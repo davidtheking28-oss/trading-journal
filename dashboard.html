@@ -8697,7 +8697,7 @@ async function missedAdd() {
 
 async function missedDelete(id) {
   if (!confirm('למחוק?')) return;
-  const { error } = await _sb.from('missed_opportunities').delete().eq('id', id);
+  const { error } = await _sb.from('missed_opportunities').delete().eq('id', id).eq('user_id', _currentUser.id);
   if (error) { toast('שגיאה במחיקה','error'); return; }
   await missedRender();
 }
@@ -8755,7 +8755,7 @@ async function missedSaveEdit(id) {
 
   const { error } = await _sb.from('missed_opportunities')
     .update({ symbol: sym, sector, date, price, note })
-    .eq('id', id);
+    .eq('id', id).eq('user_id', _currentUser.id);
   if (error) { toast('שגיאה בעדכון','error'); console.error(error); return; }
   await missedRender();
   toast('עודכן ✓','success');

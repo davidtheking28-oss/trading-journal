@@ -2,7 +2,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
 // CoinGecko is a public API — no user key needed
 const CORS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://davidtheking28-oss.github.io',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
 };
