@@ -8531,13 +8531,23 @@ function _applyTheme(theme) {
   let el = document.getElementById('tj-dynamic-theme');
   if (!el) { el = document.createElement('style'); el.id = 'tj-dynamic-theme'; document.head.appendChild(el); }
   el.textContent = theme === 'light' ? _buildLightCSS() : '';
-  // Force sidebar background directly via JS — bypasses all CSS cascade issues
+  // Force sidebar + all children via JS — same fix that worked in console
   const sidebar = document.getElementById('main-sidebar');
   if (sidebar) {
     sidebar.style.background = theme === 'light'
       ? 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)'
       : 'linear-gradient(180deg, #080c18 0%, #060910 100%)';
     sidebar.style.borderLeft = theme === 'light' ? '1px solid #dde3ed' : '1px solid rgba(255,255,255,0.07)';
+    sidebar.querySelectorAll('*').forEach(el => {
+      el.style.background = theme === 'light' ? 'transparent' : '';
+      if (theme === 'light') el.style.color = el.classList.contains('active') ? '#0284c7' : '#475569';
+      else el.style.color = '';
+    });
+    // Restore colored elements
+    const mark = sidebar.querySelector('.sidebar-brand-mark');
+    if (mark) mark.style.background = 'linear-gradient(135deg, #38bdf8 0%, #6366f1 100%)';
+    const activeBtns = sidebar.querySelectorAll('.tab-btn.active');
+    activeBtns.forEach(btn => { btn.style.background = 'rgba(14,165,233,0.12)'; });
   }
   const icon = document.getElementById('theme-icon'), label = document.getElementById('theme-label');
   if (icon)  icon.innerHTML  = theme === 'light' ? _THEME_SVG_MOON : _THEME_SVG_SUN;
