@@ -37,10 +37,14 @@ serve(async (req: Request) => {
     .eq('user_id', user.id)
     .single();
 
-  const apiKey = settings?.groq_api_key ?? '';
+  // User's own key takes priority; fall back to shared key
+  const apiKey = (settings?.groq_api_key?.startsWith('gsk_'))
+    ? settings.groq_api_key
+    : (Deno.env.get('GROQ_API_KEY') ?? '');
+
   if (!apiKey || !apiKey.startsWith('gsk_')) {
     return new Response(
-      JSON.stringify({ error: 'No Groq API key configured. Add it in your settings.' }),
+      JSON.stringify({ error: 'No Groq API key configured.' }),
       { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } }
     );
   }

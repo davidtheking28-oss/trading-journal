@@ -3477,17 +3477,17 @@
         <div id="stock-sym-status" class="ibkr-sym-status">
           <span class="sym-dot loading"></span><span>טוען...</span>
         </div>
-        <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.6;">
-          מפתח Finnhub מאפשר טעינת רשימת סמלי מניות מלאה. ללא מפתח — המערכת משתמשת ב-SEC EDGAR (חינמי).
-          <a href="https://finnhub.io/register" target="_blank" style="color:var(--accent);">הרשמה חינמית ל-Finnhub ←</a>
-          <span style="display:block;margin-top:3px;">לאחר הרשמה: Dashboard → API Keys → העתק את המפתח</span>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:8px;">
-          <input id="finnhub-key-input" class="form-control" type="password"
-            placeholder="Finnhub API Key" autocomplete="off"
-            style="font-size:12px;padding:6px 10px;flex:1;">
-          <button class="btn btn-secondary btn-sm" onclick="saveFinnhubKey()">שמור</button>
-          <span id="finnhub-key-status" style="font-size:11px;align-self:center;color:var(--text3);white-space:nowrap;"></span>
+        <div id="finnhub-key-section" style="display:none">
+          <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.6;">
+            מפתח Finnhub (Admin בלבד)
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <input id="finnhub-key-input" class="form-control" type="password"
+              placeholder="Finnhub API Key" autocomplete="off"
+              style="font-size:12px;padding:6px 10px;flex:1;">
+            <button class="btn btn-secondary btn-sm" onclick="saveFinnhubKey()">שמור</button>
+            <span id="finnhub-key-status" style="font-size:11px;align-self:center;color:var(--text3);white-space:nowrap;"></span>
+          </div>
         </div>
       </div>
 
@@ -3669,11 +3669,11 @@
             </div>
           </div>
 
-          <div class="ai-control-row">
+          <div class="ai-control-row" id="ai-key-section" style="display:none">
             <div class="ai-control-group" style="flex:1">
               <label class="ai-label">
-                Groq API Key — <a href="https://console.groq.com/keys" target="_blank" style="color:var(--accent);font-size:11px;font-weight:400">קבל בחינם ←</a>
-                <span class="ai-key-hint">נשמר בענן באופן מאובטח | <a href="https://console.groq.com/keys" target="_blank" style="color:var(--accent);">הרשמה חינמית ←</a> לאחר הרשמה: Create API Key</span>
+                Groq API Key
+                <span class="ai-key-hint">מפתח אישי (Admin בלבד)</span>
               </label>
               <div class="ai-key-row">
                 <input type="password" id="ai-api-key" class="ai-key-input" placeholder="gsk_..." oninput="aiSaveKey()">
@@ -4123,10 +4123,19 @@ async function authSignOut() {
   toast('יצאת מהחשבון', 'info');
 }
 
+const ADMIN_ID = '9f9ffff4-0936-446c-b816-410b50894e8b';
+
 async function _onAuthSuccess(user) {
   _currentUser = user;
   document.getElementById('auth-overlay').style.display = 'none';
   await Promise.all([loadDB(), loadUserSettings()]);
+
+  // Show API key fields only to admin
+  const isAdmin = user.id === ADMIN_ID;
+  const aiKey = document.getElementById('ai-key-section');
+  const fhKey = document.getElementById('finnhub-key-section');
+  if (aiKey) aiKey.style.display = isAdmin ? '' : 'none';
+  if (fhKey) fhKey.style.display = isAdmin ? '' : 'none';
   // Post-load UI setup
   initFilters();
   applyPrivacy();
