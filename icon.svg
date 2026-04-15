@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="90" fill="#0c1022"/>
+  <rect width="512" height="512" rx="90" fill="url(#bg)"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f1830"/>
+      <stop offset="100%" stop-color="#07080d"/>
+    </linearGradient>
+    <linearGradient id="line" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#4f9eff"/>
+    </linearGradient>
+  </defs>
+  <!-- Grid lines -->
+  <line x1="60" y1="160" x2="452" y2="160" stroke="#1a2035" stroke-width="1.5"/>
+  <line x1="60" y1="240" x2="452" y2="240" stroke="#1a2035" stroke-width="1.5"/>
+  <line x1="60" y1="320" x2="452" y2="320" stroke="#1a2035" stroke-width="1.5"/>
+  <!-- Fill area -->
+  <polygon points="60,360 140,290 210,310 300,170 375,205 452,115 452,390 60,390" fill="url(#line)" opacity="0.12"/>
+  <!-- Main chart line -->
+  <polyline points="60,360 140,290 210,310 300,170 375,205 452,115"
+            fill="none" stroke="url(#line)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Highlight dot -->
+  <circle cx="452" cy="115" r="18" fill="#4f9eff" opacity="0.3"/>
+  <circle cx="452" cy="115" r="11" fill="#4f9eff"/>
+  <!-- 2.0 label -->
+  <text x="256" y="478" font-family="system-ui,-apple-system,sans-serif" font-size="72" font-weight="800" fill="white" text-anchor="middle" opacity="0.85">2.0</text>
+</svg>

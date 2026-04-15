@@ -1,0 +1,30 @@
+# Local server — never commit
+serve.py
+restart-server.bat
+start-journal.bat
+start-journal.vbs
+server.ps1
+__pycache__/
+*.pyc
+*.pyo
+
+# Secrets — never commit
+.env
+.env.*
+*.env
+.env.local
+
+# Vercel / old hosting artifacts
+vercel.json
+api/
+package.json
+package-lock.json
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+style-preview.html
+index.html

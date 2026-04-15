@@ -1,0 +1,18 @@
+{
+  "name": "Trading Journal 2.0",
+  "short_name": "TJ 2.0",
+  "description": "יומן מסחר מקצועי — רשום, נתח, שפר",
+  "start_url": "./dashboard.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#07080d",
+  "theme_color": "#0c1022",
+  "orientation": "any",
+  "lang": "he",
+  "dir": "rtl",
+  "categories": ["finance", "productivity"],
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
