@@ -8854,8 +8854,6 @@ function _aiCalcPnl(t) {
 }
 
 function _aiGetTrades(start, end) {
-  const raw = localStorage.getItem('trading-journal-v1');
-  const db  = raw ? JSON.parse(raw) : {};
   const stocks = Array.isArray(db.stocks) ? db.stocks : [];
   const crypto = Array.isArray(db.crypto) ? db.crypto : [];
   const result = [];
