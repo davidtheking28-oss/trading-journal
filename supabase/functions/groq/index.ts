@@ -30,6 +30,25 @@ serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 
+  // Rate limit: max 10 requests per minute per user (shared key protection)
+  const now = Date.now();
+  const windowStart = new Date(now - 60_000).toISOString();
+  const { count: recentCount } = await supabase
+    .from('ai_requests')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .gte('created_at', windowStart);
+
+  if ((recentCount ?? 0) >= 10) {
+    return new Response(
+      JSON.stringify({ error: 'Rate limit exceeded. Try again in a minute.' }),
+      { status: 429, headers: { ...CORS, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // Log this request (fire and forget)
+  supabase.from('ai_requests').insert({ user_id: user.id }).then(() => {});
+
   // Fetch the user's Groq key from user_settings (RLS allows this because JWT is set)
   const { data: settings } = await supabase
     .from('user_settings')

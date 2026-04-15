@@ -32,8 +32,7 @@
              https://fnklrqxwyeibfptaxewf.supabase.co
              https://fnklrqxwyeibfptaxewf.supabase.co/functions/v1/*
              wss://fnklrqxwyeibfptaxewf.supabase.co
-             https://www.sec.gov
-             https://finnhub.io;
+             https://www.sec.gov;
            form-action 'none';
            base-uri    'none';
            object-src  'none';
@@ -3511,10 +3510,6 @@
         <div class="sec-grid">
           <div class="sec-row"><span class="sec-dot" id="sec-pin-dot"></span><span id="sec-pin-lbl">PIN</span></div>
           <div class="sec-row"><span class="sec-dot" id="sec-2fa-dot"></span><span id="sec-2fa-lbl">TOTP 2FA</span></div>
-          <div class="sec-row"><span class="sec-dot"></span>AES-256 Encryption</div>
-          <div class="sec-row"><span class="sec-dot"></span>Content Security Policy</div>
-          <div class="sec-row"><span class="sec-dot"></span>Subresource Integrity</div>
-          <div class="sec-row"><span class="sec-dot"></span>Auto-Lock · Bot Guard</div>
         </div>
         <div class="totp-section">
           <div>
@@ -6066,7 +6061,7 @@ async function saveTrade() {
     arr[i] = data; // optimistic
     renderTable(type); initFilters(); closeModal();
     const row = _tradeToRow(data);
-    const { error } = await _sb.from('trades').update(row).eq('id', data.id);
+    const { error } = await _sb.from('trades').update(row).eq('id', data.id).eq('user_id', _currentUser.id);
     if (error) { arr[i] = prev; renderTable(type); toast('שגיאה בעדכון עסקה','error'); console.error(error); return; }
     auditLog('trade_edited', data.symbol);
     toast('עסקה עודכנה','success');
@@ -6102,7 +6097,7 @@ async function deleteTrade(type, id) {
   toast('עסקה נמחקה', 'success');
   const { error } = await _sb.from('trades')
     .update({ deleted: true, deleted_at: new Date().toISOString() })
-    .eq('id', id);
+    .eq('id', id).eq('user_id', _currentUser.id);
   if (error) {
     tr.deleted = false; tr.deletedAt = null;
     renderTable(type);

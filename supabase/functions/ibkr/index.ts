@@ -12,13 +12,14 @@ serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
   const authHeader = req.headers.get('Authorization') ?? '';
+  const jwt = authHeader.replace('Bearer ', '').trim();
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_ANON_KEY')!,
     { global: { headers: { Authorization: authHeader } } }
   );
 
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const { data: { user }, error } = await supabase.auth.getUser(jwt);
   if (error || !user) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
@@ -30,10 +31,10 @@ serve(async (req: Request) => {
     .eq('user_id', user.id)
     .single();
 
-  const token = settings?.flex_token ?? '';
-  const qid   = settings?.flex_query_id ?? '';
+  const flexToken = settings?.flex_token ?? '';
+  const qid       = settings?.flex_query_id ?? '';
 
-  if (!token || !/^\d{10,35}$/.test(token)) {
+  if (!flexToken || !/^\d{10,35}$/.test(flexToken)) {
     return new Response(JSON.stringify({ error: 'Missing or invalid IBKR token' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 
@@ -45,13 +46,13 @@ serve(async (req: Request) => {
     if (!qid || !/^\d{1,15}$/.test(qid)) {
       return new Response(JSON.stringify({ error: 'Missing or invalid IBKR query ID' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
     }
-    endpoint = `${IBKR_BASE}.SendRequest?t=${token}&q=${qid}&v=3`;
+    endpoint = `${IBKR_BASE}.SendRequest?t=${flexToken}&q=${qid}&v=3`;
   } else if (action === 'get') {
     const refCode = url.searchParams.get('ref') ?? '';
     if (!refCode || !/^\w{1,30}$/.test(refCode)) {
       return new Response(JSON.stringify({ error: 'Invalid reference code' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
     }
-    endpoint = `${IBKR_BASE}.GetStatement?t=${token}&q=${refCode}&v=3`;
+    endpoint = `${IBKR_BASE}.GetStatement?t=${flexToken}&q=${refCode}&v=3`;
   } else {
     return new Response(JSON.stringify({ error: 'Invalid action' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
