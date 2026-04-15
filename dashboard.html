@@ -2012,6 +2012,11 @@
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  html[data-theme="light"] .sidebar {
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%) !important;
+    border-left: 1px solid #dde3ed !important;
   }
   .sidebar-brand {
     padding: 20px 18px 16px;
@@ -2465,25 +2470,21 @@
   }
 
   /* Sidebar — light mode */
-  html[data-theme="light"] .sidebar {
-    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-    border-left: 1px solid #e2e8f0;
-  }
   html[data-theme="light"] .sidebar-brand {
-    border-bottom-color: #e2e8f0;
+    border-bottom-color: #e2e8f0 !important;
   }
   html[data-theme="light"] .sidebar-brand-name {
-    background: linear-gradient(135deg, #0ea5e9 0%, #7c3aed 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background: linear-gradient(135deg, #0ea5e9 0%, #7c3aed 100%) !important;
+    -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important;
   }
-  html[data-theme="light"] .sidebar-brand-dot { background: #0ea5e9; }
-  html[data-theme="light"] .sidebar-section-label { color: #94a3b8; }
+  html[data-theme="light"] .sidebar-brand-dot { background: #0ea5e9 !important; }
+  html[data-theme="light"] .sidebar-section-label { color: #94a3b8 !important; }
   html[data-theme="light"] .sidebar-footer {
-    border-top-color: #e2e8f0;
+    border-top-color: #e2e8f0 !important;
   }
-  html[data-theme="light"] .sidebar-footer-text { color: #94a3b8; }
+  html[data-theme="light"] .sidebar-footer-text { color: #94a3b8 !important; }
   html[data-theme="light"] .tab-btn {
-    color: #64748b !important;
+    color: #475569 !important;
   }
   html[data-theme="light"] .tab-btn:hover {
     color: #0f172a !important;
