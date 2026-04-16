@@ -10207,7 +10207,7 @@ async function invAnalyze() {
     // Extract latest 2 quarterly SEC reports
     const reports = financialsData?.data?.slice(0, 2) || [];
     const latestReport = reports[0] || null;
-    const latestPeriod = latestReport?.period || null;  // e.g. "2024-12-31"
+    const latestPeriod = latestReport?.endDate?.split?.(' ')?.[0] || latestReport?.period || null;
 
     // Staleness check: how many months since the latest report period?
     const today = new Date();
@@ -10223,7 +10223,7 @@ async function invAnalyze() {
 
     const get = (arr, ...concepts) => {
       for (const c of concepts) {
-        const found = arr?.find(x => x.concept === c);
+        const found = arr?.find(x => x.concept === c || x.concept === `us-gaap_${c}`);
         if (found?.value != null) return (+found.value / 1e6).toFixed(1) + 'M';
       }
       return 'אין נתון';
@@ -10232,13 +10232,16 @@ async function invAnalyze() {
       if (!r) return '';
       const ic = r.report?.ic || [];
       const cf = r.report?.cf || [];
+      const bs = r.report?.bs || [];
+      const period = r.endDate?.split?.(' ')?.[0] || r.period || '';
       const revenue = get(ic,
         'Revenues','RevenueFromContractWithCustomerExcludingAssessedTax',
         'SalesRevenueNet','InterestAndDividendIncomeOperating',
-        'RevenueFromContractWithCustomerIncludingAssessedTax');
+        'RevenueFromContractWithCustomerIncludingAssessedTax',
+        'NoninterestIncome','InterestIncomeOperating');
       const netIncome = get(ic, 'NetIncomeLoss', 'ProfitLoss', 'NetIncomeLossAvailableToCommonStockholdersBasic');
       const opCF = get(cf, 'NetCashProvidedByUsedInOperatingActivities');
-      return `📋 ${r.period||''} (${r.form||''})\n     הכנסות: $${revenue} | רווח נטו: $${netIncome} | תזרים תפעולי: $${opCF}`;
+      return `📋 ${period} (${r.form||''})\n     הכנסות: $${revenue} | רווח נטו: $${netIncome} | תזרים תפעולי: $${opCF}`;
     };
     const reportsSummary = reports.length ? reports.map(fmtReport).join('\n   ') : 'אין נתון';
 
