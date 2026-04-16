@@ -10313,6 +10313,8 @@ async function invAnalyze() {
       ? ` [Finnhub: ${(+finnhubNetM).toFixed(1)}% — פער גבוה, סמוך על SEC]`
       : '';
 
+    const epsNorm = m['epsNormalizedAnnual'] ?? m['epsTTM'];
+
     // ── Pre-flight data quality validation ──
     const checks = [];
     // 1. SEC freshness
@@ -10389,8 +10391,6 @@ async function invAnalyze() {
     // Current ratio — annual → quarterly fallback
     const currentRatio = m['currentRatioAnnual'] ?? m['currentRatioQuarterly'];
 
-    // EPS normalized (profitability direction)
-    const epsNorm = m['epsNormalizedAnnual'] ?? m['epsTTM'];
 
     const metricsText = `
 === בדיקת איכות נתונים אוטומטית ===
