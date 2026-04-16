@@ -447,6 +447,19 @@
   .quick-add-body.collapsed { display: none; }
 
   /* ENTRY REASON PILLS */
+  .mood-pills { display: flex; gap: 5px; flex-wrap: wrap; }
+  .mood-pill {
+    padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    border: 1px solid var(--border); color: var(--text2); background: var(--bg2);
+    cursor: pointer; transition: all .15s; user-select: none;
+  }
+  .mood-pill:hover { border-color: var(--accent); color: var(--accent); }
+  .mood-pill.active-focused   { background: rgba(56,189,248,0.18);  border-color: #38bdf8; color: #38bdf8; }
+  .mood-pill.active-calm      { background: rgba(63,185,80,0.18);   border-color: #3fb950; color: #3fb950; }
+  .mood-pill.active-confident { background: rgba(163,113,247,0.18); border-color: #a371f7; color: #a371f7; }
+  .mood-pill.active-stressed  { background: rgba(248,81,73,0.18);   border-color: #f85149; color: #f85149; }
+  .mood-pill.active-impatient { background: rgba(245,166,35,0.18);  border-color: #f5a623; color: #f5a623; }
+  .mood-pill.active-doubtful  { background: rgba(139,148,158,0.18); border-color: #8b949e; color: #8b949e; }
   .er-pills { display: flex; gap: 5px; flex-wrap: wrap; }
   .er-pill {
     padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
@@ -2693,6 +2706,14 @@
   }
 
   /* ── Entry reason pills (hardcoded #0d1117) ── */
+  html[data-theme="light"] .mood-pill { background:#f1f5f9 !important; border-color:#cbd5e1 !important; color:#475569 !important; }
+  html[data-theme="light"] .mood-pill:hover { border-color:#0ea5e9 !important; color:#0ea5e9 !important; }
+  html[data-theme="light"] .mood-pill.active-focused   { background:rgba(14,165,233,0.1) !important; border-color:#0284c7 !important; color:#0284c7 !important; }
+  html[data-theme="light"] .mood-pill.active-calm      { background:rgba(5,150,105,0.1) !important;  border-color:#059669 !important; color:#059669 !important; }
+  html[data-theme="light"] .mood-pill.active-confident { background:rgba(124,58,237,0.1) !important; border-color:#7c3aed !important; color:#7c3aed !important; }
+  html[data-theme="light"] .mood-pill.active-stressed  { background:rgba(220,38,38,0.1) !important;  border-color:#dc2626 !important; color:#dc2626 !important; }
+  html[data-theme="light"] .mood-pill.active-impatient { background:rgba(234,88,12,0.1) !important;  border-color:#ea580c !important; color:#ea580c !important; }
+  html[data-theme="light"] .mood-pill.active-doubtful  { background:rgba(100,116,139,0.1) !important; border-color:#64748b !important; color:#64748b !important; }
   html[data-theme="light"] .er-pill {
     background: #f1f5f9 !important;
     border-color: #cbd5e1 !important;
@@ -3900,6 +3921,18 @@
       <div class="form-section">
         <div class="form-section-title">📝 הערות ואיכות</div>
         <div class="form-group">
+          <label class="form-label">מצב רגשי לפני הכניסה</label>
+          <div class="mood-pills" id="m-mood-pills" style="margin-bottom:4px;">
+            <span class="mood-pill" data-mood="focused"   onclick="modalSetMood('focused')">🎯 ממוקד</span>
+            <span class="mood-pill" data-mood="calm"      onclick="modalSetMood('calm')">😌 רגוע</span>
+            <span class="mood-pill" data-mood="confident" onclick="modalSetMood('confident')">💪 בטוח</span>
+            <span class="mood-pill" data-mood="stressed"  onclick="modalSetMood('stressed')">😰 לחוץ</span>
+            <span class="mood-pill" data-mood="impatient" onclick="modalSetMood('impatient')">😤 חסר סבלנות</span>
+            <span class="mood-pill" data-mood="doubtful"  onclick="modalSetMood('doubtful')">😔 ספקני</span>
+          </div>
+          <input type="hidden" id="m-mood">
+        </div>
+        <div class="form-group">
           <label class="form-label">סיבת כניסה</label>
           <div class="er-pills" id="m-er-pills" style="margin-bottom:16px;">
             <span class="er-pill" data-er="LPS"          onclick="modalSetER('LPS')">LPS</span>
@@ -4310,6 +4343,7 @@ function _rowToTrade(row) {
     setupType:    row.setup_type    || '',
     marketCond:   row.market_cond   || '',
     processScore: row.process_score,
+    mood:         row.mood          || '',
     deleted:      row.deleted       || false,
     deletedAt:    row.deleted_at,
   };
@@ -4337,6 +4371,7 @@ function _tradeToRow(trade) {
     setup_type:    trade.setupType   || '',
     market_cond:   trade.marketCond  || '',
     process_score: trade.processScore|| null,
+    mood:          trade.mood        || '',
     deleted:       trade.deleted     || false,
     deleted_at:    trade.deletedAt   || null,
   };
@@ -4925,6 +4960,29 @@ function erSetPills(containerId, val) {
   document.querySelectorAll('#'+containerId+' .er-pill').forEach(p => {
     const base = p.dataset.er;
     p.className = 'er-pill' + (base === val ? ' active-' + (ER_CLASS[base]||'') : '');
+  });
+}
+
+// ══════════════════════════════════════════════
+// MOOD HELPERS
+// ══════════════════════════════════════════════
+const MOOD_OPTIONS = ['focused','calm','confident','stressed','impatient','doubtful'];
+
+let modalMood = '';
+function modalSetMood(val) {
+  modalMood = modalMood === val ? '' : val;
+  const el = document.getElementById('m-mood');
+  if (el) el.value = modalMood;
+  document.querySelectorAll('#m-mood-pills .mood-pill').forEach(p => {
+    const base = p.dataset.mood;
+    p.className = 'mood-pill' + (base === modalMood ? ' active-' + base : '');
+  });
+}
+
+function moodSetPills(containerId, val) {
+  document.querySelectorAll('#'+containerId+' .mood-pill').forEach(p => {
+    const base = p.dataset.mood;
+    p.className = 'mood-pill' + (base === val ? ' active-' + base : '');
   });
 }
 
@@ -5923,6 +5981,10 @@ function openModal(type, tr=null) {
   modalPS = tr ? (tr.process_score || 0) : 0;
   document.getElementById('m-process-score').value = modalPS;
   psSetStars('m-ps-stars', modalPS);
+  modalMood = tr ? (tr.mood || '') : '';
+  const moodEl = document.getElementById('m-mood');
+  if (moodEl) moodEl.value = modalMood;
+  moodSetPills('m-mood-pills', modalMood);
   document.getElementById('m-notes-keep').value  = tr ? (tr.notes_keep||'')    : '';
   document.getElementById('m-notes-improve').value = tr ? (tr.notes_improve||'') : '';
 
@@ -6022,7 +6084,8 @@ function getFormTrade() {
     entry_reason:  ER_OPTIONS.includes(modalER) ? modalER : '',
     setup_type:    ST_OPTIONS.includes(modalST) ? modalST : '',
     market_cond:   document.getElementById('m-market-cond').value || '',
-    process_score: modalPS || 0
+    process_score: modalPS || 0,
+    mood:          MOOD_OPTIONS.includes(modalMood) ? modalMood : ''
   };
 }
 
@@ -8523,6 +8586,15 @@ function _buildLightCSS() {
     .toast { background:#ffffff !important; border:1px solid #e2e8f0 !important; box-shadow:0 8px 32px rgba(0,0,0,0.1) !important; color:#0f172a !important; }
     .toast.success { border-right:3px solid #059669 !important; }
     .toast.error   { border-right:3px solid #e11d48 !important; }
+
+    /* Mood pills */
+    .mood-pill { background:#f1f5f9 !important; border-color:#cbd5e1 !important; color:#475569 !important; }
+    .mood-pill.active-focused   { background:rgba(14,165,233,0.1) !important; border-color:#0284c7 !important; color:#0284c7 !important; }
+    .mood-pill.active-calm      { background:rgba(5,150,105,0.1) !important;  border-color:#059669 !important; color:#059669 !important; }
+    .mood-pill.active-confident { background:rgba(124,58,237,0.1) !important; border-color:#7c3aed !important; color:#7c3aed !important; }
+    .mood-pill.active-stressed  { background:rgba(220,38,38,0.1) !important;  border-color:#dc2626 !important; color:#dc2626 !important; }
+    .mood-pill.active-impatient { background:rgba(234,88,12,0.1) !important;  border-color:#ea580c !important; color:#ea580c !important; }
+    .mood-pill.active-doubtful  { background:rgba(100,116,139,0.1) !important; border-color:#64748b !important; color:#64748b !important; }
 
     /* Scrollbar */
     ::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.15) !important; }
