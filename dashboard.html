@@ -3898,12 +3898,12 @@
         <div class="form-section-title">💰 עמלות</div>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">ECN Fee</label>
-            <input type="number" class="form-control" id="m-ecn" step="0.01" oninput="liveCalc()">
-          </div>
-          <div class="form-group">
             <label class="form-label">Commission</label>
             <input type="number" class="form-control" id="m-commission" step="0.01" oninput="liveCalc()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">מצב רגשי לפני הכניסה</label>
+            <textarea class="form-control" id="m-mood" placeholder="איך הרגשת לפני הכניסה..." maxlength="300" rows="1" style="resize:none;height:38px;padding-top:9px;"></textarea>
           </div>
         </div>
       </div>
@@ -3920,10 +3920,6 @@
 
       <div class="form-section">
         <div class="form-section-title">📝 הערות ואיכות</div>
-        <div class="form-group">
-          <label class="form-label">מצב רגשי לפני הכניסה</label>
-          <textarea class="form-control" id="m-mood" placeholder="איך הרגשת לפני הכניסה לעסקה..." maxlength="300" rows="2"></textarea>
-        </div>
         <div class="form-group">
           <label class="form-label">סיבת כניסה</label>
           <div class="er-pills" id="m-er-pills" style="margin-bottom:16px;">
@@ -5960,7 +5956,6 @@ function openModal(type, tr=null) {
   document.getElementById('m-closeDate').value   = tr ? (tr.closeDate||'')     : '';
   document.getElementById('m-closedShares').value= tr ? (tr.closedShares||'')  : '';
   document.getElementById('m-exitPrice').value   = tr ? (tr.exitPrice||'')     : '';
-  document.getElementById('m-ecn').value         = tr ? (tr.ecn||'')           : '';
   document.getElementById('m-commission').value  = tr ? (tr.commission!==undefined?tr.commission:'2.50') : '2.50';
   modalER = tr ? (tr.entry_reason || '') : '';
   document.getElementById('m-entry-reason').value = modalER;
@@ -6065,7 +6060,7 @@ function getFormTrade() {
     closeDate:    document.getElementById('m-closeDate').value.slice(0,10),
     closedShares: sanitizeNumber(document.getElementById('m-closedShares').value, 0, 1e7),
     exitPrice:    sanitizeNumber(document.getElementById('m-exitPrice').value, 0),
-    ecn:          sanitizeNumber(document.getElementById('m-ecn').value, 0, 1e6),
+    ecn:          0,
     commission:   document.getElementById('m-commission').value !== ''
                     ? sanitizeNumber(document.getElementById('m-commission').value, 0, 1e6)
                     : 2.5,
