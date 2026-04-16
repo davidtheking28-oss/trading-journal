@@ -10204,10 +10204,6 @@ async function invAnalyze() {
     const qDate = qLatest?.endDate || '';
     const aDate = aLatest?.endDate || '';
     const financialsData = (aDate > qDate) ? financialsAData : financialsQData;
-    console.log('[INV] HTTP status:', metricRes.status, profileRes.status, quoteRes.status, earningsRes.status, financialsQRes.status, financialsARes.status);
-    console.log('[INV] metric:', metricData);
-    console.log('[INV] quote:', quoteData);
-    console.log('[INV] financials chosen:', (aDate > qDate ? 'annual' : 'quarterly'), '| period:', financialsData?.data?.[0]?.endDate);
     const m = metricData.metric || {};
     const earnings = Array.isArray(earningsData) ? earningsData.slice(0, 4) : [];
 
