@@ -4294,7 +4294,7 @@ const SEED = {
     {id:6,type:'stock',entryDate:'2025-11-10',ls:'L',symbol:'A',entryPrice:147.13,shares:10,stop:144.32,t:[],closeDate:'2025-11-17',closedShares:10,exitPrice:144.32,ecn:0,commission:2.5,notes_keep:'',notes_improve:''},
     {id:7,type:'stock',entryDate:'2025-11-12',ls:'L',symbol:'AIR',entryPrice:84.08,shares:14,stop:82.11,t:[],closeDate:'2025-11-13',closedShares:14,exitPrice:82.34,ecn:0,commission:2.5,notes_keep:'',notes_improve:''},
     {id:8,type:'stock',entryDate:'2025-11-28',ls:'L',symbol:'OPEN',entryPrice:7.95,shares:57,stop:7.42,t:[],closeDate:'2025-11-29',closedShares:57,exitPrice:7.42,ecn:0,commission:2.5,notes_keep:'',notes_improve:''},
-    {id:9,type:'stock',entryDate:'2026-01-02',ls:'L',symbol:'RDDT',entryPrice:233.72,shares:3,stop:227.49,t:[{shares:1,price:262.00}],closeDate:'2026-01-07',closedShares:2,exitPrice:230.00,ecn:0,commission:5.0,notes_keep:'',notes_improve:''},
+    {id:9,type:'stock',entryDate:'2026-01-02',ls:'L',symbol:'RDDT',entryPrice:233.72,shares:3,stop:227.49,t:[{shares:1,price:262.00}],closeDate:'2026-01-07',closedShares:3,exitPrice:230.00,ecn:0,commission:5.0,notes_keep:'',notes_improve:''},
     {id:10,type:'stock',entryDate:'2026-01-05',ls:'L',symbol:'GROY',entryPrice:4.18,shares:110,stop:3.97,t:[],closeDate:'2026-01-16',closedShares:110,exitPrice:4.95,ecn:0,commission:2.5,notes_keep:'',notes_improve:''},
     {id:11,type:'stock',entryDate:'2026-01-06',ls:'L',symbol:'TQQQ',entryPrice:54.34,shares:19,stop:53.28,t:[],closeDate:'2026-01-14',closedShares:19,exitPrice:53.29,ecn:0,commission:2.5,notes_keep:'',notes_improve:''},
     {id:12,type:'stock',entryDate:'2026-01-28',ls:'L',symbol:'JOE',entryPrice:64.79,shares:26,stop:null,t:[],closeDate:'2026-02-06',closedShares:26,exitPrice:66.98,ecn:0,commission:2.5,notes_keep:'',notes_improve:''},
@@ -5796,7 +5796,7 @@ function renderOverview() {
   renderDonut(st, adv, trades);
   renderPerChart(trades);
   renderMonthlyTracker(stTrades);
-  renderTradingSummary(trades);
+  renderTradingSummary(stTrades);
   applyPrivacy();
 }
 
