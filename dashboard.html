@@ -10185,8 +10185,12 @@ async function invAnalyze() {
       fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=stock%2Fprofile2&symbol=${encodeURIComponent(sym)}`, { headers: { Authorization: `Bearer ${token}` } }),
     ]);
 
-    const metricData  = metricRes.ok  ? await metricRes.json()  : {};
-    const profileData = profileRes.ok ? await profileRes.json() : {};
+    const metricRaw   = await metricRes.text();
+    const profileRaw  = await profileRes.text();
+    out.textContent = `metric:${metricRes.status} → ${metricRaw.slice(0,200)}\n\nprofile:${profileRes.status} → ${profileRaw.slice(0,100)}`;
+    return;
+    const metricData  = metricRes.ok  ? JSON.parse(metricRaw)  : {};
+    const profileData = profileRes.ok ? JSON.parse(profileRaw) : {};
     const m = metricData.metric || {};
 
     const fmt = (v, suffix='') => v != null ? `${(+v).toFixed(2)}${suffix}` : 'אין נתון';
