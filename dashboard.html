@@ -2485,6 +2485,8 @@
     border-top-color: #e2e8f0 !important;
   }
   html[data-theme="light"] .sidebar-footer-text { color: #94a3b8 !important; }
+  html[data-theme="light"] #main-sidebar > * { background: transparent !important; }
+  html[data-theme="light"] #main-sidebar .tab-btn { background: transparent !important; }
   html[data-theme="light"] .tab-btn {
     color: #475569 !important;
   }
@@ -8713,6 +8715,7 @@ async function missedLoad() {
 }
 
 async function missedAdd() {
+  if (!_currentUser) { toast('לא מחובר','error'); return; }
   const sym    = document.getElementById('missed-sym').value.trim().toUpperCase().replace(/[^A-Z0-9._\-]/g,'');
   const date   = document.getElementById('missed-date').value;
   const price  = parseFloat(document.getElementById('missed-price').value);
@@ -8726,7 +8729,7 @@ async function missedAdd() {
   const { data, error } = await _sb.from('missed_opportunities')
     .insert({ user_id: _currentUser.id, symbol: sym, date, price, sector, note })
     .select().single();
-  if (error) { toast('שגיאה בהוספה','error'); console.error(error); return; }
+  if (error) { toast('שגיאה בהוספה: ' + (error.message || error.code || 'unknown'), 'error'); console.error('[missedAdd]', error); return; }
 
   document.getElementById('missed-sym').value    = '';
   document.getElementById('missed-date').value   = '';
