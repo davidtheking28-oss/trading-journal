@@ -10251,6 +10251,10 @@ async function invAnalyze() {
     const secGPRaw     = getRaw(secIC, 'GrossProfit');
     const secCOGSRaw   = getRaw(secIC, 'CostOfRevenue','CostOfGoodsAndServicesSold');
     const secOpIncRaw  = getRaw(secIC, 'OperatingIncomeLoss');
+    const secPreTaxRaw = getRaw(secIC,
+      'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest',
+      'IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments',
+      'IncomeLossBeforeIncomeTaxExpenseBenefit');
     const secAssetsRaw = getRaw(secBS, 'Assets');
     const secEquityRaw = getRaw(secBS, 'StockholdersEquity','StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest');
     const secLTDebtRaw = getRaw(secBS, 'LongTermDebt','LongTermDebtNoncurrent','LongTermNotesPayable');
@@ -10262,7 +10266,8 @@ async function invAnalyze() {
     const secGrossMargin = secGPRaw != null && secRevRaw
       ? (secGPRaw / secRevRaw * 100).toFixed(2)
       : (secCOGSRaw != null && secRevRaw ? ((secRevRaw - secCOGSRaw) / secRevRaw * 100).toFixed(2) : null);
-    const secOpMargin    = (secOpIncRaw != null && secRevRaw) ? (secOpIncRaw / secRevRaw * 100).toFixed(2) : null;
+    const secPreTaxMargin = (secPreTaxRaw != null && secRevRaw) ? (secPreTaxRaw / secRevRaw * 100).toFixed(2) : null;
+    const secOpMargin    = (!isFinancial && secOpIncRaw != null && secRevRaw) ? (secOpIncRaw / secRevRaw * 100).toFixed(2) : null;
     const secROE         = (secNIRaw != null && secEquityRaw) ? (secNIRaw / secEquityRaw * 100).toFixed(2) : null;
     const secROA         = (secNIRaw != null && secAssetsRaw) ? (secNIRaw / secAssetsRaw * 100).toFixed(2) : null;
     const secDE          = (secLTDebtRaw != null && secEquityRaw) ? (secLTDebtRaw / secEquityRaw).toFixed(2) : null;
@@ -10330,8 +10335,8 @@ async function invAnalyze() {
 === רווחיות ===
 EPS מנורמל (שנתי): ${fmt(epsNorm)} ${epsNorm != null ? (+epsNorm > 0 ? '✅ רווחי' : '❌ הפסדי') : ''}
 שולי רווח גולמי: ${fmtSEC(secGrossMargin,'%', fmt(m['grossMarginTTM'] ?? m['grossMarginAnnual'],'%'))}
-שולי רווח תפעולי: ${fmtSEC(secOpMargin,'%', fmt(m['operatingMarginTTM'] ?? m['operatingMarginAnnual'],'%'))}
-שולי רווח נטו: ${fmtSEC(secNetMargin,'%', fmt(m['netProfitMarginTTM'] ?? m['netProfitMarginAnnual'],'%'))}
+שולי רווח תפעולי: ${isFinancial ? fmtSEC(secPreTaxMargin,'% (לפני מס — ישים לחברות פיננסיות)', fmt(m['operatingMarginTTM'] ?? m['operatingMarginAnnual'],'%')) : fmtSEC(secOpMargin,'%', fmt(m['operatingMarginTTM'] ?? m['operatingMarginAnnual'],'%'))}
+שולי רווח נטו: ${fmtSEC(secNetMargin,'%', fmt(m['netProfitMarginTTM'] ?? m['netProfitMarginAnnual'],'%'))}${isFinancial ? ' ⚠️ עשוי לכלול items חד-פעמיים (tax benefits וכו׳)' : ''}
 ROE: ${fmtSEC(secROE,'%', fmt(m['roeTTM'] ?? m['roeAnnual'],'%'))}
 ROA: ${fmtSEC(secROA,'%', fmt(m['roaTTM'] ?? m['roaAnnual'],'%'))}
 
@@ -10343,8 +10348,8 @@ PEG: ${fmt(pegVal)} ${pegCalc && !m['pegRatio'] ? '(מחושב)' : ''}
 === צמיחה ===
 צמיחת הכנסות YoY (SEC): ${fmtSEC(secRevGrowth,'%', 'אין נתון')}
 צמיחת הכנסות (Finnhub TTM/3Y/5Y): ${revStr}
-צמיחת EPS YoY: ${fmt(m['epsGrowthTTMYoy'] ?? m['epsGrowth3Y'],'%')}
-EPS היסטוריה (4 רבעונים):
+צמיחת EPS YoY (Finnhub): ${fmt(m['epsGrowthTTMYoy'] ?? m['epsGrowth3Y'],'%')}${isFinancial ? ' ⚠️ לחברות שיצאו מהפסד — ההיסטוריה הרבעונית מהימנה יותר' : ''}
+EPS היסטוריה רבעונית (4 רבעונים אחרונים — ראה מגמה):
    ${epsHistory}
 
 === מאזן ===
