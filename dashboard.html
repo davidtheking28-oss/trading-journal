@@ -2998,6 +2998,7 @@
   .inv-table input { background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 5px 7px; font-size: 12px; color: var(--text); width: 80px; }
   .inv-table input:focus { border-color: var(--accent); outline: none; }
   .inv-sym-input { font-family: monospace; font-weight: 700; text-transform: uppercase; width: 68px !important; }
+  .inv-sector-input { width: 110px !important; color: var(--text2) !important; font-size: 11px !important; }
   .inv-pct-bar { display: flex; align-items: center; gap: 6px; }
   .inv-pct-fill { height: 6px; border-radius: 3px; background: var(--accent); transition: width 0.3s; min-width: 2px; }
   .inv-pct-label { font-size: 12px; font-weight: 700; color: var(--text2); white-space: nowrap; min-width: 38px; }
@@ -3878,6 +3879,7 @@
             <thead>
               <tr>
                 <th>סימבול</th>
+                <th>סקטור</th>
                 <th>קטגוריה</th>
                 <th>🔵 כמות מניות</th>
                 <th>🔵 מחיר כניסה</th>
@@ -9864,12 +9866,13 @@ function invRenderRows(holdings) {
   const tbody = document.getElementById('inv-tbody');
   if (!tbody) return;
   if (!holdings.length) {
-    tbody.innerHTML = `<tr><td colspan="10" class="inv-empty">אין אחזקות — לחץ "+ הוסף אחזקה"</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" class="inv-empty">אין אחזקות — לחץ "+ הוסף אחזקה"</td></tr>`;
     return;
   }
   tbody.innerHTML = holdings.map((h, i) => `
     <tr data-idx="${i}">
-      <td><input class="inv-sym-input" type="text" value="${h.symbol||''}" placeholder="AAPL" oninput="this.value=this.value.toUpperCase();invRecalc()"></td>
+      <td><input class="inv-sym-input" type="text" value="${h.symbol||''}" placeholder="AAPL" oninput="this.value=this.value.toUpperCase();invRecalc();invAutoSector(${i})"></td>
+      <td><input class="inv-sector-input" type="text" value="${h.sector||''}" placeholder="טכנולוגיה" data-sector-idx="${i}"></td>
       <td>
         <select class="inv-cat-sel" onchange="invRecalc()">
           <option value="">—</option>
@@ -9911,10 +9914,10 @@ function invRecalc() {
     const i = +row.dataset.idx;
     const inputs = row.querySelectorAll('input');
     const cat         = row.querySelector('.inv-cat-sel')?.value || '';
-    const entryShares = +(inputs[0]?.value) || 0;
-    const entryPrice  = +(inputs[1]?.value) || 0;
-    const reinShares  = +(inputs[2]?.value) || 0;
-    const reinPrice   = +(inputs[3]?.value) || 0;
+    const entryShares = +(inputs[2]?.value) || 0;
+    const entryPrice  = +(inputs[3]?.value) || 0;
+    const reinShares  = +(inputs[4]?.value) || 0;
+    const reinPrice   = +(inputs[5]?.value) || 0;
 
     const totalShares = entryShares + reinShares;
     const totalCost   = (entryShares * entryPrice) + (reinShares * reinPrice);
@@ -9977,11 +9980,12 @@ function invGetCurrentData() {
     const cat = row.querySelector('.inv-cat-sel')?.value || '';
     holdings.push({
       symbol:      (inputs[0]?.value || '').toUpperCase().trim(),
+      sector:      (inputs[1]?.value || '').trim(),
       cat,
-      entryShares: +(inputs[1]?.value) || 0,
-      entryPrice:  +(inputs[2]?.value) || 0,
-      reinShares:  +(inputs[3]?.value) || 0,
-      reinPrice:   +(inputs[4]?.value) || 0,
+      entryShares: +(inputs[2]?.value) || 0,
+      entryPrice:  +(inputs[3]?.value) || 0,
+      reinShares:  +(inputs[4]?.value) || 0,
+      reinPrice:   +(inputs[5]?.value) || 0,
     });
   });
   return {
@@ -10012,6 +10016,31 @@ function invSave() {
   const data = invGetCurrentData();
   invSaveData(data);
   toast('תיק ההשקעות נשמר ✓', 'success');
+}
+
+const _invSectorTimers = {};
+function invAutoSector(idx) {
+  const tbody = document.getElementById('inv-tbody');
+  const row = tbody?.querySelector(`tr[data-idx="${idx}"]`);
+  if (!row) return;
+  const sym = row.querySelector('.inv-sym-input')?.value.trim().toUpperCase().replace(/[^A-Z0-9._\-]/g,'') || '';
+  const sectorEl = row.querySelector('.inv-sector-input');
+  if (!sectorEl || !sym) return;
+  const local = SECTOR_MAP[sym];
+  if (local) { sectorEl.value = local; return; }
+  clearTimeout(_invSectorTimers[idx]);
+  if (sym.length < 2) return;
+  _invSectorTimers[idx] = setTimeout(async () => {
+    try {
+      const token = await _getToken();
+      if (!token) return;
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=stock%2Fprofile2&symbol=${encodeURIComponent(sym)}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) return;
+      const data = await res.json();
+      const currentSym = row.querySelector('.inv-sym-input')?.value.trim().toUpperCase();
+      if (data.finnhubIndustry && currentSym === sym) sectorEl.value = data.finnhubIndustry;
+    } catch { /* silent */ }
+  }, 600);
 }
 
 function invAutoSaveTotal() {
