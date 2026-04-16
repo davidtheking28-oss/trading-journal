@@ -10235,11 +10235,42 @@ async function invAnalyze() {
       const v = getRaw(arr, ...concepts);
       return v != null ? (v / 1e6).toFixed(1) + 'M' : 'אין נתון';
     };
-    // Compute net margin from SEC annual data (more reliable than Finnhub for financials)
+    // SEC-derived metrics (authoritative — primary source for all companies)
     const secIC = latestReport?.report?.ic || [];
-    const secRevRaw = getRaw(secIC, 'Revenues','RevenueFromContractWithCustomerExcludingAssessedTax','SalesRevenueNet','InterestAndDividendIncomeOperating','NoninterestIncome','InterestIncomeOperating');
-    const secNIRaw  = getRaw(secIC, 'NetIncomeLoss','ProfitLoss','NetIncomeLossAvailableToCommonStockholdersBasic');
-    const secNetMargin = (secRevRaw && secNIRaw) ? (secNIRaw / secRevRaw * 100).toFixed(2) : null;
+    const secBS = latestReport?.report?.bs || [];
+    const secCF = latestReport?.report?.cf || [];
+    const prevIC = (reports[1]?.report?.ic) || [];
+
+    const REV_C = ['Revenues','RevenueFromContractWithCustomerExcludingAssessedTax','SalesRevenueNet',
+                   'InterestAndDividendIncomeOperating','NoninterestIncome','InterestIncomeOperating'];
+    const NI_C  = ['NetIncomeLoss','ProfitLoss','NetIncomeLossAvailableToCommonStockholdersBasic'];
+
+    const secRevRaw    = getRaw(secIC, ...REV_C);
+    const prevRevRaw   = getRaw(prevIC, ...REV_C);
+    const secNIRaw     = getRaw(secIC, ...NI_C);
+    const secGPRaw     = getRaw(secIC, 'GrossProfit');
+    const secCOGSRaw   = getRaw(secIC, 'CostOfRevenue','CostOfGoodsAndServicesSold');
+    const secOpIncRaw  = getRaw(secIC, 'OperatingIncomeLoss');
+    const secAssetsRaw = getRaw(secBS, 'Assets');
+    const secEquityRaw = getRaw(secBS, 'StockholdersEquity','StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest');
+    const secLTDebtRaw = getRaw(secBS, 'LongTermDebt','LongTermDebtNoncurrent','LongTermNotesPayable');
+    const secOpCFRaw   = getRaw(secCF, 'NetCashProvidedByUsedInOperatingActivities');
+    const secCapexRaw  = getRaw(secCF, 'PaymentsToAcquirePropertyPlantAndEquipment','PaymentsForCapitalImprovements');
+
+    const sl = latestPeriod ? ` [SEC ${latestPeriod}]` : ' [SEC]';
+    const secNetMargin   = (secRevRaw && secNIRaw != null) ? (secNIRaw / secRevRaw * 100).toFixed(2) : null;
+    const secGrossMargin = secGPRaw != null && secRevRaw
+      ? (secGPRaw / secRevRaw * 100).toFixed(2)
+      : (secCOGSRaw != null && secRevRaw ? ((secRevRaw - secCOGSRaw) / secRevRaw * 100).toFixed(2) : null);
+    const secOpMargin    = (secOpIncRaw != null && secRevRaw) ? (secOpIncRaw / secRevRaw * 100).toFixed(2) : null;
+    const secROE         = (secNIRaw != null && secEquityRaw) ? (secNIRaw / secEquityRaw * 100).toFixed(2) : null;
+    const secROA         = (secNIRaw != null && secAssetsRaw) ? (secNIRaw / secAssetsRaw * 100).toFixed(2) : null;
+    const secDE          = (secLTDebtRaw != null && secEquityRaw) ? (secLTDebtRaw / secEquityRaw).toFixed(2) : null;
+    const secFCFRaw      = (secOpCFRaw != null && secCapexRaw != null) ? secOpCFRaw - Math.abs(secCapexRaw) : null;
+    const secRevGrowth   = (secRevRaw && prevRevRaw) ? ((secRevRaw - prevRevRaw) / Math.abs(prevRevRaw) * 100).toFixed(1) : null;
+
+    const isFinancial = /bank|insurance|financial|fintech|reit|brokerage|capital market/i.test(profileData.finnhubIndustry || '');
+    const fmtSEC = (v, suffix, fallback) => v != null ? `${v}${suffix}${sl}` : (fallback ?? 'אין נתון');
     const fmtReport = (r) => {
       if (!r) return '';
       const ic = r.report?.ic || [];
@@ -10298,10 +10329,11 @@ async function invAnalyze() {
 
 === רווחיות ===
 EPS מנורמל (שנתי): ${fmt(epsNorm)} ${epsNorm != null ? (+epsNorm > 0 ? '✅ רווחי' : '❌ הפסדי') : ''}
-שולי רווח גולמי: ${fmt(m['grossMarginTTM'] ?? m['grossMarginAnnual'],'%')}
-שולי רווח נטו: ${secNetMargin != null ? secNetMargin+'% (מ-SEC '+latestPeriod+')' : fmt(m['netProfitMarginTTM'] ?? m['netProfitMarginAnnual'],'%')}
-ROE: ${fmt(m['roeTTM'] ?? m['roeAnnual'],'%')}
-ROA: ${fmt(m['roaTTM'] ?? m['roaAnnual'],'%')}
+שולי רווח גולמי: ${fmtSEC(secGrossMargin,'%', fmt(m['grossMarginTTM'] ?? m['grossMarginAnnual'],'%'))}
+שולי רווח תפעולי: ${fmtSEC(secOpMargin,'%', fmt(m['operatingMarginTTM'] ?? m['operatingMarginAnnual'],'%'))}
+שולי רווח נטו: ${fmtSEC(secNetMargin,'%', fmt(m['netProfitMarginTTM'] ?? m['netProfitMarginAnnual'],'%'))}
+ROE: ${fmtSEC(secROE,'%', fmt(m['roeTTM'] ?? m['roeAnnual'],'%'))}
+ROA: ${fmtSEC(secROA,'%', fmt(m['roaTTM'] ?? m['roaAnnual'],'%'))}
 
 === מכפילים ===
 P/E: ${fmt(m['peNormalizedAnnual'] ?? m['peTTM'])}
@@ -10309,16 +10341,16 @@ P/B: ${fmt(m['pbAnnual'] ?? m['pbQuarterly'])}
 PEG: ${fmt(pegVal)} ${pegCalc && !m['pegRatio'] ? '(מחושב)' : ''}
 
 === צמיחה ===
-צמיחת הכנסות: ${revStr}
-⚠️ אם TTM YoY נראה חריג, סמוך על ה-3Y/5Y CAGR כנתון אמין יותר.
+צמיחת הכנסות YoY (SEC): ${fmtSEC(secRevGrowth,'%', 'אין נתון')}
+צמיחת הכנסות (Finnhub TTM/3Y/5Y): ${revStr}
 צמיחת EPS YoY: ${fmt(m['epsGrowthTTMYoy'] ?? m['epsGrowth3Y'],'%')}
 EPS היסטוריה (4 רבעונים):
    ${epsHistory}
 
 === מאזן ===
-D/E: ${fmt(m['totalDebt/totalEquityAnnual'] ?? m['longTermDebt/equityAnnual'])}
-Current Ratio: ${fmt(currentRatio)}
-FCF: ${fmtM(m['freeCashFlowAnnual'] ?? m['freeCashFlowTTM'])}
+D/E: ${fmtSEC(secDE,'', fmt(m['totalDebt/totalEquityAnnual'] ?? m['longTermDebt/equityAnnual']))}${isFinancial ? ' ⚠️ חברה פיננסית — D/E גבוה מובנה' : ''}
+Current Ratio: ${isFinancial ? 'לא רלוונטי לחברה פיננסית' : fmt(currentRatio)}
+FCF: ${secFCFRaw != null ? '$'+(secFCFRaw/1e9).toFixed(2)+'B'+sl : fmtM(m['freeCashFlowAnnual'] ?? m['freeCashFlowTTM'])}
 תשואת דיבידנד: ${fmt(m['dividendYieldIndicatedAnnual'],'%')}
 Beta: ${fmt(m['beta'])}
 
