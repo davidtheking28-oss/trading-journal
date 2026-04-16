@@ -441,29 +441,27 @@
   .quick-add-body { transition: all 0.2s; }
   .quick-add-body.collapsed { display: none; }
 
-  /* ── FAB ── */
+  /* ── FAB (inline in quick-add header) ── */
   .fab {
-    position: fixed;
-    bottom: 28px;
-    left: 28px;
-    width: 56px;
-    height: 56px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    border: none;
+    background: linear-gradient(135deg, rgba(56,189,248,0.25) 0%, rgba(56,189,248,0.12) 100%);
+    border: 1.5px solid rgba(56,189,248,0.5);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 20px rgba(245,158,11,0.45), 0 2px 10px rgba(0,0,0,0.5);
-    z-index: 1000;
-    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 0 12px rgba(56,189,248,0.2);
+    transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+    flex-shrink: 0;
   }
   .fab:hover {
+    background: linear-gradient(135deg, rgba(56,189,248,0.38) 0%, rgba(56,189,248,0.2) 100%);
+    box-shadow: 0 0 18px rgba(56,189,248,0.4);
     transform: scale(1.08);
-    box-shadow: 0 6px 28px rgba(245,158,11,0.65), 0 2px 10px rgba(0,0,0,0.5);
   }
-  .fab svg { transition: transform 0.3s; }
+  .fab svg { transition: transform 0.3s; color: var(--accent); }
   .fab.open svg { transform: rotate(45deg); }
 
   /* ENTRY REASON PILLS */
@@ -3234,13 +3232,19 @@
       <!-- ═══ QUICK ADD WIDGET ═══ -->
       <div class="quick-add">
         <div class="quick-add-header">
-          <div class="quick-add-title">הוספת עסקה מהירה</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button class="fab" id="fab-btn" onclick="fabToggle()" aria-label="הוסף עסקה מהירה">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </button>
+            <div class="quick-add-title">הוספת עסקה מהירה</div>
+          </div>
           <div style="display:flex;gap:12px;align-items:center;">
             <div class="quick-add-preview" id="qa-preview" style="display:none">
               <div class="qa-preview-item">גודל פוז׳: <span id="qa-prev-pl">—</span></div>
               <div class="qa-preview-item">סיכון: <span id="qa-prev-pct">—</span></div>
             </div>
-            <button class="qa-collapse-btn" id="qa-toggle-btn" onclick="qaToggle()">▲ כווץ</button>
           </div>
         </div>
         <div class="quick-add-body collapsed" id="qa-body">
@@ -5099,17 +5103,9 @@ function qaToggle() {
 }
 
 function fabToggle() {
-  const ovTab = document.getElementById('tab-overview');
-  if (ovTab && !ovTab.classList.contains('active')) {
-    const btn = document.querySelector('.tab-btn[onclick*="overview"]');
-    switchTab('overview', btn);
-  }
   qaCollapsed = !qaCollapsed;
   document.getElementById('qa-body').classList.toggle('collapsed', qaCollapsed);
   document.getElementById('fab-btn').classList.toggle('open', !qaCollapsed);
-  if (!qaCollapsed) {
-    setTimeout(() => document.querySelector('.quick-add')?.scrollIntoView({behavior:'smooth', block:'nearest'}), 120);
-  }
 }
 
 // Known crypto base symbols that would otherwise be mistaken for stocks
@@ -9589,10 +9585,6 @@ async function fixStockData() {
 }
 </script>
 
-<button class="fab" id="fab-btn" onclick="fabToggle()" aria-label="הוסף עסקה מהירה">
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-  </svg>
-</button>
+
 </body>
 </html>
