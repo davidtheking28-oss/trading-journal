@@ -10224,13 +10224,22 @@ async function invAnalyze() {
           ? `⚠️ דוח גבולי (לפני ${monthsOld} חודשים) — עשוי להיות לפני פרסום הרבעון האחרון`
           : `🔴 דוח ישן (לפני ${monthsOld} חודשים) — הנתונים עשויים לא לשקף מצב עכשווי`;
 
-    const get = (arr, ...concepts) => {
+    const getRaw = (arr, ...concepts) => {
       for (const c of concepts) {
         const found = arr?.find(x => x.concept === c || x.concept === `us-gaap_${c}`);
-        if (found?.value != null) return (+found.value / 1e6).toFixed(1) + 'M';
+        if (found?.value != null) return +found.value;
       }
-      return 'אין נתון';
+      return null;
     };
+    const get = (arr, ...concepts) => {
+      const v = getRaw(arr, ...concepts);
+      return v != null ? (v / 1e6).toFixed(1) + 'M' : 'אין נתון';
+    };
+    // Compute net margin from SEC annual data (more reliable than Finnhub for financials)
+    const secIC = latestReport?.report?.ic || [];
+    const secRevRaw = getRaw(secIC, 'Revenues','RevenueFromContractWithCustomerExcludingAssessedTax','SalesRevenueNet','InterestAndDividendIncomeOperating','NoninterestIncome','InterestIncomeOperating');
+    const secNIRaw  = getRaw(secIC, 'NetIncomeLoss','ProfitLoss','NetIncomeLossAvailableToCommonStockholdersBasic');
+    const secNetMargin = (secRevRaw && secNIRaw) ? (secNIRaw / secRevRaw * 100).toFixed(2) : null;
     const fmtReport = (r) => {
       if (!r) return '';
       const ic = r.report?.ic || [];
@@ -10290,7 +10299,7 @@ async function invAnalyze() {
 === רווחיות ===
 EPS מנורמל (שנתי): ${fmt(epsNorm)} ${epsNorm != null ? (+epsNorm > 0 ? '✅ רווחי' : '❌ הפסדי') : ''}
 שולי רווח גולמי: ${fmt(m['grossMarginTTM'] ?? m['grossMarginAnnual'],'%')}
-שולי רווח נטו: ${fmt(m['netProfitMarginTTM'] ?? m['netProfitMarginAnnual'],'%')}
+שולי רווח נטו: ${secNetMargin != null ? secNetMargin+'% (מ-SEC '+latestPeriod+')' : fmt(m['netProfitMarginTTM'] ?? m['netProfitMarginAnnual'],'%')}
 ROE: ${fmt(m['roeTTM'] ?? m['roeAnnual'],'%')}
 ROA: ${fmt(m['roaTTM'] ?? m['roaAnnual'],'%')}
 
