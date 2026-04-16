@@ -3018,6 +3018,19 @@
   .inv-analyze-btn:hover { opacity: 0.85; }
   .inv-analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .inv-adv-output { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.7; color: var(--text); white-space: pre-wrap; direction: rtl; max-height: 500px; overflow-y: auto; }
+  .inv-alloc-dashboard { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; }
+  .inv-alloc-title { font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 2px; }
+  .inv-alloc-row { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+  .inv-alloc-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .inv-alloc-dot.blue { background: #38bdf8; }
+  .inv-alloc-dot.green { background: #34d399; }
+  .inv-alloc-dot.yellow { background: #fbbf24; }
+  .inv-alloc-label { width: 120px; color: var(--text2); white-space: nowrap; }
+  .inv-alloc-bar-wrap { flex: 1; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+  .inv-alloc-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+  .inv-alloc-cur { width: 38px; text-align: left; color: var(--text); font-weight: 700; }
+  .inv-alloc-remaining { color: var(--text3); white-space: nowrap; font-size: 11px; }
+  .inv-cat-sel { background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 4px 6px; font-size: 11px; color: var(--text); cursor: pointer; }
 
   /* ── Missed Opportunities tab ── */
   #tab-missed { display: none; }
@@ -3787,11 +3800,37 @@
           <div class="inv-total-allocated">מוקצה: <span id="inv-allocated-pct">0%</span></div>
         </div>
 
+        <div class="inv-alloc-dashboard">
+          <div class="inv-alloc-title">הקצאת תיק — יעד</div>
+          <div class="inv-alloc-row">
+            <span class="inv-alloc-dot blue"></span>
+            <span class="inv-alloc-label">🔵 כחולות — יעד 60%</span>
+            <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-blue" style="width:0%;background:#38bdf8;"></div></div>
+            <span class="inv-alloc-cur" id="alloc-cur-blue">0%</span>
+            <span class="inv-alloc-remaining" id="alloc-rem-blue">זמין: —</span>
+          </div>
+          <div class="inv-alloc-row">
+            <span class="inv-alloc-dot green"></span>
+            <span class="inv-alloc-label">🟢 ירוקות — יעד 35%</span>
+            <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-green" style="width:0%;background:#34d399;"></div></div>
+            <span class="inv-alloc-cur" id="alloc-cur-green">0%</span>
+            <span class="inv-alloc-remaining" id="alloc-rem-green">זמין: —</span>
+          </div>
+          <div class="inv-alloc-row">
+            <span class="inv-alloc-dot yellow"></span>
+            <span class="inv-alloc-label">🟡 צהובות — יעד 5%</span>
+            <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-yellow" style="width:0%;background:#fbbf24;"></div></div>
+            <span class="inv-alloc-cur" id="alloc-cur-yellow">0%</span>
+            <span class="inv-alloc-remaining" id="alloc-rem-yellow">זמין: —</span>
+          </div>
+        </div>
+
         <div class="inv-table-wrap">
           <table class="inv-table">
             <thead>
               <tr>
                 <th>סימבול</th>
+                <th>קטגוריה</th>
                 <th>מניות כניסה</th>
                 <th>מחיר כניסה</th>
                 <th>מניות חיזוק</th>
@@ -3818,12 +3857,7 @@
             <span>יועץ השקעות AI</span>
           </div>
           <div class="inv-advisor-controls">
-            <input type="text" id="inv-adv-symbol" class="form-control" placeholder="סימבול (AAPL, MSFT...)" style="width:160px;font-family:monospace;font-weight:700;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
-            <div class="inv-type-pills" id="inv-type-pills">
-              <button class="inv-type-pill active" data-type="value" onclick="invSetType(this)">כחולה — ערך</button>
-              <button class="inv-type-pill" data-type="growth" onclick="invSetType(this)">ירוקה — צמיחה</button>
-              <button class="inv-type-pill" data-type="aristocrat" onclick="invSetType(this)">אריסטוקרטית</button>
-            </div>
+            <input type="text" id="inv-adv-symbol" class="form-control" placeholder="סימבול (AAPL, MSFT...)" style="width:180px;font-family:monospace;font-weight:700;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
             <button class="inv-analyze-btn" onclick="invAnalyze()" id="inv-analyze-btn">▶ נתח מניה</button>
           </div>
           <div id="inv-adv-output" class="inv-adv-output" style="display:none;"></div>
@@ -9762,12 +9796,20 @@ function invRenderRows(holdings) {
   const tbody = document.getElementById('inv-tbody');
   if (!tbody) return;
   if (!holdings.length) {
-    tbody.innerHTML = `<tr><td colspan="9" class="inv-empty">אין אחזקות — לחץ "+ הוסף אחזקה"</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" class="inv-empty">אין אחזקות — לחץ "+ הוסף אחזקה"</td></tr>`;
     return;
   }
   tbody.innerHTML = holdings.map((h, i) => `
     <tr data-idx="${i}">
-      <td><input class="inv-sym-input" type="text" value="${h.symbol||''}" placeholder="AAPL" oninput="invRecalc()"></td>
+      <td><input class="inv-sym-input" type="text" value="${h.symbol||''}" placeholder="AAPL" oninput="this.value=this.value.toUpperCase();invRecalc()"></td>
+      <td>
+        <select class="inv-cat-sel" onchange="invRecalc()">
+          <option value="">—</option>
+          <option value="blue" ${h.cat==='blue'?'selected':''}>🔵 כחולה</option>
+          <option value="green" ${h.cat==='green'?'selected':''}>🟢 ירוקה</option>
+          <option value="yellow" ${h.cat==='yellow'?'selected':''}>🟡 צהובה</option>
+        </select>
+      </td>
       <td><input type="number" value="${h.entryShares||''}" placeholder="0" min="0" step="any" oninput="invRecalc()"></td>
       <td><input type="number" value="${h.entryPrice||''}" placeholder="0.00" min="0" step="any" oninput="invRecalc()"></td>
       <td><input type="number" value="${h.reinShares||''}" placeholder="—" min="0" step="any" oninput="invRecalc()"></td>
@@ -9786,20 +9828,25 @@ function invRenderRows(holdings) {
   invRecalc();
 }
 
+const ALLOC_TARGETS = { blue: 0.60, green: 0.35, yellow: 0.05 };
+const ALLOC_COLORS  = { blue: '#38bdf8', green: '#34d399', yellow: '#fbbf24' };
+
 function invRecalc() {
   const tbody = document.getElementById('inv-tbody');
   if (!tbody) return;
   const rows = tbody.querySelectorAll('tr[data-idx]');
   const portfolioTotal = +(document.getElementById('inv-portfolio-total')?.value) || 0;
   let totalAllocated = 0;
+  const byCat = { blue: 0, green: 0, yellow: 0 };
 
   rows.forEach(row => {
     const i = +row.dataset.idx;
     const inputs = row.querySelectorAll('input');
-    const entryShares = +(inputs[1]?.value) || 0;
-    const entryPrice  = +(inputs[2]?.value) || 0;
-    const reinShares  = +(inputs[3]?.value) || 0;
-    const reinPrice   = +(inputs[4]?.value) || 0;
+    const cat         = row.querySelector('.inv-cat-sel')?.value || '';
+    const entryShares = +(inputs[0]?.value) || 0;
+    const entryPrice  = +(inputs[1]?.value) || 0;
+    const reinShares  = +(inputs[2]?.value) || 0;
+    const reinPrice   = +(inputs[3]?.value) || 0;
 
     const totalShares = entryShares + reinShares;
     const totalCost   = (entryShares * entryPrice) + (reinShares * reinPrice);
@@ -9808,6 +9855,7 @@ function invRecalc() {
     const pct         = portfolioTotal > 0 ? (value / portfolioTotal) * 100 : 0;
 
     totalAllocated += pct;
+    if (cat && byCat[cat] !== undefined) byCat[cat] += value;
 
     const avgEl = document.getElementById(`inv-avg-${i}`);
     const valEl = document.getElementById(`inv-val-${i}`);
@@ -9825,6 +9873,29 @@ function invRecalc() {
     allocEl.textContent = totalAllocated.toFixed(1) + '%';
     allocEl.style.color = totalAllocated > 100 ? 'var(--red)' : 'var(--accent)';
   }
+
+  Object.entries(ALLOC_TARGETS).forEach(([cat, target]) => {
+    const targetAmt  = portfolioTotal * target;
+    const currentAmt = byCat[cat];
+    const currentPct = portfolioTotal > 0 ? (currentAmt / portfolioTotal * 100) : 0;
+    const remaining  = Math.max(0, targetAmt - currentAmt);
+    const over       = currentAmt > targetAmt;
+    const barW       = portfolioTotal > 0 ? Math.min(currentAmt / targetAmt * 100, 100) : 0;
+
+    const barEl = document.getElementById(`alloc-bar-${cat}`);
+    const curEl = document.getElementById(`alloc-cur-${cat}`);
+    const remEl = document.getElementById(`alloc-rem-${cat}`);
+
+    if (barEl) { barEl.style.width = barW + '%'; barEl.style.background = over ? 'var(--red)' : ALLOC_COLORS[cat]; }
+    if (curEl) { curEl.textContent = currentPct.toFixed(1) + '%'; curEl.style.color = over ? 'var(--red)' : 'var(--text)'; }
+    if (remEl) {
+      if (portfolioTotal === 0) { remEl.textContent = 'זמין: —'; return; }
+      remEl.textContent = over
+        ? `חרגת ב-$${(currentAmt - targetAmt).toLocaleString('en-US', {maximumFractionDigits:0})}`
+        : `זמין: $${remaining.toLocaleString('en-US', {maximumFractionDigits:0})}`;
+      remEl.style.color = over ? 'var(--red)' : 'var(--text3)';
+    }
+  });
 }
 
 function invGetCurrentData() {
@@ -9833,8 +9904,10 @@ function invGetCurrentData() {
   const holdings = [];
   rows.forEach(row => {
     const inputs = row.querySelectorAll('input');
+    const cat = row.querySelector('.inv-cat-sel')?.value || '';
     holdings.push({
-      symbol:     (inputs[0]?.value || '').toUpperCase().trim(),
+      symbol:      (inputs[0]?.value || '').toUpperCase().trim(),
+      cat,
       entryShares: +(inputs[1]?.value) || 0,
       entryPrice:  +(inputs[2]?.value) || 0,
       reinShares:  +(inputs[3]?.value) || 0,
@@ -9871,14 +9944,6 @@ function invSave() {
 }
 
 // ===== INVESTMENT ADVISOR =====
-let _invAdvType = 'value';
-
-function invSetType(btn) {
-  document.querySelectorAll('.inv-type-pill').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  _invAdvType = btn.dataset.type;
-}
-
 async function invAnalyze() {
   const sym = (document.getElementById('inv-adv-symbol')?.value || '').trim().toUpperCase();
   if (!sym) { toast('הכנס סימבול מניה', 'error'); return; }
@@ -9888,13 +9953,12 @@ async function invAnalyze() {
   btn.disabled = true;
   btn.textContent = '⏳ מנתח...';
   out.style.display = 'block';
-  out.textContent = 'מושך נתונים פיננסיים...';
+  out.textContent = 'מושך נתונים פיננסיים מ-Finnhub...';
 
   try {
     const token = await _getToken();
     if (!token) { toast('נא להתחבר תחילה', 'error'); return; }
 
-    // Fetch Finnhub metrics
     const [metricRes, profileRes] = await Promise.all([
       fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=stock%2Fmetric&symbol=${encodeURIComponent(sym)}&metric=all`, { headers: { Authorization: `Bearer ${token}` } }),
       fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=stock%2Fprofile2&symbol=${encodeURIComponent(sym)}`, { headers: { Authorization: `Bearer ${token}` } }),
@@ -9904,87 +9968,51 @@ async function invAnalyze() {
     const profileData = profileRes.ok ? await profileRes.json() : {};
     const m = metricData.metric || {};
 
-    const metrics = {
-      symbol: sym,
-      name: profileData.name || sym,
-      sector: profileData.finnhubIndustry || 'לא ידוע',
-      marketCap: profileData.marketCapitalization ? `$${(profileData.marketCapitalization/1000).toFixed(1)}B` : 'לא ידוע',
-      pe: m['peNormalizedAnnual'] ?? m['peTTM'] ?? null,
-      pb: m['pbAnnual'] ?? m['pbQuarterly'] ?? null,
-      peg: m['pegRatio'] ?? null,
-      roe: m['roeTTM'] ?? m['roeRfy'] ?? null,
-      roa: m['roaTTM'] ?? null,
-      debtEquity: m['totalDebt/totalEquityAnnual'] ?? m['longTermDebt/equityAnnual'] ?? null,
-      grossMargin: m['grossMarginTTM'] ?? m['grossMarginAnnual'] ?? null,
-      netMargin: m['netProfitMarginTTM'] ?? m['netProfitMarginAnnual'] ?? null,
-      revenueGrowth: m['revenueGrowthTTMYoy'] ?? m['revenueGrowth3Y'] ?? null,
-      epsGrowth: m['epsGrowthTTMYoy'] ?? m['epsGrowth3Y'] ?? null,
-      dividendYield: m['dividendYieldIndicatedAnnual'] ?? null,
-      payoutRatio: m['payoutRatioAnnual'] ?? null,
-      freeCashFlow: m['freeCashFlowAnnual'] ?? m['freeCashFlowTTM'] ?? null,
-      currentRatio: m['currentRatioAnnual'] ?? null,
-    };
-
-    const typeLabels = { value: 'כחולה (ערך)', growth: 'ירוקה (צמיחה)', aristocrat: 'אריסטוקרטית' };
-    const typeCriteria = {
-      value: `מניית ערך (כחולה). קריטריונים לפי הספר:
-- P/E נמוך ביחס לסקטור/שוק (עדיף מתחת לממוצע)
-- P/B נמוך (עדיף מתחת ל-1, בוודאי מתחת ל-3)
-- דיבידנד תשואה 2%-5%
-- שולי רווח גולמי ונטו יציבים וגבוהים
-- D/E נמוך (עדיף מתחת ל-1)
-- תזרים מזומנים חופשי (FCF) חיובי וגדל
-- ROE גבוה ויציב (15%-20%+)
-- צמיחה יציבה בהכנסות ורווחים`,
-      growth: `מניית צמיחה (ירוקה). קריטריונים לפי הספר:
-- צמיחה בהכנסות דו-ספרתית לפחות 3 שנים
-- EPS צומח בקצב גבוה ממתחרים
-- P/E גבוה מקובל אם מוצדק בצמיחה
-- PEG < 1 — אינדיקטור מצוין לצמיחה במחיר הוגן
-- ROE 20%+ ועולה עם הזמן
-- ROA גבוה ויציב
-- שולי רווח גולמי גבוהים (מעל הסקטור)
-- EPS Growth 20%+ לשנה
-- D/E נמוך או יציב
-- מודל עסקי סקלאבילי (SaaS, פינטק, טכנולוגיה)`,
-      aristocrat: `מניה אריסטוקרטית (דיבידנד). קריטריונים לפי הספר:
-- דיבידנד תשואה 2%-5%, יציב ועולה כל שנה
-- Payout Ratio 40%-60% (אופטימלי)
-- EPS צומח לאורך זמן
-- שולי רווח יציבים וגבוהים
-- D/E מתחת ל-0.5 (או יציב עם חוב ניתן להחזר)
-- FCF חיובי, יציב וגדל
-- ROE 15%-20%+`,
-    };
-
     const fmt = (v, suffix='') => v != null ? `${(+v).toFixed(2)}${suffix}` : 'אין נתון';
     const metricsText = `
-נתוני מניה: ${metrics.name} (${metrics.symbol})
-סקטור: ${metrics.sector} | שווי שוק: ${metrics.marketCap}
+מניה: ${profileData.name || sym} (${sym})
+סקטור: ${profileData.finnhubIndustry || 'לא ידוע'} | שווי שוק: ${profileData.marketCapitalization ? '$'+(profileData.marketCapitalization/1000).toFixed(1)+'B' : 'לא ידוע'}
 
-P/E: ${fmt(metrics.pe)}
-P/B: ${fmt(metrics.pb)}
-PEG: ${fmt(metrics.peg)}
-ROE: ${fmt(metrics.roe,'%')}
-ROA: ${fmt(metrics.roa,'%')}
-D/E: ${fmt(metrics.debtEquity)}
-שולי רווח גולמי: ${fmt(metrics.grossMargin,'%')}
-שולי רווח נטו: ${fmt(metrics.netMargin,'%')}
-צמיחת הכנסות (YoY): ${fmt(metrics.revenueGrowth,'%')}
-צמיחת EPS: ${fmt(metrics.epsGrowth,'%')}
-תשואת דיבידנד: ${fmt(metrics.dividendYield,'%')}
-Payout Ratio: ${fmt(metrics.payoutRatio,'%')}
-Current Ratio: ${fmt(metrics.currentRatio)}
+P/E: ${fmt(m['peNormalizedAnnual'] ?? m['peTTM'])}
+P/B: ${fmt(m['pbAnnual'] ?? m['pbQuarterly'])}
+PEG: ${fmt(m['pegRatio'])}
+ROE: ${fmt(m['roeTTM'] ?? m['roeRfy'],'%')}
+ROA: ${fmt(m['roaTTM'],'%')}
+D/E: ${fmt(m['totalDebt/totalEquityAnnual'] ?? m['longTermDebt/equityAnnual'])}
+שולי רווח גולמי: ${fmt(m['grossMarginTTM'] ?? m['grossMarginAnnual'],'%')}
+שולי רווח נטו: ${fmt(m['netProfitMarginTTM'] ?? m['netProfitMarginAnnual'],'%')}
+צמיחת הכנסות YoY: ${fmt(m['revenueGrowthTTMYoy'] ?? m['revenueGrowth3Y'],'%')}
+צמיחת EPS: ${fmt(m['epsGrowthTTMYoy'] ?? m['epsGrowth3Y'],'%')}
+תשואת דיבידנד: ${fmt(m['dividendYieldIndicatedAnnual'],'%')}
+Payout Ratio: ${fmt(m['payoutRatioAnnual'],'%')}
+FCF: ${fmt(m['freeCashFlowAnnual'] ?? m['freeCashFlowTTM'])}
+Current Ratio: ${fmt(m['currentRatioAnnual'])}
 `.trim();
 
-    const systemPrompt = `אתה יועץ השקעות מקצועי שמנתח מניות לפי שיטת ${typeLabels[_invAdvType]}.
-${typeCriteria[_invAdvType]}
+    const systemPrompt = `אתה יועץ השקעות מקצועי ואובייקטיבי. הנתונים הפיננסיים שתקבל הם מ-Finnhub — מקור נתונים רשמי.
 
-ענה בעברית. מבנה התשובה:
-1. **סיכום מהיר** — משפט אחד: האם המניה עומדת בקריטריונים?
-2. **ניתוח קריטריונים** — לכל קריטריון: ✅ עובר / ⚠️ גבולי / ❌ לא עובר + הסבר קצר
-3. **ציון כולל** — X/10
-4. **המלצה** — קנייה / המתנה / לא מתאימה, עם הסבר`;
+המשימה: נתח את המניה לפי הקריטריונים הבאים מהספר, וקבע לבד באיזה קטגוריה היא נופלת:
+
+🔵 **כחולה (ערך)**: P/E נמוך, P/B נמוך (<3), דיבידנד 2%-5%, D/E<1, FCF חיובי, ROE 15-20%+, שולי רווח יציבים.
+
+🟢 **ירוקה (צמיחה)**: צמיחת הכנסות 20%+ (3+ שנים), EPS צומח, PEG<1, ROE 20%+, שולי רווח גבוהים, מודל סקלאבילי.
+
+🟡 **צהובה (חלום)**: חברה חדשנית (AI/גנטיקה/רובוטיקה/אנרגיה/פינטק), צמיחת הכנסות גבוהה גם אם לא רווחית עדיין, P/E גבוה מקובל, R&D גבוה, D/E נמוך.
+
+🔴 **אדומה (דועכת — להימנע)**: ירידת הכנסות או רווחים, FCF שלילי, D/E גבוה, אובדן נתח שוק, הפסדים מתמשכים.
+
+ענה בעברית. מבנה חובה:
+1. **סיווג** — 🔵 כחולה / 🟢 ירוקה / 🟡 צהובה / 🔴 אדומה + הסבר קצר למה
+2. **סיכום** — משפט אחד
+3. **ניתוח קריטריונים** — לכל קריטריון רלוונטי: ✅ עובר / ⚠️ גבולי / ❌ לא עובר + הסבר
+4. **ציון** — X/10
+5. **המלצה** — קנייה / המתנה / הימנע, עם נימוק
+🚨 אם המניה אדומה — חובה להתריע בבירור ואל תמליץ להשקיע.
+
+הנתונים הם עדכניים למועד הניתוח המצוין. לפני מתן תשובה סופית — בדוק את עצמך: האם הסיווג עולה בקנה אחד עם כל הקריטריונים? אם יש סתירה — ציין אותה.`;
+
+    const today = new Date().toLocaleDateString('he-IL', { year: 'numeric', month: 'long', day: 'numeric' });
+    const userMessage = `תאריך הניתוח: ${today}\n\n${metricsText}`;
 
     out.textContent = 'מנתח עם AI...';
 
@@ -9995,7 +10023,7 @@ ${typeCriteria[_invAdvType]}
         model: 'llama-3.3-70b-versatile',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: metricsText },
+          { role: 'user', content: userMessage },
         ],
         stream: true,
         max_tokens: 1500,
