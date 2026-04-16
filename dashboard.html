@@ -10275,7 +10275,9 @@ async function invAnalyze() {
     const secEquityRaw = getRaw(secBS, 'StockholdersEquity','StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest');
     const secLTDebtRaw = getRaw(secBS, 'LongTermDebt','LongTermDebtNoncurrent','LongTermNotesPayable');
     const secOpCFRaw   = getRaw(secCF, 'NetCashProvidedByUsedInOperatingActivities');
-    const secCapexRaw  = getRaw(secCF, 'PaymentsToAcquirePropertyPlantAndEquipment','PaymentsForCapitalImprovements');
+    const secCapexRaw  = getRaw(secCF, 'PaymentsToAcquirePropertyPlantAndEquipment',
+      'PaymentsForCapitalImprovements','CapitalExpendituresIncurredButNotYetPaid',
+      'PaymentsToAcquireOtherPropertyPlantAndEquipment');
 
     const sl = latestPeriod ? ` [SEC ${latestPeriod}]` : ' [SEC]';
     const secNetMargin   = (secRevRaw && secNIRaw != null) ? (secNIRaw / secRevRaw * 100).toFixed(2) : null;
@@ -10287,7 +10289,10 @@ async function invAnalyze() {
     const secROE         = (secNIRaw != null && secEquityRaw) ? (secNIRaw / secEquityRaw * 100).toFixed(2) : null;
     const secROA         = (secNIRaw != null && secAssetsRaw) ? (secNIRaw / secAssetsRaw * 100).toFixed(2) : null;
     const secDE          = (secLTDebtRaw != null && secEquityRaw) ? (secLTDebtRaw / secEquityRaw).toFixed(2) : null;
-    const secFCFRaw      = (secOpCFRaw != null && secCapexRaw != null) ? secOpCFRaw - Math.abs(secCapexRaw) : null;
+    const secFCFRaw      = secOpCFRaw != null
+      ? (secCapexRaw != null ? secOpCFRaw - Math.abs(secCapexRaw) : secOpCFRaw)
+      : null;
+    const fcfNote = secOpCFRaw != null && secCapexRaw == null ? ' (תזרים תפעולי בלבד — Capex לא נמצא)' : '';
     const secRevGrowth   = (secRevRaw && prevRevRaw) ? ((secRevRaw - prevRevRaw) / Math.abs(prevRevRaw) * 100).toFixed(1) : null;
 
     // Auto-detect one-time items: net margin >> pre-tax margin = likely tax benefit / non-recurring
@@ -10372,11 +10377,14 @@ async function invAnalyze() {
       ? earnings.map(e => `${e.period||''}: EPS בפועל ${e.actual ?? '?'}, תחזית ${e.estimate ?? '?'}, הפתעה ${e.surprisePercent != null ? e.surprisePercent.toFixed(1)+'%' : '?'}`).join('\n   ')
       : 'אין נתון';
 
-    // PEG: calculate manually if not available (P/E ÷ EPS growth%)
+    // PEG: P/E ÷ EPS growth — try multiple growth rate sources
     const pe = m['peNormalizedAnnual'] ?? m['peTTM'];
-    const epsG = m['epsGrowthTTMYoy'] ?? m['epsGrowth3Y'] ?? m['epsGrowthQuarterlyYoy'];
+    const epsG = m['epsGrowthTTMYoy'] ?? m['epsGrowth3Y'] ?? m['epsGrowth5Y'] ?? m['epsGrowthQuarterlyYoy'];
     const pegCalc = (pe != null && epsG != null && +epsG > 0) ? (+pe / +epsG).toFixed(2) : null;
     const pegVal = m['pegRatio'] ?? pegCalc;
+    const pegDisplay = pegVal != null ? pegVal + (pegCalc && !m['pegRatio'] ? ' (מחושב)' : '')
+      : (pe != null && epsG != null && +epsG <= 0) ? 'לא ישים (EPS growth שלילי — חברה בצמיחה לרווחיות)'
+      : 'אין נתון';
 
     // Revenue growth — show 3 timeframes so AI can judge trend, not outlier
     const revTTM = m['revenueGrowthTTMYoy'];
@@ -10418,7 +10426,7 @@ ROA: ${fmtSEC(secROA,'%', fmt(m['roaTTM'] ?? m['roaAnnual'],'%'))}
 === מכפילים ===
 P/E: ${fmt(m['peNormalizedAnnual'] ?? m['peTTM'])}
 P/B: ${fmt(m['pbAnnual'] ?? m['pbQuarterly'])}
-PEG: ${fmt(pegVal)} ${pegCalc && !m['pegRatio'] ? '(מחושב)' : ''}
+PEG: ${pegDisplay}
 
 === צמיחה ===
 צמיחת הכנסות YoY (SEC): ${fmtSEC(secRevGrowth,'%', 'אין נתון')}
@@ -10430,7 +10438,7 @@ EPS היסטוריה רבעונית (4 רבעונים אחרונים):
 === מאזן ===
 D/E: ${fmtSEC(secDE,'', fmt(m['totalDebt/totalEquityAnnual'] ?? m['longTermDebt/equityAnnual']))}${isFinancial ? ' ⚠️ חברה פיננסית — D/E גבוה מובנה' : ''}
 Current Ratio: ${isFinancial ? 'לא רלוונטי לחברה פיננסית' : fmt(currentRatio)}
-FCF: ${secFCFRaw != null ? '$'+(secFCFRaw/1e9).toFixed(2)+'B'+sl : fmtM(m['freeCashFlowAnnual'] ?? m['freeCashFlowTTM'])}
+FCF: ${secFCFRaw != null ? '$'+(secFCFRaw/1e9).toFixed(2)+'B'+fcfNote+sl : fmtM(m['freeCashFlowAnnual'] ?? m['freeCashFlowTTM'])}
 תשואת דיבידנד: ${fmt(m['dividendYieldIndicatedAnnual'],'%')}
 Beta: ${fmt(m['beta'])}
 
