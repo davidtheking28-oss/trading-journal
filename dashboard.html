@@ -2975,6 +2975,39 @@
   /* ── AI Coach tab ── */
   .ai-tab-btn { border-top: 1px solid var(--border); margin-top: 4px; padding-top: 10px !important; }
 
+  /* ===== INVESTMENTS TAB ===== */
+  #tab-investments { display: none; }
+  #tab-investments.active { display: block; }
+  .inv-wrap { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+  .inv-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .inv-header h2 { font-size: 18px; font-weight: 700; color: var(--text); margin: 0; }
+  .inv-portfolio-bar { display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; }
+  .inv-portfolio-bar label { font-size: 13px; color: var(--text2); white-space: nowrap; }
+  .inv-portfolio-bar input { width: 160px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 14px; color: var(--text); }
+  .inv-portfolio-bar .inv-total-allocated { font-size: 12px; color: var(--text3); margin-right: auto; }
+  .inv-portfolio-bar .inv-total-allocated span { color: var(--accent); font-weight: 700; }
+  .inv-table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .inv-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .inv-table th { padding: 10px 12px; text-align: right; color: var(--text3); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); }
+  .inv-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+  .inv-table tr:last-child td { border-bottom: none; }
+  .inv-table input { background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 5px 8px; font-size: 12px; color: var(--text); width: 100%; min-width: 60px; }
+  .inv-table input:focus { border-color: var(--accent); outline: none; }
+  .inv-sym-input { font-family: monospace; font-weight: 700; text-transform: uppercase; width: 80px !important; }
+  .inv-pct-bar { display: flex; align-items: center; gap: 6px; }
+  .inv-pct-fill { height: 6px; border-radius: 3px; background: var(--accent); transition: width 0.3s; min-width: 2px; }
+  .inv-pct-label { font-size: 12px; font-weight: 700; color: var(--text2); white-space: nowrap; min-width: 38px; }
+  .inv-avg-label { font-size: 12px; color: var(--text2); }
+  .inv-value-label { font-size: 12px; font-weight: 600; color: var(--text); }
+  .inv-add-row { width: 100%; padding: 10px; background: none; border: none; border-top: 1px solid var(--border); color: var(--text3); font-size: 12px; cursor: pointer; transition: all 0.2s; }
+  .inv-add-row:hover { background: rgba(56,189,248,0.05); color: var(--accent); }
+  .inv-del-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 15px; padding: 2px 6px; border-radius: 4px; transition: color 0.2s; }
+  .inv-del-btn:hover { color: var(--red); }
+  .inv-actions { display: flex; gap: 10px; justify-content: flex-end; }
+  .inv-save-btn { background: var(--accent); color: #fff; border: none; border-radius: 7px; padding: 9px 22px; font-size: 13px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+  .inv-save-btn:hover { opacity: 0.85; }
+  .inv-empty { text-align: center; padding: 28px; color: var(--text3); font-size: 13px; }
+
   /* ── Missed Opportunities tab ── */
   #tab-missed { display: none; }
   #tab-missed.active { display: block; }
@@ -3237,6 +3270,10 @@
       <button class="tab-btn" onclick="switchTab('missed',this)" aria-label="הזדמנויות שפוספסו">
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></span>
         <span class="nav-label">פוספס</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('investments',this)" aria-label="השקעות">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+        <span class="nav-label">השקעות</span>
       </button>
     </nav>
 
@@ -3722,6 +3759,46 @@
           </div>
         </div>
 
+      </div>
+    </div>
+
+    <!-- ===== INVESTMENTS ===== -->
+    <div id="tab-investments" class="tab-content">
+      <div class="inv-wrap">
+        <div class="inv-header">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <h2>תיק השקעות</h2>
+        </div>
+
+        <div class="inv-portfolio-bar">
+          <label>סך התיק ($)</label>
+          <input type="number" id="inv-portfolio-total" placeholder="100000" min="0" step="any" oninput="invRecalc()">
+          <div class="inv-total-allocated">מוקצה: <span id="inv-allocated-pct">0%</span></div>
+        </div>
+
+        <div class="inv-table-wrap">
+          <table class="inv-table">
+            <thead>
+              <tr>
+                <th>סימבול</th>
+                <th>מניות כניסה</th>
+                <th>מחיר כניסה</th>
+                <th>מניות חיזוק</th>
+                <th>מחיר חיזוק</th>
+                <th>מחיר ממוצע</th>
+                <th>שווי</th>
+                <th>% מהתיק</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="inv-tbody"></tbody>
+          </table>
+          <button class="inv-add-row" onclick="invAddRow()">+ הוסף אחזקה</button>
+        </div>
+
+        <div class="inv-actions">
+          <button class="inv-save-btn" onclick="invSave()">💾 שמור</button>
+        </div>
       </div>
     </div>
 
@@ -4615,6 +4692,7 @@ function switchTab(name, btn) {
     // Key is pre-filled by loadUserSettings() on login — nothing to do here
   }
   if (name==='missed') missedRender();
+  if (name==='investments') invInit();
 }
 
 function setScope(s, btn) {
@@ -9626,6 +9704,140 @@ async function fixStockData() {
   const { error } = await _sb.from('trades').insert(rows);
   if (error) console.error(error);
   else { toast('נתונים עודכנו', 'success'); loadDB(); }
+}
+
+// ===== INVESTMENTS TAB =====
+const INV_KEY = 'inv_data_v1';
+
+function invLoad() {
+  try {
+    const raw = localStorage.getItem(INV_KEY);
+    return raw ? JSON.parse(raw) : { portfolioTotal: '', holdings: [] };
+  } catch { return { portfolioTotal: '', holdings: [] }; }
+}
+
+function invSaveData(data) {
+  localStorage.setItem(INV_KEY, JSON.stringify(data));
+}
+
+function invInit() {
+  const data = invLoad();
+  const totalEl = document.getElementById('inv-portfolio-total');
+  if (totalEl) totalEl.value = data.portfolioTotal || '';
+  invRenderRows(data.holdings || []);
+  invRecalc();
+}
+
+function invRenderRows(holdings) {
+  const tbody = document.getElementById('inv-tbody');
+  if (!tbody) return;
+  if (!holdings.length) {
+    tbody.innerHTML = `<tr><td colspan="9" class="inv-empty">אין אחזקות — לחץ "+ הוסף אחזקה"</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = holdings.map((h, i) => `
+    <tr data-idx="${i}">
+      <td><input class="inv-sym-input" type="text" value="${h.symbol||''}" placeholder="AAPL" oninput="invRecalc()"></td>
+      <td><input type="number" value="${h.entryShares||''}" placeholder="0" min="0" step="any" oninput="invRecalc()"></td>
+      <td><input type="number" value="${h.entryPrice||''}" placeholder="0.00" min="0" step="any" oninput="invRecalc()"></td>
+      <td><input type="number" value="${h.reinShares||''}" placeholder="—" min="0" step="any" oninput="invRecalc()"></td>
+      <td><input type="number" value="${h.reinPrice||''}" placeholder="—" min="0" step="any" oninput="invRecalc()"></td>
+      <td><span class="inv-avg-label" id="inv-avg-${i}">—</span></td>
+      <td><span class="inv-value-label" id="inv-val-${i}">—</span></td>
+      <td>
+        <div class="inv-pct-bar">
+          <div class="inv-pct-fill" id="inv-bar-${i}" style="width:0%"></div>
+          <span class="inv-pct-label" id="inv-pct-${i}">0%</span>
+        </div>
+      </td>
+      <td><button class="inv-del-btn" onclick="invDeleteRow(${i})">×</button></td>
+    </tr>
+  `).join('');
+  invRecalc();
+}
+
+function invRecalc() {
+  const tbody = document.getElementById('inv-tbody');
+  if (!tbody) return;
+  const rows = tbody.querySelectorAll('tr[data-idx]');
+  const portfolioTotal = +(document.getElementById('inv-portfolio-total')?.value) || 0;
+  let totalAllocated = 0;
+
+  rows.forEach(row => {
+    const i = +row.dataset.idx;
+    const inputs = row.querySelectorAll('input');
+    const entryShares = +(inputs[1]?.value) || 0;
+    const entryPrice  = +(inputs[2]?.value) || 0;
+    const reinShares  = +(inputs[3]?.value) || 0;
+    const reinPrice   = +(inputs[4]?.value) || 0;
+
+    const totalShares = entryShares + reinShares;
+    const totalCost   = (entryShares * entryPrice) + (reinShares * reinPrice);
+    const avgPrice    = totalShares > 0 ? totalCost / totalShares : 0;
+    const value       = totalCost;
+    const pct         = portfolioTotal > 0 ? (value / portfolioTotal) * 100 : 0;
+
+    totalAllocated += pct;
+
+    const avgEl = document.getElementById(`inv-avg-${i}`);
+    const valEl = document.getElementById(`inv-val-${i}`);
+    const barEl = document.getElementById(`inv-bar-${i}`);
+    const pctEl = document.getElementById(`inv-pct-${i}`);
+
+    if (avgEl) avgEl.textContent = avgPrice > 0 ? '$' + avgPrice.toFixed(2) : '—';
+    if (valEl) valEl.textContent = value > 0 ? '$' + value.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
+    if (barEl) barEl.style.width = Math.min(pct, 100) + '%';
+    if (pctEl) pctEl.textContent = pct > 0 ? pct.toFixed(1) + '%' : '0%';
+  });
+
+  const allocEl = document.getElementById('inv-allocated-pct');
+  if (allocEl) {
+    allocEl.textContent = totalAllocated.toFixed(1) + '%';
+    allocEl.style.color = totalAllocated > 100 ? 'var(--red)' : 'var(--accent)';
+  }
+}
+
+function invGetCurrentData() {
+  const tbody = document.getElementById('inv-tbody');
+  const rows = tbody ? tbody.querySelectorAll('tr[data-idx]') : [];
+  const holdings = [];
+  rows.forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    holdings.push({
+      symbol:     (inputs[0]?.value || '').toUpperCase().trim(),
+      entryShares: +(inputs[1]?.value) || 0,
+      entryPrice:  +(inputs[2]?.value) || 0,
+      reinShares:  +(inputs[3]?.value) || 0,
+      reinPrice:   +(inputs[4]?.value) || 0,
+    });
+  });
+  return {
+    portfolioTotal: (document.getElementById('inv-portfolio-total')?.value || ''),
+    holdings: holdings.filter(h => h.symbol || h.entryShares || h.entryPrice)
+  };
+}
+
+function invAddRow() {
+  const data = invGetCurrentData();
+  data.holdings.push({ symbol:'', entryShares:0, entryPrice:0, reinShares:0, reinPrice:0 });
+  invRenderRows(data.holdings);
+  const tbody = document.getElementById('inv-tbody');
+  if (tbody) {
+    const newRow = tbody.querySelector('tr[data-idx="' + (data.holdings.length - 1) + '"]');
+    newRow?.querySelector('input')?.focus();
+  }
+}
+
+function invDeleteRow(i) {
+  const data = invGetCurrentData();
+  data.holdings.splice(i, 1);
+  invRenderRows(data.holdings);
+}
+
+function invSave() {
+  const data = invGetCurrentData();
+  invSaveData(data);
+  toast('תיק ההשקעות נשמר ✓', 'success');
 }
 </script>
 
