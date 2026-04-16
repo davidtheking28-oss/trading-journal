@@ -3264,11 +3264,11 @@
               <div class="qa-label">תנאי שוק</div>
               <select class="qa-input" id="qa-market-cond" style="padding:6px 8px;">
                 <option value="">— בחר —</option>
-                <option value="easy">🟢 Easy Dollar</option>
-                <option value="hard">🔴 Hard Penny</option>
-                <option value="up">🔵 Uptrend</option>
-                <option value="press">🟡 Under Pressure</option>
-                <option value="down">🟣 Downtrend</option>
+                <option value="easy">🟢 שוק קל</option>
+                <option value="hard">🔴 שוק קשה</option>
+                <option value="up">🔵 מגמה עולה</option>
+                <option value="press">🟡 לחץ</option>
+                <option value="down">🟣 מגמה יורדת</option>
               </select>
             </div>
             <div class="qa-field">
@@ -3952,11 +3952,11 @@
             <label class="form-label">תנאי שוק בכניסה</label>
             <select class="form-control" id="m-market-cond">
               <option value="">— בחר —</option>
-              <option value="easy">🟢 Easy Dollar</option>
-              <option value="hard">🔴 Hard Penny</option>
-              <option value="up">🔵 Uptrend</option>
-              <option value="press">🟡 Under Pressure</option>
-              <option value="down">🟣 Downtrend</option>
+              <option value="easy">🟢 שוק קל</option>
+              <option value="hard">🔴 שוק קשה</option>
+              <option value="up">🔵 מגמה עולה</option>
+              <option value="press">🟡 לחץ</option>
+              <option value="down">🟣 מגמה יורדת</option>
             </select>
           </div>
           <div class="form-group">
@@ -4725,7 +4725,7 @@ function renderTable(type) {
       const noteImp = tr.notes_improve ? `<div class="notes-tag" style="color:var(--yellow);margin-top:8px;">מה לשפר:</div><div class="notes-box">${esc(tr.notes_improve)}</div>` : '';
       const noNotes = !tr.notes_keep && !tr.notes_improve ? '<span style="color:var(--text3);font-size:12px;">אין הערות</span>' : '';
 
-      const mcLabel = {'easy':'🟢 Easy Dollar','hard':'🔴 Hard Penny','up':'🔵 Uptrend','press':'🟡 Under Pressure','down':'🟣 Downtrend'};
+      const mcLabel = {'easy':'🟢 שוק קל','hard':'🔴 שוק קשה','up':'🔵 מגמה עולה','press':'🟡 לחץ','down':'🟣 מגמה יורדת'};
       const mcSafe = Object.prototype.hasOwnProperty.call(mcLabel, tr.market_cond) ? tr.market_cond : '';
       const mcHtml = mcSafe ? `<span class="mc-badge ${mcSafe}">${mcLabel[mcSafe]}</span>` : '<span style="color:var(--text3)">—</span>';
       const psHtml = tr.process_score ? '★'.repeat(tr.process_score) + '☆'.repeat(5-tr.process_score) : '<span style="color:var(--text3)">—</span>';
