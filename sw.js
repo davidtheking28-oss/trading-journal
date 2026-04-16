@@ -1,4 +1,4 @@
-const CACHE = 'tj-v15';
+const CACHE = 'tj-v16';
 const PRECACHE = [
   './dashboard.html',
   './manifest.json',
@@ -23,6 +23,7 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   if (e.request.url.includes('localhost:8282/api/')) return;
   if (e.request.url.startsWith('chrome-extension://')) return;
+  if (e.request.url.includes('supabase.co/functions/')) return;
 
   // Never cache dashboard.html or sw.js — always fetch fresh
   const url = new URL(e.request.url);
