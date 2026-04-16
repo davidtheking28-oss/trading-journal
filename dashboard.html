@@ -10241,8 +10241,24 @@ async function invAnalyze() {
     const secCF = latestReport?.report?.cf || [];
     const prevIC = (reports[1]?.report?.ic) || [];
 
-    const REV_C = ['Revenues','RevenueFromContractWithCustomerExcludingAssessedTax','SalesRevenueNet',
-                   'InterestAndDividendIncomeOperating','NoninterestIncome','InterestIncomeOperating'];
+    // Industry detection — drives concept selection + metric interpretation
+    const industry = (profileData.finnhubIndustry || '').toLowerCase();
+    const isFinancial = /bank|insurance|financial|fintech|reit|brokerage|capital market/.test(industry);
+    const isHealthcare = /biotech|pharma|health|medical|drug/.test(industry);
+    const isEnergy     = /oil|gas|energy|mining|utilities|coal/.test(industry);
+
+    // Revenue concepts ordered by industry relevance
+    const REV_C = isFinancial
+      ? ['Revenues','InterestAndDividendIncomeOperating','NoninterestIncome','InterestIncomeOperating',
+         'RevenueFromContractWithCustomerExcludingAssessedTax','SalesRevenueNet']
+      : isHealthcare
+        ? ['Revenues','RevenueFromContractWithCustomerExcludingAssessedTax','SalesRevenueNet',
+           'RevenueFromContractWithCustomerIncludingAssessedTax','Revenues']
+        : isEnergy
+          ? ['Revenues','RevenueFromContractWithCustomerExcludingAssessedTax','SalesRevenueNet',
+             'OilAndGasRevenue','RevenueFromContractWithCustomerIncludingAssessedTax']
+          : ['Revenues','RevenueFromContractWithCustomerExcludingAssessedTax','SalesRevenueNet',
+             'RevenueFromContractWithCustomerIncludingAssessedTax'];
     const NI_C  = ['NetIncomeLoss','ProfitLoss','NetIncomeLossAvailableToCommonStockholdersBasic'];
 
     const secRevRaw    = getRaw(secIC, ...REV_C);
@@ -10274,7 +10290,29 @@ async function invAnalyze() {
     const secFCFRaw      = (secOpCFRaw != null && secCapexRaw != null) ? secOpCFRaw - Math.abs(secCapexRaw) : null;
     const secRevGrowth   = (secRevRaw && prevRevRaw) ? ((secRevRaw - prevRevRaw) / Math.abs(prevRevRaw) * 100).toFixed(1) : null;
 
-    const isFinancial = /bank|insurance|financial|fintech|reit|brokerage|capital market/i.test(profileData.finnhubIndustry || '');
+    // Auto-detect one-time items: net margin >> pre-tax margin = likely tax benefit / non-recurring
+    const oneTimeFlag = (secNetMargin != null && secPreTaxMargin != null &&
+      Math.abs(+secNetMargin - +secPreTaxMargin) > 12)
+      ? ` ⚠️ פער גדול מ-pre-tax (${secPreTaxMargin}%) — ייתכנו items חד-פעמיים`
+      : '';
+
+    // EPS trend from quarterly history (more reliable than YoY for transition companies)
+    const epsActuals = earnings.map(e => e.actual).filter(v => v != null);
+    const epsTrend = epsActuals.length >= 3
+      ? (epsActuals[0] > epsActuals[epsActuals.length - 1]
+          ? '📈 מגמה רבעונית עולה'
+          : epsActuals[0] < epsActuals[epsActuals.length - 1]
+            ? '📉 מגמה רבעונית יורדת'
+            : '➡️ מגמה רבעונית יציבה')
+      : '';
+
+    // Cross-validate SEC vs Finnhub net margin — flag large disagreements
+    const finnhubNetM = m['netProfitMarginTTM'] ?? m['netProfitMarginAnnual'];
+    const crossValidWarn = (secNetMargin != null && finnhubNetM != null &&
+      Math.abs(+secNetMargin - +finnhubNetM) > 20)
+      ? ` [Finnhub: ${(+finnhubNetM).toFixed(1)}% — פער גבוה, סמוך על SEC]`
+      : '';
+
     const fmtSEC = (v, suffix, fallback) => v != null ? `${v}${suffix}${sl}` : (fallback ?? 'אין נתון');
     const fmtReport = (r) => {
       if (!r) return '';
@@ -10336,7 +10374,7 @@ async function invAnalyze() {
 EPS מנורמל (שנתי): ${fmt(epsNorm)} ${epsNorm != null ? (+epsNorm > 0 ? '✅ רווחי' : '❌ הפסדי') : ''}
 שולי רווח גולמי: ${fmtSEC(secGrossMargin,'%', fmt(m['grossMarginTTM'] ?? m['grossMarginAnnual'],'%'))}
 שולי רווח תפעולי: ${isFinancial ? fmtSEC(secPreTaxMargin,'% (לפני מס — ישים לחברות פיננסיות)', fmt(m['operatingMarginTTM'] ?? m['operatingMarginAnnual'],'%')) : fmtSEC(secOpMargin,'%', fmt(m['operatingMarginTTM'] ?? m['operatingMarginAnnual'],'%'))}
-שולי רווח נטו: ${fmtSEC(secNetMargin,'%', fmt(m['netProfitMarginTTM'] ?? m['netProfitMarginAnnual'],'%'))}${isFinancial ? ' ⚠️ עשוי לכלול items חד-פעמיים (tax benefits וכו׳)' : ''}
+שולי רווח נטו: ${fmtSEC(secNetMargin,'%', fmt(m['netProfitMarginTTM'] ?? m['netProfitMarginAnnual'],'%'))}${oneTimeFlag}${crossValidWarn}
 ROE: ${fmtSEC(secROE,'%', fmt(m['roeTTM'] ?? m['roeAnnual'],'%'))}
 ROA: ${fmtSEC(secROA,'%', fmt(m['roaTTM'] ?? m['roaAnnual'],'%'))}
 
@@ -10348,8 +10386,8 @@ PEG: ${fmt(pegVal)} ${pegCalc && !m['pegRatio'] ? '(מחושב)' : ''}
 === צמיחה ===
 צמיחת הכנסות YoY (SEC): ${fmtSEC(secRevGrowth,'%', 'אין נתון')}
 צמיחת הכנסות (Finnhub TTM/3Y/5Y): ${revStr}
-צמיחת EPS YoY (Finnhub): ${fmt(m['epsGrowthTTMYoy'] ?? m['epsGrowth3Y'],'%')}${isFinancial ? ' ⚠️ לחברות שיצאו מהפסד — ההיסטוריה הרבעונית מהימנה יותר' : ''}
-EPS היסטוריה רבעונית (4 רבעונים אחרונים — ראה מגמה):
+צמיחת EPS YoY (Finnhub): ${fmt(m['epsGrowthTTMYoy'] ?? m['epsGrowth3Y'],'%')} ${epsTrend}
+EPS היסטוריה רבעונית (4 רבעונים אחרונים):
    ${epsHistory}
 
 === מאזן ===
