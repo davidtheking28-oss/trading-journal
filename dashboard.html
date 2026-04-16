@@ -10215,8 +10215,8 @@ async function invAnalyze() {
       fetch(`${base}?path=stock%2Fprofile2&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
       fetch(`${base}?path=quote&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
       fetch(`${base}?path=stock%2Fearnings&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
-      fetch(`${base}?path=stock%2Ffinancials-reported&symbol=${encodeURIComponent(sym)}&freq=quarterly`, { headers: hdr }),
-      fetch(`${base}?path=stock%2Ffinancials-reported&symbol=${encodeURIComponent(sym)}&freq=annual`, { headers: hdr }),
+      isIsraeli ? Promise.resolve({ok:false}) : fetch(`${base}?path=stock%2Ffinancials-reported&symbol=${encodeURIComponent(sym)}&freq=quarterly`, { headers: hdr }),
+      isIsraeli ? Promise.resolve({ok:false}) : fetch(`${base}?path=stock%2Ffinancials-reported&symbol=${encodeURIComponent(sym)}&freq=annual`, { headers: hdr }),
     ]);
 
     const metricData     = metricRes.ok      ? await metricRes.json()      : {};
@@ -10322,7 +10322,7 @@ async function invAnalyze() {
       'PaymentsToAcquireOtherPropertyPlantAndEquipment',
       'PurchaseOfPropertyAndEquipment','AdditionsToPropertyAndEquipment');
 
-    const sl = latestPeriod ? ` [SEC ${latestPeriod}]` : ' [SEC]';
+    const sl = isIsraeli ? '' : (latestPeriod ? ` [SEC ${latestPeriod}]` : ' [SEC]');
 
     const secTotalDebtRaw = (secLTDebtRaw != null || secSTDebtRaw != null)
       ? (secLTDebtRaw ?? 0) + (secSTDebtRaw ?? 0) : null;
@@ -10371,11 +10371,15 @@ async function invAnalyze() {
 
     // ── Pre-flight data quality validation ──
     const checks = [];
-    // 1. SEC freshness
-    checks.push(monthsOld == null ? '⚠️ תאריך דוח SEC לא ידוע'
-      : monthsOld <= 4 ? `✅ דוח SEC עדכני (לפני ${monthsOld} חודשים)`
-      : monthsOld <= 6 ? `⚠️ דוח SEC גבולי (${monthsOld} חודשים)`
-      : `🔴 דוח SEC ישן (${monthsOld} חודשים)`);
+    // 1. SEC freshness (skip for Israeli stocks — SEC data not expected)
+    if (isIsraeli) {
+      checks.push('ℹ️ מניה ישראלית — דוחות SEC לא זמינים, נתונים מ-Finnhub בלבד');
+    } else {
+      checks.push(monthsOld == null ? '⚠️ תאריך דוח SEC לא ידוע'
+        : monthsOld <= 4 ? `✅ דוח SEC עדכני (לפני ${monthsOld} חודשים)`
+        : monthsOld <= 6 ? `⚠️ דוח SEC גבולי (${monthsOld} חודשים)`
+        : `🔴 דוח SEC ישן (${monthsOld} חודשים)`);
+    }
     // 2. Price in 52W range
     const hi52 = m['52WeekHigh'], lo52 = m['52WeekLow'], px = quoteData.c;
     if (hi52 && lo52 && px)
@@ -10392,9 +10396,13 @@ async function invAnalyze() {
     // 5. Finnhub vs SEC disagreement
     if (crossValidWarn) checks.push('⚠️ פער > 20% בין Finnhub ל-SEC בשולי רווח נטו');
     // 6. Data completeness
-    const missing = [secRevRaw, secNIRaw, secEquityRaw, secAssetsRaw, px].filter(v => v == null).length;
-    checks.push(missing === 0 ? '✅ כל המדדים הקריטיים זמינים'
-      : `⚠️ ${missing} מדד/ים קריטי/ים חסר/ים`);
+    if (isIsraeli) {
+      checks.push(px != null ? '✅ מחיר ומדדי Finnhub זמינים' : '⚠️ מחיר לא זמין — בדוק את הסימבול');
+    } else {
+      const missing = [secRevRaw, secNIRaw, secEquityRaw, secAssetsRaw, px].filter(v => v == null).length;
+      checks.push(missing === 0 ? '✅ כל המדדים הקריטיים זמינים'
+        : `⚠️ ${missing} מדד/ים קריטי/ים חסר/ים`);
+    }
 
     const warnCount = checks.filter(c => c.startsWith('⚠️') || c.startsWith('🔴')).length;
     const qualityScore = Math.max(1, 10 - warnCount * 2);
