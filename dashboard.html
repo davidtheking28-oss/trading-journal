@@ -10200,6 +10200,7 @@ async function invAnalyze() {
     console.log('[INV] metric:', metricData);
     console.log('[INV] quote:', quoteData);
     console.log('[INV] financials period:', financialsData?.data?.[0]?.period);
+    console.log('[INV] financials raw:', JSON.stringify(financialsData).slice(0, 800));
     const m = metricData.metric || {};
     const earnings = Array.isArray(earningsData) ? earningsData.slice(0, 4) : [];
 
