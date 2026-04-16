@@ -2999,6 +2999,7 @@
   .inv-table input:focus { border-color: var(--accent); outline: none; }
   .inv-sym-input { font-family: monospace; font-weight: 700; text-transform: uppercase; width: 68px !important; }
   .inv-sector-input { width: 110px !important; color: var(--text2) !important; font-size: 11px !important; }
+  .inv-cat-rem { font-size: 11px; font-weight: 700; white-space: nowrap; }
   .inv-pct-bar { display: flex; align-items: center; gap: 6px; }
   .inv-pct-fill { height: 6px; border-radius: 3px; background: var(--accent); transition: width 0.3s; min-width: 2px; }
   .inv-pct-label { font-size: 12px; font-weight: 700; color: var(--text2); white-space: nowrap; min-width: 38px; }
@@ -3888,11 +3889,13 @@
                 <th>ממוצע</th>
                 <th>שווי</th>
                 <th>% תיק</th>
+                <th>נותר לקטגוריה</th>
                 <th></th>
               </tr>
             </thead>
             <tbody id="inv-tbody"></tbody>
           </table>
+          <datalist id="inv-sym-list"></datalist>
           <button class="inv-add-row" onclick="invAddRow()">+ הוסף אחזקה</button>
         </div>
 
@@ -9857,6 +9860,8 @@ function invInit() {
   const data = invLoad();
   const totalEl = document.getElementById('inv-portfolio-total');
   if (totalEl) totalEl.value = data.portfolioTotal || '';
+  const dl = document.getElementById('inv-sym-list');
+  if (dl) dl.innerHTML = Object.keys(SECTOR_MAP).map(s => `<option value="${s}">`).join('');
   invRenderRows(data.holdings || []);
   invRenderDeposits(data.deposits || []);
   invRecalc();
@@ -9866,12 +9871,12 @@ function invRenderRows(holdings) {
   const tbody = document.getElementById('inv-tbody');
   if (!tbody) return;
   if (!holdings.length) {
-    tbody.innerHTML = `<tr><td colspan="11" class="inv-empty">אין אחזקות — לחץ "+ הוסף אחזקה"</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="12" class="inv-empty">אין אחזקות — לחץ "+ הוסף אחזקה"</td></tr>`;
     return;
   }
   tbody.innerHTML = holdings.map((h, i) => `
     <tr data-idx="${i}">
-      <td><input class="inv-sym-input" type="text" value="${h.symbol||''}" placeholder="AAPL" oninput="this.value=this.value.toUpperCase();invRecalc();invAutoSector(${i})"></td>
+      <td><input class="inv-sym-input" type="text" value="${h.symbol||''}" placeholder="AAPL" list="inv-sym-list" oninput="this.value=this.value.toUpperCase();invRecalc();invAutoSector(${i})"></td>
       <td><input class="inv-sector-input" type="text" value="${h.sector||''}" placeholder="טכנולוגיה" data-sector-idx="${i}"></td>
       <td>
         <select class="inv-cat-sel" onchange="invRecalc()">
@@ -9893,6 +9898,7 @@ function invRenderRows(holdings) {
           <span class="inv-pct-label" id="inv-pct-${i}">0%</span>
         </div>
       </td>
+      <td><span class="inv-cat-rem" id="inv-catrem-${i}">—</span></td>
       <td><button class="inv-del-btn" onclick="invDeleteRow(${i})">×</button></td>
     </tr>
   `).join('');
@@ -9966,6 +9972,21 @@ function invRecalc() {
         : `זמין: $${remaining.toLocaleString('en-US', {maximumFractionDigits:0})}`;
       remEl.style.color = over ? 'var(--red)' : 'var(--text3)';
     }
+  });
+  const catRemaining = {};
+  Object.entries(ALLOC_TARGETS).forEach(([cat, target]) => {
+    catRemaining[cat] = Math.max(0, portfolioTotal * target - byCat[cat]);
+  });
+  rows.forEach(row => {
+    const idx = +row.dataset.idx;
+    const cat = row.querySelector('.inv-cat-sel')?.value || '';
+    const remEl = document.getElementById(`inv-catrem-${idx}`);
+    if (!remEl) return;
+    if (!cat || portfolioTotal === 0) { remEl.textContent = '—'; remEl.style.color = ''; return; }
+    const over = byCat[cat] > portfolioTotal * ALLOC_TARGETS[cat];
+    const rem  = catRemaining[cat];
+    remEl.textContent = over ? 'חרגת' : `$${rem.toLocaleString('en-US',{maximumFractionDigits:0})}`;
+    remEl.style.color = over ? 'var(--red)' : 'var(--green)';
   });
   invUpdateDonut(byCat, portfolioTotal);
   invRenderDeposits(invLoad().deposits || []);
