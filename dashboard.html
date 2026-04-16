@@ -10199,21 +10199,41 @@ async function invAnalyze() {
     const m = metricData.metric || {};
     const earnings = Array.isArray(earningsData) ? earningsData.slice(0, 4) : [];
 
-    // Extract latest 2 quarterly reports
+    // Extract latest 2 quarterly SEC reports
     const reports = financialsData?.data?.slice(0, 2) || [];
+    const latestReport = reports[0] || null;
+    const latestPeriod = latestReport?.period || null;  // e.g. "2024-12-31"
+
+    // Staleness check: how many months since the latest report period?
+    const today = new Date();
+    const reportDate = latestPeriod ? new Date(latestPeriod) : null;
+    const monthsOld = reportDate ? Math.round((today - reportDate) / (1000 * 60 * 60 * 24 * 30)) : null;
+    const stalenessWarning = monthsOld == null
+      ? '⚠️ לא ניתן לקבוע תאריך דוח'
+      : monthsOld <= 4
+        ? `✅ דוח עדכני (לפני ${monthsOld} חודשים)`
+        : monthsOld <= 6
+          ? `⚠️ דוח גבולי (לפני ${monthsOld} חודשים) — עשוי להיות לפני פרסום הרבעון האחרון`
+          : `🔴 דוח ישן (לפני ${monthsOld} חודשים) — הנתונים עשויים לא לשקף מצב עכשווי`;
+
+    const get = (arr, ...concepts) => {
+      for (const c of concepts) {
+        const found = arr?.find(x => x.concept === c);
+        if (found?.value != null) return (+found.value / 1e6).toFixed(1) + 'M';
+      }
+      return 'אין נתון';
+    };
     const fmtReport = (r) => {
       if (!r) return '';
       const ic = r.report?.ic || [];
-      const bs = r.report?.bs || [];
       const cf = r.report?.cf || [];
-      const get = (arr, ...concepts) => {
-        for (const c of concepts) {
-          const found = arr.find(x => x.concept === c);
-          if (found?.value != null) return (+found.value / 1e6).toFixed(0) + 'M';
-        }
-        return 'אין נתון';
-      };
-      return `${r.period||''} (${r.form||''}): הכנסות ${get(ic,'Revenues','RevenueFromContractWithCustomerExcludingAssessedTax','SalesRevenueNet')}, רווח נטו ${get(ic,'NetIncomeLoss','ProfitLoss')}, FCF ~${get(cf,'NetCashProvidedByUsedInOperatingActivities')}`;
+      const revenue = get(ic,
+        'Revenues','RevenueFromContractWithCustomerExcludingAssessedTax',
+        'SalesRevenueNet','InterestAndDividendIncomeOperating',
+        'RevenueFromContractWithCustomerIncludingAssessedTax');
+      const netIncome = get(ic, 'NetIncomeLoss', 'ProfitLoss', 'NetIncomeLossAvailableToCommonStockholdersBasic');
+      const opCF = get(cf, 'NetCashProvidedByUsedInOperatingActivities');
+      return `📋 ${r.period||''} (${r.form||''})\n     הכנסות: $${revenue} | רווח נטו: $${netIncome} | תזרים תפעולי: $${opCF}`;
     };
     const reportsSummary = reports.length ? reports.map(fmtReport).join('\n   ') : 'אין נתון';
 
@@ -10246,6 +10266,11 @@ async function invAnalyze() {
     const epsNorm = m['epsNormalizedAnnual'] ?? m['epsTTM'];
 
     const metricsText = `
+=== בדיקת עדכניות ===
+תאריך ניתוח: ${today.toLocaleDateString('he-IL')}
+דוח אחרון זמין: ${latestPeriod || 'לא ידוע'}
+סטטוס עדכניות: ${stalenessWarning}
+
 מניה: ${profileData.name || sym} (${sym})
 סקטור: ${profileData.finnhubIndustry || 'לא ידוע'} | שווי שוק: ${profileData.marketCapitalization ? '$'+(profileData.marketCapitalization/1000).toFixed(1)+'B' : 'לא ידוע'}
 מחיר עכשווי: ${quoteData.c ? '$'+quoteData.c : 'אין נתון'} | שינוי יומי: ${quoteData.dp != null ? quoteData.dp.toFixed(2)+'%' : 'אין נתון'}
@@ -10283,8 +10308,15 @@ Beta: ${fmt(m['beta'])}
 
     const systemPrompt = `אתה יועץ השקעות מקצועי ואובייקטיבי. תפקידך לנתח מניות לפי נתונים פיננסיים בלבד.
 
-⛔ כלל ברזל: השתמש אך ורק בנתונים שסופקו לך מ-Finnhub. אסור בהחלט להשתמש בידע מהאימון שלך על החברה. אם נתון מסומן "אין נתון" — רשום ❓ ואל תנחש.
-⚠️ צמיחת הכנסות TTM YoY עלולה להיות מוגזמת (בסיס השוואה חלש). אם TTM גבוה בצורה חריגה (מעל 100%) ויש 3Y/5Y CAGR — סמוך על ה-CAGR כנתון אמין יותר.
+⛔ כלל ברזל: השתמש אך ורק בנתונים שסופקו מ-Finnhub. אסור להשתמש בידע מהאימון. נתון חסר = ❓ בלבד.
+
+📅 בדיקת עדכניות — חובה בתחילת הניתוח:
+- בדוק את "דוח אחרון זמין" מול "תאריך ניתוח"
+- אם הפרש > 5 חודשים: ציין בבירור שהנתונים עשויים לא לכלול את הרבעון האחרון
+- ציין בסיכום הסופי: "ניתוח מבוסס על דוח רבעון [תאריך]"
+- אם הדוח ישן ו-EPS/הכנסות משתנים מהר — המלץ לאמת עם דוח עדכני
+
+⚠️ צמיחת הכנסות: אם TTM YoY חריג (מעל 80%) — סמוך על 3Y/5Y CAGR כנתון אמין יותר.
 
 המשימה: נתח את המניה לפי הקריטריונים הבאים מהספר:
 
@@ -10302,8 +10334,8 @@ Beta: ${fmt(m['beta'])}
 6. **המלצה** — קנייה / המתנה / הימנע + נימוק מהנתונים
 🚨 אדומה = התרע בבירור ואסור להמליץ להשקיע.`;
 
-    const today = new Date().toLocaleDateString('he-IL', { year: 'numeric', month: 'long', day: 'numeric' });
-    const userMessage = `תאריך הניתוח: ${today}\n\n${metricsText}`;
+    const todayStr = today.toLocaleDateString('he-IL', { year: 'numeric', month: 'long', day: 'numeric' });
+    const userMessage = `תאריך הניתוח: ${todayStr}\n\n${metricsText}`;
 
     out.textContent = '📊 נתונים שנמשכו מ-Finnhub:\n─────────────────────\n' + metricsText + '\n─────────────────────\nמנתח עם AI...\n';
 
