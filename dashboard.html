@@ -3922,15 +3922,7 @@
         <div class="form-section-title">📝 הערות ואיכות</div>
         <div class="form-group">
           <label class="form-label">מצב רגשי לפני הכניסה</label>
-          <div class="mood-pills" id="m-mood-pills" style="margin-bottom:4px;">
-            <span class="mood-pill" data-mood="focused"   onclick="modalSetMood('focused')">🎯 ממוקד</span>
-            <span class="mood-pill" data-mood="calm"      onclick="modalSetMood('calm')">😌 רגוע</span>
-            <span class="mood-pill" data-mood="confident" onclick="modalSetMood('confident')">💪 בטוח</span>
-            <span class="mood-pill" data-mood="stressed"  onclick="modalSetMood('stressed')">😰 לחוץ</span>
-            <span class="mood-pill" data-mood="impatient" onclick="modalSetMood('impatient')">😤 חסר סבלנות</span>
-            <span class="mood-pill" data-mood="doubtful"  onclick="modalSetMood('doubtful')">😔 ספקני</span>
-          </div>
-          <input type="hidden" id="m-mood">
+          <textarea class="form-control" id="m-mood" placeholder="איך הרגשת לפני הכניסה לעסקה..." maxlength="300" rows="2"></textarea>
         </div>
         <div class="form-group">
           <label class="form-label">סיבת כניסה</label>
@@ -5981,10 +5973,8 @@ function openModal(type, tr=null) {
   modalPS = tr ? (tr.process_score || 0) : 0;
   document.getElementById('m-process-score').value = modalPS;
   psSetStars('m-ps-stars', modalPS);
-  modalMood = tr ? (tr.mood || '') : '';
   const moodEl = document.getElementById('m-mood');
-  if (moodEl) moodEl.value = modalMood;
-  moodSetPills('m-mood-pills', modalMood);
+  if (moodEl) moodEl.value = tr ? (tr.mood || '') : '';
   document.getElementById('m-notes-keep').value  = tr ? (tr.notes_keep||'')    : '';
   document.getElementById('m-notes-improve').value = tr ? (tr.notes_improve||'') : '';
 
@@ -6085,7 +6075,7 @@ function getFormTrade() {
     setup_type:    ST_OPTIONS.includes(modalST) ? modalST : '',
     market_cond:   document.getElementById('m-market-cond').value || '',
     process_score: modalPS || 0,
-    mood:          MOOD_OPTIONS.includes(modalMood) ? modalMood : ''
+    mood:          (document.getElementById('m-mood').value || '').trim().slice(0, 300)
   };
 }
 
