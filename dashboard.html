@@ -10183,19 +10183,39 @@ async function invAnalyze() {
     out.textContent = 'מושך נתונים פיננסיים מ-Finnhub...';
     const hdr = { Authorization: `Bearer ${token}` };
     const base = `${SUPABASE_URL}/functions/v1/finnhub`;
-    const [metricRes, profileRes, quoteRes, earningsRes] = await Promise.all([
+    const [metricRes, profileRes, quoteRes, earningsRes, financialsRes] = await Promise.all([
       fetch(`${base}?path=stock%2Fmetric&symbol=${encodeURIComponent(sym)}&metric=all`, { headers: hdr }),
       fetch(`${base}?path=stock%2Fprofile2&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
       fetch(`${base}?path=quote&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
       fetch(`${base}?path=stock%2Fearnings&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
+      fetch(`${base}?path=stock%2Ffinancials-reported&symbol=${encodeURIComponent(sym)}&freq=quarterly`, { headers: hdr }),
     ]);
 
-    const metricData   = metricRes.ok   ? await metricRes.json()   : {};
-    const profileData  = profileRes.ok  ? await profileRes.json()  : {};
-    const quoteData    = quoteRes.ok    ? await quoteRes.json()    : {};
-    const earningsData = earningsRes.ok ? await earningsRes.json() : {};
+    const metricData     = metricRes.ok     ? await metricRes.json()     : {};
+    const profileData    = profileRes.ok    ? await profileRes.json()    : {};
+    const quoteData      = quoteRes.ok      ? await quoteRes.json()      : {};
+    const earningsData   = earningsRes.ok   ? await earningsRes.json()   : {};
+    const financialsData = financialsRes.ok ? await financialsRes.json() : {};
     const m = metricData.metric || {};
     const earnings = Array.isArray(earningsData) ? earningsData.slice(0, 4) : [];
+
+    // Extract latest 2 quarterly reports
+    const reports = financialsData?.data?.slice(0, 2) || [];
+    const fmtReport = (r) => {
+      if (!r) return '';
+      const ic = r.report?.ic || [];
+      const bs = r.report?.bs || [];
+      const cf = r.report?.cf || [];
+      const get = (arr, ...concepts) => {
+        for (const c of concepts) {
+          const found = arr.find(x => x.concept === c);
+          if (found?.value != null) return (+found.value / 1e6).toFixed(0) + 'M';
+        }
+        return 'אין נתון';
+      };
+      return `${r.period||''} (${r.form||''}): הכנסות ${get(ic,'Revenues','RevenueFromContractWithCustomerExcludingAssessedTax','SalesRevenueNet')}, רווח נטו ${get(ic,'NetIncomeLoss','ProfitLoss')}, FCF ~${get(cf,'NetCashProvidedByUsedInOperatingActivities')}`;
+    };
+    const reportsSummary = reports.length ? reports.map(fmtReport).join('\n   ') : 'אין נתון';
 
     const fmt  = (v, suffix='') => (v != null && !isNaN(+v)) ? `${(+v).toFixed(2)}${suffix}` : 'אין נתון';
     const fmtM = (v) => (v != null && !isNaN(+v)) ? `$${(+v/1e6).toFixed(1)}M` : 'אין נתון';
@@ -10256,6 +10276,9 @@ Current Ratio: ${fmt(currentRatio)}
 FCF: ${fmtM(m['freeCashFlowAnnual'] ?? m['freeCashFlowTTM'])}
 תשואת דיבידנד: ${fmt(m['dividendYieldIndicatedAnnual'],'%')}
 Beta: ${fmt(m['beta'])}
+
+=== דוחות כספיים אחרונים (SEC) ===
+   ${reportsSummary}
 `.trim();
 
     const systemPrompt = `אתה יועץ השקעות מקצועי ואובייקטיבי. תפקידך לנתח מניות לפי נתונים פיננסיים בלבד.
