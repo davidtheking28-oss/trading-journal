@@ -2153,7 +2153,9 @@
   }
 
   /* ── Mobile: sidebar as right-side drawer ── */
+  .mobile-theme-btn { display: none; }
   @media (max-width: 768px) {
+    .mobile-theme-btn { display: inline-flex; }
     .hamburger { display: flex; }
     .sidebar {
       position: fixed;
@@ -3072,6 +3074,9 @@
       נועל בעוד <span id="inactivity-countdown">—</span>
     </div>
     <div class="header-actions">
+      <button class="btn btn-export btn-sm mobile-theme-btn" onclick="toggleTheme()" id="header-theme-btn" aria-label="החלף ערכת צבעים" title="מצב בהיר/כהה">
+        <span id="header-theme-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/></svg></span>
+      </button>
       <button class="btn btn-export btn-sm" onclick="togglePrivacy()" id="privacy-btn" title="מצב פרטיות" aria-label="הסתר ערכים">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
       </button>
@@ -8554,6 +8559,8 @@ function _applyTheme(theme) {
   const icon = document.getElementById('theme-icon'), label = document.getElementById('theme-label');
   if (icon)  icon.innerHTML  = theme === 'light' ? _THEME_SVG_MOON : _THEME_SVG_SUN;
   if (label) label.textContent = theme === 'light' ? 'מצב כהה' : 'מצב בהיר';
+  const hIcon = document.getElementById('header-theme-icon');
+  if (hIcon) hIcon.innerHTML = theme === 'light' ? _THEME_SVG_MOON : _THEME_SVG_SUN;
 }
 
 function toggleTheme() {
