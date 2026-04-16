@@ -29,7 +29,11 @@ serve(async (req: Request) => {
     .eq('user_id', user.id)
     .single();
 
-  const apiKey = settings?.finnhub_key ?? '';
+  // User's own key takes priority; fall back to shared key
+  const apiKey = (settings?.finnhub_key && /^[A-Za-z0-9_]{10,40}$/.test(settings.finnhub_key))
+    ? settings.finnhub_key
+    : (Deno.env.get('FINNHUB_API_KEY') ?? '');
+
   if (!apiKey || !/^[A-Za-z0-9_]{10,40}$/.test(apiKey)) {
     return new Response(
       JSON.stringify({ error: 'No Finnhub API key configured.' }),
@@ -41,21 +45,30 @@ serve(async (req: Request) => {
   const path = url.searchParams.get('path') ?? 'stock/symbol';
 
   // Whitelist of allowed Finnhub paths
-  const ALLOWED_PATHS = ['stock/symbol', 'stock/profile2'];
+  const ALLOWED_PATHS = ['stock/symbol', 'stock/profile2', 'stock/metric', 'quote', 'stock/earnings', 'stock/financials-reported'];
   if (!ALLOWED_PATHS.includes(path)) {
     return new Response(JSON.stringify({ error: 'Path not allowed' }), { status: 403, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 
-  const symbol = url.searchParams.get('symbol') ?? '';
-  let finnhubUrl = `https://finnhub.io/api/v1/${path}?token=${encodeURIComponent(apiKey)}`;
-  if (path === 'stock/symbol') finnhubUrl += '&exchange=US';
-  if (path === 'stock/profile2' && symbol) finnhubUrl += `&symbol=${encodeURIComponent(symbol)}`;
+  const symbol    = url.searchParams.get('symbol') ?? '';
+  const metric    = url.searchParams.get('metric') ?? '';
+  const freq      = url.searchParams.get('freq') ?? '';
+  const exchange  = /^[A-Z]{1,4}$/.test(url.searchParams.get('exchange') ?? '') ? (url.searchParams.get('exchange') ?? 'US') : 'US';
+  let finnhubUrl  = `https://finnhub.io/api/v1/${path}?token=${encodeURIComponent(apiKey)}`;
+  if (path === 'stock/symbol') finnhubUrl += `&exchange=${exchange}`;
+  if (symbol) finnhubUrl += `&symbol=${encodeURIComponent(symbol)}`;
+  if (path === 'stock/metric' && metric) finnhubUrl += `&metric=${encodeURIComponent(metric)}`;
+  if (path === 'stock/financials-reported' && freq) finnhubUrl += `&freq=${encodeURIComponent(freq)}`;
 
   const upstream = await fetch(finnhubUrl, { headers: { 'User-Agent': 'trading-journal/2.0' } });
   const data = await upstream.text();
 
+  // Quote: no cache (real-time). Financials: 1 hour. Metrics/profile: 4 hours.
+  const ttl = path === 'quote' ? 0 : path === 'stock/financials-reported' ? 3600 : 14400;
+  const cacheHeader = ttl === 0 ? 'no-store' : `max-age=${ttl}`;
+
   return new Response(data, {
     status: upstream.status,
-    headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'max-age=86400' },
+    headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': cacheHeader },
   });
 });
