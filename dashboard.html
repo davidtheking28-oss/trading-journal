@@ -3034,7 +3034,30 @@
   .inv-alloc-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
   .inv-alloc-cur { width: 38px; text-align: left; color: var(--text); font-weight: 700; }
   .inv-alloc-remaining { color: var(--text3); white-space: nowrap; font-size: 11px; }
+  .inv-alloc-donut-row { display: flex; gap: 20px; align-items: flex-start; }
+  .inv-alloc-bars { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+  .inv-donut-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; flex-shrink: 0; }
+  .inv-donut-legend { display: flex; flex-direction: column; gap: 5px; }
+  .inv-donut-leg-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text2); gap: 5px; }
+  .inv-donut-leg-row .inv-leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .inv-donut-leg-row b { color: var(--text); font-size: 11px; }
   .inv-cat-sel { background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 4px 6px; font-size: 11px; color: var(--text); cursor: pointer; }
+  .inv-deposits-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+  .inv-deposits-header { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text); }
+  .inv-deposits-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .inv-deposits-form input { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 13px; color: var(--text); }
+  .inv-deposits-add-btn { background: var(--accent); color: #fff; border: none; border-radius: 7px; padding: 7px 16px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .inv-deposits-add-btn:hover { opacity: 0.85; }
+  .inv-deposits-stats { display: flex; gap: 24px; padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 8px; flex-wrap: wrap; }
+  .inv-dep-stat { display: flex; flex-direction: column; gap: 2px; }
+  .inv-dep-stat-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.4px; }
+  .inv-dep-stat-val { font-size: 15px; font-weight: 700; color: var(--text); }
+  .inv-dep-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .inv-dep-table th { color: var(--text3); font-size: 10px; text-transform: uppercase; padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: right; font-weight: 600; letter-spacing: 0.4px; }
+  .inv-dep-table td { padding: 7px 8px; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--text2); }
+  .inv-dep-table tr:last-child td { border-bottom: none; }
+  .inv-dep-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 14px; padding: 0 4px; }
+  .inv-dep-del:hover { color: var(--red); }
 
   /* ── Missed Opportunities tab ── */
   #tab-missed { display: none; }
@@ -3806,26 +3829,47 @@
 
         <div class="inv-alloc-dashboard">
           <div class="inv-alloc-title">הקצאת תיק — יעד</div>
-          <div class="inv-alloc-row">
-            <span class="inv-alloc-dot blue"></span>
-            <span class="inv-alloc-label">🔵 כחולות — יעד 60%</span>
-            <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-blue" style="width:0%;background:#38bdf8;"></div></div>
-            <span class="inv-alloc-cur" id="alloc-cur-blue">0%</span>
-            <span class="inv-alloc-remaining" id="alloc-rem-blue">זמין: —</span>
-          </div>
-          <div class="inv-alloc-row">
-            <span class="inv-alloc-dot green"></span>
-            <span class="inv-alloc-label">🟢 ירוקות — יעד 35%</span>
-            <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-green" style="width:0%;background:#34d399;"></div></div>
-            <span class="inv-alloc-cur" id="alloc-cur-green">0%</span>
-            <span class="inv-alloc-remaining" id="alloc-rem-green">זמין: —</span>
-          </div>
-          <div class="inv-alloc-row">
-            <span class="inv-alloc-dot yellow"></span>
-            <span class="inv-alloc-label">🟡 צהובות — יעד 5%</span>
-            <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-yellow" style="width:0%;background:#fbbf24;"></div></div>
-            <span class="inv-alloc-cur" id="alloc-cur-yellow">0%</span>
-            <span class="inv-alloc-remaining" id="alloc-rem-yellow">זמין: —</span>
+          <div class="inv-alloc-donut-row">
+            <div class="inv-alloc-bars">
+              <div class="inv-alloc-row">
+                <span class="inv-alloc-dot blue"></span>
+                <span class="inv-alloc-label">🔵 כחולות — יעד 60%</span>
+                <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-blue" style="width:0%;background:#38bdf8;"></div></div>
+                <span class="inv-alloc-cur" id="alloc-cur-blue">0%</span>
+                <span class="inv-alloc-remaining" id="alloc-rem-blue">זמין: —</span>
+              </div>
+              <div class="inv-alloc-row">
+                <span class="inv-alloc-dot green"></span>
+                <span class="inv-alloc-label">🟢 ירוקות — יעד 35%</span>
+                <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-green" style="width:0%;background:#34d399;"></div></div>
+                <span class="inv-alloc-cur" id="alloc-cur-green">0%</span>
+                <span class="inv-alloc-remaining" id="alloc-rem-green">זמין: —</span>
+              </div>
+              <div class="inv-alloc-row">
+                <span class="inv-alloc-dot yellow"></span>
+                <span class="inv-alloc-label">🟡 צהובות — יעד 5%</span>
+                <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-yellow" style="width:0%;background:#fbbf24;"></div></div>
+                <span class="inv-alloc-cur" id="alloc-cur-yellow">0%</span>
+                <span class="inv-alloc-remaining" id="alloc-rem-yellow">זמין: —</span>
+              </div>
+            </div>
+            <div class="inv-donut-wrap">
+              <svg width="130" height="130" viewBox="0 0 130 130">
+                <circle cx="65" cy="65" r="50" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="18"/>
+                <circle id="donut-cash"   cx="65" cy="65" r="50" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="18" stroke-dasharray="314 314" stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
+                <circle id="donut-yellow" cx="65" cy="65" r="50" fill="none" stroke="#fbbf24"                stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
+                <circle id="donut-green"  cx="65" cy="65" r="50" fill="none" stroke="#34d399"                stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
+                <circle id="donut-blue"   cx="65" cy="65" r="50" fill="none" stroke="#38bdf8"                stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
+                <text x="65" y="60" text-anchor="middle" fill="var(--text)"  font-size="16" font-weight="700" id="donut-label-pct">0%</text>
+                <text x="65" y="76" text-anchor="middle" fill="var(--text3)" font-size="9">מוקצה</text>
+              </svg>
+              <div class="inv-donut-legend">
+                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:#38bdf8"></span>🔵 כחולות&nbsp;<b id="leg-blue">0%</b></div>
+                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:#34d399"></span>🟢 ירוקות&nbsp;<b id="leg-green">0%</b></div>
+                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:#fbbf24"></span>🟡 צהובות&nbsp;<b id="leg-yellow">0%</b></div>
+                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:rgba(255,255,255,0.2)"></span>💵 מזומן&nbsp;<b id="leg-cash">100%</b></div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -3835,9 +3879,9 @@
               <tr>
                 <th>סימבול</th>
                 <th>קטגוריה</th>
-                <th>🔵 מניות כניסה</th>
+                <th>🔵 כמות מניות</th>
                 <th>🔵 מחיר כניסה</th>
-                <th>🟢 מניות חיזוק</th>
+                <th>🟢 כמות חיזוק</th>
                 <th>🟢 מחיר חיזוק</th>
                 <th>ממוצע</th>
                 <th>שווי</th>
@@ -3852,6 +3896,25 @@
 
         <div class="inv-actions">
           <button class="inv-save-btn" onclick="invSave()">💾 שמור</button>
+        </div>
+
+        <!-- MONTHLY DEPOSITS -->
+        <div class="inv-deposits-card">
+          <div class="inv-deposits-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>הפקדות חודשיות</span>
+          </div>
+          <div class="inv-deposits-form">
+            <input type="month" id="inv-dep-month">
+            <input type="number" id="inv-dep-amount" placeholder="סכום ($)" style="width:130px;" min="0" step="any">
+            <button class="inv-deposits-add-btn" onclick="invAddDeposit()">+ הוסף הפקדה</button>
+          </div>
+          <div class="inv-deposits-stats">
+            <div class="inv-dep-stat"><span class="inv-dep-stat-label">סה"כ הופקד</span><span class="inv-dep-stat-val" id="dep-total-val">$0</span></div>
+            <div class="inv-dep-stat"><span class="inv-dep-stat-label">שווי תיק כעת</span><span class="inv-dep-stat-val" id="dep-portfolio-val">—</span></div>
+            <div class="inv-dep-stat"><span class="inv-dep-stat-label">רווח / הפסד</span><span class="inv-dep-stat-val" id="dep-pnl-val">—</span></div>
+          </div>
+          <div id="dep-list"></div>
         </div>
 
         <!-- INVESTMENT ADVISOR -->
@@ -9780,8 +9843,8 @@ const INV_KEY = 'inv_data_v1';
 function invLoad() {
   try {
     const raw = localStorage.getItem(INV_KEY);
-    return raw ? JSON.parse(raw) : { portfolioTotal: '', holdings: [] };
-  } catch { return { portfolioTotal: '', holdings: [] }; }
+    return raw ? JSON.parse(raw) : { portfolioTotal: '', holdings: [], deposits: [] };
+  } catch { return { portfolioTotal: '', holdings: [], deposits: [] }; }
 }
 
 function invSaveData(data) {
@@ -9793,6 +9856,7 @@ function invInit() {
   const totalEl = document.getElementById('inv-portfolio-total');
   if (totalEl) totalEl.value = data.portfolioTotal || '';
   invRenderRows(data.holdings || []);
+  invRenderDeposits(data.deposits || []);
   invRecalc();
 }
 
@@ -9900,6 +9964,8 @@ function invRecalc() {
       remEl.style.color = over ? 'var(--red)' : 'var(--text3)';
     }
   });
+  invUpdateDonut(byCat, portfolioTotal);
+  invRenderDeposits(invLoad().deposits || []);
 }
 
 function invGetCurrentData() {
@@ -9920,7 +9986,8 @@ function invGetCurrentData() {
   });
   return {
     portfolioTotal: (document.getElementById('inv-portfolio-total')?.value || ''),
-    holdings: holdings.filter(h => h.symbol || h.entryShares || h.entryPrice)
+    holdings: holdings.filter(h => h.symbol || h.entryShares || h.entryPrice),
+    deposits: invLoad().deposits || []
   };
 }
 
@@ -9945,6 +10012,95 @@ function invSave() {
   const data = invGetCurrentData();
   invSaveData(data);
   toast('תיק ההשקעות נשמר ✓', 'success');
+}
+
+function invUpdateDonut(byCat, portfolioTotal) {
+  const C = 314.159;
+  const pcts = {
+    blue:   portfolioTotal > 0 ? byCat.blue   / portfolioTotal * 100 : 0,
+    green:  portfolioTotal > 0 ? byCat.green  / portfolioTotal * 100 : 0,
+    yellow: portfolioTotal > 0 ? byCat.yellow / portfolioTotal * 100 : 0,
+  };
+  pcts.cash = Math.max(0, 100 - pcts.blue - pcts.green - pcts.yellow);
+  const totalAllocated = pcts.blue + pcts.green + pcts.yellow;
+
+  const order = ['blue', 'green', 'yellow', 'cash'];
+  let offset = 0;
+  order.forEach(key => {
+    const el = document.getElementById(`donut-${key}`);
+    if (!el) return;
+    const len = pcts[key] / 100 * C;
+    el.setAttribute('stroke-dasharray', `${len.toFixed(2)} ${C}`);
+    el.setAttribute('stroke-dashoffset', `${(-offset / 100 * C).toFixed(2)}`);
+    offset += pcts[key];
+  });
+
+  const lbl = document.getElementById('donut-label-pct');
+  if (lbl) lbl.textContent = totalAllocated.toFixed(0) + '%';
+  ['blue','green','yellow','cash'].forEach(k => {
+    const el = document.getElementById(`leg-${k}`);
+    if (el) el.textContent = (pcts[k] || 0).toFixed(1) + '%';
+  });
+}
+
+function invAddDeposit() {
+  const month  = document.getElementById('inv-dep-month')?.value;
+  const amount = +(document.getElementById('inv-dep-amount')?.value) || 0;
+  if (!month || !amount) { toast('הכנס חודש וסכום', 'error'); return; }
+  const data = invLoad();
+  if (!data.deposits) data.deposits = [];
+  data.deposits.push({ month, amount });
+  data.deposits.sort((a, b) => b.month.localeCompare(a.month));
+  invSaveData(data);
+  invRenderDeposits(data.deposits);
+  document.getElementById('inv-dep-amount').value = '';
+}
+
+function invDeleteDeposit(idx) {
+  const data = invLoad();
+  if (!data.deposits) return;
+  data.deposits.splice(idx, 1);
+  invSaveData(data);
+  invRenderDeposits(data.deposits);
+}
+
+function invRenderDeposits(deposits = []) {
+  const listEl = document.getElementById('dep-list');
+  if (!listEl) return;
+  const portfolioTotal = +(document.getElementById('inv-portfolio-total')?.value) || 0;
+  const totalDeposited = deposits.reduce((s, d) => s + (+d.amount || 0), 0);
+
+  const totalEl = document.getElementById('dep-total-val');
+  const portEl  = document.getElementById('dep-portfolio-val');
+  const pnlEl   = document.getElementById('dep-pnl-val');
+
+  if (totalEl) totalEl.textContent = '$' + totalDeposited.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  if (portEl)  portEl.textContent  = portfolioTotal ? '$' + portfolioTotal.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '—';
+  if (pnlEl) {
+    if (portfolioTotal && totalDeposited) {
+      const pnl    = portfolioTotal - totalDeposited;
+      const pnlPct = (pnl / totalDeposited * 100).toFixed(1);
+      pnlEl.textContent = (pnl >= 0 ? '+' : '') + '$' + Math.abs(pnl).toLocaleString('en-US', { maximumFractionDigits: 0 }) + ` (${pnl >= 0 ? '+' : ''}${pnlPct}%)`;
+      pnlEl.style.color = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+    } else {
+      pnlEl.textContent = '—';
+      pnlEl.style.color = '';
+    }
+  }
+
+  if (!deposits.length) { listEl.innerHTML = ''; return; }
+  const heMonth = m => {
+    const [y, mo] = m.split('-');
+    return new Date(+y, +mo - 1, 1).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' });
+  };
+  let cumul = totalDeposited;
+  listEl.innerHTML = `<table class="inv-dep-table"><thead><tr><th>חודש</th><th>הפקדה</th><th>מצטבר</th><th></th></tr></thead><tbody>${
+    deposits.map((d, i) => {
+      const row = `<tr><td>${heMonth(d.month)}</td><td>$${(+d.amount).toLocaleString('en-US',{maximumFractionDigits:0})}</td><td>$${cumul.toLocaleString('en-US',{maximumFractionDigits:0})}</td><td><button class="inv-dep-del" onclick="invDeleteDeposit(${i})">×</button></td></tr>`;
+      cumul -= +d.amount;
+      return row;
+    }).join('')
+  }</tbody></table>`;
 }
 
 // ===== INVESTMENT ADVISOR =====
