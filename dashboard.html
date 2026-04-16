@@ -3823,7 +3823,7 @@
 
         <div class="inv-portfolio-bar">
           <label>סך התיק ($)</label>
-          <input type="number" id="inv-portfolio-total" placeholder="100000" min="0" step="any" oninput="invRecalc()">
+          <input type="number" id="inv-portfolio-total" placeholder="100000" min="0" step="any" oninput="invRecalc();invAutoSaveTotal()">
           <div class="inv-total-allocated">מוקצה: <span id="inv-allocated-pct">0%</span></div>
         </div>
 
@@ -10014,6 +10014,12 @@ function invSave() {
   toast('תיק ההשקעות נשמר ✓', 'success');
 }
 
+function invAutoSaveTotal() {
+  const data = invLoad();
+  data.portfolioTotal = document.getElementById('inv-portfolio-total')?.value || '';
+  invSaveData(data);
+}
+
 function invUpdateDonut(byCat, portfolioTotal) {
   const C = 314.159;
   const pcts = {
@@ -10051,8 +10057,13 @@ function invAddDeposit() {
   if (!data.deposits) data.deposits = [];
   data.deposits.push({ month, amount });
   data.deposits.sort((a, b) => b.month.localeCompare(a.month));
+  const totalEl = document.getElementById('inv-portfolio-total');
+  const newTotal = (+(totalEl?.value) || 0) + amount;
+  if (totalEl) totalEl.value = newTotal;
+  data.portfolioTotal = String(newTotal);
   invSaveData(data);
   invRenderDeposits(data.deposits);
+  invRecalc();
   document.getElementById('inv-dep-amount').value = '';
 }
 
