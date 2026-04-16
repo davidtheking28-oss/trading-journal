@@ -3007,6 +3007,17 @@
   .inv-save-btn { background: var(--accent); color: #fff; border: none; border-radius: 7px; padding: 9px 22px; font-size: 13px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
   .inv-save-btn:hover { opacity: 0.85; }
   .inv-empty { text-align: center; padding: 28px; color: var(--text3); font-size: 13px; }
+  .inv-advisor-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .inv-advisor-header { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--text); }
+  .inv-advisor-header svg { color: var(--accent); }
+  .inv-advisor-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .inv-type-pills { display: flex; gap: 6px; }
+  .inv-type-pill { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text2); font-size: 12px; cursor: pointer; transition: all 0.2s; }
+  .inv-type-pill.active { background: rgba(56,189,248,0.15); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+  .inv-analyze-btn { background: var(--accent); color: #fff; border: none; border-radius: 7px; padding: 8px 18px; font-size: 13px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; white-space: nowrap; }
+  .inv-analyze-btn:hover { opacity: 0.85; }
+  .inv-analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .inv-adv-output { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.7; color: var(--text); white-space: pre-wrap; direction: rtl; max-height: 500px; overflow-y: auto; }
 
   /* ── Missed Opportunities tab ── */
   #tab-missed { display: none; }
@@ -3799,6 +3810,25 @@
         <div class="inv-actions">
           <button class="inv-save-btn" onclick="invSave()">💾 שמור</button>
         </div>
+
+        <!-- INVESTMENT ADVISOR -->
+        <div class="inv-advisor-card">
+          <div class="inv-advisor-header">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            <span>יועץ השקעות AI</span>
+          </div>
+          <div class="inv-advisor-controls">
+            <input type="text" id="inv-adv-symbol" class="form-control" placeholder="סימבול (AAPL, MSFT...)" style="width:160px;font-family:monospace;font-weight:700;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
+            <div class="inv-type-pills" id="inv-type-pills">
+              <button class="inv-type-pill active" data-type="value" onclick="invSetType(this)">כחולה — ערך</button>
+              <button class="inv-type-pill" data-type="growth" onclick="invSetType(this)">ירוקה — צמיחה</button>
+              <button class="inv-type-pill" data-type="aristocrat" onclick="invSetType(this)">אריסטוקרטית</button>
+            </div>
+            <button class="inv-analyze-btn" onclick="invAnalyze()" id="inv-analyze-btn">▶ נתח מניה</button>
+          </div>
+          <div id="inv-adv-output" class="inv-adv-output" style="display:none;"></div>
+        </div>
+
       </div>
     </div>
 
@@ -9838,6 +9868,169 @@ function invSave() {
   const data = invGetCurrentData();
   invSaveData(data);
   toast('תיק ההשקעות נשמר ✓', 'success');
+}
+
+// ===== INVESTMENT ADVISOR =====
+let _invAdvType = 'value';
+
+function invSetType(btn) {
+  document.querySelectorAll('.inv-type-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _invAdvType = btn.dataset.type;
+}
+
+async function invAnalyze() {
+  const sym = (document.getElementById('inv-adv-symbol')?.value || '').trim().toUpperCase();
+  if (!sym) { toast('הכנס סימבול מניה', 'error'); return; }
+
+  const btn = document.getElementById('inv-analyze-btn');
+  const out  = document.getElementById('inv-adv-output');
+  btn.disabled = true;
+  btn.textContent = '⏳ מנתח...';
+  out.style.display = 'block';
+  out.textContent = 'מושך נתונים פיננסיים...';
+
+  try {
+    const token = await _getToken();
+    if (!token) { toast('נא להתחבר תחילה', 'error'); return; }
+
+    // Fetch Finnhub metrics
+    const [metricRes, profileRes] = await Promise.all([
+      fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=stock%2Fmetric&symbol=${encodeURIComponent(sym)}&metric=all`, { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=stock%2Fprofile2&symbol=${encodeURIComponent(sym)}`, { headers: { Authorization: `Bearer ${token}` } }),
+    ]);
+
+    const metricData  = metricRes.ok  ? await metricRes.json()  : {};
+    const profileData = profileRes.ok ? await profileRes.json() : {};
+    const m = metricData.metric || {};
+
+    const metrics = {
+      symbol: sym,
+      name: profileData.name || sym,
+      sector: profileData.finnhubIndustry || 'לא ידוע',
+      marketCap: profileData.marketCapitalization ? `$${(profileData.marketCapitalization/1000).toFixed(1)}B` : 'לא ידוע',
+      pe: m['peNormalizedAnnual'] ?? m['peTTM'] ?? null,
+      pb: m['pbAnnual'] ?? m['pbQuarterly'] ?? null,
+      peg: m['pegRatio'] ?? null,
+      roe: m['roeTTM'] ?? m['roeRfy'] ?? null,
+      roa: m['roaTTM'] ?? null,
+      debtEquity: m['totalDebt/totalEquityAnnual'] ?? m['longTermDebt/equityAnnual'] ?? null,
+      grossMargin: m['grossMarginTTM'] ?? m['grossMarginAnnual'] ?? null,
+      netMargin: m['netProfitMarginTTM'] ?? m['netProfitMarginAnnual'] ?? null,
+      revenueGrowth: m['revenueGrowthTTMYoy'] ?? m['revenueGrowth3Y'] ?? null,
+      epsGrowth: m['epsGrowthTTMYoy'] ?? m['epsGrowth3Y'] ?? null,
+      dividendYield: m['dividendYieldIndicatedAnnual'] ?? null,
+      payoutRatio: m['payoutRatioAnnual'] ?? null,
+      freeCashFlow: m['freeCashFlowAnnual'] ?? m['freeCashFlowTTM'] ?? null,
+      currentRatio: m['currentRatioAnnual'] ?? null,
+    };
+
+    const typeLabels = { value: 'כחולה (ערך)', growth: 'ירוקה (צמיחה)', aristocrat: 'אריסטוקרטית' };
+    const typeCriteria = {
+      value: `מניית ערך (כחולה). קריטריונים לפי הספר:
+- P/E נמוך ביחס לסקטור/שוק (עדיף מתחת לממוצע)
+- P/B נמוך (עדיף מתחת ל-1, בוודאי מתחת ל-3)
+- דיבידנד תשואה 2%-5%
+- שולי רווח גולמי ונטו יציבים וגבוהים
+- D/E נמוך (עדיף מתחת ל-1)
+- תזרים מזומנים חופשי (FCF) חיובי וגדל
+- ROE גבוה ויציב (15%-20%+)
+- צמיחה יציבה בהכנסות ורווחים`,
+      growth: `מניית צמיחה (ירוקה). קריטריונים לפי הספר:
+- צמיחה בהכנסות דו-ספרתית לפחות 3 שנים
+- EPS צומח בקצב גבוה ממתחרים
+- P/E גבוה מקובל אם מוצדק בצמיחה
+- PEG < 1 — אינדיקטור מצוין לצמיחה במחיר הוגן
+- ROE 20%+ ועולה עם הזמן
+- ROA גבוה ויציב
+- שולי רווח גולמי גבוהים (מעל הסקטור)
+- EPS Growth 20%+ לשנה
+- D/E נמוך או יציב
+- מודל עסקי סקלאבילי (SaaS, פינטק, טכנולוגיה)`,
+      aristocrat: `מניה אריסטוקרטית (דיבידנד). קריטריונים לפי הספר:
+- דיבידנד תשואה 2%-5%, יציב ועולה כל שנה
+- Payout Ratio 40%-60% (אופטימלי)
+- EPS צומח לאורך זמן
+- שולי רווח יציבים וגבוהים
+- D/E מתחת ל-0.5 (או יציב עם חוב ניתן להחזר)
+- FCF חיובי, יציב וגדל
+- ROE 15%-20%+`,
+    };
+
+    const fmt = (v, suffix='') => v != null ? `${(+v).toFixed(2)}${suffix}` : 'אין נתון';
+    const metricsText = `
+נתוני מניה: ${metrics.name} (${metrics.symbol})
+סקטור: ${metrics.sector} | שווי שוק: ${metrics.marketCap}
+
+P/E: ${fmt(metrics.pe)}
+P/B: ${fmt(metrics.pb)}
+PEG: ${fmt(metrics.peg)}
+ROE: ${fmt(metrics.roe,'%')}
+ROA: ${fmt(metrics.roa,'%')}
+D/E: ${fmt(metrics.debtEquity)}
+שולי רווח גולמי: ${fmt(metrics.grossMargin,'%')}
+שולי רווח נטו: ${fmt(metrics.netMargin,'%')}
+צמיחת הכנסות (YoY): ${fmt(metrics.revenueGrowth,'%')}
+צמיחת EPS: ${fmt(metrics.epsGrowth,'%')}
+תשואת דיבידנד: ${fmt(metrics.dividendYield,'%')}
+Payout Ratio: ${fmt(metrics.payoutRatio,'%')}
+Current Ratio: ${fmt(metrics.currentRatio)}
+`.trim();
+
+    const systemPrompt = `אתה יועץ השקעות מקצועי שמנתח מניות לפי שיטת ${typeLabels[_invAdvType]}.
+${typeCriteria[_invAdvType]}
+
+ענה בעברית. מבנה התשובה:
+1. **סיכום מהיר** — משפט אחד: האם המניה עומדת בקריטריונים?
+2. **ניתוח קריטריונים** — לכל קריטריון: ✅ עובר / ⚠️ גבולי / ❌ לא עובר + הסבר קצר
+3. **ציון כולל** — X/10
+4. **המלצה** — קנייה / המתנה / לא מתאימה, עם הסבר`;
+
+    out.textContent = 'מנתח עם AI...';
+
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/groq`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: metricsText },
+        ],
+        stream: true,
+        max_tokens: 1500,
+        temperature: 0.4,
+      }),
+    });
+
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+    out.textContent = '';
+    const reader = resp.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
+        try {
+          const chunk = JSON.parse(line.slice(6));
+          const delta = chunk.choices?.[0]?.delta?.content || '';
+          out.textContent += delta;
+          out.scrollTop = out.scrollHeight;
+        } catch { /* skip */ }
+      }
+    }
+  } catch (e) {
+    out.textContent = 'שגיאה: ' + (e.message || 'נסה שוב');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '▶ נתח מניה';
+  }
 }
 </script>
 
