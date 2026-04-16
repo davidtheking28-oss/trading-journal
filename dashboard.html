@@ -10206,8 +10206,8 @@ async function invAnalyze() {
     const metricsText = `
 מניה: ${profileData.name || sym} (${sym})
 סקטור: ${profileData.finnhubIndustry || 'לא ידוע'} | שווי שוק: ${profileData.marketCapitalization ? '$'+(profileData.marketCapitalization/1000).toFixed(1)+'B' : 'לא ידוע'}
-מחיר עכשווי: ${quoteData.c ? '$'+quoteData.c : 'אין נתון'} | שינוי יומי: ${quoteData.dp != null ? quoteData.dp.toFixed(2)+'%' : 'אין נתון'}
-52W גבוה: ${fmt(quoteData.h ?? m['52WeekHigh'])} | 52W נמוך: ${fmt(quoteData.l ?? m['52WeekLow'])}
+מחיר עכשווי: ${quoteData.c ? '$'+quoteData.c : 'אין נתון'} | שינוי יומי: ${quoteData.dp != null ? quoteData.dp.toFixed(2)+'%' : 'אין נתון'} | שינוי ($): ${quoteData.d != null ? (quoteData.d > 0 ? '+' : '')+quoteData.d.toFixed(2) : 'אין נתון'}
+52W גבוה: ${fmt(m['52WeekHigh'])} | 52W נמוך: ${fmt(m['52WeekLow'])}
 
 P/E: ${fmt(m['peNormalizedAnnual'] ?? m['peTTM'])}
 P/B: ${fmt(m['pbAnnual'] ?? m['pbQuarterly'])}
@@ -10249,7 +10249,7 @@ Beta: ${fmt(m['beta'])}
     const today = new Date().toLocaleDateString('he-IL', { year: 'numeric', month: 'long', day: 'numeric' });
     const userMessage = `תאריך הניתוח: ${today}\n\n${metricsText}`;
 
-    out.textContent = 'מנתח עם AI...';
+    out.textContent = '📊 נתונים שנמשכו מ-Finnhub:\n─────────────────────\n' + metricsText + '\n─────────────────────\nמנתח עם AI...\n';
 
     const resp = await fetch(`${SUPABASE_URL}/functions/v1/groq`, {
       method: 'POST',
@@ -10268,7 +10268,8 @@ Beta: ${fmt(m['beta'])}
 
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
-    out.textContent = '';
+    const dataHeader = '📊 נתונים שנמשכו מ-Finnhub:\n─────────────────────\n' + metricsText + '\n─────────────────────\n\n';
+    out.textContent = dataHeader;
     const reader = resp.body.getReader();
     const dec = new TextDecoder();
     let buf = '';
