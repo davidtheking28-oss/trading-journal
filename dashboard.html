@@ -10196,6 +10196,10 @@ async function invAnalyze() {
     const quoteData      = quoteRes.ok      ? await quoteRes.json()      : {};
     const earningsData   = earningsRes.ok   ? await earningsRes.json()   : {};
     const financialsData = financialsRes.ok ? await financialsRes.json() : {};
+    console.log('[INV] HTTP status:', metricRes.status, profileRes.status, quoteRes.status, earningsRes.status, financialsRes.status);
+    console.log('[INV] metric:', metricData);
+    console.log('[INV] quote:', quoteData);
+    console.log('[INV] financials period:', financialsData?.data?.[0]?.period);
     const m = metricData.metric || {};
     const earnings = Array.isArray(earningsData) ? earningsData.slice(0, 4) : [];
 
