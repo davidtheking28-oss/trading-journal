@@ -10183,24 +10183,31 @@ async function invAnalyze() {
     out.textContent = 'מושך נתונים פיננסיים מ-Finnhub...';
     const hdr = { Authorization: `Bearer ${token}` };
     const base = `${SUPABASE_URL}/functions/v1/finnhub`;
-    const [metricRes, profileRes, quoteRes, earningsRes, financialsRes] = await Promise.all([
+    const [metricRes, profileRes, quoteRes, earningsRes, financialsQRes, financialsARes] = await Promise.all([
       fetch(`${base}?path=stock%2Fmetric&symbol=${encodeURIComponent(sym)}&metric=all`, { headers: hdr }),
       fetch(`${base}?path=stock%2Fprofile2&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
       fetch(`${base}?path=quote&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
       fetch(`${base}?path=stock%2Fearnings&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
       fetch(`${base}?path=stock%2Ffinancials-reported&symbol=${encodeURIComponent(sym)}&freq=quarterly`, { headers: hdr }),
+      fetch(`${base}?path=stock%2Ffinancials-reported&symbol=${encodeURIComponent(sym)}&freq=annual`, { headers: hdr }),
     ]);
 
-    const metricData     = metricRes.ok     ? await metricRes.json()     : {};
-    const profileData    = profileRes.ok    ? await profileRes.json()    : {};
-    const quoteData      = quoteRes.ok      ? await quoteRes.json()      : {};
-    const earningsData   = earningsRes.ok   ? await earningsRes.json()   : {};
-    const financialsData = financialsRes.ok ? await financialsRes.json() : {};
-    console.log('[INV] HTTP status:', metricRes.status, profileRes.status, quoteRes.status, earningsRes.status, financialsRes.status);
+    const metricData     = metricRes.ok      ? await metricRes.json()      : {};
+    const profileData    = profileRes.ok     ? await profileRes.json()     : {};
+    const quoteData      = quoteRes.ok       ? await quoteRes.json()       : {};
+    const earningsData   = earningsRes.ok    ? await earningsRes.json()    : {};
+    const financialsQData = financialsQRes.ok ? await financialsQRes.json() : {};
+    const financialsAData = financialsARes.ok ? await financialsARes.json() : {};
+    // Pick whichever report (quarterly or annual) has the more recent endDate
+    const qLatest = financialsQData?.data?.[0];
+    const aLatest = financialsAData?.data?.[0];
+    const qDate = qLatest?.endDate || '';
+    const aDate = aLatest?.endDate || '';
+    const financialsData = (aDate > qDate) ? financialsAData : financialsQData;
+    console.log('[INV] HTTP status:', metricRes.status, profileRes.status, quoteRes.status, earningsRes.status, financialsQRes.status, financialsARes.status);
     console.log('[INV] metric:', metricData);
     console.log('[INV] quote:', quoteData);
-    console.log('[INV] financials period:', financialsData?.data?.[0]?.period);
-    console.log('[INV] financials raw:', JSON.stringify(financialsData).slice(0, 800));
+    console.log('[INV] financials chosen:', (aDate > qDate ? 'annual' : 'quarterly'), '| period:', financialsData?.data?.[0]?.endDate);
     const m = metricData.metric || {};
     const earnings = Array.isArray(earningsData) ? earningsData.slice(0, 4) : [];
 
