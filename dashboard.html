@@ -3280,12 +3280,8 @@
               <input class="qa-input" id="qa-mood" placeholder="איך הרגשת..." maxlength="300" autocomplete="off">
             </div>
             <div class="qa-field">
-              <div class="qa-label">ציון תהליך ⭐</div>
+              <div class="qa-label" style="opacity:0">x</div>
               <div style="display:flex; align-items:center; gap:12px; margin-top:2px;">
-                <div class="ps-stars" id="qa-ps-stars" onclick="qaSetPS(event)">
-                  <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span>
-                  <span data-v="4">★</span><span data-v="5">★</span>
-                </div>
                 <input type="checkbox" id="qa-crypto" onchange="qaCalc(); applyTypeBadge(document.getElementById('qa-type-badge'),this.checked);" style="display:none">
                 <span id="qa-type-badge" class="qa-type-badge stock" onclick="qaToggleType()" title="זוהה אוטומטית — לחץ לשינוי ידני">📈 מניה</span>
               </div>
@@ -3958,17 +3954,6 @@
               <option value="press">🟡 לחץ</option>
               <option value="down">🟣 מגמה יורדת</option>
             </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">ציון תהליך (1–5 ⭐)</label>
-            <div class="ps-stars" id="m-ps-stars" onclick="modalSetPS(event)" style="margin-top:8px;">
-              <span data-v="1" style="font-size:20px;">★</span>
-              <span data-v="2" style="font-size:20px;">★</span>
-              <span data-v="3" style="font-size:20px;">★</span>
-              <span data-v="4" style="font-size:20px;">★</span>
-              <span data-v="5" style="font-size:20px;">★</span>
-            </div>
-            <input type="hidden" id="m-process-score" value="0">
           </div>
         </div>
         <div class="form-group">
@@ -4738,7 +4723,6 @@ function renderTable(type) {
               <div style="display:flex;gap:24px;flex-wrap:wrap;font-size:13px;">
                 <div>סוג סטאפ: ${stBadge(tr.setup_type)}</div>
                 <div>תנאי שוק: ${mcHtml}</div>
-                <div>ציון תהליך: <span style="color:var(--yellow)">${psHtml}</span></div>
               </div>
             </div>
           </div>
