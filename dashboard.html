@@ -10247,53 +10247,75 @@ async function invAnalyze() {
     const isHealthcare = /biotech|pharma|health|medical|drug/.test(industry);
     const isEnergy     = /oil|gas|energy|mining|utilities|coal/.test(industry);
 
-    // Revenue concepts ordered by industry relevance
-    const REV_C = isFinancial
-      ? ['Revenues','InterestAndDividendIncomeOperating','NoninterestIncome','InterestIncomeOperating',
-         'RevenueFromContractWithCustomerExcludingAssessedTax','SalesRevenueNet']
-      : isHealthcare
-        ? ['Revenues','RevenueFromContractWithCustomerExcludingAssessedTax','SalesRevenueNet',
-           'RevenueFromContractWithCustomerIncludingAssessedTax','Revenues']
-        : isEnergy
-          ? ['Revenues','RevenueFromContractWithCustomerExcludingAssessedTax','SalesRevenueNet',
-             'OilAndGasRevenue','RevenueFromContractWithCustomerIncludingAssessedTax']
-          : ['Revenues','RevenueFromContractWithCustomerExcludingAssessedTax','SalesRevenueNet',
-             'RevenueFromContractWithCustomerIncludingAssessedTax'];
-    const NI_C  = ['NetIncomeLoss','ProfitLoss','NetIncomeLossAvailableToCommonStockholdersBasic'];
+    // Universal revenue concepts — covers tech, retail, healthcare, energy, financial, SaaS, real estate
+    const REV_C = [
+      'Revenues','RevenueFromContractWithCustomerExcludingAssessedTax',
+      'RevenueFromContractWithCustomerIncludingAssessedTax',
+      'SalesRevenueNet','SalesRevenueGoodsNet','SalesRevenueServicesNet',
+      'InterestAndDividendIncomeOperating','NoninterestIncome','InterestIncomeOperating',
+      'OilAndGasRevenue','RealEstateRevenueNet','HealthCareOrganizationRevenue',
+      'ProductRevenue','LicenseAndServicesRevenue','SubscriptionRevenue',
+      'TotalRevenues','NetRevenues','RevenueNet',
+    ];
+    const NI_C = [
+      'NetIncomeLoss','ProfitLoss',
+      'NetIncomeLossAvailableToCommonStockholdersBasic',
+      'NetIncomeLossAttributableToParent',
+      'IncomeLossFromContinuingOperations',
+    ];
 
     const secRevRaw    = getRaw(secIC, ...REV_C);
     const prevRevRaw   = getRaw(prevIC, ...REV_C);
     const secNIRaw     = getRaw(secIC, ...NI_C);
-    const secGPRaw     = getRaw(secIC, 'GrossProfit');
-    const secCOGSRaw   = getRaw(secIC, 'CostOfRevenue','CostOfGoodsAndServicesSold');
-    const secOpIncRaw  = getRaw(secIC, 'OperatingIncomeLoss');
+    const secGPRaw     = getRaw(secIC, 'GrossProfit','GrossProfitLoss');
+    const secCOGSRaw   = getRaw(secIC, 'CostOfRevenue','CostOfGoodsAndServicesSold',
+      'CostOfGoodsSold','CostOfGoodsAndServiceExcludingDepreciationDepletionAndAmortization');
+    const secOpIncRaw  = getRaw(secIC, 'OperatingIncomeLoss',
+      'IncomeLossFromContinuingOperationsBeforeInterestExpenseInterestIncomeIncomeTaxesExtraordinaryItemsNoncontrollingInterestsNet');
     const secPreTaxRaw = getRaw(secIC,
       'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest',
       'IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments',
-      'IncomeLossBeforeIncomeTaxExpenseBenefit');
+      'IncomeLossBeforeIncomeTaxExpenseBenefit','IncomeLossBeforeProvisionForIncomeTax');
+    const secDAraw     = getRaw(secCF, 'DepreciationDepletionAndAmortization',
+      'DepreciationAndAmortization','Depreciation');
     const secAssetsRaw = getRaw(secBS, 'Assets');
-    const secEquityRaw = getRaw(secBS, 'StockholdersEquity','StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest');
-    const secLTDebtRaw = getRaw(secBS, 'LongTermDebt','LongTermDebtNoncurrent','LongTermNotesPayable');
+    const secEquityRaw = getRaw(secBS, 'StockholdersEquity',
+      'StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest',
+      'PartnersCapital','MembersEquity');
+    const secLTDebtRaw = getRaw(secBS, 'LongTermDebt','LongTermDebtNoncurrent',
+      'LongTermNotesPayable','SeniorNotes','LongTermLineOfCredit');
+    const secSTDebtRaw = getRaw(secBS, 'ShortTermBorrowings','DebtCurrent',
+      'NotesPayableCurrent','LongTermDebtCurrent','CommercialPaper');
+    const secCurrAssetsRaw = getRaw(secBS, 'AssetsCurrent');
+    const secCurrLiabRaw   = getRaw(secBS, 'LiabilitiesCurrent');
     const secOpCFRaw   = getRaw(secCF, 'NetCashProvidedByUsedInOperatingActivities');
-    const secCapexRaw  = getRaw(secCF, 'PaymentsToAcquirePropertyPlantAndEquipment',
+    const secCapexRaw  = getRaw(secCF,
+      'PaymentsToAcquirePropertyPlantAndEquipment',
       'PaymentsForCapitalImprovements','CapitalExpendituresIncurredButNotYetPaid',
-      'PaymentsToAcquireOtherPropertyPlantAndEquipment');
+      'PaymentsToAcquireOtherPropertyPlantAndEquipment',
+      'PurchaseOfPropertyAndEquipment','AdditionsToPropertyAndEquipment');
 
     const sl = latestPeriod ? ` [SEC ${latestPeriod}]` : ' [SEC]';
-    const secNetMargin   = (secRevRaw && secNIRaw != null) ? (secNIRaw / secRevRaw * 100).toFixed(2) : null;
-    const secGrossMargin = secGPRaw != null && secRevRaw
+
+    const secTotalDebtRaw = (secLTDebtRaw != null || secSTDebtRaw != null)
+      ? (secLTDebtRaw ?? 0) + (secSTDebtRaw ?? 0) : null;
+    const secNetMargin    = (secRevRaw && secNIRaw != null) ? (secNIRaw / secRevRaw * 100).toFixed(2) : null;
+    const secGrossMargin  = secGPRaw != null && secRevRaw
       ? (secGPRaw / secRevRaw * 100).toFixed(2)
       : (secCOGSRaw != null && secRevRaw ? ((secRevRaw - secCOGSRaw) / secRevRaw * 100).toFixed(2) : null);
     const secPreTaxMargin = (secPreTaxRaw != null && secRevRaw) ? (secPreTaxRaw / secRevRaw * 100).toFixed(2) : null;
-    const secOpMargin    = (!isFinancial && secOpIncRaw != null && secRevRaw) ? (secOpIncRaw / secRevRaw * 100).toFixed(2) : null;
-    const secROE         = (secNIRaw != null && secEquityRaw) ? (secNIRaw / secEquityRaw * 100).toFixed(2) : null;
-    const secROA         = (secNIRaw != null && secAssetsRaw) ? (secNIRaw / secAssetsRaw * 100).toFixed(2) : null;
-    const secDE          = (secLTDebtRaw != null && secEquityRaw) ? (secLTDebtRaw / secEquityRaw).toFixed(2) : null;
-    const secFCFRaw      = secOpCFRaw != null
+    const secOpMargin     = (!isFinancial && secOpIncRaw != null && secRevRaw) ? (secOpIncRaw / secRevRaw * 100).toFixed(2) : null;
+    const secEBITDARaw    = (secOpIncRaw != null && secDAraw != null) ? secOpIncRaw + secDAraw : null;
+    const secROE          = (secNIRaw != null && secEquityRaw) ? (secNIRaw / secEquityRaw * 100).toFixed(2) : null;
+    const secROA          = (secNIRaw != null && secAssetsRaw) ? (secNIRaw / secAssetsRaw * 100).toFixed(2) : null;
+    const secDE           = (secTotalDebtRaw != null && secEquityRaw) ? (secTotalDebtRaw / secEquityRaw).toFixed(2)
+      : (secLTDebtRaw != null && secEquityRaw ? (secLTDebtRaw / secEquityRaw).toFixed(2) : null);
+    const secCurrentRatio = (secCurrAssetsRaw && secCurrLiabRaw) ? (secCurrAssetsRaw / secCurrLiabRaw).toFixed(2) : null;
+    const secFCFRaw       = secOpCFRaw != null
       ? (secCapexRaw != null ? secOpCFRaw - Math.abs(secCapexRaw) : secOpCFRaw)
       : null;
     const fcfNote = secOpCFRaw != null && secCapexRaw == null ? ' (תזרים תפעולי בלבד — Capex לא נמצא)' : '';
-    const secRevGrowth   = (secRevRaw && prevRevRaw) ? ((secRevRaw - prevRevRaw) / Math.abs(prevRevRaw) * 100).toFixed(1) : null;
+    const secRevGrowth    = (secRevRaw && prevRevRaw) ? ((secRevRaw - prevRevRaw) / Math.abs(prevRevRaw) * 100).toFixed(1) : null;
 
     // Auto-detect one-time items: net margin >> pre-tax margin = likely tax benefit / non-recurring
     const oneTimeFlag = (secNetMargin != null && secPreTaxMargin != null &&
@@ -10437,8 +10459,9 @@ EPS היסטוריה רבעונית (4 רבעונים אחרונים):
 
 === מאזן ===
 D/E: ${fmtSEC(secDE,'', fmt(m['totalDebt/totalEquityAnnual'] ?? m['longTermDebt/equityAnnual']))}${isFinancial ? ' ⚠️ חברה פיננסית — D/E גבוה מובנה' : ''}
-Current Ratio: ${isFinancial ? 'לא רלוונטי לחברה פיננסית' : fmt(currentRatio)}
+Current Ratio: ${isFinancial ? 'לא רלוונטי לחברה פיננסית' : fmtSEC(secCurrentRatio,'', fmt(currentRatio))}
 FCF: ${secFCFRaw != null ? '$'+(secFCFRaw/1e9).toFixed(2)+'B'+fcfNote+sl : fmtM(m['freeCashFlowAnnual'] ?? m['freeCashFlowTTM'])}
+EBITDA: ${secEBITDARaw != null ? '$'+(secEBITDARaw/1e9).toFixed(2)+'B'+sl : 'אין נתון'}
 תשואת דיבידנד: ${fmt(m['dividendYieldIndicatedAnnual'],'%')}
 Beta: ${fmt(m['beta'])}
 
