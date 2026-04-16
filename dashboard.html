@@ -441,6 +441,43 @@
   .quick-add-body { transition: all 0.2s; }
   .quick-add-body.collapsed { display: none; }
 
+  /* ── QA Modal ── */
+  #qa-modal .modal {
+    max-width: 680px;
+  }
+  #qa-modal .modal-header {
+    background: linear-gradient(90deg, rgba(56,189,248,0.08) 0%, transparent 100%);
+  }
+  #qa-modal .modal-body {
+    padding: 20px 24px 24px;
+  }
+  .qa-modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .qa-modal-grid .qa-field { margin: 0; }
+  .qa-modal-grid .qa-field.full { grid-column: 1 / -1; }
+  .qa-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 20px;
+    background: rgba(56,189,248,0.04);
+    border-top: 1px solid rgba(56,189,248,0.12);
+    border-radius: 0 0 var(--radius2) var(--radius2);
+  }
+  .qa-modal-stats {
+    display: flex;
+    gap: 20px;
+    font-size: 12px;
+    color: var(--text3);
+  }
+  .qa-modal-stats span { display: flex; flex-direction: column; gap: 2px; }
+  .qa-modal-stats strong { font-size: 13px; color: var(--text1); }
+
   /* ── FAB (inline in quick-add header) ── */
   .fab {
     width: 32px;
@@ -3229,113 +3266,18 @@
         <button class="mini-tab" onclick="setScope('stock',this)">מניות</button>
         <button class="mini-tab" onclick="setScope('crypto',this)">קריפטו</button>
       </div>
-      <!-- ═══ QUICK ADD WIDGET ═══ -->
-      <div class="quick-add">
-        <div class="quick-add-header">
+      <!-- ═══ QUICK ADD TRIGGER ═══ -->
+      <div class="quick-add" style="cursor:pointer;" onclick="fabToggle()">
+        <div class="quick-add-header" style="margin-bottom:0;">
           <div style="display:flex;align-items:center;gap:10px;">
-            <button class="fab" id="fab-btn" onclick="fabToggle()" aria-label="הוסף עסקה מהירה">
+            <button class="fab" id="fab-btn" onclick="event.stopPropagation();fabToggle()" aria-label="הוסף עסקה מהירה">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
             </button>
             <div class="quick-add-title">הוספת עסקה מהירה</div>
           </div>
-          <div style="display:flex;gap:12px;align-items:center;">
-            <div class="quick-add-preview" id="qa-preview" style="display:none">
-              <div class="qa-preview-item">גודל פוז׳: <span id="qa-prev-pl">—</span></div>
-              <div class="qa-preview-item">סיכון: <span id="qa-prev-pct">—</span></div>
-            </div>
-          </div>
-        </div>
-        <div class="quick-add-body collapsed" id="qa-body">
-          <!-- שורה 1: שדות עסקה עיקריים -->
-          <div class="quick-add-row">
-            <div class="qa-field">
-              <div class="qa-label">L / S</div>
-              <div class="qa-ls">
-                <button class="qa-ls-btn active-l" id="qa-l-btn" onclick="qaSetLS('L')">L</button>
-                <button class="qa-ls-btn" id="qa-s-btn" onclick="qaSetLS('S')">S</button>
-              </div>
-            </div>
-            <div class="qa-field">
-              <div class="qa-label">סימבול</div>
-              <div class="sym-ac-wrap">
-                <input class="qa-input" id="qa-symbol" placeholder="AAPL" maxlength="20"
-                  oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9._\-]/g,''); symAcShow('qa-symbol','qa-symbol-drop'); qaAutoType(); rtValidate('qa-symbol','qa-sym-status','qa-crypto')"
-                  onkeydown="symAcKey(event,'qa-symbol','qa-symbol-drop')"
-                  autocomplete="off">
-                <div id="qa-symbol-drop" class="sym-ac-drop" style="display:none"></div>
-              </div>
-              <div class="sym-status" id="qa-sym-status"></div>
-            </div>
-            <div class="qa-field">
-              <div class="qa-label">מחיר כניסה</div>
-              <input class="qa-input" id="qa-entry" type="number" placeholder="0.00" step="0.0001" oninput="qaCalc()">
-            </div>
-            <div class="qa-field">
-              <div class="qa-label">מניות</div>
-              <input class="qa-input" id="qa-shares" type="number" placeholder="0" step="1" oninput="qaCalc()">
-            </div>
-            <div class="qa-field">
-              <div class="qa-label">סטופ</div>
-              <input class="qa-input" id="qa-stop" type="number" placeholder="0.00" step="0.0001" oninput="qaCalc()">
-              <div class="qa-stop-pct" id="qa-stop-pct"></div>
-            </div>
-            <div class="qa-field">
-              <div class="qa-label">עמלה</div>
-              <input class="qa-input" id="qa-commission" type="number" placeholder="2.50" value="2.50" step="0.01">
-            </div>
-            <div class="qa-field">
-              <div class="qa-label">תאריך כניסה</div>
-              <input class="qa-input" id="qa-date" type="date">
-            </div>
-          </div>
-          <!-- שורה 2: הקשר + שמירה -->
-          <div class="quick-add-row2">
-            <div class="qa-field">
-              <div class="qa-label">סיבת כניסה</div>
-              <div class="er-pills" id="qa-er-pills">
-                <span class="er-pill" data-er="LPS"       onclick="qaSetER('LPS')">LPS</span>
-                <span class="er-pill" data-er="Low Cheat" onclick="qaSetER('Low Cheat')">Low Cheat</span>
-                <span class="er-pill" data-er="Cheat"     onclick="qaSetER('Cheat')">Cheat</span>
-                <span class="er-pill" data-er="Handle"    onclick="qaSetER('Handle')">Handle</span>
-                <span class="er-pill" data-er="Breakout"  onclick="qaSetER('Breakout')">Breakout</span>
-              </div>
-            </div>
-            <div class="qa-field" style="display:none">
-              <div id="qa-st-pills"></div>
-            </div>
-            <div class="qa-field">
-              <div class="qa-label">תנאי שוק</div>
-              <select class="qa-input" id="qa-market-cond" style="padding:6px 8px;">
-                <option value="">— בחר —</option>
-                <option value="easy">🟢 שוק קל</option>
-                <option value="hard">🔴 שוק קשה</option>
-                <option value="up">🔵 מגמה עולה</option>
-                <option value="press">🟡 לחץ</option>
-                <option value="down">🟣 מגמה יורדת</option>
-              </select>
-            </div>
-            <div class="qa-field">
-              <div class="qa-label">הערה (אופציונלי)</div>
-              <input class="qa-input" id="qa-note" placeholder="תיאור הכניסה..." maxlength="200" autocomplete="off">
-            </div>
-            <div class="qa-field">
-              <div class="qa-label">מצב רגשי לפני הכניסה</div>
-              <input class="qa-input" id="qa-mood" placeholder="איך הרגשת..." maxlength="300" autocomplete="off">
-            </div>
-            <div class="qa-field">
-              <div class="qa-label" style="opacity:0">x</div>
-              <div style="display:flex; align-items:center; gap:12px; margin-top:2px;">
-                <input type="checkbox" id="qa-crypto" onchange="qaCalc(); applyTypeBadge(document.getElementById('qa-type-badge'),this.checked);" style="display:none">
-                <span id="qa-type-badge" class="qa-type-badge stock" onclick="qaToggleType()" title="זוהה אוטומטית — לחץ לשינוי ידני">📈 מניה</span>
-              </div>
-            </div>
-            <div class="qa-field">
-              <div class="qa-label" style="opacity:0">x</div>
-              <button class="qa-save" onclick="qaSave()">💾 שמור</button>
-            </div>
-          </div>
+          <span style="font-size:11px;color:var(--text3);">לחץ לפתיחה</span>
         </div>
       </div>
       <!-- ═══════════════════════ -->
@@ -3850,6 +3792,105 @@
 <div class="ss-lightbox" id="ss-lightbox" onclick="closeLightbox()">
   <button class="ss-lightbox-close" onclick="closeLightbox()">✕</button>
   <img id="ss-lightbox-img" src="" alt="Screenshot">
+</div>
+
+<!-- QA MODAL -->
+<div class="modal-overlay" id="qa-modal" onclick="if(event.target===this)fabToggle()">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:680px;">
+    <div class="modal-header">
+      <div class="modal-title">⚡ הוספת עסקה מהירה</div>
+      <button class="btn btn-secondary btn-sm" onclick="fabToggle()" style="padding:4px 10px;font-size:18px;line-height:1;">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px 24px 0;">
+      <div class="qa-modal-grid">
+        <div class="qa-field">
+          <div class="qa-label">L / S</div>
+          <div class="qa-ls">
+            <button class="qa-ls-btn active-l" id="qa-l-btn" onclick="qaSetLS('L')">L</button>
+            <button class="qa-ls-btn" id="qa-s-btn" onclick="qaSetLS('S')">S</button>
+          </div>
+        </div>
+        <div class="qa-field">
+          <div class="qa-label">סוג</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+            <input type="checkbox" id="qa-crypto" onchange="qaCalc(); applyTypeBadge(document.getElementById('qa-type-badge'),this.checked);" style="display:none">
+            <span id="qa-type-badge" class="qa-type-badge stock" onclick="qaToggleType()" title="לחץ לשינוי">📈 מניה</span>
+          </div>
+        </div>
+        <div class="qa-field">
+          <div class="qa-label">סימבול</div>
+          <div class="sym-ac-wrap">
+            <input class="qa-input" id="qa-symbol" placeholder="AAPL" maxlength="20"
+              oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9._\-]/g,''); symAcShow('qa-symbol','qa-symbol-drop'); qaAutoType(); rtValidate('qa-symbol','qa-sym-status','qa-crypto')"
+              onkeydown="symAcKey(event,'qa-symbol','qa-symbol-drop')"
+              autocomplete="off">
+            <div id="qa-symbol-drop" class="sym-ac-drop" style="display:none"></div>
+          </div>
+          <div class="sym-status" id="qa-sym-status"></div>
+        </div>
+        <div class="qa-field">
+          <div class="qa-label">תאריך כניסה</div>
+          <input class="qa-input" id="qa-date" type="date">
+        </div>
+        <div class="qa-field">
+          <div class="qa-label">מחיר כניסה</div>
+          <input class="qa-input" id="qa-entry" type="number" placeholder="0.00" step="0.0001" oninput="qaCalc()">
+        </div>
+        <div class="qa-field">
+          <div class="qa-label">מניות</div>
+          <input class="qa-input" id="qa-shares" type="number" placeholder="0" step="1" oninput="qaCalc()">
+        </div>
+        <div class="qa-field">
+          <div class="qa-label">סטופ (SL)</div>
+          <input class="qa-input" id="qa-stop" type="number" placeholder="0.00" step="0.0001" oninput="qaCalc()">
+          <div class="qa-stop-pct" id="qa-stop-pct"></div>
+        </div>
+        <div class="qa-field">
+          <div class="qa-label">עמלה</div>
+          <input class="qa-input" id="qa-commission" type="number" placeholder="2.50" value="2.50" step="0.01">
+        </div>
+        <div class="qa-field full">
+          <div class="qa-label">סיבת כניסה</div>
+          <div class="er-pills" id="qa-er-pills">
+            <span class="er-pill" data-er="LPS"       onclick="qaSetER('LPS')">LPS</span>
+            <span class="er-pill" data-er="Low Cheat" onclick="qaSetER('Low Cheat')">Low Cheat</span>
+            <span class="er-pill" data-er="Cheat"     onclick="qaSetER('Cheat')">Cheat</span>
+            <span class="er-pill" data-er="Handle"    onclick="qaSetER('Handle')">Handle</span>
+            <span class="er-pill" data-er="Breakout"  onclick="qaSetER('Breakout')">Breakout</span>
+          </div>
+        </div>
+        <div class="qa-field" style="display:none"><div id="qa-st-pills"></div></div>
+        <div class="qa-field">
+          <div class="qa-label">תנאי שוק</div>
+          <select class="qa-input" id="qa-market-cond" style="padding:6px 8px;">
+            <option value="">— בחר —</option>
+            <option value="easy">🟢 שוק קל</option>
+            <option value="hard">🔴 שוק קשה</option>
+            <option value="up">🔵 מגמה עולה</option>
+            <option value="press">🟡 לחץ</option>
+            <option value="down">🟣 מגמה יורדת</option>
+          </select>
+        </div>
+        <div class="qa-field">
+          <div class="qa-label">מצב רגשי</div>
+          <input class="qa-input" id="qa-mood" placeholder="איך הרגשת..." maxlength="300" autocomplete="off">
+        </div>
+        <div class="qa-field full">
+          <div class="qa-label">הערה</div>
+          <input class="qa-input" id="qa-note" placeholder="תיאור הכניסה..." maxlength="200" autocomplete="off">
+        </div>
+      </div>
+    </div>
+    <div class="qa-modal-footer">
+      <div class="qa-modal-stats">
+        <span>גודל פוז׳<strong id="qa-prev-pl">—</strong></span>
+        <span>סיכון %<strong id="qa-prev-pct">—</strong></span>
+        <span>סטופ מ-כניסה<strong id="qa-stop-pct" style="color:var(--red)"></strong></span>
+      </div>
+      <button class="qa-save" onclick="qaSave()">💾 שמור עסקה</button>
+    </div>
+    <div id="qa-preview" style="display:none"></div>
+  </div>
 </div>
 
 <!-- MODAL -->
@@ -5088,7 +5129,7 @@ function calcExpectancy(trades) {
 // QUICK ADD WIDGET
 // ══════════════════════════════════════════════
 let qaLS = 'L';
-let qaCollapsed = true;
+let qaCollapsed = false; // managed by modal open/close
 
 function qaInit() {
   const today = new Date().toISOString().split('T')[0];
@@ -5096,16 +5137,18 @@ function qaInit() {
   if (el && !el.value) el.value = today;
 }
 
-function qaToggle() {
-  qaCollapsed = !qaCollapsed;
-  document.getElementById('qa-body').classList.toggle('collapsed', qaCollapsed);
-  document.getElementById('fab-btn')?.classList.toggle('open', !qaCollapsed);
-}
+function qaToggle() { fabToggle(); }
 
 function fabToggle() {
-  qaCollapsed = !qaCollapsed;
-  document.getElementById('qa-body').classList.toggle('collapsed', qaCollapsed);
-  document.getElementById('fab-btn').classList.toggle('open', !qaCollapsed);
+  const modal = document.getElementById('qa-modal');
+  const isOpen = modal.classList.toggle('open');
+  document.getElementById('fab-btn')?.classList.toggle('open', isOpen);
+  document.body.style.overflow = isOpen ? 'hidden' : '';
+  if (isOpen) {
+    const d = document.getElementById('qa-date');
+    if (d && !d.value) d.value = new Date().toISOString().split('T')[0];
+    setTimeout(() => document.getElementById('qa-symbol')?.focus(), 80);
+  }
 }
 
 // Known crypto base symbols that would otherwise be mistaken for stocks
@@ -5574,6 +5617,7 @@ function qaSave() {
 
   renderOverview();
   initFilters();
+  fabToggle(); // סגור מודל אחרי שמירה
 }
 
 function tradeDays(t) {
