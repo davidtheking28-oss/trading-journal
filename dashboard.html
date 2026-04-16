@@ -3929,7 +3929,8 @@
             <span>יועץ השקעות AI</span>
           </div>
           <div class="inv-advisor-controls">
-            <input type="text" id="inv-adv-symbol" class="form-control" placeholder="סימבול (AAPL, MSFT...)" style="width:180px;font-family:monospace;font-weight:700;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
+            <input type="text" id="inv-adv-symbol" list="inv-adv-symbol-list" class="form-control" placeholder="סימבול (AAPL, MSFT...)" style="width:180px;font-family:monospace;font-weight:700;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase();invSymbolAutocomplete(this.value)">
+            <datalist id="inv-adv-symbol-list"></datalist>
             <button class="inv-analyze-btn" onclick="invAnalyze()" id="inv-analyze-btn">▶ נתח מניה</button>
           </div>
           <div id="inv-adv-output" class="inv-adv-output" style="display:none;"></div>
@@ -10165,6 +10166,22 @@ function invRenderDeposits(deposits = []) {
 }
 
 // ===== INVESTMENT ADVISOR =====
+function invSymbolAutocomplete(val) {
+  const list = document.getElementById('inv-adv-symbol-list');
+  if (!list) return;
+  list.innerHTML = '';
+  if (!val || val.length < 1) return;
+  let count = 0;
+  for (const s of STOCK_SYMBOLS) {
+    if (s.startsWith(val)) {
+      const opt = document.createElement('option');
+      opt.value = s;
+      list.appendChild(opt);
+      if (++count >= 15) break;
+    }
+  }
+}
+
 async function invAnalyze() {
   const sym = (document.getElementById('inv-adv-symbol')?.value || '').trim().toUpperCase();
   if (!sym) { toast('הכנס סימבול מניה', 'error'); return; }
