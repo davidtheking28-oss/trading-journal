@@ -7320,26 +7320,25 @@ function tlgParse(text) {
   preview.appendChild(allBtn);
 }
 
-function deduplicateDB(type) {
+async function deduplicateDB(type) {
   const arr = type === 'stock' ? db.stocks : db.crypto;
   const seen = new Set();
-  const before = arr.length;
+  const toRemove = [];
   const deduped = arr.filter(t => {
-    if (t.deleted) return true; // keep deleted (recycle bin)
+    if (t.deleted) return true;
     const key = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}`;
-    if (seen.has(key)) return false;
+    if (seen.has(key)) { toRemove.push(t.id); return false; }
     seen.add(key);
     return true;
   });
-  const removed = before - deduped.length;
-  if (removed === 0) {
-    toast('לא נמצאו כפילויות', 'success');
-    return;
-  }
+  const removed = toRemove.length;
+  if (removed === 0) { toast('לא נמצאו כפילויות', 'success'); return; }
   if (!confirm(`נמצאו ${removed} עסקאות כפולות ב${type==='stock'?'מניות':'קריפטו'}. למחוק?`)) return;
   if (type === 'stock') db.stocks = deduped;
   else db.crypto = deduped;
-  saveDB();
+  if (_currentUser && toRemove.length) {
+    await _sb.from('trades').update({ deleted: true }).in('id', toRemove).eq('user_id', _currentUser.id);
+  }
   renderTable(type);
   toast(`הוסרו ${removed} כפילויות`, 'success');
 }
@@ -8567,19 +8566,27 @@ function flexIsDuplicate(t) {
   );
 }
 
-function flexConfirm(idx) {
+async function flexConfirm(idx) {
   const t = window._flexPending?.[idx];
   if (!t) return;
   if (flexIsDuplicate(t)) { toast('כבר קיים ביומן', 'error'); return; }
 
-  const arr = t.type === 'crypto' ? db.crypto : db.stocks;
-  const id  = (arr.length ? Math.max(...arr.map(x => x.id)) : 0) + 1;
-  arr.push({ ...t, id, deleted: false });
-  saveDB(); initFilters();
-  renderTable(t.type === 'crypto' ? 'crypto' : 'stock');
-
   const btn = document.getElementById(`flex-btn-${idx}`);
-  if (btn) { btn.disabled = true; btn.textContent = '✓ נוסף'; }
+  if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
+
+  const row = _tradeToRow({ ...t, deleted: false });
+  const { data: inserted, error } = await _sb.from('trades').insert(row).select().single();
+  if (error) {
+    toast('שגיאה בשמירה: ' + error.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = '+ ייבא'; }
+    return;
+  }
+
+  const arr = t.type === 'crypto' ? db.crypto : db.stocks;
+  arr.push(_rowToTrade(inserted));
+  initFilters();
+  renderTable(t.type === 'crypto' ? 'crypto' : 'stock');
+  if (btn) { btn.textContent = '✓ נוסף'; }
   toast(`${t.symbol} נוסף`, 'success');
 }
 
