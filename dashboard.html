@@ -3494,7 +3494,22 @@
       <div class="ov-section" style="margin-top:22px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> גרפים</div>
       <div class="charts-grid">
         <div class="chart-card">
-          <div class="chart-title">P&L מצטבר <span style="color:var(--text3);font-weight:500;text-transform:none;letter-spacing:0;">— לפי חודש</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;flex-wrap:wrap;">
+            <div class="chart-title" style="margin-bottom:0">P&L מצטבר</div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div style="display:flex;background:rgba(255,255,255,0.05);border-radius:6px;overflow:hidden;border:1px solid var(--border);">
+                <button id="cum-mode-pct" onclick="setCumMode('pct')" style="padding:3px 10px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:var(--accent);color:#fff;transition:all 0.15s;">%</button>
+                <button id="cum-mode-usd" onclick="setCumMode('usd')" style="padding:3px 10px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all 0.15s;">$</button>
+              </div>
+              <div style="display:flex;background:rgba(255,255,255,0.05);border-radius:6px;overflow:hidden;border:1px solid var(--border);" id="cum-period-btns">
+                <button onclick="setCumPeriod('7d')"  data-p="7d"  style="padding:3px 9px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all 0.15s;">7D</button>
+                <button onclick="setCumPeriod('1m')"  data-p="1m"  style="padding:3px 9px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all 0.15s;">1M</button>
+                <button onclick="setCumPeriod('ytd')" data-p="ytd" style="padding:3px 9px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all 0.15s;">YTD</button>
+                <button onclick="setCumPeriod('1y')"  data-p="1y"  style="padding:3px 9px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all 0.15s;">1Y</button>
+                <button onclick="setCumPeriod('all')" data-p="all" style="padding:3px 9px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:var(--accent);color:#fff;transition:all 0.15s;">All</button>
+              </div>
+            </div>
+          </div>
           <div class="chart-skeleton" id="skel-cum" style="height:140px;"></div>
           <div style="height:140px;position:relative;"><canvas id="chart-cum" style="display:none"></canvas></div>
         </div>
@@ -6261,52 +6276,110 @@ function chartDefaults(type) {
 
 function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
 
+let _cumTrades = [];
+let _cumMode   = 'pct'; // 'pct' | 'usd'
+let _cumPeriod = 'all';
+
+function setCumMode(mode) {
+  _cumMode = mode;
+  document.getElementById('cum-mode-pct').style.background = mode === 'pct' ? 'var(--accent)' : 'transparent';
+  document.getElementById('cum-mode-pct').style.color      = mode === 'pct' ? '#fff' : 'var(--text3)';
+  document.getElementById('cum-mode-usd').style.background = mode === 'usd' ? 'var(--accent)' : 'transparent';
+  document.getElementById('cum-mode-usd').style.color      = mode === 'usd' ? '#fff' : 'var(--text3)';
+  renderCumChart(_cumTrades);
+}
+
+function setCumPeriod(period) {
+  _cumPeriod = period;
+  document.querySelectorAll('#cum-period-btns button').forEach(b => {
+    const active = b.dataset.p === period;
+    b.style.background = active ? 'var(--accent)' : 'transparent';
+    b.style.color      = active ? '#fff' : 'var(--text3)';
+  });
+  renderCumChart(_cumTrades);
+}
+
+function _filterByPeriod(trades, period) {
+  const now = new Date();
+  const cutoff = {
+    '7d':  new Date(now - 7  * 86400000),
+    '1m':  new Date(now.getFullYear(), now.getMonth() - 1, now.getDate()),
+    'ytd': new Date(now.getFullYear(), 0, 1),
+    '1y':  new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()),
+    'all': null
+  }[period] || null;
+  if (!cutoff) return trades;
+  return trades.filter(t => t.entryDate && new Date(t.entryDate + 'T00:00:00') >= cutoff);
+}
+
 function renderCumChart(trades) {
+  _cumTrades = trades;
   destroyChart('cum');
-  // קבץ לפי חודש (YYYY-MM) ↦ P&L מצטבר חודשי
+
+  const filtered = _filterByPeriod(trades, _cumPeriod);
+
+  // Group by month
   const byMonth = {};
-  trades.forEach(t => {
-    const d = t.entryDate ? t.entryDate.slice(0,7) : null; // "2026-01"
+  filtered.forEach(t => {
+    const d = t.entryDate?.slice(0, 7);
     if (!d) return;
     byMonth[d] = (byMonth[d] || 0) + calcTotal(t);
   });
   const months = Object.keys(byMonth).sort();
   const labels = months.map(m => {
     const [y, mo] = m.split('-');
-    return MONTHS[+mo-1] + ' ' + y.slice(2); // "ינואר 26"
+    return MONTHS[+mo-1] + "'" + y.slice(2);
   });
+
   let cum = 0;
-  const data = months.map(m => { cum += byMonth[m]; return +cum.toFixed(2); });
+  const cumUsd = months.map(m => { cum += byMonth[m]; return +cum.toFixed(2); });
+
+  // % mode: cumulative % relative to starting capital (first month absolute as base)
+  const totalComm = filtered.reduce((s, t) => s + (t.commission || 0) + (t.ecn || 0), 0);
+  const totalPnl  = filtered.reduce((s, t) => s + calcTotal(t), 0);
+  const base      = Math.abs(filtered.reduce((s, t) => s + (t.entryPrice || 0) * (t.shares || 0), 0)) || 1;
+  let cumPct = 0;
+  const cumPctData = months.map(m => {
+    cumPct += byMonth[m];
+    return +(cumPct / base * 100).toFixed(2);
+  });
+
+  const isPct = _cumMode === 'pct';
+  const data  = isPct ? cumPctData : cumUsd;
+  const lastVal = data[data.length - 1] ?? 0;
+  const color = lastVal >= 0 ? '#22c55e' : '#ef4444';
+  const bgColor = lastVal >= 0 ? 'rgba(34,197,94,0.07)' : 'rgba(239,68,68,0.07)';
 
   showChart('skel-cum', 'chart-cum');
-  const cumEl = document.getElementById('chart-cum'); if (!cumEl) return;
-  const ctx = cumEl.getContext('2d');
-  charts.cum = new Chart(ctx, {
+  const cumEl = document.getElementById('chart-cum');
+  if (!cumEl) return;
+
+  charts.cum = new Chart(cumEl.getContext('2d'), {
     type: 'line',
     data: {
       labels,
       datasets: [{
-        label: 'P&L מצטבר',
+        label: isPct ? 'P&L %' : 'P&L $',
         data,
-        borderColor: '#38bdf8',
-        backgroundColor: 'rgba(56,189,248,0.07)',
-        tension: 0.35,
-        fill: true,
-        pointRadius: 5,
+        borderColor: color,
+        backgroundColor: bgColor,
+        tension: 0.35, fill: true,
+        pointRadius: data.length > 12 ? 3 : 5,
         pointBackgroundColor: data.map(v => v >= 0 ? '#22c55e' : '#ef4444'),
         pointBorderColor: 'transparent',
-        pointHoverRadius: 7
+        pointHoverRadius: 7,
+        borderWidth: 2,
       }]
     },
     options: {
       ...chartDefaults('line'),
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: c => ` $${(+c.raw).toFixed(2)}` } }
+        tooltip: { callbacks: { label: c => isPct ? ` ${(+c.raw).toFixed(2)}%` : ` $${(+c.raw).toFixed(2)}` } }
       },
       scales: {
         x: { ticks: { color: TICK_COLOR, font: CHART_FONT }, grid: { color: GRID_COLOR, drawBorder: false } },
-        y: { ticks: { color: TICK_COLOR, font: CHART_FONT, callback: v => '$' + v }, grid: { color: GRID_COLOR, drawBorder: false } }
+        y: { ticks: { color: TICK_COLOR, font: CHART_FONT, callback: v => isPct ? v + '%' : '$' + v }, grid: { color: GRID_COLOR, drawBorder: false } }
       }
     }
   });
