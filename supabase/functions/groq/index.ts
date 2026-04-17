@@ -30,25 +30,6 @@ serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 
-  // Rate limit: max 10 requests per minute per user (shared key protection)
-  const now = Date.now();
-  const windowStart = new Date(now - 60_000).toISOString();
-  const { count: recentCount } = await supabase
-    .from('ai_requests')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .gte('created_at', windowStart);
-
-  if ((recentCount ?? 0) >= 10) {
-    return new Response(
-      JSON.stringify({ error: 'Rate limit exceeded. Try again in a minute.' }),
-      { status: 429, headers: { ...CORS, 'Content-Type': 'application/json' } }
-    );
-  }
-
-  // Log this request (fire and forget)
-  supabase.from('ai_requests').insert({ user_id: user.id }).then(() => {});
-
   const reqUrl  = new URL(req.url);
   const keyType = reqUrl.searchParams.get('key') ?? 'default';
 
@@ -64,6 +45,25 @@ serve(async (req: Request) => {
     ? (settings?.groq_inv_key?.startsWith('gsk_') ? settings.groq_inv_key : null)
     : (settings?.groq_api_key?.startsWith('gsk_') ? settings.groq_api_key : null);
   const apiKey = userKey ?? (Deno.env.get('GROQ_API_KEY') ?? '');
+
+  // Rate limit only when using the shared key — personal keys use their own quota
+  if (!userKey) {
+    const now = Date.now();
+    const windowStart = new Date(now - 60_000).toISOString();
+    const { count: recentCount } = await supabase
+      .from('ai_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('created_at', windowStart);
+
+    if ((recentCount ?? 0) >= 10) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded. Try again in a minute.' }),
+        { status: 429, headers: { ...CORS, 'Content-Type': 'application/json' } }
+      );
+    }
+    supabase.from('ai_requests').insert({ user_id: user.id }).then(() => {});
+  }
 
   if (!apiKey || !apiKey.startsWith('gsk_')) {
     return new Response(
