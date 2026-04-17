@@ -3479,13 +3479,13 @@
       <div class="charts-grid">
         <div class="chart-card">
           <div class="chart-title">P&L מצטבר <span style="color:var(--text3);font-weight:500;text-transform:none;letter-spacing:0;">— לפי חודש</span></div>
-          <div class="chart-skeleton" id="skel-cum" style="height:200px;"></div>
-          <canvas id="chart-cum" height="200" style="display:none"></canvas>
+          <div class="chart-skeleton" id="skel-cum" style="height:140px;"></div>
+          <div style="height:140px;position:relative;"><canvas id="chart-cum" style="display:none"></canvas></div>
         </div>
         <div class="chart-card">
           <div class="chart-title">ניצחון / הפסד</div>
-          <div class="chart-skeleton" id="skel-donut" style="height:160px;"></div>
-          <canvas id="chart-donut" height="160" style="display:none"></canvas>
+          <div class="chart-skeleton" id="skel-donut" style="height:140px;"></div>
+          <div style="height:140px;position:relative;"><canvas id="chart-donut" style="display:none"></canvas></div>
           <div id="donut-stats" class="donut-stats"></div>
         </div>
       </div>
@@ -6230,6 +6230,7 @@ function chartDefaults(type) {
   const gc = getGridColor(), tc = getTickColor();
   return {
     responsive: true,
+    maintainAspectRatio: false,
     animation: { duration: 300 },
     plugins: {
       legend: { labels: { color: tc, font: CHART_FONT } },
