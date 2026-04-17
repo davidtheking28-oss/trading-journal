@@ -2978,41 +2978,95 @@
   /* ===== INVESTMENTS TAB ===== */
   #tab-investments { display: none; }
   #tab-investments.active { display: block; }
-  .inv-wrap { width: 100%; display: flex; flex-direction: column; gap: 18px; }
+  .inv-wrap { width: 100%; display: flex; flex-direction: column; gap: 20px; }
   .inv-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
   .inv-header h2 { font-size: 18px; font-weight: 700; color: var(--text); margin: 0; }
-  .inv-portfolio-bar { display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; }
-  .inv-portfolio-bar label { font-size: 13px; color: var(--text2); white-space: nowrap; }
-  .inv-portfolio-bar input { width: 160px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 14px; color: var(--text); }
+
+  /* Portfolio bar — glassmorphism card */
+  .inv-portfolio-bar {
+    display: flex; align-items: center; gap: 16px;
+    background: linear-gradient(135deg, rgba(56,189,248,0.06) 0%, rgba(9,21,37,0.95) 100%);
+    border: 1px solid rgba(56,189,248,0.18);
+    border-radius: 14px; padding: 16px 22px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(56,189,248,0.08);
+  }
+  .inv-portfolio-bar label { font-size: 13px; color: var(--text2); white-space: nowrap; font-weight: 500; }
+  .inv-portfolio-bar input {
+    width: 160px; background: rgba(255,255,255,0.05); border: 1px solid rgba(56,189,248,0.2);
+    border-radius: 8px; padding: 8px 12px; font-size: 15px; font-weight: 700; color: var(--accent);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .inv-portfolio-bar input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(56,189,248,0.12); }
   .inv-portfolio-bar .inv-total-allocated { font-size: 12px; color: var(--text3); margin-right: auto; }
-  .inv-portfolio-bar .inv-total-allocated span { color: var(--accent); font-weight: 700; }
-  .inv-table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .inv-portfolio-bar .inv-total-allocated span { color: var(--accent); font-weight: 700; font-size: 14px; }
+
+  /* Table */
+  .inv-table-wrap {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+  }
   .inv-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
-  .inv-table th { padding: 8px 6px; text-align: right; color: var(--text3); font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); white-space: nowrap; overflow: hidden; }
-  .inv-table th:nth-child(4), .inv-table th:nth-child(5) { background: rgba(56,189,248,0.08); color: #38bdf8; }
-  .inv-table th:nth-child(6), .inv-table th:nth-child(7) { background: rgba(52,211,153,0.08); color: #34d399; }
-  .inv-table td { padding: 7px 6px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; overflow: hidden; }
-  .inv-table td:nth-child(4), .inv-table td:nth-child(5) { background: rgba(56,189,248,0.03); }
-  .inv-table td:nth-child(6), .inv-table td:nth-child(7) { background: rgba(52,211,153,0.03); }
+  .inv-table th {
+    padding: 10px 8px; text-align: right; color: var(--text3); font-weight: 700;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px;
+    border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02);
+    white-space: nowrap; overflow: hidden;
+  }
+  .inv-table th:nth-child(4), .inv-table th:nth-child(5) { background: rgba(56,189,248,0.1); color: #38bdf8; }
+  .inv-table th:nth-child(6), .inv-table th:nth-child(7) { background: rgba(52,211,153,0.1); color: #34d399; }
+  .inv-table td { padding: 9px 8px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; overflow: hidden; }
+  .inv-table td:nth-child(4), .inv-table td:nth-child(5) { background: rgba(56,189,248,0.04); }
+  .inv-table td:nth-child(6), .inv-table td:nth-child(7) { background: rgba(52,211,153,0.04); }
+  .inv-table tbody tr { transition: background 0.15s; }
+  .inv-table tbody tr:hover td { background: rgba(56,189,248,0.07) !important; }
   .inv-table tr:last-child td { border-bottom: none; }
-  .inv-table input { background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 4px 5px; font-size: 12px; color: var(--text); width: 100%; box-sizing: border-box; }
-  .inv-table input:focus { border-color: var(--accent); outline: none; }
-  .inv-sym-input { font-family: monospace; font-weight: 700; text-transform: uppercase; }
-  .inv-sector-input { color: var(--text2) !important; font-size: 11px !important; width: 100% !important; }
+  .inv-table input {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px; padding: 5px 6px; font-size: 12px; color: var(--text);
+    width: 100%; box-sizing: border-box; transition: border-color 0.15s, background 0.15s;
+  }
+  .inv-table input:focus { border-color: var(--accent); outline: none; background: rgba(56,189,248,0.06); }
+  .inv-table select {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px; padding: 5px 4px; font-size: 11px; color: var(--text);
+    width: 100%; box-sizing: border-box; cursor: pointer;
+  }
+  .inv-sym-input { font-family: monospace; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .inv-sector-input { color: var(--text3) !important; font-size: 11px !important; width: 100% !important; }
   .inv-cat-rem { font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .inv-cat-rem.over { color: var(--red); }
+  .inv-cat-rem.ok   { color: var(--green); }
   .inv-pct-bar { display: flex; align-items: center; gap: 6px; }
-  .inv-pct-fill { height: 6px; border-radius: 3px; background: var(--accent); transition: width 0.3s; min-width: 2px; }
+  .inv-pct-fill { height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--accent), #818cf8); transition: width 0.4s; min-width: 2px; }
   .inv-pct-label { font-size: 12px; font-weight: 700; color: var(--text2); white-space: nowrap; min-width: 38px; }
-  .inv-avg-label { font-size: 12px; color: var(--text2); }
-  .inv-value-label { font-size: 12px; font-weight: 600; color: var(--text); }
-  .inv-add-row { width: 100%; padding: 10px; background: none; border: none; border-top: 1px solid var(--border); color: var(--text3); font-size: 12px; cursor: pointer; transition: all 0.2s; }
-  .inv-add-row:hover { background: rgba(56,189,248,0.05); color: var(--accent); }
-  .inv-del-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 15px; padding: 2px 6px; border-radius: 4px; transition: color 0.2s; }
-  .inv-del-btn:hover { color: var(--red); }
+  .inv-avg-label { font-size: 12px; color: var(--text3); }
+  .inv-value-label { font-size: 12px; font-weight: 700; color: var(--text); }
+  .inv-add-row {
+    width: 100%; padding: 12px; background: none; border: none;
+    border-top: 1px solid var(--border); color: var(--text3); font-size: 12px;
+    cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px;
+  }
+  .inv-add-row:hover { background: rgba(56,189,248,0.06); color: var(--accent); }
+  .inv-del-btn {
+    background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer;
+    font-size: 14px; padding: 4px 6px; border-radius: 5px; transition: all 0.15s;
+  }
+  .inv-del-btn:hover { color: var(--red); background: rgba(239,68,68,0.1); }
   .inv-actions { display: flex; gap: 10px; justify-content: flex-end; }
-  .inv-save-btn { background: var(--accent); color: #fff; border: none; border-radius: 7px; padding: 9px 22px; font-size: 13px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
-  .inv-save-btn:hover { opacity: 0.85; }
-  .inv-empty { text-align: center; padding: 28px; color: var(--text3); font-size: 13px; }
+  .inv-save-btn {
+    background: linear-gradient(135deg, #38bdf8, #0284c7);
+    color: #fff; border: none; border-radius: 9px; padding: 10px 28px;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(56,189,248,0.3); transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .inv-save-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(56,189,248,0.4); }
+  .inv-save-btn:active { transform: translateY(0); }
+  .inv-empty {
+    text-align: center; padding: 40px 28px; color: var(--text3); font-size: 13px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
   .inv-advisor-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
   .inv-advisor-header { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--text); }
   .inv-advisor-header svg { color: var(--accent); }
@@ -3270,7 +3324,20 @@
       <button class="hamburger" onclick="toggleSidebar()" aria-label="תפריט" title="פתח תפריט">
         <span></span><span></span><span></span>
       </button>
-      <span style="width:8px;height:8px;border-radius:50%;background:#38bdf8;display:inline-block;flex-shrink:0;animation:dotGlow 2s ease-in-out infinite;"></span>
+      <svg width="28" height="28" viewBox="0 0 200 200" style="flex-shrink:0;filter:drop-shadow(0 0 6px rgba(56,189,248,0.4))">
+        <defs>
+          <linearGradient id="hbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#07122a"/><stop offset="100%" stop-color="#0c1d3f"/></linearGradient>
+          <linearGradient id="ha" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#0284c7"/><stop offset="100%" stop-color="#38bdf8"/></linearGradient>
+          <linearGradient id="hg" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#059669"/><stop offset="100%" stop-color="#34d399"/></linearGradient>
+        </defs>
+        <circle cx="100" cy="100" r="96" fill="url(#hbg)" stroke="#1a3460" stroke-width="2"/>
+        <line x1="44" y1="60" x2="156" y2="60" stroke="#0e2040" stroke-width="1"/><line x1="44" y1="90" x2="156" y2="90" stroke="#0e2040" stroke-width="1"/><line x1="44" y1="120" x2="156" y2="120" stroke="#0e2040" stroke-width="1"/>
+        <line x1="58" y1="102" x2="58" y2="130" stroke="#ef4444" stroke-width="2" opacity="0.7"/><rect x="52" y="110" width="12" height="16" rx="2" fill="#ef4444" opacity="0.7"/>
+        <line x1="85" y1="88" x2="85" y2="122" stroke="url(#ha)" stroke-width="2"/><rect x="79" y="95" width="12" height="22" rx="2" fill="url(#ha)"/>
+        <line x1="112" y1="65" x2="112" y2="112" stroke="url(#ha)" stroke-width="2"/><rect x="106" y="72" width="12" height="34" rx="2" fill="url(#ha)"/>
+        <line x1="139" y1="52" x2="139" y2="95" stroke="url(#hg)" stroke-width="2"/><rect x="133" y="58" width="12" height="30" rx="2" fill="url(#hg)"/>
+        <polyline points="52,132 85,108 112,88 139,70" fill="none" stroke="rgba(56,189,248,0.3)" stroke-width="1.5" stroke-dasharray="4 3"/>
+      </svg>
       <span class="accent">Trading Journal</span>
       <span style="font-size:11px;font-weight:700;background:linear-gradient(135deg,#38bdf8,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-right:2px;">2.0</span>
       <span class="ibkr-status-dot" id="ibkr-header-dot" title="IBKR לא נבדק"></span>
