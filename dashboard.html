@@ -7468,7 +7468,8 @@ async function deduplicateDB(type) {
   if (type === 'stock') db.stocks = deduped;
   else db.crypto = deduped;
   if (_currentUser && toRemove.length) {
-    await _sb.from('trades').update({ deleted: true }).in('id', toRemove).eq('user_id', _currentUser.id);
+    const { error } = await _sb.from('trades').update({ deleted: true }).in('id', toRemove).eq('user_id', _currentUser.id);
+    if (error) { toast('שגיאה בנקה כפילויות', 'error'); console.error(error); return; }
   }
   renderTable(type);
   toast(`הוסרו ${removed} כפילויות`, 'success');
