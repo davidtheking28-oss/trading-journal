@@ -10889,113 +10889,57 @@ async function invAnalyze() {
     const currentRatio = m['currentRatioAnnual'] ?? m['currentRatioQuarterly'];
 
 
-    const metricsText = `
-${isIsraeli ? '🇮🇱 מניה ישראלית (בורסה תל אביב) — דוחות SEC לא זמינים, ניתוח מבוסס על Finnhub בלבד. מדדים שמחושבים מ-SEC יוצגו כ"אין נתון".\n' : ''}${fmpData ? `⚠️ Finnhub לא החזיר דוחות כספיים — נתונים מ-${extDataSource}. מדדי SEC יוצגו כ"אין נתון".\n` : ''}=== בדיקת איכות נתונים אוטומטית ===
-ציון מהימנות: ${qualityLine}
-${checks.join('\n')}
+    const fmtV = (v, suffix='') => v != null ? `${v}${suffix}` : '❓';
 
-=== בדיקת עדכניות ===
-תאריך ניתוח: ${today.toLocaleDateString('he-IL')}
-דוח אחרון זמין: ${latestPeriod || 'לא ידוע'}
-סטטוס עדכניות: ${stalenessWarning}
-
-מניה: ${fmpData?.profile?.companyName || profileData.name || sym} (${sym})
-סקטור: ${fmpData?.profile?.industry || profileData.finnhubIndustry || 'לא ידוע'} | שווי שוק: ${fmpData?.profile?.mktCap ? '$'+(fmpData.profile.mktCap/1e9).toFixed(2)+'B' : profileData.marketCapitalization ? '$'+(profileData.marketCapitalization/1000).toFixed(1)+'B' : 'לא ידוע'}
-מחיר עכשווי: ${quoteData.c ? '$'+quoteData.c : 'אין נתון'} | שינוי יומי: ${quoteData.dp != null ? quoteData.dp.toFixed(2)+'%' : 'אין נתון'}
-52W גבוה: ${fmt(m['52WeekHigh'])} | 52W נמוך: ${fmt(m['52WeekLow'])}
+    const metricsText = `תאריך ניתוח: ${today.toLocaleDateString('he-IL', { year:'numeric', month:'long', day:'numeric' })}
+מניה: ${profileData.name || sym} (${sym}) | מחיר: ${quoteData.c ? '$'+quoteData.c : '❓'} | שינוי: ${quoteData.dp != null ? quoteData.dp.toFixed(2)+'%' : '❓'}
+52W: ${fmt(m['52WeekHigh'])}–${fmt(m['52WeekLow'])} | שווי שוק: ${profileData.marketCapitalization ? '$'+(profileData.marketCapitalization/1000).toFixed(1)+'B' : '❓'} | סקטור: ${profileData.finnhubIndustry || '❓'}
+דוח אחרון: ${latestPeriod || '❓'} | ${stalenessWarning}
 
 === רווחיות ===
-EPS מנורמל (שנתי): ${fmt(epsNorm)} ${epsNorm != null ? (+epsNorm > 0 ? '✅ רווחי' : '❌ הפסדי') : ''}
-שולי רווח גולמי: ${fmtSEC(secGrossMargin,'%', fmt(m['grossMarginTTM'] ?? m['grossMarginAnnual'],'%'))}
-שולי רווח תפעולי: ${isFinancial ? fmtSEC(secPreTaxMargin,'% (לפני מס — ישים לחברות פיננסיות)', fmt(m['operatingMarginTTM'] ?? m['operatingMarginAnnual'],'%')) : fmtSEC(secOpMargin,'%', fmt(m['operatingMarginTTM'] ?? m['operatingMarginAnnual'],'%'))}
-שולי רווח נטו: ${fmtSEC(secNetMargin,'%', fmt(m['netProfitMarginTTM'] ?? m['netProfitMarginAnnual'],'%'))}${oneTimeFlag}${crossValidWarn}
-ROE: ${fmtSEC(secROE,'%', fmt(m['roeTTM'] ?? m['roeAnnual'],'%'))}
-ROA: ${fmtSEC(secROA,'%', fmt(m['roaTTM'] ?? m['roaAnnual'],'%'))}
+הכנסות: ${secRevRaw != null ? '$'+(secRevRaw/1e6).toFixed(1)+'M' : '❓'} | רווח נטו: ${secNIRaw != null ? '$'+(secNIRaw/1e6).toFixed(1)+'M' : '❓'} | EPS: ${fmtV(epsNorm)} ${epsNorm != null ? (+epsNorm > 0 ? '✅' : '❌') : ''}
+שולי גולמי: ${fmtV(secGrossMargin,'%')} | שולי תפעולי: ${fmtV(secOpMargin,'%')} | שולי נטו: ${fmtV(secNetMargin,'%')}${oneTimeFlag}
+ROE: ${fmtV(secROE,'%')} | ROA: ${fmtV(secROA,'%')}
 
 === מכפילים ===
-P/E: ${fmt(m['peNormalizedAnnual'] ?? m['peTTM'])}
-P/B: ${fmt(m['pbAnnual'] ?? m['pbQuarterly'])}
-PEG: ${pegDisplay}
-
-=== צמיחה ===
-צמיחת הכנסות YoY (SEC): ${fmtSEC(secRevGrowth,'%', 'אין נתון')}
-צמיחת הכנסות (Finnhub TTM/3Y/5Y): ${revStr}
-צמיחת EPS YoY (Finnhub): ${fmt(m['epsGrowthTTMYoy'] ?? m['epsGrowth3Y'],'%')} ${epsTrend}
-EPS היסטוריה רבעונית (4 רבעונים אחרונים):
-   ${epsHistory}
+P/E: ${fmt(m['peNormalizedAnnual'] ?? m['peTTM'])} | P/B: ${fmt(m['pbAnnual'] ?? m['pbQuarterly'])} | PEG: ${pegDisplay} | Beta: ${fmt(m['beta'])} | דיבידנד: ${fmt(m['dividendYieldIndicatedAnnual'],'%')}
 
 === מאזן ===
-D/E: ${fmtSEC(secDE,'', fmt(m['totalDebt/totalEquityAnnual'] ?? m['longTermDebt/equityAnnual']))}${isFinancial ? ' ⚠️ חברה פיננסית — D/E גבוה מובנה' : ''}
-Current Ratio: ${isFinancial ? 'לא רלוונטי לחברה פיננסית' : fmtSEC(secCurrentRatio,'', fmt(currentRatio))}
-FCF: ${secFCFRaw != null ? '$'+(secFCFRaw/1e9).toFixed(2)+'B'+fcfNote+sl : fmtM(m['freeCashFlowAnnual'] ?? m['freeCashFlowTTM'])}
-EBITDA: ${secEBITDARaw != null ? '$'+(secEBITDARaw/1e9).toFixed(2)+'B'+sl : 'אין נתון'}
-תשואת דיבידנד: ${fmt(m['dividendYieldIndicatedAnnual'],'%')}
-Beta: ${fmt(m['beta'])}
+D/E: ${fmtV(secDE)}${isFinancial ? ' (חברה פיננסית)' : ''} | Current Ratio: ${isFinancial ? 'לא רלוונטי' : fmtV(secCurrentRatio)} | FCF: ${secFCFRaw != null ? '$'+(secFCFRaw/1e9).toFixed(2)+'B' : '❓'} | EBITDA: ${secEBITDARaw != null ? '$'+(secEBITDARaw/1e9).toFixed(2)+'B' : '❓'}
 
-=== דוחות כספיים אחרונים (${edgarNewer ? `EDGAR ${edgarData.latestForm}` : fmpData ? 'FMP' : 'SEC Finnhub'}) ===
-   ${edgarNewer
-     ? (edgarData.revenue ? `הכנסות: $${(edgarData.revenue.val/1e6).toFixed(1)}M [${edgarData.revenue.period}] | רווח נטו: ${edgarData.netIncome?.val != null ? '$'+(edgarData.netIncome.val/1e6).toFixed(1)+'M' : 'אין נתון'} | תזרים תפעולי: ${edgarData.opCF?.val != null ? '$'+(edgarData.opCF.val/1e6).toFixed(1)+'M' : 'אין נתון'}` : 'אין נתון')
-     : fmpData ? (fmpReportsSummary || 'אין נתון') : reportsSummary}
-${edgarData?.revenueTTM ? `הכנסות TTM (4 רבעונים): $${(edgarData.revenueTTM/1e6).toFixed(1)}M` : ''}
-${edgarData?.revenueHistory?.length > 1 ? `מגמת הכנסות רבעונית (EDGAR):\n   ${edgarData.revenueHistory.slice(0,4).map(r => `${r.period}: $${(r.val/1e6).toFixed(1)}M`).join(' | ')}` : ''}
+=== צמיחה ===
+צמיחת הכנסות YoY: ${fmtV(secRevGrowth,'%')} | צמיחת EPS: ${fmt(m['epsGrowthTTMYoy'] ?? m['epsGrowth3Y'],'%')} ${epsTrend}
+EPS רבעוני: ${epsHistory}
 ${edgarData?.latest8K ? `
-=== הכרזת רווחים אחרונה (8-K הוגש ${edgarData.latest8K.filed}) ===
-⚡ זהו המקור הכי עדכני — תעדיף נתונים אלה על כל מקור אחר:
-${edgarData.latest8K.text}` : ''}
-`.trim();
+=== הכרזת רווחים עדכנית (8-K ${edgarData.latest8K.filed}) ===
+${edgarData.latest8K.text.slice(0, 1500)}` : ''}`.trim();
 
-    const systemPrompt = `אתה יועץ השקעות מקצועי ואובייקטיבי. תפקידך לנתח מניות לפי נתונים פיננסיים בלבד.
+    const systemPrompt = `אתה יועץ השקעות מקצועי. נתח את המניה לפי הנתונים בלבד — אסור להשתמש בידע מהאימון. נתון חסר = ❓.
+אם קיים קטע "הכרזת רווחים (8-K ...)" — זה המקור הכי עדכני, תעדיף אותו.
+אם הדוח ישן מ-5 חודשים — ציין זאת בבירור.
 
-⛔ כלל ברזל: השתמש אך ורק בנתונים שסופקו (Finnhub / SEC EDGAR / 8-K). אסור להשתמש בידע מהאימון. נתון חסר = ❓ בלבד.
-אם קיים קטע "הכרזת רווחים אחרונה (8-K)" — זה המקור הכי עדכני, תעדיף אותו ותציין את תאריכו בניתוח.
+קריטריוני סיווג:
+🔵 ערך: P/E נמוך, P/B<3, דיבידנד 2-5%, D/E<1, FCF חיובי, ROE 15%+
+🟢 צמיחה: הכנסות +20% YoY, EPS צומח, PEG<1, ROE 20%+
+🟡 חלום: חדשנות (AI/ביוטק/פינטק), צמיחה גבוהה גם ללא רווחיות, D/E נמוך
+🔴 דועכת: ירידת הכנסות, FCF שלילי, הפסדים מתמשכים — להימנע
 
-📅 בדיקת עדכניות — חובה בתחילת הניתוח:
-- בדוק את "דוח אחרון זמין" מול "תאריך ניתוח"
-- אם הפרש > 5 חודשים: ציין בבירור שהנתונים עשויים לא לכלול את הרבעון האחרון
-- ציין בסיכום הסופי: "ניתוח מבוסס על דוח רבעון [תאריך]"
-- אם הדוח ישן ו-EPS/הכנסות משתנים מהר — המלץ לאמת עם דוח עדכני
+מבנה תשובה:
+1. **סיווג** — 🔵/🟢/🟡/🔴 + נימוק קצר מהנתונים
+2. **ניתוח קריטריונים** — ✅/⚠️/❌/❓ לכל מדד עם הערך המספרי
+3. **בדיקה עצמית** — האם הסיווג עולה בקנה אחד עם כל הנתונים?
+4. **ציון** — X/10
+5. **המלצה** — קנייה / המתנה / הימנע + נימוק
+6. **הקשר שוק** — 3 משפטים: מה המספרים לא אומרים לבד?
+🚨 אדומה = התרע בבירור.`;
 
-⚠️ צמיחת הכנסות: אם TTM YoY חריג (מעל 80%) — סמוך על 3Y/5Y CAGR כנתון אמין יותר.
-
-המשימה: נתח את המניה לפי הקריטריונים הבאים מהספר:
-
-🔵 כחולה (ערך): P/E נמוך, P/B<3, דיבידנד 2-5%, D/E<1, FCF חיובי, ROE 15%+, שולי רווח יציבים.
-🟢 ירוקה (צמיחה): הכנסות +20% YoY, EPS צומח ברבעונים, PEG<1, ROE 20%+, שולי רווח גבוהים.
-🟡 צהובה (חלום): חדשנות (AI/גנטיקה/רובוטיקה/אנרגיה/פינטק), צמיחה גבוהה גם ללא רווחיות, R&D גבוה, D/E נמוך.
-🔴 אדומה (דועכת): ירידת הכנסות, FCF שלילי, D/E גבוה, הפסדים מתמשכים — להימנע לחלוטין.
-
-🔍 בדיקת איכות נתונים — חובה לפני ניתוח:
-- קרא את "בדיקת איכות נתונים אוטומטית" בנתונים
-- אם ציון מהימנות < 6: פתח את הניתוח ב"⚠️ אזהרת מהימנות — חלק מהנתונים עשויים להיות לא מדויקים"
-- אם יש ⚠️ items חד-פעמיים: השתמש בשולי לפני מס, לא בשולי נטו, לסיווג
-- אם יש ⚠️ סתירה EPS/נטו: ציין אותה ובאר מי מהנתונים מהימן יותר
-- אם [SEC ...] מופיע — הנתון מקורי מדוח SEC ועדיף על Finnhub
-
-מבנה חובה:
-1. **סיווג** — 🔵/🟢/🟡/🔴 + הסבר ישיר מהנתונים
-2. **סיכום** — משפט אחד
-3. **ניתוח קריטריונים** — לכל קריטריון: ✅ עובר / ⚠️ גבולי / ❌ לא עובר / ❓ אין נתון — עם הערך המספרי מהנתונים
-4. **בדיקה עצמית** — האם הסיווג עולה בקנה אחד עם כל הנתונים? אם לא — ציין את הסתירה ותקן
-5. **ציון** — X/10 (מבוסס על נתונים בלבד)
-6. **המלצה** — קנייה / המתנה / הימנע + נימוק מהנתונים
-7. **📌 מציאות לעומת מספרים** — סעיף חובה: פרש את החברה בהקשר השוק האמיתי. ענה על:
-   - האם המספרים "על הנייר" מייצגים את המצב האמיתי, או שיש פער בין הנתונים לתמונה הכוללת?
-   - האם החברה בשלב מעבר (גדלה לרווחיות, משנה מודל עסקי, מתמחרת כסקטור אחר)?
-   - איך השוק מתמחר אותה ביחס למה שהמספרים הגולמיים מראים? (לדוגמה: מכפילים גבוהים = ציפייה לצמיחה, לא בהכרח יקרה)
-   - מה המשקיע צריך לדעת שהמספרים לא אומרים לבד?
-   כתוב 3-5 משפטים ישירים. אל תחזור על מה שנאמר כבר — הוסף הקשר ופרספקטיבה.
-🚨 אדומה = התרע בבירור ואסור להמליץ להשקיע.`;
-
-    const todayStr = today.toLocaleDateString('he-IL', { year: 'numeric', month: 'long', day: 'numeric' });
-    const userMessage = `תאריך הניתוח: ${todayStr}\n\n${metricsText}`;
-
-    out.textContent = '📊 נתונים שנמשכו מ-Finnhub:\n─────────────────────\n' + metricsText + '\n─────────────────────\nמנתח עם AI...\n';
+    out.textContent = '📊 נתונים:\n─────────────────────\n' + metricsText + '\n─────────────────────\nמנתח עם AI...\n';
 
     const groqBody = JSON.stringify({
       model: 'llama-3.3-70b-versatile',
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage },
+        { role: 'user', content: metricsText },
       ],
       stream: true,
       max_tokens: 2000,
