@@ -48,6 +48,7 @@ serve(async (req: Request) => {
   const periods = recent.reportDate    ?? [];
   const fDates  = recent.filingDate    ?? [];
   const accNums = recent.accessionNumber ?? [];
+  const items8K = recent.items         ?? [];
 
   const findLatestIdx = (formType: string) => {
     let bestIdx = -1;
@@ -66,9 +67,14 @@ serve(async (req: Request) => {
   const latestFiling = (latest10Q?.period ?? '') > (latest10K?.period ?? '') ? latest10Q : latest10K;
   const latestForm   = (latest10Q?.period ?? '') > (latest10K?.period ?? '') ? '10-Q' : '10-K';
 
-  // 8-K: latest earnings press release (most up-to-date source)
+  // 8-K: only earnings press releases (item 2.02 = Results of Operations)
   let latest8K: { filed: string; text: string } | null = null;
-  const idx8K = findLatestIdx('8-K');
+  let idx8K = -1;
+  for (let i = 0; i < forms.length; i++) {
+    if (forms[i] === '8-K' && fDates[i] && String(items8K[i] ?? '').includes('2.02')) {
+      if (idx8K === -1 || fDates[i] > fDates[idx8K]) idx8K = i;
+    }
+  }
   if (idx8K >= 0 && accNums[idx8K]) {
     try {
       const acc     = accNums[idx8K].replace(/-/g, '');
@@ -84,13 +90,15 @@ serve(async (req: Request) => {
           const docRes = await fetch(docUrl, { headers: { ...UA, 'Accept': 'text/html' } });
           if (docRes.ok) {
             const html = await docRes.text();
-            const text = html
+            const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+            const bodyHtml = bodyMatch ? bodyMatch[1] : html;
+            const text = bodyHtml
               .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
               .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
               .replace(/<[^>]+>/g, ' ')
               .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
               .replace(/\s{2,}/g, ' ').trim()
-              .slice(0, 5000);
+              .slice(0, 3000);
             latest8K = { filed: fDates[idx8K], text };
           }
         }

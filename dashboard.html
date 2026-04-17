@@ -10791,6 +10791,14 @@ async function invAnalyze() {
     const fcfNote = secOpCFRaw != null && secCapexRaw == null ? ' (תזרים תפעולי בלבד — Capex לא נמצא)' : '';
     const secRevGrowth    = (secRevRaw && prevRevRaw) ? ((secRevRaw - prevRevRaw) / Math.abs(prevRevRaw) * 100).toFixed(1) : null;
 
+    const edgarRevHistory = edgarData?.revenueHistory ?? [];
+    const edgarNIHistory  = edgarData?.netIncomeHistory ?? [];
+    const yearAgoRev    = edgarRevHistory[4]?.val ?? null;
+    const yearAgoNI     = edgarNIHistory[4]?.val  ?? null;
+    const yearAgoPeriod = edgarRevHistory[4]?.period ?? null;
+    const yoyRev = (secRevRaw && yearAgoRev) ? ((secRevRaw - yearAgoRev) / Math.abs(yearAgoRev) * 100).toFixed(1) : null;
+    const yoyNI  = (secNIRaw != null && yearAgoNI != null) ? ((secNIRaw - yearAgoNI) / Math.abs(yearAgoNI) * 100).toFixed(1) : null;
+
     // Auto-detect one-time items: net margin >> pre-tax margin = likely tax benefit / non-recurring
     const oneTimeFlag = (secNetMargin != null && secPreTaxMargin != null &&
       Math.abs(+secNetMargin - +secPreTaxMargin) > 12)
@@ -10807,12 +10815,6 @@ async function invAnalyze() {
             : '➡️ מגמה רבעונית יציבה')
       : '';
 
-    // Cross-validate SEC vs Finnhub net margin — flag large disagreements
-    const finnhubNetM = m['netProfitMarginTTM'] ?? m['netProfitMarginAnnual'];
-    const crossValidWarn = (secNetMargin != null && finnhubNetM != null &&
-      Math.abs(+secNetMargin - +finnhubNetM) > 20)
-      ? ` [Finnhub: ${(+finnhubNetM).toFixed(1)}% — פער גבוה, סמוך על SEC]`
-      : '';
 
     const epsNorm = m['epsNormalizedAnnual'] ?? m['epsTTM'];
 
@@ -10840,9 +10842,7 @@ async function invAnalyze() {
         : `⚠️ סתירה: EPS Finnhub ${+epsNorm > 0 ? 'חיובי' : 'שלילי'} אך רווח נטו SEC ${secNIRaw > 0 ? 'חיובי' : 'שלילי'}`);
     // 4. One-time items
     if (oneTimeFlag) checks.push('⚠️ זוהו items חד-פעמיים (פער נטו vs לפני-מס > 12%)');
-    // 5. Finnhub vs SEC disagreement
-    if (crossValidWarn) checks.push('⚠️ פער > 20% בין Finnhub ל-SEC בשולי רווח נטו');
-    // 6. Data completeness
+    // 5. Data completeness
     if (isIsraeli) {
       checks.push(px != null ? '✅ מחיר ומדדי Finnhub זמינים' : '⚠️ מחיר לא זמין — בדוק את הסימבול');
     } else {
@@ -10873,16 +10873,6 @@ async function invAnalyze() {
       const opCF = get(cf, 'NetCashProvidedByUsedInOperatingActivities');
       return `📋 ${period} (${r.form||''})\n     הכנסות: $${revenue} | רווח נטו: $${netIncome} | תזרים תפעולי: $${opCF}`;
     };
-    const reportsSummary = reports.length ? reports.map(fmtReport).join('\n   ') : 'אין נתון';
-
-    // FMP income statement summary (used when Finnhub had no financials)
-    const fmpReportsSummary = fmpData ? fmpData.income.slice(0, 3).map(r => {
-      const rev = r.revenue != null ? '$' + (r.revenue / 1e6).toFixed(1) + 'M' : 'אין נתון';
-      const ni  = r.netIncome != null ? '$' + (r.netIncome / 1e6).toFixed(1) + 'M' : 'אין נתון';
-      const gm  = r.grossProfitRatio != null ? (r.grossProfitRatio * 100).toFixed(1) + '%' : 'אין נתון';
-      const op  = r.operatingIncomeRatio != null ? (r.operatingIncomeRatio * 100).toFixed(1) + '%' : 'אין נתון';
-      return `📋 ${r.date || ''} (${r.period || ''})\n     הכנסות: ${rev} | רווח נטו: ${ni} | שולי גולמי: ${gm} | שולי תפעולי: ${op}`;
-    }).join('\n   ') : null;
 
     const fmt  = (v, suffix='') => (v != null && !isNaN(+v)) ? `${(+v).toFixed(2)}${suffix}` : 'אין נתון';
     const fmtM = (v) => (v != null && !isNaN(+v)) ? `$${(+v/1e6).toFixed(1)}M` : 'אין נתון';
@@ -10900,15 +10890,6 @@ async function invAnalyze() {
       : 'אין נתון';
 
     // Revenue growth — show 3 timeframes so AI can judge trend, not outlier
-    const revTTM = m['revenueGrowthTTMYoy'];
-    const rev3Y  = m['revenueGrowth3Y'];
-    const rev5Y  = m['revenueGrowth5Y'];
-    const revStr = [
-      revTTM != null ? `TTM YoY: ${(+revTTM).toFixed(1)}%` : null,
-      rev3Y  != null ? `3Y CAGR: ${(+rev3Y).toFixed(1)}%`  : null,
-      rev5Y  != null ? `5Y CAGR: ${(+rev5Y).toFixed(1)}%`  : null,
-    ].filter(Boolean).join(' | ') || 'אין נתון';
-
     // Current ratio — annual → quarterly fallback
     const currentRatio = m['currentRatioAnnual'] ?? m['currentRatioQuarterly'];
 
@@ -10918,24 +10899,27 @@ async function invAnalyze() {
     const metricsText = `תאריך ניתוח: ${today.toLocaleDateString('he-IL', { year:'numeric', month:'long', day:'numeric' })}
 מניה: ${profileData.name || sym} (${sym}) | מחיר: ${quoteData.c ? '$'+quoteData.c : '❓'} | שינוי: ${quoteData.dp != null ? quoteData.dp.toFixed(2)+'%' : '❓'}
 52W: ${fmt(m['52WeekHigh'])}–${fmt(m['52WeekLow'])} | שווי שוק: ${profileData.marketCapitalization ? '$'+(profileData.marketCapitalization/1000).toFixed(1)+'B' : '❓'} | סקטור: ${profileData.finnhubIndustry || '❓'}
-דוח אחרון: ${latestPeriod || '❓'} | ${stalenessWarning}
+מקור: ${edgarNewer ? `EDGAR ${edgarData.latestForm} (הוגש ${edgarFiling.filed})` : 'Finnhub/SEC'} | ${stalenessWarning}
 
-=== רווחיות ===
+=== דוח אחרון: ${latestPeriod || '❓'} ===
 הכנסות: ${secRevRaw != null ? '$'+(secRevRaw/1e6).toFixed(1)+'M' : '❓'} | רווח נטו: ${secNIRaw != null ? '$'+(secNIRaw/1e6).toFixed(1)+'M' : '❓'} | EPS: ${fmtV(epsNorm)} ${epsNorm != null ? (+epsNorm > 0 ? '✅' : '❌') : ''}
 שולי גולמי: ${fmtV(secGrossMargin,'%')} | שולי תפעולי: ${fmtV(secOpMargin,'%')} | שולי נטו: ${fmtV(secNetMargin,'%')}${oneTimeFlag}
-ROE: ${fmtV(secROE,'%')} | ROA: ${fmtV(secROA,'%')}
+ROE: ${fmtV(secROE,'%')} | ROA: ${fmtV(secROA,'%')} | EBITDA: ${secEBITDARaw != null ? '$'+(secEBITDARaw/1e6).toFixed(1)+'M' : '❓'}
+${yearAgoPeriod ? `
+=== דוח לפני שנה: ${yearAgoPeriod} ===
+הכנסות: ${yearAgoRev != null ? '$'+(yearAgoRev/1e6).toFixed(1)+'M' : '❓'} | רווח נטו: ${yearAgoNI != null ? '$'+(yearAgoNI/1e6).toFixed(1)+'M' : '❓'}
+צמיחה YoY → הכנסות: ${yoyRev != null ? yoyRev+'%' : '❓'} | רווח נטו: ${yoyNI != null ? yoyNI+'%' : '❓'}` : ''}
 
-=== מכפילים ===
+=== מכפילים (Finnhub) ===
 P/E: ${fmt(m['peNormalizedAnnual'] ?? m['peTTM'])} | P/B: ${fmt(m['pbAnnual'] ?? m['pbQuarterly'])} | PEG: ${pegDisplay} | Beta: ${fmt(m['beta'])} | דיבידנד: ${fmt(m['dividendYieldIndicatedAnnual'],'%')}
 
 === מאזן ===
-D/E: ${fmtV(secDE)}${isFinancial ? ' (חברה פיננסית)' : ''} | Current Ratio: ${isFinancial ? 'לא רלוונטי' : fmtV(secCurrentRatio)} | FCF: ${secFCFRaw != null ? '$'+(secFCFRaw/1e9).toFixed(2)+'B' : '❓'} | EBITDA: ${secEBITDARaw != null ? '$'+(secEBITDARaw/1e9).toFixed(2)+'B' : '❓'}
+D/E: ${fmtV(secDE)}${isFinancial ? ' (חברה פיננסית)' : ''} | Current Ratio: ${isFinancial ? 'לא רלוונטי' : fmtV(secCurrentRatio)} | FCF: ${secFCFRaw != null ? '$'+(secFCFRaw/1e6).toFixed(1)+'M' : '❓'}${fcfNote}
 
-=== צמיחה ===
-צמיחת הכנסות YoY: ${fmtV(secRevGrowth,'%')} | צמיחת EPS: ${fmt(m['epsGrowthTTMYoy'] ?? m['epsGrowth3Y'],'%')} ${epsTrend}
-EPS רבעוני: ${epsHistory}
+=== EPS רבעוני ===
+${epsHistory}
 ${edgarData?.latest8K ? `
-=== הכרזת רווחים עדכנית (8-K ${edgarData.latest8K.filed}) ===
+=== הכרזת רווחים (8-K ${edgarData.latest8K.filed}) ===
 ${edgarData.latest8K.text.slice(0, 1500)}` : ''}`.trim();
 
     const systemPrompt = `אתה יועץ השקעות מקצועי. נתח את המניה לפי הנתונים בלבד — אסור להשתמש בידע מהאימון. נתון חסר = ❓.
@@ -10979,7 +10963,13 @@ ${edgarData.latest8K.text.slice(0, 1500)}` : ''}`.trim();
       body: groqBodyWithKey,
     });
     if (resp.status === 429) {
-      out.textContent = '⛔ Groq rate limit — הוסף Groq API key ייעודי לשדה שמתחת לסימבול.';
+      let errMsg = '';
+      try { const j = await resp.clone().json(); errMsg = j.error || j.message || JSON.stringify(j); } catch { errMsg = await resp.text(); }
+      if (errMsg.includes('Rate limit exceeded')) {
+        out.textContent = '⛔ הגעת למגבלת הבקשות שלנו (10/דקה). הוסף Groq API key ייעודי או המתן דקה.';
+      } else {
+        out.textContent = `⛔ Groq 429: ${errMsg.slice(0, 200)}`;
+      }
       return;
     }
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
