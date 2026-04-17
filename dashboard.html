@@ -10495,9 +10495,13 @@ async function invAnalyze() {
     const token = await _getToken();
     if (!token) { toast('נא להתחבר תחילה', 'error'); return; }
 
-    out.textContent = 'מושך נתונים פיננסיים מ-Finnhub...';
     const hdr = { Authorization: `Bearer ${token}` };
     const base = `${SUPABASE_URL}/functions/v1/finnhub`;
+    const fmpKey = getFmpKey();
+    const fmpBase = `${SUPABASE_URL}/functions/v1/fmp`;
+
+    // ── שלב 1: Finnhub — מחיר, מכפילים, earnings (תמיד) ──
+    out.textContent = 'מושך נתונים מ-Finnhub...';
     const [metricRes, profileRes, quoteRes, earningsRes, financialsQRes, financialsARes] = await Promise.all([
       fetch(`${base}?path=stock%2Fmetric&symbol=${encodeURIComponent(sym)}&metric=all`, { headers: hdr }),
       fetch(`${base}?path=stock%2Fprofile2&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
@@ -10507,36 +10511,23 @@ async function invAnalyze() {
       isIsraeli ? Promise.resolve({ok:false}) : fetch(`${base}?path=stock%2Ffinancials-reported&symbol=${encodeURIComponent(sym)}&freq=annual`, { headers: hdr }),
     ]);
 
-    const metricData     = metricRes.ok      ? await metricRes.json()      : {};
-    const profileData    = profileRes.ok     ? await profileRes.json()     : {};
-    let   quoteData      = quoteRes.ok       ? await quoteRes.json()       : {};
-    const earningsData   = earningsRes.ok    ? await earningsRes.json()    : {};
+    const metricData      = metricRes.ok  ? await metricRes.json()  : {};
+    const profileData     = profileRes.ok ? await profileRes.json() : {};
+    let   quoteData       = quoteRes.ok   ? await quoteRes.json()   : {};
+    const earningsData    = earningsRes.ok ? await earningsRes.json() : {};
     const financialsQData = (!isIsraeli && financialsQRes.ok) ? await financialsQRes.json() : {};
     const financialsAData = (!isIsraeli && financialsARes.ok) ? await financialsARes.json() : {};
-    // Pick whichever report (quarterly or annual) has the more recent endDate
     const qLatest = financialsQData?.data?.[0];
     const aLatest = financialsAData?.data?.[0];
-    const qDate = qLatest?.endDate || '';
-    const aDate = aLatest?.endDate || '';
-    const financialsData = (aDate > qDate) ? financialsAData : financialsQData;
+    const financialsData = ((aLatest?.endDate||'') > (qLatest?.endDate||'')) ? financialsAData : financialsQData;
     let m = metricData.metric || {};
     const earnings = Array.isArray(earningsData) ? earningsData.slice(0, 4) : [];
 
-    // ── FMP fallback: if Finnhub has no financials OR data is stale (>4 months) ──
-    const reports0 = financialsData?.data?.slice(0, 2) || [];
-    const latestReport0 = reports0[0] || null;
-    const latestPeriod0 = latestReport0?.endDate?.split?.(' ')?.[0] || latestReport0?.period || null;
-    const reportDate0 = latestPeriod0 ? new Date(latestPeriod0) : null;
-    const monthsOld0 = reportDate0 ? Math.round((new Date() - reportDate0) / (1000 * 60 * 60 * 24 * 30)) : null;
-    const finnhubHasFinancials = (financialsData?.data?.length > 0);
-    const finnhubIsStale = !finnhubHasFinancials || (monthsOld0 != null && monthsOld0 > 4);
-
+    // ── שלב 2: FMP — דוחות כספיים (תמיד, כשיש מפתח ולא ישראלי) ──
     let fmpData = null;
-    const fmpKey = getFmpKey();
-    if (!isIsraeli && finnhubIsStale && fmpKey) {
-      out.textContent = 'Finnhub לא החזיר דוחות — מנסה FMP...';
-      console.log(`[FMP] fetching data for ${sym}`);
-      const fmpBase = `${SUPABASE_URL}/functions/v1/fmp`;
+    if (!isIsraeli && fmpKey) {
+      out.textContent = 'מושך דוחות כספיים מ-FMP...';
+      console.log(`[FMP] fetching financials for ${sym}`);
       const [fmpQuoteRes, fmpProfileRes, fmpIncomeRes, fmpMetricsRes] = await Promise.all([
         fetch(`${fmpBase}?path=quote&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
         fetch(`${fmpBase}?path=profile&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
@@ -10549,26 +10540,17 @@ async function invAnalyze() {
       const fmpMetrics = fmpMetricsRes.ok ? await fmpMetricsRes.json() : [];
 
       if (Array.isArray(fmpIncome) && fmpIncome.length > 0) {
-        fmpData = { quote: fmpQuote[0] || {}, profile: fmpProfile[0] || {}, income: fmpIncome, metrics: fmpMetrics[0] || {} };
+        fmpData = { quote: fmpQuote[0]||{}, profile: fmpProfile[0]||{}, income: fmpIncome, metrics: fmpMetrics[0]||{} };
 
-        // Override quote data with FMP if Finnhub quote was empty
-        if (!quoteData.c && fmpData.quote.price) {
-          quoteData = {
-            c:  fmpData.quote.price,
-            dp: fmpData.quote.changesPercentage,
-          };
+        // FMP quote → עדיף על Finnhub (יותר עדכני)
+        if (fmpData.quote.price) {
+          quoteData = { c: fmpData.quote.price, dp: fmpData.quote.changesPercentage };
         }
-
-        // Override 52W range in m if missing
-        if (!m['52WeekHigh'] && fmpData.quote.yearHigh) {
-          m = {
-            ...m,
-            '52WeekHigh': fmpData.quote.yearHigh,
-            '52WeekLow':  fmpData.quote.yearLow,
-          };
+        // FMP 52W
+        if (fmpData.quote.yearHigh) {
+          m = { ...m, '52WeekHigh': fmpData.quote.yearHigh, '52WeekLow': fmpData.quote.yearLow };
         }
-
-        console.log(`[FMP] fetched data for ${sym} — ${fmpIncome.length} income statements`);
+        console.log(`[FMP] got ${fmpIncome.length} income statements for ${sym}, latest: ${fmpIncome[0]?.date}`);
       }
     }
 
