@@ -5676,7 +5676,9 @@ async function loadUserSettings() {
     const el = document.getElementById('ai-api-key');
     if (el) el.value = _userSettings.groq_api_key;
   }
-  if (_userSettings.groq_inv_key) {
+  const savedInvKey = localStorage.getItem('groq-inv-key') || _userSettings.groq_inv_key;
+  if (savedInvKey) {
+    if (savedInvKey && !localStorage.getItem('groq-inv-key')) localStorage.setItem('groq-inv-key', savedInvKey);
     const el = document.getElementById('inv-groq-key-input');
     if (el) el.placeholder = 'מפתח שמור ✓';
   }
@@ -9639,9 +9641,15 @@ async function aiSaveKey() {
 async function invSaveGroqKey() {
   const k = document.getElementById('inv-groq-key-input').value.trim();
   if (!k || !k.startsWith('gsk_')) return;
-  await _saveUserSettings({ groq_inv_key: k });
+  localStorage.setItem('groq-inv-key', k);
+  _userSettings.groq_inv_key = k;
+  _saveUserSettings({ groq_inv_key: k });
   document.getElementById('inv-groq-key-input').placeholder = 'מפתח שמור ✓';
   toast('מפתח Groq ליועץ השקעות נשמר 🔐', 'success');
+}
+
+function _getInvGroqKey() {
+  return localStorage.getItem('groq-inv-key') || _userSettings.groq_inv_key || '';
 }
 
 function aiToggleKey() {
@@ -10958,19 +10966,16 @@ ${edgarData.latest8K.text.slice(0, 1500)}` : ''}`.trim();
       max_tokens: 2000,
       temperature: 0.2,
     });
-    const groqInvUrl = `${SUPABASE_URL}/functions/v1/groq?key=inv`;
-    let resp = await fetch(groqInvUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: groqBody,
-    });
-    if (resp.status === 429) {
-      for (let wait = 60; wait > 0; wait -= 5) {
-        out.textContent = `⏳ Groq rate limit — ממתין ${wait} שניות...`;
-        await new Promise(r => setTimeout(r, 5000));
-      }
-      out.textContent = 'מנסה שוב...';
-      resp = await fetch(groqInvUrl, {
+    const invKey = _getInvGroqKey();
+    let resp;
+    if (invKey) {
+      resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${invKey}` },
+        body: groqBody,
+      });
+    } else {
+      resp = await fetch(`${SUPABASE_URL}/functions/v1/groq`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: groqBody,
