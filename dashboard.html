@@ -9368,7 +9368,10 @@ async function missedAdd() {
   document.getElementById('missed-sector').value = '';
   document.getElementById('missed-note').value   = '';
 
-  await missedRender();
+  // Optimistic: add to local list and render immediately without re-fetching
+  const newItem = { id: data.id, sym: data.symbol, date: data.date, price: data.price, sector: data.sector || '', note: data.note || '' };
+  _missedList = [newItem, ...(_missedList || [])].sort((a,b) => b.date.localeCompare(a.date));
+  missedRenderList(_missedList);
   toast('נוסף ✓','success');
 }
 
@@ -9379,9 +9382,7 @@ async function missedDelete(id) {
   await missedRender();
 }
 
-async function missedRender() {
-  const list = await missedLoad();
-  _missedList = list;
+function missedRenderList(list) {
   const tbody = document.getElementById('missed-tbody');
   if (!tbody) return;
   if (!list.length) {
@@ -9400,6 +9401,12 @@ async function missedRender() {
       <td>$${(+r.price).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:4})}</td>
       <td style="color:var(--text2);font-size:12px">${esc(r.note||'—')}</td>
     </tr>`).join('');
+}
+
+async function missedRender() {
+  const list = await missedLoad();
+  _missedList = list;
+  missedRenderList(list);
 }
 
 function missedEdit(id) {
