@@ -10573,11 +10573,12 @@ async function invAnalyze() {
       out.textContent = 'מושך דוחות כספיים מ-Alpha Vantage...';
       console.log(`[AV] fetching financials for ${sym}`);
       const avBase = `${SUPABASE_URL}/functions/v1/alphavantage`;
-      const [avQuoteRes, avOverviewRes, avIncomeRes] = await Promise.all([
-        fetch(`${avBase}?function=GLOBAL_QUOTE&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
-        fetch(`${avBase}?function=OVERVIEW&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
-        fetch(`${avBase}?function=INCOME_STATEMENT&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
-      ]);
+      const avDelay = ms => new Promise(r => setTimeout(r, ms));
+      const avQuoteRes    = await fetch(`${avBase}?function=GLOBAL_QUOTE&symbol=${encodeURIComponent(sym)}`, { headers: hdr });
+      await avDelay(1100);
+      const avOverviewRes = await fetch(`${avBase}?function=OVERVIEW&symbol=${encodeURIComponent(sym)}`, { headers: hdr });
+      await avDelay(1100);
+      const avIncomeRes   = await fetch(`${avBase}?function=INCOME_STATEMENT&symbol=${encodeURIComponent(sym)}`, { headers: hdr });
       const avQuoteRaw   = avQuoteRes.ok   ? await avQuoteRes.json()   : {};
       const avOverview   = avOverviewRes.ok ? await avOverviewRes.json() : {};
       const avIncomeRaw  = avIncomeRes.ok  ? await avIncomeRes.json()  : {};
