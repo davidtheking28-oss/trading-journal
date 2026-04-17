@@ -10522,11 +10522,18 @@ async function invAnalyze() {
     let m = metricData.metric || {};
     const earnings = Array.isArray(earningsData) ? earningsData.slice(0, 4) : [];
 
-    // ── FMP fallback: if Finnhub returned no financials and user has FMP key ──
-    let fmpData = null;
+    // ── FMP fallback: if Finnhub has no financials OR data is stale (>4 months) ──
+    const reports0 = financialsData?.data?.slice(0, 2) || [];
+    const latestReport0 = reports0[0] || null;
+    const latestPeriod0 = latestReport0?.endDate?.split?.(' ')?.[0] || latestReport0?.period || null;
+    const reportDate0 = latestPeriod0 ? new Date(latestPeriod0) : null;
+    const monthsOld0 = reportDate0 ? Math.round((new Date() - reportDate0) / (1000 * 60 * 60 * 24 * 30)) : null;
     const finnhubHasFinancials = (financialsData?.data?.length > 0);
+    const finnhubIsStale = !finnhubHasFinancials || (monthsOld0 != null && monthsOld0 > 4);
+
+    let fmpData = null;
     const fmpKey = getFmpKey();
-    if (!isIsraeli && !finnhubHasFinancials && fmpKey) {
+    if (!isIsraeli && finnhubIsStale && fmpKey) {
       out.textContent = 'Finnhub לא החזיר דוחות — מנסה FMP...';
       console.log(`[FMP] fetching data for ${sym}`);
       const fmpBase = `${SUPABASE_URL}/functions/v1/fmp`;
