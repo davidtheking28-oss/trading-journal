@@ -4383,18 +4383,7 @@
           </div>
           <input type="hidden" id="m-entry-reason">
         </div>
-        <div class="form-group">
-          <label class="form-label">סוג סטאפ</label>
-          <div class="er-pills" id="m-st-pills" style="margin-bottom:16px;">
-            <span class="st-pill" data-st="VCP"  onclick="modalSetST('VCP')">VCP</span>
-            <span class="st-pill" data-st="PP"   onclick="modalSetST('PP')">PP</span>
-            <span class="st-pill" data-st="PKP"  onclick="modalSetST('PKP')">PKP</span>
-            <span class="st-pill" data-st="BoB"  onclick="modalSetST('BoB')">BoB</span>
-            <span class="st-pill" data-st="FB"   onclick="modalSetST('FB')">FB</span>
-            <span class="st-pill" data-st="Cont" onclick="modalSetST('Cont')">Cont</span>
-          </div>
-          <input type="hidden" id="m-setup-type">
-        </div>
+        <input type="hidden" id="m-setup-type">
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">תנאי שוק בכניסה</label>
@@ -5071,7 +5060,7 @@ function renderTable(type) {
 
   let h = `<table><colgroup>
     <col style="width:44px"><col style="width:110px"><col style="width:54px">
-    <col style="width:90px"><col style="width:110px"><col style="width:100px">
+    <col style="width:90px"><col style="width:110px">
     <col style="width:90px"><col style="width:90px"><col style="width:80px">
     <col style="width:80px"><col style="width:70px"><col style="width:110px">
     <col style="width:100px"><col style="width:90px"><col style="width:70px">
@@ -5083,7 +5072,6 @@ function renderTable(type) {
     <th>L/S</th>
     <th>סטטוס</th>
     <th>סיבת כניסה</th>
-    <th>סוג סטאפ</th>
     ${thSort(type,'symbol','סימבול',sc,sd)}
     <th>כניסה</th>
     <th>מניות</th>
@@ -5140,7 +5128,6 @@ function renderTable(type) {
       <td><span class="badge badge-${tr.ls}">${tr.ls}</span></td>
       <td>${tradeStatus(tr)}</td>
       <td>${erBadge(tr.entry_reason)}</td>
-      <td>${stBadge(tr.setup_type)}</td>
       <td><strong>${esc(tr.symbol)}</strong></td>
       <td class="sensitive">$${fmtPrice(tr.entryPrice)}</td>
       <td>${tr.shares}</td>
@@ -5182,7 +5169,6 @@ function renderTable(type) {
             <div class="expanded-section"><h4>📝 הערות</h4>${noteKeep}${noteImp}${noNotes}</div>
             <div class="expanded-section"><h4>📊 Minervini</h4>
               <div style="display:flex;gap:24px;flex-wrap:wrap;font-size:13px;">
-                <div>סוג סטאפ: ${stBadge(tr.setup_type)}</div>
                 <div>תנאי שוק: ${mcHtml}</div>
               </div>
             </div>
