@@ -3721,6 +3721,16 @@
             <button class="btn btn-secondary btn-sm" onclick="saveFinnhubKey()">שמור</button>
             <span id="finnhub-key-status" style="font-size:11px;align-self:center;color:var(--text3);white-space:nowrap;"></span>
           </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:12px;line-height:1.6;">
+            מפתח FMP — Financial Modeling Prep (fallback לסמולקאפ)
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <input id="fmp-key-input" class="form-control" type="password"
+              placeholder="FMP API Key" autocomplete="off"
+              style="font-size:12px;padding:6px 10px;flex:1;">
+            <button class="btn btn-secondary btn-sm" onclick="saveFmpKey()">שמור</button>
+            <span id="fmp-key-status" style="font-size:11px;align-self:center;color:var(--text3);white-space:nowrap;"></span>
+          </div>
         </div>
       </div>
 
@@ -5655,7 +5665,7 @@ let _userSettings = {};
 async function loadUserSettings() {
   if (!_currentUser) return;
   const { data } = await _sb.from('user_settings')
-    .select('groq_api_key, finnhub_key, flex_token, flex_query_id')
+    .select('groq_api_key, finnhub_key, fmp_key, flex_token, flex_query_id')
     .eq('user_id', _currentUser.id)
     .single();
   _userSettings = data || {};
@@ -5667,9 +5677,10 @@ async function loadUserSettings() {
   }
   if (_userSettings.finnhub_key) {
     const el = document.getElementById('finnhub-key-input');
-    if (el) el.value = '';  // keep field empty for security; status shows it's saved
+    if (el) el.value = '';
   }
   renderFinnhubKeyStatus();
+  renderFmpKeyStatus();
 }
 
 async function _saveUserSettings(patch) {
@@ -5698,6 +5709,24 @@ function renderFinnhubKeyStatus() {
   const el = document.getElementById('finnhub-key-status');
   if (!el) return;
   const key = getFinnhubKey();
+  el.textContent = key ? '✓ מפתח שמור' : '';
+  el.style.color = key ? 'var(--green)' : 'var(--text3)';
+}
+
+function getFmpKey() { return _userSettings.fmp_key || ''; }
+
+async function saveFmpKey() {
+  const val = (document.getElementById('fmp-key-input')?.value || '').trim();
+  await _saveUserSettings({ fmp_key: val || null });
+  document.getElementById('fmp-key-input').value = '';
+  toast(val ? 'מפתח FMP נשמר 🔐' : 'מפתח FMP הוסר', 'success');
+  renderFmpKeyStatus();
+}
+
+function renderFmpKeyStatus() {
+  const el = document.getElementById('fmp-key-status');
+  if (!el) return;
+  const key = getFmpKey();
   el.textContent = key ? '✓ מפתח שמור' : '';
   el.style.color = key ? 'var(--green)' : 'var(--text3)';
 }
@@ -10480,7 +10509,7 @@ async function invAnalyze() {
 
     const metricData     = metricRes.ok      ? await metricRes.json()      : {};
     const profileData    = profileRes.ok     ? await profileRes.json()     : {};
-    const quoteData      = quoteRes.ok       ? await quoteRes.json()       : {};
+    let   quoteData      = quoteRes.ok       ? await quoteRes.json()       : {};
     const earningsData   = earningsRes.ok    ? await earningsRes.json()    : {};
     const financialsQData = (!isIsraeli && financialsQRes.ok) ? await financialsQRes.json() : {};
     const financialsAData = (!isIsraeli && financialsARes.ok) ? await financialsARes.json() : {};
@@ -10490,8 +10519,51 @@ async function invAnalyze() {
     const qDate = qLatest?.endDate || '';
     const aDate = aLatest?.endDate || '';
     const financialsData = (aDate > qDate) ? financialsAData : financialsQData;
-    const m = metricData.metric || {};
+    let m = metricData.metric || {};
     const earnings = Array.isArray(earningsData) ? earningsData.slice(0, 4) : [];
+
+    // ── FMP fallback: if Finnhub returned no financials and user has FMP key ──
+    let fmpData = null;
+    const finnhubHasFinancials = (financialsData?.data?.length > 0);
+    const fmpKey = getFmpKey();
+    if (!isIsraeli && !finnhubHasFinancials && fmpKey) {
+      out.textContent = 'Finnhub לא החזיר דוחות — מנסה FMP...';
+      console.log(`[FMP] fetching data for ${sym}`);
+      const fmpBase = `${SUPABASE_URL}/functions/v1/fmp`;
+      const [fmpQuoteRes, fmpProfileRes, fmpIncomeRes, fmpMetricsRes] = await Promise.all([
+        fetch(`${fmpBase}?path=quote&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
+        fetch(`${fmpBase}?path=profile&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
+        fetch(`${fmpBase}?path=income-statement&symbol=${encodeURIComponent(sym)}&period=annual`, { headers: hdr }),
+        fetch(`${fmpBase}?path=key-metrics&symbol=${encodeURIComponent(sym)}&period=annual`, { headers: hdr }),
+      ]);
+      const fmpQuote   = fmpQuoteRes.ok   ? await fmpQuoteRes.json()   : [];
+      const fmpProfile = fmpProfileRes.ok ? await fmpProfileRes.json() : [];
+      const fmpIncome  = fmpIncomeRes.ok  ? await fmpIncomeRes.json()  : [];
+      const fmpMetrics = fmpMetricsRes.ok ? await fmpMetricsRes.json() : [];
+
+      if (Array.isArray(fmpIncome) && fmpIncome.length > 0) {
+        fmpData = { quote: fmpQuote[0] || {}, profile: fmpProfile[0] || {}, income: fmpIncome, metrics: fmpMetrics[0] || {} };
+
+        // Override quote data with FMP if Finnhub quote was empty
+        if (!quoteData.c && fmpData.quote.price) {
+          quoteData = {
+            c:  fmpData.quote.price,
+            dp: fmpData.quote.changesPercentage,
+          };
+        }
+
+        // Override 52W range in m if missing
+        if (!m['52WeekHigh'] && fmpData.quote.yearHigh) {
+          m = {
+            ...m,
+            '52WeekHigh': fmpData.quote.yearHigh,
+            '52WeekLow':  fmpData.quote.yearLow,
+          };
+        }
+
+        console.log(`[FMP] fetched data for ${sym} — ${fmpIncome.length} income statements`);
+      }
+    }
 
     // Extract latest 2 quarterly SEC reports
     const reports = financialsData?.data?.slice(0, 2) || [];
@@ -10687,6 +10759,15 @@ async function invAnalyze() {
     };
     const reportsSummary = reports.length ? reports.map(fmtReport).join('\n   ') : 'אין נתון';
 
+    // FMP income statement summary (used when Finnhub had no financials)
+    const fmpReportsSummary = fmpData ? fmpData.income.slice(0, 3).map(r => {
+      const rev = r.revenue != null ? '$' + (r.revenue / 1e6).toFixed(1) + 'M' : 'אין נתון';
+      const ni  = r.netIncome != null ? '$' + (r.netIncome / 1e6).toFixed(1) + 'M' : 'אין נתון';
+      const gm  = r.grossProfitRatio != null ? (r.grossProfitRatio * 100).toFixed(1) + '%' : 'אין נתון';
+      const op  = r.operatingIncomeRatio != null ? (r.operatingIncomeRatio * 100).toFixed(1) + '%' : 'אין נתון';
+      return `📋 ${r.date || ''} (${r.period || ''})\n     הכנסות: ${rev} | רווח נטו: ${ni} | שולי גולמי: ${gm} | שולי תפעולי: ${op}`;
+    }).join('\n   ') : null;
+
     const fmt  = (v, suffix='') => (v != null && !isNaN(+v)) ? `${(+v).toFixed(2)}${suffix}` : 'אין נתון';
     const fmtM = (v) => (v != null && !isNaN(+v)) ? `$${(+v/1e6).toFixed(1)}M` : 'אין נתון';
     const epsHistory = earnings.length
@@ -10717,7 +10798,7 @@ async function invAnalyze() {
 
 
     const metricsText = `
-${isIsraeli ? '🇮🇱 מניה ישראלית (בורסה תל אביב) — דוחות SEC לא זמינים, ניתוח מבוסס על Finnhub בלבד. מדדים שמחושבים מ-SEC יוצגו כ"אין נתון".\n' : ''}=== בדיקת איכות נתונים אוטומטית ===
+${isIsraeli ? '🇮🇱 מניה ישראלית (בורסה תל אביב) — דוחות SEC לא זמינים, ניתוח מבוסס על Finnhub בלבד. מדדים שמחושבים מ-SEC יוצגו כ"אין נתון".\n' : ''}${fmpData ? '⚠️ Finnhub לא החזיר דוחות כספיים — נתונים מ-FMP (Financial Modeling Prep). מדדי SEC יוצגו כ"אין נתון".\n' : ''}=== בדיקת איכות נתונים אוטומטית ===
 ציון מהימנות: ${qualityLine}
 ${checks.join('\n')}
 
@@ -10726,8 +10807,8 @@ ${checks.join('\n')}
 דוח אחרון זמין: ${latestPeriod || 'לא ידוע'}
 סטטוס עדכניות: ${stalenessWarning}
 
-מניה: ${profileData.name || sym} (${sym})
-סקטור: ${profileData.finnhubIndustry || 'לא ידוע'} | שווי שוק: ${profileData.marketCapitalization ? '$'+(profileData.marketCapitalization/1000).toFixed(1)+'B' : 'לא ידוע'}
+מניה: ${fmpData?.profile?.companyName || profileData.name || sym} (${sym})
+סקטור: ${fmpData?.profile?.industry || profileData.finnhubIndustry || 'לא ידוע'} | שווי שוק: ${fmpData?.profile?.mktCap ? '$'+(fmpData.profile.mktCap/1e9).toFixed(2)+'B' : profileData.marketCapitalization ? '$'+(profileData.marketCapitalization/1000).toFixed(1)+'B' : 'לא ידוע'}
 מחיר עכשווי: ${quoteData.c ? '$'+quoteData.c : 'אין נתון'} | שינוי יומי: ${quoteData.dp != null ? quoteData.dp.toFixed(2)+'%' : 'אין נתון'}
 52W גבוה: ${fmt(m['52WeekHigh'])} | 52W נמוך: ${fmt(m['52WeekLow'])}
 
@@ -10759,8 +10840,8 @@ EBITDA: ${secEBITDARaw != null ? '$'+(secEBITDARaw/1e9).toFixed(2)+'B'+sl : 'א�
 תשואת דיבידנד: ${fmt(m['dividendYieldIndicatedAnnual'],'%')}
 Beta: ${fmt(m['beta'])}
 
-=== דוחות כספיים אחרונים (SEC) ===
-   ${reportsSummary}
+=== דוחות כספיים אחרונים (${fmpData ? 'FMP' : 'SEC'}) ===
+   ${fmpData ? (fmpReportsSummary || 'אין נתון') : reportsSummary}
 `.trim();
 
     const systemPrompt = `אתה יועץ השקעות מקצועי ואובייקטיבי. תפקידך לנתח מניות לפי נתונים פיננסיים בלבד.
