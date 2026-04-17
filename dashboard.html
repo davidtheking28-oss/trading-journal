@@ -9181,6 +9181,14 @@ const SECTOR_MAP = {
   BTC:'Crypto',ETH:'Crypto',SOL:'Crypto',XRP:'Crypto',BNB:'Crypto',DOGE:'Crypto',
 };
 
+const SECTOR_TO_CAT = {
+  'Technology':'green','Semiconductors':'green','Internet / E-Commerce':'green',
+  'Media / Entertainment':'green','ETF':'green',
+  'Biotech':'yellow','EV / Auto':'yellow','Crypto':'yellow','Crypto / Bitcoin':'yellow','Leveraged ETF':'yellow',
+  'Financials':'blue','Healthcare':'blue','Consumer':'blue','Industrials':'blue',
+  'Energy':'blue','Real Estate':'blue','Telecom':'blue',
+};
+
 let _missedSectorTimer = null;
 
 function missedAutoSector() {
@@ -10068,7 +10076,13 @@ function invAutoSector(idx) {
   const sectorEl = row.querySelector('.inv-sector-input');
   if (!sectorEl || !sym) return;
   const local = SECTOR_MAP[sym];
-  if (local) { sectorEl.value = local; return; }
+  if (local) {
+    sectorEl.value = local;
+    const catSel = row.querySelector('.inv-cat-sel');
+    if (catSel && !catSel.value) { catSel.value = SECTOR_TO_CAT[local] || ''; }
+    invRecalc();
+    return;
+  }
   clearTimeout(_invSectorTimers[idx]);
   if (sym.length < 2) return;
   _invSectorTimers[idx] = setTimeout(async () => {
@@ -10079,7 +10093,12 @@ function invAutoSector(idx) {
       if (!res.ok) return;
       const data = await res.json();
       const currentSym = row.querySelector('.inv-sym-input')?.value.trim().toUpperCase();
-      if (data.finnhubIndustry && currentSym === sym) sectorEl.value = data.finnhubIndustry;
+      if (data.finnhubIndustry && currentSym === sym) {
+        sectorEl.value = data.finnhubIndustry;
+        const catSel = row.querySelector('.inv-cat-sel');
+        if (catSel && !catSel.value) { catSel.value = SECTOR_TO_CAT[data.finnhubIndustry] || ''; }
+        invRecalc();
+      }
     } catch { /* silent */ }
   }, 600);
 }
