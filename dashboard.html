@@ -2978,7 +2978,7 @@
   /* ===== INVESTMENTS TAB ===== */
   #tab-investments { display: none; }
   #tab-investments.active { display: block; }
-  .inv-wrap { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+  .inv-wrap { width: 100%; display: flex; flex-direction: column; gap: 18px; }
   .inv-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
   .inv-header h2 { font-size: 18px; font-weight: 700; color: var(--text); margin: 0; }
   .inv-portfolio-bar { display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; }
@@ -2986,19 +2986,19 @@
   .inv-portfolio-bar input { width: 160px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 14px; color: var(--text); }
   .inv-portfolio-bar .inv-total-allocated { font-size: 12px; color: var(--text3); margin-right: auto; }
   .inv-portfolio-bar .inv-total-allocated span { color: var(--accent); font-weight: 700; }
-  .inv-table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; overflow-x: auto; }
-  .inv-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 820px; }
-  .inv-table th { padding: 9px 10px; text-align: right; color: var(--text3); font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); white-space: nowrap; }
-  .inv-table th:nth-child(3), .inv-table th:nth-child(4) { background: rgba(56,189,248,0.08); color: #38bdf8; }
-  .inv-table th:nth-child(5), .inv-table th:nth-child(6) { background: rgba(52,211,153,0.08); color: #34d399; }
-  .inv-table td { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
-  .inv-table td:nth-child(3), .inv-table td:nth-child(4) { background: rgba(56,189,248,0.03); }
-  .inv-table td:nth-child(5), .inv-table td:nth-child(6) { background: rgba(52,211,153,0.03); }
+  .inv-table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .inv-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+  .inv-table th { padding: 8px 6px; text-align: right; color: var(--text3); font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); white-space: nowrap; overflow: hidden; }
+  .inv-table th:nth-child(4), .inv-table th:nth-child(5) { background: rgba(56,189,248,0.08); color: #38bdf8; }
+  .inv-table th:nth-child(6), .inv-table th:nth-child(7) { background: rgba(52,211,153,0.08); color: #34d399; }
+  .inv-table td { padding: 7px 6px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; overflow: hidden; }
+  .inv-table td:nth-child(4), .inv-table td:nth-child(5) { background: rgba(56,189,248,0.03); }
+  .inv-table td:nth-child(6), .inv-table td:nth-child(7) { background: rgba(52,211,153,0.03); }
   .inv-table tr:last-child td { border-bottom: none; }
-  .inv-table input { background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 5px 7px; font-size: 12px; color: var(--text); width: 80px; }
+  .inv-table input { background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 4px 5px; font-size: 12px; color: var(--text); width: 100%; box-sizing: border-box; }
   .inv-table input:focus { border-color: var(--accent); outline: none; }
-  .inv-sym-input { font-family: monospace; font-weight: 700; text-transform: uppercase; width: 68px !important; }
-  .inv-sector-input { width: 110px !important; color: var(--text2) !important; font-size: 11px !important; }
+  .inv-sym-input { font-family: monospace; font-weight: 700; text-transform: uppercase; }
+  .inv-sector-input { color: var(--text2) !important; font-size: 11px !important; width: 100% !important; }
   .inv-cat-rem { font-size: 11px; font-weight: 700; white-space: nowrap; }
   .inv-pct-bar { display: flex; align-items: center; gap: 6px; }
   .inv-pct-fill { height: 6px; border-radius: 3px; background: var(--accent); transition: width 0.3s; min-width: 2px; }
@@ -3877,19 +3877,33 @@
 
         <div class="inv-table-wrap">
           <table class="inv-table">
+            <colgroup>
+              <col style="width:7%">  <!-- סימבול -->
+              <col style="width:10%"> <!-- סקטור -->
+              <col style="width:8%">  <!-- קטגוריה -->
+              <col style="width:8%">  <!-- כמות מניות -->
+              <col style="width:8%">  <!-- מחיר כניסה -->
+              <col style="width:8%">  <!-- כמות חיזוק -->
+              <col style="width:8%">  <!-- מחיר חיזוק -->
+              <col style="width:8%">  <!-- ממוצע -->
+              <col style="width:9%">  <!-- שווי -->
+              <col style="width:9%">  <!-- % תיק -->
+              <col style="width:14%"> <!-- נותר -->
+              <col style="width:3%">  <!-- מחק -->
+            </colgroup>
             <thead>
               <tr>
                 <th>סימבול</th>
                 <th>סקטור</th>
                 <th>קטגוריה</th>
-                <th>🔵 כמות מניות</th>
-                <th>🔵 מחיר כניסה</th>
-                <th>🟢 כמות חיזוק</th>
-                <th>🟢 מחיר חיזוק</th>
+                <th>🔵 כמות</th>
+                <th>🔵 כניסה</th>
+                <th>🟢 כמות</th>
+                <th>🟢 חיזוק</th>
                 <th>ממוצע</th>
                 <th>שווי</th>
                 <th>% תיק</th>
-                <th>נותר לקטגוריה</th>
+                <th>נותר</th>
                 <th></th>
               </tr>
             </thead>
