@@ -3368,12 +3368,22 @@
   <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
   <aside class="sidebar" id="main-sidebar">
     <div class="sidebar-brand">
-      <span class="sidebar-brand-mark" aria-hidden="true">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <rect x="1" y="10" width="3" height="5" rx="0.75" fill="white" opacity="0.8"/>
-          <rect x="6" y="6" width="3" height="9" rx="0.75" fill="white"/>
-          <rect x="11" y="3" width="3" height="12" rx="0.75" fill="white" opacity="0.8"/>
-          <polyline points="2.5,9 7.5,4.5 12.5,2" stroke="white" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+      <span class="sidebar-brand-mark" aria-hidden="true" style="filter:drop-shadow(0 0 5px rgba(56,189,248,0.5))">
+        <svg width="28" height="28" viewBox="0 0 200 200">
+          <defs>
+            <linearGradient id="sb-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#07122a"/><stop offset="100%" stop-color="#0c1d3f"/></linearGradient>
+            <linearGradient id="sb-a" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#0284c7"/><stop offset="100%" stop-color="#38bdf8"/></linearGradient>
+            <linearGradient id="sb-g" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#059669"/><stop offset="100%" stop-color="#34d399"/></linearGradient>
+          </defs>
+          <circle cx="100" cy="100" r="96" fill="url(#sb-bg)" stroke="#1a3460" stroke-width="2"/>
+          <line x1="44" y1="60" x2="156" y2="60" stroke="#0e2040" stroke-width="1"/>
+          <line x1="44" y1="90" x2="156" y2="90" stroke="#0e2040" stroke-width="1"/>
+          <line x1="44" y1="120" x2="156" y2="120" stroke="#0e2040" stroke-width="1"/>
+          <line x1="58" y1="102" x2="58" y2="130" stroke="#ef4444" stroke-width="2" opacity="0.7"/><rect x="52" y="110" width="12" height="16" rx="2" fill="#ef4444" opacity="0.7"/>
+          <line x1="85" y1="88" x2="85" y2="122" stroke="url(#sb-a)" stroke-width="2"/><rect x="79" y="95" width="12" height="22" rx="2" fill="url(#sb-a)"/>
+          <line x1="112" y1="65" x2="112" y2="112" stroke="url(#sb-a)" stroke-width="2"/><rect x="106" y="72" width="12" height="34" rx="2" fill="url(#sb-a)"/>
+          <line x1="139" y1="52" x2="139" y2="95" stroke="url(#sb-g)" stroke-width="2"/><rect x="133" y="58" width="12" height="30" rx="2" fill="url(#sb-g)"/>
+          <polyline points="52,132 85,108 112,88 139,70" fill="none" stroke="rgba(56,189,248,0.3)" stroke-width="1.5" stroke-dasharray="4 3"/>
         </svg>
       </span>
       <span class="sidebar-brand-name">Trading Journal</span>
