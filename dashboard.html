@@ -10967,20 +10967,14 @@ ${edgarData.latest8K.text.slice(0, 1500)}` : ''}`.trim();
       temperature: 0.2,
     });
     const invKey = _getInvGroqKey();
-    let resp;
-    if (invKey) {
-      resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${invKey}` },
-        body: groqBody,
-      });
-    } else {
-      resp = await fetch(`${SUPABASE_URL}/functions/v1/groq`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: groqBody,
-      });
-    }
+    const groqBodyWithKey = invKey
+      ? JSON.stringify({ ...JSON.parse(groqBody), _inv_key: invKey })
+      : groqBody;
+    let resp = await fetch(`${SUPABASE_URL}/functions/v1/groq`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: groqBodyWithKey,
+    });
     if (resp.status === 429) {
       out.textContent = '⛔ Groq rate limit — הוסף Groq API key ייעודי לשדה שמתחת לסימבול.';
       return;

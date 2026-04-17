@@ -72,16 +72,25 @@ serve(async (req: Request) => {
     );
   }
 
-  let body: unknown;
+  let body: Record<string, unknown>;
   try { body = await req.json(); } catch {
     return new Response('Invalid JSON', { status: 400, headers: CORS });
+  }
+
+  // Accept key passed directly in body (when DB save fails) — strip before forwarding
+  const bodyKey = typeof body._inv_key === 'string' && body._inv_key.startsWith('gsk_') ? body._inv_key : null;
+  delete body._inv_key;
+  const finalKey = bodyKey ?? apiKey;
+
+  if (!finalKey.startsWith('gsk_')) {
+    return new Response(JSON.stringify({ error: 'No Groq API key configured.' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 
   const upstream = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
+      'Authorization': `Bearer ${finalKey}`,
     },
     body: JSON.stringify(body),
   });
