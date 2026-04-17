@@ -6856,14 +6856,14 @@ async function saveTrade() {
 
 function editTrade(type, id) {
   const arr = type==='stock' ? db.stocks : db.crypto;
-  const tr = arr.find(t=>t.id===id);
+  const tr = arr.find(t=>String(t.id)===String(id));
   if (tr) openModal(type, tr);
 }
 
 async function deleteTrade(type, id) {
   if (!confirm('למחוק את העסקה?')) return;
   const arr = type==='stock' ? db.stocks : db.crypto;
-  const tr = arr.find(t => t.id === id);
+  const tr = arr.find(t => String(t.id) === String(id));
   if (!tr) return;
   // Optimistic
   tr.deleted = true;
@@ -6872,7 +6872,7 @@ async function deleteTrade(type, id) {
   toast('עסקה נמחקה', 'success');
   const { error } = await _sb.from('trades')
     .update({ deleted: true, deleted_at: new Date().toISOString() })
-    .eq('id', id).eq('user_id', _currentUser.id);
+    .eq('id', tr.id).eq('user_id', _currentUser.id);
   if (error) {
     tr.deleted = false; tr.deletedAt = null;
     renderTable(type);
