@@ -10518,6 +10518,19 @@ async function invAnalyze() {
     const fmpKey = getFmpKey();
     const fmpBase = `${SUPABASE_URL}/functions/v1/fmp`;
 
+    // ── שלב 0: SEC EDGAR ישיר (הכי עדכני — לפני Finnhub) ──
+    let edgarData = null;
+    if (!isIsraeli) {
+      out.textContent = 'מושך נתונים עדכניים מ-SEC EDGAR...';
+      try {
+        const edgarRes = await fetch(`${SUPABASE_URL}/functions/v1/edgar?symbol=${encodeURIComponent(sym)}`, { headers: hdr });
+        if (edgarRes.ok) {
+          edgarData = await edgarRes.json();
+          if (edgarData?.error) edgarData = null;
+        }
+      } catch(e) { console.warn('[EDGAR] failed:', e); }
+    }
+
     // ── שלב 1: Finnhub — עם retry על 429 ──
     out.textContent = 'מושך נתונים מ-Finnhub...';
     const fetchRetry = async (url, opts, retries = 3) => {
@@ -10617,10 +10630,18 @@ async function invAnalyze() {
       }
     }
 
-    // Extract latest 2 quarterly SEC reports
+    // Extract latest 2 quarterly SEC reports (Finnhub)
     const reports = financialsData?.data?.slice(0, 2) || [];
     const latestReport = reports[0] || null;
-    const latestPeriod = latestReport?.endDate?.split?.(' ')?.[0] || latestReport?.period || null;
+    const fhLatestPeriod = latestReport?.endDate?.split?.(' ')?.[0] || latestReport?.period || null;
+
+    // EDGAR direct — prefer if more recent than Finnhub SEC
+    const edgarFiling = edgarData?.latestFiling;
+    const edgarPeriod = edgarFiling?.period || null;
+    const latestPeriod = (edgarPeriod && (!fhLatestPeriod || edgarPeriod > fhLatestPeriod)) ? edgarPeriod : fhLatestPeriod;
+    const dataSource   = (edgarPeriod && (!fhLatestPeriod || edgarPeriod > fhLatestPeriod))
+      ? `SEC EDGAR ישיר (${edgarData.latestForm}, הוגש ${edgarFiling.filed})`
+      : 'Finnhub / SEC';
 
     // Staleness check: how many months since the latest report period?
     const today = new Date();
@@ -10674,38 +10695,57 @@ async function invAnalyze() {
       'IncomeLossFromContinuingOperations',
     ];
 
-    const secRevRaw    = getRaw(secIC, ...REV_C);
-    const prevRevRaw   = getRaw(prevIC, ...REV_C);
-    const secNIRaw     = getRaw(secIC, ...NI_C);
-    const secGPRaw     = getRaw(secIC, 'GrossProfit','GrossProfitLoss');
-    const secCOGSRaw   = getRaw(secIC, 'CostOfRevenue','CostOfGoodsAndServicesSold',
+    // Finnhub SEC values
+    const fhRevRaw    = getRaw(secIC, ...REV_C);
+    const prevRevRaw  = getRaw(prevIC, ...REV_C);
+    const fhNIRaw     = getRaw(secIC, ...NI_C);
+    const fhGPRaw     = getRaw(secIC, 'GrossProfit','GrossProfitLoss');
+    const fhCOGSRaw   = getRaw(secIC, 'CostOfRevenue','CostOfGoodsAndServicesSold',
       'CostOfGoodsSold','CostOfGoodsAndServiceExcludingDepreciationDepletionAndAmortization');
-    const secOpIncRaw  = getRaw(secIC, 'OperatingIncomeLoss',
+    const fhOpIncRaw  = getRaw(secIC, 'OperatingIncomeLoss',
       'IncomeLossFromContinuingOperationsBeforeInterestExpenseInterestIncomeIncomeTaxesExtraordinaryItemsNoncontrollingInterestsNet');
-    const secPreTaxRaw = getRaw(secIC,
+    const fhPreTaxRaw = getRaw(secIC,
       'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest',
       'IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments',
       'IncomeLossBeforeIncomeTaxExpenseBenefit','IncomeLossBeforeProvisionForIncomeTax');
-    const secDAraw     = getRaw(secCF, 'DepreciationDepletionAndAmortization',
+    const fhDAraw     = getRaw(secCF, 'DepreciationDepletionAndAmortization',
       'DepreciationAndAmortization','Depreciation');
-    const secAssetsRaw = getRaw(secBS, 'Assets');
-    const secEquityRaw = getRaw(secBS, 'StockholdersEquity',
+    const fhAssetsRaw = getRaw(secBS, 'Assets');
+    const fhEquityRaw = getRaw(secBS, 'StockholdersEquity',
       'StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest',
       'PartnersCapital','MembersEquity');
-    const secLTDebtRaw = getRaw(secBS, 'LongTermDebt','LongTermDebtNoncurrent',
+    const fhLTDebtRaw = getRaw(secBS, 'LongTermDebt','LongTermDebtNoncurrent',
       'LongTermNotesPayable','SeniorNotes','LongTermLineOfCredit');
-    const secSTDebtRaw = getRaw(secBS, 'ShortTermBorrowings','DebtCurrent',
+    const fhSTDebtRaw = getRaw(secBS, 'ShortTermBorrowings','DebtCurrent',
       'NotesPayableCurrent','LongTermDebtCurrent','CommercialPaper');
-    const secCurrAssetsRaw = getRaw(secBS, 'AssetsCurrent');
-    const secCurrLiabRaw   = getRaw(secBS, 'LiabilitiesCurrent');
-    const secOpCFRaw   = getRaw(secCF, 'NetCashProvidedByUsedInOperatingActivities');
-    const secCapexRaw  = getRaw(secCF,
+    const fhCurrAssetsRaw = getRaw(secBS, 'AssetsCurrent');
+    const fhCurrLiabRaw   = getRaw(secBS, 'LiabilitiesCurrent');
+    const fhOpCFRaw   = getRaw(secCF, 'NetCashProvidedByUsedInOperatingActivities');
+    const fhCapexRaw  = getRaw(secCF,
       'PaymentsToAcquirePropertyPlantAndEquipment',
       'PaymentsForCapitalImprovements','CapitalExpendituresIncurredButNotYetPaid',
       'PaymentsToAcquireOtherPropertyPlantAndEquipment',
       'PurchaseOfPropertyAndEquipment','AdditionsToPropertyAndEquipment');
 
-    const sl = isIsraeli ? '' : (latestPeriod ? ` [SEC ${latestPeriod}]` : ' [SEC]');
+    // Use EDGAR direct when its period is newer (or when Finnhub has no data)
+    const edgarNewer = edgarData && (!fhLatestPeriod || (edgarPeriod && edgarPeriod > fhLatestPeriod));
+    const secRevRaw    = edgarNewer && edgarData.revenue    ? edgarData.revenue.val    : fhRevRaw;
+    const secNIRaw     = edgarNewer && edgarData.netIncome  ? edgarData.netIncome.val  : fhNIRaw;
+    const secGPRaw     = edgarNewer && edgarData.grossProfit ? edgarData.grossProfit.val : fhGPRaw;
+    const secCOGSRaw   = edgarNewer ? null : fhCOGSRaw;
+    const secOpIncRaw  = edgarNewer && edgarData.opIncome   ? edgarData.opIncome.val   : fhOpIncRaw;
+    const secPreTaxRaw = fhPreTaxRaw;
+    const secDAraw     = edgarNewer && edgarData.da         ? edgarData.da.val         : fhDAraw;
+    const secAssetsRaw = edgarNewer && edgarData.assets     ? edgarData.assets.val     : fhAssetsRaw;
+    const secEquityRaw = edgarNewer && edgarData.equity     ? edgarData.equity.val     : fhEquityRaw;
+    const secLTDebtRaw = edgarNewer && edgarData.ltDebt     ? edgarData.ltDebt.val     : fhLTDebtRaw;
+    const secSTDebtRaw = fhSTDebtRaw;
+    const secCurrAssetsRaw = edgarNewer && edgarData.currAssets ? edgarData.currAssets.val : fhCurrAssetsRaw;
+    const secCurrLiabRaw   = edgarNewer && edgarData.currLiab   ? edgarData.currLiab.val   : fhCurrLiabRaw;
+    const secOpCFRaw   = edgarNewer && edgarData.opCF       ? edgarData.opCF.val       : fhOpCFRaw;
+    const secCapexRaw  = edgarNewer && edgarData.capex      ? edgarData.capex.val      : fhCapexRaw;
+
+    const sl = isIsraeli ? '' : (latestPeriod ? ` [${edgarNewer ? 'EDGAR' : 'SEC'} ${latestPeriod}]` : ' [SEC]');
 
     const secTotalDebtRaw = (secLTDebtRaw != null || secSTDebtRaw != null)
       ? (secLTDebtRaw ?? 0) + (secSTDebtRaw ?? 0) : null;
@@ -10892,13 +10932,22 @@ EBITDA: ${secEBITDARaw != null ? '$'+(secEBITDARaw/1e9).toFixed(2)+'B'+sl : 'א�
 תשואת דיבידנד: ${fmt(m['dividendYieldIndicatedAnnual'],'%')}
 Beta: ${fmt(m['beta'])}
 
-=== דוחות כספיים אחרונים (${fmpData ? 'FMP' : 'SEC'}) ===
-   ${fmpData ? (fmpReportsSummary || 'אין נתון') : reportsSummary}
+=== דוחות כספיים אחרונים (${edgarNewer ? `EDGAR ${edgarData.latestForm}` : fmpData ? 'FMP' : 'SEC Finnhub'}) ===
+   ${edgarNewer
+     ? (edgarData.revenue ? `הכנסות: $${(edgarData.revenue.val/1e6).toFixed(1)}M [${edgarData.revenue.period}] | רווח נטו: ${edgarData.netIncome?.val != null ? '$'+(edgarData.netIncome.val/1e6).toFixed(1)+'M' : 'אין נתון'} | תזרים תפעולי: ${edgarData.opCF?.val != null ? '$'+(edgarData.opCF.val/1e6).toFixed(1)+'M' : 'אין נתון'}` : 'אין נתון')
+     : fmpData ? (fmpReportsSummary || 'אין נתון') : reportsSummary}
+${edgarData?.revenueTTM ? `הכנסות TTM (4 רבעונים): $${(edgarData.revenueTTM/1e6).toFixed(1)}M` : ''}
+${edgarData?.revenueHistory?.length > 1 ? `מגמת הכנסות רבעונית (EDGAR):\n   ${edgarData.revenueHistory.slice(0,4).map(r => `${r.period}: $${(r.val/1e6).toFixed(1)}M`).join(' | ')}` : ''}
+${edgarData?.latest8K ? `
+=== הכרזת רווחים אחרונה (8-K הוגש ${edgarData.latest8K.filed}) ===
+⚡ זהו המקור הכי עדכני — תעדיף נתונים אלה על כל מקור אחר:
+${edgarData.latest8K.text}` : ''}
 `.trim();
 
     const systemPrompt = `אתה יועץ השקעות מקצועי ואובייקטיבי. תפקידך לנתח מניות לפי נתונים פיננסיים בלבד.
 
-⛔ כלל ברזל: השתמש אך ורק בנתונים שסופקו מ-Finnhub. אסור להשתמש בידע מהאימון. נתון חסר = ❓ בלבד.
+⛔ כלל ברזל: השתמש אך ורק בנתונים שסופקו (Finnhub / SEC EDGAR / 8-K). אסור להשתמש בידע מהאימון. נתון חסר = ❓ בלבד.
+אם קיים קטע "הכרזת רווחים אחרונה (8-K)" — זה המקור הכי עדכני, תעדיף אותו ותציין את תאריכו בניתוח.
 
 📅 בדיקת עדכניות — חובה בתחילת הניתוח:
 - בדוק את "דוח אחרון זמין" מול "תאריך ניתוח"
