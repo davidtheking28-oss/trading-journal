@@ -10958,13 +10958,20 @@ Beta: ${fmt(m['beta'])}
       body: groqBody,
     });
     if (resp.status === 429) {
-      out.textContent = '⏳ Groq rate limit — מנסה שוב בעוד 30 שניות...';
-      await new Promise(r => setTimeout(r, 30000));
+      for (let wait = 60; wait > 0; wait -= 5) {
+        out.textContent = `⏳ Groq rate limit — ממתין ${wait} שניות...`;
+        await new Promise(r => setTimeout(r, 5000));
+      }
+      out.textContent = 'מנסה שוב...';
       resp = await fetch(`${SUPABASE_URL}/functions/v1/groq`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: groqBody,
       });
+    }
+    if (resp.status === 429) {
+      out.textContent = '⛔ Groq rate limit — הגעת ל-10 ניתוחים בדקה. נסה שוב בעוד דקה, או הוסף Groq API key אישי בהגדרות.';
+      return;
     }
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
