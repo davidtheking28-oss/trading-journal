@@ -8858,6 +8858,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
   calcBreakeven();
+  // Restore portfolio total immediately on load (don't wait for tab click)
+  const totalEl = document.getElementById('inv-portfolio-total');
+  if (totalEl) {
+    try {
+      const saved = localStorage.getItem('inv_data_v1');
+      if (saved) {
+        const d = JSON.parse(saved);
+        if (d.portfolioTotal) totalEl.value = d.portfolioTotal;
+      }
+    } catch {}
+  }
 });
 
 // ── Theme System — Dynamic Stylesheet ──
