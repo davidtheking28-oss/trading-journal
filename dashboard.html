@@ -270,7 +270,7 @@
     overflow-x: auto;
     box-shadow: 0 4px 32px rgba(0,0,0,0.5);
   }
-  table { width: 100%; border-collapse: collapse; min-width: 1200px; font-size: 14px; }
+  table { width: 100%; border-collapse: collapse; min-width: 1600px; font-size: 14px; }
   thead tr {
     background: linear-gradient(90deg, #050d20 0%, #070f24 100%);
     border-bottom: 1px solid rgba(56,189,248,0.15);
@@ -5069,7 +5069,15 @@ function renderTable(type) {
     return;
   }
 
-  let h = `<table><thead><tr>
+  let h = `<table><colgroup>
+    <col style="width:44px"><col style="width:110px"><col style="width:54px">
+    <col style="width:90px"><col style="width:110px"><col style="width:100px">
+    <col style="width:90px"><col style="width:90px"><col style="width:80px">
+    <col style="width:80px"><col style="width:70px"><col style="width:110px">
+    <col style="width:100px"><col style="width:90px"><col style="width:70px">
+    <col style="width:80px"><col style="width:90px"><col style="width:70px">
+    <col style="width:60px"><col style="min-width:100px">
+  </colgroup><thead><tr>
     <th>#</th>
     ${thSort(type,'entryDate','תאריך כניסה',sc,sd)}
     <th>L/S</th>
