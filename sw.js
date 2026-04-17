@@ -1,4 +1,4 @@
-const CACHE = 'tj-v16';
+const CACHE = 'tj-v17';
 const PRECACHE = [
   './dashboard.html',
   './manifest.json',
