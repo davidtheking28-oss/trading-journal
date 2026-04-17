@@ -6674,7 +6674,8 @@ function openModal(type, tr=null) {
   stSetPills('m-st-pills', modalST);
   document.getElementById('m-market-cond').value = tr ? (tr.market_cond || '') : '';
   modalPS = tr ? (tr.process_score || 0) : 0;
-  document.getElementById('m-process-score').value = modalPS;
+  const psEl = document.getElementById('m-process-score');
+  if (psEl) psEl.value = modalPS;
   psSetStars('m-ps-stars', modalPS);
   const moodEl = document.getElementById('m-mood');
   if (moodEl) moodEl.value = tr ? (tr.mood || '') : '';
