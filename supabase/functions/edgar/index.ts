@@ -83,15 +83,22 @@ serve(async (req: Request) => {
       if (idxRes.ok) {
         const idxJson = await idxRes.json() as { directory?: { item?: { name: string; type: string }[] } };
         const items   = idxJson.directory?.item ?? [];
-        const doc     = items.find(f => f.type === '8-K' && /\.(htm|html)$/i.test(f.name))
-                     ?? items.find(f => /\.(htm|html)$/i.test(f.name));
+        // Prefer EX-99.1 (earnings press release) over 8-K cover page (contains SGML noise)
+        const doc = items.find(f => f.type === 'EX-99.1' && /\.(htm|html)$/i.test(f.name))
+                 ?? items.find(f => /ex-?99\.?1/i.test(f.name) && /\.(htm|html)$/i.test(f.name))
+                 ?? items.find(f => f.type === '8-K' && /\.(htm|html)$/i.test(f.name))
+                 ?? items.find(f => /\.(htm|html)$/i.test(f.name) && !/index/i.test(f.name));
         if (doc) {
           const docUrl = `https://www.sec.gov/Archives/edgar/data/${entry.cik_str}/${acc}/${doc.name}`;
           const docRes = await fetch(docUrl, { headers: { ...UA, 'Accept': 'text/html' } });
           if (docRes.ok) {
-            const html = await docRes.text();
-            const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-            const bodyHtml = bodyMatch ? bodyMatch[1] : html;
+            let raw = await docRes.text();
+            // Strip SGML/EDGAR envelope that appears before the actual HTML
+            raw = raw.replace(/^[\s\S]*?(<html|<!DOCTYPE)/i, (_, tag) => tag);
+            // Also strip <DOCUMENT>/<TEXT> SGML tags
+            raw = raw.replace(/<\/?(?:SEC-DOCUMENT|DOCUMENT|TYPE|SEQUENCE|FILENAME|DESCRIPTION|TEXT|SEC-HEADER|ACCEPTANCE-DATETIME|ACCESSION-NUMBER|CONFORMED-SUBMISSION-TYPE|PUBLIC-DOCUMENT-COUNT|CONFORMED-PERIOD-OF-REPORT|FILED-AS-OF-DATE|DATE-AS-OF-CHANGE|FILER|COMPANY-DATA|REGISTRANT-NAME|FORM-TYPE|FILE-NUMBER|FILM-NUMBER|IRS-NUMBER|STATE-OF-INCORPORATION|FISCAL-YEAR-END|BUSINESS-ADDRESS|STREET1|STREET2|CITY|STATE|ZIP|PHONE|MAIL-ADDRESS|FORMER-COMPANY|FORMER-CONFORMED-NAME|DATE-CHANGED)[^>]*>/gi, '');
+            const bodyMatch = raw.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+            const bodyHtml  = bodyMatch ? bodyMatch[1] : raw;
             const text = bodyHtml
               .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
               .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
