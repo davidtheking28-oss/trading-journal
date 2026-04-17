@@ -8559,7 +8559,6 @@ function flexRenderPreview(trades) {
 function flexIsDuplicate(t) {
   const arr = t.type === 'crypto' ? db.crypto : db.stocks;
   return arr.some(x =>
-    !x.deleted &&
     x.symbol === t.symbol &&
     x.entryDate === t.entryDate &&
     Math.abs(x.entryPrice - t.entryPrice) < 0.001
