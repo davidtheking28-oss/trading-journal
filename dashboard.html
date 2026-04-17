@@ -6317,38 +6317,49 @@ function renderCumChart(trades) {
   destroyChart('cum');
 
   const filtered = _filterByPeriod(trades, _cumPeriod);
+  const useDaily = ['7d', '1m'].includes(_cumPeriod);
 
-  // Group by month
-  const byMonth = {};
+  // Group by day or month
+  const byKey = {};
   filtered.forEach(t => {
-    const d = t.entryDate?.slice(0, 7);
+    const d = useDaily ? t.entryDate?.slice(0, 10) : t.entryDate?.slice(0, 7);
     if (!d) return;
-    byMonth[d] = (byMonth[d] || 0) + calcTotal(t);
+    byKey[d] = (byKey[d] || 0) + calcTotal(t);
   });
-  const months = Object.keys(byMonth).sort();
-  const labels = months.map(m => {
-    const [y, mo] = m.split('-');
+
+  // Fall back to all-time if fewer than 2 data points
+  const keys = Object.keys(byKey).sort();
+  if (keys.length < 2 && _cumPeriod !== 'all') {
+    _cumPeriod = 'all';
+    document.querySelectorAll('#cum-period-btns button').forEach(b => {
+      const active = b.dataset.p === 'all';
+      b.style.background = active ? 'var(--accent)' : 'transparent';
+      b.style.color      = active ? '#fff' : 'var(--text3)';
+    });
+    return renderCumChart(trades);
+  }
+
+  const labels = keys.map(k => {
+    if (useDaily) {
+      const [, mo, d] = k.split('-');
+      return d + '/' + mo;
+    }
+    const [y, mo] = k.split('-');
     return MONTHS[+mo-1] + "'" + y.slice(2);
   });
 
   let cum = 0;
-  const cumUsd = months.map(m => { cum += byMonth[m]; return +cum.toFixed(2); });
+  const cumUsd = keys.map(k => { cum += byKey[k]; return +cum.toFixed(2); });
 
-  // % mode: cumulative % relative to starting capital (first month absolute as base)
-  const totalComm = filtered.reduce((s, t) => s + (t.commission || 0) + (t.ecn || 0), 0);
-  const totalPnl  = filtered.reduce((s, t) => s + calcTotal(t), 0);
-  const base      = Math.abs(filtered.reduce((s, t) => s + (t.entryPrice || 0) * (t.shares || 0), 0)) || 1;
+  const base = Math.abs(filtered.reduce((s, t) => s + (t.entryPrice || 0) * (t.shares || 0), 0)) || 1;
   let cumPct = 0;
-  const cumPctData = months.map(m => {
-    cumPct += byMonth[m];
-    return +(cumPct / base * 100).toFixed(2);
-  });
+  const cumPctData = keys.map(k => { cumPct += byKey[k]; return +(cumPct / base * 100).toFixed(2); });
 
-  const isPct = _cumMode === 'pct';
-  const data  = isPct ? cumPctData : cumUsd;
+  const isPct   = _cumMode === 'pct';
+  const data    = isPct ? cumPctData : cumUsd;
   const lastVal = data[data.length - 1] ?? 0;
-  const color = lastVal >= 0 ? '#22c55e' : '#ef4444';
-  const bgColor = lastVal >= 0 ? 'rgba(34,197,94,0.07)' : 'rgba(239,68,68,0.07)';
+  const color   = lastVal >= 0 ? '#22c55e' : '#ef4444';
+  const bgColor = lastVal >= 0 ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)';
 
   showChart('skel-cum', 'chart-cum');
   const cumEl = document.getElementById('chart-cum');
@@ -6363,11 +6374,11 @@ function renderCumChart(trades) {
         data,
         borderColor: color,
         backgroundColor: bgColor,
-        tension: 0.35, fill: true,
-        pointRadius: data.length > 12 ? 3 : 5,
+        tension: 0.3, fill: true,
+        pointRadius: data.length > 20 ? 2 : 4,
         pointBackgroundColor: data.map(v => v >= 0 ? '#22c55e' : '#ef4444'),
         pointBorderColor: 'transparent',
-        pointHoverRadius: 7,
+        pointHoverRadius: 6,
         borderWidth: 2,
       }]
     },
@@ -6378,7 +6389,7 @@ function renderCumChart(trades) {
         tooltip: { callbacks: { label: c => isPct ? ` ${(+c.raw).toFixed(2)}%` : ` $${(+c.raw).toFixed(2)}` } }
       },
       scales: {
-        x: { ticks: { color: TICK_COLOR, font: CHART_FONT }, grid: { color: GRID_COLOR, drawBorder: false } },
+        x: { ticks: { color: TICK_COLOR, font: CHART_FONT, maxTicksLimit: 8 }, grid: { color: GRID_COLOR, drawBorder: false } },
         y: { ticks: { color: TICK_COLOR, font: CHART_FONT, callback: v => isPct ? v + '%' : '$' + v }, grid: { color: GRID_COLOR, drawBorder: false } }
       }
     }
