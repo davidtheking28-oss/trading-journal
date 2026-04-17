@@ -10933,21 +10933,30 @@ Beta: ${fmt(m['beta'])}
 
     out.textContent = '📊 נתונים שנמשכו מ-Finnhub:\n─────────────────────\n' + metricsText + '\n─────────────────────\nמנתח עם AI...\n';
 
-    const resp = await fetch(`${SUPABASE_URL}/functions/v1/groq`, {
+    const groqBody = JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage },
+      ],
+      stream: true,
+      max_tokens: 2000,
+      temperature: 0.2,
+    });
+    let resp = await fetch(`${SUPABASE_URL}/functions/v1/groq`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage },
-        ],
-        stream: true,
-        max_tokens: 2000,
-        temperature: 0.2,
-      }),
+      body: groqBody,
     });
-
+    if (resp.status === 429) {
+      out.textContent = '⏳ Groq rate limit — מנסה שוב בעוד 30 שניות...';
+      await new Promise(r => setTimeout(r, 30000));
+      resp = await fetch(`${SUPABASE_URL}/functions/v1/groq`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: groqBody,
+      });
+    }
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
     const dataHeader = '📊 נתונים שנמשכו מ-Finnhub:\n─────────────────────\n' + metricsText + '\n─────────────────────\n\n';
