@@ -3722,14 +3722,14 @@
             <span id="finnhub-key-status" style="font-size:11px;align-self:center;color:var(--text3);white-space:nowrap;"></span>
           </div>
           <div style="font-size:11px;color:var(--text3);margin-top:12px;line-height:1.6;">
-            מפתח FMP — Financial Modeling Prep (fallback לסמולקאפ)
+            מפתח Alpha Vantage — נתונים פיננסיים לכל מניה כולל סמולקאפ (<a href="https://www.alphavantage.co/support/#api-key" target="_blank" style="color:var(--accent);">קבל מפתח חינמי</a>)
           </div>
           <div style="display:flex;gap:8px;margin-top:8px;">
-            <input id="fmp-key-input" class="form-control" type="password"
-              placeholder="FMP API Key" autocomplete="off"
+            <input id="av-key-input" class="form-control" type="password"
+              placeholder="Alpha Vantage API Key" autocomplete="off"
               style="font-size:12px;padding:6px 10px;flex:1;">
-            <button class="btn btn-secondary btn-sm" onclick="saveFmpKey()">שמור</button>
-            <span id="fmp-key-status" style="font-size:11px;align-self:center;color:var(--text3);white-space:nowrap;"></span>
+            <button class="btn btn-secondary btn-sm" onclick="saveAvKey()">שמור</button>
+            <span id="av-key-status" style="font-size:11px;align-self:center;color:var(--text3);white-space:nowrap;"></span>
           </div>
         </div>
       </div>
@@ -5665,7 +5665,7 @@ let _userSettings = {};
 async function loadUserSettings() {
   if (!_currentUser) return;
   const { data } = await _sb.from('user_settings')
-    .select('groq_api_key, finnhub_key, fmp_key, flex_token, flex_query_id')
+    .select('groq_api_key, finnhub_key, fmp_key, av_key, flex_token, flex_query_id')
     .eq('user_id', _currentUser.id)
     .single();
   _userSettings = data || {};
@@ -5681,6 +5681,7 @@ async function loadUserSettings() {
   }
   renderFinnhubKeyStatus();
   renderFmpKeyStatus();
+  renderAvKeyStatus();
 }
 
 async function _saveUserSettings(patch) {
@@ -5714,6 +5715,7 @@ function renderFinnhubKeyStatus() {
 }
 
 function getFmpKey() { return _userSettings.fmp_key || ''; }
+function getAvKey()  { return _userSettings.av_key  || ''; }
 
 async function saveFmpKey() {
   const val = (document.getElementById('fmp-key-input')?.value || '').trim();
@@ -5727,6 +5729,22 @@ function renderFmpKeyStatus() {
   const el = document.getElementById('fmp-key-status');
   if (!el) return;
   const key = getFmpKey();
+  el.textContent = key ? '✓ מפתח שמור' : '';
+  el.style.color = key ? 'var(--green)' : 'var(--text3)';
+}
+
+async function saveAvKey() {
+  const val = (document.getElementById('av-key-input')?.value || '').trim();
+  await _saveUserSettings({ av_key: val || null });
+  document.getElementById('av-key-input').value = '';
+  toast(val ? 'מפתח Alpha Vantage נשמר 🔐' : 'מפתח Alpha Vantage הוסר', 'success');
+  renderAvKeyStatus();
+}
+
+function renderAvKeyStatus() {
+  const el = document.getElementById('av-key-status');
+  if (!el) return;
+  const key = getAvKey();
   el.textContent = key ? '✓ מפתח שמור' : '';
   el.style.color = key ? 'var(--green)' : 'var(--text3)';
 }
@@ -10523,8 +10541,9 @@ async function invAnalyze() {
     let m = metricData.metric || {};
     const earnings = Array.isArray(earningsData) ? earningsData.slice(0, 4) : [];
 
-    // ── שלב 2: FMP — דוחות כספיים (תמיד, כשיש מפתח ולא ישראלי) ──
+    // ── שלב 2: FMP — דוחות כספיים (כשיש מפתח ולא ישראלי) ──
     let fmpData = null;
+    let extDataSource = '';
     if (!isIsraeli && fmpKey) {
       out.textContent = 'מושך דוחות כספיים מ-FMP...';
       console.log(`[FMP] fetching financials for ${sym}`);
@@ -10541,16 +10560,50 @@ async function invAnalyze() {
 
       if (Array.isArray(fmpIncome) && fmpIncome.length > 0) {
         fmpData = { quote: fmpQuote[0]||{}, profile: fmpProfile[0]||{}, income: fmpIncome, metrics: fmpMetrics[0]||{} };
-
-        // FMP quote → עדיף על Finnhub (יותר עדכני)
-        if (fmpData.quote.price) {
-          quoteData = { c: fmpData.quote.price, dp: fmpData.quote.changesPercentage };
-        }
-        // FMP 52W
-        if (fmpData.quote.yearHigh) {
-          m = { ...m, '52WeekHigh': fmpData.quote.yearHigh, '52WeekLow': fmpData.quote.yearLow };
-        }
+        extDataSource = 'FMP';
+        if (fmpData.quote.price) quoteData = { c: fmpData.quote.price, dp: fmpData.quote.changesPercentage };
+        if (fmpData.quote.yearHigh) m = { ...m, '52WeekHigh': fmpData.quote.yearHigh, '52WeekLow': fmpData.quote.yearLow };
         console.log(`[FMP] got ${fmpIncome.length} income statements for ${sym}, latest: ${fmpIncome[0]?.date}`);
+      }
+    }
+
+    // ── שלב 3: Alpha Vantage — fallback כשאין FMP data ──
+    const avKey = getAvKey();
+    if (!fmpData && !isIsraeli && avKey) {
+      out.textContent = 'מושך דוחות כספיים מ-Alpha Vantage...';
+      console.log(`[AV] fetching financials for ${sym}`);
+      const avBase = `${SUPABASE_URL}/functions/v1/alphavantage`;
+      const [avQuoteRes, avOverviewRes, avIncomeRes] = await Promise.all([
+        fetch(`${avBase}?function=GLOBAL_QUOTE&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
+        fetch(`${avBase}?function=OVERVIEW&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
+        fetch(`${avBase}?function=INCOME_STATEMENT&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
+      ]);
+      const avQuoteRaw   = avQuoteRes.ok   ? await avQuoteRes.json()   : {};
+      const avOverview   = avOverviewRes.ok ? await avOverviewRes.json() : {};
+      const avIncomeRaw  = avIncomeRes.ok  ? await avIncomeRes.json()  : {};
+
+      const avQ = avQuoteRaw['Global Quote'] || {};
+      const avIncome = (avIncomeRaw.annualReports || []).slice(0, 4).map(r => ({
+        date: r.fiscalDateEnding,
+        revenue: +r.totalRevenue || null,
+        netIncome: +r.netIncome || null,
+        operatingIncome: +r.operatingIncome || null,
+        ebitda: +r.ebitda || null,
+        grossProfit: +r.grossProfit || null,
+      }));
+
+      if (avIncome.length > 0) {
+        fmpData = {
+          quote:   { price: +avQ['05. price']||0, changesPercentage: parseFloat(avQ['10. change percent']||'0'), yearHigh: +avOverview['52WeekHigh']||0, yearLow: +avOverview['52WeekLow']||0 },
+          profile: { companyName: avOverview.Name||sym, industry: avOverview.Industry||'', mktCap: +avOverview.MarketCapitalization||0 },
+          income:  avIncome,
+          metrics: {},
+        };
+        extDataSource = 'Alpha Vantage';
+        if (fmpData.quote.price)   quoteData = { c: fmpData.quote.price, dp: fmpData.quote.changesPercentage };
+        if (fmpData.quote.yearHigh) m = { ...m, '52WeekHigh': fmpData.quote.yearHigh, '52WeekLow': fmpData.quote.yearLow };
+        if (avOverview.PERatio && avOverview.PERatio !== 'None') m = { ...m, peBasicExclExtraTTM: +avOverview.PERatio };
+        console.log(`[AV] got ${avIncome.length} income statements for ${sym}, latest: ${avIncome[0]?.date}`);
       }
     }
 
@@ -10787,7 +10840,7 @@ async function invAnalyze() {
 
 
     const metricsText = `
-${isIsraeli ? '🇮🇱 מניה ישראלית (בורסה תל אביב) — דוחות SEC לא זמינים, ניתוח מבוסס על Finnhub בלבד. מדדים שמחושבים מ-SEC יוצגו כ"אין נתון".\n' : ''}${fmpData ? '⚠️ Finnhub לא החזיר דוחות כספיים — נתונים מ-FMP (Financial Modeling Prep). מדדי SEC יוצגו כ"אין נתון".\n' : ''}=== בדיקת איכות נתונים אוטומטית ===
+${isIsraeli ? '🇮🇱 מניה ישראלית (בורסה תל אביב) — דוחות SEC לא זמינים, ניתוח מבוסס על Finnhub בלבד. מדדים שמחושבים מ-SEC יוצגו כ"אין נתון".\n' : ''}${fmpData ? `⚠️ Finnhub לא החזיר דוחות כספיים — נתונים מ-${extDataSource}. מדדי SEC יוצגו כ"אין נתון".\n` : ''}=== בדיקת איכות נתונים אוטומטית ===
 ציון מהימנות: ${qualityLine}
 ${checks.join('\n')}
 
