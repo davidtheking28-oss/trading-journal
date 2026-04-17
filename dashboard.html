@@ -10518,15 +10518,24 @@ async function invAnalyze() {
     const fmpKey = getFmpKey();
     const fmpBase = `${SUPABASE_URL}/functions/v1/fmp`;
 
-    // ── שלב 1: Finnhub — מחיר, מכפילים, earnings (תמיד) ──
+    // ── שלב 1: Finnhub — עם retry על 429 ──
     out.textContent = 'מושך נתונים מ-Finnhub...';
+    const fetchRetry = async (url, opts, retries = 3) => {
+      for (let i = 0; i < retries; i++) {
+        const r = await fetch(url, opts);
+        if (r.status !== 429) return r;
+        await new Promise(res => setTimeout(res, 1200 * (i + 1)));
+      }
+      return { ok: false, status: 429 };
+    };
+    const fh = u => fetchRetry(u, { headers: hdr });
     const [metricRes, profileRes, quoteRes, earningsRes, financialsQRes, financialsARes] = await Promise.all([
-      fetch(`${base}?path=stock%2Fmetric&symbol=${encodeURIComponent(sym)}&metric=all`, { headers: hdr }),
-      fetch(`${base}?path=stock%2Fprofile2&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
-      fetch(`${base}?path=quote&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
-      fetch(`${base}?path=stock%2Fearnings&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
-      isIsraeli ? Promise.resolve({ok:false}) : fetch(`${base}?path=stock%2Ffinancials-reported&symbol=${encodeURIComponent(sym)}&freq=quarterly`, { headers: hdr }),
-      isIsraeli ? Promise.resolve({ok:false}) : fetch(`${base}?path=stock%2Ffinancials-reported&symbol=${encodeURIComponent(sym)}&freq=annual`, { headers: hdr }),
+      fh(`${base}?path=stock%2Fmetric&symbol=${encodeURIComponent(sym)}&metric=all`),
+      fh(`${base}?path=stock%2Fprofile2&symbol=${encodeURIComponent(sym)}`),
+      fh(`${base}?path=quote&symbol=${encodeURIComponent(sym)}`),
+      fh(`${base}?path=stock%2Fearnings&symbol=${encodeURIComponent(sym)}`),
+      isIsraeli ? Promise.resolve({ok:false}) : fh(`${base}?path=stock%2Ffinancials-reported&symbol=${encodeURIComponent(sym)}&freq=quarterly`),
+      isIsraeli ? Promise.resolve({ok:false}) : fh(`${base}?path=stock%2Ffinancials-reported&symbol=${encodeURIComponent(sym)}&freq=annual`),
     ]);
 
     const metricData      = metricRes.ok  ? await metricRes.json()  : {};
