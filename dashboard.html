@@ -10905,10 +10905,7 @@ async function invAnalyze() {
 הכנסות: ${secRevRaw != null ? '$'+(secRevRaw/1e6).toFixed(1)+'M' : '❓'} | רווח נטו: ${secNIRaw != null ? '$'+(secNIRaw/1e6).toFixed(1)+'M' : '❓'} | EPS: ${fmtV(epsNorm)} ${epsNorm != null ? (+epsNorm > 0 ? '✅' : '❌') : ''}
 שולי גולמי: ${fmtV(secGrossMargin,'%')} | שולי תפעולי: ${fmtV(secOpMargin,'%')} | שולי נטו: ${fmtV(secNetMargin,'%')}${oneTimeFlag}
 ROE: ${fmtV(secROE,'%')} | ROA: ${fmtV(secROA,'%')} | EBITDA: ${secEBITDARaw != null ? '$'+(secEBITDARaw/1e6).toFixed(1)+'M' : '❓'}
-${yearAgoPeriod ? `
-=== דוח לפני שנה: ${yearAgoPeriod} ===
-הכנסות: ${yearAgoRev != null ? '$'+(yearAgoRev/1e6).toFixed(1)+'M' : '❓'} | רווח נטו: ${yearAgoNI != null ? '$'+(yearAgoNI/1e6).toFixed(1)+'M' : '❓'}
-צמיחה YoY → הכנסות: ${yoyRev != null ? yoyRev+'%' : '❓'} | רווח נטו: ${yoyNI != null ? yoyNI+'%' : '❓'}` : ''}
+צמיחה YoY → הכנסות: ${yoyRev != null ? yoyRev+'%' : '❓'} | רווח נטו: ${yoyNI != null ? yoyNI+'%' : '❓'}
 
 === מכפילים (Finnhub) ===
 P/E: ${fmt(m['peNormalizedAnnual'] ?? m['peTTM'])} | P/B: ${fmt(m['pbAnnual'] ?? m['pbQuarterly'])} | PEG: ${pegDisplay} | Beta: ${fmt(m['beta'])} | דיבידנד: ${fmt(m['dividendYieldIndicatedAnnual'],'%')}
