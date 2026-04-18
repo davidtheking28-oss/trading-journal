@@ -6981,9 +6981,9 @@ function renderOverview() {
 // Gridlines: subtle, adapts to both dark/light via dynamic lookup
 function getGridColor() { return document.documentElement.getAttribute('data-theme')==='light' ? 'rgba(15,23,42,0.07)' : 'rgba(148,163,184,0.07)'; }
 function getTickColor() { return document.documentElement.getAttribute('data-theme')==='light' ? '#64748b' : '#4b6080'; }
-const GRID_COLOR  = 'rgba(148,163,184,0.07)';
-const TICK_COLOR  = '#4b6080';
-const CHART_FONT  = { family: "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif", size: 11 };
+const GRID_COLOR  = 'rgba(148,163,184,0.09)';
+const TICK_COLOR  = '#8faac8';
+const CHART_FONT  = { family: "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif", size: 12, weight: '500' };
 
 function showChart(skelId, canvasId) {
   const skel = document.getElementById(skelId);
