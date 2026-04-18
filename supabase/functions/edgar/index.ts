@@ -176,18 +176,25 @@ serve(async (req: Request) => {
   const currAssets = getLatest(['AssetsCurrent']);
   const currLiab   = getLatest(['LiabilitiesCurrent']);
 
+  // Filter to single-quarter entries only (60–105 days) to exclude YTD cumulative values
+  const isQuarterOnly = (d: any) => {
+    if (!d.start || !d.end) return false;
+    const days = (new Date(d.end).getTime() - new Date(d.start).getTime()) / 86400000;
+    return days >= 60 && days <= 105;
+  };
+
   // Revenue TTM (sum of 4 most recent quarters)
   let revenueTTM: number | null = null;
   const revConcept = revenue?.concept ?? REV_C[0];
   const allQ = (byName[revConcept] ?? [])
-    .filter(d => d.form === '10-Q' && d.val != null)
+    .filter(d => d.form === '10-Q' && d.val != null && isQuarterOnly(d))
     .sort((a, b) => b.end.localeCompare(a.end))
     .slice(0, 4);
   if (allQ.length === 4) revenueTTM = allQ.reduce((s, d) => s + d.val, 0);
 
   // Revenue history (last 8 quarters for trend)
   const revenueHistory = (byName[revConcept] ?? [])
-    .filter(d => d.form === '10-Q' && d.val != null)
+    .filter(d => d.form === '10-Q' && d.val != null && isQuarterOnly(d))
     .sort((a, b) => b.end.localeCompare(a.end))
     .slice(0, 8)
     .map(d => ({ period: d.end, val: d.val }));
@@ -195,7 +202,7 @@ serve(async (req: Request) => {
   // Net income history (last 8 quarters)
   const niConcept = netIncome?.concept ?? NI_C[0];
   const netIncomeHistory = (byName[niConcept] ?? [])
-    .filter(d => d.form === '10-Q' && d.val != null)
+    .filter(d => d.form === '10-Q' && d.val != null && isQuarterOnly(d))
     .sort((a, b) => b.end.localeCompare(a.end))
     .slice(0, 8)
     .map(d => ({ period: d.end, val: d.val }));
