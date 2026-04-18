@@ -4628,7 +4628,18 @@ async function _onAuthSuccess(user) {
   _currentUser = user;
   const _displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Trading Journal';
   const _nameEl = document.getElementById('header-user-name');
-  if (_nameEl) _nameEl.textContent = _displayName;
+  if (_nameEl) {
+    _nameEl.textContent = _displayName;
+    _nameEl.title = 'לחץ לשינוי שם';
+    _nameEl.style.cursor = 'pointer';
+    _nameEl.onclick = async () => {
+      const n = prompt('שם תצוגה:', _nameEl.textContent);
+      if (!n || !n.trim()) return;
+      _nameEl.textContent = n.trim();
+      await _sb.auth.updateUser({ data: { full_name: n.trim() } });
+      toast('שם עודכן ✓', 'success');
+    };
+  }
   document.getElementById('auth-overlay').style.display = 'none';
   await Promise.all([loadDB(), loadUserSettings()]);
 
@@ -5666,7 +5677,7 @@ let _userSettings = {};
 async function loadUserSettings() {
   if (!_currentUser) return;
   const { data } = await _sb.from('user_settings')
-    .select('groq_api_key, groq_inv_key, finnhub_key, fmp_key, av_key, flex_token, flex_query_id')
+    .select('groq_api_key, groq_inv_key, finnhub_key, fmp_key, av_key, flex_token, flex_query_id, portfolio_total')
     .eq('user_id', _currentUser.id)
     .single();
   _userSettings = data || {};
@@ -5689,6 +5700,13 @@ async function loadUserSettings() {
   renderFinnhubKeyStatus();
   renderFmpKeyStatus();
   renderAvKeyStatus();
+  if (_userSettings.portfolio_total != null) {
+    const ptEl = document.getElementById('inv-portfolio-total');
+    if (ptEl) { ptEl.value = _userSettings.portfolio_total; invRecalc(); }
+    const invData = invLoad();
+    invData.portfolioTotal = String(_userSettings.portfolio_total);
+    invSaveData(invData);
+  }
 }
 
 async function _saveUserSettings(patch) {
@@ -10392,8 +10410,10 @@ function invAutoSector(idx) {
 
 function invAutoSaveTotal() {
   const data = invLoad();
-  data.portfolioTotal = document.getElementById('inv-portfolio-total')?.value || '';
+  const val = document.getElementById('inv-portfolio-total')?.value || '';
+  data.portfolioTotal = val;
   invSaveData(data);
+  _saveUserSettings({ portfolio_total: val ? +val : null });
 }
 
 function invUpdateDonut(byCat, portfolioTotal) {
