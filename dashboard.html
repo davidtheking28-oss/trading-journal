@@ -11092,7 +11092,7 @@ ${edgarData.latest8K.text.slice(0, 1500)}` : ''}`.trim();
     });
     if (resp.status === 429) {
       let errMsg = '';
-      try { const j = await resp.clone().json(); errMsg = j.error || j.message || JSON.stringify(j); } catch { errMsg = await resp.text(); }
+      try { const j = await resp.clone().json(); errMsg = String(j.error || j.message || JSON.stringify(j)); } catch { errMsg = await resp.text(); }
       if (errMsg.includes('Rate limit exceeded')) {
         out.textContent = '⛔ הגעת למגבלת הבקשות שלנו (10/דקה). הוסף Groq API key ייעודי או המתן דקה.';
       } else {
