@@ -4175,8 +4175,8 @@
         </div>
         <div class="chart-card" style="display:flex;flex-direction:column;">
           <div class="chart-title">ניצחון / הפסד</div>
-          <div class="chart-skeleton" id="skel-donut" style="height:160px;"></div>
-          <div style="height:160px;position:relative;"><canvas id="chart-donut" style="display:none"></canvas></div>
+          <div class="chart-skeleton" id="skel-donut" style="height:130px;"></div>
+          <div style="height:130px;position:relative;"><canvas id="chart-donut" style="display:none"></canvas></div>
           <div id="donut-stats" class="donut-stats" style="flex:1;"></div>
         </div>
       </div>
@@ -7159,16 +7159,14 @@ function renderDonut(st, adv, trades) {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
-        legend: {
-          position: 'bottom',
-          labels: { color: TICK_COLOR, padding: 12, font: CHART_FONT, usePointStyle: true, pointStyleWidth: 8 }
-        },
+        legend: { display: false },
         tooltip: {
           callbacks: { label: c => ` ${c.label}: ${c.raw} (${st.n ? (c.raw/st.n*100).toFixed(1) : 0}%)` }
         }
       },
-      cutout: '68%',
+      cutout: '70%',
       animation: { duration: 300 }
     }
   });
