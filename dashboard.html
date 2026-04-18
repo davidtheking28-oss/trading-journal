@@ -10916,7 +10916,7 @@ ROE: ${fmtV(secROE,'%')} | ROA: ${fmtV(secROA,'%')} | EBITDA: ${secEBITDARaw != 
 צמיחה YoY → הכנסות: ${yoyRev != null ? yoyRev+'%' : '❓'} | רווח נטו: ${yoyNI != null ? yoyNI+'%' : '❓'}
 
 === מכפילים (Finnhub) ===
-P/E: ${fmt(m['peNormalizedAnnual'] ?? m['peTTM'])}${(+(m['peNormalizedAnnual'] ?? m['peTTM'] ?? 0) > 150) ? ' (GAAP בלבד — Non-GAAP נמוך משמעותית עקב stock-based compensation)' : ''} | P/B: ${fmt(m['pbAnnual'] ?? m['pbQuarterly'])} | PEG: ${pegDisplay} | Beta: ${fmt(m['beta'])} | דיבידנד: ${fmt(m['dividendYieldIndicatedAnnual'],'%')}
+P/E: ${fmt(m['peTTM'] ?? m['peNormalizedAnnual'])}${(+(m['peTTM'] ?? m['peNormalizedAnnual'] ?? 0) > 150) ? ' (GAAP בלבד — Non-GAAP נמוך משמעותית עקב stock-based compensation)' : ''} | P/B: ${fmt(m['pbAnnual'] ?? m['pbQuarterly'])} | PEG: ${pegDisplay} | Beta: ${fmt(m['beta'])} | דיבידנד: ${fmt(m['dividendYieldIndicatedAnnual'],'%')}
 
 === מאזן ===
 D/E: ${fmtV(secDE)}${isFinancial ? ' (חברה פיננסית)' : ''} | Current Ratio: ${isFinancial ? 'לא רלוונטי' : fmtV(secCurrentRatio)} | FCF: ${secFCFRaw != null ? '$'+(secFCFRaw/1e6).toFixed(1)+'M' : '❓'}${fcfNote}
