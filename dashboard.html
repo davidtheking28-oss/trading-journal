@@ -10798,11 +10798,14 @@ async function invAnalyze() {
 
     const edgarRevHistory = edgarData?.revenueHistory ?? [];
     const edgarNIHistory  = edgarData?.netIncomeHistory ?? [];
+    // Always compare quarterly vs quarterly to avoid annual vs quarterly mismatch
+    const curQRev       = edgarRevHistory[0]?.val ?? null;
     const yearAgoRev    = edgarRevHistory[4]?.val ?? null;
+    const curQNI        = edgarNIHistory[0]?.val  ?? null;
     const yearAgoNI     = edgarNIHistory[4]?.val  ?? null;
     const yearAgoPeriod = edgarRevHistory[4]?.period ?? null;
-    const yoyRev = (secRevRaw && yearAgoRev) ? ((secRevRaw - yearAgoRev) / Math.abs(yearAgoRev) * 100).toFixed(1) : null;
-    const yoyNI  = (secNIRaw != null && yearAgoNI != null) ? ((secNIRaw - yearAgoNI) / Math.abs(yearAgoNI) * 100).toFixed(1) : null;
+    const yoyRev = (curQRev && yearAgoRev) ? ((curQRev - yearAgoRev) / Math.abs(yearAgoRev) * 100).toFixed(1) : null;
+    const yoyNI  = (curQNI != null && yearAgoNI != null) ? ((curQNI - yearAgoNI) / Math.abs(yearAgoNI) * 100).toFixed(1) : null;
 
     // Auto-detect one-time items: net margin >> pre-tax margin = likely tax benefit / non-recurring
     const oneTimeFlag = (secNetMargin != null && secPreTaxMargin != null &&
