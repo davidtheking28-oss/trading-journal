@@ -10659,11 +10659,6 @@ async function invAnalyze() {
       }
     }
 
-    // Override P/E with Alpha Vantage TTM when available — AV updates daily and is more accurate than Finnhub
-    if (avOverview?.PERatio && avOverview.PERatio !== 'None') {
-      m = { ...m, peTTM: +avOverview.PERatio };
-    }
-
     // Extract latest 2 quarterly SEC reports (Finnhub)
     const reports = financialsData?.data?.slice(0, 2) || [];
     const latestReport = reports[0] || null;
