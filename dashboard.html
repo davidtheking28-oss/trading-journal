@@ -805,10 +805,10 @@
   .mt-table tr:last-child td { border-bottom: none; background: var(--bg2); font-weight: 700; color: var(--text1); }
   .mt-table tr:hover td { background: rgba(56,189,248,0.04); }
   .mt-table .mt-empty { color: var(--text3); }
-  .ts-table { width: 100%; border-collapse: collapse; font-size: 13px; max-width: 420px; }
-  .ts-table td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--text1); }
+  .ts-table { width: auto; border-collapse: collapse; font-size: 13px; }
+  .ts-table td { padding: 9px 16px; border-bottom: 1px solid var(--border); color: var(--text1); white-space: nowrap; }
   .ts-table td:first-child { color: var(--text2); font-size: 12px; }
-  .ts-table td:last-child { font-weight: 700; text-align: left; }
+  .ts-table td:last-child { font-weight: 700; text-align: right; min-width: 80px; }
   .ts-table tr:last-child td { border-bottom: none; }
   .comparison-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
   .comp-card {
@@ -4184,7 +4184,7 @@
       <div id="monthly-tracker-wrap" style="overflow-x:auto;margin-bottom:22px;"></div>
 
       <div class="ov-section" style="margin-top:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Trading Summary</div>
-      <div id="trading-summary-wrap" style="margin-bottom:22px;"></div>
+      <div id="trading-summary-wrap" style="margin-bottom:22px;background:rgba(15,22,36,0.75);border:1px solid rgba(120,140,170,0.08);border-radius:14px;padding:4px 8px;display:inline-block;min-width:360px;"></div>
     </div>
 
     <!-- ===== STOCKS ===== -->
