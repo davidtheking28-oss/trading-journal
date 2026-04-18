@@ -4170,14 +4170,14 @@
               </div>
             </div>
           </div>
-          <div class="chart-skeleton" id="skel-cum" style="height:140px;"></div>
-          <div style="height:140px;position:relative;"><canvas id="chart-cum" style="display:none"></canvas></div>
+          <div class="chart-skeleton" id="skel-cum" style="height:200px;"></div>
+          <div style="height:200px;position:relative;"><canvas id="chart-cum" style="display:none"></canvas></div>
         </div>
-        <div class="chart-card">
+        <div class="chart-card" style="display:flex;flex-direction:column;">
           <div class="chart-title">ניצחון / הפסד</div>
-          <div class="chart-skeleton" id="skel-donut" style="height:140px;"></div>
-          <div style="height:140px;position:relative;"><canvas id="chart-donut" style="display:none"></canvas></div>
-          <div id="donut-stats" class="donut-stats"></div>
+          <div class="chart-skeleton" id="skel-donut" style="height:160px;"></div>
+          <div style="height:160px;position:relative;"><canvas id="chart-donut" style="display:none"></canvas></div>
+          <div id="donut-stats" class="donut-stats" style="flex:1;"></div>
         </div>
       </div>
       <div class="ov-section" style="margin-top:22px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Monthly Tracker <span id="mt-year-label" style="font-size:11px;font-weight:500;color:var(--text3);margin-right:6px;"></span></div>
@@ -7094,13 +7094,18 @@ function renderCumChart(trades) {
   const data    = isPct ? cumPctData : cumUsd;
   const lastVal = data[data.length - 1] ?? 0;
   const color   = lastVal >= 0 ? '#22c55e' : '#ef4444';
-  const bgColor = lastVal >= 0 ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)';
+  const colorRgb = lastVal >= 0 ? '34,197,94' : '239,68,68';
 
   showChart('skel-cum', 'chart-cum');
   const cumEl = document.getElementById('chart-cum');
   if (!cumEl) return;
+  const ctx2d = cumEl.getContext('2d');
+  const grad = ctx2d.createLinearGradient(0, 0, 0, cumEl.offsetHeight || 200);
+  grad.addColorStop(0,   `rgba(${colorRgb},0.35)`);
+  grad.addColorStop(0.5, `rgba(${colorRgb},0.12)`);
+  grad.addColorStop(1,   `rgba(${colorRgb},0.00)`);
 
-  charts.cum = new Chart(cumEl.getContext('2d'), {
+  charts.cum = new Chart(ctx2d, {
     type: 'line',
     data: {
       labels,
@@ -7108,13 +7113,17 @@ function renderCumChart(trades) {
         label: isPct ? 'P&L %' : 'P&L $',
         data,
         borderColor: color,
-        backgroundColor: bgColor,
-        tension: 0.3, fill: true,
-        pointRadius: data.length > 20 ? 2 : 4,
-        pointBackgroundColor: data.map(v => v >= 0 ? '#22c55e' : '#ef4444'),
-        pointBorderColor: 'transparent',
-        pointHoverRadius: 6,
-        borderWidth: 2,
+        backgroundColor: grad,
+        tension: 0.4, fill: true,
+        pointRadius: data.length > 20 ? 0 : 3,
+        pointBackgroundColor: color,
+        pointBorderColor: 'rgba(255,255,255,0.6)',
+        pointBorderWidth: 1.5,
+        pointHoverRadius: 7,
+        pointHoverBackgroundColor: color,
+        pointHoverBorderColor: '#fff',
+        pointHoverBorderWidth: 2,
+        borderWidth: 2.5,
       }]
     },
     options: {
