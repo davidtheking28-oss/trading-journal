@@ -540,29 +540,6 @@
   .er-badge.handle  { background: rgba(255,121,77,0.18);  color: #ff794d; }
   .er-badge.bo     { background: rgba(63,185,80,0.18);   color: #3fb950; }
 
-  /* SETUP TYPE PILLS */
-  .st-pill {
-    padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
-    border: 1px solid var(--border2); background: #0d1117;
-    color: var(--text2); cursor: pointer; transition: all 0.15s;
-    white-space: nowrap; user-select: none;
-  }
-  .st-pill:hover { border-color: #a371f7; color: #a371f7; }
-  .st-pill.active-vcp   { background: rgba(163,113,247,0.18); border-color: #a371f7; color: #a371f7; }
-  .st-pill.active-pp    { background: rgba(255,166,77,0.18);  border-color: #ffa64d; color: #ffa64d; }
-  .st-pill.active-pkp   { background: rgba(88,166,255,0.18);  border-color: #58a6ff; color: #58a6ff; }
-  .st-pill.active-bob   { background: rgba(63,185,80,0.18);   border-color: #3fb950; color: #3fb950; }
-  .st-pill.active-fb    { background: rgba(245,166,35,0.18);  border-color: #f5a623; color: #f5a623; }
-  .st-pill.active-cont  { background: rgba(255,121,77,0.18);  border-color: #ff794d; color: #ff794d; }
-
-  .st-badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700; }
-  .st-badge.vcp  { background:rgba(163,113,247,0.18); color:#a371f7; }
-  .st-badge.pp   { background:rgba(255,166,77,0.18);  color:#ffa64d; }
-  .st-badge.pkp  { background:rgba(88,166,255,0.18);  color:#58a6ff; }
-  .st-badge.bob  { background:rgba(63,185,80,0.18);   color:#3fb950; }
-  .st-badge.fb   { background:rgba(245,166,35,0.18);  color:#f5a623; }
-  .st-badge.cont { background:rgba(255,121,77,0.18);  color:#ff794d; }
-
   /* MARKET CONDITION BADGE */
   .mc-badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700; }
   .mc-badge.easy   { background:rgba(63,185,80,0.18);   color:#3fb950; }
@@ -634,7 +611,7 @@
     border-radius: 4px;
   }
   /* ── Cursor pointer on all interactive elements ── */
-  button, [onclick], .tab-btn, .mini-tab, .er-pill, .st-pill,
+  button, [onclick], .tab-btn, .mini-tab, .er-pill,
   .ps-stars, .sortable, .kpi-card, .data-row, .recycle-header,
   .pin-key, .pin-toggle, .ss-thumb-wrap { cursor: pointer; }
 
@@ -1234,7 +1211,12 @@
      IBKR TAB — Professional Redesign
   ══════════════════════════════════════ */
   #tab-ibkr { display: none; }
-  #tab-ibkr.active { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+  #tab-ibkr.active {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+  }
 
   .ibkr-card {
     background: var(--card);
@@ -1242,18 +1224,34 @@
     border-radius: 12px;
     padding: 20px 22px;
     margin-bottom: 0;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
   }
-  .ibkr-card:hover { border-color: rgba(56,189,248,0.2); }
+  .ibkr-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    border-radius: 12px 12px 0 0;
+  }
+  .ibkr-card.c-green::before  { background: linear-gradient(90deg, transparent, #22c55e, transparent); }
+  .ibkr-card.c-blue::before   { background: linear-gradient(90deg, transparent, #38bdf8, transparent); }
+  .ibkr-card.c-purple::before { background: linear-gradient(90deg, transparent, #818cf8, transparent); }
+  .ibkr-card.c-gray::before   { background: linear-gradient(90deg, transparent, #6e7681, transparent); }
+  .ibkr-card:hover { border-color: rgba(56,189,248,0.22); box-shadow: 0 4px 20px rgba(0,0,0,0.18); }
+  .ibkr-card.span-2 { grid-column: span 2; }
   .ibkr-card.full-width { grid-column: 1 / -1; }
 
   .ibkr-card-header {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 16px;
+    margin-bottom: 16px; gap: 8px;
   }
+  .ibkr-card-title-wrap { display: flex; align-items: center; gap: 7px; }
+  .ibkr-card-icon { font-size: 14px; opacity: 0.8; }
   .ibkr-card-title {
-    font-size: 11px; font-weight: 700; letter-spacing: 0.8px;
-    text-transform: uppercase; color: var(--text3);
+    font-size: 12px; font-weight: 700; letter-spacing: 0.6px;
+    text-transform: uppercase; color: var(--text2);
   }
   .ibkr-card-badge {
     font-size: 10px; font-weight: 700; padding: 2px 8px;
@@ -1336,9 +1334,14 @@
   .tlg-drop:hover { border-color: var(--accent); color: var(--text2); background: rgba(56,189,248,0.04); }
   .tlg-drop-icon { font-size: 24px; margin-bottom: 6px; display: block; }
 
+  @media (max-width: 960px) {
+    #tab-ibkr.active { grid-template-columns: 1fr 1fr; }
+    .ibkr-card.span-2 { grid-column: span 2; }
+    .ibkr-card.full-width { grid-column: 1 / -1; }
+  }
   @media (max-width: 700px) {
     #tab-ibkr.active { grid-template-columns: 1fr; }
-    .ibkr-card.full-width { grid-column: 1; }
+    .ibkr-card.span-2, .ibkr-card.full-width { grid-column: 1; }
     .ibkr-field-row { grid-template-columns: 1fr; }
     .sec-grid { grid-template-columns: 1fr; }
   }
@@ -2806,18 +2809,6 @@
   html[data-theme="light"] .er-pill.active-cheatl { background: rgba(14,165,233,0.1) !important; border-color: #0284c7 !important; color: #0284c7 !important; }
   html[data-theme="light"] .er-pill.active-lps    { background: rgba(124,58,237,0.1) !important; border-color: #7c3aed !important; color: #7c3aed !important; }
 
-  /* ── Setup type pills (st-pill, #0d1117 bg) ── */
-  html[data-theme="light"] .st-pill {
-    background: #f1f5f9 !important;
-    border-color: #cbd5e1 !important;
-    color: #475569 !important;
-  }
-  html[data-theme="light"] .st-pill:hover     { border-color: #7c3aed !important; color: #7c3aed !important; background: rgba(124,58,237,0.07) !important; }
-  html[data-theme="light"] .st-pill.active-vcp { background: rgba(124,58,237,0.1) !important; border-color: #7c3aed !important; color: #7c3aed !important; }
-  html[data-theme="light"] .st-pill.active-pp  { background: rgba(234,88,12,0.1)  !important; border-color: #ea580c !important; color: #ea580c !important; }
-  html[data-theme="light"] .st-pill.active-pkp { background: rgba(14,165,233,0.1) !important; border-color: #0284c7 !important; color: #0284c7 !important; }
-  html[data-theme="light"] .st-pill.active-bob { background: rgba(5,150,105,0.1)  !important; border-color: #059669 !important; color: #059669 !important; }
-
   /* ── Calc cards ── */
   html[data-theme="light"] .calc-grid > div,
   html[data-theme="light"] .calc-card {
@@ -3702,9 +3693,12 @@
     <div id="tab-ibkr" class="tab-content">
 
       <!-- Stocks -->
-      <div class="ibkr-card">
+      <div class="ibkr-card c-green">
         <div class="ibkr-card-header">
-          <span class="ibkr-card-title">מניות</span>
+          <div class="ibkr-card-title-wrap">
+            <span class="ibkr-card-icon">📈</span>
+            <span class="ibkr-card-title">מניות</span>
+          </div>
           <span class="ibkr-card-badge badge-live">Finnhub · SEC</span>
         </div>
         <div id="stock-sym-status" class="ibkr-sym-status">
@@ -3735,9 +3729,12 @@
       </div>
 
       <!-- Crypto -->
-      <div class="ibkr-card">
+      <div class="ibkr-card c-green">
         <div class="ibkr-card-header">
-          <span class="ibkr-card-title">קריפטו</span>
+          <div class="ibkr-card-title-wrap">
+            <span class="ibkr-card-icon">🪙</span>
+            <span class="ibkr-card-title">קריפטו</span>
+          </div>
           <span class="ibkr-card-badge badge-live">CoinGecko</span>
         </div>
         <div id="crypto-sym-status" class="ibkr-sym-status">
@@ -3746,9 +3743,12 @@
       </div>
 
       <!-- Security -->
-      <div class="ibkr-card">
+      <div class="ibkr-card c-purple">
         <div class="ibkr-card-header">
-          <span class="ibkr-card-title">אבטחה</span>
+          <div class="ibkr-card-title-wrap">
+            <span class="ibkr-card-icon">🔐</span>
+            <span class="ibkr-card-title">אבטחה</span>
+          </div>
           <span class="ibkr-card-badge badge-secure">Defense in Depth</span>
         </div>
         <div class="sec-grid">
@@ -3766,9 +3766,12 @@
       </div>
 
       <!-- Flex Sync -->
-      <div class="ibkr-card">
+      <div class="ibkr-card c-blue span-2">
         <div class="ibkr-card-header">
-          <span class="ibkr-card-title">סנכרון</span>
+          <div class="ibkr-card-title-wrap">
+            <span class="ibkr-card-icon">🔄</span>
+            <span class="ibkr-card-title">סנכרון IBKR</span>
+          </div>
           <span class="ibkr-card-badge badge-sync">Flex Web Service</span>
         </div>
         <div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.6;">
@@ -3776,7 +3779,7 @@
           <strong style="color:var(--text2);">איך להגדיר:</strong>
           IBKR → Reports → Flex Queries → צור Flex Query חדש → העתק את Token ו-Query ID
         </div>
-        <div class="ibkr-field-row">
+        <div style="display:grid;grid-template-columns:1fr 180px auto;gap:10px;align-items:end;margin-bottom:14px;">
           <div>
             <div class="ibkr-field-label">Token</div>
             <input id="flex-token" class="form-control" type="password" placeholder="••••••••" autocomplete="off" style="font-size:12px;padding:6px 10px;">
@@ -3785,19 +3788,22 @@
             <div class="ibkr-field-label">Query ID</div>
             <input id="flex-query-id" class="form-control" type="text" placeholder="1462900" autocomplete="off" style="font-size:12px;padding:6px 10px;">
           </div>
+          <div class="ibkr-actions" style="margin-bottom:0;">
+            <button class="btn btn-secondary btn-sm" onclick="flexSave()">שמור</button>
+            <button class="btn btn-primary btn-sm" onclick="flexSync()" id="flex-sync-btn">סנכרן</button>
+          </div>
         </div>
-        <div class="ibkr-actions">
-          <button class="btn btn-secondary btn-sm" onclick="flexSave()">שמור</button>
-          <button class="btn btn-primary btn-sm" onclick="flexSync()" id="flex-sync-btn">סנכרן</button>
-          <span class="ibkr-sync-status" id="flex-status"></span>
-        </div>
+        <span class="ibkr-sync-status" id="flex-status"></span>
         <div id="flex-preview" class="ibkr-trades-list"></div>
       </div>
 
       <!-- TLG Import -->
-      <div class="ibkr-card">
+      <div class="ibkr-card c-blue">
         <div class="ibkr-card-header">
-          <span class="ibkr-card-title">ייבוא קובץ</span>
+          <div class="ibkr-card-title-wrap">
+            <span class="ibkr-card-icon">📂</span>
+            <span class="ibkr-card-title">ייבוא קובץ</span>
+          </div>
           <span class="ibkr-card-badge badge-sync">.tlg</span>
         </div>
         <label class="tlg-drop">
@@ -3810,9 +3816,12 @@
       </div>
 
       <!-- Audit Log -->
-      <div class="ibkr-card">
+      <div class="ibkr-card c-gray full-width">
         <div class="ibkr-card-header">
-          <span class="ibkr-card-title">יומן ביקורת</span>
+          <div class="ibkr-card-title-wrap">
+            <span class="ibkr-card-icon">📋</span>
+            <span class="ibkr-card-title">יומן ביקורת</span>
+          </div>
           <button class="btn btn-danger btn-sm" style="font-size:10px;padding:3px 8px;" onclick="clearAuditLog()">נקה</button>
         </div>
         <div style="overflow-x:auto;">
@@ -4230,7 +4239,6 @@
             <span class="er-pill" data-er="Breakout"  onclick="qaSetER('Breakout')">Breakout</span>
           </div>
         </div>
-        <div class="qa-field" style="display:none"><div id="qa-st-pills"></div></div>
         <div class="qa-field">
           <div class="qa-label">תנאי שוק</div>
           <select class="qa-input" id="qa-market-cond" style="padding:6px 8px;">
@@ -4758,7 +4766,6 @@ function _rowToTrade(row) {
     notes_keep:   row.notes_keep    || '',
     notes_improve:row.notes_improve || '',
     entryReason:  row.entry_reason  || '',
-    setupType:    row.setup_type    || '',
     marketCond:   row.market_cond   || '',
     processScore: row.process_score,
     mood:         row.mood          || '',
@@ -4786,7 +4793,6 @@ function _tradeToRow(trade) {
     notes_keep:    trade.notes_keep  || '',
     notes_improve: trade.notes_improve || '',
     entry_reason:  trade.entryReason || '',
-    setup_type:    trade.setupType   || '',
     market_cond:   trade.marketCond  || '',
     process_score: trade.processScore|| null,
     mood:          trade.mood        || '',
@@ -5410,45 +5416,6 @@ function moodSetPills(containerId, val) {
 }
 
 // ══════════════════════════════════════════════
-// SETUP TYPE HELPERS
-// ══════════════════════════════════════════════
-const ST_OPTIONS = ['VCP','PP','PKP','BoB','FB','Cont'];
-const ST_CLASS   = {'VCP':'vcp','PP':'pp','PKP':'pkp','BoB':'bob','FB':'fb','Cont':'cont'};
-
-function stBadge(st) {
-  if (!st) return '<span style="color:var(--text3)">—</span>';
-  const cls = ST_CLASS[st] || '';
-  return `<span class="st-badge ${cls}">${esc(st)}</span>`;
-}
-
-let qaST = '';
-function qaSetST(val) {
-  qaST = qaST === val ? '' : val;
-  document.querySelectorAll('#qa-st-pills .st-pill').forEach(p => {
-    const base = p.dataset.st;
-    p.className = 'st-pill' + (base === qaST ? ' active-' + (ST_CLASS[base]||'') : '');
-  });
-}
-
-let modalST = '';
-function modalSetST(val) {
-  modalST = modalST === val ? '' : val;
-  const el = document.getElementById('m-setup-type');
-  if (el) el.value = modalST;
-  document.querySelectorAll('#m-st-pills .st-pill').forEach(p => {
-    const base = p.dataset.st;
-    p.className = 'st-pill' + (base === modalST ? ' active-' + (ST_CLASS[base]||'') : '');
-  });
-}
-
-function stSetPills(containerId, val) {
-  document.querySelectorAll('#'+containerId+' .st-pill').forEach(p => {
-    const base = p.dataset.st;
-    p.className = 'st-pill' + (base === val ? ' active-' + (ST_CLASS[base]||'') : '');
-  });
-}
-
-// ══════════════════════════════════════════════
 // MINERVINI — PROCESS SCORE & MARKET CONDITION
 // ══════════════════════════════════════════════
 let qaPS = 0;
@@ -6004,7 +5971,6 @@ function qaSave() {
     ecn: 0, commission,
     notes_keep: '', notes_improve: note,
     entry_reason: ER_OPTIONS.includes(qaER) ? qaER : '',
-    setup_type:   ST_OPTIONS.includes(qaST) ? qaST : '',
     market_cond:  document.getElementById('qa-market-cond').value || '',
     process_score: qaPS || 0,
     mood: sanitizeText(document.getElementById('qa-mood').value, 300)
@@ -6029,7 +5995,6 @@ function qaSave() {
   document.getElementById('qa-preview').style.display = 'none';
   document.getElementById('qa-market-cond').value = '';
   qaPS = 0; document.querySelectorAll('#qa-ps-stars span').forEach(s => s.className = '');
-  qaST = ''; document.querySelectorAll('#qa-st-pills .st-pill').forEach(p => p.className = 'st-pill');
   qaER = ''; document.querySelectorAll('#qa-er-pills .er-pill').forEach(p => p.className = 'er-pill');
 
   renderOverview();
@@ -6659,15 +6624,11 @@ function openModal(type, tr=null) {
   document.getElementById('m-closedShares').value= tr ? (tr.closedShares||'')  : '';
   document.getElementById('m-exitPrice').value   = tr ? (tr.exitPrice||'')     : '';
   document.getElementById('m-commission').value  = tr ? (tr.commission!==undefined?tr.commission:'2.50') : '2.50';
-  modalER = tr ? (tr.entry_reason || '') : '';
+  modalER = tr ? (tr.entryReason || '') : '';
   document.getElementById('m-entry-reason').value = modalER;
   erSetPills('m-er-pills', modalER);
-  modalST = tr ? (tr.setup_type || '') : '';
-  const stEl = document.getElementById('m-setup-type');
-  if (stEl) stEl.value = modalST;
-  stSetPills('m-st-pills', modalST);
-  document.getElementById('m-market-cond').value = tr ? (tr.market_cond || '') : '';
-  modalPS = tr ? (tr.process_score || 0) : 0;
+  document.getElementById('m-market-cond').value = tr ? (tr.marketCond || '') : '';
+  modalPS = tr ? (tr.processScore || 0) : 0;
   const psEl = document.getElementById('m-process-score');
   if (psEl) psEl.value = modalPS;
   psSetStars('m-ps-stars', modalPS);
@@ -6770,7 +6731,6 @@ function getFormTrade() {
     notes_keep:    sanitizeText(document.getElementById('m-notes-keep').value, 500),
     notes_improve: sanitizeText(document.getElementById('m-notes-improve').value, 500),
     entry_reason:  ER_OPTIONS.includes(modalER) ? modalER : '',
-    setup_type:    ST_OPTIONS.includes(modalST) ? modalST : '',
     market_cond:   document.getElementById('m-market-cond').value || '',
     process_score: modalPS || 0,
     mood:          (document.getElementById('m-mood').value || '').trim().slice(0, 300)
@@ -8767,7 +8727,7 @@ function flexParseXML(xml) {
         commission:  totalComm,
         ls: 'L',
         stop: 0, ecn: 0,
-        entry_reason: '', setup_type: '', market_cond: '', process_score: 0,
+        entry_reason: '', market_cond: '', process_score: 0,
         notes_keep: '', notes_improve: '',
       };
 
@@ -9260,12 +9220,6 @@ function _buildLightCSS() {
     .er-pill.active-cheath { background:rgba(180,83,9,0.1) !important; border-color:#b45309 !important; color:#b45309 !important; }
     .er-pill.active-cheatl { background:rgba(14,165,233,0.1) !important; border-color:#0284c7 !important; color:#0284c7 !important; }
     .er-pill.active-lps    { background:rgba(124,58,237,0.1) !important; border-color:#7c3aed !important; color:#7c3aed !important; }
-    .st-pill { background:#f1f5f9 !important; border-color:#cbd5e1 !important; color:#475569 !important; }
-    .st-pill.active-vcp { background:rgba(124,58,237,0.1) !important; border-color:#7c3aed !important; color:#7c3aed !important; }
-    .st-pill.active-pp  { background:rgba(234,88,12,0.1) !important; border-color:#ea580c !important; color:#ea580c !important; }
-    .st-pill.active-pkp { background:rgba(14,165,233,0.1) !important; border-color:#0284c7 !important; color:#0284c7 !important; }
-    .st-pill.active-bob { background:rgba(5,150,105,0.1) !important; border-color:#059669 !important; color:#059669 !important; }
-
     /* Quick Add */
     .quick-add { background:#ffffff !important; border-color:rgba(14,165,233,0.2) !important; }
     .quick-add-title { color:#0ea5e9 !important; }
