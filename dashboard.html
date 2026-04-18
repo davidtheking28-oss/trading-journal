@@ -10614,6 +10614,7 @@ async function invAnalyze() {
         extDataSource = 'FMP';
         if (fmpData.quote.price) quoteData = { c: fmpData.quote.price, dp: fmpData.quote.changesPercentage };
         if (fmpData.quote.yearHigh) m = { ...m, '52WeekHigh': fmpData.quote.yearHigh, '52WeekLow': fmpData.quote.yearLow };
+        if (fmpData.quote.pe) m = { ...m, peTTM: fmpData.quote.pe };
         console.log(`[FMP] got ${fmpIncome.length} income statements for ${sym}, latest: ${fmpIncome[0]?.date}`);
       }
     }
