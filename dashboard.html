@@ -10655,7 +10655,9 @@ async function invAnalyze() {
         extDataSource = 'Alpha Vantage';
         if (fmpData.quote.price)   quoteData = { c: fmpData.quote.price, dp: fmpData.quote.changesPercentage };
         if (fmpData.quote.yearHigh) m = { ...m, '52WeekHigh': fmpData.quote.yearHigh, '52WeekLow': fmpData.quote.yearLow };
-        if (avOverview.PERatio && avOverview.PERatio !== 'None') m = { ...m, peBasicExclExtraTTM: +avOverview.PERatio };
+        if (avOverview.PERatio && avOverview.PERatio !== 'None') {
+          m = { ...m, peBasicExclExtraTTM: +avOverview.PERatio, peTTM: +avOverview.PERatio };
+        }
         console.log(`[AV] got ${avIncome.length} income statements for ${sym}, latest: ${avIncome[0]?.date}`);
       }
     }
