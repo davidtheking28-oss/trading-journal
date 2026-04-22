@@ -3282,26 +3282,32 @@
   }
   .missed-add-form .form-group { margin: 0; flex: 1; min-width: 130px; }
   .missed-add-form .form-label { font-size: 11px; font-weight: 700; color: var(--text3); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
-  .missed-table-wrap {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 14px; overflow: hidden;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+  .missed-list { padding-top: 4px; }
+  .missed-month-section { margin-bottom: 28px; }
+  .missed-month-label {
+    font-size: 11px; font-weight: 700; color: var(--text3);
+    text-transform: uppercase; letter-spacing: 1px;
+    display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
   }
-  .missed-table { width: 100%; border-collapse: collapse; }
-  .missed-table th {
-    background: rgba(255,255,255,0.02); color: var(--text3);
-    font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.7px; padding: 13px 18px; text-align: right;
-    border-bottom: 1px solid var(--border); white-space: nowrap;
+  .missed-month-label::before { content: ''; flex: 0 0 3px; height: 3px; width: 3px; border-radius: 50%; background: var(--accent); }
+  .missed-month-label::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.06); }
+  .missed-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .missed-card {
+    background: linear-gradient(145deg, #091525 0%, #0b1e38 100%);
+    border: 1px solid rgba(255,255,255,0.07); border-radius: 14px;
+    padding: 14px 16px; transition: border-color 0.15s, transform 0.15s;
+    cursor: default;
   }
-  .missed-table td { padding: 15px 18px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13px; color: var(--text); vertical-align: middle; }
-  .missed-table tr:last-child td { border-bottom: none; }
-  .missed-table tbody tr { transition: background 0.15s; }
-  .missed-table tbody tr:hover td { background: rgba(56,189,248,0.06); }
-  .missed-sym { font-weight: 800; font-size: 14px; color: var(--accent); letter-spacing: 0.8px; font-family: monospace; }
+  .missed-card:hover { border-color: rgba(56,189,248,0.22); transform: translateY(-1px); }
+  .missed-card-sym { font-size: 15px; font-weight: 800; color: var(--accent); font-family: monospace; letter-spacing: 1px; }
+  .missed-card-price { font-size: 13px; font-weight: 700; color: var(--text); margin-top: 4px; }
+  .missed-card-meta { font-size: 11px; color: var(--text3); margin-top: 3px; }
+  .missed-card-note { font-size: 11px; color: var(--text2); margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); font-style: italic; }
+  .missed-card-actions { display: flex; gap: 4px; justify-content: flex-end; margin-top: 10px; }
   .missed-empty { text-align: center; color: var(--text3); padding: 50px; font-size: 13px; }
-  .missed-del-btn { background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer; font-size: 14px; padding: 4px 7px; border-radius: 5px; transition: all 0.15s; }
+  .missed-del-btn { background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer; font-size: 13px; padding: 4px 7px; border-radius: 5px; transition: all 0.15s; }
   .missed-del-btn:hover { color: var(--red); background: rgba(239,68,68,0.12); }
+  .missed-del-btn.edit:hover { color: var(--accent); background: rgba(56,189,248,0.1); }
   .ai-coach-wrap { max-width: 860px; margin: 0 auto; padding: 24px 16px 48px; }
   .ai-header { margin-bottom: 28px; }
   .ai-header-title {
@@ -4536,23 +4542,9 @@
           <button class="btn btn-primary btn-sm" onclick="missedAdd()" style="white-space:nowrap;height:36px;align-self:flex-end">+ הוסף</button>
         </div>
 
-        <!-- Table -->
-        <div class="missed-table-wrap">
-          <table class="missed-table" id="missed-table">
-            <thead>
-              <tr>
-                <th style="width:72px"></th>
-                <th>סימבול</th>
-                <th>סקטור</th>
-                <th>תאריך</th>
-                <th>מחיר ($)</th>
-                <th>הערה</th>
-              </tr>
-            </thead>
-            <tbody id="missed-tbody">
-              <tr><td colspan="6" class="missed-empty">אין הזדמנויות שנרשמו עדיין — הוסף את הראשונה למעלה</td></tr>
-            </tbody>
-          </table>
+        <!-- Cards -->
+        <div class="missed-list" id="missed-tbody">
+          <div class="missed-empty">אין הזדמנויות שנרשמו עדיין — הוסף את הראשונה למעלה</div>
         </div>
       </div>
     </div>
@@ -10242,24 +10234,41 @@ async function missedDelete(id) {
 }
 
 function missedRenderList(list) {
-  const tbody = document.getElementById('missed-tbody');
-  if (!tbody) return;
+  const container = document.getElementById('missed-tbody');
+  if (!container) return;
   if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="missed-empty">אין הזדמנויות שנרשמו עדיין</td></tr>';
+    container.innerHTML = '<div class="missed-empty">אין הזדמנויות שנרשמו עדיין — הוסף את הראשונה למעלה</div>';
     return;
   }
-  tbody.innerHTML = list.map(r => `
-    <tr id="missed-row-${r.id}">
-      <td style="white-space:nowrap">
-        <button class="missed-del-btn" onclick="missedEdit('${r.id}')" title="ערוך" style="color:var(--accent)">✏</button>
-        <button class="missed-del-btn" onclick="missedDelete('${r.id}')" title="מחק">✕</button>
-      </td>
-      <td><span class="missed-sym">${esc(r.sym)}</span></td>
-      <td style="color:var(--text2);font-size:12px">${esc(r.sector||'—')}</td>
-      <td>${esc(r.date)}</td>
-      <td>$${(+r.price).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:4})}</td>
-      <td style="color:var(--text2);font-size:12px">${esc(r.note||'—')}</td>
-    </tr>`).join('');
+  const sorted = [...list].sort((a, b) => b.date.localeCompare(a.date));
+  const byMonth = {};
+  sorted.forEach(r => {
+    const key = r.date.slice(0, 7); // YYYY-MM
+    if (!byMonth[key]) byMonth[key] = [];
+    byMonth[key].push(r);
+  });
+  container.innerHTML = Object.entries(byMonth).map(([key, items]) => {
+    const [y, m] = key.split('-');
+    const label = `${MONTHS[+m-1]} ${y}`;
+    const cards = items.map(r => `
+      <div class="missed-card" id="missed-row-${r.id}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
+          <div class="missed-card-sym">${esc(r.sym)}</div>
+          <div class="missed-card-actions">
+            <button class="missed-del-btn edit" onclick="missedEdit('${r.id}')" title="ערוך">✏</button>
+            <button class="missed-del-btn" onclick="missedDelete('${r.id}')" title="מחק">✕</button>
+          </div>
+        </div>
+        <div class="missed-card-price">$${(+r.price).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+        <div class="missed-card-meta">${r.sector ? esc(r.sector)+' · ' : ''}${fmtDate(r.date)}</div>
+        ${r.note ? `<div class="missed-card-note">${esc(r.note)}</div>` : ''}
+      </div>`).join('');
+    return `
+      <div class="missed-month-section">
+        <div class="missed-month-label">${label} <span style="color:var(--accent);font-size:10px;font-weight:800">${items.length}</span></div>
+        <div class="missed-cards">${cards}</div>
+      </div>`;
+  }).join('');
 }
 
 async function missedRender() {
@@ -10271,18 +10280,20 @@ async function missedRender() {
 function missedEdit(id) {
   const r = _missedList.find(x => String(x.id) === String(id));
   if (!r) return;
-  const row = document.getElementById('missed-row-' + id);
-  if (!row) return;
-  row.innerHTML = `
-    <td style="white-space:nowrap">
-      <button class="btn btn-primary btn-sm" style="font-size:11px;padding:3px 8px" onclick="missedSaveEdit('${id}')">שמור</button>
-      <button class="missed-del-btn" onclick="missedRender()" title="בטל" style="margin-right:2px">✕</button>
-    </td>
-    <td><input class="form-control" style="font-size:12px;padding:4px 6px;width:80px;text-transform:uppercase" value="${esc(r.sym)}" id="me-sym-${id}"></td>
-    <td><input class="form-control" style="font-size:12px;padding:4px 6px;width:110px" value="${esc(r.sector||'')}" id="me-sec-${id}" placeholder="Sector"></td>
-    <td><input class="form-control" type="date" style="font-size:12px;padding:4px 6px" value="${esc(r.date)}" id="me-date-${id}"></td>
-    <td><input class="form-control" type="number" style="font-size:12px;padding:4px 6px;width:90px" value="${r.price}" step="0.0001" id="me-price-${id}"></td>
-    <td><input class="form-control" style="font-size:12px;padding:4px 6px" value="${esc(r.note||'')}" id="me-note-${id}" placeholder="הערה" maxlength="120"></td>`;
+  const card = document.getElementById('missed-row-' + id);
+  if (!card) return;
+  card.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <input class="form-control" style="font-size:12px;padding:4px 8px;text-transform:uppercase" value="${esc(r.sym)}" id="me-sym-${id}" placeholder="סימבול">
+      <input class="form-control" style="font-size:12px;padding:4px 8px" value="${esc(r.sector||'')}" id="me-sec-${id}" placeholder="סקטור">
+      <input class="form-control" type="date" style="font-size:12px;padding:4px 8px" value="${esc(r.date)}" id="me-date-${id}">
+      <input class="form-control" type="number" style="font-size:12px;padding:4px 8px" value="${r.price}" step="0.0001" id="me-price-${id}" placeholder="מחיר">
+      <input class="form-control" style="font-size:12px;padding:4px 8px" value="${esc(r.note||'')}" id="me-note-${id}" placeholder="הערה" maxlength="120">
+      <div style="display:flex;gap:6px;margin-top:2px;">
+        <button class="btn btn-primary btn-sm" style="flex:1;font-size:11px" onclick="missedSaveEdit('${id}')">שמור</button>
+        <button class="btn btn-secondary btn-sm" style="font-size:11px" onclick="missedRender()">ביטול</button>
+      </div>
+    </div>`;
 }
 
 async function missedSaveEdit(id) {
