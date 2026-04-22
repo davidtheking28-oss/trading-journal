@@ -8021,7 +8021,12 @@ function stopPromptSave() {
   if (!val || val <= 0) { toast('הכנס מחיר stop תקין', 'error'); return; }
   const arr = t.type === 'crypto' ? db.crypto : db.stocks;
   const tr  = arr.find(x => x.id === t.id);
-  if (tr) { tr.stop = val; saveDB(); renderTable(t.type); }
+  if (tr) {
+    tr.stop = val;
+    renderTable(t.type); // optimistic — מיד
+    _sb.from('trades').update({ stop: val }).eq('id', tr.id).eq('user_id', _currentUser.id)
+      .then(({ error }) => { if (error) toast('שגיאה בשמירת stop', 'error'); });
+  }
   _stopPromptClose();
 }
 
