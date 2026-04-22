@@ -7923,7 +7923,8 @@ async function _autoFlexSync() {
     const trades = flexParseXML(await getRes.text());
 
     let imported = 0, updated = 0;
-    const newlyImported = []; // רק עסקות שיובאו עכשיו לראשונה
+    const newlyImported = [];
+    const toInsert = [];
 
     trades.forEach(t => {
       const arr = t.type === 'crypto' ? db.crypto : db.stocks;
@@ -7950,16 +7951,23 @@ async function _autoFlexSync() {
       // 2. כפילות מלאה — דלג
       if (flexIsDuplicate(t)) return;
 
-      // 3. עסקה חדשה (פתוחה או סגורה) — ייבא
-      const id = (arr.length ? Math.max(...arr.map(x => x.id)) : 0) + 1;
-      const newTrade = { ...t, id, deleted: false };
-      arr.push(newTrade);
-      imported++;
-      if (!t.exitPrice) newlyImported.push(newTrade); // פתוחה חדשה
+      // 3. עסקה חדשה — שמור ל-Supabase וקבל ID אמיתי
+      toInsert.push(t);
     });
 
+    // שמור כל עסקה חדשה ל-Supabase
+    for (const t of toInsert) {
+      const row = _tradeToRow({ ...t, deleted: false });
+      const { data: inserted, error: insErr } = await _sb.from('trades').insert(row).select().single();
+      if (insErr) continue;
+      const newTrade = _rowToTrade(inserted); // ID אמיתי מ-Supabase
+      const arr = t.type === 'crypto' ? db.crypto : db.stocks;
+      arr.push(newTrade);
+      imported++;
+      if (!t.exitPrice) newlyImported.push(newTrade);
+    }
+
     if (imported > 0 || updated > 0) {
-      saveDB();
       initFilters();
       renderTable('stock');
       renderTable('crypto');
