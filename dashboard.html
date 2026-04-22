@@ -6819,12 +6819,13 @@ function renderMonthlyTracker(trades) {
     const avg = f => { const vals=validMonths.filter(s=>s[f]!==null); return vals.length?vals.reduce((a,s)=>a+s[f],0)/vals.length:null; };
     const avgWR = validMonths.reduce((a,s)=>a+s.winRate,0)/validMonths.length;
     const avgN  = Math.round(validMonths.reduce((a,s)=>a+s.n,0)/validMonths.length);
-    avgRow += `<td style="${clrPct(avg('avgGainPct'))}" class="sensitive">${pct(avg('avgGainPct'))}</td>`;
-    avgRow += `<td style="${clrPct(avg('avgLossPct'))}" class="sensitive">${pct(avg('avgLossPct'))}</td>`;
-    avgRow += `<td style="color:${avgWR>=50?'var(--green)':'var(--red)'}" class="sensitive">${fmt(avgWR,1)}%</td>`;
+    const agp = avg('avgGainPct'), alp = avg('avgLossPct');
+    avgRow += `<td class="${agp!==null?(agp>=0?'cl-green':'cl-red'):''} sensitive">${pct(agp)}</td>`;
+    avgRow += `<td class="${alp!==null?(alp>=0?'cl-green':'cl-red'):''} sensitive">${pct(alp)}</td>`;
+    avgRow += `<td class="${avgWR>=50?'cl-green':'cl-red'} sensitive">${fmt(avgWR,1)}%</td>`;
     avgRow += `<td class="sensitive">${avgN}</td>`;
-    avgRow += `<td style="color:var(--green)" class="sensitive">${usd(avg('lgGain'))}</td>`;
-    avgRow += `<td style="color:var(--red)"   class="sensitive">${usd(avg('lgLoss'))}</td>`;
+    avgRow += `<td class="cl-green sensitive">${usd(avg('lgGain'))}</td>`;
+    avgRow += `<td class="cl-red sensitive">${usd(avg('lgLoss'))}</td>`;
     avgRow += `<td class="sensitive">${days(avg('avgDaysWin'))}</td>`;
     avgRow += `<td class="sensitive">${days(avg('avgDaysLoss'))}</td>`;
   } else {
