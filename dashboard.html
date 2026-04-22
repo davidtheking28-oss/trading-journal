@@ -7923,6 +7923,7 @@ async function _autoFlexSync() {
     const trades = flexParseXML(await getRes.text());
 
     let imported = 0, updated = 0;
+    const newlyImported = []; // רק עסקות שיובאו עכשיו לראשונה
 
     trades.forEach(t => {
       const arr = t.type === 'crypto' ? db.crypto : db.stocks;
@@ -7934,7 +7935,7 @@ async function _autoFlexSync() {
           x.symbol === t.symbol &&
           x.entryDate === t.entryDate &&
           Math.abs(x.entryPrice - t.entryPrice) < 0.001 &&
-          !x.exitPrice   // פתוחה — אין יציאה עדיין
+          !x.exitPrice
         );
         if (open) {
           open.exitPrice    = t.exitPrice;
@@ -7951,8 +7952,10 @@ async function _autoFlexSync() {
 
       // 3. עסקה חדשה (פתוחה או סגורה) — ייבא
       const id = (arr.length ? Math.max(...arr.map(x => x.id)) : 0) + 1;
-      arr.push({ ...t, id, deleted: false });
+      const newTrade = { ...t, id, deleted: false };
+      arr.push(newTrade);
       imported++;
+      if (!t.exitPrice) newlyImported.push(newTrade); // פתוחה חדשה
     });
 
     if (imported > 0 || updated > 0) {
@@ -7969,18 +7972,10 @@ async function _autoFlexSync() {
       toast(`✓ IBKR: ${msg}`, 'success');
       auditLog('flex_auto_import', `imported:${imported} updated:${updated}`);
 
-      // הצג פופאפ stop loss לכל עסקה פתוחה חדשה שחסר לה stop
-      const openNeedStop = [];
-      trades.forEach(t => {
-        if (t.exitPrice) return; // סגורה — לא צריך
-        const arr = t.type === 'crypto' ? db.crypto : db.stocks;
-        const tr  = arr.find(x =>
-          !x.deleted && x.symbol === t.symbol &&
-          x.entryDate === t.entryDate &&
-          Math.abs(x.entryPrice - t.entryPrice) < 0.001
-        );
-        if (tr && !tr.stop) openNeedStop.push({ type: t.type, id: tr.id, symbol: tr.symbol, entryPrice: tr.entryPrice, entryDate: tr.entryDate });
-      });
+      // הצג פופאפ stop loss רק לעסקות שיובאו עכשיו לראשונה
+      const openNeedStop = newlyImported
+        .filter(tr => !tr.stop)
+        .map(tr => ({ type: tr.type, id: tr.id, symbol: tr.symbol, entryPrice: tr.entryPrice, entryDate: tr.entryDate }));
       if (openNeedStop.length) setTimeout(() => stopPromptShow(openNeedStop), 800);
     } else {
       flexSetStatus('✓ סונכרן — אין עסקאות חדשות', 'var(--text3)');
