@@ -7949,9 +7949,10 @@ async function _autoFlexSync() {
       }
 
       // 2. כפילות מלאה — דלג
-      if (flexIsDuplicate(t)) return;
+      if (flexIsDuplicate(t)) { console.log('[autoSync] duplicate skipped:', t.symbol, t.entryDate); return; }
 
       // 3. עסקה חדשה — שמור ל-Supabase וקבל ID אמיתי
+      console.log('[autoSync] new trade to insert:', t.symbol, t.entryDate, t.entryPrice);
       toInsert.push(t);
     });
 
@@ -7959,7 +7960,8 @@ async function _autoFlexSync() {
     for (const t of toInsert) {
       const row = _tradeToRow({ ...t, deleted: false });
       const { data: inserted, error: insErr } = await _sb.from('trades').insert(row).select().single();
-      if (insErr) continue;
+      if (insErr) { console.error('[autoSync] insert error:', insErr.message, t.symbol); continue; }
+      console.log('[autoSync] inserted with real ID:', inserted.id, t.symbol);
       const newTrade = _rowToTrade(inserted); // ID אמיתי מ-Supabase
       const arr = t.type === 'crypto' ? db.crypto : db.stocks;
       arr.push(newTrade);
@@ -8028,7 +8030,10 @@ function stopPromptSave() {
     tr.stop = val;
     renderTable(t.type); // optimistic — מיד
     _sb.from('trades').update({ stop: val }).eq('id', tr.id).eq('user_id', _currentUser.id)
-      .then(({ error }) => { if (error) toast('שגיאה בשמירת stop', 'error'); });
+      .then(({ error, data }) => {
+        if (error) { console.error('[stopPrompt] save error:', error.message, 'id:', tr.id); toast('שגיאה בשמירת stop', 'error'); }
+        else { console.log('[stopPrompt] saved stop', val, 'for id:', tr.id, 'rows updated:', data?.length); toast('Stop loss נשמר ✓', 'success'); }
+      });
   }
   _stopPromptClose();
 }
