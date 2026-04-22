@@ -6802,12 +6802,12 @@ function renderMonthlyTracker(trades) {
     validMonths.push(s);
     rows += `<tr>
       <td>${MONTHS_SHORT[i]}</td>
-      <td style="${clrPct(s.avgGainPct)}" class="sensitive">${pct(s.avgGainPct)}</td>
-      <td style="${clrPct(s.avgLossPct)}" class="sensitive">${pct(s.avgLossPct)}</td>
-      <td style="color:${s.winRate>=50?'var(--green)':'var(--red)'}" class="sensitive">${fmt(s.winRate,1)}%</td>
+      <td class="${s.avgGainPct!==null?(s.avgGainPct>=0?'cl-green':'cl-red'):''} sensitive">${pct(s.avgGainPct)}</td>
+      <td class="${s.avgLossPct!==null?(s.avgLossPct>=0?'cl-green':'cl-red'):''} sensitive">${pct(s.avgLossPct)}</td>
+      <td class="${s.winRate>=50?'cl-green':'cl-red'} sensitive">${fmt(s.winRate,1)}%</td>
       <td class="sensitive">${s.n}</td>
-      <td style="color:var(--green)" class="sensitive">${usd(s.lgGain)}</td>
-      <td style="color:var(--red)"   class="sensitive">${usd(s.lgLoss)}</td>
+      <td class="cl-green sensitive">${usd(s.lgGain)}</td>
+      <td class="cl-red sensitive">${usd(s.lgLoss)}</td>
       <td class="sensitive">${days(s.avgDaysWin)}</td>
       <td class="sensitive">${days(s.avgDaysLoss)}</td>
     </tr>`;
