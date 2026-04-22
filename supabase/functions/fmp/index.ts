@@ -53,7 +53,7 @@ serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: 'Symbol required' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 
-  let fmpUrl = `https://financialmodelingprep.com/api/v3/${path}/${symbol}?apikey=${encodeURIComponent(apiKey)}`;
+  let fmpUrl = `https://financialmodelingprep.com/stable/${path}?symbol=${encodeURIComponent(symbol)}&apikey=${encodeURIComponent(apiKey)}`;
   if (path === 'income-statement' || path === 'key-metrics') {
     fmpUrl += `&period=${encodeURIComponent(period)}&limit=4`;
   }

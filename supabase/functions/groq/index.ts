@@ -18,7 +18,6 @@ serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 
-  // Create client with user's JWT so RLS works correctly
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_ANON_KEY')!,
@@ -30,6 +29,16 @@ serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 
+  // Read body FIRST so we can extract _inv_key before rate limit check
+  let body: Record<string, unknown>;
+  try { body = await req.json(); } catch {
+    return new Response('Invalid JSON', { status: 400, headers: CORS });
+  }
+
+  // Extract key passed directly in body — strip before forwarding
+  const bodyKey = typeof body._inv_key === 'string' && body._inv_key.startsWith('gsk_') ? body._inv_key : null;
+  delete body._inv_key;
+
   const reqUrl  = new URL(req.url);
   const keyType = reqUrl.searchParams.get('key') ?? 'default';
 
@@ -40,14 +49,16 @@ serve(async (req: Request) => {
     .eq('user_id', user.id)
     .single();
 
-  // Investment advisor uses groq_inv_key; all others use groq_api_key → shared fallback
   const userKey = keyType === 'inv'
     ? (settings?.groq_inv_key?.startsWith('gsk_') ? settings.groq_inv_key : null)
     : (settings?.groq_api_key?.startsWith('gsk_') ? settings.groq_api_key : null);
-  const apiKey = userKey ?? (Deno.env.get('GROQ_API_KEY') ?? '');
 
-  // Rate limit only when using the shared key — personal keys use their own quota
-  if (!userKey) {
+  // Priority: body key > DB key > shared key
+  const finalKey = bodyKey ?? userKey ?? (Deno.env.get('GROQ_API_KEY') ?? '');
+  const usingSharedKey = !bodyKey && !userKey;
+
+  // Rate limit only when using the shared key
+  if (usingSharedKey) {
     const now = Date.now();
     const windowStart = new Date(now - 60_000).toISOString();
     const { count: recentCount } = await supabase
@@ -65,25 +76,11 @@ serve(async (req: Request) => {
     supabase.from('ai_requests').insert({ user_id: user.id }).then(() => {});
   }
 
-  if (!apiKey || !apiKey.startsWith('gsk_')) {
+  if (!finalKey || !finalKey.startsWith('gsk_')) {
     return new Response(
       JSON.stringify({ error: 'No Groq API key configured.' }),
       { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } }
     );
-  }
-
-  let body: Record<string, unknown>;
-  try { body = await req.json(); } catch {
-    return new Response('Invalid JSON', { status: 400, headers: CORS });
-  }
-
-  // Accept key passed directly in body (when DB save fails) — strip before forwarding
-  const bodyKey = typeof body._inv_key === 'string' && body._inv_key.startsWith('gsk_') ? body._inv_key : null;
-  delete body._inv_key;
-  const finalKey = bodyKey ?? apiKey;
-
-  if (!finalKey.startsWith('gsk_')) {
-    return new Response(JSON.stringify({ error: 'No Groq API key configured.' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 
   const upstream = await fetch('https://api.groq.com/openai/v1/chat/completions', {
