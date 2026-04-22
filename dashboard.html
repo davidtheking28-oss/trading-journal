@@ -11372,7 +11372,7 @@ async function invAnalyze() {
     const edgarPeriod = edgarFiling?.period || null;
     const latestPeriod = (edgarPeriod && (!fhLatestPeriod || edgarPeriod > fhLatestPeriod)) ? edgarPeriod : fhLatestPeriod;
     const dataSource   = (edgarPeriod && (!fhLatestPeriod || edgarPeriod > fhLatestPeriod))
-      ? `SEC EDGAR ישיר (${edgarData.latestForm}, הוגש ${edgarFiling.filed})`
+      ? `SEC EDGAR ישיר (${edgarData.latestForm}${edgarFiling?.filed ? ', הוגש '+edgarFiling.filed : ''})`
       : 'Finnhub / SEC';
 
     // Staleness check: how many months since the latest report period?
@@ -11610,7 +11610,7 @@ async function invAnalyze() {
     const metricsText = `תאריך ניתוח: ${today.toLocaleDateString('he-IL', { year:'numeric', month:'long', day:'numeric' })}
 מניה: ${profileData.name || sym} (${sym}) | מחיר: ${quoteData.c ? '$'+quoteData.c : '❓'} | שינוי: ${quoteData.dp != null ? quoteData.dp.toFixed(2)+'%' : '❓'}
 52W: ${fmt(m['52WeekHigh'])}–${fmt(m['52WeekLow'])} | שווי שוק: ${profileData.marketCapitalization ? '$'+(profileData.marketCapitalization/1000).toFixed(1)+'B' : '❓'} | סקטור: ${profileData.finnhubIndustry || '❓'}
-מקור: ${edgarNewer ? `EDGAR ${edgarData.latestForm} (הוגש ${edgarFiling.filed})` : 'Finnhub/SEC'} | ${stalenessWarning}
+מקור: ${edgarNewer ? `EDGAR ${edgarData.latestForm}${edgarFiling?.filed ? ' (הוגש '+edgarFiling.filed+')' : ''}` : 'Finnhub/SEC'} | ${stalenessWarning}
 
 === דוח אחרון: ${latestPeriod || '❓'} ===
 הכנסות: ${secRevRaw != null ? '$'+(secRevRaw/1e6).toFixed(1)+'M' : '❓'} | רווח נטו: ${secNIRaw != null ? '$'+(secNIRaw/1e6).toFixed(1)+'M' : '❓'} | EPS: ${fmtV(epsNorm)} ${epsNorm != null ? (+epsNorm > 0 ? '✅' : '❌') : ''}
