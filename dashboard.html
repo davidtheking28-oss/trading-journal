@@ -5973,6 +5973,10 @@ function renderTable(type) {
 
   h += '</tbody></table>';
   wrap.innerHTML = h;
+  wrap.querySelectorAll('tr.data-row').forEach((row, i) => {
+    row.style.setProperty('--i', Math.min(i, 14));
+    row.classList.add('animate-in');
+  });
   // Load screenshot counts for each trade row
   trades.forEach(tr => {
     const key = type+'-'+tr.id;
