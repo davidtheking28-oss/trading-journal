@@ -5352,6 +5352,7 @@ async function _onAuthSuccess(user) {
   cleanOldDeleted();
   loadStockSymbols();
   _autoFlexSync();
+  loadFearGreed();
   // Offer localStorage migration on first login
   await offerMigration();
 }
