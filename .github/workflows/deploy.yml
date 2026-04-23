@@ -66,3 +66,4 @@ jobs:
           supabase functions deploy fmp         --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
           supabase functions deploy alphavantage --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
           supabase functions deploy coingecko   --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
+          supabase functions deploy fear-greed  --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
