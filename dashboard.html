@@ -6939,7 +6939,8 @@ const FG_LABELS = {
 async function loadFearGreed() {
   const el = document.getElementById('fear-greed-widget');
   if (!el) return;
-  el.innerHTML = `<div class="fg-label">מדד פחד/חמדנות — CNN</div><div class="fg-score" style="color:var(--text3)">...</div>`;
+  const R = 26, C = 32, FULL = 2 * Math.PI * R;
+  el.innerHTML = `<div class="fg-gauge-wrap"><svg width="64" height="64" viewBox="0 0 64 64"><circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/></svg><div class="fg-gauge-text"><span class="fg-score" style="color:var(--text3)">…</span></div></div><div class="fg-info"><div class="fg-label">Fear & Greed Index</div><div class="fg-rating" style="color:var(--text3)">CNN</div></div>`;
   try {
     const jwt = await _getToken();
     const res = await fetch(`${SUPABASE_URL}/functions/v1/fear-greed`,
@@ -6950,20 +6951,29 @@ async function loadFearGreed() {
     const score  = Math.round(d.score);
     const key    = (d.rating || '').toLowerCase();
     const colors = FG_COLORS[key] || ['#8faac8','#64748b'];
-    const label  = FG_LABELS[key] || d.rating || '—';
+    const label  = FG_LABELS[key] || d.rating;
     const now    = new Date().toLocaleTimeString('he-IL', { hour:'2-digit', minute:'2-digit' });
+    const dash   = (score / 100) * FULL;
     el.innerHTML = `
-      <div>
-        <div class="fg-label">מדד פחד/חמדנות — CNN</div>
-        <div class="fg-score" style="color:${colors[0]}">${score}</div>
+      <div class="fg-gauge-wrap">
+        <svg width="64" height="64" viewBox="0 0 64 64">
+          <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>
+          <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="${colors[0]}" stroke-width="5"
+            stroke-dasharray="${dash} ${FULL}" stroke-linecap="round"
+            style="filter:drop-shadow(0 0 4px ${colors[0]}80)"/>
+        </svg>
+        <div class="fg-gauge-text">
+          <span class="fg-score" style="color:${colors[0]}">${score}</span>
+          <span class="fg-score-sub">/100</span>
+        </div>
       </div>
-      <div style="flex:1">
-        <div class="fg-rating" style="color:${colors[0]};margin-bottom:6px">${label}</div>
-        <div class="fg-bar-wrap"><div class="fg-bar" style="width:${score}%;background:linear-gradient(90deg,${colors[1]},${colors[0]})"></div></div>
-      </div>
-      <div class="fg-updated">עודכן ${now}</div>`;
+      <div class="fg-info">
+        <div class="fg-label">Fear & Greed Index</div>
+        <div class="fg-rating" style="color:${colors[0]}">${label}</div>
+        <div class="fg-source">CNN · עודכן ${now}</div>
+      </div>`;
   } catch {
-    el.innerHTML = `<div class="fg-label">מדד פחד/חמדנות — CNN</div><div class="fg-score" style="color:var(--text3)">—</div><div class="fg-updated" style="color:var(--text3)">לא זמין</div>`;
+    el.innerHTML = `<div class="fg-gauge-wrap"><svg width="64" height="64" viewBox="0 0 64 64"><circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/></svg><div class="fg-gauge-text"><span class="fg-score" style="color:var(--text3)">—</span></div></div><div class="fg-info"><div class="fg-label">Fear & Greed Index</div><div class="fg-rating" style="color:var(--text3)">לא זמין</div><div class="fg-source">CNN</div></div>`;
   }
   clearTimeout(_fgTimer);
   _fgTimer = setTimeout(loadFearGreed, 5 * 60 * 1000);
