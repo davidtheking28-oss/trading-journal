@@ -5751,7 +5751,11 @@ function switchTab(name, btn) {
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
   btn.classList.add('active');
   btn.style.color = '';
-  document.getElementById('tab-'+name).classList.add('active');
+  const tabEl = document.getElementById('tab-'+name);
+  tabEl.classList.add('active');
+  tabEl.classList.remove('tab-entering');
+  void tabEl.offsetWidth;
+  tabEl.classList.add('tab-entering');
   if (name==='overview') renderOverview();
   if (name==='stocks') renderTable('stock');
   if (name==='crypto') renderTable('crypto');
