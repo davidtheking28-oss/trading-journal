@@ -10203,8 +10203,15 @@ function _applyTheme(theme) {
 
 function toggleSidebar() {
   const sidebar = document.getElementById('main-sidebar');
-  const collapsed = sidebar.classList.toggle('collapsed');
-  localStorage.setItem('tj-sidebar-collapsed', collapsed ? '1' : '0');
+  if (window.innerWidth <= 768) {
+    const overlay = document.getElementById('sidebar-overlay');
+    const isOpen = sidebar.classList.toggle('open');
+    overlay?.classList.toggle('open', isOpen);
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+  } else {
+    const collapsed = sidebar.classList.toggle('collapsed');
+    localStorage.setItem('tj-sidebar-collapsed', collapsed ? '1' : '0');
+  }
 }
 
 function toggleTheme() {
