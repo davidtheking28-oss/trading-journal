@@ -4213,17 +4213,17 @@
         <button class="mini-tab" onclick="setScope('crypto',this)">קריפטו</button>
       </div>
       <!-- ═══ QUICK ADD TRIGGER ═══ -->
-      <div class="quick-add" style="cursor:pointer;" onclick="fabToggle()">
-        <div class="quick-add-header" style="margin-bottom:0;">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <button class="fab" id="fab-btn" onclick="event.stopPropagation();fabToggle()" aria-label="הוסף עסקה מהירה">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-            </button>
-            <div class="quick-add-title">הוספת עסקה מהירה</div>
+      <div style="margin-bottom:14px">
+        <div class="fg-widget qa-trigger" onclick="fabToggle()" title="הוסף עסקה מהירה" style="gap:12px;">
+          <div style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.25);flex-shrink:0;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
           </div>
-          <span style="font-size:11px;color:var(--text3);">לחץ לפתיחה</span>
+          <div class="fg-info">
+            <div class="fg-label">Quick Add</div>
+            <div class="fg-rating" style="color:var(--accent);">הוספת עסקה מהירה</div>
+          </div>
         </div>
       </div>
       <!-- ═══════════════════════ -->
