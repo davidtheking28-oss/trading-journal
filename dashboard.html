@@ -6906,6 +6906,56 @@ function renderTradingSummary(trades) {
   </table>`;
 }
 
+// ── Fear & Greed Index ──────────────────────────
+let _fgTimer = null;
+const FG_COLORS = {
+  'extreme fear': ['#ef4444', '#dc2626'],
+  'fear':         ['#f97316', '#ea580c'],
+  'neutral':      ['#eab308', '#ca8a04'],
+  'greed':        ['#84cc16', '#65a30d'],
+  'extreme greed':['#22c55e', '#16a34a'],
+};
+const FG_LABELS = {
+  'extreme fear':  'פחד קיצוני',
+  'fear':          'פחד',
+  'neutral':       'ניטרלי',
+  'greed':         'חמדנות',
+  'extreme greed': 'חמדנות קיצונית',
+};
+
+async function loadFearGreed() {
+  const el = document.getElementById('fear-greed-widget');
+  if (!el) return;
+  el.innerHTML = `<div class="fg-label">מדד פחד/חמדנות — CNN</div><div class="fg-score" style="color:var(--text3)">...</div>`;
+  try {
+    const jwt = await _getToken();
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/fear-greed`,
+      jwt ? { headers: { 'Authorization': `Bearer ${jwt}` } } : {}
+    );
+    const d = await res.json();
+    if (!d.score) throw new Error('no data');
+    const score  = Math.round(d.score);
+    const key    = (d.rating || '').toLowerCase();
+    const colors = FG_COLORS[key] || ['#8faac8','#64748b'];
+    const label  = FG_LABELS[key] || d.rating || '—';
+    const now    = new Date().toLocaleTimeString('he-IL', { hour:'2-digit', minute:'2-digit' });
+    el.innerHTML = `
+      <div>
+        <div class="fg-label">מדד פחד/חמדנות — CNN</div>
+        <div class="fg-score" style="color:${colors[0]}">${score}</div>
+      </div>
+      <div style="flex:1">
+        <div class="fg-rating" style="color:${colors[0]};margin-bottom:6px">${label}</div>
+        <div class="fg-bar-wrap"><div class="fg-bar" style="width:${score}%;background:linear-gradient(90deg,${colors[1]},${colors[0]})"></div></div>
+      </div>
+      <div class="fg-updated">עודכן ${now}</div>`;
+  } catch {
+    el.innerHTML = `<div class="fg-label">מדד פחד/חמדנות — CNN</div><div class="fg-score" style="color:var(--text3)">—</div><div class="fg-updated" style="color:var(--text3)">לא זמין</div>`;
+  }
+  clearTimeout(_fgTimer);
+  _fgTimer = setTimeout(loadFearGreed, 5 * 60 * 1000);
+}
+
 function renderOverview() {
   const {month, year} = getFilter('ov');
   const info = document.getElementById('ov-filter-info');
