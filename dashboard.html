@@ -10199,6 +10199,12 @@ function _applyTheme(theme) {
   if (hIcon) hIcon.innerHTML = theme === 'light' ? _THEME_SVG_MOON : _THEME_SVG_SUN;
 }
 
+function toggleSidebar() {
+  const sidebar = document.getElementById('main-sidebar');
+  const collapsed = sidebar.classList.toggle('collapsed');
+  localStorage.setItem('tj-sidebar-collapsed', collapsed ? '1' : '0');
+}
+
 function toggleTheme() {
   const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
   localStorage.setItem('tj-theme', next);
