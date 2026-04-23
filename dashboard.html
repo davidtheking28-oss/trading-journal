@@ -7029,7 +7029,7 @@ async function loadFearGreed() {
       <div class="fg-info">
         <div class="fg-label">Fear & Greed Index</div>
         <div class="fg-rating" style="color:${colors[0]}">${label}</div>
-        <div class="fg-source">CNN · עודכן ${now}</div>
+        <div class="fg-source">CNN · Updated ${now}</div>
       </div>`;
   } catch {
     el.innerHTML = `<div class="fg-gauge-wrap"><svg width="64" height="64" viewBox="0 0 64 64"><circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/></svg><div class="fg-gauge-text"><span class="fg-score" style="color:var(--text3)">—</span></div></div><div class="fg-info"><div class="fg-label">Fear & Greed Index</div><div class="fg-rating" style="color:var(--text3)">Unavailable</div><div class="fg-source">CNN</div></div>`;
