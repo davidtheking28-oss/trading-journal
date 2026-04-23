@@ -4242,68 +4242,56 @@
     <!-- ===== OVERVIEW ===== -->
     <div id="tab-overview" class="tab-content active">
 
-      <div class="ov-layout">
-
-        <!-- ── LEFT: main chart + KPIs + secondary content ── -->
-        <div class="ov-main">
-          <!-- Main P&L chart -->
-          <div class="chart-card" style="margin-bottom:12px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;flex-wrap:wrap;">
-              <div class="chart-title" style="margin-bottom:0">P&L מצטבר</div>
-              <div style="display:flex;align-items:center;gap:6px;">
-                <div style="display:flex;background:rgba(255,255,255,0.05);border-radius:6px;overflow:hidden;border:1px solid var(--border);">
-                  <button id="cum-mode-pct" onclick="setCumMode('pct')" style="padding:3px 10px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:var(--accent);color:#fff;transition:all 0.15s;">%</button>
-                  <button id="cum-mode-usd" onclick="setCumMode('usd')" style="padding:3px 10px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all 0.15s;">$</button>
-                </div>
-                <div style="display:flex;background:rgba(255,255,255,0.05);border-radius:6px;overflow:hidden;border:1px solid var(--border);" id="cum-period-btns">
-                  <button onclick="setCumPeriod('7d')"  data-p="7d"  style="padding:3px 9px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all 0.15s;">7D</button>
-                  <button onclick="setCumPeriod('1m')"  data-p="1m"  style="padding:3px 9px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all 0.15s;">1M</button>
-                  <button onclick="setCumPeriod('ytd')" data-p="ytd" style="padding:3px 9px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all 0.15s;">YTD</button>
-                  <button onclick="setCumPeriod('1y')"  data-p="1y"  style="padding:3px 9px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all 0.15s;">1Y</button>
-                  <button onclick="setCumPeriod('all')" data-p="all" style="padding:3px 9px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:var(--accent);color:#fff;transition:all 0.15s;">All</button>
-                </div>
-              </div>
+      <!-- Main P&L chart -->
+      <div class="chart-card" style="margin-bottom:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;flex-wrap:wrap;">
+          <div class="chart-title" style="margin-bottom:0">P&L מצטבר</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="display:flex;background:rgba(255,255,255,0.05);border-radius:6px;overflow:hidden;border:1px solid var(--border);">
+              <button id="cum-mode-pct" onclick="setCumMode('pct')" style="padding:3px 10px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:var(--accent);color:#fff;transition:all 0.15s;">%</button>
+              <button id="cum-mode-usd" onclick="setCumMode('usd')" style="padding:3px 10px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all 0.15s;">$</button>
             </div>
-            <div class="chart-skeleton" id="skel-cum" style="height:280px;"></div>
-            <div style="height:360px;position:relative;"><canvas id="chart-cum" style="display:none"></canvas></div>
-          </div>
-
-          <!-- KPI cards -->
-          <div class="ov-section"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg> סיכום ביצועים</div>
-          <div class="kpi-grid" id="kpi-grid" style="margin-bottom:16px;"></div>
-
-          <!-- Donut + secondary charts -->
-          <div class="charts-grid">
-            <div class="chart-card" style="display:flex;flex-direction:column;">
-              <div class="chart-title">ניצחון / הפסד</div>
-              <div class="chart-skeleton" id="skel-donut" style="height:130px;"></div>
-              <div style="height:130px;position:relative;"><canvas id="chart-donut" style="display:none"></canvas></div>
-              <div id="donut-stats" class="donut-stats" style="flex:1;"></div>
+            <div style="display:flex;background:rgba(255,255,255,0.05);border-radius:6px;overflow:hidden;border:1px solid var(--border);" id="cum-period-btns">
+              <button onclick="setCumPeriod('7d')"  data-p="7d"  style="padding:3px 9px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all 0.15s;">7D</button>
+              <button onclick="setCumPeriod('1m')"  data-p="1m"  style="padding:3px 9px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all 0.15s;">1M</button>
+              <button onclick="setCumPeriod('ytd')" data-p="ytd" style="padding:3px 9px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all 0.15s;">YTD</button>
+              <button onclick="setCumPeriod('1y')"  data-p="1y"  style="padding:3px 9px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all 0.15s;">1Y</button>
+              <button onclick="setCumPeriod('all')" data-p="all" style="padding:3px 9px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:var(--accent);color:#fff;transition:all 0.15s;">All</button>
             </div>
           </div>
+        </div>
+        <div class="chart-skeleton" id="skel-cum" style="height:280px;"></div>
+        <div style="height:360px;position:relative;"><canvas id="chart-cum" style="display:none"></canvas></div>
+      </div>
 
-          <!-- Monthly Tracker -->
-          <div class="ov-section" style="margin-top:22px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Monthly Tracker <span id="mt-year-label" style="font-size:11px;font-weight:500;color:var(--text3);margin-right:6px;"></span></div>
-          <div id="monthly-tracker-wrap" style="overflow-x:auto;margin-bottom:22px;"></div>
+      <!-- Fear & Greed + KPI row -->
+      <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:4px;">
+        <div id="fear-greed-widget" class="fg-widget" style="flex-shrink:0;width:180px;"></div>
+        <div style="flex:1;min-width:0;">
+          <div class="ov-section" style="margin-bottom:8px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg> סיכום ביצועים</div>
+          <div class="kpi-grid" id="kpi-grid" style="margin-bottom:0;"></div>
+        </div>
+      </div>
 
-          <!-- Trading Summary -->
-          <div class="ov-section" style="margin-top:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Trading Summary</div>
-          <div id="trading-summary-wrap" style="margin-bottom:22px;"></div>
-        </div><!-- /.ov-main -->
+      <!-- Donut + secondary charts -->
+      <div class="charts-grid" style="margin-top:16px;">
+        <div class="chart-card" style="display:flex;flex-direction:column;">
+          <div class="chart-title">ניצחון / הפסד</div>
+          <div class="chart-skeleton" id="skel-donut" style="height:130px;"></div>
+          <div style="height:130px;position:relative;"><canvas id="chart-donut" style="display:none"></canvas></div>
+          <div id="donut-stats" class="donut-stats" style="flex:1;"></div>
+        </div>
+      </div>
 
-        <!-- ── RIGHT COLUMN: quick-add + fear-greed ── -->
-        <div class="ov-aside">
-          <!-- Quick Add trigger -->
-          <div class="fg-widget" onclick="fabToggle()" style="cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;min-height:80px;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-            <span style="font-size:13px;font-weight:600;color:var(--text);">Quick Add Trade</span>
-          </div>
-          <!-- Fear & Greed widget -->
-          <div id="fear-greed-widget" class="fg-widget"></div>
-        </div><!-- /.ov-aside -->
+      <!-- Monthly Tracker -->
+      <div class="ov-section" style="margin-top:22px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Monthly Tracker <span id="mt-year-label" style="font-size:11px;font-weight:500;color:var(--text3);margin-right:6px;"></span></div>
+      <div id="monthly-tracker-wrap" style="overflow-x:auto;margin-bottom:22px;"></div>
 
-      </div><!-- /.ov-layout -->
-    </div><!-- /#tab-overview -->
+      <!-- Trading Summary -->
+      <div class="ov-section" style="margin-top:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Trading Summary</div>
+      <div id="trading-summary-wrap" style="margin-bottom:22px;"></div>
+
+    </div>
 
     <!-- ===== STOCKS ===== -->
     <div id="tab-stocks" class="tab-content">
