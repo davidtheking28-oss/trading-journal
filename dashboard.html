@@ -10411,6 +10411,10 @@ function missedRenderList(list) {
         <div class="missed-cards">${cards}</div>
       </div>`;
   }).join('');
+  container.querySelectorAll('.missed-card').forEach((el, i) => {
+    el.style.setProperty('--i', i);
+    el.classList.add('animate-in');
+  });
 }
 
 async function missedRender() {
