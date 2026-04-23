@@ -7027,7 +7027,7 @@ async function loadFearGreed() {
     const key    = (d.rating || '').toLowerCase();
     const colors = FG_COLORS[key] || ['#8faac8','#64748b'];
     const label  = FG_LABELS[key] || d.rating;
-    const now    = new Date().toLocaleTimeString('he-IL', { hour:'2-digit', minute:'2-digit' });
+    const now    = new Date().toLocaleDateString('en-US', { month:'short', day:'numeric' });
     const dash   = (score / 100) * FULL;
     el.innerHTML = `
       <div class="fg-gauge-wrap">
