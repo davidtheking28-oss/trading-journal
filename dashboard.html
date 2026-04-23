@@ -10390,7 +10390,6 @@ function missedRenderList(list) {
     byMonth[key].push(r);
   });
   container.innerHTML = Object.entries(byMonth).map(([key, items]) => {
-
     const [y, m] = key.split('-');
     const label = `${MONTHS[+m-1]} ${y}`;
     const cards = items.map(r => `
