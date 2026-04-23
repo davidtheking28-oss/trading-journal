@@ -10223,6 +10223,15 @@ function _updateThemeBtn(theme) {
     _applyTheme(saved);
   }
 })();
+(function _initSidebar() {
+  const apply = () => {
+    if (localStorage.getItem('tj-sidebar-collapsed') === '1') {
+      document.getElementById('main-sidebar')?.classList.add('collapsed');
+    }
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply);
+  else apply();
+})();
 
 // ─── Cookie Consent ─────────────────────────────────────────────────────────
 
