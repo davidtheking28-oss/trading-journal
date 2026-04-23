@@ -7058,6 +7058,50 @@ async function loadFearGreed() {
   _fgTimer = setTimeout(loadFearGreed, 24 * 60 * 60 * 1000);
 }
 
+let _cfgTimer = null;
+async function loadCryptoFearGreed() {
+  const el = document.getElementById('crypto-fear-greed-widget');
+  if (!el) return;
+  const R = 26, C = 32, FULL = 2 * Math.PI * R;
+  el.innerHTML = `<div class="fg-gauge-wrap"><svg width="64" height="64" viewBox="0 0 64 64"><circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/></svg><div class="fg-gauge-text"><span class="fg-score" style="color:var(--text3)">…</span></div></div><div class="fg-info"><div class="fg-label">Crypto Fear & Greed</div><div class="fg-rating" style="color:var(--text3)">Loading</div></div>`;
+  try {
+    const jwt = await _getToken();
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/crypto-fear-greed`,
+      jwt ? { headers: { 'Authorization': `Bearer ${jwt}` } } : {}
+    );
+    const d = await res.json();
+    if (!d.score) throw new Error('no data');
+    const score  = Math.round(d.score);
+    const key    = (d.rating || '').toLowerCase();
+    const colors = FG_COLORS[key] || ['#8faac8','#64748b'];
+    const label  = FG_LABELS[key] || d.rating;
+    const now    = new Date().toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    const dash   = (score / 100) * FULL;
+    el.innerHTML = `
+      <div class="fg-gauge-wrap">
+        <svg width="64" height="64" viewBox="0 0 64 64">
+          <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>
+          <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="${colors[0]}" stroke-width="5"
+            stroke-dasharray="${dash} ${FULL}" stroke-linecap="round"
+            style="filter:drop-shadow(0 0 4px ${colors[0]}80)"/>
+        </svg>
+        <div class="fg-gauge-text">
+          <span class="fg-score" style="color:${colors[0]}">${score}</span>
+          <span class="fg-score-sub">/100</span>
+        </div>
+      </div>
+      <div class="fg-info">
+        <div class="fg-label">Crypto Fear & Greed</div>
+        <div class="fg-rating" style="color:${colors[0]}">${label}</div>
+        <div class="fg-source">CoinMarketCap · ${now}</div>
+      </div>`;
+  } catch {
+    el.innerHTML = `<div class="fg-gauge-wrap"><svg width="64" height="64" viewBox="0 0 64 64"><circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/></svg><div class="fg-gauge-text"><span class="fg-score" style="color:var(--text3)">—</span></div></div><div class="fg-info"><div class="fg-label">Crypto Fear & Greed</div><div class="fg-rating" style="color:var(--text3)">Unavailable</div></div>`;
+  }
+  clearTimeout(_cfgTimer);
+  _cfgTimer = setTimeout(loadCryptoFearGreed, 24 * 60 * 60 * 1000);
+}
+
 function renderOverview() {
   const {month, year} = getFilter('ov');
   const info = document.getElementById('ov-filter-info');
