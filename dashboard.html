@@ -7112,6 +7112,10 @@ function renderOverview() {
       </div>`;
     })()}
   `;
+  document.querySelectorAll('#kpi-grid .kpi-card').forEach((el, i) => {
+    el.style.setProperty('--i', i);
+    el.classList.add('animate-in');
+  });
 
   renderCumChart(trades);
   renderDonut(st, adv, trades);
