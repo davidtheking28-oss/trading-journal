@@ -655,6 +655,13 @@
 
   /* CHARTS */
   .charts-grid { display: grid; grid-template-columns: 3fr 1fr; gap: 12px; margin-bottom: 12px; align-items: start; }
+
+  /* Overview two-column layout */
+  .ov-layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; align-items: start; }
+  .ov-aside { display: flex; flex-direction: column; gap: 12px; position: sticky; top: 16px; }
+  .ov-aside .fg-widget { display: flex; width: 100%; }
+  .ov-aside .qa-trigger { display: flex; width: 100%; }
+  @media (max-width: 1100px) { .ov-layout { grid-template-columns: 1fr; } .ov-aside { position: static; } }
   .charts-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
   .chart-card {
     background: var(--card);
