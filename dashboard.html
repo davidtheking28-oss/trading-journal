@@ -5436,6 +5436,7 @@ async function _onAuthSuccess(user) {
   loadStockSymbols();
   _autoFlexSync();
   loadFearGreed();
+  loadCryptoFearGreed();
   // Offer localStorage migration on first login
   await offerMigration();
 }
