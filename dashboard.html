@@ -269,14 +269,20 @@
     background: linear-gradient(145deg, #091525 0%, #060d1f 100%);
     border: 1px solid #0e2040;
     border-radius: var(--radius2);
-    overflow: hidden;
-    overflow-x: auto;
+    overflow: auto;
+    max-height: 70vh;
     box-shadow: 0 4px 32px rgba(0,0,0,0.5);
   }
   table { width: 100%; border-collapse: collapse; min-width: 1600px; font-size: 14px; }
   thead tr {
     background: linear-gradient(90deg, #050d20 0%, #070f24 100%);
     border-bottom: 1px solid rgba(56,189,248,0.15);
+  }
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #050d20;
   }
   th {
     padding: 14px 18px;
