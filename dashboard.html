@@ -4705,8 +4705,8 @@
     <!-- ===== OVERVIEW ===== -->
     <div id="tab-overview" class="tab-content active">
 
-      <!-- Top bar: Add Trade + Fear & Greed + Period filter -->
-      <div class="ov-top-bar" style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-bottom:16px;padding:8px 14px;">
+      <!-- Top bar: Add Trade + Fear & Greed -->
+      <div class="ov-top-bar" style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-bottom:12px;padding:8px 14px;">
         <!-- Add Trade -->
         <button class="btn btn-primary" onclick="fabToggle()" style="gap:6px;display:inline-flex;align-items:center;flex-shrink:0;padding:7px 16px;font-size:13px;font-weight:600;border-radius:9px;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -4719,18 +4719,15 @@
         <div id="fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;border:none;background:transparent;box-shadow:none;padding:0;backdrop-filter:none;"></div>
         <div class="ov-bar-divider"></div>
         <div id="crypto-fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;border:none;background:transparent;box-shadow:none;padding:0;backdrop-filter:none;"></div>
+      </div>
 
-        <!-- Spacer -->
-        <div style="flex:1;"></div>
-
-        <!-- Period filter -->
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:11px;color:var(--text3);font-weight:600;letter-spacing:0.8px;text-transform:uppercase;">תקופה</span>
-          <select id="ov-month" onchange="renderOverview()" style="font-size:12px;padding:5px 8px;border-radius:8px;background:var(--card2);border:1px solid var(--border2);color:var(--text);"></select>
-          <select id="ov-year" onchange="renderOverview()" style="font-size:12px;padding:5px 8px;border-radius:8px;background:var(--card2);border:1px solid var(--border2);color:var(--text);"></select>
-          <button class="btn btn-secondary btn-sm" onclick="resetFilter('ov')" style="font-size:11px;padding:5px 10px;">כל הזמן</button>
-          <span id="ov-filter-info" style="font-size:11px;color:var(--accent);font-weight:500;"></span>
-        </div>
+      <!-- Period filter — same style as stocks/crypto tabs -->
+      <div class="month-filter" style="margin-bottom:16px;">
+        <label>סינון:</label>
+        <select id="ov-month" onchange="renderOverview()"></select>
+        <select id="ov-year" onchange="renderOverview()"></select>
+        <button class="btn btn-secondary btn-sm" onclick="resetFilter('ov')">כל הזמן</button>
+        <div class="filter-stats" id="ov-filter-info"></div>
       </div>
 
 
