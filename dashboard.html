@@ -5433,6 +5433,7 @@ async function _onAuthSuccess(user) {
   cleanOldDeleted();
   loadStockSymbols();
   _autoFlexSync();
+  setInterval(_autoFlexSync, 30 * 60 * 1000);
   loadFearGreed();
   loadCryptoFearGreed();
   // Offer localStorage migration on first login
