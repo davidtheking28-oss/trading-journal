@@ -4633,28 +4633,24 @@
     <!-- ===== OVERVIEW ===== -->
     <div id="tab-overview" class="tab-content active">
 
-      <!-- Unified control bar -->
-      <div class="month-filter" style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
-        <!-- Add Trade -->
-        <button class="btn btn-primary btn-sm" onclick="fabToggle()" style="gap:6px;display:inline-flex;align-items:center;flex-shrink:0;">
+      <!-- Row 1: Fear & Greed + Add Trade -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div id="fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;"></div>
+        <div id="crypto-fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;"></div>
+        <div style="flex:1;"></div>
+        <button class="btn btn-primary" onclick="fabToggle()" style="gap:7px;display:inline-flex;align-items:center;flex-shrink:0;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           הוסף עסקה
         </button>
+      </div>
 
-        <div style="width:1px;height:22px;background:rgba(148,163,184,0.12);flex-shrink:0;"></div>
-
-        <!-- Period filter -->
+      <!-- Row 2: Period filter -->
+      <div class="month-filter" style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+        <label style="font-size:11px;color:var(--text3);font-weight:600;letter-spacing:0.5px;">תקופה</label>
         <select id="ov-month" onchange="renderOverview()" style="font-size:12px;padding:4px 8px;"></select>
         <select id="ov-year" onchange="renderOverview()" style="font-size:12px;padding:4px 8px;"></select>
-        <button class="btn btn-secondary btn-sm" onclick="resetFilter('ov')" style="font-size:11px;">כל הזמן</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetFilter('ov')">כל הזמן</button>
         <span id="ov-filter-info" style="font-size:11px;color:var(--text3);"></span>
-
-        <!-- Push Fear & Greed to the right -->
-        <div style="flex:1;"></div>
-
-        <div id="fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;"></div>
-        <div style="width:1px;height:36px;background:rgba(148,163,184,0.12);flex-shrink:0;"></div>
-        <div id="crypto-fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;"></div>
       </div>
 
       <!-- KPI cards — top priority -->
