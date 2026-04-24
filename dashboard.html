@@ -4229,10 +4229,23 @@
     </div>
   </header>
 
+  <!-- ── Top Navigation Bar ── -->
+  <nav class="top-nav" id="top-nav">
+    <button class="tab-btn active" onclick="switchTab('overview',this)">סקירה כללית</button>
+    <button class="tab-btn" onclick="switchTab('stocks',this)">מניות</button>
+    <button class="tab-btn" onclick="switchTab('crypto',this)">קריפטו</button>
+    <button class="tab-btn" onclick="switchTab('archive',this)">ארכיון</button>
+    <button class="tab-btn" onclick="switchTab('calculators',this)">מחשבונים</button>
+    <button class="tab-btn" onclick="switchTab('ibkr',this)">IBKR</button>
+    <button class="tab-btn ai-tab-btn" onclick="switchTab('ai',this)">Minervini</button>
+    <button class="tab-btn" onclick="switchTab('missed',this)">פוספסו</button>
+    <button class="tab-btn" onclick="switchTab('investments',this)">השקעות</button>
+  </nav>
+
   <div class="app-body">
 
   <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
-  <aside class="sidebar" id="main-sidebar">
+  <aside class="sidebar" id="main-sidebar" style="display:none">
     <div class="sidebar-brand">
       <span class="sidebar-brand-mark" aria-hidden="true" style="filter:drop-shadow(0 0 5px rgba(56,189,248,0.5))">
         <svg width="28" height="28" viewBox="0 0 200 200">
