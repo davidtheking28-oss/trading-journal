@@ -5885,11 +5885,8 @@ function applySearch(trades, type) {
 function tradeSector(tr) {
   const raw = (tr.symbol || '').toUpperCase().replace(/USDT\.P|USDT|\.P$/,'');
   const sec = SECTOR_MAP[raw];
-  if (!sec) return '<span style="color:var(--text3)">—</span>';
-  const cat = SECTOR_TO_CAT[sec] || 'blue';
-  const c  = cat==='green' ? 'var(--green)' : cat==='yellow' ? 'var(--yellow)' : 'var(--accent)';
-  const bg = cat==='green' ? 'var(--green-bg)' : cat==='yellow' ? 'var(--yellow-bg)' : 'rgba(79,131,255,0.10)';
-  return `<span style="background:${bg};color:${c};padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;white-space:nowrap">${esc(sec)}</span>`;
+  if (!sec) return `<span class="sector-cell" data-sym="${raw}" style="color:var(--text3)">—</span>`;
+  return `<span class="sector-cell" style="color:var(--text2);font-size:12px">${esc(sec)}</span>`;
 }
 
 function tradeStatus(tr) {
