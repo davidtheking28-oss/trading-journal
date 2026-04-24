@@ -4032,27 +4032,24 @@
     direction: rtl !important;
   }
   .top-nav::-webkit-scrollbar { display: none !important; }
-  .top-nav .tab-btn {
-    display: inline-flex !important;
-    align-items: center !important;
-    padding: 6px 16px !important;
-    border-radius: 8px !important;
-    border: none !important;
-    border-bottom: none !important;
-    color: #6b8aab !important;
-    font-size: 13px !important;
-    font-weight: 500 !important;
-    white-space: nowrap !important;
-    height: 34px !important;
-    background: transparent !important;
-    transition: all 0.15s !important;
+  .tnav-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 16px;
+    border-radius: 8px;
+    border: none;
+    color: #6b8aab;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    height: 34px;
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, color 0.15s;
   }
-  .top-nav .tab-btn:hover { background: rgba(255,255,255,0.06) !important; color: var(--text) !important; }
-  .top-nav .tab-btn.active {
-    background: rgba(79,131,255,0.14) !important;
-    color: #7aabff !important;
-    font-weight: 600 !important;
-  }
+  .tnav-btn:hover { background: rgba(255,255,255,0.06); color: #c8d8f0; }
+  .tnav-btn.active { background: rgba(79,131,255,0.14); color: #7aabff; font-weight: 600; }
 
   /* ── Layout: full-width when sidebar hidden ── */
   .app-body { flex-direction: column !important; }
