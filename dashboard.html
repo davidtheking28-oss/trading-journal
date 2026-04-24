@@ -7065,8 +7065,8 @@ let _cfgTimer = null;
 async function loadCryptoFearGreed() {
   const el = document.getElementById('crypto-fear-greed-widget');
   if (!el) return;
-  const R = 26, C = 32, FULL = 2 * Math.PI * R;
-  el.innerHTML = `<div class="fg-gauge-wrap"><svg width="64" height="64" viewBox="0 0 64 64"><circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/></svg><div class="fg-gauge-text"><span class="fg-score" style="color:var(--text3)">…</span></div></div><div class="fg-info"><div class="fg-label">Crypto Fear & Greed</div><div class="fg-rating" style="color:var(--text3)">Loading</div></div>`;
+  const R = 33, C = 40, FULL = 2 * Math.PI * R;
+  el.innerHTML = `<div class="fg-gauge-wrap"><svg width="80" height="80" viewBox="0 0 80 80"><circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/></svg><div class="fg-gauge-text"><span class="fg-score" style="color:var(--text3)">…</span></div></div><div class="fg-info"><div class="fg-label">Crypto Fear & Greed</div><div class="fg-rating" style="color:var(--text3)">Loading</div></div>`;
   try {
     const jwt = await _getToken();
     const res = await fetch(`${SUPABASE_URL}/functions/v1/crypto-fear-greed`,
@@ -7082,11 +7082,11 @@ async function loadCryptoFearGreed() {
     const dash   = (score / 100) * FULL;
     el.innerHTML = `
       <div class="fg-gauge-wrap">
-        <svg width="64" height="64" viewBox="0 0 64 64">
-          <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>
-          <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="${colors[0]}" stroke-width="5"
+        <svg width="80" height="80" viewBox="0 0 80 80">
+          <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/>
+          <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="${colors[0]}" stroke-width="6"
             stroke-dasharray="${dash} ${FULL}" stroke-linecap="round"
-            style="filter:drop-shadow(0 0 4px ${colors[0]}80)"/>
+            style="filter:drop-shadow(0 0 6px ${colors[0]}80)"/>
         </svg>
         <div class="fg-gauge-text">
           <span class="fg-score" style="color:${colors[0]}">${score}</span>
@@ -7099,7 +7099,7 @@ async function loadCryptoFearGreed() {
         <div class="fg-source">CoinMarketCap · ${now}</div>
       </div>`;
   } catch {
-    el.innerHTML = `<div class="fg-gauge-wrap"><svg width="64" height="64" viewBox="0 0 64 64"><circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/></svg><div class="fg-gauge-text"><span class="fg-score" style="color:var(--text3)">—</span></div></div><div class="fg-info"><div class="fg-label">Crypto Fear & Greed</div><div class="fg-rating" style="color:var(--text3)">Unavailable</div></div>`;
+    el.innerHTML = `<div class="fg-gauge-wrap"><svg width="80" height="80" viewBox="0 0 80 80"><circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/></svg><div class="fg-gauge-text"><span class="fg-score" style="color:var(--text3)">—</span></div></div><div class="fg-info"><div class="fg-label">Crypto Fear & Greed</div><div class="fg-rating" style="color:var(--text3)">Unavailable</div></div>`;
   }
   clearTimeout(_cfgTimer);
   _cfgTimer = setTimeout(loadCryptoFearGreed, 24 * 60 * 60 * 1000);
