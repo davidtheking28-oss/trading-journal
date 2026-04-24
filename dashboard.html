@@ -4657,16 +4657,32 @@
     <!-- ===== OVERVIEW ===== -->
     <div id="tab-overview" class="tab-content active">
 
-      <!-- Row 1: Add Trade + Fear & Greed -->
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-        <button class="btn btn-primary" onclick="fabToggle()" style="gap:7px;display:inline-flex;align-items:center;flex-shrink:0;padding:8px 18px;font-size:13px;font-weight:600;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <!-- Top bar: Add Trade + Fear & Greed + Period filter -->
+      <div style="display:flex;align-items:center;gap:0;margin-bottom:16px;background:rgba(17,25,39,0.6);border:1px solid rgba(148,163,184,0.07);border-radius:14px;padding:8px 14px;backdrop-filter:blur(12px);">
+        <!-- Add Trade -->
+        <button class="btn btn-primary" onclick="fabToggle()" style="gap:6px;display:inline-flex;align-items:center;flex-shrink:0;padding:7px 16px;font-size:13px;font-weight:600;border-radius:9px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           הוסף עסקה
         </button>
-        <div style="width:1px;height:36px;background:rgba(148,163,184,0.12);flex-shrink:0;"></div>
-        <div id="fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;"></div>
-        <div style="width:1px;height:36px;background:rgba(148,163,184,0.12);flex-shrink:0;"></div>
-        <div id="crypto-fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;"></div>
+
+        <div style="width:1px;height:32px;background:rgba(148,163,184,0.12);flex-shrink:0;margin:0 14px;"></div>
+
+        <!-- Fear & Greed -->
+        <div id="fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;border:none;background:transparent;box-shadow:none;padding:0;backdrop-filter:none;"></div>
+        <div style="width:1px;height:32px;background:rgba(148,163,184,0.12);flex-shrink:0;margin:0 14px;"></div>
+        <div id="crypto-fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;border:none;background:transparent;box-shadow:none;padding:0;backdrop-filter:none;"></div>
+
+        <!-- Spacer -->
+        <div style="flex:1;"></div>
+
+        <!-- Period filter -->
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:11px;color:var(--text3);font-weight:600;letter-spacing:0.8px;text-transform:uppercase;">תקופה</span>
+          <select id="ov-month" onchange="renderOverview()" style="font-size:12px;padding:5px 8px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(148,163,184,0.12);color:var(--text);"></select>
+          <select id="ov-year" onchange="renderOverview()" style="font-size:12px;padding:5px 8px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(148,163,184,0.12);color:var(--text);"></select>
+          <button class="btn btn-secondary btn-sm" onclick="resetFilter('ov')" style="font-size:11px;padding:5px 10px;">כל הזמן</button>
+          <span id="ov-filter-info" style="font-size:11px;color:var(--accent);font-weight:500;"></span>
+        </div>
       </div>
 
 
