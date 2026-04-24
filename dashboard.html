@@ -4013,6 +4013,54 @@
   /* ── Scrollbar on main ── */
   main { scrollbar-gutter: stable; }
 
+  /* ── Top Nav ── */
+  .top-nav {
+    background: rgba(8,15,32,0.97) !important;
+    border-bottom: 1px solid rgba(148,163,184,0.08) !important;
+    padding: 0 28px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+    position: sticky !important;
+    top: 60px !important;
+    z-index: 90 !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    height: 48px !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    direction: rtl !important;
+  }
+  .top-nav::-webkit-scrollbar { display: none !important; }
+  .top-nav .tab-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 6px 16px !important;
+    border-radius: 8px !important;
+    border: none !important;
+    border-bottom: none !important;
+    color: #6b8aab !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    white-space: nowrap !important;
+    height: 34px !important;
+    background: transparent !important;
+    transition: all 0.15s !important;
+  }
+  .top-nav .tab-btn:hover { background: rgba(255,255,255,0.06) !important; color: var(--text) !important; }
+  .top-nav .tab-btn.active {
+    background: rgba(79,131,255,0.14) !important;
+    color: #7aabff !important;
+    font-weight: 600 !important;
+  }
+
+  /* ── Layout: full-width when sidebar hidden ── */
+  .app-body { flex-direction: column !important; }
+  main { padding: 24px 28px !important; overflow-y: auto !important; min-height: 0 !important; flex: 1 !important; }
+  .sidebar { display: none !important; }
+  .sidebar-overlay { display: none !important; }
+  .hamburger { display: none !important; }
+
   /* ── Toast ── */
   .toast {
     background: rgba(17,25,39,0.95) !important;
