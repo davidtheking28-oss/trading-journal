@@ -6461,8 +6461,10 @@ function renderTable(type) {
     const key = type+'-'+tr.id;
     const isExp = expanded[key];
 
+    const trYear = tr.entryDate ? tr.entryDate.slice(0,4) : '—';
+    const trNum = yearTradeNum[trYear]?.[tr.id] ?? '—';
     h += `<tr class="data-row ${rowCls}" onclick="toggleExpand('${type}',${tr.id})">
-      <td>${tr.id}</td>
+      <td style="color:var(--text3);font-size:11px;">${trNum}</td>
       <td>${fmtDate(tr.entryDate)}</td>
       <td><span class="badge badge-${tr.ls}">${tr.ls}</span></td>
       <td>${tradeStatus(tr)}</td>
