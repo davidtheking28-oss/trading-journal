@@ -7548,8 +7548,8 @@ function renderTradingSummary(trades) {
   const closed = trades.filter(t => t.exitPrice > 0 && t.closedShares > 0);
   if (!closed.length) { wrap.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:8px 0;">אין עסקאות סגורות להצגה</div>'; return; }
 
-  const winners = closed.filter(t => calcTotal(t) > 0);
-  const losers  = closed.filter(t => calcTotal(t) < 0);
+  const winners = closed.filter(t => calcPL(t) > 0);
+  const losers  = closed.filter(t => calcPL(t) < 0);
   const wr = closed.length ? winners.length / closed.length * 100 : 0;
   const lossRate = 100 - wr;
 
