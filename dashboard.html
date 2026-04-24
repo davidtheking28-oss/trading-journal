@@ -6163,12 +6163,12 @@ function calcPct(tr) {
 
 function stats(trades) {
   const total = trades.reduce((s,t) => s+calcTotal(t), 0);
-  const wins = trades.filter(t => calcTotal(t) > 0);
-  const losses = trades.filter(t => calcTotal(t) <= 0);
+  const wins = trades.filter(t => calcPL(t) > 0);
+  const losses = trades.filter(t => calcPL(t) <= 0);
   const wr = trades.length ? wins.length / trades.length * 100 : 0;
-  const best = trades.length ? Math.max(...trades.map(t=>calcTotal(t))) : 0;
-  const worst = trades.length ? Math.min(...trades.map(t=>calcTotal(t))) : 0;
-  const avg = trades.length ? total / trades.length : 0;
+  const best = trades.length ? Math.max(...trades.map(t=>calcPL(t))) : 0;
+  const worst = trades.length ? Math.min(...trades.map(t=>calcPL(t))) : 0;
+  const avg = trades.length ? trades.reduce((s,t)=>s+calcPL(t),0) / trades.length : 0;
   return {total, wins:wins.length, losses:losses.length, wr, best, worst, avg, n:trades.length};
 }
 
