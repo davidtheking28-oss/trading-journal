@@ -5912,10 +5912,9 @@ function resetFilter(p) {
 let ovScope = 'all';
 
 function switchTab(name, btn) {
-  document.querySelectorAll('.tab-btn').forEach(b=>{ b.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn,.tnav-btn').forEach(b=>{ b.classList.remove('active'); b.style.color=''; });
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
   btn.classList.add('active');
-  btn.style.color = '';
   const tabEl = document.getElementById('tab-'+name);
   tabEl.classList.add('active');
   tabEl.classList.remove('tab-entering');
