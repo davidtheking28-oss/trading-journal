@@ -2633,19 +2633,39 @@
 
   /* ── Selects ── */
   select, select.form-control {
-    background: rgba(10,15,28,0.9) !important;
+    background: rgba(9,21,45,0.85) !important;
     color: #dde6f0 !important;
-    border-color: rgba(120,140,170,0.14) !important;
+    border-color: rgba(148,163,184,0.12) !important;
     border-radius: 8px !important;
   }
-  select option { background: #0c1020 !important; color: #dde6f0 !important; }
+  select option { background: #0d1526 !important; color: #dde6f0 !important; }
   select:focus  { border-color: #4f83ff !important; box-shadow: 0 0 0 3px rgba(79,131,255,0.14) !important; }
+
+  /* ── Inputs ── */
+  .form-control, input[type="number"], input[type="text"], input[type="email"], input[type="password"] {
+    background: rgba(9,21,45,0.7) !important;
+    border-color: rgba(148,163,184,0.12) !important;
+    border-radius: 8px !important;
+    color: var(--text) !important;
+  }
 
   /* ── Input focus ── */
   input:focus, .form-control:focus, .qa-input:focus {
     border-color: #4f83ff !important;
     box-shadow: 0 0 0 3px rgba(79,131,255,0.13) !important;
   }
+
+  /* ── Calc cards ── */
+  .calc-card {
+    background: rgba(13,26,54,0.82) !important;
+    border: 1px solid rgba(148,163,184,0.10) !important;
+    border-radius: 14px !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 20px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.05) !important;
+  }
+  .calc-card:hover { border-color: rgba(6,214,240,0.2) !important; box-shadow: 0 4px 24px rgba(6,214,240,0.06) !important; }
+  .calc-card h3 { color: var(--accent) !important; }
 
   /* ── Overview / chart cards ── */
   .chart-card {
