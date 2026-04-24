@@ -6591,26 +6591,7 @@ function renderTable(type) {
     refreshScreenshotCount(key);
   });
 
-  // Recycle Bin
-  const tabId = type === 'stock' ? 'tab-stocks' : 'tab-crypto';
-  const tabEl = document.getElementById(tabId);
-  if (tabEl) {
-    const recycleId = 'recycle-' + type;
-    let recycleEl = document.getElementById(recycleId);
-    if (!recycleEl) {
-      recycleEl = document.createElement('div');
-      recycleEl.id = recycleId;
-      recycleEl.className = 'recycle-section';
-      recycleEl.innerHTML = `
-        <div class="recycle-header" onclick="this.nextElementSibling.classList.toggle('open')">
-          🗑 סל מחזור <span class="recycle-count"></span>
-          <span style="margin-right:auto;font-size:11px;color:var(--text3);">(לחץ להרחבה)</span>
-        </div>
-        <div class="recycle-body"></div>`;
-      tabEl.appendChild(recycleEl);
-    }
-    renderRecycleBin(type);
-  }
+  // Recycle bin hidden — deleted trades are excluded from view
 
   applyPrivacy();
   _fillMissingSectors(type);
