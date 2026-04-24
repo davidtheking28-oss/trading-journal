@@ -8750,6 +8750,7 @@ async function _autoFlexSync() {
     let imported = 0, updated = 0;
     const newlyImported = [];
     const toInsert = [];
+    const toUpdate = []; // {trade: existingTradeObj, exitData}
 
     trades.forEach(t => {
       const arr = t.type === 'crypto' ? db.crypto : db.stocks;
@@ -8767,6 +8768,7 @@ async function _autoFlexSync() {
           open.exitPrice    = t.exitPrice;
           open.closeDate    = t.closeDate;
           open.closedShares = t.closedShares;
+          toUpdate.push(open);
           updated++;
         }
         return;
@@ -8786,6 +8788,7 @@ async function _autoFlexSync() {
           open.closeDate    = t.closeDate;
           open.closedShares = t.closedShares;
           if (t.t?.length) open.t = t.t;
+          toUpdate.push(open);
           updated++;
           return;
         }
@@ -8798,12 +8801,18 @@ async function _autoFlexSync() {
       toInsert.push(t);
     });
 
+    // שמור עסקאות שעודכנו ב-Supabase
+    for (const trade of toUpdate) {
+      const row = _tradeToRow(trade);
+      await _sb.from('trades').update(row).eq('id', trade.id).eq('user_id', _currentUser.id);
+    }
+
     // שמור כל עסקה חדשה ל-Supabase
     for (const t of toInsert) {
       const row = _tradeToRow({ ...t, deleted: false });
       const { data: inserted, error: insErr } = await _sb.from('trades').insert(row).select().single();
       if (insErr) { continue; }
-      const newTrade = _rowToTrade(inserted); // ID אמיתי מ-Supabase
+      const newTrade = _rowToTrade(inserted);
       const arr = t.type === 'crypto' ? db.crypto : db.stocks;
       arr.push(newTrade);
       imported++;
