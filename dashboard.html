@@ -10404,9 +10404,10 @@ function flexRenderPreview(trades) {
 }
 
 function flexIsDuplicate(t) {
+  const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
+  if (db._deletedFingerprints?.has(fp)) return true;
   const arr = t.type === 'crypto' ? db.crypto : db.stocks;
   return arr.some(x =>
-    !x.deleted &&
     x.symbol === t.symbol &&
     x.entryDate === t.entryDate &&
     Math.abs(x.entryPrice - t.entryPrice) < 0.01 &&
