@@ -4499,6 +4499,21 @@
 
   /* Empty state */
   html[data-theme="light"] .empty-state { color: #64748b; }
+
+  /* Overview top bar — light mode */
+  html[data-theme="light"] .ov-top-bar {
+    background: rgba(255,255,255,0.85) !important;
+    border-color: rgba(15,23,42,0.08) !important;
+    backdrop-filter: blur(8px) !important;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.05) !important;
+  }
+  html[data-theme="light"] .ov-top-bar select {
+    background: rgba(15,23,42,0.04) !important;
+    border-color: rgba(15,23,42,0.12) !important;
+    color: #1e293b !important;
+  }
+  html[data-theme="light"] .ov-top-bar span[style*="color:var(--text3)"] { color: #64748b !important; }
+  html[data-theme="light"] .ov-top-bar > div[style*="background:rgba(148"] { background: rgba(15,23,42,0.1) !important; }
 </style>
 </head>
 <body>
