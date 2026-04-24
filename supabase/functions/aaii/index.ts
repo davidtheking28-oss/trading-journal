@@ -19,16 +19,16 @@ async function fetchSeries(id: string): Promise<number> {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   try {
-    const [bull, bear, neu] = await Promise.all([
+    const [bull, bear] = await Promise.all([
       fetchSeries('AAIIBULL'),
       fetchSeries('AAIIBEAR'),
-      fetchSeries('AAIINEU'),
     ]);
+    const neu = Math.max(0, 100 - bull - bear);
     return new Response(JSON.stringify({ bull, bear, neu }), {
       headers: { ...CORS, 'Content-Type': 'application/json' },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), {
+    return new Response(JSON.stringify({ error: String(e) }), {
       status: 500, headers: { ...CORS, 'Content-Type': 'application/json' },
     });
   }
