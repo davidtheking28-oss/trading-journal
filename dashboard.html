@@ -6082,6 +6082,35 @@ function renderTable(type) {
   }
 
   applyPrivacy();
+  _fillMissingSectors(type);
+}
+
+const _sectorCache = {};
+async function _fillMissingSectors(type) {
+  const tabEl = document.getElementById('tab-'+(type==='stock'?'stocks':'crypto'));
+  if (!tabEl) return;
+  const cells = tabEl.querySelectorAll('.sector-cell[data-sym]');
+  const seen = new Set();
+  for (const cell of cells) {
+    const sym = cell.dataset.sym;
+    if (!sym || seen.has(sym)) { if (seen.has(sym) && _sectorCache[sym]) cell.textContent = _sectorCache[sym]; continue; }
+    seen.add(sym);
+    if (_sectorCache[sym]) { cell.textContent = _sectorCache[sym]; cell.style.color = 'var(--text2)'; cell.removeAttribute('data-sym'); continue; }
+    try {
+      const token = await _getToken();
+      if (!token) break;
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=stock%2Fprofile2&symbol=${encodeURIComponent(sym)}`,
+        { headers: { 'Authorization': `Bearer ${token}` } });
+      const d = await res.json();
+      const sec = d.finnhubIndustry || '';
+      if (sec) {
+        _sectorCache[sym] = sec;
+        tabEl.querySelectorAll(`.sector-cell[data-sym="${sym}"]`).forEach(el => {
+          el.textContent = sec; el.style.color = 'var(--text2)'; el.removeAttribute('data-sym');
+        });
+      }
+    } catch { /* silent */ }
+  }
 }
 
 function toggleExpand(type, id) {
