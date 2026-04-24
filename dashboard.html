@@ -6110,12 +6110,17 @@ async function loadDB() {
   if (!_currentUser) { db = JSON.parse(JSON.stringify(SEED)); return; }
   const { data, error } = await _sb.from('trades').select('*')
     .eq('user_id', _currentUser.id)
-    .eq('deleted', false)
     .order('entry_date', { ascending: false });
   if (error) { toast('שגיאה בטעינת נתונים', 'error'); console.error('[loadDB]', error); return; }
   const all = (data || []).map(_rowToTrade).filter(validateTradeSchema);
-  db.stocks = all.filter(t => t.type === 'stock');
-  db.crypto = all.filter(t => t.type === 'crypto');
+  db.stocks  = all.filter(t => t.type === 'stock'  && !t.deleted);
+  db.crypto  = all.filter(t => t.type === 'crypto' && !t.deleted);
+  // Build a fingerprint set of deleted trades so auto-sync never re-imports them
+  db._deletedFingerprints = new Set(
+    all.filter(t => t.deleted).map(t =>
+      `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`
+    )
+  );
   renderOverview(); renderTable('stock'); renderTable('crypto');
 }
 // ─────────────────────────────────────────────
