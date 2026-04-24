@@ -5882,6 +5882,16 @@ function applySearch(trades, type) {
   return trades.filter(t => t.symbol.toLowerCase().includes(q));
 }
 
+function tradeSector(tr) {
+  const raw = (tr.symbol || '').toUpperCase().replace(/USDT\.P|USDT|\.P$/,'');
+  const sec = SECTOR_MAP[raw];
+  if (!sec) return '<span style="color:var(--text3)">—</span>';
+  const cat = SECTOR_TO_CAT[sec] || 'blue';
+  const c  = cat==='green' ? 'var(--green)' : cat==='yellow' ? 'var(--yellow)' : 'var(--accent)';
+  const bg = cat==='green' ? 'var(--green-bg)' : cat==='yellow' ? 'var(--yellow-bg)' : 'rgba(79,131,255,0.10)';
+  return `<span style="background:${bg};color:${c};padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;white-space:nowrap">${esc(sec)}</span>`;
+}
+
 function tradeStatus(tr) {
   const closed = +tr.closedShares || 0;
   const total  = +tr.shares || 0;
