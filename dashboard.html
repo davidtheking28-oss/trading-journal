@@ -6425,6 +6425,19 @@ function renderTable(type) {
   }
   let lastRenderedYear = null;
 
+  // Build per-year sequential trade numbers based on chronological entry date
+  // Use all trades of this type (not just filtered) for accurate year numbering
+  const allOfType = type === 'stock' ? db.stocks : db.crypto;
+  const yearTradeNum = {};
+  [...allOfType]
+    .filter(t => !t.deleted)
+    .sort((a, b) => (a.entryDate || '').localeCompare(b.entryDate || ''))
+    .forEach(t => {
+      const y = t.entryDate ? t.entryDate.slice(0, 4) : '—';
+      if (!yearTradeNum[y]) yearTradeNum[y] = { next: 1 };
+      yearTradeNum[y][t.id] = yearTradeNum[y].next++;
+    });
+
   trades.forEach(tr => {
     // Year group header when no year filter is active
     if (!year) {
