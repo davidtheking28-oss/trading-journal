@@ -6022,27 +6022,87 @@ function renderTable(type) {
     </tr>`;
 
     if (isExp) {
-      const tgts = tr.t && tr.t.length
-        ? `<div class="targets-grid">${tr.t.map((tg,i)=>`<div class="target-pill"><strong>T${i+1}</strong> ${tg.shares} מניות @ $${fmtPrice(tg.price)}</div>`).join('')}</div>`
-        : '<span style="color:var(--text3);font-size:12px;">אין יעדים חלקיים</span>';
-      const noteKeep = tr.notes_keep ? `<div class="notes-tag" style="color:var(--green)">מה לשמר:</div><div class="notes-box">${esc(tr.notes_keep)}</div>` : '';
-      const noteImp = tr.notes_improve ? `<div class="notes-tag" style="color:var(--yellow);margin-top:8px;">מה לשפר:</div><div class="notes-box">${esc(tr.notes_improve)}</div>` : '';
-      const noNotes = !tr.notes_keep && !tr.notes_improve ? '<span style="color:var(--text3);font-size:12px;">אין הערות</span>' : '';
+      const pl    = calcPL(tr);
+      const tot   = calcTotal(tr);
+      const risk  = calcRisk(tr);
+      const pct   = calcPct(tr);
+      const stopR = calcStopRisk(tr);
+      const rVal  = stopR ? tot / stopR : null;
+      const stopDist = tr.entryPrice && tr.stop
+        ? Math.abs((tr.entryPrice - tr.stop) / tr.entryPrice * 100)
+        : null;
+      const commission = +(tr.commission || 0);
+      const isWin = tot > 0;
 
-      const mcLabel = {'easy':'🟢 שוק קל','hard':'🔴 שוק קשה','up':'🔵 מגמה עולה','press':'🟡 לחץ','down':'🟣 מגמה יורדת'};
+      // metric tile helper
+      const tile = (label, val, col) =>
+        `<div class="tr-tile">
+          <div class="tr-tile-val" style="color:${col||'var(--text)'}">${val}</div>
+          <div class="tr-tile-label">${label}</div>
+        </div>`;
+
+      const tgtsHtml = tr.t && tr.t.length
+        ? tr.t.map((tg,i)=>`<span class="tr-target-pill"><strong>T${i+1}</strong> ${tg.shares} @ $${fmtPrice(tg.price)}</span>`).join('')
+        : '<span style="color:var(--text3);font-size:12px;">אין יעדים</span>';
+
+      const mcLabel = {'easy':'שוק קל','hard':'שוק קשה','up':'מגמה עולה','press':'לחץ','down':'מגמה יורדת'};
       const mcSafe = Object.prototype.hasOwnProperty.call(mcLabel, tr.market_cond) ? tr.market_cond : '';
-      const mcHtml = mcSafe ? `<span class="mc-badge ${mcSafe}">${mcLabel[mcSafe]}</span>` : '<span style="color:var(--text3)">—</span>';
-      const psHtml = tr.process_score ? '★'.repeat(tr.process_score) + '☆'.repeat(5-tr.process_score) : '<span style="color:var(--text3)">—</span>';
+
+      const noteKeep = tr.notes_keep
+        ? `<div class="tr-note tr-note-keep"><div class="tr-note-label">מה לשמר</div><div class="tr-note-text">${esc(tr.notes_keep)}</div></div>` : '';
+      const noteImp = tr.notes_improve
+        ? `<div class="tr-note tr-note-imp"><div class="tr-note-label">מה לשפר</div><div class="tr-note-text">${esc(tr.notes_improve)}</div></div>` : '';
+      const noNotes = !tr.notes_keep && !tr.notes_improve
+        ? `<span style="color:var(--text3);font-size:12px;">לא נרשמו הערות</span>` : '';
+
       h += `<tr class="expanded-row">
         <td colspan="20">
-          <div class="expanded-inner">
-            <div class="expanded-section"><h4>🎯 יעדים חלקיים</h4>${tgts}</div>
-            <div class="expanded-section"><h4>📝 הערות</h4>${noteKeep}${noteImp}${noNotes}</div>
-            <div class="expanded-section"><h4>📊 Minervini</h4>
-              <div style="display:flex;gap:24px;flex-wrap:wrap;font-size:13px;">
-                <div>תנאי שוק: ${mcHtml}</div>
-              </div>
+          <div class="tr-review">
+
+            <!-- Metric tiles -->
+            <div class="tr-tiles">
+              ${tile('P&L נטו', `<span class="sensitive">${fmtUSD(tot)}</span>`, tot>=0?'var(--green)':'var(--red)')}
+              ${tile('תשואה', `<span class="sensitive">${fmtPct(pct)}</span>`, pct>=0?'var(--green)':'var(--red)')}
+              ${tile('R Multiple', rVal!==null ? fmtR(tot,stopR) : '—', rVal===null?'var(--text3)':rVal>=1?'var(--green)':rVal>=0?'var(--yellow)':'var(--red)')}
+              ${tile('סיכון בעסקה', risk>0?`<span class="sensitive">${fmtUSD(risk)}</span>`:'—', 'var(--text)')}
+              ${tile('מרחק סטופ', stopDist!==null?`${fmt(stopDist,1)}%`:'—', 'var(--text)')}
+              ${tile('עמלה', `<span class="sensitive">$${fmt(commission)}</span>`, 'var(--text3)')}
             </div>
+
+            <!-- Price flow -->
+            <div class="tr-flow-row">
+              <div class="tr-flow-block">
+                <div class="tr-flow-label">כניסה</div>
+                <div class="tr-flow-price sensitive">$${fmtPrice(tr.entryPrice)}</div>
+                <div class="tr-flow-sub">${fmtDate(tr.entryDate)}</div>
+              </div>
+              <div class="tr-flow-arrow">→</div>
+              <div class="tr-flow-block">
+                <div class="tr-flow-label">סטופ</div>
+                <div class="tr-flow-price sensitive" style="color:var(--red)">$${fmtPrice(tr.stop)}</div>
+                <div class="tr-flow-sub">${stopDist!==null?fmt(stopDist,1)+'% מהכניסה':''}</div>
+              </div>
+              <div class="tr-flow-arrow">→</div>
+              <div class="tr-flow-block">
+                <div class="tr-flow-label">יציאה</div>
+                <div class="tr-flow-price sensitive" style="color:${isWin?'var(--green)':'var(--red)'}">$${fmtPrice(tr.exitPrice||tr.entryPrice)}</div>
+                <div class="tr-flow-sub">${tr.closeDate?fmtDate(tr.closeDate):''}</div>
+              </div>
+              ${tr.t&&tr.t.length?`<div class="tr-flow-arrow" style="color:var(--text3)">|</div>
+              <div class="tr-flow-block">
+                <div class="tr-flow-label">יעדים חלקיים</div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">${tgtsHtml}</div>
+              </div>`:''}
+              ${mcSafe?`<div class="tr-flow-arrow" style="color:var(--text3)">|</div>
+              <div class="tr-flow-block">
+                <div class="tr-flow-label">תנאי שוק</div>
+                <div class="tr-flow-price" style="font-size:13px;color:var(--text2)">${mcLabel[mcSafe]}</div>
+              </div>`:''}
+            </div>
+
+            <!-- Notes -->
+            ${noteKeep||noteImp||noNotes?`<div class="tr-notes-row">${noteKeep}${noteImp}${noNotes}</div>`:''}
+
           </div>
         </td>
       </tr>`;
