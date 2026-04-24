@@ -4242,12 +4242,10 @@
 </div>
 <div id="app">
 
-  <header>
-    <div class="header-title">
-      <button class="hamburger" onclick="toggleSidebar()" aria-label="תפריט" title="פתח תפריט">
-        <span></span><span></span><span></span>
-      </button>
-      <svg width="28" height="28" viewBox="0 0 200 200" style="flex-shrink:0;filter:drop-shadow(0 0 6px rgba(56,189,248,0.4))">
+  <header style="height:56px;padding:0 20px 0 20px;">
+    <!-- Logo -->
+    <div class="header-title" style="flex-shrink:0;gap:8px;">
+      <svg width="26" height="26" viewBox="0 0 200 200" style="flex-shrink:0;filter:drop-shadow(0 0 6px rgba(56,189,248,0.4))">
         <defs>
           <linearGradient id="hbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#07122a"/><stop offset="100%" stop-color="#0c1d3f"/></linearGradient>
           <linearGradient id="ha" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#0284c7"/><stop offset="100%" stop-color="#38bdf8"/></linearGradient>
@@ -4255,49 +4253,45 @@
         </defs>
         <circle cx="100" cy="100" r="96" fill="url(#hbg)" stroke="#1a3460" stroke-width="2"/>
         <line x1="44" y1="60" x2="156" y2="60" stroke="#0e2040" stroke-width="1"/><line x1="44" y1="90" x2="156" y2="90" stroke="#0e2040" stroke-width="1"/><line x1="44" y1="120" x2="156" y2="120" stroke="#0e2040" stroke-width="1"/>
-        <line x1="58" y1="102" x2="58" y2="130" stroke="#ef4444" stroke-width="2" opacity="0.7"/><rect x="52" y="110" width="12" height="16" rx="2" fill="#ef4444" opacity="0.7"/>
         <line x1="85" y1="88" x2="85" y2="122" stroke="url(#ha)" stroke-width="2"/><rect x="79" y="95" width="12" height="22" rx="2" fill="url(#ha)"/>
         <line x1="112" y1="65" x2="112" y2="112" stroke="url(#ha)" stroke-width="2"/><rect x="106" y="72" width="12" height="34" rx="2" fill="url(#ha)"/>
         <line x1="139" y1="52" x2="139" y2="95" stroke="url(#hg)" stroke-width="2"/><rect x="133" y="58" width="12" height="30" rx="2" fill="url(#hg)"/>
-        <polyline points="52,132 85,108 112,88 139,70" fill="none" stroke="rgba(56,189,248,0.3)" stroke-width="1.5" stroke-dasharray="4 3"/>
       </svg>
-      <span class="accent">Trading Journal</span>
-      <span style="font-size:11px;font-weight:700;background:linear-gradient(135deg,#38bdf8,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-right:2px;">2.0</span>
+      <span class="accent" style="font-size:15px;">Trading Journal</span>
+      <span style="font-size:10px;font-weight:700;background:linear-gradient(135deg,#38bdf8,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">2.0</span>
       <span class="ibkr-status-dot" id="ibkr-header-dot" title="IBKR לא נבדק"></span>
     </div>
-    <div id="inactivity-badge" class="inactivity-badge">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.7" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      נועל בעוד <span id="inactivity-countdown">—</span>
+
+    <!-- Center Nav Tabs -->
+    <div id="top-nav" style="display:flex;align-items:stretch;flex:1;justify-content:center;overflow-x:auto;scrollbar-width:none;">
+      <button class="tnav-btn active" onclick="switchTab('overview',this)">סקירה כללית</button>
+      <button class="tnav-btn" onclick="switchTab('stocks',this)">מניות</button>
+      <button class="tnav-btn" onclick="switchTab('crypto',this)">קריפטו</button>
+      <button class="tnav-btn" onclick="switchTab('archive',this)">ארכיון</button>
+      <button class="tnav-btn" onclick="switchTab('calculators',this)">מחשבונים</button>
+      <button class="tnav-btn" onclick="switchTab('ai',this)">Minervini</button>
+      <button class="tnav-btn" onclick="switchTab('missed',this)">פוספסו</button>
+      <button class="tnav-btn" onclick="switchTab('investments',this)">השקעות</button>
+      <button class="tnav-btn" onclick="switchTab('ibkr',this)">הגדרות</button>
     </div>
-    <div class="header-actions">
-      <button class="btn btn-export btn-sm mobile-theme-btn" onclick="toggleTheme()" id="header-theme-btn" aria-label="החלף ערכת צבעים" title="מצב בהיר/כהה">
-        <span id="header-theme-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/></svg></span>
+
+    <!-- Actions -->
+    <div class="header-actions" style="flex-shrink:0;">
+      <div id="inactivity-badge" class="inactivity-badge">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.7"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        נועל בעוד <span id="inactivity-countdown">—</span>
+      </div>
+      <button class="btn btn-export btn-sm" onclick="toggleTheme()" id="header-theme-btn" aria-label="החלף ערכת צבעים">
+        <span id="header-theme-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/></svg></span>
       </button>
-      <button class="btn btn-export btn-sm" onclick="togglePrivacy()" id="privacy-btn" title="מצב פרטיות" aria-label="הסתר ערכים">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <button class="btn btn-export btn-sm" onclick="togglePrivacy()" id="privacy-btn" title="מצב פרטיות">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
       </button>
-      <button class="btn btn-secondary btn-sm" onclick="authSignOut()" id="signout-btn" title="יציאה מהחשבון" aria-label="יציאה">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      </button>
-      <button class="btn btn-export btn-sm" onclick="exportCSV()" aria-label="ייצא CSV">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-left:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        ייצא CSV
+      <button class="btn btn-secondary btn-sm" onclick="authSignOut()" id="signout-btn" title="יציאה">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       </button>
     </div>
   </header>
-
-  <!-- ── Top Navigation Bar ── -->
-  <div id="top-nav" style="display:flex;align-items:stretch;justify-content:center;padding:0;height:52px;background:linear-gradient(180deg,rgba(11,22,48,0.98) 0%,rgba(9,18,40,0.99) 100%);border-bottom:1px solid rgba(6,214,240,0.08);position:sticky;top:60px;z-index:90;direction:rtl;overflow-x:auto;flex-shrink:0;box-shadow:0 1px 0 rgba(6,214,240,0.06),0 4px 16px rgba(0,0,0,0.3);">
-    <button class="tnav-btn active" onclick="switchTab('overview',this)">סקירה כללית</button>
-    <button class="tnav-btn" onclick="switchTab('stocks',this)">מניות</button>
-    <button class="tnav-btn" onclick="switchTab('crypto',this)">קריפטו</button>
-    <button class="tnav-btn" onclick="switchTab('archive',this)">ארכיון</button>
-    <button class="tnav-btn" onclick="switchTab('calculators',this)">מחשבונים</button>
-    <button class="tnav-btn" onclick="switchTab('ibkr',this)">IBKR</button>
-    <button class="tnav-btn" onclick="switchTab('ai',this)">Minervini</button>
-    <button class="tnav-btn" onclick="switchTab('missed',this)">פוספסו</button>
-    <button class="tnav-btn" onclick="switchTab('investments',this)">השקעות</button>
-  </div>
 
   <div class="app-body">
 
