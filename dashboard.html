@@ -7954,7 +7954,7 @@ function exportCSV() {
       t.id, t.assetType, t.entryDate, t.ls, t.entry_reason||'', t.symbol,
       t.entryPrice, t.shares, t.stop, tgts,
       t.closeDate, t.closedShares, t.exitPrice,
-      t.ecn, t.commission,
+      SECTOR_MAP[(t.symbol||'').toUpperCase().replace(/USDT\.P|USDT|\.P$/,'')] || '', t.commission,
       pl.toFixed(2), tot.toFixed(2), risk.toFixed(2), pct.toFixed(2),
       `"${(t.notes_keep||'').replace(/"/g,'""')}"`,
       `"${(t.notes_improve||'').replace(/"/g,'""')}"`
