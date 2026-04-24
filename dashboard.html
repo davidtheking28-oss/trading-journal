@@ -8140,11 +8140,13 @@ function calcBreakeven() {
 // ─────────────────────────────────────────────
 // EXPORT
 // ─────────────────────────────────────────────
-function exportCSV() {
-  const all = [
-    ...db.stocks.map(t=>({...t,assetType:'stock'})),
-    ...db.crypto.map(t=>({...t,assetType:'crypto'}))
-  ];
+function exportCSV(type) {
+  const all = type === 'stock'  ? db.stocks.map(t=>({...t,assetType:'stock'}))
+            : type === 'crypto' ? db.crypto.map(t=>({...t,assetType:'crypto'}))
+            : [
+                ...db.stocks.map(t=>({...t,assetType:'stock'})),
+                ...db.crypto.map(t=>({...t,assetType:'crypto'}))
+              ];
   if (!all.length) { toast('אין נתונים לייצוא','error'); return; }
 
   const hdrs = ['ID','סוג','תאריך כניסה','L/S','סיבת כניסה','סימבול','שער כניסה','מניות','סטופ','יעדים','תאריך סגירה','מניות סגירה','מחיר יציאה','סקטור','עמלה','P/L','סה"כ','$ בעסקה','% תשואה','מה לשמר','מה לשפר'];
