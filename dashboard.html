@@ -8171,7 +8171,8 @@ function exportCSV(type) {
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href=url; a.download=`trading-journal-${new Date().toISOString().split('T')[0]}.csv`;
+  const suffix = type === 'stock' ? '-stocks' : type === 'crypto' ? '-crypto' : '';
+  a.href=url; a.download=`trading-journal${suffix}-${new Date().toISOString().split('T')[0]}.csv`;
   a.click();
   URL.revokeObjectURL(url);
   auditLog('export_csv');
