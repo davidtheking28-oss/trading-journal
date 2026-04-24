@@ -7762,7 +7762,7 @@ function renderOverview() {
     ${(() => {
       const withR = trades.filter(t => calcStopRisk(t) > 0);
       if (!withR.length) return `<div class="kpi-card c-yellow"><div class="kpi-label">ממוצע R</div><div class="kpi-value">—</div><div class="kpi-sub">הוסף סטופ לעסקאות</div></div>`;
-      const avgR = withR.reduce((s,t) => s + calcTotal(t)/calcStopRisk(t), 0) / withR.length;
+      const avgR = withR.reduce((s,t) => s + calcPL(t)/calcStopRisk(t), 0) / withR.length;
       return `<div class="kpi-card ${avgR>=0?'c-green':'c-red'}">
         <div class="kpi-label">ממוצע R</div>
         <div class="kpi-value ${avgR>=0?'green':'red'} sensitive">${avgR>=0?'+':''}${avgR.toFixed(2)}R</div>
