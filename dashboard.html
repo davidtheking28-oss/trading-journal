@@ -10363,7 +10363,8 @@ function flexRenderPreview(trades) {
   const preview = document.getElementById('flex-preview');
   if (!preview) return;
 
-  let h = `<div style="margin-bottom:8px;font-size:12px;color:var(--text2);">${trades.length} עסקאות נמצאו — בדוק ואשר ייבוא:</div>`;
+  const existingDebug = preview.querySelector('.flex-debug-box')?.outerHTML || '';
+  let h = existingDebug + `<div style="margin-bottom:8px;font-size:12px;color:var(--text2);">${trades.length} עסקאות נמצאו — בדוק ואשר ייבוא:</div>`;
 
   trades.forEach((t, i) => {
     const isDup = flexIsDuplicate(t);
