@@ -10244,7 +10244,7 @@ async function flexSync() {
 
     const preview = document.getElementById('flex-preview');
     preview.innerHTML = `
-      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;padding:10px;background:rgba(255,255,255,0.04);border-radius:8px;line-height:1.8;">
+      <div class="flex-debug-box" style="font-size:12px;color:var(--text2);margin-bottom:10px;padding:10px;background:rgba(255,255,255,0.04);border-radius:8px;line-height:1.8;">
         <strong style="color:var(--text);">🔍 XML Debug:</strong><br>
         סה"כ executions ב-XML: <strong>${rawTrades.length}</strong> (${buys.length} BUY, ${sells.length} SELL)<br>
         סימבולים: <strong>${symbols.join(', ') || 'אין'}</strong><br>
