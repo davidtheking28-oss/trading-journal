@@ -7426,10 +7426,10 @@ function tradeDays(t) {
 }
 
 function advancedStats(trades) {
-  const winners = trades.filter(t => calcTotal(t) > 0);
-  const losers  = trades.filter(t => calcTotal(t) < 0);
-  const avgWin     = winners.length ? winners.reduce((s,t) => s + calcTotal(t), 0) / winners.length : 0;
-  const avgLoss    = losers.length  ? losers.reduce((s,t)  => s + calcTotal(t), 0) / losers.length  : 0;
+  const winners = trades.filter(t => calcPL(t) > 0);
+  const losers  = trades.filter(t => calcPL(t) < 0);
+  const avgWin     = winners.length ? winners.reduce((s,t) => s + calcPL(t), 0) / winners.length : 0;
+  const avgLoss    = losers.length  ? losers.reduce((s,t)  => s + calcPL(t), 0) / losers.length  : 0;
   const avgWinDays = winners.length ? winners.reduce((s,t) => s + tradeDays(t), 0) / winners.length : 0;
   const avgLossDays= losers.length  ? losers.reduce((s,t)  => s + tradeDays(t), 0) / losers.length  : 0;
   return { avgWin, avgLoss, avgWinDays, avgLossDays };
