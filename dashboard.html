@@ -6858,13 +6858,13 @@ function psSetStars(containerId, val) {
 // Expectancy = (avgWin × winRate) / (avgLoss × lossRate)
 // Returns 0 if not enough data
 function calcExpectancy(trades) {
-  const winners = trades.filter(t => calcTotal(t) > 0);
-  const losers  = trades.filter(t => calcTotal(t) < 0);
+  const winners = trades.filter(t => calcPL(t) > 0);
+  const losers  = trades.filter(t => calcPL(t) < 0);
   if (!winners.length || !losers.length) return null;
   const winRate  = winners.length / trades.length;
   const lossRate = losers.length  / trades.length;
-  const avgWin   = winners.reduce((s,t) => s + calcTotal(t), 0) / winners.length;
-  const avgLoss  = Math.abs(losers.reduce((s,t) => s + calcTotal(t), 0) / losers.length);
+  const avgWin   = winners.reduce((s,t) => s + calcPL(t), 0) / winners.length;
+  const avgLoss  = Math.abs(losers.reduce((s,t) => s + calcPL(t), 0) / losers.length);
   return (avgWin * winRate) / (avgLoss * lossRate);
 }
 
