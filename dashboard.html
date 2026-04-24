@@ -3932,19 +3932,20 @@
   }
   .mini-tab:hover:not(.active) { background: rgba(255,255,255,0.05); color: #8fa8c4; }
 
-  /* ── Selects ── */
-  select, select.form-control {
-    background: rgba(13,21,38,0.9) !important;
+  /* ── Selects & inputs ── */
+  select, select.form-control,
+  input[type="text"], input[type="number"], input[type="email"], input[type="password"], input[type="date"],
+  .form-control, textarea.form-control {
+    background: rgba(255,255,255,0.06) !important;
     border-color: rgba(148,163,184,0.12) !important;
     color: #e8edf5 !important;
     border-radius: 8px;
   }
-  select:focus { border-color: #3b9eff !important; box-shadow: 0 0 0 3px rgba(59,158,255,0.12) !important; }
-
-  /* ── Input focus ── */
-  input:focus, .form-control:focus, .qa-input:focus {
+  select option { background: #0d1526 !important; color: #e8edf5 !important; }
+  select:focus, input:focus, .form-control:focus, .qa-input:focus {
     border-color: #3b9eff !important;
     box-shadow: 0 0 0 3px rgba(59,158,255,0.12) !important;
+    background: rgba(255,255,255,0.09) !important;
   }
 
   /* ── Section title bars ── */
