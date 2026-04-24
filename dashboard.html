@@ -8727,7 +8727,7 @@ function pinUnlock() {
   _autoFlexSync();
 }
 
-async function _flexFetch(jwt) {
+async function _flexFetch(jwt, { debug } = {}) {
   const sendRes = await fetch(`${SUPABASE_URL}/functions/v1/ibkr?action=send`, { headers: { 'Authorization': `Bearer ${jwt}` } });
   if (!sendRes.ok) throw new Error(`שגיאת רשת: ${sendRes.status}`);
   const sendXml = await sendRes.text();
@@ -8736,7 +8736,9 @@ async function _flexFetch(jwt) {
   await new Promise(r => setTimeout(r, 2000));
   const getRes = await fetch(`${SUPABASE_URL}/functions/v1/ibkr?action=get&ref=${encodeURIComponent(refCode)}`, { headers: { 'Authorization': `Bearer ${jwt}` } });
   if (!getRes.ok) throw new Error(`שגיאת רשת: ${getRes.status}`);
-  return flexParseXML(await getRes.text());
+  const xml = await getRes.text();
+  if (debug) return { xml, trades: flexParseXML(xml) };
+  return flexParseXML(xml);
 }
 
 async function _autoFlexSync() {
