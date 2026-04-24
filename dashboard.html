@@ -7466,13 +7466,13 @@ function renderMonthlyTracker(trades) {
 
   function monthStats(arr) {
     if (!arr || !arr.length) return null;
-    const winners = arr.filter(t => calcTotal(t) > 0);
-    const losers  = arr.filter(t => calcTotal(t) < 0);
+    const winners = arr.filter(t => calcPL(t) > 0);
+    const losers  = arr.filter(t => calcPL(t) < 0);
     const avgGainPct = winners.length ? winners.reduce((s,t)=>{ const p=_tradePct(t); return p!==null?s+p:s; },0) / winners.length : null;
     const avgLossPct = losers.length  ? losers.reduce((s,t)=>{ const p=_tradePct(t); return p!==null?s+p:s; },0) / losers.length  : null;
     const winRate    = arr.length ? winners.length / arr.length * 100 : 0;
-    const lgGain     = winners.length ? Math.max(...winners.map(t=>calcTotal(t))) : null;
-    const lgLoss     = losers.length  ? Math.min(...losers.map(t=>calcTotal(t)))  : null;
+    const lgGain     = winners.length ? Math.max(...winners.map(t=>calcPL(t))) : null;
+    const lgLoss     = losers.length  ? Math.min(...losers.map(t=>calcPL(t)))  : null;
     const avgDaysWin = winners.length ? winners.reduce((s,t)=>s+tradeDays(t),0)/winners.length : null;
     const avgDaysLoss= losers.length  ? losers.reduce((s,t)=>s+tradeDays(t),0)/losers.length   : null;
     return { n: arr.length, avgGainPct, avgLossPct, winRate, lgGain, lgLoss, avgDaysWin, avgDaysLoss };
