@@ -4278,16 +4278,16 @@
   </header>
 
   <!-- ── Top Navigation Bar ── -->
-  <div class="top-nav" id="top-nav">
-    <button class="tab-btn active" onclick="switchTab('overview',this)">סקירה כללית</button>
-    <button class="tab-btn" onclick="switchTab('stocks',this)">מניות</button>
-    <button class="tab-btn" onclick="switchTab('crypto',this)">קריפטו</button>
-    <button class="tab-btn" onclick="switchTab('archive',this)">ארכיון</button>
-    <button class="tab-btn" onclick="switchTab('calculators',this)">מחשבונים</button>
-    <button class="tab-btn" onclick="switchTab('ibkr',this)">IBKR</button>
-    <button class="tab-btn ai-tab-btn" onclick="switchTab('ai',this)">Minervini</button>
-    <button class="tab-btn" onclick="switchTab('missed',this)">פוספסו</button>
-    <button class="tab-btn" onclick="switchTab('investments',this)">השקעות</button>
+  <div id="top-nav" style="display:flex;align-items:center;gap:2px;padding:0 28px;height:48px;background:rgba(8,15,32,0.97);border-bottom:1px solid rgba(148,163,184,0.08);position:sticky;top:60px;z-index:90;direction:rtl;overflow-x:auto;flex-shrink:0;">
+    <button class="tnav-btn active" onclick="switchTab('overview',this)">סקירה כללית</button>
+    <button class="tnav-btn" onclick="switchTab('stocks',this)">מניות</button>
+    <button class="tnav-btn" onclick="switchTab('crypto',this)">קריפטו</button>
+    <button class="tnav-btn" onclick="switchTab('archive',this)">ארכיון</button>
+    <button class="tnav-btn" onclick="switchTab('calculators',this)">מחשבונים</button>
+    <button class="tnav-btn" onclick="switchTab('ibkr',this)">IBKR</button>
+    <button class="tnav-btn" onclick="switchTab('ai',this)">Minervini</button>
+    <button class="tnav-btn" onclick="switchTab('missed',this)">פוספסו</button>
+    <button class="tnav-btn" onclick="switchTab('investments',this)">השקעות</button>
   </div>
 
   <div class="app-body">
