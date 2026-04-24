@@ -4735,6 +4735,24 @@
         <div id="tlg-preview" class="ibkr-trades-list"></div>
       </div>
 
+      <!-- CSV Export -->
+      <div class="ibkr-card c-blue">
+        <div class="ibkr-card-header">
+          <div class="ibkr-card-title-wrap">
+            <span class="ibkr-card-icon">📥</span>
+            <span class="ibkr-card-title">ייצוא נתונים</span>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6;">
+          ייצוא כל העסקאות לקובץ CSV לניתוח חיצוני.
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-secondary btn-sm" onclick="exportCSV('stock')">ייצא מניות</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportCSV('crypto')">ייצא קריפטו</button>
+          <button class="btn btn-primary btn-sm" onclick="exportCSV('all')">ייצא הכל</button>
+        </div>
+      </div>
+
       <!-- Audit Log -->
       <div class="ibkr-card c-gray full-width">
         <div class="ibkr-card-header">
