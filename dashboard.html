@@ -8166,7 +8166,7 @@ function openModal(type, tr=null) {
   document.getElementById('m-closeDate').value   = tr ? (tr.closeDate||'')     : '';
   document.getElementById('m-closedShares').value= tr ? (tr.closedShares||'')  : '';
   document.getElementById('m-exitPrice').value   = tr ? (tr.exitPrice||'')     : '';
-  document.getElementById('m-commission').value  = tr ? (tr.commission!==undefined?tr.commission:'2.50') : '2.50';
+  document.getElementById('m-commission').value  = tr ? (tr.commission!==undefined?tr.commission:'5.00') : '5.00';
   modalER = tr ? (tr.entryReason || '') : '';
   document.getElementById('m-entry-reason').value = modalER;
   erSetPills('m-er-pills', modalER);
