@@ -9996,6 +9996,16 @@ function renderRecycleBin(type) {
   }).join('');
 }
 
+async function _migrateCommission() {
+  const FLAG = 'comm_migrated_5';
+  if (localStorage.getItem(FLAG) || !_currentUser) return;
+  const { error } = await _sb.from('trades')
+    .update({ commission: 5.0 })
+    .eq('user_id', _currentUser.id)
+    .eq('commission', 2.5);
+  if (!error) localStorage.setItem(FLAG, '1');
+}
+
 function cleanOldDeleted() {
   const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
   const cutoff = Date.now() - THIRTY_DAYS;
