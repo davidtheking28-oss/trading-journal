@@ -4033,23 +4033,35 @@
   }
   .top-nav::-webkit-scrollbar { display: none !important; }
   .tnav-btn {
+    flex: 1;
     display: inline-flex;
     align-items: center;
-    padding: 6px 16px;
-    border-radius: 8px;
+    justify-content: center;
+    padding: 0 8px;
     border: none;
-    color: #6b8aab;
-    font-size: 13px;
+    border-bottom: 2px solid transparent;
+    color: rgba(148,163,184,0.55);
+    font-size: 12.5px;
     font-weight: 500;
+    letter-spacing: 0.2px;
     white-space: nowrap;
-    height: 34px;
     background: transparent;
     cursor: pointer;
-    font-family: inherit;
-    transition: background 0.15s, color 0.15s;
+    font-family: 'Plus Jakarta Sans', inherit;
+    transition: color 0.18s, border-color 0.18s, background 0.18s;
+    position: relative;
   }
-  .tnav-btn:hover { background: rgba(255,255,255,0.06); color: #c8d8f0; }
-  .tnav-btn.active { background: rgba(79,131,255,0.14); color: #7aabff; font-weight: 600; }
+  .tnav-btn:hover {
+    color: rgba(200,220,240,0.85);
+    background: rgba(255,255,255,0.03);
+  }
+  .tnav-btn.active {
+    color: #06d6f0;
+    font-weight: 600;
+    border-bottom-color: #06d6f0;
+    background: rgba(6,214,240,0.05);
+    text-shadow: 0 0 20px rgba(6,214,240,0.4);
+  }
 
   /* ── Layout: full-width when sidebar hidden ── */
   .app-body { flex-direction: column !important; }
