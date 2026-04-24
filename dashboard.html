@@ -10232,18 +10232,37 @@ async function flexSync() {
   document.getElementById('flex-preview').innerHTML = '';
 
   try {
-    const trades = await _flexFetch(jwt);
-    if (!trades.length) {
+    const { xml, trades } = await _flexFetch(jwt, { debug: true });
+
+    // Debug: count raw Trade elements and show symbol breakdown
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xml, 'text/xml');
+    const rawTrades = [...doc.querySelectorAll('Trade')];
+    const buys  = rawTrades.filter(e => (e.getAttribute('buySell')||'').toUpperCase() === 'BUY');
+    const sells = rawTrades.filter(e => (e.getAttribute('buySell')||'').toUpperCase() === 'SELL');
+    const symbols = [...new Set(rawTrades.map(e => e.getAttribute('symbol')).filter(Boolean))];
+
+    const preview = document.getElementById('flex-preview');
+    preview.innerHTML = `
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;padding:10px;background:rgba(255,255,255,0.04);border-radius:8px;line-height:1.8;">
+        <strong style="color:var(--text);">🔍 XML Debug:</strong><br>
+        סה"כ executions ב-XML: <strong>${rawTrades.length}</strong> (${buys.length} BUY, ${sells.length} SELL)<br>
+        סימבולים: <strong>${symbols.join(', ') || 'אין'}</strong><br>
+        עסקאות שנפענחו: <strong>${trades.length}</strong>
+        ${trades.filter(t=>t._orphanClose).length ? `<br>orphan closes (ללא BUY בXML): <strong style="color:var(--accent);">${trades.filter(t=>t._orphanClose).length}</strong>` : ''}
+      </div>`;
+
+    if (!trades.filter(t => !t._orphanClose).length && !trades.filter(t => t._orphanClose).length) {
       flexSetStatus('לא נמצאו עסקאות בתקופה', 'var(--text3)');
     } else {
-      flexSetStatus(`נמצאו ${trades.length} עסקאות`, 'var(--green)');
-      flexRenderPreview(trades);
+      flexSetStatus(`נמצאו ${trades.length} עסקאות (${rawTrades.length} executions)`, 'var(--green)');
+      flexRenderPreview(trades.filter(t => !t._orphanClose));
     }
   } catch(e) {
     flexSetStatus('שגיאה: ' + e.message, 'var(--red)');
     toast('סנכרון נכשל: ' + e.message, 'error');
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '🔄 סנכרן עסקאות'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'סנכרן'; }
   }
 }
 
