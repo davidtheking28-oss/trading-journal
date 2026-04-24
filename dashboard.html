@@ -6497,7 +6497,7 @@ function renderTable(type) {
         ? tr.t.map((tg,i)=>`<span class="tr-target-pill"><strong>T${i+1}</strong> ${tg.shares} @ $${fmtPrice(tg.price)}</span>`).join('')
         : '<span style="color:var(--text3);font-size:12px;">אין יעדים</span>';
 
-      const mcLabel = {'easy':'שוק קל','hard':'שוק קשה','up':'מגמה עולה','press':'לחץ','down':'מגמה יורדת'};
+      const mcLabel = {'green':'🟢 STEM ירוק','orange':'🟠 STEM כתום','red':'🔴 STEM אדום','easy':'שוק קל','hard':'שוק קשה','up':'מגמה עולה','press':'לחץ','down':'מגמה יורדת'};
       const mcSafe = Object.prototype.hasOwnProperty.call(mcLabel, tr.market_cond) ? tr.market_cond : '';
 
       const noteKeep = tr.notes_keep
