@@ -8754,7 +8754,25 @@ async function _autoFlexSync() {
     trades.forEach(t => {
       const arr = t.type === 'crypto' ? db.crypto : db.stocks;
 
-      // 1. עסקה פתוחה קיימת שעכשיו יש לה יציאה — עדכן אותה
+      // 1א. Orphan close — sell without a matching buy in the XML.
+      //     Position was opened before the Flex Query date range.
+      //     Match against any open position with the same symbol in the journal.
+      if (t._orphanClose) {
+        const open = arr.find(x =>
+          !x.deleted &&
+          x.symbol === t.symbol &&
+          !x.exitPrice
+        );
+        if (open) {
+          open.exitPrice    = t.exitPrice;
+          open.closeDate    = t.closeDate;
+          open.closedShares = t.closedShares;
+          updated++;
+        }
+        return;
+      }
+
+      // 1ב. עסקה פתוחה קיימת שעכשיו יש לה יציאה — עדכן לפי כניסה מדויקת
       if (t.exitPrice) {
         const open = arr.find(x =>
           !x.deleted &&
