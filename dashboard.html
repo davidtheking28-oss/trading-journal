@@ -4633,15 +4633,16 @@
     <!-- ===== OVERVIEW ===== -->
     <div id="tab-overview" class="tab-content active">
 
-      <!-- Row 1: Fear & Greed + Add Trade -->
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-        <div id="fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;"></div>
-        <div id="crypto-fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;"></div>
-        <div style="width:1px;height:36px;background:rgba(148,163,184,0.12);flex-shrink:0;margin:0 4px;"></div>
-        <button class="btn btn-primary" onclick="fabToggle()" style="gap:7px;display:inline-flex;align-items:center;flex-shrink:0;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <!-- Row 1: Add Trade + Fear & Greed -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <button class="btn btn-primary" onclick="fabToggle()" style="gap:7px;display:inline-flex;align-items:center;flex-shrink:0;padding:8px 18px;font-size:13px;font-weight:600;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           הוסף עסקה
         </button>
+        <div style="width:1px;height:36px;background:rgba(148,163,184,0.12);flex-shrink:0;"></div>
+        <div id="fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;"></div>
+        <div style="width:1px;height:36px;background:rgba(148,163,184,0.12);flex-shrink:0;"></div>
+        <div id="crypto-fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;"></div>
       </div>
 
       <!-- Row 2: Period filter -->
