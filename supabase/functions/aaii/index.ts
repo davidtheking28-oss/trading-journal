@@ -3,36 +3,28 @@ const CORS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const FRED_KEY = Deno.env.get('FRED_API_KEY') ?? '';
-const BASE = 'https://api.stlouisfed.org/fred/series/observations';
-
-async function fred(id: string): Promise<number> {
-  const url = `${BASE}?series_id=${id}&api_key=${FRED_KEY}&sort_order=desc&limit=1&file_type=json`;
-  const res = await fetch(url);
-  const text = await res.text();
-  if (!res.ok) throw new Error(`FRED ${id} ${res.status}: ${text.slice(0,200)}`);
-  const data = JSON.parse(text);
-  const val = data?.observations?.[0]?.value;
-  if (!val || val === '.') throw new Error(`no value for ${id}`);
-  return parseFloat(val);
-}
+const NASDAQ_KEY = Deno.env.get('NASDAQ_API_KEY') ?? '';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
-  if (!FRED_KEY) {
-    return new Response(JSON.stringify({ error: 'FRED_API_KEY not set' }), {
-      status: 500, headers: { ...CORS, 'Content-Type': 'application/json' },
-    });
-  }
-
   try {
-    const [bull, bear] = await Promise.all([
-      fred('AAIIBULL'),
-      fred('AAIIBEAR'),
-    ]);
-    const neu = Math.max(0, parseFloat((100 - bull - bear).toFixed(1)));
-    return new Response(JSON.stringify({ bull, bear, neu }), {
+    const url = `https://data.nasdaq.com/api/v3/datasets/AAII/SENTIMENT/data.json?api_key=${NASDAQ_KEY}&rows=1`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Nasdaq returned ${res.status}`);
+    const json = await res.json();
+
+    const cols: string[] = json?.dataset_data?.column_names ?? [];
+    const row: number[]  = json?.dataset_data?.data?.[0]  ?? [];
+
+    const idx = (name: string) => cols.findIndex(c => c.toLowerCase().includes(name));
+    const bull = row[idx('bull')];
+    const neu  = row[idx('neutral')];
+    const bear = row[idx('bear')];
+
+    if (bull == null || bear == null) throw new Error('unexpected Nasdaq format');
+
+    return new Response(JSON.stringify({ bull, bear, neu: neu ?? Math.max(0, 100 - bull - bear) }), {
       headers: { ...CORS, 'Content-Type': 'application/json' },
     });
   } catch (e) {
