@@ -5441,6 +5441,7 @@ async function _onAuthSuccess(user) {
   setInterval(_autoFlexSync, 30 * 60 * 1000);
   loadFearGreed();
   loadCryptoFearGreed();
+  loadAAII();
   // Offer localStorage migration on first login
   await offerMigration();
 }
