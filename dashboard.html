@@ -10286,6 +10286,23 @@ function flexParseXML(xml) {
 
       trades.push(trade);
     });
+
+    // Orphan sells — position opened before the Flex Query date range,
+    // so BUY execution is missing from the XML. Mark them for matching
+    // against existing open positions in the journal.
+    if (buys.length === 0 && sells.length > 0) {
+      sells.forEach(sell => {
+        trades.push({
+          symbol, type,
+          _orphanClose: true,
+          exitPrice:    sell.price,
+          closeDate:    sell.date,
+          closedShares: sell.qty,
+          commission:   sell.comm,
+          _exitDt:      sell.dt,
+        });
+      });
+    }
   });
 
   return trades;
