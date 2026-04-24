@@ -5907,6 +5907,7 @@ async function _onAuthSuccess(user) {
   applyPrivacy();
   renderAuditLog();
   cleanOldDeleted();
+  _migrateCommission();
   loadStockSymbols();
   _autoFlexSync();
   setInterval(_autoFlexSync, 30 * 60 * 1000);
