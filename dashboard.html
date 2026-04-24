@@ -4633,17 +4633,31 @@
     <!-- ===== OVERVIEW ===== -->
     <div id="tab-overview" class="tab-content active">
 
-      <!-- Top bar: Quick Add + Fear & Greed -->
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;width:100%;">
-        <button class="btn btn-primary" onclick="fabToggle()" style="gap:7px;display:inline-flex;align-items:center;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-          Add Trade
+      <!-- Top bar: Fear & Greed + Add Trade -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;width:100%;">
+        <div id="fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;"></div>
+        <div style="width:1px;height:40px;background:rgba(148,163,184,0.12);flex-shrink:0;"></div>
+        <div id="crypto-fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;"></div>
+        <div style="flex:1;"></div>
+        <button class="btn btn-primary" onclick="fabToggle()" style="gap:7px;display:inline-flex;align-items:center;flex-shrink:0;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          הוסף עסקה
         </button>
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <div id="fear-greed-widget" class="fg-widget" style="margin-bottom:0;"></div>
-          <div style="width:1px;height:40px;background:rgba(148,163,184,0.15);flex-shrink:0;"></div>
-          <div id="crypto-fear-greed-widget" class="fg-widget" style="margin-bottom:0;"></div>
+      </div>
+
+      <!-- Filter + Scope bar -->
+      <div class="month-filter" style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+        <div class="mini-tabs" style="margin-bottom:0;gap:4px;">
+          <button class="mini-tab active" onclick="setScope('all',this)">הכל</button>
+          <button class="mini-tab" onclick="setScope('stock',this)">מניות</button>
+          <button class="mini-tab" onclick="setScope('crypto',this)">קריפטו</button>
         </div>
+        <div style="width:1px;height:24px;background:rgba(148,163,184,0.12);flex-shrink:0;"></div>
+        <label style="font-size:12px;color:var(--text3);">תקופה:</label>
+        <select id="ov-month" onchange="renderOverview()" style="font-size:12px;padding:4px 8px;min-width:90px;"></select>
+        <select id="ov-year" onchange="renderOverview()" style="font-size:12px;padding:4px 8px;min-width:70px;"></select>
+        <button class="btn btn-secondary btn-sm" onclick="resetFilter('ov')">כל הזמן</button>
+        <span id="ov-filter-info" style="font-size:11px;color:var(--text3);margin-right:4px;"></span>
       </div>
 
       <!-- KPI cards — top priority -->
