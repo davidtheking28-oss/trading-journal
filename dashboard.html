@@ -7107,6 +7107,52 @@ async function loadCryptoFearGreed() {
   _cfgTimer = setTimeout(loadCryptoFearGreed, 24 * 60 * 60 * 1000);
 }
 
+let _aaiiTimer = null;
+async function loadAAII() {
+  const el = document.getElementById('aaii-widget');
+  if (!el) return;
+  el.innerHTML = `<div class="fg-info" style="width:100%"><div class="fg-label">AAII Sentiment</div><div class="fg-rating" style="color:var(--text3)">טוען...</div></div>`;
+  try {
+    const jwt = await _getToken();
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/aaii`,
+      jwt ? { headers: { 'Authorization': `Bearer ${jwt}` } } : {}
+    );
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
+    const bull = d.bull.toFixed(1), bear = d.bear.toFixed(1), neu = d.neu.toFixed(1);
+    const now = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    el.innerHTML = `
+      <div class="fg-info" style="width:100%;min-width:160px;">
+        <div class="fg-label" style="margin-bottom:6px;">AAII Sentiment</div>
+        <div style="display:flex;flex-direction:column;gap:3px;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:10px;color:#00e5a0;font-weight:700;width:52px;">Bull ${bull}%</span>
+            <div style="flex:1;height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
+              <div style="width:${bull}%;height:100%;background:#00e5a0;border-radius:3px;box-shadow:0 0 6px rgba(0,229,160,0.4);"></div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:10px;color:#8fa8c4;font-weight:700;width:52px;">Neu ${neu}%</span>
+            <div style="flex:1;height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
+              <div style="width:${neu}%;height:100%;background:#8fa8c4;border-radius:3px;"></div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:10px;color:#ff6b8a;font-weight:700;width:52px;">Bear ${bear}%</span>
+            <div style="flex:1;height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
+              <div style="width:${bear}%;height:100%;background:#ff6b8a;border-radius:3px;box-shadow:0 0 6px rgba(255,107,138,0.4);"></div>
+            </div>
+          </div>
+        </div>
+        <div class="fg-source" style="margin-top:4px;">AAII · ${now}</div>
+      </div>`;
+  } catch {
+    el.innerHTML = `<div class="fg-info" style="width:100%"><div class="fg-label">AAII Sentiment</div><div class="fg-rating" style="color:var(--text3)">Unavailable</div></div>`;
+  }
+  clearTimeout(_aaiiTimer);
+  _aaiiTimer = setTimeout(loadAAII, 24 * 60 * 60 * 1000);
+}
+
 function renderOverview() {
   const {month, year} = getFilter('ov');
   const info = document.getElementById('ov-filter-info');
