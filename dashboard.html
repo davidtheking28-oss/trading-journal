@@ -6396,6 +6396,126 @@ function thSort(type, col, label, currentCol, currentDir) {
   return `<th class="sortable ${cls}" onclick="sortTable('${type}','${col}')">${label}</th>`;
 }
 
+// ─────────────────────────────────────────────
+// CALENDAR VIEW
+// ─────────────────────────────────────────────
+const tableViewMode = { stock: 'table', crypto: 'table' };
+const calendarNav   = { stock: null,    crypto: null };
+const CAL_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+const TBL_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="0.5" fill="currentColor"/><circle cx="3" cy="12" r="0.5" fill="currentColor"/><circle cx="3" cy="18" r="0.5" fill="currentColor"/></svg>`;
+
+function toggleTableView(type) {
+  tableViewMode[type] = tableViewMode[type] === 'table' ? 'calendar' : 'table';
+  if (tableViewMode[type] === 'calendar' && !calendarNav[type]) {
+    const p = type === 'stock' ? 'st' : 'cr';
+    const f = getFilter(p);
+    const now = new Date();
+    calendarNav[type] = {
+      year:  f.year  ? +f.year  : now.getFullYear(),
+      month: f.month ? +f.month : now.getMonth() + 1
+    };
+  }
+  renderTable(type);
+}
+function calNavPrev(type) {
+  const n = calendarNav[type];
+  calendarNav[type] = n.month === 1 ? { year: n.year-1, month: 12 } : { year: n.year, month: n.month-1 };
+  renderTable(type);
+}
+function calNavNext(type) {
+  const n = calendarNav[type];
+  calendarNav[type] = n.month === 12 ? { year: n.year+1, month: 1 } : { year: n.year, month: n.month+1 };
+  renderTable(type);
+}
+
+function renderCalendar(type) {
+  const p    = type === 'stock' ? 'st' : 'cr';
+  const wrap = document.getElementById(type === 'stock' ? 'stocks-wrap' : 'crypto-wrap');
+  if (!calendarNav[type]) {
+    const f = getFilter(p), now = new Date();
+    calendarNav[type] = { year: f.year?+f.year:now.getFullYear(), month: f.month?+f.month:now.getMonth()+1 };
+  }
+  const { year, month } = calendarNav[type];
+  const arr = (type === 'stock' ? db.stocks : db.crypto).filter(t => !t.deleted);
+
+  // Group trades by day
+  const byDay = {};
+  arr.forEach(t => {
+    if (!t.entryDate) return;
+    const d = new Date(t.entryDate+'T00:00:00');
+    if (d.getFullYear() === year && d.getMonth()+1 === month) {
+      const key = t.entryDate.slice(0,10);
+      if (!byDay[key]) byDay[key] = [];
+      byDay[key].push(t);
+    }
+  });
+
+  const allMonthTrades = Object.values(byDay).flat();
+  const monthTotal = allMonthTrades.reduce((s,t) => s+calcTotal(t), 0);
+  const totalStyle = monthTotal > 0 ? 'color:var(--green)' : monthTotal < 0 ? 'color:var(--red)' : 'color:var(--text2)';
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const startDow    = new Date(year, month-1, 1).getDay(); // 0=Sun
+
+  // Build cell array (null = empty, number = day)
+  const cells = Array(startDow).fill(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const DAY_HDRS = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת','סיכום שבועי'];
+
+  let html = `<div class="cal-wrap">
+  <div class="cal-header">
+    <button class="cal-nav-btn" onclick="calNavNext('${type}')">&#8250;</button>
+    <div class="cal-title">
+      <span>${MONTHS[month-1]} ${year}</span>
+      <span class="cal-summary sensitive" style="${totalStyle}">${fmtUSD(monthTotal)}</span>
+      <span class="cal-trade-count">${allMonthTrades.length} עסקאות</span>
+    </div>
+    <button class="cal-nav-btn" onclick="calNavPrev('${type}')">&#8249;</button>
+  </div>
+  <div class="cal-grid">`;
+
+  // Header row
+  DAY_HDRS.forEach(h => { html += `<div class="cal-day-hdr">${h}</div>`; });
+
+  // Weeks
+  const numWeeks = cells.length / 7;
+  for (let w = 0; w < numWeeks; w++) {
+    const weekDays = cells.slice(w*7, w*7+7);
+    weekDays.forEach(day => {
+      if (day === null) {
+        html += `<div class="cal-empty"></div>`;
+      } else {
+        const ds = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const dt = byDay[ds] || [];
+        const dayTotal = dt.reduce((s,t) => s+calcTotal(t), 0);
+        const dayCls   = dt.length ? 'has-trades' : '';
+        const dtStyle  = dayTotal >= 0 ? 'color:var(--green)' : 'color:var(--red)';
+        html += `<div class="cal-cell ${dayCls}">
+          <div class="cal-date">${day}</div>
+          ${dt.map(t => `<div class="cal-chip ${calcPL(t)>=0?'win':'loss'}">${t.symbol}</div>`).join('')}
+          ${dt.length ? `<div class="cal-day-pl sensitive" style="${dtStyle}">${fmtUSD(dayTotal)}</div>` : ''}
+        </div>`;
+      }
+    });
+    // Weekly summary
+    const wTrades = weekDays.filter(Boolean).flatMap(d => {
+      const ds = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      return byDay[ds] || [];
+    });
+    const wTotal = wTrades.reduce((s,t) => s+calcTotal(t), 0);
+    if (wTrades.length) {
+      const wStyle = wTotal >= 0 ? 'color:var(--green)' : 'color:var(--red)';
+      html += `<div class="cal-week-sum"><span class="sensitive" style="${wStyle}">${fmtUSD(wTotal)}</span><span class="cal-week-count">${wTrades.length} עסקאות</span></div>`;
+    } else {
+      html += `<div class="cal-week-sum" style="color:var(--text3)">-</div>`;
+    }
+  }
+
+  html += `</div></div>`;
+  wrap.innerHTML = html;
+}
+
 function renderTable(type) {
   const p = type==='stock' ? 'st' : 'cr';
   const wrap = document.getElementById(type==='stock' ? 'stocks-wrap' : 'crypto-wrap');
