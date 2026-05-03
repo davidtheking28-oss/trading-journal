@@ -6301,7 +6301,7 @@ function initFilters() {
   const yrs = [...years].sort((a,b)=>b-a);
   if (!yrs.length) yrs.push(curYear);
 
-  ['ov','st','cr'].forEach(p => {
+  ['ov','st','cr','stats'].forEach(p => {
     const ms = document.getElementById(p+'-month');
     const ys = document.getElementById(p+'-year');
     if (!ms||!ys) return;
