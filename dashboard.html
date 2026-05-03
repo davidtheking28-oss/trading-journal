@@ -8048,8 +8048,8 @@ async function _updateLivePL() {
 function renderStatistics() {
   const { month, year } = getFilter('stats');
   let trades = [...db.stocks, ...db.crypto].filter(t => !t.deleted && t.entryDate);
-  if (month) trades = trades.filter(t => +t.entryDate.slice(5, 7) === month);
-  if (year)  trades = trades.filter(t => +t.entryDate.slice(0, 4) === year);
+  if (month) trades = trades.filter(t => +t.entryDate.slice(5, 7) === +month);
+  if (year)  trades = trades.filter(t => +t.entryDate.slice(0, 4) === +year);
 
   const stTrades = trades.filter(t => t.type === 'stock' || !t.type);
   const crTrades = trades.filter(t => t.type === 'crypto');
