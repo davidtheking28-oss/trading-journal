@@ -6557,6 +6557,22 @@ function renderCalendar(type) {
         </div>`;
       }
     });
+
+    // Weekly summary cell — rendered last = leftmost column in RTL
+    const wTrades = weekDays.filter(Boolean).flatMap(d => {
+      const ds = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      return byDay[ds] || [];
+    });
+    const wTotal = wTrades.reduce((s,t) => s+calcTotal(t), 0);
+    if (wTrades.length) {
+      const wCls = wTotal >= 0 ? 'color:var(--green)' : 'color:var(--red)';
+      html += `<div class="cal-week-sum">
+        <span class="cal-week-pl sensitive" style="${wCls}">${fmtUSD(wTotal)}</span>
+        <span class="cal-week-count">${wTrades.length} עסקאות</span>
+      </div>`;
+    } else {
+      html += `<div class="cal-week-sum"><span class="cal-week-empty">—</span></div>`;
+    }
   }
 
   html += `</div></div>`;
