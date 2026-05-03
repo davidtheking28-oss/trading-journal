@@ -6346,9 +6346,11 @@ function switchTab(name, btn) {
   void tabEl.offsetWidth;
   tabEl.classList.add('tab-entering');
   if (name==='overview') renderOverview();
+  else if (_ovLiveTimer) { clearInterval(_ovLiveTimer); _ovLiveTimer = null; }
   if (name==='stocks') renderTable('stock');
   if (name==='crypto') renderTable('crypto');
   if (name==='archive') renderArchive();
+  if (name==='statistics') renderStatistics();
   if (name==='ibkr') {
     flexInit();
     renderSecurityStatus();
