@@ -6326,6 +6326,7 @@ function resetFilter(p) {
   if (ys) ys.value = '';
   if (p==='st') renderTable('stock');
   else if (p==='cr') renderTable('crypto');
+  else if (p==='stats') renderStatistics();
   else renderOverview();
 }
 
