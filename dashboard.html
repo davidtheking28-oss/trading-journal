@@ -4530,38 +4530,59 @@
 
   /* ── Calendar View ── */
   .cal-wrap { padding: 0; }
-  .cal-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px 10px; }
-  .cal-nav-btn { background: none; border: 1px solid var(--border2); color: var(--text2); border-radius: 8px; width: 30px; height: 30px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; line-height: 1; }
-  .cal-nav-btn:hover { background: rgba(255,255,255,0.07); color: var(--text); }
-  .cal-title { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 700; color: var(--text); }
+  .cal-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px 12px; }
+  .cal-nav-btn { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--text2); border-radius: 8px; width: 32px; height: 32px; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; line-height: 1; }
+  .cal-nav-btn:hover { background: rgba(255,255,255,0.09); color: var(--text); }
+  .cal-title { display: flex; align-items: center; gap: 10px; }
+  .cal-title-month { font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: -0.2px; }
   .cal-summary { font-size: 14px; font-weight: 700; }
+  .cal-divider { width: 1px; height: 14px; background: rgba(255,255,255,0.12); }
   .cal-trade-count { font-size: 11px; color: var(--text3); font-weight: 500; }
-  .cal-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 1px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: var(--radius2); overflow: hidden; }
-  .cal-day-hdr { background: rgba(9,21,45,0.98); color: var(--text3); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 6px; text-align: center; }
-  .cal-cell { background: rgba(13,26,54,0.7); min-height: 78px; padding: 6px 7px; display: flex; flex-direction: column; gap: 3px; transition: background 0.15s; }
-  .cal-cell.has-trades { background: rgba(16,33,70,0.95); cursor: default; }
-  .cal-empty { background: rgba(7,14,32,0.5); min-height: 78px; }
-  .cal-other-month { background: rgba(7,14,32,0.3); min-height: 78px; padding: 6px 7px; }
-  .cal-date { font-size: 12px; font-weight: 600; color: var(--text3); }
+  .cal-grid { display: grid; grid-template-columns: 110px repeat(7, 1fr); gap: 1px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: var(--radius2); overflow: hidden; }
+  .cal-day-hdr { background: rgba(9,21,45,0.98); color: var(--text3); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; padding: 9px 8px; text-align: center; }
+  .cal-day-hdr.hdr-week { font-size: 9px; letter-spacing: 0.4px; }
+  .cal-cell { background: rgba(11,22,48,0.75); min-height: 96px; padding: 8px 9px; display: flex; flex-direction: column; gap: 4px; transition: background 0.15s; }
+  .cal-cell.weekend { background: rgba(8,17,38,0.6); }
+  .cal-cell.has-trades { background: rgba(14,29,64,0.98); }
+  .cal-cell.has-trades.weekend { background: rgba(12,25,58,0.98); }
+  .cal-cell.today { box-shadow: inset 0 0 0 1.5px var(--accent); }
+  .cal-empty { background: rgba(6,11,28,0.45); min-height: 96px; }
+  .cal-empty.weekend { background: rgba(5,9,23,0.35); }
+  .cal-date { font-size: 13px; font-weight: 700; color: rgba(148,163,184,0.5); line-height: 1; margin-bottom: 2px; }
   .cal-cell.has-trades .cal-date { color: var(--text2); }
-  .cal-chip { font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-  .cal-chip.win { background: rgba(0,209,122,0.14); color: var(--green); }
-  .cal-chip.loss { background: rgba(255,71,87,0.14); color: var(--red); }
-  .cal-day-pl { font-size: 10px; font-weight: 700; margin-top: auto; padding-top: 2px; }
-  .cal-week-sum { background: rgba(7,14,32,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 6px 4px; font-size: 11px; font-weight: 700; min-height: 78px; gap: 2px; }
-  .cal-week-count { font-size: 9px; opacity: 0.7; font-weight: 500; }
+  .cal-cell.today .cal-date { color: var(--accent); }
+  .cal-chip { font-size: 10px; font-weight: 600; padding: 3px 6px; border-radius: 5px; display: flex; align-items: center; justify-content: space-between; gap: 5px; }
+  .cal-chip.win { background: rgba(0,209,122,0.12); border: 1px solid rgba(0,209,122,0.2); }
+  .cal-chip.loss { background: rgba(255,71,87,0.1); border: 1px solid rgba(255,71,87,0.18); }
+  .cal-chip-sym { color: var(--text); font-weight: 700; }
+  .cal-chip-pl { font-size: 9px; font-weight: 700; }
+  .cal-chip.win .cal-chip-pl { color: var(--green); }
+  .cal-chip.loss .cal-chip-pl { color: var(--red); }
+  .cal-day-pl { font-size: 10px; font-weight: 700; margin-top: auto; padding-top: 3px; border-top: 1px solid rgba(255,255,255,0.05); }
+  .cal-week-sum { background: rgba(6,12,30,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 8px 6px; min-height: 96px; gap: 3px; border-left: 1px solid rgba(255,255,255,0.04); }
+  .cal-week-pl { font-size: 12px; font-weight: 700; }
+  .cal-week-count { font-size: 9px; color: var(--text3); font-weight: 500; margin-top: 1px; }
+  .cal-week-empty { font-size: 18px; color: rgba(148,163,184,0.15); }
   .view-toggle-btn { padding: 5px 9px !important; display: inline-flex !important; align-items: center !important; gap: 5px !important; font-size: 11px !important; }
   .view-toggle-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
-  html[data-theme="light"] .cal-day-hdr { background: rgba(226,232,240,0.9) !important; color: #64748b !important; }
-  html[data-theme="light"] .cal-cell { background: rgba(248,250,252,0.8) !important; }
-  html[data-theme="light"] .cal-cell.has-trades { background: rgba(239,246,255,0.95) !important; }
-  html[data-theme="light"] .cal-empty, html[data-theme="light"] .cal-other-month { background: rgba(241,245,249,0.5) !important; }
-  html[data-theme="light"] .cal-week-sum { background: rgba(226,232,240,0.7) !important; }
-  html[data-theme="light"] .cal-grid { background: rgba(15,23,42,0.08) !important; border-color: rgba(15,23,42,0.1) !important; }
-  html[data-theme="light"] .cal-nav-btn { border-color: #e2e8f0 !important; color: #64748b !important; }
+  html[data-theme="light"] .cal-nav-btn { background: #f1f5f9 !important; border-color: #e2e8f0 !important; color: #64748b !important; }
   html[data-theme="light"] .cal-nav-btn:hover { background: #e2e8f0 !important; color: #334155 !important; }
-  html[data-theme="light"] .cal-date { color: #94a3b8 !important; }
+  html[data-theme="light"] .cal-grid { background: rgba(15,23,42,0.08) !important; border-color: rgba(15,23,42,0.1) !important; }
+  html[data-theme="light"] .cal-day-hdr { background: #e8edf5 !important; color: #64748b !important; }
+  html[data-theme="light"] .cal-cell { background: #ffffff !important; }
+  html[data-theme="light"] .cal-cell.weekend { background: #f8fafc !important; }
+  html[data-theme="light"] .cal-cell.has-trades { background: #f0f7ff !important; }
+  html[data-theme="light"] .cal-empty { background: #f1f5f9 !important; }
+  html[data-theme="light"] .cal-empty.weekend { background: #edf2f8 !important; }
+  html[data-theme="light"] .cal-week-sum { background: #eef2f8 !important; border-left-color: rgba(15,23,42,0.06) !important; }
+  html[data-theme="light"] .cal-date { color: #cbd5e1 !important; }
   html[data-theme="light"] .cal-cell.has-trades .cal-date { color: #475569 !important; }
+  html[data-theme="light"] .cal-chip.win { background: rgba(5,150,105,0.08) !important; border-color: rgba(5,150,105,0.2) !important; }
+  html[data-theme="light"] .cal-chip.loss { background: rgba(220,38,38,0.07) !important; border-color: rgba(220,38,38,0.16) !important; }
+  html[data-theme="light"] .cal-chip-sym { color: #1e293b !important; }
+  html[data-theme="light"] .cal-day-pl { border-top-color: rgba(15,23,42,0.07) !important; }
+  html[data-theme="light"] .cal-week-empty { color: rgba(15,23,42,0.1) !important; }
+  html[data-theme="light"] .cal-divider { background: rgba(15,23,42,0.12) !important; }
 </style>
 </head>
 <body>
