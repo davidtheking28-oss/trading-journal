@@ -4843,13 +4843,13 @@
       </div>
       <div class="table-toolbar">
         <button class="btn btn-primary" onclick="openModal('crypto')">+ הוסף עסקה חדשה</button>
+        <button class="btn btn-export btn-sm view-toggle-btn" id="cr-view-toggle" onclick="toggleTableView('crypto')" title="החלף תצוגה"></button>
         <button class="btn btn-danger btn-sm" onclick="deduplicateDB('crypto')" title="מחק עסקאות כפולות (זהות בסימבול + תאריך + מחיר)">🧹 נקה כפילויות</button>
+        <span id="cr-stats" style="color:var(--text2);font-size:12px;flex:1;text-align:center;"></span>
         <div class="search-input-wrap">
           <input class="search-input" id="cr-search" placeholder="חיפוש סימבול..."
             oninput="searchQuery.crypto=this.value; renderTable('crypto')" autocomplete="off">
         </div>
-        <span id="cr-stats" style="color:var(--text2);font-size:12px;"></span>
-        <button class="btn btn-export btn-sm view-toggle-btn" id="cr-view-toggle" onclick="toggleTableView('crypto')" title="החלף תצוגה"></button>
       </div>
       <div class="table-wrap" id="crypto-wrap"></div>
     </div>
