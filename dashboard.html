@@ -8476,7 +8476,7 @@ function renderComparison(stTrades, crTrades) {
       <div class="comp-stat"><span class="comp-stat-label">ממוצע לעסקה</span><span class="comp-stat-val ${clr(st.avg)} sensitive">${st.n?fmtUSD(st.avg):'—'}</span></div>
     </div>`;
   }
-  document.getElementById('comparison-grid').innerHTML =
+  document.getElementById('comparison-wrap').innerHTML =
     card('📈 מניות', stTrades, '#38bdf8') +
     card('₿ קריפטו', crTrades, '#f59e0b');
 }
