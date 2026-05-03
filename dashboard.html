@@ -6486,61 +6486,93 @@ function renderCalendar(type) {
   const totalStyle = monthTotal > 0 ? 'color:var(--green)' : monthTotal < 0 ? 'color:var(--red)' : 'color:var(--text2)';
   const daysInMonth = new Date(year, month, 0).getDate();
   const startDow    = new Date(year, month-1, 1).getDay(); // 0=Sun
+  const todayObj    = new Date();
+  const todayStr    = `${todayObj.getFullYear()}-${String(todayObj.getMonth()+1).padStart(2,'0')}-${String(todayObj.getDate()).padStart(2,'0')}`;
 
   // Build cell array (null = empty, number = day)
   const cells = Array(startDow).fill(null);
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
   while (cells.length % 7 !== 0) cells.push(null);
 
-  const DAY_HDRS = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת','סיכום שבועי'];
+  // In RTL grid: col order in HTML = [WeekSum, Sun, Mon, Tue, Wed, Thu, Fri, Sat]
+  // grid-template-columns: 110px repeat(7,1fr)  → WeekSum is leftmost column
+  // Day headers rendered in HTML order = first col header, then Sun→Sat
+  const DAY_HDRS_ORDER = ['סיכום שבועי','ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+
+  const winsCount  = allMonthTrades.filter(t => calcPL(t) > 0).length;
+  const lossCount  = allMonthTrades.length - winsCount;
 
   let html = `<div class="cal-wrap">
   <div class="cal-header">
     <button class="cal-nav-btn" onclick="calNavNext('${type}')">&#8250;</button>
     <div class="cal-title">
-      <span>${MONTHS[month-1]} ${year}</span>
+      <span class="cal-title-month">${MONTHS[month-1]} ${year}</span>
+      ${allMonthTrades.length ? `<span class="cal-divider"></span>
       <span class="cal-summary sensitive" style="${totalStyle}">${fmtUSD(monthTotal)}</span>
-      <span class="cal-trade-count">${allMonthTrades.length} עסקאות</span>
+      <span class="cal-divider"></span>
+      <span class="cal-trade-count">${allMonthTrades.length} עסקאות &nbsp;·&nbsp; ${winsCount}W / ${lossCount}L</span>` : `<span class="cal-trade-count" style="opacity:0.5">אין עסקאות</span>`}
     </div>
     <button class="cal-nav-btn" onclick="calNavPrev('${type}')">&#8249;</button>
   </div>
   <div class="cal-grid">`;
 
-  // Header row
-  DAY_HDRS.forEach(h => { html += `<div class="cal-day-hdr">${h}</div>`; });
+  // Header row — week-sum header first, then days
+  DAY_HDRS_ORDER.forEach((h,i) => {
+    html += `<div class="cal-day-hdr${i===0?' hdr-week':''}">${h}</div>`;
+  });
 
-  // Weeks
+  // Weeks — render WeekSum cell first, then Sun→Sat day cells
   const numWeeks = cells.length / 7;
   for (let w = 0; w < numWeeks; w++) {
     const weekDays = cells.slice(w*7, w*7+7);
-    weekDays.forEach(day => {
-      if (day === null) {
-        html += `<div class="cal-empty"></div>`;
-      } else {
-        const ds = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-        const dt = byDay[ds] || [];
-        const dayTotal = dt.reduce((s,t) => s+calcTotal(t), 0);
-        const dayCls   = dt.length ? 'has-trades' : '';
-        const dtStyle  = dayTotal >= 0 ? 'color:var(--green)' : 'color:var(--red)';
-        html += `<div class="cal-cell ${dayCls}">
-          <div class="cal-date">${day}</div>
-          ${dt.map(t => `<div class="cal-chip ${calcPL(t)>=0?'win':'loss'}">${t.symbol}</div>`).join('')}
-          ${dt.length ? `<div class="cal-day-pl sensitive" style="${dtStyle}">${fmtUSD(dayTotal)}</div>` : ''}
-        </div>`;
-      }
-    });
-    // Weekly summary
+
+    // Weekly summary cell (rendered first = leftmost column in RTL)
     const wTrades = weekDays.filter(Boolean).flatMap(d => {
       const ds = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       return byDay[ds] || [];
     });
     const wTotal = wTrades.reduce((s,t) => s+calcTotal(t), 0);
     if (wTrades.length) {
-      const wStyle = wTotal >= 0 ? 'color:var(--green)' : 'color:var(--red)';
-      html += `<div class="cal-week-sum"><span class="sensitive" style="${wStyle}">${fmtUSD(wTotal)}</span><span class="cal-week-count">${wTrades.length} עסקאות</span></div>`;
+      const wCls = wTotal >= 0 ? 'color:var(--green)' : 'color:var(--red)';
+      html += `<div class="cal-week-sum">
+        <span class="cal-week-pl sensitive" style="${wCls}">${fmtUSD(wTotal)}</span>
+        <span class="cal-week-count">${wTrades.length} עסקאות</span>
+      </div>`;
     } else {
-      html += `<div class="cal-week-sum" style="color:var(--text3)">-</div>`;
+      html += `<div class="cal-week-sum"><span class="cal-week-empty">—</span></div>`;
     }
+
+    // Day cells Sun(0)→Sat(6)
+    weekDays.forEach((day, colIdx) => {
+      const isWeekend = colIdx === 5 || colIdx === 6; // Fri=5, Sat=6
+      if (day === null) {
+        html += `<div class="cal-empty${isWeekend?' weekend':''}"></div>`;
+      } else {
+        const ds = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const dt = byDay[ds] || [];
+        const dayTotal = dt.reduce((s,t) => s+calcTotal(t), 0);
+        const isToday  = ds === todayStr;
+        const cls = [
+          'cal-cell',
+          dt.length ? 'has-trades' : '',
+          isWeekend   ? 'weekend'    : '',
+          isToday     ? 'today'      : ''
+        ].filter(Boolean).join(' ');
+        const dtStyle = dayTotal >= 0 ? 'color:var(--green)' : 'color:var(--red)';
+        html += `<div class="${cls}">
+          <div class="cal-date">${day}</div>
+          ${dt.map(t => {
+            const pl = calcTotal(t);
+            const plStr = (pl >= 0 ? '+' : '') + fmtUSD(pl);
+            return `<div class="cal-chip ${calcPL(t)>=0?'win':'loss'}">
+              <span class="cal-chip-sym">${t.symbol}</span>
+              <span class="cal-chip-pl sensitive">${plStr}</span>
+            </div>`;
+          }).join('')}
+          ${dt.length > 1 ? `<div class="cal-day-pl sensitive" style="${dtStyle}">${dt.length} עסקאות · ${fmtUSD(dayTotal)}</div>` : ''}
+        </div>`;
+      }
+    });
   }
 
   html += `</div></div>`;
