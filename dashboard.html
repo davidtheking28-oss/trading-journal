@@ -6348,7 +6348,14 @@ function switchTab(name, btn) {
   if (name==='stocks') renderTable('stock');
   if (name==='crypto') renderTable('crypto');
   if (name==='archive') renderArchive();
-  if (name==='statistics') renderStatistics();
+  if (name==='statistics') {
+    const now = new Date();
+    const sm = document.getElementById('stats-month');
+    const sy = document.getElementById('stats-year');
+    if (sm && !sm.value) sm.value = now.getMonth() + 1;
+    if (sy && !sy.value) sy.value = now.getFullYear();
+    renderStatistics();
+  }
   if (name==='ibkr') {
     flexInit();
     renderSecurityStatus();
