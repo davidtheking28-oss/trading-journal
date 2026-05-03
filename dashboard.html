@@ -7687,7 +7687,7 @@ function _tradePct(t) {
 function renderMonthlyTracker(trades) {
   const wrap = document.getElementById('monthly-tracker-wrap');
   if (!wrap) return;
-  const effectiveYear = +(document.getElementById('ov-year')?.value) || new Date().getFullYear();
+  const effectiveYear = +(document.getElementById('stats-year')?.value) || +(document.getElementById('ov-year')?.value) || new Date().getFullYear();
   const lbl = document.getElementById('mt-year-label');
   if (lbl) lbl.textContent = effectiveYear;
   const closed = trades.filter(t =>
