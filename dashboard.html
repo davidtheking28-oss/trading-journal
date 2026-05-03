@@ -6514,7 +6514,7 @@ function renderCalendar(type) {
 
   let html = `<div class="cal-wrap">
   <div class="cal-header">
-    <button class="cal-nav-btn" onclick="calNavNext('${type}')">&#8250;</button>
+    <button class="cal-nav-btn" onclick="calNavNext('${navType}')">&#8250;</button>
     <div class="cal-title">
       <span class="cal-title-month">${MONTHS[month-1]} ${year}</span>
       ${allMonthTrades.length ? `<span class="cal-divider"></span>
@@ -6522,7 +6522,7 @@ function renderCalendar(type) {
       <span class="cal-divider"></span>
       <span class="cal-trade-count">${allMonthTrades.length} עסקאות &nbsp;·&nbsp; ${winsCount}W / ${lossCount}L</span>` : `<span class="cal-trade-count" style="opacity:0.5">אין עסקאות</span>`}
     </div>
-    <button class="cal-nav-btn" onclick="calNavPrev('${type}')">&#8249;</button>
+    <button class="cal-nav-btn" onclick="calNavPrev('${navType}')">&#8249;</button>
   </div>
   <div class="cal-grid">`;
 
