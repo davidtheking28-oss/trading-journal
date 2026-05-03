@@ -4583,6 +4583,11 @@
   html[data-theme="light"] .cal-day-pl { border-top-color: rgba(15,23,42,0.07) !important; }
   html[data-theme="light"] .cal-week-empty { color: rgba(15,23,42,0.1) !important; }
   html[data-theme="light"] .cal-divider { background: rgba(15,23,42,0.12) !important; }
+
+  /* ── Overview main grid ── */
+  .ov-main-grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 16px; margin-top: 4px; }
+  .ov-cal-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius2); overflow: hidden; min-height: 320px; }
+  @media (max-width: 960px) { .ov-main-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
