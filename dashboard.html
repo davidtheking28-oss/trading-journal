@@ -6494,10 +6494,9 @@ function renderCalendar(type) {
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
   while (cells.length % 7 !== 0) cells.push(null);
 
-  // In RTL grid: col order in HTML = [WeekSum, Sun, Mon, Tue, Wed, Thu, Fri, Sat]
-  // grid-template-columns: 110px repeat(7,1fr)  → WeekSum is leftmost column
-  // Day headers rendered in HTML order = first col header, then Sun→Sat
-  const DAY_HDRS_ORDER = ['סיכום שבועי','ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+  // In RTL grid: HTML order = [Sun, Mon, Tue, Wed, Thu, Fri, Sat, WeekSum]
+  // grid-template-columns: repeat(7,1fr) 110px → WeekSum is leftmost in RTL
+  const DAY_HDRS_ORDER = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת','סיכום שבועי'];
 
   const winsCount  = allMonthTrades.filter(t => calcPL(t) > 0).length;
   const lossCount  = allMonthTrades.length - winsCount;
