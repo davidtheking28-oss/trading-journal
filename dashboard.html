@@ -4768,21 +4768,17 @@
 
       <!-- Top bar: Add Trade + Fear & Greed -->
       <div class="ov-top-bar" style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-bottom:12px;padding:8px 14px;">
-        <!-- Add Trade -->
         <button class="btn btn-primary" onclick="fabToggle()" style="gap:6px;display:inline-flex;align-items:center;flex-shrink:0;padding:7px 16px;font-size:13px;font-weight:600;border-radius:9px;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           הוסף עסקה
         </button>
-
         <div class="ov-bar-divider"></div>
-
-        <!-- Fear & Greed -->
         <div id="fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;border:none;background:transparent;box-shadow:none;padding:0;backdrop-filter:none;"></div>
         <div class="ov-bar-divider"></div>
         <div id="crypto-fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;border:none;background:transparent;box-shadow:none;padding:0;backdrop-filter:none;"></div>
       </div>
 
-      <!-- Period filter — same style as stocks/crypto tabs -->
+      <!-- Period filter -->
       <div class="month-filter" style="margin-bottom:16px;">
         <label>סינון:</label>
         <select id="ov-month" onchange="renderOverview()"></select>
@@ -4791,14 +4787,12 @@
         <div class="filter-stats" id="ov-filter-info"></div>
       </div>
 
+      <!-- KPI row — 5 cards -->
+      <div class="kpi-grid" id="kpi-grid" style="margin-bottom:20px;"></div>
 
-      <!-- KPI cards — top priority -->
-      <div class="ov-section"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg> סיכום ביצועים</div>
-      <div class="kpi-grid" id="kpi-grid" style="margin-bottom:16px;"></div>
-
-      <!-- Charts: P&L + Donut side by side -->
-      <div class="ov-section"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> גרפים</div>
-      <div class="charts-grid" style="margin-bottom:16px;">
+      <!-- Main: Calendar (right) + P&L Chart (left) -->
+      <div class="ov-main-grid">
+        <div id="ov-calendar" class="ov-cal-panel"></div>
         <div class="chart-card" style="display:flex;flex-direction:column;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:6px;flex-wrap:wrap;">
             <div class="chart-title" style="margin-bottom:0">P&L מצטבר</div>
@@ -4818,21 +4812,7 @@
           <div class="chart-skeleton" id="skel-cum" style="height:180px;"></div>
           <div style="min-height:200px;flex:1;position:relative;width:100%;"><canvas id="chart-cum" style="display:none"></canvas></div>
         </div>
-        <div class="chart-card" style="display:flex;flex-direction:column;">
-          <div class="chart-title">ניצחון / הפסד</div>
-          <div class="chart-skeleton" id="skel-donut" style="height:130px;"></div>
-          <div style="height:160px;position:relative;width:100%;"><canvas id="chart-donut" style="display:none"></canvas></div>
-          <div id="donut-stats" class="donut-stats" style="flex:1;"></div>
-        </div>
       </div>
-
-      <!-- Monthly Tracker -->
-      <div class="ov-section"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Monthly Tracker <span id="mt-year-label" style="font-size:11px;font-weight:500;color:var(--text3);margin-right:6px;"></span></div>
-      <div id="monthly-tracker-wrap" style="overflow-x:auto;margin-bottom:22px;"></div>
-
-      <!-- Trading Summary -->
-      <div class="ov-section"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Trading Summary</div>
-      <div id="trading-summary-wrap" style="margin-bottom:22px;"></div>
 
     </div>
 
