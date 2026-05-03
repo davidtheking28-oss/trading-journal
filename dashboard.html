@@ -6458,12 +6458,12 @@ function toggleTableView(type) {
 function calNavPrev(type) {
   const n = calendarNav[type];
   calendarNav[type] = n.month === 1 ? { year: n.year-1, month: 12 } : { year: n.year, month: n.month-1 };
-  renderTable(type);
+  if (type === 'overview') renderCalendar('all'); else renderTable(type);
 }
 function calNavNext(type) {
   const n = calendarNav[type];
   calendarNav[type] = n.month === 12 ? { year: n.year+1, month: 1 } : { year: n.year, month: n.month+1 };
-  renderTable(type);
+  if (type === 'overview') renderCalendar('all'); else renderTable(type);
 }
 
 function renderCalendar(type) {
