@@ -6409,11 +6409,20 @@ function toggleTableView(type) {
   if (tableViewMode[type] === 'calendar' && !calendarNav[type]) {
     const p = type === 'stock' ? 'st' : 'cr';
     const f = getFilter(p);
-    const now = new Date();
-    calendarNav[type] = {
-      year:  f.year  ? +f.year  : now.getFullYear(),
-      month: f.month ? +f.month : now.getMonth() + 1
-    };
+    if (f.month && f.year) {
+      calendarNav[type] = { year: +f.year, month: +f.month };
+    } else {
+      const arr = (type === 'stock' ? db.stocks : db.crypto).filter(t => !t.deleted && t.entryDate);
+      const pool = f.year ? arr.filter(t => t.entryDate.startsWith(f.year)) : arr;
+      if (pool.length) {
+        const latest = pool.reduce((b, t) => t.entryDate > b.entryDate ? t : b);
+        const d = new Date(latest.entryDate + 'T00:00:00');
+        calendarNav[type] = { year: d.getFullYear(), month: d.getMonth() + 1 };
+      } else {
+        const now = new Date();
+        calendarNav[type] = { year: f.year ? +f.year : now.getFullYear(), month: now.getMonth() + 1 };
+      }
+    }
   }
   renderTable(type);
 }
