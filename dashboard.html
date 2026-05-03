@@ -8045,7 +8045,9 @@ async function _updateLivePL() {
 }
 
 function renderStatistics() {
-  const { month, year } = getFilter('stats');
+  let { month, year } = getFilter('stats');
+  const now = new Date();
+  if (!month && !year) { month = now.getMonth() + 1; year = now.getFullYear(); }
   let trades = [...db.stocks, ...db.crypto].filter(t => !t.deleted && t.entryDate);
   if (month) trades = trades.filter(t => +t.entryDate.slice(5, 7) === month);
   if (year)  trades = trades.filter(t => +t.entryDate.slice(0, 4) === year);
