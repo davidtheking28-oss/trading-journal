@@ -6467,14 +6467,18 @@ function calNavNext(type) {
 }
 
 function renderCalendar(type) {
-  const p    = type === 'stock' ? 'st' : 'cr';
-  const wrap = document.getElementById(type === 'stock' ? 'stocks-wrap' : 'crypto-wrap');
-  if (!calendarNav[type]) {
+  const isAll = type === 'all';
+  const navType = isAll ? 'overview' : type;
+  const p    = isAll ? 'ov' : (type === 'stock' ? 'st' : 'cr');
+  const wrap = document.getElementById(isAll ? 'ov-calendar' : (type === 'stock' ? 'stocks-wrap' : 'crypto-wrap'));
+  if (!calendarNav[navType]) {
     const f = getFilter(p), now = new Date();
-    calendarNav[type] = { year: f.year?+f.year:now.getFullYear(), month: f.month?+f.month:now.getMonth()+1 };
+    calendarNav[navType] = { year: f.year?+f.year:now.getFullYear(), month: f.month?+f.month:now.getMonth()+1 };
   }
-  const { year, month } = calendarNav[type];
-  const arr = (type === 'stock' ? db.stocks : db.crypto).filter(t => !t.deleted);
+  const { year, month } = calendarNav[navType];
+  const arr = isAll
+    ? [...db.stocks, ...db.crypto].filter(t => !t.deleted)
+    : (type === 'stock' ? db.stocks : db.crypto).filter(t => !t.deleted);
 
   // Group trades by day
   const byDay = {};
