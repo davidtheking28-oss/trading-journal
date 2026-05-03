@@ -6406,6 +6406,7 @@ const TBL_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 
 function toggleTableView(type) {
   tableViewMode[type] = tableViewMode[type] === 'table' ? 'calendar' : 'table';
+  if (tableViewMode[type] === 'table') { calendarNav[type] = null; renderTable(type); return; }
   if (tableViewMode[type] === 'calendar' && !calendarNav[type]) {
     const p = type === 'stock' ? 'st' : 'cr';
     const f = getFilter(p);
