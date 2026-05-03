@@ -4874,28 +4874,25 @@
         <button class="btn btn-secondary btn-sm" onclick="resetFilter('stats')">כל הזמן</button>
         <div class="filter-stats" id="stats-filter-info"></div>
       </div>
-      <div class="kpi-grid" id="stats-kpi-grid" style="margin-bottom:20px;"></div>
-      <div class="charts-grid" style="margin-bottom:16px;">
+      <div class="kpi-grid" id="stats-kpi-grid" style="margin-bottom:24px;"></div>
+      <div style="display:grid;grid-template-columns:320px 1fr;gap:16px;margin-bottom:16px;align-items:start;">
         <div class="chart-card" style="display:flex;flex-direction:column;">
           <div class="chart-title">ניצחון / הפסד</div>
           <div class="chart-skeleton" id="skel-donut" style="height:130px;"></div>
-          <div style="height:160px;position:relative;width:100%;"><canvas id="chart-donut" style="display:none"></canvas></div>
-          <div id="donut-stats" class="donut-stats" style="flex:1;"></div>
+          <div style="height:200px;position:relative;width:100%;"><canvas id="chart-donut" style="display:none"></canvas></div>
+          <div id="donut-stats" class="donut-stats" style="flex:1;margin-top:8px;"></div>
         </div>
         <div class="chart-card" style="display:flex;flex-direction:column;">
-          <div class="chart-title">ביצועים לפי עסקה</div>
-          <div class="chart-skeleton" id="skel-per" style="height:180px;"></div>
-          <div style="min-height:200px;flex:1;position:relative;"><canvas id="chart-per" style="display:none"></canvas></div>
+          <div class="chart-title">P&amp;L חודשי</div>
+          <div class="chart-skeleton" id="skel-monthly" style="height:180px;"></div>
+          <div style="min-height:240px;flex:1;position:relative;"><canvas id="chart-monthly" style="display:none"></canvas></div>
         </div>
       </div>
-      <div class="chart-card" style="display:flex;flex-direction:column;margin-bottom:16px;">
-        <div class="chart-title">P&L חודשי</div>
-        <div class="chart-skeleton" id="skel-monthly" style="height:180px;"></div>
-        <div style="min-height:200px;position:relative;"><canvas id="chart-monthly" style="display:none"></canvas></div>
-      </div>
-      <div class="ov-section"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Monthly Tracker <span id="mt-year-label" style="font-size:11px;font-weight:500;color:var(--text3);margin-right:6px;"></span></div>
+      <canvas id="chart-per" style="display:none"></canvas>
+      <div id="skel-per" style="display:none"></div>
+      <div class="ov-section" style="margin-bottom:10px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Monthly Tracker <span id="mt-year-label" style="font-size:11px;font-weight:500;color:var(--text3);margin-right:6px;"></span></div>
       <div id="monthly-tracker-wrap" style="overflow-x:auto;margin-bottom:22px;"></div>
-      <div class="ov-section"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Trading Summary</div>
+      <div class="ov-section" style="margin-bottom:10px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Trading Summary</div>
       <div id="trading-summary-wrap" style="margin-bottom:22px;"></div>
       <div id="comparison-wrap" style="margin-bottom:22px;"></div>
     </div>
