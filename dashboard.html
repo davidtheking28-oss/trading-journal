@@ -6519,6 +6519,17 @@ function renderCalendar(type) {
 function renderTable(type) {
   const p = type==='stock' ? 'st' : 'cr';
   const wrap = document.getElementById(type==='stock' ? 'stocks-wrap' : 'crypto-wrap');
+
+  // Update toggle button icon
+  const toggleBtn = document.getElementById(p+'-view-toggle');
+  if (toggleBtn) {
+    const isCalMode = tableViewMode[type] === 'calendar';
+    toggleBtn.innerHTML = isCalMode ? TBL_ICON + ' טבלה' : CAL_ICON + ' חודשי';
+  }
+
+  // Calendar mode
+  if (tableViewMode[type] === 'calendar') { renderCalendar(type); return; }
+
   const {month, year} = getFilter(p);
   let trades = filterTrades(type, month, year);
   trades = applySearch(trades, type);
