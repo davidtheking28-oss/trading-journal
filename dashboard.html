@@ -8074,7 +8074,7 @@ function renderStatistics() {
 
   let rSum = 0, rCount = 0;
   closed.forEach(t => {
-    const sl = t.stopLoss || 0;
+    const sl = t.stop || 0;
     if (!sl || !t.entryPrice) return;
     const risk = Math.abs(t.entryPrice - sl) * (t.closedShares || t.shares || 0);
     if (risk > 0) { rSum += calcPL(t) / risk; rCount++; }
