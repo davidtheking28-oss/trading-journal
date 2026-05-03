@@ -7926,22 +7926,28 @@ function renderOverview() {
   else trades = [...stTrades, ...crTrades];
 
   trades = [...trades].sort((a,b) => new Date(a.entryDate)-new Date(b.entryDate));
-  const st = stats(trades);
+  const st  = stats(trades);
   const adv = advancedStats(trades);
 
-  // ── Trend: compare last month vs month before ──
+  // Trend
   const byMon = {};
   trades.forEach(t => { const k=(t.entryDate||'').slice(0,7); if(k) byMon[k]=(byMon[k]||0)+calcTotal(t); });
   const monKeys = Object.keys(byMon).sort();
   let trendCls='flat', trendLbl='—';
   if (monKeys.length >= 2) {
-    const last=byMon[monKeys[monKeys.length-1]], prev=byMon[monKeys[monKeys.length-2]];
-    const diff = last - prev;
+    const diff = byMon[monKeys[monKeys.length-1]] - byMon[monKeys[monKeys.length-2]];
     trendCls = diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat';
     trendLbl = (diff > 0 ? '▲ ' : diff < 0 ? '▼ ' : '') + fmtUSD(Math.abs(diff)) + ' vs חודש קודם';
   }
 
-  // KPIs
+  // Avg R
+  const withR = trades.filter(t => calcStopRisk(t) > 0);
+  const avgR  = withR.length ? withR.reduce((s,t) => s + calcPL(t)/calcStopRisk(t), 0) / withR.length : null;
+
+  // Open positions
+  const openTrades = [...db.stocks, ...db.crypto].filter(t => !t.deleted && !t.exitPrice);
+
+  // 5 KPI cards
   document.getElementById('kpi-grid').innerHTML = `
     <div class="kpi-card ${st.total>=0?'c-green':'c-red'}">
       <div class="kpi-label">P&amp;L כולל</div>
@@ -7950,83 +7956,53 @@ function renderOverview() {
       ${monKeys.length>=2 ? `<div class="kpi-trend ${trendCls} sensitive">${trendLbl}</div>` : ''}
     </div>
     <div class="kpi-card c-blue">
-      <div class="kpi-label">Win Rate</div>
+      <div class="kpi-label">אחוז הצלחה</div>
       <div class="kpi-value ${st.wr>=50?'green':'red'} sensitive">${fmt(st.wr,1)}%</div>
-      <div class="kpi-sub">${st.wins}W / ${st.losses}L — יעד: 60%</div>
+      <div class="kpi-sub">${st.wins}W / ${st.losses}L</div>
       <div class="kpi-progress-track"><div class="kpi-progress-bar" style="width:${Math.min(st.wr,100)}%;background:${st.wr>=50?'#22c55e':'#ef4444'}"></div></div>
     </div>
     <div class="kpi-card c-blue">
-      <div class="kpi-label"># עסקאות</div>
+      <div class="kpi-label">מס&apos; עסקאות</div>
       <div class="kpi-value">${st.n}</div>
-      <div class="kpi-sub">מניות: ${stTrades.length} | קריפטו: ${crTrades.length}</div>
+      <div class="kpi-sub">${stTrades.length} לונגים / ${crTrades.length} שורטים</div>
     </div>
-    <div class="kpi-card c-green">
-      <div class="kpi-label">ממוצע ניצחון</div>
-      <div class="kpi-value green sensitive">${st.wins?fmtUSD(adv.avgWin):'—'}</div>
-      <div class="kpi-sub">${st.wins} עסקאות מנצחות</div>
+    <div class="kpi-card ${avgR!==null&&avgR>=0?'c-green':'c-yellow'}">
+      <div class="kpi-label">יחס סיכוי/סיכון</div>
+      <div class="kpi-value ${avgR!==null?(avgR>=0?'green':'red'):''} sensitive">${avgR!==null?avgR.toFixed(2)+'R':'—'}</div>
+      <div class="kpi-sub">${withR.length ? withR.length+' עסקאות עם סטופ' : 'הוסף סטופ'}</div>
     </div>
-    <div class="kpi-card c-red">
-      <div class="kpi-label">ממוצע הפסד</div>
-      <div class="kpi-value red sensitive">${st.losses?fmtUSD(adv.avgLoss):'—'}</div>
-      <div class="kpi-sub">${st.losses} עסקאות מפסידות</div>
+    <div class="kpi-card c-yellow" id="kpi-live-card">
+      <div class="kpi-label">רווח/הפסד בזמן אמת</div>
+      <div class="kpi-value" id="kpi-live-pl">מחשב...</div>
+      <div class="kpi-sub" id="kpi-live-sub">${openTrades.length} פוזיציות פתוחות</div>
     </div>
-    <div class="kpi-card c-yellow">
-      <div class="kpi-label">ממוצע לעסקה</div>
-      <div class="kpi-value ${st.avg>=0?'green':'red'} sensitive">${st.n?fmtUSD(st.avg):'—'}</div>
-      <div class="kpi-sub">Avg P&amp;L</div>
-    </div>
-    <div class="kpi-card c-green">
-      <div class="kpi-label">ימים בעסקה מנצחת</div>
-      <div class="kpi-value">${st.wins?fmt(adv.avgWinDays,1):'—'}</div>
-      <div class="kpi-sub">ממוצע ימים פתוחה</div>
-    </div>
-    <div class="kpi-card c-red">
-      <div class="kpi-label">ימים בעסקה מפסידת</div>
-      <div class="kpi-value">${st.losses?fmt(adv.avgLossDays,1):'—'}</div>
-      <div class="kpi-sub">ממוצע ימים פתוחה</div>
-    </div>
-    ${(() => {
-      const exp = calcExpectancy(trades);
-      const expColor = exp === null ? '' : exp >= 1 ? 'green' : 'red';
-      const expVal   = exp === null ? '—' : exp.toFixed(2) + 'x';
-      const expSub   = exp === null ? 'אין מספיק נתונים' : exp >= 1 ? 'מערכת רווחית' : 'מערכת לא רווחית';
-      return `<div class="kpi-card ${exp!==null&&exp>=1?'c-green':'c-red'}">
-        <div class="kpi-label">Expectancy</div>
-        <div class="kpi-value ${expColor} sensitive">${expVal}</div>
-        <div class="kpi-sub">${expSub}</div>
-      </div>`;
-    })()}
-    ${(() => {
-      const withR = trades.filter(t => calcStopRisk(t) > 0);
-      if (!withR.length) return `<div class="kpi-card c-yellow"><div class="kpi-label">ממוצע R</div><div class="kpi-value">—</div><div class="kpi-sub">הוסף סטופ לעסקאות</div></div>`;
-      const avgR = withR.reduce((s,t) => s + calcPL(t)/calcStopRisk(t), 0) / withR.length;
-      return `<div class="kpi-card ${avgR>=0?'c-green':'c-red'}">
-        <div class="kpi-label">ממוצע R</div>
-        <div class="kpi-value ${avgR>=0?'green':'red'} sensitive">${avgR>=0?'+':''}${avgR.toFixed(2)}R</div>
-        <div class="kpi-sub">על ${withR.length} עסקאות עם סטופ</div>
-      </div>`;
-    })()}
-    ${(() => {
-      const allTrades = [...db.stocks, ...db.crypto].filter(t => !t.deleted && !t.exitPrice);
-      const withStop  = allTrades.filter(t => t.stop > 0);
-      const totalRisk = withStop.reduce((s,t) => s + calcStopRisk(t), 0);
-      return `<div class="kpi-card c-yellow">
-        <div class="kpi-label">עסקות פתוחות</div>
-        <div class="kpi-value">${allTrades.length}</div>
-        <div class="kpi-sub sensitive">${withStop.length ? 'סיכון בסטופ: ' + fmtUSD(totalRisk) : 'אין סטופ מוגדר'}</div>
-      </div>`;
-    })()}
   `;
   document.querySelectorAll('#kpi-grid .kpi-card').forEach((el, i) => {
     el.style.setProperty('--i', i);
     el.classList.add('animate-in');
   });
 
+  // Calendar
+  if (!calendarNav.overview) {
+    const allOpen = [...db.stocks, ...db.crypto].filter(t => !t.deleted && t.entryDate);
+    const now = new Date();
+    if (allOpen.length) {
+      const latest = allOpen.reduce((b,t) => t.entryDate > b.entryDate ? t : b);
+      const d = new Date(latest.entryDate+'T00:00:00');
+      calendarNav.overview = { year: d.getFullYear(), month: d.getMonth()+1 };
+    } else {
+      calendarNav.overview = { year: now.getFullYear(), month: now.getMonth()+1 };
+    }
+  }
+  renderCalendar('all');
+
   renderCumChart(trades);
-  renderDonut(st, adv, trades);
-  renderPerChart(trades);
-  renderMonthlyTracker(stTrades);
-  renderTradingSummary(stTrades);
+
+  // Live P&L refresh
+  if (_ovLiveTimer) clearInterval(_ovLiveTimer);
+  _updateLivePL();
+  _ovLiveTimer = setInterval(_updateLivePL, 60000);
+
   applyPrivacy();
 }
 
