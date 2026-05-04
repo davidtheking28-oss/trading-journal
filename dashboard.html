@@ -4113,11 +4113,7 @@
 
   /* 2. Body: richer ambient glow — dark mode only */
   html[data-theme="dark"] body {
-    background-image:
-      radial-gradient(ellipse 160% 60% at 60% -5%, rgba(129,140,248,0.13) 0%, transparent 50%),
-      radial-gradient(ellipse 90% 50% at 5% 85%, rgba(167,139,250,0.10) 0%, transparent 50%),
-      radial-gradient(ellipse 60% 40% at 98% 95%, rgba(0,229,160,0.07) 0%, transparent 50%),
-      radial-gradient(ellipse 40% 30% at 50% 50%, rgba(129,140,248,0.03) 0%, transparent 70%) !important;
+    background-image: none !important;
   }
 
   /* 3. Section headers — accent left-border + better contrast */
@@ -4751,6 +4747,17 @@
   ::-webkit-scrollbar-track { background: rgba(9,9,11,0.5) !important; }
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10) !important; border-radius: 10px !important; }
   ::-webkit-scrollbar-thumb:hover { background: rgba(129,140,248,0.25) !important; }
+
+  /* ── Calendar: force uniform background regardless of theme selector ── */
+  html body .cal-cell,
+  html body .cal-cell.weekend,
+  html body .cal-cell.has-trades,
+  html body .cal-cell.has-trades.weekend,
+  html body .cal-empty,
+  html body .cal-empty.weekend { background: #111111 !important; }
+  html body .cal-day-hdr       { background: #0f0f0f !important; }
+  html body .cal-week-sum      { background: #111111 !important; }
+
 </style>
 </head>
 <body>
