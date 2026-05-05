@@ -8228,8 +8228,8 @@ function renderOverview() {
   const now = new Date();
   const om = document.getElementById('ov-month');
   const oy = document.getElementById('ov-year');
-  if (om && !om.value) om.value = now.getMonth() + 1;
-  if (oy && !oy.value) oy.value = now.getFullYear();
+  if (om) om.value = now.getMonth() + 1;
+  if (oy) oy.value = now.getFullYear();
   const {month, year} = getFilter('ov');
   const info = document.getElementById('ov-filter-info');
   if (info) info.textContent = (month||year) ? `מציג: ${month?MONTHS[+month-1]:''} ${year||''}`.trim() : '';
