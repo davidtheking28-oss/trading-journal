@@ -1756,8 +1756,18 @@
   ══════════════════════════════════════════════ */
   th.sortable { cursor: pointer; user-select: none; }
   th.sortable:hover { color: var(--text2); }
-  th.sort-asc::after  { content: ' ▲'; color: var(--accent); }
-  th.sort-desc::after { content: ' ▼'; color: var(--accent); }
+  th.sortable { position: relative; }
+  th.sort-asc::after, th.sort-desc::after {
+    content: '';
+    display: inline-block;
+    width: 0; height: 0;
+    margin-right: 5px;
+    vertical-align: middle;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+  }
+  th.sort-asc::after  { border-bottom: 5px solid var(--accent); }
+  th.sort-desc::after { border-top:    5px solid var(--accent); }
 
   /* ══════════════════════════════════════════════
      SEARCH INPUT
