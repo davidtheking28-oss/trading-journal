@@ -71,8 +71,8 @@
     --border:    rgba(255,255,255,0.06);
     --border2:   rgba(255,255,255,0.10);
     --text:      #f1f5f9;
-    --text2:     #94a3b8;
-    --text3:     #64748b;
+    --text2:     #a8b8cc;
+    --text3:     #8896a8;
     --accent:    #818cf8;   /* soft indigo */
     --accent2:   #6366f1;
     --accent-glow: rgba(129,140,248,0.14);
@@ -190,7 +190,7 @@
     flex-wrap: wrap;
     box-shadow: none;
   }
-  .month-filter label { color: #64748b; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; }
+  .month-filter label { color: var(--text3); font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; }
   .month-filter select {
     background: var(--bg);
     border: 1px solid var(--border2);
@@ -433,7 +433,7 @@
     align-items: start;
   }
   .qa-field { display: flex; flex-direction: column; gap: 5px; }
-  .qa-label { font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+  .qa-label { font-size: 10px; color: var(--text3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
   .qa-input {
     background: rgba(10,10,14,0.9);
     border: 1px solid rgba(20,20,26,0.9);
@@ -673,12 +673,12 @@
   .kpi-card.c-yellow::before { background: linear-gradient(180deg, rgba(251,191,36,0.8),  rgba(251,191,36,0.0)); }
   .kpi-card.c-purple::before { background: linear-gradient(180deg, rgba(167,139,250,0.8), rgba(167,139,250,0.0)); }
 
-  .kpi-label { font-size: 10px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 6px; opacity: 0.85; }
+  .kpi-label { font-size: 10px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 6px; }
   .kpi-value { font-size: 24px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
   .kpi-value.green  { color: var(--green); text-shadow: 0 0 20px rgba(52,211,153,0.25); }
   .kpi-value.red    { color: var(--red);   text-shadow: 0 0 20px rgba(248,113,113,0.25); }
   .kpi-value.yellow { color: var(--yellow);text-shadow: 0 0 20px rgba(251,191,36,0.25); }
-  .kpi-sub { font-size: 11px; color: var(--text3); margin-top: 6px; line-height: 1.4; opacity: 0.75; }
+  .kpi-sub { font-size: 11px; color: var(--text3); margin-top: 6px; line-height: 1.4; }
   /* KPI progress bar (Win Rate target) */
   .kpi-progress-track { height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; margin-top: 10px; overflow: hidden; }
   .kpi-progress-bar { height: 100%; border-radius: 2px; transition: width 0.6s cubic-bezier(0.16,1,0.3,1); }
@@ -1792,8 +1792,8 @@
     --border:      rgba(255,255,255,0.07);
     --border2:     rgba(255,255,255,0.11);
     --text:        #f1f5f9;
-    --text2:       #94a3b8;
-    --text3:       #64748b;
+    --text2:       #a8b8cc;
+    --text3:       #8896a8;
     --accent:      #818cf8;
     --accent2:     #6366f1;
     --accent-glow: rgba(129,140,248,0.14);
@@ -2357,7 +2357,7 @@
     .sidebar-footer-text { display: none; }
     .sidebar-brand { justify-content: center; padding: 18px 10px 14px; }
     .tab-btn { justify-content: center !important; padding: 11px !important; }
-    .nav-icon { width: 20px !important; height: 20px !important; opacity: 0.75; }
+    .nav-icon { width: 20px !important; height: 20px !important; opacity: 0.9; }
     .nav-icon svg { width: 20px !important; height: 20px !important; }
     .theme-toggle { justify-content: center; padding: 10px !important; }
     .theme-toggle #theme-label { display: none; }
@@ -2421,8 +2421,8 @@
     --border2:     rgba(255,255,255,0.11);
     --text:        #f1f5f9;
     --text1:       #f1f5f9;
-    --text2:       #94a3b8;
-    --text3:       #64748b;
+    --text2:       #a8b8cc;
+    --text3:       #8896a8;
     --accent:      #818cf8;
     --accent2:     #6366f1;
     --accent-glow: rgba(129,140,248,0.14);
@@ -2820,7 +2820,7 @@
     --border2:     rgba(14,14,18,0.13);
     --text:        #0f172a;
     --text2:       #334155;
-    --text3:       #64748b;
+    --text3:       #8896a8;
     --accent:      #0ea5e9;
     --accent2:     #0284c7;
     --accent-glow: rgba(14,165,233,0.12);
@@ -2960,7 +2960,7 @@
 
   /* Month filter */
   html[data-theme="light"] .month-filter { background: transparent; border: 1px solid rgba(14,14,18,0.08); }
-  html[data-theme="light"] .month-filter label { color: #64748b; }
+  html[data-theme="light"] .month-filter label { color: var(--text3); }
   html[data-theme="light"] .filter-stats { color: #64748b; }
 
   /* Selects & inputs in light mode */
@@ -3661,8 +3661,8 @@
     --border:    rgba(255,255,255,0.06);
     --border2:   rgba(255,255,255,0.10);
     --text:      #f1f5f9;
-    --text2:     #94a3b8;
-    --text3:     #64748b;
+    --text2:     #a8b8cc;
+    --text3:     #8896a8;
     --accent:    #818cf8;
     --accent2:   #6366f1;
     --accent-glow: rgba(129,140,248,0.14);
@@ -3825,7 +3825,7 @@
   .kpi-value.red   { color: #fb7185; text-shadow: 0 0 20px rgba(251,113,133,0.3); }
   .kpi-value.yellow { color: #fbbf24; text-shadow: 0 0 20px rgba(251,191,36,0.25); }
   .kpi-grid .kpi-card:first-child .kpi-value { font-size: 34px; }
-  .kpi-sub { font-size: 11.5px; color: #3d5674; margin-top: 7px; line-height: 1.5; }
+  .kpi-sub { font-size: 11.5px; color: var(--text3); margin-top: 7px; line-height: 1.5; }
   .kpi-progress-track { height: 2px; background: rgba(255,255,255,0.06); border-radius: 2px; margin-top: 12px; }
 
   /* ── Table: Premium ── */
@@ -4004,7 +4004,7 @@
     margin: 20px 0 12px; padding-bottom: 8px;
     border-bottom: 1px solid rgba(148,163,184,0.06);
   }
-  .ov-section svg { color: #818cf8; opacity: 0.7; }
+  .ov-section svg { color: #818cf8; opacity: 0.9; }
 
   /* ── Sidebar footer ── */
   .sidebar-footer { padding: 14px 18px; border-top: 1px solid rgba(255,255,255,0.04); }
@@ -4124,7 +4124,7 @@
     font-size: 9.5px !important;
     letter-spacing: 1.6px !important;
   }
-  .ov-section svg { color: var(--accent) !important; opacity: 0.8 !important; }
+  .ov-section svg { color: var(--accent) !important; opacity: 0.95 !important; }
 
   /* 4. KPI cards — upgraded glow on hover */
   .kpi-card.c-blue:hover   { box-shadow: 0 8px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(129,140,248,0.2), 0 0 24px rgba(129,140,248,0.08), inset 0 1px 0 rgba(255,255,255,0.07) !important; }
@@ -4295,7 +4295,7 @@
     --border2: rgba(14,14,18,0.12);
     --text:  #0f172a;
     --text2: #334155;
-    --text3: #64748b;
+    --text3: #8896a8;
     --accent: #4f46e5;
     --accent2: #6366f1;
     --accent-glow: rgba(37,99,235,0.1);
@@ -4767,7 +4767,7 @@
 
   /* KPI value sizing hierarchy */
   .kpi-value { font-size: 26px; font-weight: 800; letter-spacing: -0.8px; line-height: 1.1; }
-  .kpi-label { font-size: 10px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text3); opacity: 1; }
+  .kpi-label { font-size: 10px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text3); }
   .kpi-sub   { font-size: 11.5px; color: var(--text3); margin-top: 5px; line-height: 1.45; }
 
   /* Card: cleaner elevated surface, left accent bar */
