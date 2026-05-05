@@ -6476,7 +6476,7 @@ async function loadDB() {
       `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`
     )
   );
-  renderOverview(); renderTable('stock'); renderTable('crypto');
+  initFilters(); renderOverview(); renderTable('stock'); renderTable('crypto');
 }
 // ─────────────────────────────────────────────
 // CALCULATIONS
