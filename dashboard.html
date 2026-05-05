@@ -1756,18 +1756,15 @@
   ══════════════════════════════════════════════ */
   th.sortable { cursor: pointer; user-select: none; }
   th.sortable:hover { color: var(--text2); }
-  th.sortable { position: relative; }
-  th.sort-asc::after, th.sort-desc::after {
-    content: '';
-    display: inline-block;
-    width: 0; height: 0;
-    margin-right: 5px;
-    vertical-align: middle;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-  }
-  th.sort-asc::after  { border-bottom: 5px solid var(--accent); }
-  th.sort-desc::after { border-top:    5px solid var(--accent); }
+  th.sortable { cursor: pointer; user-select: none; }
+  .sort-icon { display: inline-flex; flex-direction: column; gap: 1px; vertical-align: middle; margin-right: 5px; opacity: 0.3; }
+  .sort-icon span { display: block; width: 0; height: 0; border-left: 3px solid transparent; border-right: 3px solid transparent; }
+  .sort-icon .si-up   { border-bottom: 4px solid currentColor; }
+  .sort-icon .si-down { border-top:    4px solid currentColor; }
+  th.sort-asc  .sort-icon { opacity: 1; color: var(--accent); }
+  th.sort-asc  .sort-icon .si-down { display: none; }
+  th.sort-desc .sort-icon { opacity: 1; color: var(--accent); }
+  th.sort-desc .sort-icon .si-up   { display: none; }
 
   /* ══════════════════════════════════════════════
      SEARCH INPUT
