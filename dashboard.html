@@ -6598,8 +6598,8 @@ function initFilters() {
   [...db.stocks,...db.crypto].forEach(t => {
     if (t.entryDate) years.add(new Date(t.entryDate+'T00:00:00').getFullYear());
   });
+  years.add(curYear); // always include current year so filter works even with no trades yet
   const yrs = [...years].sort((a,b)=>b-a);
-  if (!yrs.length) yrs.push(curYear);
 
   ['ov','st','cr','stats'].forEach(p => {
     const ms = document.getElementById(p+'-month');
