@@ -8308,17 +8308,7 @@ function renderOverview() {
   });
 
   // Calendar
-  if (!calendarNav.overview) {
-    const allOpen = [...db.stocks, ...db.crypto].filter(t => !t.deleted && t.entryDate);
-    const now = new Date();
-    if (allOpen.length) {
-      const latest = allOpen.reduce((b,t) => t.entryDate > b.entryDate ? t : b);
-      const d = new Date(latest.entryDate+'T00:00:00');
-      calendarNav.overview = { year: d.getFullYear(), month: d.getMonth()+1 };
-    } else {
-      calendarNav.overview = { year: now.getFullYear(), month: now.getMonth()+1 };
-    }
-  }
+  calendarNav.overview = { year: now.getFullYear(), month: now.getMonth()+1 };
   renderCalendar('all');
 
   renderCumChart(trades);
