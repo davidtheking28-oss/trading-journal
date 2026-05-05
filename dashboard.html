@@ -4837,9 +4837,40 @@
   /* Badge refinement */
   .badge { font-size: 10.5px !important; font-weight: 700 !important; padding: 2px 7px !important; border-radius: 5px !important; }
 
-  /* Scrollbar */
+  /* Scrollbar — neutral, no indigo tint */
   ::-webkit-scrollbar { width: 4px; height: 4px; }
-  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12) !important; border-radius: 4px !important; }
+  ::-webkit-scrollbar-track { background: transparent !important; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10) !important; border-radius: 4px !important; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18) !important; }
+
+  /* Header separator — neutral, no indigo tint */
+  header { box-shadow: 0 1px 0 rgba(255,255,255,0.06), 0 4px 32px rgba(0,0,0,0.7) !important; }
+
+  /* KPI card hover — reduce lift to 2px for refinement */
+  .kpi-card:hover { transform: translateY(-2px) !important; }
+
+  /* P&L badge — subtle bg chip for scannability */
+  .num-green {
+    background: rgba(45,212,160,0.08) !important;
+    color: #2dd4a0 !important;
+    padding: 1px 5px !important;
+    border-radius: 4px !important;
+    font-weight: 700 !important;
+  }
+  .num-red {
+    background: rgba(255,107,138,0.08) !important;
+    color: #ff6b8a !important;
+    padding: 1px 5px !important;
+    border-radius: 4px !important;
+    font-weight: 700 !important;
+  }
+
+  /* Table row subtle alternating */
+  tbody tr.data-row:nth-child(even) td { background: rgba(255,255,255,0.012) !important; }
+  tbody tr.data-row:hover td { background: rgba(129,140,248,0.05) !important; }
+
+  /* Font consistency — override lone Inter blocks */
+  html, body { font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif !important; }
 
 </style>
 </head>
