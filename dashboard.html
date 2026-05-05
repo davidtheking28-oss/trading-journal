@@ -4873,6 +4873,21 @@
   /* Font consistency — override lone Inter blocks */
   html, body { font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif !important; }
 
+  /* Force text contrast — override any cached/competing rules */
+  html[data-theme="dark"] .kpi-label,
+  html[data-theme="dark"] .kpi-sub,
+  html[data-theme="dark"] th,
+  html[data-theme="dark"] .filter-stats,
+  html[data-theme="dark"] .month-filter label,
+  html[data-theme="dark"] .qa-label,
+  html[data-theme="dark"] .tr-tile-label,
+  html[data-theme="dark"] .tr-flow-label,
+  html[data-theme="dark"] .archive-stat-label,
+  html[data-theme="dark"] .archive-chevron,
+  html[data-theme="dark"] .sidebar-footer-text { color: #8896a8 !important; opacity: 1 !important; }
+
+  html[data-theme="dark"] .kpi-label { letter-spacing: 0.8px !important; }
+
 </style>
 </head>
 <body>
