@@ -6607,8 +6607,10 @@ function initFilters() {
     if (!ms||!ys) return;
     ms.innerHTML = '<option value="">כל החודשים</option>' + MONTHS.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('');
     ys.innerHTML = '<option value="">כל השנים</option>' + yrs.map(y=>`<option value="${y}">${y}</option>`).join('');
-    // Default stocks/crypto tabs to current year; overview shows all
-    if ((p==='st' || p==='cr') && !ys.value) {
+    if (p === 'ov') {
+      ms.value = new Date().getMonth() + 1;
+      ys.value = new Date().getFullYear();
+    } else if ((p==='st' || p==='cr') && !ys.value) {
       if (yrs.includes(curYear)) ys.value = curYear;
     }
   });
