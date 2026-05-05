@@ -6734,8 +6734,14 @@ function tradeStatus(tr) {
 }
 
 function thSort(type, col, label, currentCol, currentDir) {
-  const cls = currentCol === col ? (currentDir === 1 ? 'sort-asc' : 'sort-desc') : '';
-  return `<th class="sortable ${cls}" onclick="sortTable('${type}','${col}')">${label}</th>`;
+  const active = currentCol === col;
+  const cls = active ? (currentDir === 1 ? 'sort-asc' : 'sort-desc') : '';
+  const arrow = active
+    ? (currentDir === 1
+        ? `<svg width="8" height="8" viewBox="0 0 8 8" style="margin-right:4px;vertical-align:middle;opacity:1;color:var(--accent)" fill="currentColor"><path d="M4 1L7 6H1z"/></svg>`
+        : `<svg width="8" height="8" viewBox="0 0 8 8" style="margin-right:4px;vertical-align:middle;opacity:1;color:var(--accent)" fill="currentColor"><path d="M4 7L1 2H7z"/></svg>`)
+    : `<svg width="8" height="8" viewBox="0 0 8 8" style="margin-right:4px;vertical-align:middle;opacity:0.25" fill="currentColor"><path d="M4 1L6.5 4H1.5z"/><path d="M4 7L1.5 4H6.5z"/></svg>`;
+  return `<th class="sortable ${cls}" onclick="sortTable('${type}','${col}')">${label}${arrow}</th>`;
 }
 
 // ─────────────────────────────────────────────
