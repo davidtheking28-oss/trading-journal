@@ -4849,25 +4849,27 @@
   /* KPI card hover — reduce lift to 2px for refinement */
   .kpi-card:hover { transform: translateY(-2px) !important; }
 
-  /* P&L badge — subtle bg chip for scannability */
-  .num-green {
-    background: rgba(45,212,160,0.08) !important;
+  /* P&L chip — scoped to table cells only, not KPI cards */
+  td .num-green {
+    background: rgba(45,212,160,0.09);
     color: #2dd4a0 !important;
-    padding: 1px 5px !important;
-    border-radius: 4px !important;
+    padding: 1px 6px;
+    border-radius: 4px;
     font-weight: 700 !important;
+    display: inline-block;
   }
-  .num-red {
-    background: rgba(255,107,138,0.08) !important;
+  td .num-red {
+    background: rgba(255,107,138,0.09);
     color: #ff6b8a !important;
-    padding: 1px 5px !important;
-    border-radius: 4px !important;
+    padding: 1px 6px;
+    border-radius: 4px;
     font-weight: 700 !important;
+    display: inline-block;
   }
 
-  /* Table row subtle alternating */
-  tbody tr.data-row:nth-child(even) td { background: rgba(255,255,255,0.012) !important; }
-  tbody tr.data-row:hover td { background: rgba(129,140,248,0.05) !important; }
+  /* Table row subtle alternating — no !important so hover still wins */
+  tbody tr.data-row:nth-child(even) td { background: rgba(255,255,255,0.014); }
+  tbody tr.data-row:hover td { background: rgba(129,140,248,0.06) !important; }
 
   /* Font consistency — override lone Inter blocks */
   html, body { font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif !important; }
