@@ -11579,14 +11579,21 @@ function _applyTheme(theme) {
     const activeBtns = sidebar.querySelectorAll('.tab-btn.active');
     activeBtns.forEach(btn => { btn.style.background = theme === 'light' ? 'rgba(14,165,233,0.12)' : 'rgba(129,140,248,0.14)'; });
   }
-  // Force table-wrap backgrounds via JS — CSS !important specificity battles are unreliable
-  document.querySelectorAll('.table-wrap').forEach(tw => {
+  // Force table-wrap, cal-panel, cal-header backgrounds via JS
+  document.querySelectorAll('.table-wrap, .ov-cal-panel').forEach(el => {
     if (theme === 'light') {
-      tw.style.setProperty('background', '#ffffff', 'important');
-      tw.style.setProperty('border-color', '#e2e8f0', 'important');
+      el.style.setProperty('background', '#ffffff', 'important');
+      el.style.setProperty('border-color', '#e2e8f0', 'important');
     } else {
-      tw.style.removeProperty('background');
-      tw.style.removeProperty('border-color');
+      el.style.removeProperty('background');
+      el.style.removeProperty('border-color');
+    }
+  });
+  document.querySelectorAll('.cal-header, .cal-wrap').forEach(el => {
+    if (theme === 'light') {
+      el.style.setProperty('background', '#ffffff', 'important');
+    } else {
+      el.style.removeProperty('background');
     }
   });
 
