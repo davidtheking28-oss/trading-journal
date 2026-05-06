@@ -11613,6 +11613,17 @@ function _applyTheme(theme) {
     const activeBtns = sidebar.querySelectorAll('.tab-btn.active');
     activeBtns.forEach(btn => { btn.style.background = theme === 'light' ? 'rgba(14,165,233,0.12)' : 'rgba(129,140,248,0.14)'; });
   }
+  // Force table-wrap backgrounds via JS — CSS !important specificity battles are unreliable
+  document.querySelectorAll('.table-wrap').forEach(tw => {
+    if (theme === 'light') {
+      tw.style.setProperty('background', '#ffffff', 'important');
+      tw.style.setProperty('border-color', '#e2e8f0', 'important');
+    } else {
+      tw.style.removeProperty('background');
+      tw.style.removeProperty('border-color');
+    }
+  });
+
   const icon = document.getElementById('theme-icon'), label = document.getElementById('theme-label');
   if (icon)  icon.innerHTML  = theme === 'light' ? _THEME_SVG_MOON : _THEME_SVG_SUN;
   if (label) label.textContent = theme === 'light' ? 'מצב כהה' : 'מצב בהיר';
