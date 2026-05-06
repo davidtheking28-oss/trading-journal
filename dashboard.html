@@ -11520,6 +11520,30 @@ function _buildLightCSS() {
     /* Table header — ensure sticky cells are light */
     thead th { background:#f8fafc !important; }
 
+    /* Calendar — override dark html body .cal-* rules (specificity 0-1-2) with 0-2-1 */
+    html[data-theme="light"] .cal-wrap { background:#ffffff !important; }
+    html[data-theme="light"] .cal-header { background:#ffffff !important; border-bottom:1px solid #e2e8f0 !important; }
+    html[data-theme="light"] .cal-title-month { color:#0f172a !important; }
+    html[data-theme="light"] .cal-trade-count { color:#64748b !important; }
+    html[data-theme="light"] .cal-divider { background:rgba(0,0,0,0.12) !important; }
+    html[data-theme="light"] .cal-nav-btn { background:#f1f5f9 !important; border:1px solid #e2e8f0 !important; color:#475569 !important; }
+    html[data-theme="light"] .cal-nav-btn:hover { background:#e2e8f0 !important; color:#1e293b !important; }
+    html[data-theme="light"] .cal-grid { background:rgba(14,14,18,0.08) !important; border-color:rgba(14,14,18,0.1) !important; }
+    html[data-theme="light"] .cal-day-hdr { background:#e8edf5 !important; color:#64748b !important; }
+    html[data-theme="light"] .cal-cell { background:#ffffff !important; }
+    html[data-theme="light"] .cal-cell.weekend { background:#f8fafc !important; }
+    html[data-theme="light"] .cal-cell.has-trades { background:#f0f7ff !important; }
+    html[data-theme="light"] .cal-cell.has-trades.weekend { background:#edf6ff !important; }
+    html[data-theme="light"] .cal-empty { background:#f1f5f9 !important; }
+    html[data-theme="light"] .cal-empty.weekend { background:#edf2f8 !important; }
+    html[data-theme="light"] .cal-week-sum { background:#eef2f8 !important; border-left-color:rgba(14,14,18,0.06) !important; }
+    html[data-theme="light"] .cal-date { color:#64748b !important; }
+    html[data-theme="light"] .cal-cell.has-trades .cal-date { color:#475569 !important; }
+    html[data-theme="light"] .cal-cell.today .cal-date { color:#0284c7 !important; }
+    html[data-theme="light"] .cal-day-pl { border-top-color:rgba(14,14,18,0.07) !important; }
+    html[data-theme="light"] .cal-week-count { color:#94a3b8 !important; }
+    html[data-theme="light"] .cal-week-empty { color:rgba(14,14,18,0.12) !important; }
+
     /* Expanded trade review panel */
     .tr-review { background:#f8fafc !important; border-top:1px solid #e2e8f0 !important; }
     .tr-tile { background:rgba(0,0,0,0.03) !important; border-color:rgba(0,0,0,0.08) !important; }
