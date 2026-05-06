@@ -8475,55 +8475,22 @@ function setCumMode(mode) {
   renderCumChart(_cumTrades);
 }
 
-function setCumPeriod(period) {
-  _cumPeriod = period;
-  document.querySelectorAll('#cum-period-btns button').forEach(b => {
-    const active = b.dataset.p === period;
-    b.style.background = active ? 'var(--accent)' : 'transparent';
-    b.style.color      = active ? '#fff' : 'var(--text3)';
-  });
-  renderCumChart(_cumTrades);
-}
-
-function _filterByPeriod(trades, period) {
-  const now = new Date();
-  const cutoff = {
-    '7d':  new Date(now - 7  * 86400000),
-    '1m':  new Date(now.getFullYear(), now.getMonth() - 1, now.getDate()),
-    'ytd': new Date(now.getFullYear(), 0, 1),
-    '1y':  new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()),
-    'all': null
-  }[period] || null;
-  if (!cutoff) return trades;
-  return trades.filter(t => t.entryDate && new Date(t.entryDate + 'T00:00:00') >= cutoff);
-}
-
 function renderCumChart(trades) {
   _cumTrades = trades;
   destroyChart('cum');
 
-  const filtered = _filterByPeriod(trades, _cumPeriod);
-  const useDaily = ['7d', '1m'].includes(_cumPeriod);
+  const f = getFilter('ov');
+  const useDaily = !!f.month;
 
   // Group by day or month
   const byKey = {};
-  filtered.forEach(t => {
+  trades.forEach(t => {
     const d = useDaily ? t.entryDate?.slice(0, 10) : t.entryDate?.slice(0, 7);
     if (!d) return;
     byKey[d] = (byKey[d] || 0) + calcTotal(t);
   });
 
-  // Fall back to all-time if fewer than 2 data points
   const keys = Object.keys(byKey).sort();
-  if (keys.length < 2 && _cumPeriod !== 'all') {
-    _cumPeriod = 'all';
-    document.querySelectorAll('#cum-period-btns button').forEach(b => {
-      const active = b.dataset.p === 'all';
-      b.style.background = active ? 'var(--accent)' : 'transparent';
-      b.style.color      = active ? '#fff' : 'var(--text3)';
-    });
-    return renderCumChart(trades);
-  }
 
   const labels = keys.map(k => {
     if (useDaily) {
