@@ -6904,6 +6904,12 @@ function renderCalendar(type) {
 
   html += `</div></div>`;
   wrap.innerHTML = html;
+  if (document.documentElement.getAttribute('data-theme') === 'light') {
+    const calHeader = wrap.querySelector('.cal-header');
+    if (calHeader) calHeader.style.setProperty('background', '#ffffff', 'important');
+    const calWrap = wrap.querySelector('.cal-wrap');
+    if (calWrap) calWrap.style.setProperty('background', '#ffffff', 'important');
+  }
 }
 
 function renderTable(type) {
