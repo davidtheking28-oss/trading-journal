@@ -6827,7 +6827,7 @@ function renderCalendar(type) {
 
   let html = `<div class="cal-wrap">
   <div class="cal-header">
-    <button class="cal-nav-btn" onclick="calNavNext('${navType}')" title="חודש הבא"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <button class="cal-nav-btn" onclick="calNavNext('${navType}')" title="חודש הבא"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
     <div class="cal-title">
       <span class="cal-title-month">${MONTHS[month-1]} ${year}</span>
       ${allMonthTrades.length ? `<span class="cal-divider"></span>
@@ -6835,7 +6835,7 @@ function renderCalendar(type) {
       <span class="cal-divider"></span>
       <span class="cal-trade-count">${allMonthTrades.length} עסקאות · ${winsCount}W / ${lossCount}L</span>` : `<span class="cal-trade-count" style="opacity:0.5">אין עסקאות</span>`}
     </div>
-    <button class="cal-nav-btn" onclick="calNavPrev('${navType}')" title="חודש קודם"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+    <button class="cal-nav-btn" onclick="calNavPrev('${navType}')" title="חודש קודם"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
   </div>
   <div class="cal-grid">`;
 
