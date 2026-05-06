@@ -3308,13 +3308,18 @@
   .inv-portfolio-bar input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(129,140,248,0.12); }
   .inv-portfolio-bar .inv-total-allocated { font-size: 12px; color: var(--text3); margin-right: auto; }
   .inv-portfolio-bar .inv-total-allocated span { color: var(--accent); font-weight: 700; font-size: 14px; }
-  #inv-currency-btn {
-    font-size: 12px; font-weight: 700; padding: 4px 10px;
-    background: rgba(129,140,248,0.10); border: 1px solid rgba(129,140,248,0.25);
-    color: var(--accent); border-radius: 6px; cursor: pointer; white-space: nowrap;
-    transition: background 0.15s;
+  .inv-currency-seg {
+    display: flex; border: 1px solid rgba(129,140,248,0.25); border-radius: 6px; overflow: hidden;
   }
-  #inv-currency-btn:hover { background: rgba(129,140,248,0.2); }
+  .inv-cur-opt {
+    font-size: 12px; font-weight: 700; padding: 4px 10px;
+    background: transparent; border: none; color: var(--text3);
+    cursor: pointer; transition: background 0.15s, color 0.15s;
+  }
+  .inv-cur-opt:first-child { border-left: none; }
+  .inv-cur-opt + .inv-cur-opt { border-right: 1px solid rgba(129,140,248,0.25); }
+  .inv-cur-opt.active { background: rgba(129,140,248,0.15); color: var(--accent); }
+  .inv-cur-opt:not(.active):hover { background: rgba(255,255,255,0.05); color: var(--text2); }
 
   /* Table */
   .inv-table-wrap {
@@ -5567,7 +5572,10 @@
 
         <div class="inv-portfolio-bar">
           <label>סך התיק</label>
-          <button id="inv-currency-btn" onclick="invToggleCurrency()" title="החלף מטבע">$</button>
+          <div class="inv-currency-seg">
+            <button id="inv-cur-usd" class="inv-cur-opt active" onclick="invSetCurrency('$')">$</button>
+            <button id="inv-cur-ils" class="inv-cur-opt" onclick="invSetCurrency('₪')">₪</button>
+          </div>
           <input type="number" id="inv-portfolio-total" placeholder="100000" min="0" step="any" oninput="invRecalc();invAutoSaveTotal()">
           <div class="inv-total-allocated">מוקצה: <span id="inv-allocated-pct">0%</span></div>
         </div>
@@ -12513,11 +12521,10 @@ const INV_KEY = 'inv_data_v1';
 function invGetCurrency() {
   return localStorage.getItem('inv_currency') || '$';
 }
-function invToggleCurrency() {
-  const next = invGetCurrency() === '$' ? '₪' : '$';
-  localStorage.setItem('inv_currency', next);
-  const btn = document.getElementById('inv-currency-btn');
-  if (btn) btn.textContent = next;
+function invSetCurrency(cur) {
+  localStorage.setItem('inv_currency', cur);
+  document.getElementById('inv-cur-usd')?.classList.toggle('active', cur === '$');
+  document.getElementById('inv-cur-ils')?.classList.toggle('active', cur === '₪');
   invRecalc();
 }
 
@@ -12534,8 +12541,9 @@ function invSaveData(data) {
 
 function invInit() {
   const data = invLoad();
-  const btn = document.getElementById('inv-currency-btn');
-  if (btn) btn.textContent = invGetCurrency();
+  const cur = invGetCurrency();
+  document.getElementById('inv-cur-usd')?.classList.toggle('active', cur === '$');
+  document.getElementById('inv-cur-ils')?.classList.toggle('active', cur === '₪');
   const totalEl = document.getElementById('inv-portfolio-total');
   if (totalEl) totalEl.value = data.portfolioTotal || '';
   const dl = document.getElementById('inv-sym-list');
