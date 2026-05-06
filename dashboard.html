@@ -3309,15 +3309,16 @@
   .inv-portfolio-bar .inv-total-allocated { font-size: 12px; color: var(--text3); margin-right: auto; }
   .inv-portfolio-bar .inv-total-allocated span { color: var(--accent); font-weight: 700; font-size: 14px; }
   .inv-currency-seg {
-    display: flex; border: 1px solid rgba(129,140,248,0.25); border-radius: 6px; overflow: hidden;
+    display: inline-flex; flex-direction: row; flex-shrink: 0;
+    border: 1px solid rgba(129,140,248,0.25); border-radius: 6px; overflow: hidden;
   }
   .inv-cur-opt {
-    font-size: 12px; font-weight: 700; padding: 4px 10px;
-    background: transparent; border: none; color: var(--text3);
-    cursor: pointer; transition: background 0.15s, color 0.15s;
+    display: inline-block; font-size: 12px; font-weight: 700; padding: 4px 10px;
+    background: transparent; border: none; border-left: 1px solid rgba(129,140,248,0.25);
+    color: var(--text3); cursor: pointer; transition: background 0.15s, color 0.15s;
+    line-height: 1;
   }
   .inv-cur-opt:first-child { border-left: none; }
-  .inv-cur-opt + .inv-cur-opt { border-right: 1px solid rgba(129,140,248,0.25); }
   .inv-cur-opt.active { background: rgba(129,140,248,0.15); color: var(--accent); }
   .inv-cur-opt:not(.active):hover { background: rgba(255,255,255,0.05); color: var(--text2); }
 
