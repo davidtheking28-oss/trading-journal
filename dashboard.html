@@ -6630,17 +6630,9 @@ function switchTab(name, btn) {
   if (name==='overview') renderOverview();
   else if (_ovLiveTimer) { clearInterval(_ovLiveTimer); _ovLiveTimer = null; }
   if (name==='stocks') {
-    const ovM = document.getElementById('ov-month')?.value;
-    const ovY = document.getElementById('ov-year')?.value;
-    if (ovM) { const el = document.getElementById('st-month'); if (el && !el.value) el.value = ovM; }
-    if (ovY) { const el = document.getElementById('st-year');  if (el && !el.value) el.value = ovY; }
     renderTable('stock');
   }
   if (name==='crypto') {
-    const ovM = document.getElementById('ov-month')?.value;
-    const ovY = document.getElementById('ov-year')?.value;
-    if (ovM) { const el = document.getElementById('cr-month'); if (el && !el.value) el.value = ovM; }
-    if (ovY) { const el = document.getElementById('cr-year');  if (el && !el.value) el.value = ovY; }
     renderTable('crypto');
   }
   if (name==='archive') renderArchive();
