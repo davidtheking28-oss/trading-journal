@@ -5427,15 +5427,15 @@
           </div>
           <span class="ibkr-card-badge badge-sync">.tlg</span>
         </div>
-        <label class="tlg-drop" id="tlg-drop-zone"
+        <input type="file" accept=".tlg,.txt" id="tlg-file-input" style="display:none" onchange="tlgLoadFile(this)">
+        <div class="tlg-drop" id="tlg-drop-zone"
           onclick="document.getElementById('tlg-file-input').click()"
           ondragover="event.preventDefault();this.classList.add('tlg-drag-over')"
           ondragleave="this.classList.remove('tlg-drag-over')"
           ondrop="event.preventDefault();this.classList.remove('tlg-drag-over');tlgLoadFile({files:event.dataTransfer.files})">
           <span class="tlg-drop-icon">📂</span>
           גרור קובץ .tlg או לחץ לבחירה
-          <input type="file" accept=".tlg,.txt" id="tlg-file-input" style="display:none" onchange="tlgLoadFile(this)">
-        </label>
+        </div>
         <div id="tlg-status" style="margin-top:8px;font-size:12px;color:var(--text3);"></div>
         <div id="tlg-preview" class="ibkr-trades-list"></div>
       </div>
