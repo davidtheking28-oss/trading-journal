@@ -8465,7 +8465,6 @@ function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete chart
 
 let _cumTrades = [];
 let _cumMode   = 'pct'; // 'pct' | 'usd'
-let _cumPeriod = 'all';
 
 function setCumMode(mode) {
   _cumMode = mode;
