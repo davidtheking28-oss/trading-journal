@@ -11440,11 +11440,12 @@ function _buildLightCSS() {
     .ibkr-card-header { border-bottom-color:#e2e8f0 !important; }
     .ibkr-card-title  { color:#0f172a !important; }
 
-    /* Table */
-    .table-wrap { background:#ffffff !important; border:1px solid #e2e8f0 !important; box-shadow:0 2px 12px rgba(0,0,0,0.05) !important; }
-    thead tr { background:#f8fafc !important; border-bottom:1px solid #e2e8f0 !important; }
-    th { color:#64748b !important; }
-    td { color:#0f172a !important; border-bottom-color:#f1f5f9 !important; }
+    /* Table — use html[data-theme] prefix to beat specificity of static dark rules */
+    html[data-theme="light"] .table-wrap { background:#ffffff !important; border:1px solid #e2e8f0 !important; box-shadow:0 2px 12px rgba(0,0,0,0.05) !important; }
+    html[data-theme="light"] thead tr { background:#f8fafc !important; border-bottom:1px solid #e2e8f0 !important; }
+    html[data-theme="light"] thead th { background:#f8fafc !important; }
+    html[data-theme="light"] th { color:#64748b !important; }
+    html[data-theme="light"] td { color:#0f172a !important; border-bottom-color:#f1f5f9 !important; }
     tbody tr.data-row:hover td { background:#f0f6ff !important; }
     tbody tr.profit td { background:rgba(5,150,105,0.03) !important; }
     tbody tr.profit:hover td { background:rgba(5,150,105,0.08) !important; }
