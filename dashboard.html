@@ -6825,6 +6825,15 @@ function renderCalendar(type) {
   const winsCount  = allMonthTrades.filter(t => calcPL(t) > 0).length;
   const lossCount  = allMonthTrades.length - winsCount;
 
+  // Force light-mode background on the wrap — CSS !important battles are unreliable
+  if (document.documentElement.getAttribute('data-theme') === 'light') {
+    wrap.style.setProperty('background', '#ffffff', 'important');
+    wrap.style.setProperty('border-color', '#e2e8f0', 'important');
+  } else {
+    wrap.style.removeProperty('background');
+    wrap.style.removeProperty('border-color');
+  }
+
   let html = `<div class="cal-wrap">
   <div class="cal-header">
     <button class="cal-nav-btn" onclick="calNavNext('${navType}')" title="חודש הבא"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
