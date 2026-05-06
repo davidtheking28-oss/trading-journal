@@ -1442,7 +1442,8 @@
     text-align: center; cursor: pointer;
     transition: all 0.2s; color: var(--text3); font-size: 13px;
   }
-  .tlg-drop:hover { border-color: var(--accent); color: var(--text2); background: rgba(129,140,248,0.04); }
+  .tlg-drop:hover, .tlg-drag-over { border-color: var(--accent); color: var(--text2); background: rgba(129,140,248,0.08); }
+  .tlg-drag-over { border-style: solid; }
   .tlg-drop-icon { font-size: 24px; margin-bottom: 6px; display: block; }
 
   @media (max-width: 960px) {
@@ -5426,7 +5427,11 @@
           </div>
           <span class="ibkr-card-badge badge-sync">.tlg</span>
         </div>
-        <label class="tlg-drop">
+        <label class="tlg-drop" id="tlg-drop-zone"
+          onclick="document.getElementById('tlg-file-input').click()"
+          ondragover="event.preventDefault();this.classList.add('tlg-drag-over')"
+          ondragleave="this.classList.remove('tlg-drag-over')"
+          ondrop="event.preventDefault();this.classList.remove('tlg-drag-over');tlgLoadFile({files:event.dataTransfer.files})">
           <span class="tlg-drop-icon">📂</span>
           גרור קובץ .tlg או לחץ לבחירה
           <input type="file" accept=".tlg,.txt" id="tlg-file-input" style="display:none" onchange="tlgLoadFile(this)">
