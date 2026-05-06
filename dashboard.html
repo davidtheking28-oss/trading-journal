@@ -3308,6 +3308,13 @@
   .inv-portfolio-bar input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(129,140,248,0.12); }
   .inv-portfolio-bar .inv-total-allocated { font-size: 12px; color: var(--text3); margin-right: auto; }
   .inv-portfolio-bar .inv-total-allocated span { color: var(--accent); font-weight: 700; font-size: 14px; }
+  #inv-currency-btn {
+    font-size: 12px; font-weight: 700; padding: 4px 10px;
+    background: rgba(129,140,248,0.10); border: 1px solid rgba(129,140,248,0.25);
+    color: var(--accent); border-radius: 6px; cursor: pointer; white-space: nowrap;
+    transition: background 0.15s;
+  }
+  #inv-currency-btn:hover { background: rgba(129,140,248,0.2); }
 
   /* Table */
   .inv-table-wrap {
@@ -5559,7 +5566,8 @@
         </div>
 
         <div class="inv-portfolio-bar">
-          <label>סך התיק ($)</label>
+          <label>סך התיק</label>
+          <button id="inv-currency-btn" onclick="invToggleCurrency()" title="החלף מטבע">$</button>
           <input type="number" id="inv-portfolio-total" placeholder="100000" min="0" step="any" oninput="invRecalc();invAutoSaveTotal()">
           <div class="inv-total-allocated">מוקצה: <span id="inv-allocated-pct">0%</span></div>
         </div>
@@ -12502,6 +12510,17 @@ async function fixStockData() {
 // ===== INVESTMENTS TAB =====
 const INV_KEY = 'inv_data_v1';
 
+function invGetCurrency() {
+  return localStorage.getItem('inv_currency') || '$';
+}
+function invToggleCurrency() {
+  const next = invGetCurrency() === '$' ? '₪' : '$';
+  localStorage.setItem('inv_currency', next);
+  const btn = document.getElementById('inv-currency-btn');
+  if (btn) btn.textContent = next;
+  invRecalc();
+}
+
 function invLoad() {
   try {
     const raw = localStorage.getItem(INV_KEY);
@@ -12515,6 +12534,8 @@ function invSaveData(data) {
 
 function invInit() {
   const data = invLoad();
+  const btn = document.getElementById('inv-currency-btn');
+  if (btn) btn.textContent = invGetCurrency();
   const totalEl = document.getElementById('inv-portfolio-total');
   if (totalEl) totalEl.value = data.portfolioTotal || '';
   const dl = document.getElementById('inv-sym-list');
@@ -12596,8 +12617,9 @@ function invRecalc() {
     const barEl = document.getElementById(`inv-bar-${i}`);
     const pctEl = document.getElementById(`inv-pct-${i}`);
 
-    if (avgEl) avgEl.textContent = avgPrice > 0 ? '$' + avgPrice.toFixed(2) : '—';
-    if (valEl) valEl.textContent = value > 0 ? '$' + value.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
+    const cur = invGetCurrency();
+    if (avgEl) avgEl.textContent = avgPrice > 0 ? cur + avgPrice.toFixed(2) : '—';
+    if (valEl) valEl.textContent = value > 0 ? cur + value.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
     if (barEl) barEl.style.width = Math.min(pct, 100) + '%';
     if (pctEl) pctEl.textContent = pct > 0 ? pct.toFixed(1) + '%' : '0%';
   });
@@ -12624,9 +12646,10 @@ function invRecalc() {
     if (curEl) { curEl.textContent = currentPct.toFixed(1) + '%'; curEl.style.color = over ? 'var(--red)' : 'var(--text)'; }
     if (remEl) {
       if (portfolioTotal === 0) { remEl.textContent = 'זמין: —'; return; }
+      const c = invGetCurrency();
       remEl.textContent = over
-        ? `חרגת ב-$${(currentAmt - targetAmt).toLocaleString('en-US', {maximumFractionDigits:0})}`
-        : `זמין: $${remaining.toLocaleString('en-US', {maximumFractionDigits:0})}`;
+        ? `חרגת ב-${c}${(currentAmt - targetAmt).toLocaleString('en-US', {maximumFractionDigits:0})}`
+        : `זמין: ${c}${remaining.toLocaleString('en-US', {maximumFractionDigits:0})}`;
       remEl.style.color = over ? 'var(--red)' : 'var(--text3)';
     }
   });
@@ -12642,7 +12665,7 @@ function invRecalc() {
     if (!cat || portfolioTotal === 0) { remEl.textContent = '—'; remEl.style.color = ''; return; }
     const over = byCat[cat] > portfolioTotal * ALLOC_TARGETS[cat];
     const rem  = catRemaining[cat];
-    remEl.textContent = over ? 'חרגת' : `$${rem.toLocaleString('en-US',{maximumFractionDigits:0})}`;
+    remEl.textContent = over ? 'חרגת' : `${invGetCurrency()}${rem.toLocaleString('en-US',{maximumFractionDigits:0})}`;
     remEl.style.color = over ? 'var(--red)' : 'var(--green)';
   });
   invUpdateDonut(byCat, portfolioTotal);
@@ -12805,13 +12828,14 @@ function invRenderDeposits(deposits = []) {
   const portEl  = document.getElementById('dep-portfolio-val');
   const pnlEl   = document.getElementById('dep-pnl-val');
 
-  if (totalEl) totalEl.textContent = '$' + totalDeposited.toLocaleString('en-US', { maximumFractionDigits: 0 });
-  if (portEl)  portEl.textContent  = portfolioTotal ? '$' + portfolioTotal.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '—';
+  const cur = invGetCurrency();
+  if (totalEl) totalEl.textContent = cur + totalDeposited.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  if (portEl)  portEl.textContent  = portfolioTotal ? cur + portfolioTotal.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '—';
   if (pnlEl) {
     if (portfolioTotal && totalDeposited) {
       const pnl    = portfolioTotal - totalDeposited;
       const pnlPct = (pnl / totalDeposited * 100).toFixed(1);
-      pnlEl.textContent = (pnl >= 0 ? '+' : '') + '$' + Math.abs(pnl).toLocaleString('en-US', { maximumFractionDigits: 0 }) + ` (${pnl >= 0 ? '+' : ''}${pnlPct}%)`;
+      pnlEl.textContent = (pnl >= 0 ? '+' : '') + cur + Math.abs(pnl).toLocaleString('en-US', { maximumFractionDigits: 0 }) + ` (${pnl >= 0 ? '+' : ''}${pnlPct}%)`;
       pnlEl.style.color = pnl >= 0 ? 'var(--green)' : 'var(--red)';
     } else {
       pnlEl.textContent = '—';
@@ -12827,7 +12851,7 @@ function invRenderDeposits(deposits = []) {
   let cumul = totalDeposited;
   listEl.innerHTML = `<table class="inv-dep-table"><thead><tr><th>חודש</th><th>הפקדה</th><th>מצטבר</th><th></th></tr></thead><tbody>${
     deposits.map((d, i) => {
-      const row = `<tr><td>${heMonth(d.month)}</td><td>$${(+d.amount).toLocaleString('en-US',{maximumFractionDigits:0})}</td><td>$${cumul.toLocaleString('en-US',{maximumFractionDigits:0})}</td><td><button class="inv-dep-del" onclick="invDeleteDeposit(${i})">×</button></td></tr>`;
+      const row = `<tr><td>${heMonth(d.month)}</td><td>${cur}${(+d.amount).toLocaleString('en-US',{maximumFractionDigits:0})}</td><td>${cur}${cumul.toLocaleString('en-US',{maximumFractionDigits:0})}</td><td><button class="inv-dep-del" onclick="invDeleteDeposit(${i})">×</button></td></tr>`;
       cumul -= +d.amount;
       return row;
     }).join('')
