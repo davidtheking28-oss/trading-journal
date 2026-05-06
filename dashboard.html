@@ -5176,8 +5176,6 @@
       </div>
       <div id="skel-monthly" style="display:none"></div>
       <canvas id="chart-monthly" style="display:none"></canvas>
-      <canvas id="chart-per" style="display:none"></canvas>
-      <div id="skel-per" style="display:none"></div>
       <div class="ov-section" style="margin-bottom:10px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Monthly Tracker <span id="mt-year-label" style="font-size:11px;font-weight:500;color:var(--text3);margin-right:6px;"></span></div>
       <div id="monthly-tracker-wrap" style="overflow-x:auto;margin-bottom:22px;"></div>
       <div class="ov-section" style="margin-bottom:10px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Trading Summary</div>
@@ -7366,47 +7364,12 @@ function erSetPills(containerId, val) {
 // ══════════════════════════════════════════════
 const MOOD_OPTIONS = ['focused','calm','confident','stressed','impatient','doubtful'];
 
-let modalMood = '';
-function modalSetMood(val) {
-  modalMood = modalMood === val ? '' : val;
-  const el = document.getElementById('m-mood');
-  if (el) el.value = modalMood;
-  document.querySelectorAll('#m-mood-pills .mood-pill').forEach(p => {
-    const base = p.dataset.mood;
-    p.className = 'mood-pill' + (base === modalMood ? ' active-' + base : '');
-  });
-}
-
-function moodSetPills(containerId, val) {
-  document.querySelectorAll('#'+containerId+' .mood-pill').forEach(p => {
-    const base = p.dataset.mood;
-    p.className = 'mood-pill' + (base === val ? ' active-' + base : '');
-  });
-}
 
 // ══════════════════════════════════════════════
 // MINERVINI — PROCESS SCORE & MARKET CONDITION
 // ══════════════════════════════════════════════
 let qaPS = 0;
-function qaSetPS(e) {
-  const v = parseInt(e.target.dataset.v);
-  if (!v) return;
-  qaPS = qaPS === v ? 0 : v;
-  document.querySelectorAll('#qa-ps-stars span').forEach(s => {
-    s.className = parseInt(s.dataset.v) <= qaPS ? 'on' : '';
-  });
-}
-
 let modalPS = 0;
-function modalSetPS(e) {
-  const v = parseInt(e.target.dataset.v);
-  if (!v) return;
-  modalPS = modalPS === v ? 0 : v;
-  document.getElementById('m-process-score').value = modalPS;
-  document.querySelectorAll('#m-ps-stars span').forEach(s => {
-    s.className = parseInt(s.dataset.v) <= modalPS ? 'on' : '';
-  });
-}
 
 function psSetStars(containerId, val) {
   document.querySelectorAll('#'+containerId+' span').forEach(s => {
@@ -7414,18 +7377,6 @@ function psSetStars(containerId, val) {
   });
 }
 
-// Expectancy = (avgWin × winRate) / (avgLoss × lossRate)
-// Returns 0 if not enough data
-function calcExpectancy(trades) {
-  const winners = trades.filter(t => calcPL(t) > 0);
-  const losers  = trades.filter(t => calcPL(t) < 0);
-  if (!winners.length || !losers.length) return null;
-  const winRate  = winners.length / trades.length;
-  const lossRate = losers.length  / trades.length;
-  const avgWin   = winners.reduce((s,t) => s + calcPL(t), 0) / winners.length;
-  const avgLoss  = Math.abs(losers.reduce((s,t) => s + calcPL(t), 0) / losers.length);
-  return (avgWin * winRate) / (avgLoss * lossRate);
-}
 
 // ══════════════════════════════════════════════
 // QUICK ADD WIDGET
@@ -8640,84 +8591,6 @@ function renderDonut(st, adv, trades) {
   applyPrivacy();
 }
 
-function renderPerChart(trades) {
-  if (!document.getElementById('chart-per')) return;
-  destroyChart('per');
-  showChart('skel-per', 'chart-per');
-  // Sort descending by absolute value for better visual scanning
-  const sorted = [...trades].sort((a,b) => Math.abs(calcTotal(b)) - Math.abs(calcTotal(a))).slice(0,20);
-  const labels = sorted.map(t => t.symbol);
-  const data   = sorted.map(t => +calcTotal(t).toFixed(2));
-  const ctx = document.getElementById('chart-per').getContext('2d');
-  charts.per = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'P&L',
-        data,
-        backgroundColor: data.map(v => v >= 0 ? 'rgba(34,197,94,0.6)' : 'rgba(239,68,68,0.6)'),
-        borderColor:     data.map(v => v >= 0 ? '#22c55e' : '#ef4444'),
-        borderWidth: 1,
-        borderRadius: 3
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: c => ` $${(+c.raw).toFixed(2)}` } }
-      },
-      scales: {
-        x: { ticks: { color: TICK_COLOR, font: CHART_FONT }, grid: { color: GRID_COLOR, drawBorder: false } },
-        y: { ticks: { color: TICK_COLOR, font: CHART_FONT, callback: v => '$'+v }, grid: { color: GRID_COLOR, drawBorder: false } }
-      },
-      animation: { duration: 300 }
-    }
-  });
-}
-
-function renderMonthly(trades) {
-  destroyChart('monthly');
-  const byM = {};
-  trades.forEach(t => {
-    const d = new Date(t.entryDate+'T00:00:00');
-    const k = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-    byM[k] = (byM[k]||0) + calcTotal(t);
-  });
-  const keys = Object.keys(byM).sort();
-  const labels = keys.map(k=>{ const [y,m]=k.split('-'); return MONTHS[+m-1]+' '+y.slice(2); });
-  const data = keys.map(k=>+byM[k].toFixed(2));
-  showChart('skel-monthly', 'chart-monthly');
-  const monthlyEl = document.getElementById('chart-monthly'); if (!monthlyEl) return;
-  const ctx = monthlyEl.getContext('2d');
-  charts.monthly = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'P&L חודשי',
-        data,
-        backgroundColor: data.map(v => v >= 0 ? 'rgba(34,197,94,0.6)' : 'rgba(239,68,68,0.6)'),
-        borderColor:     data.map(v => v >= 0 ? '#22c55e' : '#ef4444'),
-        borderWidth: 1,
-        borderRadius: 3
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: c => ` $${(+c.raw).toFixed(2)}` } }
-      },
-      scales: {
-        x: { ticks: { color: TICK_COLOR, font: CHART_FONT }, grid: { color: GRID_COLOR, drawBorder: false } },
-        y: { ticks: { color: TICK_COLOR, font: CHART_FONT, callback: v => '$'+v }, grid: { color: GRID_COLOR, drawBorder: false } }
-      },
-      animation: { duration: 300 }
-    }
-  });
-}
 
 function renderComparison(stTrades, crTrades) {
   function card(title, tr, accentColor) {
@@ -9966,111 +9839,6 @@ async function ibkrLoadAccounts() {
   }
 }
 
-async function ibkrImportTrades() {
-  if (!ibkrConnected) {
-    toast('יש לחבר תחילה ל-IBKR Gateway', 'error');
-    return;
-  }
-  const btn = document.getElementById('ibkr-import-btn');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ מייבא...'; }
-
-  const accountId = (document.getElementById('ibkr-account-select')||{}).value || '';
-  const preview = document.getElementById('ibkr-trades-preview');
-  if (preview) preview.innerHTML = '';
-
-  ibkrLog('מבקש עסקאות מ-IBKR...', 'ibkr-log-info');
-
-  // Try account-specific endpoint first, fall back to general
-  let data = null;
-  if (accountId) {
-    data = await ibkrFetch(`/iserver/account/${encodeURIComponent(accountId)}/trades`);
-  }
-  if (!data) {
-    data = await ibkrFetch('/iserver/account/trades');
-  }
-
-  if (btn) { btn.disabled = false; btn.textContent = '📥 ייבא עסקאות'; }
-
-  if (!data) {
-    ibkrLog('שגיאה בקבלת עסקאות מ-IBKR', 'ibkr-log-err');
-    toast('שגיאה בקבלת עסקאות', 'error');
-    return;
-  }
-
-  const trades = Array.isArray(data) ? data : (data.trades || []);
-  if (!trades.length) {
-    ibkrLog('לא נמצאו עסקאות לתקופה הנבחרת', 'ibkr-log-info');
-    toast('לא נמצאו עסקאות', 'error');
-    return;
-  }
-
-  // Filter by date range if provided
-  const fromVal = (document.getElementById('ibkr-date-from')||{}).value;
-  const toVal   = (document.getElementById('ibkr-date-to')||{}).value;
-
-  const mapped = trades.map(tr => {
-    // Map IBKR fields to our schema
-    const exec = tr.execution || tr;
-    const comm = tr.commission || {};
-    const rawTime = exec.time || exec.trade_time || tr.trade_time || '';
-    // IBKR time format: "20240115-14:30:00"
-    let entryDate = '';
-    if (rawTime && rawTime.length >= 8) {
-      const y = rawTime.slice(0,4), mo = rawTime.slice(4,6), d = rawTime.slice(6,8);
-      entryDate = `${y}-${mo}-${d}`;
-    }
-    const side = (exec.side || tr.side || '').toUpperCase();
-    const ls = side === 'BOT' ? 'L' : side === 'SLD' ? 'S' : 'L';
-    const symbol = (exec.symbol || tr.symbol || '').toUpperCase().replace(/[^A-Z0-9._\-]/g,'').slice(0,20);
-    const price = parseFloat(exec.price || tr.price || 0);
-    const shares = parseFloat(exec.shares || tr.shares || exec.size || tr.size || 0);
-    const commission = parseFloat((comm.commission || exec.commission || tr.commission_amount || 0));
-
-    return { entryDate, ls, symbol, entryPrice: price, shares, commission };
-  }).filter(t => {
-    if (!t.symbol || !t.entryPrice) return false;
-    if (fromVal && t.entryDate < fromVal) return false;
-    if (toVal   && t.entryDate > toVal)   return false;
-    return true;
-  });
-
-  ibkrLog('נמצאו ' + mapped.length + ' עסקאות', 'ibkr-log-ok');
-  auditLog('ibkr_import', String(mapped.length));
-
-  if (!preview) return;
-  if (!mapped.length) {
-    preview.innerHTML = '<div style="color:var(--text3);font-size:12px;margin-top:10px;">אין עסקאות בטווח הנבחר</div>';
-    return;
-  }
-
-  mapped.forEach((t, i) => {
-    const div = document.createElement('div');
-    div.className = 'ibkr-trade-preview';
-    const safeLs    = t.ls === 'S' ? 'S' : 'L';
-    const safeDate  = /^\d{4}-\d{2}-\d{2}$/.test(t.entryDate) ? t.entryDate : '—';
-    const safePrice = parseFloat(t.entryPrice||0).toFixed(4);
-    const safeShares = parseFloat(t.shares||0).toFixed(4);
-    const safeComm   = parseFloat(t.commission||0).toFixed(2);
-    div.innerHTML = `
-      <div>
-        <span class="sym">${esc(t.symbol)}</span>
-        <span class="badge badge-${safeLs}" style="margin-right:8px;">${safeLs}</span>
-      </div>
-      <div class="det">
-        ${safeDate} &nbsp;|&nbsp;
-        מחיר: $${safePrice} &nbsp;|&nbsp;
-        כמות: ${safeShares} &nbsp;|&nbsp;
-        עמלה: $${safeComm}
-      </div>
-      <button class="btn btn-primary btn-sm" onclick="ibkrConfirmTrade(${i})">+ ייבא</button>
-    `;
-    preview.appendChild(div);
-  });
-
-  // Store mapped trades for import confirmation (module-scoped, not window)
-  _ibkrPending = mapped;
-}
-
 function ibkrConfirmTrade(idx) {
   // Validate index — must be safe integer within bounds
   if (!Number.isInteger(idx) || idx < 0 || idx >= _ibkrPending.length) return;
@@ -10117,15 +9885,6 @@ function ibkrConfirmTrade(idx) {
   initFilters();
 }
 
-// Auto-check IBKR connection on page load (silent)
-async function ibkrAutoCheck() {
-  const data = await ibkrFetch('/iserver/auth/status');
-  if (data && (data.authenticated === true || data.connected === true)) {
-    ibkrSetStatus(true, 'מחובר');
-  } else {
-    ibkrSetStatus(false, 'לא מחובר');
-  }
-}
 
 // ══════════════════════════════════════════════
 // TRADE SCREENSHOTS — IndexedDB
@@ -12495,33 +12254,6 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-async function fixStockData() {
-  const { data: { user } } = await _sb.auth.getUser();
-  if (!user) { console.error('Not logged in'); return; }
-  await _sb.from('trades').delete().eq('user_id', user.id).eq('type', 'stock');
-  const rows = SEED.stocks.map(t => ({
-    user_id: user.id,
-    type: 'stock',
-    entry_date: t.entryDate,
-    ls: t.ls,
-    symbol: t.symbol,
-    entry_price: t.entryPrice,
-    shares: t.shares,
-    stop: t.stop || null,
-    targets: t.t || [],
-    close_date: t.closeDate || null,
-    closed_shares: t.closedShares || null,
-    exit_price: t.exitPrice || null,
-    ecn: t.ecn || 0,
-    commission: t.commission,
-    notes_keep: t.notes_keep || '',
-    notes_improve: t.notes_improve || '',
-    deleted: false
-  }));
-  const { error } = await _sb.from('trades').insert(rows);
-  if (error) console.error(error);
-  else { toast('נתונים עודכנו', 'success'); loadDB(); }
-}
 
 // ===== INVESTMENTS TAB =====
 const INV_KEY = 'inv_data_v1';
