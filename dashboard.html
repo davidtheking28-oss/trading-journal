@@ -8504,7 +8504,7 @@ function renderCumChart(trades) {
   let cum = 0;
   const cumUsd = keys.map(k => { cum += byKey[k]; return +cum.toFixed(2); });
 
-  const base = Math.abs(filtered.reduce((s, t) => s + (t.entryPrice || 0) * (t.shares || 0), 0)) || 1;
+  const base = Math.abs(trades.reduce((s, t) => s + (t.entryPrice || 0) * (t.shares || 0), 0)) || 1;
   let cumPct = 0;
   const cumPctData = keys.map(k => { cumPct += byKey[k]; return +(cumPct / base * 100).toFixed(2); });
 
