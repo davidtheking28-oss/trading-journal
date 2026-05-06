@@ -1,2 +1,4 @@
 User-agent: *
-Disallow: /
+Allow: /
+
+Sitemap: https://davidtheking28-oss.github.io/trading-journal/sitemap.xml
