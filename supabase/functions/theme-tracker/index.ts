@@ -8,7 +8,7 @@ const CORS = {
 
 const THEMES = [
   { name: 'Semiconductors',  ticker: 'SOXX'  },
-  { name: 'AI',              ticker: 'BOTZ'  },
+  { name: 'AI',              ticker: 'AIQ'   },
   { name: 'Oil & Gas',       ticker: 'XOP'   },
   { name: 'Quantum',         ticker: 'QTUM'  },
   { name: 'Gold Miners',     ticker: 'GDX'   },
