@@ -5130,6 +5130,8 @@
         <div id="fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;border:none;background:transparent;box-shadow:none;padding:0;backdrop-filter:none;"></div>
         <div class="ov-bar-divider"></div>
         <div id="crypto-fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;border:none;background:transparent;box-shadow:none;padding:0;backdrop-filter:none;"></div>
+        <div class="ov-bar-divider"></div>
+        <div id="ov-pulse-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;border:none;background:transparent;box-shadow:none;padding:0;backdrop-filter:none;"></div>
       </div>
 
       <!-- Period filter -->
@@ -6372,6 +6374,7 @@ async function _onAuthSuccess(user) {
   setInterval(_autoFlexSync, 30 * 60 * 1000);
   loadFearGreed();
   loadCryptoFearGreed();
+  ttLoad(false);
   // Offer localStorage migration on first login
   await offerMigration();
 }
@@ -13540,6 +13543,7 @@ function ttRender(themes, indices) {
         </div>
         <div class="tt-sent-sub">Breadth ${Math.round(breadthScore)}% · Avg ${avgPct >= 0 ? '+' : ''}${avgPct.toFixed(2)}% · ${total} themes</div>
       </div>`;
+    ttRenderPulseWidget(score, label, color);
   }
 
   // ── Meta: Top3/Bottom3 + Breadth ──
@@ -13597,6 +13601,31 @@ function ttRender(themes, indices) {
       <div class="tt-pct ${pos?'pos':'neg'}">${sign}${pct.toFixed(2)}%</div>
     </div>`;
   }).join('');
+}
+
+function ttRenderPulseWidget(score, label, color) {
+  const el = document.getElementById('ov-pulse-widget');
+  if (!el) return;
+  const R = 33, C = 40, FULL = 2 * Math.PI * R;
+  const dash = (score / 100) * FULL;
+  el.innerHTML = `
+    <div class="fg-gauge-wrap">
+      <svg width="80" height="80" viewBox="0 0 80 80">
+        <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/>
+        <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="${color}" stroke-width="6"
+          stroke-dasharray="${dash} ${FULL}" stroke-linecap="round"
+          style="filter:drop-shadow(0 0 6px ${color}80)"/>
+      </svg>
+      <div class="fg-gauge-text">
+        <span class="fg-score" style="color:${color}">${score}</span>
+        <span class="fg-score-sub">/100</span>
+      </div>
+    </div>
+    <div class="fg-info">
+      <div class="fg-label">Market Pulse</div>
+      <div class="fg-rating" style="color:${color}">${label}</div>
+      <div class="fg-source">Themes · ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
+    </div>`;
 }
 
 // ─────────────────────────────────────────────
