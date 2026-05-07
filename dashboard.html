@@ -1285,7 +1285,6 @@
     }
   }
 
-
   /* ══════════════════════════════════════
      IBKR STATUS DOT
   ══════════════════════════════════════ */
@@ -4891,7 +4890,6 @@
 </head>
 <body>
 
-
 <div class="ambient-blob ambient-blob-1"></div>
 <div class="ambient-blob ambient-blob-2"></div>
 
@@ -5449,7 +5447,6 @@
           <button class="btn btn-primary btn-sm" onclick="exportCSV('all')">ייצא הכל</button>
         </div>
       </div>
-
 
     </div>
 
@@ -7434,7 +7431,6 @@ function erSetPills(containerId, val) {
 // ══════════════════════════════════════════════
 const MOOD_OPTIONS = ['focused','calm','confident','stressed','impatient','doubtful'];
 
-
 // ══════════════════════════════════════════════
 // MINERVINI — PROCESS SCORE & MARKET CONDITION
 // ══════════════════════════════════════════════
@@ -7446,7 +7442,6 @@ function psSetStars(containerId, val) {
     s.className = parseInt(s.dataset.v) <= val ? 'on' : '';
   });
 }
-
 
 // ══════════════════════════════════════════════
 // QUICK ADD WIDGET
@@ -8255,7 +8250,6 @@ async function loadCryptoFearGreed() {
   _cfgTimer = setTimeout(loadCryptoFearGreed, 24 * 60 * 60 * 1000);
 }
 
-
 function renderOverview() {
   const now = new Date();
   const om = document.getElementById('ov-month');
@@ -8660,7 +8654,6 @@ function renderDonut(st, adv, trades) {
     </div>`;
   applyPrivacy();
 }
-
 
 function renderComparison(stTrades, crTrades) {
   function card(title, tr, accentColor) {
@@ -9954,7 +9947,6 @@ function ibkrConfirmTrade(idx) {
   }
   initFilters();
 }
-
 
 // ══════════════════════════════════════════════
 // TRADE SCREENSHOTS — IndexedDB
@@ -12324,7 +12316,6 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-
 // ===== INVESTMENTS TAB =====
 const INV_KEY = 'inv_data_v1';
 
@@ -13015,7 +13006,6 @@ async function invAnalyze() {
             : '➡️ מגמה רבעונית יציבה')
       : '';
 
-
     const epsNorm = m['epsNormalizedAnnual'] ?? m['epsTTM'];
 
     // ── Pre-flight data quality validation ──
@@ -13092,7 +13082,6 @@ async function invAnalyze() {
     // Revenue growth — show 3 timeframes so AI can judge trend, not outlier
     // Current ratio — annual → quarterly fallback
     const currentRatio = m['currentRatioAnnual'] ?? m['currentRatioQuarterly'];
-
 
     const fmtV = (v, suffix='') => v != null ? `${v}${suffix}` : '❓';
 
@@ -13325,7 +13314,6 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
 </script>
-
 
 </body>
 </html>
