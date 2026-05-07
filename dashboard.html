@@ -5531,6 +5531,7 @@
             <div class="s-row-desc">Interactive Brokers · Flex Web Service</div>
           </div>
           <div class="s-row-ctrl">
+            <span id="ibkr-conn-dot" style="display:none;width:8px;height:8px;border-radius:50%;background:#3fb950;box-shadow:0 0 6px rgba(63,185,80,0.6);flex-shrink:0;"></span>
             <svg class="s-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
         </div>
@@ -11200,11 +11201,11 @@ const FLEX_TOKEN_KEY = 'flex-token';
 const FLEX_QID_KEY   = 'flex-query-id';
 
 function flexInit() {
-  // Fields stay blank — credentials are stored server-side only.
-  // Status indicator is shown if the user has saved credentials.
   const hasToken = !!_userSettings.flex_token;
   const statusEl = document.getElementById('flex-status');
   if (statusEl && hasToken) flexSetStatus('פרטי IBKR שמורים ✓', 'var(--green)');
+  const dot = document.getElementById('ibkr-conn-dot');
+  if (dot) dot.style.display = hasToken ? 'inline-block' : 'none';
 }
 
 function toggleIbkrCard() {
@@ -11230,6 +11231,8 @@ async function flexSave() {
   document.getElementById('flex-query-id').value = '';
   toast('פרטי Flex נשמרו 🔐', 'success');
   flexSetStatus('פרטי IBKR שמורים ✓', 'var(--green)');
+  const dot = document.getElementById('ibkr-conn-dot');
+  if (dot) dot.style.display = 'inline-block';
 }
 
 function flexSetStatus(msg, color) {
