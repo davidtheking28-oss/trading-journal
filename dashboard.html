@@ -1495,6 +1495,25 @@
   .tt-breadth-neutral { color:var(--text3); }
   @media(max-width:700px) { .tt-indices { grid-template-columns:1fr 1fr 1fr; } .tt-meta { grid-template-columns:1fr; } .tt-index-pct { font-size:18px; } }
 
+  /* Sector Holdings Modal */
+  .sector-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1000; backdrop-filter:blur(2px); }
+  .sector-modal { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:1001; width:min(420px,92vw); background:#111; border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:20px; box-shadow:0 24px 60px rgba(0,0,0,0.6); }
+  .sector-modal-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:16px; }
+  .sector-modal-title { font-size:15px; font-weight:700; color:var(--text); }
+  .sector-modal-sub { font-size:11px; color:var(--text3); margin-top:3px; }
+  .sector-modal-close { background:none; border:none; color:var(--text3); font-size:16px; cursor:pointer; padding:0 2px; line-height:1; }
+  .sector-modal-close:hover { color:var(--text); }
+  .sector-modal-body { display:flex; flex-direction:column; gap:4px; }
+  .sector-holding-row { display:flex; align-items:center; gap:10px; padding:7px 10px; border-radius:7px; background:rgba(255,255,255,0.03); }
+  .sector-holding-sym { font-size:13px; font-weight:700; color:var(--text); width:54px; flex-shrink:0; }
+  .sector-holding-name { font-size:12px; color:var(--text2); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sector-holding-weight { font-size:11px; color:var(--text3); width:38px; text-align:right; flex-shrink:0; }
+  .sector-holding-pct { font-size:12px; font-weight:700; font-variant-numeric:tabular-nums; width:56px; text-align:right; flex-shrink:0; }
+  .sector-holding-pct.pos { color:var(--green); }
+  .sector-holding-pct.neg { color:var(--red); }
+  .sector-modal-loading { text-align:center; padding:30px 0; color:var(--text3); font-size:13px; }
+  .tt-row { cursor:pointer; }
+
   /* TLG drop zone */
   .tlg-drop {
     border: 1.5px dashed var(--border);
@@ -5590,6 +5609,19 @@
     </div>
 
     <!-- ===== THEME TRACKER ===== -->
+    <!-- Sector Holdings Modal -->
+    <div id="sector-modal-overlay" class="sector-modal-overlay" onclick="sectorModalClose()" style="display:none"></div>
+    <div id="sector-modal" class="sector-modal" style="display:none">
+      <div class="sector-modal-header">
+        <div>
+          <div class="sector-modal-title" id="sector-modal-title"></div>
+          <div class="sector-modal-sub" id="sector-modal-sub"></div>
+        </div>
+        <button class="sector-modal-close" onclick="sectorModalClose()">✕</button>
+      </div>
+      <div id="sector-modal-body" class="sector-modal-body"></div>
+    </div>
+
     <div id="tab-themes" class="tab-content">
       <div class="tt-header">
         <div class="tt-title">Market Pulse</div>
@@ -13598,7 +13630,7 @@ function ttRender(themes, indices) {
     const pos = pct >= 0;
     const barW = Math.min((Math.abs(pct) / maxAbs) * 48, 48);
     const sign = pos ? '+' : '';
-    return `<div class="tt-row">
+    return `<div class="tt-row" onclick="sectorModalOpen('${esc(t.ticker)}','${esc(t.name)}')">
       <div class="tt-name">${esc(t.name)}</div>
       <div class="tt-bar-wrap">
         <div class="tt-bar-bg"></div>
@@ -13635,6 +13667,54 @@ function ttRenderPulseWidget(score, label, color) {
 }
 
 // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// SECTOR HOLDINGS MODAL
+// ─────────────────────────────────────────────
+async function sectorModalOpen(ticker, name) {
+  const overlay = document.getElementById('sector-modal-overlay');
+  const modal   = document.getElementById('sector-modal');
+  const title   = document.getElementById('sector-modal-title');
+  const sub     = document.getElementById('sector-modal-sub');
+  const body    = document.getElementById('sector-modal-body');
+  if (!modal) return;
+
+  title.textContent = name;
+  sub.textContent   = ticker + ' — Top Holdings';
+  body.innerHTML    = '<div class="sector-modal-loading">Loading...</div>';
+  overlay.style.display = 'block';
+  modal.style.display   = 'block';
+
+  try {
+    const res = await fetch(
+      'https://fnklrqxwyeibfptaxewf.supabase.co/functions/v1/sector-holdings?ticker=' + ticker,
+      { headers: { 'Authorization': 'Bearer ' + _sb.supabaseKey, 'apikey': _sb.supabaseKey } }
+    );
+    const json = await res.json();
+    if (!json.holdings?.length) { body.innerHTML = '<div class="sector-modal-loading">No holdings data available</div>'; return; }
+
+    body.innerHTML = json.holdings.map(h => {
+      const pos = h.pct > 0, neg = h.pct < 0;
+      const cls = pos ? 'pos' : neg ? 'neg' : '';
+      const sign = pos ? '+' : '';
+      const pctStr = h.pct != null ? sign + h.pct.toFixed(2) + '%' : '—';
+      const wStr = h.weight != null ? (h.weight * 100).toFixed(1) + '%' : '';
+      return '<div class="sector-holding-row">'
+        + '<span class="sector-holding-sym">' + esc(h.symbol) + '</span>'
+        + '<span class="sector-holding-name">' + esc(h.name) + '</span>'
+        + '<span class="sector-holding-weight">' + wStr + '</span>'
+        + '<span class="sector-holding-pct ' + cls + '">' + pctStr + '</span>'
+        + '</div>';
+    }).join('');
+  } catch {
+    body.innerHTML = '<div class="sector-modal-loading">Error loading data</div>';
+  }
+}
+
+function sectorModalClose() {
+  document.getElementById('sector-modal-overlay').style.display = 'none';
+  document.getElementById('sector-modal').style.display = 'none';
+}
+
 // BROKER CSV IMPORT
 // ─────────────────────────────────────────────
 const BROKER_DEFS = {
