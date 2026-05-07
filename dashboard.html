@@ -1514,6 +1514,20 @@
   .sector-modal-loading { text-align:center; padding:30px 0; color:var(--text3); font-size:13px; }
   .tt-row { cursor:pointer; }
 
+  /* Profile & Language cards */
+  .profile-field-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+  .profile-field { display:flex; flex-direction:column; gap:5px; }
+  .profile-label { font-size:11px; color:var(--text3); font-weight:600; }
+  .profile-input { background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:7px; padding:8px 10px; color:var(--text); font-size:13px; outline:none; transition:border-color 0.15s; }
+  .profile-input:focus { border-color:var(--accent); }
+  .profile-input:disabled { opacity:0.45; cursor:not-allowed; }
+  .profile-email { font-size:12px; color:var(--text3); margin-top:2px; }
+  .lang-seg { display:flex; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:8px; padding:3px; gap:3px; width:fit-content; }
+  .lang-opt { background:none; border:none; color:var(--text3); font-size:13px; font-weight:600; padding:6px 20px; border-radius:6px; cursor:pointer; transition:all 0.15s; }
+  .lang-opt:hover { color:var(--text); }
+  .lang-opt.active { background:var(--accent); color:#fff; }
+  .lang-desc { font-size:11px; color:var(--text3); margin-top:8px; }
+
   /* TLG drop zone */
   .tlg-drop {
     border: 1.5px dashed var(--border);
@@ -5566,6 +5580,52 @@
         <button id="bi-import-btn" class="btn btn-primary btn-sm" style="display:none;margin-top:12px;" onclick="brokerImport()">ייבא עסקאות</button>
       </div>
 
+      <!-- Profile -->
+      <div class="ibkr-card c-purple span-2">
+        <div class="ibkr-card-header">
+          <div class="ibkr-card-title-wrap">
+            <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>
+            <span class="ibkr-card-title">Profile</span>
+          </div>
+        </div>
+        <div class="profile-field-row">
+          <div class="profile-field">
+            <label class="profile-label">First Name</label>
+            <input class="profile-input" id="profile-first" type="text" placeholder="First name" oninput="profileMarkDirty()">
+          </div>
+          <div class="profile-field">
+            <label class="profile-label">Last Name</label>
+            <input class="profile-input" id="profile-last" type="text" placeholder="Last name" oninput="profileMarkDirty()">
+          </div>
+        </div>
+        <div class="profile-field-row">
+          <div class="profile-field">
+            <label class="profile-label">Display Name</label>
+            <input class="profile-input" id="profile-display" type="text" placeholder="How it appears in the header" oninput="profileMarkDirty()">
+          </div>
+          <div class="profile-field">
+            <label class="profile-label">Email</label>
+            <input class="profile-input" id="profile-email" type="email" disabled>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" id="profile-save-btn" onclick="profileSave()" style="margin-top:4px;display:none;">Save Changes</button>
+      </div>
+
+      <!-- Language -->
+      <div class="ibkr-card c-blue">
+        <div class="ibkr-card-header">
+          <div class="ibkr-card-title-wrap">
+            <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
+            <span class="ibkr-card-title">Language</span>
+          </div>
+        </div>
+        <div class="lang-seg">
+          <button class="lang-opt" id="lang-en" onclick="setLang('en')">English</button>
+          <button class="lang-opt" id="lang-he" onclick="setLang('he')">עברית</button>
+        </div>
+        <div class="lang-desc" id="lang-desc"></div>
+      </div>
+
     </div>
 
     <!-- ===== MISSED OPPORTUNITIES ===== -->
@@ -6408,6 +6468,7 @@ async function _onAuthSuccess(user) {
   loadFearGreed();
   loadCryptoFearGreed();
   ttLoad(false);
+  langInit();
   // Offer localStorage migration on first login
   await offerMigration();
 }
@@ -6795,6 +6856,7 @@ function switchTab(name, btn) {
   if (name==='ibkr') {
     flexInit();
     renderSecurityStatus();
+    profileLoad();
   }
   if (name==='ai') {
     // Key is pre-filled by loadUserSettings() on login — nothing to do here
@@ -8295,6 +8357,98 @@ function renderTradingSummary(trades) {
       ${row('יחס מותאם (Adjusted W/L)', adjWL!==null?fmt(adjWL,2):'—', adjWL!==null&&adjWL>=1?'green':'red')}
     </tbody>
   </table>`;
+}
+
+// ─────────────────────────────────────────────
+// PROFILE
+// ─────────────────────────────────────────────
+function profileLoad() {
+  if (!_currentUser) return;
+  const m = _currentUser.user_metadata || {};
+  document.getElementById('profile-first').value   = m.first_name   || '';
+  document.getElementById('profile-last').value    = m.last_name    || '';
+  document.getElementById('profile-display').value = m.full_name    || '';
+  document.getElementById('profile-email').value   = _currentUser.email || '';
+  document.getElementById('profile-save-btn').style.display = 'none';
+}
+
+function profileMarkDirty() {
+  document.getElementById('profile-save-btn').style.display = 'inline-flex';
+}
+
+async function profileSave() {
+  const first   = document.getElementById('profile-first').value.trim();
+  const last    = document.getElementById('profile-last').value.trim();
+  const display = document.getElementById('profile-display').value.trim() || [first, last].filter(Boolean).join(' ') || _currentUser.email.split('@')[0];
+  const btn = document.getElementById('profile-save-btn');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+  try {
+    await _sb.auth.updateUser({ data: { first_name: first, last_name: last, full_name: display } });
+    const el = document.getElementById('header-user-name');
+    if (el) el.textContent = display;
+    document.getElementById('profile-display').value = display;
+    btn.style.display = 'none';
+    toast('Profile saved ✓', 'success');
+  } catch {
+    toast('Error saving profile', true);
+  } finally {
+    btn.textContent = 'Save Changes';
+    btn.disabled = false;
+  }
+}
+
+// ─────────────────────────────────────────────
+// LANGUAGE
+// ─────────────────────────────────────────────
+const LANG_STRINGS = {
+  en: {
+    nav_overview: 'Overview', nav_stocks: 'Stocks', nav_crypto: 'Crypto',
+    nav_statistics: 'Statistics', nav_settings: 'Settings', nav_themes: 'Market Pulse',
+    nav_ai: 'Minervini', nav_missed: 'Missed', nav_investments: 'Investments',
+    nav_section: 'Navigation',
+    add_trade: 'Add Trade',
+  },
+  he: {
+    nav_overview: 'סקירה כללית', nav_stocks: 'מניות', nav_crypto: 'קריפטו',
+    nav_statistics: 'סטטיסטיקות', nav_settings: 'הגדרות', nav_themes: 'Market Pulse',
+    nav_ai: 'Minervini', nav_missed: 'פוספסו', nav_investments: 'השקעות',
+    nav_section: 'ניווט',
+    add_trade: 'הוסף עסקה',
+  }
+};
+
+function setLang(lang) {
+  localStorage.setItem('tj_lang', lang);
+  const s = LANG_STRINGS[lang] || LANG_STRINGS.en;
+
+  // Top nav
+  const tnav = document.querySelectorAll('#top-nav .tnav-btn');
+  const tnavKeys = ['nav_overview','nav_stocks','nav_crypto','nav_statistics','nav_themes','nav_ai','nav_missed','nav_investments','nav_settings'];
+  tnav.forEach((btn, i) => { if (tnavKeys[i]) btn.textContent = s[tnavKeys[i]]; });
+
+  // Sidebar nav-labels
+  const sideKeys = ['nav_overview','nav_stocks','nav_crypto','nav_statistics','nav_settings','nav_themes','nav_ai','nav_missed','nav_investments'];
+  document.querySelectorAll('.sidebar-nav .nav-label').forEach((el, i) => { if (sideKeys[i]) el.textContent = s[sideKeys[i]]; });
+
+  // Sidebar section label
+  const sectionEl = document.querySelector('.sidebar-section-label');
+  if (sectionEl) sectionEl.textContent = s.nav_section;
+
+  // Add trade button
+  const addBtn = document.querySelector('.ov-top-bar .btn-primary');
+  if (addBtn) addBtn.childNodes[addBtn.childNodes.length - 1].textContent = ' ' + s.add_trade;
+
+  // Toggle buttons
+  document.getElementById('lang-en')?.classList.toggle('active', lang === 'en');
+  document.getElementById('lang-he')?.classList.toggle('active', lang === 'he');
+  const desc = document.getElementById('lang-desc');
+  if (desc) desc.textContent = lang === 'he' ? 'ממשק בעברית' : 'Interface in English';
+}
+
+function langInit() {
+  const saved = localStorage.getItem('tj_lang') || 'en';
+  setLang(saved);
 }
 
 // ── Fear & Greed Index ──────────────────────────
