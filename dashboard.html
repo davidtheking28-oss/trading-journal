@@ -5125,7 +5125,7 @@
         </div>
       </div>
       <div class="table-wrap" id="stocks-wrap"></div>
-      <div id="st-archive-wrap" style="display:none;margin-top:16px;"></div>
+      <div id="st-archive-wrap" style="display:none;margin-top:16px;border-top:1px solid var(--border);padding-top:16px;" data-open="0"></div>
     </div>
 
     <!-- ===== CRYPTO ===== -->
@@ -5149,7 +5149,7 @@
         </div>
       </div>
       <div class="table-wrap" id="crypto-wrap"></div>
-      <div id="cr-archive-wrap" style="display:none;margin-top:16px;"></div>
+      <div id="cr-archive-wrap" style="display:none;margin-top:16px;border-top:1px solid var(--border);padding-top:16px;" data-open="0"></div>
     </div>
 
     <!-- ===== STATISTICS ===== -->
@@ -7314,15 +7314,19 @@ function toggleInlineArchive(type) {
   const btnId  = type === 'stock' ? 'st-archive-btn'  : 'cr-archive-btn';
   const wrap = document.getElementById(wrapId);
   const btn  = document.getElementById(btnId);
-  if (!wrap) return;
-  if (wrap.style.display !== 'none') {
+  if (!wrap) { toast('שגיאה: לא נמצא אזור ארכיון', true); return; }
+  const isOpen = wrap.dataset.open === '1';
+  if (isOpen) {
     wrap.style.display = 'none';
+    wrap.dataset.open = '0';
     if (btn) btn.classList.remove('active');
-    return;
+  } else {
+    renderInlineArchive(type);
+    wrap.style.display = 'block';
+    wrap.dataset.open = '1';
+    if (btn) btn.classList.add('active');
+    wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
-  renderInlineArchive(type);
-  wrap.style.display = 'block';
-  if (btn) btn.classList.add('active');
 }
 
 function renderInlineArchive(type) {
