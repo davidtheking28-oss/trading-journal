@@ -13670,47 +13670,63 @@ function ttRenderPulseWidget(score, label, color) {
 // ─────────────────────────────────────────────
 // SECTOR HOLDINGS MODAL
 // ─────────────────────────────────────────────
-async function sectorModalOpen(ticker, name) {
-  const overlay = document.getElementById('sector-modal-overlay');
-  const modal   = document.getElementById('sector-modal');
-  const title   = document.getElementById('sector-modal-title');
-  const sub     = document.getElementById('sector-modal-sub');
-  const body    = document.getElementById('sector-modal-body');
-  if (!modal) return;
+let _sectorTimer = null, _sectorTicker = null;
 
-  title.textContent = name;
-  sub.textContent   = ticker + ' — Top Holdings';
-  body.innerHTML    = '<div class="sector-modal-loading">Loading...</div>';
-  overlay.style.display = 'block';
-  modal.style.display   = 'block';
+function _renderHoldings(holdings) {
+  const body = document.getElementById('sector-modal-body');
+  if (!body) return;
+  body.innerHTML = holdings.map(h => {
+    const pos = h.pct > 0, neg = h.pct < 0;
+    const cls = pos ? 'pos' : neg ? 'neg' : '';
+    const sign = pos ? '+' : '';
+    const pctStr = h.pct != null ? sign + h.pct.toFixed(2) + '%' : '—';
+    return '<div class="sector-holding-row">'
+      + '<span class="sector-holding-sym">' + esc(h.symbol) + '</span>'
+      + '<span class="sector-holding-name">' + esc(h.name) + '</span>'
+      + '<span class="sector-holding-pct ' + cls + '">' + pctStr + '</span>'
+      + '</div>';
+  }).join('');
+}
 
+async function _fetchAndRender(ticker, showLoading) {
+  const body = document.getElementById('sector-modal-body');
+  if (!body) return;
+  if (showLoading) body.innerHTML = '<div class="sector-modal-loading">Loading...</div>';
   try {
     const res = await fetch(
       'https://fnklrqxwyeibfptaxewf.supabase.co/functions/v1/sector-holdings?ticker=' + ticker,
       { headers: { 'Authorization': 'Bearer ' + _sb.supabaseKey, 'apikey': _sb.supabaseKey } }
     );
     const json = await res.json();
-    if (!json.holdings?.length) { body.innerHTML = '<div class="sector-modal-loading">No holdings data available</div>'; return; }
-
-    body.innerHTML = json.holdings.map(h => {
-      const pos = h.pct > 0, neg = h.pct < 0;
-      const cls = pos ? 'pos' : neg ? 'neg' : '';
-      const sign = pos ? '+' : '';
-      const pctStr = h.pct != null ? sign + h.pct.toFixed(2) + '%' : '—';
-      const wStr = h.weight != null ? (h.weight * 100).toFixed(1) + '%' : '';
-      return '<div class="sector-holding-row">'
-        + '<span class="sector-holding-sym">' + esc(h.symbol) + '</span>'
-        + '<span class="sector-holding-name">' + esc(h.name) + '</span>'
-        + '<span class="sector-holding-weight">' + wStr + '</span>'
-        + '<span class="sector-holding-pct ' + cls + '">' + pctStr + '</span>'
-        + '</div>';
-    }).join('');
+    if (!json.holdings?.length) { body.innerHTML = '<div class="sector-modal-loading">No holdings data</div>'; return; }
+    _renderHoldings(json.holdings);
+    const sub = document.getElementById('sector-modal-sub');
+    if (sub) sub.textContent = ticker + ' — updated ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   } catch {
-    body.innerHTML = '<div class="sector-modal-loading">Error loading data</div>';
+    if (showLoading) body.innerHTML = '<div class="sector-modal-loading">Error loading data</div>';
   }
 }
 
+async function sectorModalOpen(ticker, name) {
+  const overlay = document.getElementById('sector-modal-overlay');
+  const modal   = document.getElementById('sector-modal');
+  const title   = document.getElementById('sector-modal-title');
+  if (!modal) return;
+
+  _sectorTicker = ticker;
+  title.textContent = name;
+  overlay.style.display = 'block';
+  modal.style.display   = 'block';
+
+  clearInterval(_sectorTimer);
+  await _fetchAndRender(ticker, true);
+  _sectorTimer = setInterval(() => _fetchAndRender(_sectorTicker, false), 30000);
+}
+
 function sectorModalClose() {
+  clearInterval(_sectorTimer);
+  _sectorTimer = null;
+  _sectorTicker = null;
   document.getElementById('sector-modal-overlay').style.display = 'none';
   document.getElementById('sector-modal').style.display = 'none';
 }
