@@ -5122,6 +5122,7 @@
         <button class="btn btn-primary" onclick="openModal('stock')">+ הוסף עסקה חדשה</button>
         <button class="btn btn-export btn-sm view-toggle-btn" id="st-view-toggle" onclick="toggleTableView('stock')" title="החלף תצוגה"></button>
         <button class="btn btn-danger btn-sm" onclick="deduplicateDB('stock')" title="מחק עסקאות כפולות (זהות בסימבול + תאריך + מחיר)">🧹 נקה כפילויות</button>
+        <button class="btn btn-secondary btn-sm" id="st-archive-btn" onclick="toggleInlineArchive('stock')">📅 ארכיון</button>
         <span id="st-stats" style="color:var(--text2);font-size:12px;flex:1;text-align:center;"></span>
         <div class="search-input-wrap">
           <input class="search-input" id="st-search" placeholder="חיפוש סימבול..."
@@ -5129,6 +5130,7 @@
         </div>
       </div>
       <div class="table-wrap" id="stocks-wrap"></div>
+      <div id="st-archive-wrap" style="display:none;margin-top:16px;"></div>
     </div>
 
     <!-- ===== CRYPTO ===== -->
@@ -5144,6 +5146,7 @@
         <button class="btn btn-primary" onclick="openModal('crypto')">+ הוסף עסקה חדשה</button>
         <button class="btn btn-export btn-sm view-toggle-btn" id="cr-view-toggle" onclick="toggleTableView('crypto')" title="החלף תצוגה"></button>
         <button class="btn btn-danger btn-sm" onclick="deduplicateDB('crypto')" title="מחק עסקאות כפולות (זהות בסימבול + תאריך + מחיר)">🧹 נקה כפילויות</button>
+        <button class="btn btn-secondary btn-sm" id="cr-archive-btn" onclick="toggleInlineArchive('crypto')">📅 ארכיון</button>
         <span id="cr-stats" style="color:var(--text2);font-size:12px;flex:1;text-align:center;"></span>
         <div class="search-input-wrap">
           <input class="search-input" id="cr-search" placeholder="חיפוש סימבול..."
@@ -5151,6 +5154,7 @@
         </div>
       </div>
       <div class="table-wrap" id="crypto-wrap"></div>
+      <div id="cr-archive-wrap" style="display:none;margin-top:16px;"></div>
     </div>
 
     <!-- ===== ARCHIVE ===== -->
@@ -7313,6 +7317,78 @@ function archiveToggle(uid) {
   const open = body.style.display !== 'none';
   body.style.display = open ? 'none' : 'block';
   if (chev) chev.textContent = open ? '▼' : '▲';
+}
+
+function toggleInlineArchive(type) {
+  const wrapId = type === 'stock' ? 'st-archive-wrap' : 'cr-archive-wrap';
+  const btnId  = type === 'stock' ? 'st-archive-btn'  : 'cr-archive-btn';
+  const wrap = document.getElementById(wrapId);
+  const btn  = document.getElementById(btnId);
+  if (!wrap) return;
+  if (wrap.style.display !== 'none') {
+    wrap.style.display = 'none';
+    if (btn) btn.classList.remove('active');
+    return;
+  }
+  renderInlineArchive(type);
+  wrap.style.display = 'block';
+  if (btn) btn.classList.add('active');
+}
+
+function renderInlineArchive(type) {
+  const wrapId = type === 'stock' ? 'st-archive-wrap' : 'cr-archive-wrap';
+  const wrap = document.getElementById(wrapId);
+  if (!wrap) return;
+  const curYear = new Date().getFullYear();
+  const arr = type === 'stock' ? db.stocks : db.crypto;
+
+  const byYear = {};
+  arr.filter(t => !t.deleted && t.entryDate).forEach(t => {
+    const y = +t.entryDate.slice(0, 4);
+    if (y >= curYear) return;
+    if (!byYear[y]) byYear[y] = [];
+    byYear[y].push(t);
+  });
+
+  const years = Object.keys(byYear).map(Number).sort((a, b) => b - a);
+
+  if (!years.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">🗄</div><p>אין עסקאות בארכיון — כל העסקאות הן משנת ${curYear}</p></div>`;
+    return;
+  }
+
+  const typeLabel = type === 'stock' ? 'מניות' : 'קריפטו';
+  const uidPfx = type === 'stock' ? 'st-arc' : 'cr-arc';
+  let h = `<div style="padding:4px 0 16px;font-size:12px;color:var(--text3);">ארכיון ${typeLabel} מכיל עסקאות מלפני שנת ${curYear}. לחץ על שנה לפתיחה.</div>`;
+
+  years.forEach(y => {
+    const trades = byYear[y];
+    const yst = stats(trades);
+    const tc = yst.total >= 0 ? 'var(--green)' : 'var(--red)';
+    const uid = uidPfx + '-' + y;
+
+    h += `<div class="archive-year-block" id="${uid}-block">
+      <div class="archive-year-header" onclick="archiveToggle('${uid}')">
+        <span class="archive-year-label">📅 ${y}</span>
+        <span class="archive-year-summary">
+          ${trades.length} עסקאות &nbsp;|&nbsp;
+          P&L: <strong style="color:${tc}">${fmtUSD(yst.total)}</strong> &nbsp;|&nbsp;
+          Win: <strong>${fmt(yst.wr, 1)}%</strong> &nbsp;|&nbsp;
+          ${yst.wins}W / ${yst.losses}L
+        </span>
+        <span class="archive-chevron" id="${uid}-chev">▼</span>
+      </div>
+      <div class="archive-year-body" id="${uid}-body" style="display:none;">
+        <div class="archive-stats-row">`;
+    h += archiveStatCard(typeLabel + ' ' + y, fmtUSD(yst.total), tc, trades.length + ' עסקאות | Win ' + fmt(yst.wr, 1) + '%');
+    if (trades.length) h += archiveStatCard('עסקה הטובה', fmtUSD(yst.best), 'var(--green)', '');
+    if (trades.length) h += archiveStatCard('עסקה הגרועה', fmtUSD(yst.worst), 'var(--red)', '');
+    h += `</div>`;
+    h += archiveTradeTable(trades, type);
+    h += `</div></div>`;
+  });
+
+  wrap.innerHTML = h;
 }
 
 // ─────────────────────────────────────────────
