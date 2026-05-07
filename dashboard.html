@@ -1486,6 +1486,10 @@
   .tt-breadth-bar-wrap { height:8px; border-radius:4px; overflow:hidden; background:rgba(239,68,68,0.3); margin:10px 0 8px; }
   .tt-breadth-bar-fill { height:100%; background:var(--green); border-radius:4px; transition:width 0.4s ease; }
   .tt-breadth-labels { display:flex; justify-content:space-between; font-size:11px; }
+  .tt-breadth-chips { display:grid; grid-template-columns:1fr 1fr; gap:6px 10px; margin-top:10px; }
+  .tt-chip { font-size:11px; font-weight:600; padding:3px 7px; border-radius:4px; display:flex; justify-content:space-between; gap:6px; }
+  .tt-chip.green { background:rgba(34,197,94,0.1); color:var(--green); }
+  .tt-chip.red   { background:rgba(239,68,68,0.1);  color:var(--red); }
   .tt-breadth-green { color:var(--green); font-weight:700; }
   .tt-breadth-red { color:var(--red); font-weight:700; }
   .tt-breadth-neutral { color:var(--text3); }
@@ -13567,6 +13571,18 @@ function ttRender(themes, indices) {
           <span class="tt-breadth-neutral">${total} themes</span>
           <span class="tt-breadth-red">${100 - greenPct}% <span style="opacity:0.7">(${red})</span> ▼</span>
         </div>
+        <div class="tt-breadth-chips">${(() => {
+          const greens = sorted.filter(t => t[pKey] > 0).slice(0, 6);
+          const reds   = sorted.filter(t => t[pKey] < 0).slice(-6).reverse();
+          const rows = Math.max(greens.length, reds.length);
+          let html = '';
+          for (let i = 0; i < rows; i++) {
+            const g = greens[i], r = reds[i];
+            html += r ? `<div class="tt-chip red"><span>${esc(r.name)}</span><span>${r[pKey].toFixed(1)}%</span></div>` : '<div></div>';
+            html += g ? `<div class="tt-chip green"><span>${esc(g.name)}</span><span>+${g[pKey].toFixed(1)}%</span></div>` : '<div></div>';
+          }
+          return html;
+        })()}</div>
       </div>`;
   }
 
