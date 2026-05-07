@@ -13575,8 +13575,8 @@ function ttRender(themes, indices) {
       </div>`;
     const chipsEl = document.getElementById('tt-breadth-chips-inner');
     if (chipsEl) {
-      const greens = sorted.filter(t => t[pKey] > 0).slice(0, 6);
-      const reds   = sorted.filter(t => t[pKey] < 0).slice(-6).reverse();
+      const greens = sorted.filter(t => t[pKey] > 0).slice(0, 7);
+      const reds   = sorted.filter(t => t[pKey] < 0).slice(-7).reverse();
       const rows = Math.max(greens.length, reds.length);
       let chipsHtml = '';
       for (let i = 0; i < rows; i++) {
