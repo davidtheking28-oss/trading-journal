@@ -1434,6 +1434,29 @@
   .ibkr-trade-preview .det { color: var(--text2); }
   .ibkr-trades-list { margin-top: 12px; }
 
+  /* THEME TRACKER */
+  .tt-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+  .tt-title { font-size:16px; font-weight:700; color:var(--text); }
+  .tt-periods { display:flex; gap:4px; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:8px; padding:3px; }
+  .tt-period { background:none; border:none; color:var(--text3); font-size:12px; font-weight:600; padding:4px 12px; border-radius:6px; cursor:pointer; transition:all 0.15s; }
+  .tt-period:hover { color:var(--text); }
+  .tt-period.active { background:var(--accent); color:#fff; }
+  .tt-updated { font-size:11px; color:var(--text3); margin-right:auto; }
+  .tt-grid { display:grid; grid-template-columns:1fr 1fr; gap:2px; }
+  .tt-row { display:flex; align-items:center; gap:10px; padding:5px 8px; border-radius:6px; transition:background 0.1s; }
+  .tt-row:hover { background:rgba(255,255,255,0.03); }
+  .tt-name { font-size:12px; color:var(--text2); width:130px; flex-shrink:0; text-align:right; }
+  .tt-bar-wrap { flex:1; height:10px; position:relative; }
+  .tt-bar-bg { position:absolute; top:50%; transform:translateY(-50%); width:100%; height:1px; background:rgba(255,255,255,0.06); }
+  .tt-bar { position:absolute; top:50%; transform:translateY(-50%); height:8px; border-radius:2px; transition:width 0.4s ease; min-width:2px; }
+  .tt-bar.pos { background:var(--green); left:50%; }
+  .tt-bar.neg { background:var(--red); right:50%; }
+  .tt-pct { font-size:12px; font-weight:700; font-variant-numeric:tabular-nums; width:58px; text-align:left; flex-shrink:0; }
+  .tt-pct.pos { color:var(--green); }
+  .tt-pct.neg { color:var(--red); }
+  .tt-loading { grid-column:1/-1; text-align:center; padding:60px 0; color:var(--text3); font-size:13px; }
+  @media(max-width:700px) { .tt-grid { grid-template-columns:1fr; } .tt-name { width:110px; } }
+
   /* TLG drop zone */
   .tlg-drop {
     border: 1.5px dashed var(--border);
@@ -4950,6 +4973,7 @@
       <button class="tnav-btn" onclick="switchTab('stocks',this)">מניות</button>
       <button class="tnav-btn" onclick="switchTab('crypto',this)">קריפטו</button>
       <button class="tnav-btn" onclick="switchTab('statistics',this)">סטטיסטיקות</button>
+      <button class="tnav-btn" onclick="switchTab('themes',this)">Themes</button>
       <button class="tnav-btn" onclick="switchTab('ai',this)">Minervini</button>
       <button class="tnav-btn" onclick="switchTab('missed',this)">פוספסו</button>
       <button class="tnav-btn" onclick="switchTab('investments',this)">השקעות</button>
@@ -5022,6 +5046,10 @@
       <button class="tab-btn" onclick="switchTab('ibkr',this)" aria-label="IBKR">
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
         <span class="nav-label">IBKR</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('themes',this)" aria-label="Theme Tracker">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="1"/><rect x="13" y="2" width="9" height="9" rx="1"/><rect x="2" y="13" width="9" height="9" rx="1"/><rect x="13" y="13" width="9" height="9" rx="1"/></svg></span>
+        <span class="nav-label">Themes</span>
       </button>
       <button class="tab-btn ai-tab-btn" onclick="switchTab('ai',this)" aria-label="AI Minervini">
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a5 5 0 0 1 5 5c0 1.5-.6 2.8-1.6 3.8L17 20H7l1.6-9.2A5 5 0 0 1 7 7a5 5 0 0 1 5-5z"/><line x1="9" y1="20" x2="15" y2="20"/><circle cx="12" cy="7" r="1.5" fill="currentColor" opacity="0.6"/></svg></span>
@@ -5521,6 +5549,22 @@
           <div class="missed-empty">אין הזדמנויות שנרשמו עדיין — הוסף את הראשונה למעלה</div>
         </div>
       </div>
+    </div>
+
+    <!-- ===== THEME TRACKER ===== -->
+    <div id="tab-themes" class="tab-content">
+      <div class="tt-header">
+        <div class="tt-title">Theme Tracker</div>
+        <div class="tt-periods">
+          <button class="tt-period active" data-p="today" onclick="ttSetPeriod('today',this)">Today</button>
+          <button class="tt-period" data-p="w1" onclick="ttSetPeriod('w1',this)">1W</button>
+          <button class="tt-period" data-p="m1" onclick="ttSetPeriod('m1',this)">1M</button>
+          <button class="tt-period" data-p="m3" onclick="ttSetPeriod('m3',this)">3M</button>
+          <button class="tt-period" data-p="ytd" onclick="ttSetPeriod('ytd',this)">YTD</button>
+        </div>
+        <span class="tt-updated" id="tt-updated"></span>
+      </div>
+      <div id="tt-grid" class="tt-grid"></div>
     </div>
 
     <!-- ===== AI COACH ===== -->
@@ -6674,6 +6718,7 @@ function switchTab(name, btn) {
   }
   if (name==='archive') renderArchive();
   if (name==='statistics') renderStatistics();
+  if (name==='themes') ttLoad();
   if (name==='ibkr') {
     flexInit();
     renderSecurityStatus();
@@ -13341,6 +13386,66 @@ ${edgarData.latest8K.text.slice(0, 1500)}` : ''}`.trim();
     btn.disabled = false;
     btn.textContent = '▶ נתח מניה';
   }
+}
+
+// ─────────────────────────────────────────────
+// THEME TRACKER
+// ─────────────────────────────────────────────
+let _ttData = null, _ttPeriod = 'today', _ttLoading = false;
+
+function ttSetPeriod(p, btn) {
+  _ttPeriod = p;
+  document.querySelectorAll('.tt-period').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (_ttData) ttRender(_ttData);
+}
+
+async function ttLoad(force = false) {
+  if (_ttLoading) return;
+  if (_ttData && !force) { ttRender(_ttData); return; }
+  _ttLoading = true;
+  document.getElementById('tt-grid').innerHTML = '<div class="tt-loading">טוען נתונים...</div>';
+  try {
+    const res = await fetch(
+      'https://fnklrqxwyeibfptaxewf.supabase.co/functions/v1/theme-tracker',
+      { headers: { 'Authorization': `Bearer ${_sb.supabaseKey}`, 'apikey': _sb.supabaseKey } }
+    );
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    _ttData = json.themes;
+    const ts = new Date(json.ts);
+    const el = document.getElementById('tt-updated');
+    if (el) el.textContent = 'עודכן: ' + ts.toLocaleTimeString('he-IL', { hour:'2-digit', minute:'2-digit' });
+    ttRender(_ttData);
+  } catch(e) {
+    document.getElementById('tt-grid').innerHTML = '<div class="tt-loading">שגיאה בטעינת נתונים — נסה שוב</div>';
+  } finally {
+    _ttLoading = false;
+  }
+}
+
+function ttRender(themes) {
+  const grid = document.getElementById('tt-grid');
+  if (!grid) return;
+  const pKey = { today:'today', w1:'w1', m1:'m1', m3:'m3', ytd:'ytd' }[_ttPeriod];
+  const valid = themes.filter(t => t[pKey] != null);
+  const sorted = [...valid].sort((a, b) => b[pKey] - a[pKey]);
+  if (!sorted.length) { grid.innerHTML = '<div class="tt-loading">אין נתונים לתקופה זו</div>'; return; }
+  const maxAbs = Math.max(...sorted.map(t => Math.abs(t[pKey])), 0.01);
+  grid.innerHTML = sorted.map(t => {
+    const pct = t[pKey];
+    const pos = pct >= 0;
+    const barW = Math.min((Math.abs(pct) / maxAbs) * 48, 48);
+    const sign = pos ? '+' : '';
+    return `<div class="tt-row">
+      <div class="tt-name">${esc(t.name)}</div>
+      <div class="tt-bar-wrap">
+        <div class="tt-bar-bg"></div>
+        <div class="tt-bar ${pos?'pos':'neg'}" style="width:${barW}%"></div>
+      </div>
+      <div class="tt-pct ${pos?'pos':'neg'}">${sign}${pct.toFixed(2)}%</div>
+    </div>`;
+  }).join('');
 }
 
 // ─────────────────────────────────────────────
