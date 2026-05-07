@@ -1476,6 +1476,13 @@
   .tt-podium-pct { font-weight:700; font-variant-numeric:tabular-nums; }
   .tt-podium-pct.pos { color:var(--green); }
   .tt-podium-pct.neg { color:var(--red); }
+  .tt-sentiment { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:16px 20px; margin-bottom:10px; display:flex; align-items:center; gap:20px; }
+  .tt-sent-score { font-size:42px; font-weight:900; font-variant-numeric:tabular-nums; line-height:1; min-width:72px; }
+  .tt-sent-right { display:flex; flex-direction:column; gap:4px; }
+  .tt-sent-label { font-size:15px; font-weight:700; }
+  .tt-sent-sub { font-size:11px; color:var(--text3); }
+  .tt-sent-bar-wrap { flex:1; height:6px; border-radius:3px; background:rgba(255,255,255,0.07); overflow:hidden; }
+  .tt-sent-bar-fill { height:100%; border-radius:3px; transition:width 0.5s ease; }
   .tt-breadth-bar-wrap { height:8px; border-radius:4px; overflow:hidden; background:rgba(239,68,68,0.3); margin:10px 0 8px; }
   .tt-breadth-bar-fill { height:100%; background:var(--green); border-radius:4px; transition:width 0.4s ease; }
   .tt-breadth-labels { display:flex; justify-content:space-between; font-size:11px; }
@@ -5592,6 +5599,7 @@
         <span class="tt-updated" id="tt-updated"></span>
       </div>
       <div id="tt-indices" class="tt-indices"></div>
+      <div id="tt-sentiment" class="tt-sentiment" style="display:none"></div>
       <div id="tt-meta" class="tt-meta"></div>
       <div id="tt-grid" class="tt-grid"></div>
     </div>
@@ -13460,6 +13468,8 @@ async function ttLoad(force = false) {
   if (_idxEl) _idxEl.innerHTML = '';
   const _metaEl = document.getElementById('tt-meta');
   if (_metaEl) _metaEl.innerHTML = '';
+  const _sentEl = document.getElementById('tt-sentiment');
+  if (_sentEl) { _sentEl.style.display = 'none'; _sentEl.innerHTML = ''; }
   try {
     const res = await fetch(
       'https://fnklrqxwyeibfptaxewf.supabase.co/functions/v1/theme-tracker',
@@ -13505,6 +13515,32 @@ function ttRender(themes, indices) {
   const valid = themes.filter(t => t[pKey] != null);
   const sorted = [...valid].sort((a, b) => b[pKey] - a[pKey]);
   if (!sorted.length) { grid.innerHTML = '<div class="tt-loading">אין נתונים לתקופה זו</div>'; return; }
+
+  // ── Sentiment Score ──
+  const sentEl = document.getElementById('tt-sentiment');
+  if (sentEl) {
+    const green = sorted.filter(t => t[pKey] > 0).length;
+    const total = sorted.length;
+    const breadthScore = (green / total) * 100;
+    const avgPct = sorted.reduce((s, t) => s + t[pKey], 0) / total;
+    const momentumScore = Math.min(Math.max((avgPct + 5) / 10 * 100, 0), 100);
+    const score = Math.round(breadthScore * 0.5 + momentumScore * 0.5);
+    const [label, color] = score >= 80 ? ['Extreme Greed', '#22c55e']
+      : score >= 60 ? ['Greed', '#84cc16']
+      : score >= 40 ? ['Neutral', '#94a3b8']
+      : score >= 20 ? ['Fear', '#f97316']
+      : ['Extreme Fear', '#ef4444'];
+    sentEl.style.display = 'flex';
+    sentEl.innerHTML = `
+      <div class="tt-sent-score" style="color:${color}">${score}</div>
+      <div class="tt-sent-right" style="flex:1">
+        <div class="tt-sent-label" style="color:${color}">${label}</div>
+        <div class="tt-sent-bar-wrap">
+          <div class="tt-sent-bar-fill" style="width:${score}%;background:${color}"></div>
+        </div>
+        <div class="tt-sent-sub">Breadth ${Math.round(breadthScore)}% · Avg ${avgPct >= 0 ? '+' : ''}${avgPct.toFixed(2)}% · ${total} themes</div>
+      </div>`;
+  }
 
   // ── Meta: Top3/Bottom3 + Breadth ──
   const metaEl = document.getElementById('tt-meta');
