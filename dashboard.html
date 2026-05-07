@@ -4969,15 +4969,15 @@
 
     <!-- Center Nav Tabs -->
     <div id="top-nav" style="display:flex;align-items:stretch;flex:1;justify-content:center;overflow-x:auto;scrollbar-width:none;">
-      <button class="tnav-btn active" onclick="switchTab('overview',this)">סקירה כללית</button>
-      <button class="tnav-btn" onclick="switchTab('stocks',this)">מניות</button>
-      <button class="tnav-btn" onclick="switchTab('crypto',this)">קריפטו</button>
-      <button class="tnav-btn" onclick="switchTab('statistics',this)">סטטיסטיקות</button>
+      <button class="tnav-btn active" onclick="switchTab('overview',this)">Overview</button>
+      <button class="tnav-btn" onclick="switchTab('stocks',this)">Stocks</button>
+      <button class="tnav-btn" onclick="switchTab('crypto',this)">Crypto</button>
+      <button class="tnav-btn" onclick="switchTab('statistics',this)">Statistics</button>
       <button class="tnav-btn" onclick="switchTab('themes',this)">Themes</button>
       <button class="tnav-btn" onclick="switchTab('ai',this)">Minervini</button>
-      <button class="tnav-btn" onclick="switchTab('missed',this)">פוספסו</button>
-      <button class="tnav-btn" onclick="switchTab('investments',this)">השקעות</button>
-      <button class="tnav-btn" onclick="switchTab('ibkr',this)">הגדרות</button>
+      <button class="tnav-btn" onclick="switchTab('missed',this)">Missed</button>
+      <button class="tnav-btn" onclick="switchTab('investments',this)">Investments</button>
+      <button class="tnav-btn" onclick="switchTab('ibkr',this)">Settings</button>
     </div>
 
     <!-- Actions -->
@@ -5024,28 +5024,28 @@
       <span class="sidebar-brand-name" id="header-user-name">Trading Journal</span>
     </div>
 
-    <div class="sidebar-section-label">ניווט</div>
+    <div class="sidebar-section-label">Navigation</div>
 
     <nav class="sidebar-nav">
-      <button class="tab-btn active" onclick="switchTab('overview',this)" aria-label="סקירה כללית">
+      <button class="tab-btn active" onclick="switchTab('overview',this)" aria-label="Overview">
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
-        <span class="nav-label">סקירה כללית</span>
+        <span class="nav-label">Overview</span>
       </button>
-      <button class="tab-btn" onclick="switchTab('stocks',this)" aria-label="מניות">
+      <button class="tab-btn" onclick="switchTab('stocks',this)" aria-label="Stocks">
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></span>
-        <span class="nav-label">מניות</span>
+        <span class="nav-label">Stocks</span>
       </button>
-      <button class="tab-btn" onclick="switchTab('crypto',this)" aria-label="קריפטו">
+      <button class="tab-btn" onclick="switchTab('crypto',this)" aria-label="Crypto">
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 8.5h4a2 2 0 0 1 0 4h-4zm0 4h4.5a2 2 0 0 1 0 4h-4.5z"/><line x1="10.5" y1="8.5" x2="10.5" y2="7"/><line x1="13.5" y1="8.5" x2="13.5" y2="7"/><line x1="10.5" y1="16.5" x2="10.5" y2="18"/><line x1="13.5" y1="16.5" x2="13.5" y2="18"/></svg></span>
-        <span class="nav-label">קריפטו</span>
+        <span class="nav-label">Crypto</span>
       </button>
-      <button class="tab-btn" onclick="switchTab('statistics',this)" aria-label="סטטיסטיקות">
+      <button class="tab-btn" onclick="switchTab('statistics',this)" aria-label="Statistics">
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></span>
-        <span class="nav-label">סטטיסטיקות</span>
+        <span class="nav-label">Statistics</span>
       </button>
-      <button class="tab-btn" onclick="switchTab('ibkr',this)" aria-label="IBKR">
+      <button class="tab-btn" onclick="switchTab('ibkr',this)" aria-label="Settings">
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
-        <span class="nav-label">IBKR</span>
+        <span class="nav-label">Settings</span>
       </button>
       <button class="tab-btn" onclick="switchTab('themes',this)" aria-label="Theme Tracker">
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="1"/><rect x="13" y="2" width="9" height="9" rx="1"/><rect x="2" y="13" width="9" height="9" rx="1"/><rect x="13" y="13" width="9" height="9" rx="1"/></svg></span>
@@ -5055,13 +5055,13 @@
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a5 5 0 0 1 5 5c0 1.5-.6 2.8-1.6 3.8L17 20H7l1.6-9.2A5 5 0 0 1 7 7a5 5 0 0 1 5-5z"/><line x1="9" y1="20" x2="15" y2="20"/><circle cx="12" cy="7" r="1.5" fill="currentColor" opacity="0.6"/></svg></span>
         <span class="nav-label">Minervini</span>
       </button>
-      <button class="tab-btn" onclick="switchTab('missed',this)" aria-label="הזדמנויות שפוספסו">
+      <button class="tab-btn" onclick="switchTab('missed',this)" aria-label="Missed Opportunities">
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></span>
-        <span class="nav-label">פוספס</span>
+        <span class="nav-label">Missed</span>
       </button>
-      <button class="tab-btn" onclick="switchTab('investments',this)" aria-label="השקעות">
+      <button class="tab-btn" onclick="switchTab('investments',this)" aria-label="Investments">
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
-        <span class="nav-label">השקעות</span>
+        <span class="nav-label">Investments</span>
       </button>
     </nav>
 
