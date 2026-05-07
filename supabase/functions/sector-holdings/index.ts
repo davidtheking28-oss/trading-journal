@@ -12,30 +12,27 @@ const YF_HEADERS = {
   'Accept-Language': 'en-US,en;q=0.9',
 };
 
-async function fetchPct(symbol: string): Promise<{ symbol: string; name: string; pct: number | null }> {
+async function fetchPct(symbol: string, idx: number): Promise<{ symbol: string; name: string; pct: number | null }> {
+  // Stagger requests to avoid Yahoo Finance rate limiting
+  await new Promise(r => setTimeout(r, idx * 120));
+  const hosts = ['query1', 'query2'];
+  const host = hosts[idx % 2];
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=5d&interval=1d`;
+    const url = `https://${host}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=5d&interval=1d`;
     const res = await fetch(url, { headers: YF_HEADERS });
-    if (!res.ok) return { symbol, name: symbol, pct: null };
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
     const result = json?.chart?.result?.[0];
     if (!result) return { symbol, name: symbol, pct: null };
     const meta = result.meta;
-    const closes: number[] = result.indicators?.quote?.[0]?.close ?? [];
-    const valid = closes.filter((c: number) => c != null && c > 0);
+    const closes: number[] = (result.indicators?.quote?.[0]?.close ?? []).filter((c: number) => c != null && c > 0);
 
-    let pct = meta?.regularMarketChangePercent ?? null;
-    if (pct == null && valid.length >= 2) {
-      const last = valid[valid.length - 1];
-      const prev = valid[valid.length - 2];
-      pct = ((last - prev) / prev) * 100;
+    let pct: number | null = typeof meta?.regularMarketChangePercent === 'number' ? meta.regularMarketChangePercent : null;
+    if (pct == null && closes.length >= 2) {
+      pct = ((closes[closes.length - 1] - closes[closes.length - 2]) / closes[closes.length - 2]) * 100;
     }
 
-    return {
-      symbol,
-      name: meta?.shortName || meta?.longName || symbol,
-      pct,
-    };
+    return { symbol, name: meta?.shortName || meta?.longName || symbol, pct };
   } catch {
     return { symbol, name: symbol, pct: null };
   }
@@ -86,7 +83,7 @@ serve(async (req: Request) => {
     const symbols = HOLDINGS[ticker];
     if (!symbols?.length) return new Response(JSON.stringify({ holdings: [] }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
 
-    const results = await Promise.all(symbols.map(fetchPct));
+    const results = await Promise.all(symbols.map((s, i) => fetchPct(s, i)));
 
     results.sort((a, b) => Math.abs(b.pct ?? 0) - Math.abs(a.pct ?? 0));
 
