@@ -1328,6 +1328,20 @@
     align-items: start;
   }
 
+  .settings-group-hdr {
+    grid-column: 1 / -1;
+    display: flex; align-items: center; gap: 10px;
+    padding: 4px 0 2px;
+    margin-top: 4px;
+  }
+  .settings-group-hdr:first-child { margin-top: 0; }
+  .settings-group-hdr-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
+    text-transform: uppercase; color: var(--text3);
+    white-space: nowrap;
+  }
+  .settings-group-hdr-line { flex: 1; height: 1px; background: var(--border); }
+
   .ibkr-card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -5400,9 +5414,90 @@
       </div>
     </div>
 
-    <!-- ===== IBKR ===== -->
+    <!-- ===== SETTINGS ===== -->
 
     <div id="tab-ibkr" class="tab-content">
+
+      <!-- ── Account ── -->
+      <div class="settings-group-hdr">
+        <span class="settings-group-hdr-label" data-i18n="set_grp_account">Account</span>
+        <span class="settings-group-hdr-line"></span>
+      </div>
+
+      <!-- Profile -->
+      <div class="ibkr-card c-purple span-2">
+        <div class="ibkr-card-header">
+          <div class="ibkr-card-title-wrap">
+            <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>
+            <span class="ibkr-card-title" data-i18n="settings_profile">Profile</span>
+          </div>
+        </div>
+        <div class="profile-field-row">
+          <div class="profile-field">
+            <label class="profile-label" data-i18n="settings_first">First Name</label>
+            <input class="profile-input" id="profile-first" type="text" placeholder="First name" oninput="profileMarkDirty()">
+          </div>
+          <div class="profile-field">
+            <label class="profile-label" data-i18n="settings_last">Last Name</label>
+            <input class="profile-input" id="profile-last" type="text" placeholder="Last name" oninput="profileMarkDirty()">
+          </div>
+        </div>
+        <div class="profile-field-row">
+          <div class="profile-field">
+            <label class="profile-label" data-i18n="settings_display">Display Name</label>
+            <input class="profile-input" id="profile-display" type="text" placeholder="How it appears in the header" oninput="profileMarkDirty()">
+          </div>
+          <div class="profile-field">
+            <label class="profile-label" data-i18n="settings_email">Email</label>
+            <input class="profile-input" id="profile-email" type="email" disabled>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" id="profile-save-btn" onclick="profileSave()" style="margin-top:4px;display:none;" data-i18n="settings_save_profile">Save Profile</button>
+      </div>
+
+      <!-- Language -->
+      <div class="ibkr-card c-blue">
+        <div class="ibkr-card-header">
+          <div class="ibkr-card-title-wrap">
+            <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
+            <span class="ibkr-card-title" data-i18n="settings_lang">Language</span>
+          </div>
+        </div>
+        <div class="lang-seg">
+          <button class="lang-opt" id="lang-en" onclick="setLang('en')">English</button>
+          <button class="lang-opt" id="lang-he" onclick="setLang('he')">עברית</button>
+        </div>
+        <div class="lang-desc" id="lang-desc"></div>
+      </div>
+
+      <!-- ── Security & Data Sources ── -->
+      <div class="settings-group-hdr">
+        <span class="settings-group-hdr-label" data-i18n="set_grp_data">Data Sources & Security</span>
+        <span class="settings-group-hdr-line"></span>
+      </div>
+
+      <!-- Security -->
+      <div class="ibkr-card c-purple">
+        <div class="ibkr-card-header">
+          <div class="ibkr-card-title-wrap">
+            <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+            <span class="ibkr-card-title" data-i18n="set_security">Security</span>
+          </div>
+          <span class="ibkr-card-badge badge-secure">Defense in Depth</span>
+        </div>
+        <div class="sec-grid">
+          <div class="sec-row"><span class="sec-dot" id="sec-pin-dot"></span><span id="sec-pin-lbl">PIN</span></div>
+          <div class="sec-row"><span class="sec-dot" id="sec-2fa-dot"></span><span id="sec-2fa-lbl">TOTP 2FA</span></div>
+        </div>
+        <div class="totp-section">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--text);" data-i18n="set_2fa">Two-Factor Authentication</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;" id="totp-status-text">בודק...</div>
+          </div>
+          <button id="totp-toggle-btn" class="btn btn-secondary btn-sm" onclick="totpToggle()">—</button>
+        </div>
+        <div id="totp-setup-area" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);"></div>
+      </div>
 
       <!-- Stocks -->
       <div class="ibkr-card c-green">
@@ -5454,30 +5549,13 @@
         </div>
       </div>
 
-      <!-- Security -->
-      <div class="ibkr-card c-purple">
-        <div class="ibkr-card-header">
-          <div class="ibkr-card-title-wrap">
-            <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-            <span class="ibkr-card-title" data-i18n="set_security">Security</span>
-          </div>
-          <span class="ibkr-card-badge badge-secure">Defense in Depth</span>
-        </div>
-        <div class="sec-grid">
-          <div class="sec-row"><span class="sec-dot" id="sec-pin-dot"></span><span id="sec-pin-lbl">PIN</span></div>
-          <div class="sec-row"><span class="sec-dot" id="sec-2fa-dot"></span><span id="sec-2fa-lbl">TOTP 2FA</span></div>
-        </div>
-        <div class="totp-section">
-          <div>
-            <div style="font-size:12px;font-weight:600;color:var(--text);" data-i18n="set_2fa">Two-Factor Authentication</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:2px;" id="totp-status-text">בודק...</div>
-          </div>
-          <button id="totp-toggle-btn" class="btn btn-secondary btn-sm" onclick="totpToggle()">—</button>
-        </div>
-        <div id="totp-setup-area" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);"></div>
+      <!-- ── Import / Export ── -->
+      <div class="settings-group-hdr">
+        <span class="settings-group-hdr-label" data-i18n="set_grp_import">Import / Export</span>
+        <span class="settings-group-hdr-line"></span>
       </div>
 
-      <!-- Flex Sync -->
+      <!-- IBKR Sync -->
       <div class="ibkr-card c-blue span-2">
         <div class="ibkr-card-header">
           <div class="ibkr-card-title-wrap">
@@ -5550,7 +5628,7 @@
       </div>
 
       <!-- Broker CSV Import -->
-      <div class="ibkr-card c-blue full-width">
+      <div class="ibkr-card c-blue span-2">
         <div class="ibkr-card-header">
           <div class="ibkr-card-title-wrap">
             <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
@@ -5580,52 +5658,6 @@
         <div id="bi-mapping" style="display:none;"></div>
         <div id="bi-preview" style="display:none;"></div>
         <button id="bi-import-btn" class="btn btn-primary btn-sm" style="display:none;margin-top:12px;" onclick="brokerImport()" data-i18n="set_import_btn">Import Trades</button>
-      </div>
-
-      <!-- Profile -->
-      <div class="ibkr-card c-purple span-2">
-        <div class="ibkr-card-header">
-          <div class="ibkr-card-title-wrap">
-            <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>
-            <span class="ibkr-card-title">Profile</span>
-          </div>
-        </div>
-        <div class="profile-field-row">
-          <div class="profile-field">
-            <label class="profile-label">First Name</label>
-            <input class="profile-input" id="profile-first" type="text" placeholder="First name" oninput="profileMarkDirty()">
-          </div>
-          <div class="profile-field">
-            <label class="profile-label">Last Name</label>
-            <input class="profile-input" id="profile-last" type="text" placeholder="Last name" oninput="profileMarkDirty()">
-          </div>
-        </div>
-        <div class="profile-field-row">
-          <div class="profile-field">
-            <label class="profile-label">Display Name</label>
-            <input class="profile-input" id="profile-display" type="text" placeholder="How it appears in the header" oninput="profileMarkDirty()">
-          </div>
-          <div class="profile-field">
-            <label class="profile-label">Email</label>
-            <input class="profile-input" id="profile-email" type="email" disabled>
-          </div>
-        </div>
-        <button class="btn btn-primary btn-sm" id="profile-save-btn" onclick="profileSave()" style="margin-top:4px;display:none;">Save Changes</button>
-      </div>
-
-      <!-- Language -->
-      <div class="ibkr-card c-blue">
-        <div class="ibkr-card-header">
-          <div class="ibkr-card-title-wrap">
-            <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
-            <span class="ibkr-card-title">Language</span>
-          </div>
-        </div>
-        <div class="lang-seg">
-          <button class="lang-opt" id="lang-en" onclick="setLang('en')">English</button>
-          <button class="lang-opt" id="lang-he" onclick="setLang('he')">עברית</button>
-        </div>
-        <div class="lang-desc" id="lang-desc"></div>
       </div>
 
     </div>
@@ -8510,6 +8542,7 @@ const LANG_STRINGS = {
     set_finnhub_key:'Finnhub Key (Admin only)',
     set_av_key:'Alpha Vantage Key — financial data for all stocks including small caps',
     set_get_free_key:'Get free key',
+    set_grp_account:'Account', set_grp_data:'Data Sources & Security', set_grp_import:'Import / Export',
   },
   he: {
     nav_overview:'סקירה כללית', nav_stocks:'מניות', nav_crypto:'קריפטו',
@@ -8606,6 +8639,7 @@ const LANG_STRINGS = {
     set_finnhub_key:'מפתח Finnhub (Admin בלבד)',
     set_av_key:'מפתח Alpha Vantage — נתונים פיננסיים לכל מניה כולל סמולקאפ',
     set_get_free_key:'קבל מפתח חינמי',
+    set_grp_account:'חשבון', set_grp_data:'מקורות נתונים ואבטחה', set_grp_import:'ייבוא / ייצוא',
   }
 };
 
