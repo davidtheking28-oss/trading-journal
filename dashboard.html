@@ -10690,6 +10690,7 @@ function rtAutoFill(symInputId, statusId) {
   qaInit();
   initMediaDB().catch(e => console.warn('[Screenshots] IndexedDB init failed:', e));
   loadCryptoSymbolsFromCoinGecko();
+  ttScheduleMidnight();
 
   // Check for an existing Supabase session (persisted from last visit)
   const { data: { session } } = await _sb.auth.getSession();
@@ -13404,6 +13405,18 @@ function ttSetPeriod(p, btn) {
 function ttStartTimer() {
   ttStopTimer();
   _ttTimer = setInterval(() => ttLoad(true), 60000);
+}
+
+function ttScheduleMidnight() {
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(24, 0, 30, 0); // 00:00:30 Israel time next day
+  const ms = next - now;
+  setTimeout(() => {
+    _ttData = null; // force fresh fetch
+    if (document.getElementById('tab-themes')?.classList.contains('active')) ttLoad(true);
+    ttScheduleMidnight(); // reschedule for next day
+  }, ms);
 }
 
 function ttStopTimer() {
