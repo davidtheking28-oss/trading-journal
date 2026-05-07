@@ -6791,7 +6791,7 @@ function switchTab(name, btn) {
   }
   if (name==='archive') renderArchive();
   if (name==='statistics') renderStatistics();
-  if (name==='themes') ttLoad(true);
+  if (name==='themes') { ttLoad(true); ttStartTimer(); } else { ttStopTimer(); }
   if (name==='ibkr') {
     flexInit();
     renderSecurityStatus();
