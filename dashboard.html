@@ -3538,10 +3538,11 @@
   .inv-alloc-donut-row { display: flex; gap: 20px; align-items: flex-start; }
   .inv-alloc-bars { flex: 1; display: flex; flex-direction: column; gap: 10px; }
   .inv-donut-wrap { display: flex; flex-direction: row; align-items: center; gap: 16px; flex-shrink: 0; }
-  .inv-donut-legend { display: flex; flex-direction: column; gap: 10px; }
+  .inv-donut-legend { display: flex; flex-direction: column; gap: 10px; direction: ltr; }
   .inv-donut-leg-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text2); }
-  .inv-donut-leg-row .inv-leg-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-  .inv-donut-leg-row b { color: var(--text); font-size: 13px; }
+  .inv-donut-leg-row .inv-leg-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .inv-donut-leg-row .inv-leg-label { flex: 1; white-space: nowrap; }
+  .inv-donut-leg-row b { color: var(--text); font-size: 13px; min-width: 38px; text-align: right; }
   .inv-cat-sel { background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 4px 6px; font-size: 11px; color: var(--text); cursor: pointer; }
   .inv-deposits-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
   .inv-deposits-header { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text); }
@@ -5842,10 +5843,10 @@
                 <text x="65" y="74" text-anchor="middle" fill="var(--text3)" font-size="9" id="donut-allocated-label">Allocated</text>
               </svg>
               <div class="inv-donut-legend">
-                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:#818cf8"></span><span data-i18n="inv_legend_blue">🔵 Blue Chips</span>&nbsp;<b id="leg-blue">0%</b></div>
-                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:#34d399"></span><span data-i18n="inv_legend_green">🟢 Growth</span>&nbsp;<b id="leg-green">0%</b></div>
-                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:#fbbf24"></span><span data-i18n="inv_legend_yellow">🟡 Speculative</span>&nbsp;<b id="leg-yellow">0%</b></div>
-                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:rgba(255,255,255,0.2)"></span><span data-i18n="inv_cash">💵 Cash</span>&nbsp;<b id="leg-cash">100%</b></div>
+                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:#818cf8"></span><span class="inv-leg-label" data-i18n="inv_legend_blue">Blue Chips</span><b id="leg-blue">0%</b></div>
+                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:#34d399"></span><span class="inv-leg-label" data-i18n="inv_legend_green">Growth</span><b id="leg-green">0%</b></div>
+                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:#fbbf24"></span><span class="inv-leg-label" data-i18n="inv_legend_yellow">Speculative</span><b id="leg-yellow">0%</b></div>
+                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:rgba(255,255,255,0.25)"></span><span class="inv-leg-label" data-i18n="inv_cash">Cash</span><b id="leg-cash">100%</b></div>
               </div>
             </div>
           </div>
@@ -7158,7 +7159,7 @@ function renderTable(type) {
 
   // info
   const info = document.getElementById(p+'-filter-info');
-  if (info) info.textContent = (month||year) ? `מציג: ${month ? MONTHS[+month-1] : ''} ${year||''}`.trim() : '';
+  if (info) info.textContent = (month||year) ? `${month ? months()[+month-1] : ''} ${year||''}`.trim() : '';
 
   if (!trades.length) {
     wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">${type==='stock'?'📋':'₿'}</div><p>${t('no_trades')}</p></div>`;
@@ -8314,7 +8315,7 @@ function renderMonthlyTracker(trades) {
   });
 
   // AVG row
-  let avgRow = '<tr><td>ממוצע</td>';
+  let avgRow = `<tr><td>${t('mt_avg_row')}</td>`;
   if (validMonths.length) {
     const avg = f => { const vals=validMonths.filter(s=>s[f]!==null); return vals.length?vals.reduce((a,s)=>a+s[f],0)/vals.length:null; };
     const avgWR = validMonths.reduce((a,s)=>a+s.winRate,0)/validMonths.length;
@@ -8336,14 +8337,14 @@ function renderMonthlyTracker(trades) {
   wrap.innerHTML = `<table class="mt-table">
     <thead><tr>
       <th></th>
-      <th>ממוצע רווח %</th>
-      <th>ממוצע הפסד %</th>
+      <th>${t('mt_avg_gain')}</th>
+      <th>${t('mt_avg_loss')}</th>
       <th>WIN %</th>
-      <th>סה"כ עסקאות</th>
-      <th>רווח מקסימלי</th>
-      <th>הפסד מקסימלי</th>
-      <th>ימים ממוצע (רווח)</th>
-      <th>ימים ממוצע (הפסד)</th>
+      <th>${t('mt_total_trades')}</th>
+      <th>${t('mt_max_gain')}</th>
+      <th>${t('mt_max_loss')}</th>
+      <th>${t('mt_avg_days_win')}</th>
+      <th>${t('mt_avg_days_loss')}</th>
     </tr></thead>
     <tbody>${rows}${avgRow}</tbody>
   </table>`;
@@ -8353,7 +8354,7 @@ function renderTradingSummary(trades) {
   const wrap = document.getElementById('trading-summary-wrap');
   if (!wrap) return;
   const closed = trades.filter(t => t.exitPrice > 0 && t.closedShares > 0);
-  if (!closed.length) { wrap.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:8px 0;">אין עסקאות סגורות להצגה</div>'; return; }
+  if (!closed.length) { wrap.innerHTML = `<div style="color:var(--text3);font-size:13px;padding:8px 0;">${t('ts_no_closed')}</div>`; return; }
 
   const winners = closed.filter(t => calcPL(t) > 0);
   const losers  = closed.filter(t => calcPL(t) < 0);
@@ -8369,11 +8370,11 @@ function renderTradingSummary(trades) {
 
   wrap.innerHTML = `<table class="ts-table">
     <tbody>
-      ${row('אחוז ניצחון', fmt(wr,2)+'%', wr>=50?'green':'red')}
-      ${row('ממוצע רווח %', '+'+fmt(avgGainPct,2)+'%', 'green')}
-      ${row('ממוצע הפסד %', '-'+fmt(avgLossPct,2)+'%', 'red')}
-      ${row('יחס רווח/הפסד', wlRatio!==null?fmt(wlRatio,2)+'x':'—', wlRatio!==null&&wlRatio>=1?'green':'red')}
-      ${row('יחס מותאם (Adjusted W/L)', adjWL!==null?fmt(adjWL,2):'—', adjWL!==null&&adjWL>=1?'green':'red')}
+      ${row(t('ts_win_rate'), fmt(wr,2)+'%', wr>=50?'green':'red')}
+      ${row(t('ts_avg_gain_pct'), '+'+fmt(avgGainPct,2)+'%', 'green')}
+      ${row(t('ts_avg_loss_pct'), '-'+fmt(avgLossPct,2)+'%', 'red')}
+      ${row(t('ts_gl_ratio'), wlRatio!==null?fmt(wlRatio,2)+'x':'—', wlRatio!==null&&wlRatio>=1?'green':'red')}
+      ${row(t('ts_adj_wl'), adjWL!==null?fmt(adjWL,2):'—', adjWL!==null&&adjWL>=1?'green':'red')}
     </tbody>
   </table>`;
 }
@@ -8483,8 +8484,8 @@ const LANG_STRINGS = {
     inv_deposits:'Monthly Deposits', inv_add_deposit:'+ Add Deposit',
     inv_total_dep:'Total Deposited', inv_portfolio_now:'Portfolio Value Now',
     inv_pnl:'P&L', inv_dep_month:'Month', inv_dep_amount:'Deposit',
-    inv_dep_cumulative:'Cumulative', inv_cash:'💵 Cash',
-    inv_legend_blue:'🔵 Blue Chips', inv_legend_green:'🟢 Growth', inv_legend_yellow:'🟡 Speculative',
+    inv_dep_cumulative:'Cumulative', inv_cash:'Cash',
+    inv_legend_blue:'Blue Chips', inv_legend_green:'Growth', inv_legend_yellow:'Speculative',
     missed_title:'Missed Opportunities', missed_symbol:'Symbol',
     missed_date:'Date', missed_price:'Price ($)', missed_sector:'Sector',
     missed_note:'Note (optional)', missed_add:'+ Add',
@@ -8520,6 +8521,23 @@ const LANG_STRINGS = {
     set_av_key:'Alpha Vantage Key — financial data for all stocks including small caps',
     set_get_free_key:'Get free key',
     set_grp_account:'Account', set_grp_data:'Data Sources & Security', set_grp_import:'Import / Export',
+    st_best:'Best Trade', st_worst:'Worst Trade', st_avg_trade:'Avg per Trade',
+    st_avg_win:'Avg Win', st_avg_loss:'Avg Loss', st_expectancy:'Expectancy',
+    st_wl_ratio:'W/L Ratio', st_max_win_streak:'Max Win Streak', st_max_loss_streak:'Max Loss Streak',
+    st_avg_hold_win:'Avg Hold (Win)', st_avg_hold_loss:'Avg Hold (Loss)',
+    st_avg_r:'Avg R', st_win_rate:'Win Rate',
+    mt_avg_gain:'Avg Gain %', mt_avg_loss:'Avg Loss %', mt_total_trades:'Trades',
+    mt_max_gain:'Max Gain', mt_max_loss:'Max Loss',
+    mt_avg_days_win:'Days (Win)', mt_avg_days_loss:'Days (Loss)', mt_avg_row:'Average',
+    donut_win:'Win', donut_loss:'Loss', donut_best:'Best Trade', donut_worst:'Worst Trade',
+    donut_win_streak:'Win Streak', donut_loss_streak:'Loss Streak',
+    ts_no_closed:'No closed trades', ts_win_rate:'Win Rate',
+    ts_avg_gain_pct:'Avg Gain %', ts_avg_loss_pct:'Avg Loss %',
+    ts_gl_ratio:'Gain/Loss Ratio', ts_adj_wl:'Adjusted W/L',
+    comp_trades:'trades', comp_total_pl:'Total P&L',
+    comp_avg_win:'Avg Win', comp_avg_loss:'Avg Loss',
+    comp_best:'Best', comp_worst:'Worst', comp_avg_trade:'Avg per Trade',
+    comp_stocks:'📈 Stocks', comp_crypto:'₿ Crypto',
   },
   he: {
     nav_overview:'Dashboard', nav_stocks:'מניות', nav_crypto:'קריפטו',
@@ -8580,8 +8598,8 @@ const LANG_STRINGS = {
     inv_deposits:'הפקדות חודשיות', inv_add_deposit:'+ הוסף הפקדה',
     inv_total_dep:'סה"כ הופקד', inv_portfolio_now:'שווי תיק כעת',
     inv_pnl:'רווח / הפסד', inv_dep_month:'חודש', inv_dep_amount:'הפקדה',
-    inv_dep_cumulative:'מצטבר', inv_cash:'💵 מזומן',
-    inv_legend_blue:'🔵 כחולות', inv_legend_green:'🟢 ירוקות', inv_legend_yellow:'🟡 צהובות',
+    inv_dep_cumulative:'מצטבר', inv_cash:'מזומן',
+    inv_legend_blue:'כחולות', inv_legend_green:'ירוקות', inv_legend_yellow:'צהובות',
     missed_title:'הזדמנויות שפוספסו', missed_symbol:'סימבול',
     missed_date:'תאריך', missed_price:'מחיר ($)', missed_sector:'סקטור',
     missed_note:'הערה (אופציונלי)', missed_add:'+ הוסף',
@@ -8617,6 +8635,23 @@ const LANG_STRINGS = {
     set_av_key:'מפתח Alpha Vantage — נתונים פיננסיים לכל מניה כולל סמולקאפ',
     set_get_free_key:'קבל מפתח חינמי',
     set_grp_account:'חשבון', set_grp_data:'מקורות נתונים ואבטחה', set_grp_import:'ייבוא / ייצוא',
+    st_best:'עסקה הטובה ביותר', st_worst:'עסקה הגרועה ביותר', st_avg_trade:'ממוצע לעסקה',
+    st_avg_win:'ממוצע רווח', st_avg_loss:'ממוצע הפסד', st_expectancy:'ציפיה (Expectancy)',
+    st_wl_ratio:'יחס W/L', st_max_win_streak:'רצף ניצחון מקסימלי', st_max_loss_streak:'רצף הפסד מקסימלי',
+    st_avg_hold_win:'ימי החזקה ממוצע (זכייה)', st_avg_hold_loss:'ימי החזקה ממוצע (הפסד)',
+    st_avg_r:'ממוצע R', st_win_rate:'אחוז הצלחה',
+    mt_avg_gain:'ממוצע רווח %', mt_avg_loss:'ממוצע הפסד %', mt_total_trades:'סה"כ עסקאות',
+    mt_max_gain:'רווח מקסימלי', mt_max_loss:'הפסד מקסימלי',
+    mt_avg_days_win:'ימים ממוצע (רווח)', mt_avg_days_loss:'ימים ממוצע (הפסד)', mt_avg_row:'ממוצע',
+    donut_win:'ניצחון', donut_loss:'הפסד', donut_best:'עסקה הטובה', donut_worst:'עסקה הגרועה',
+    donut_win_streak:'רצף ניצחונות', donut_loss_streak:'רצף הפסדים',
+    ts_no_closed:'אין עסקאות סגורות להצגה', ts_win_rate:'אחוז ניצחון',
+    ts_avg_gain_pct:'ממוצע רווח %', ts_avg_loss_pct:'ממוצע הפסד %',
+    ts_gl_ratio:'יחס רווח/הפסד', ts_adj_wl:'יחס מותאם',
+    comp_trades:'עסקאות', comp_total_pl:'P&L כולל',
+    comp_avg_win:'ממוצע ניצחון', comp_avg_loss:'ממוצע הפסד',
+    comp_best:'הטובה', comp_worst:'הגרועה', comp_avg_trade:'ממוצע לעסקה',
+    comp_stocks:'📈 מניות', comp_crypto:'₿ קריפטו',
   }
 };
 
@@ -8819,7 +8854,7 @@ function renderOverview() {
   if (oy) oy.value = now.getFullYear();
   const {month, year} = getFilter('ov');
   const info = document.getElementById('ov-filter-info');
-  if (info) info.textContent = (month||year) ? `מציג: ${month?MONTHS[+month-1]:''} ${year||''}`.trim() : '';
+  if (info) info.textContent = (month||year) ? `${month?months()[+month-1]:''} ${year||''}`.trim() : '';
 
   let stTrades = filterTrades('stock', month, year);
   let crTrades = filterTrades('crypto', month, year);
@@ -8974,20 +9009,20 @@ function renderStatistics() {
   const pct  = v => v.toFixed(1) + '%';
 
   const kpis = [
-    { label: 'עסקה הטובה ביותר',          value: fmt(st.best),                cls: st.best >= 0 ? 'green' : 'red', sensitive: true },
-    { label: 'עסקה הגרועה ביותר',         value: fmt(st.worst),               cls: st.worst >= 0 ? 'green' : 'red', sensitive: true },
-    { label: 'ממוצע לעסקה',               value: fmt(st.avg),                 cls: st.avg >= 0 ? 'green' : 'red', sensitive: true },
-    { label: 'ממוצע רווח',                value: fmt(adv.avgWin),             cls: 'green', sensitive: true },
-    { label: 'ממוצע הפסד',                value: fmt(adv.avgLoss),            cls: 'red', sensitive: true },
-    { label: 'ציפיה (Expectancy)',         value: fmt(expectancy),             cls: expectancy >= 0 ? 'green' : 'red', sensitive: true },
-    { label: 'Profit Factor',              value: pf != null ? pf.toFixed(2) : '—', cls: pf != null ? (pf >= 1 ? 'green' : 'red') : '' },
-    { label: 'יחס W/L',                   value: adv.avgLoss !== 0 ? Math.abs(adv.avgWin / adv.avgLoss).toFixed(2) + 'x' : '—', cls: '' },
-    { label: 'רצף ניצחון מקסימלי',        value: maxW, cls: '' },
-    { label: 'רצף הפסד מקסימלי',          value: maxL, cls: '' },
-    { label: 'ימי החזקה ממוצע (זכייה)',   value: adv.avgWinDays.toFixed(1) + 'd', cls: '' },
-    { label: 'ימי החזקה ממוצע (הפסד)',    value: adv.avgLossDays.toFixed(1) + 'd', cls: '' },
-    { label: 'ממוצע R',                   value: avgR ? avgR.toFixed(2) + 'R' : '—', cls: avgR >= 1 ? 'green' : '' },
-    { label: 'אחוז הצלחה',                value: pct(st.wr),                  cls: st.wr >= 50 ? 'green' : 'red' },
+    { label: t('st_best'),           value: fmt(st.best),                cls: st.best >= 0 ? 'green' : 'red', sensitive: true },
+    { label: t('st_worst'),          value: fmt(st.worst),               cls: st.worst >= 0 ? 'green' : 'red', sensitive: true },
+    { label: t('st_avg_trade'),      value: fmt(st.avg),                 cls: st.avg >= 0 ? 'green' : 'red', sensitive: true },
+    { label: t('st_avg_win'),        value: fmt(adv.avgWin),             cls: 'green', sensitive: true },
+    { label: t('st_avg_loss'),       value: fmt(adv.avgLoss),            cls: 'red', sensitive: true },
+    { label: t('st_expectancy'),     value: fmt(expectancy),             cls: expectancy >= 0 ? 'green' : 'red', sensitive: true },
+    { label: 'Profit Factor',        value: pf != null ? pf.toFixed(2) : '—', cls: pf != null ? (pf >= 1 ? 'green' : 'red') : '' },
+    { label: t('st_wl_ratio'),       value: adv.avgLoss !== 0 ? Math.abs(adv.avgWin / adv.avgLoss).toFixed(2) + 'x' : '—', cls: '' },
+    { label: t('st_max_win_streak'), value: maxW, cls: '' },
+    { label: t('st_max_loss_streak'),value: maxL, cls: '' },
+    { label: t('st_avg_hold_win'),   value: adv.avgWinDays.toFixed(1) + 'd', cls: '' },
+    { label: t('st_avg_hold_loss'),  value: adv.avgLossDays.toFixed(1) + 'd', cls: '' },
+    { label: t('st_avg_r'),          value: avgR ? avgR.toFixed(2) + 'R' : '—', cls: avgR >= 1 ? 'green' : '' },
+    { label: t('st_win_rate'),       value: pct(st.wr),                  cls: st.wr >= 50 ? 'green' : 'red' },
   ];
 
   const grid = document.getElementById('stats-kpi-grid');
@@ -9075,7 +9110,7 @@ function renderCumChart(trades) {
       return d + '/' + mo;
     }
     const [y, mo] = k.split('-');
-    return MONTHS[+mo-1] + "'" + y.slice(2);
+    return months()[+mo-1] + "'" + y.slice(2);
   });
 
   let cum = 0;
@@ -9143,7 +9178,7 @@ function renderDonut(st, adv, trades) {
   charts.donut = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: ['ניצחון', 'הפסד'],
+      labels: [t('donut_win'), t('donut_loss')],
       datasets: [{
         data: [st.wins || 0, st.losses || 0],
         backgroundColor: ['#22c55e', '#ef4444'],
@@ -9198,19 +9233,19 @@ function renderDonut(st, adv, trades) {
       <div class="donut-stat-value ${wlCls} sensitive">${wlStr}</div>
     </div>
     <div class="donut-stat">
-      <div class="donut-stat-label">עסקה הטובה</div>
+      <div class="donut-stat-label">${t('donut_best')}</div>
       <div class="donut-stat-value green sensitive">${bestStr}</div>
     </div>
     <div class="donut-stat">
-      <div class="donut-stat-label">עסקה הגרועה</div>
+      <div class="donut-stat-label">${t('donut_worst')}</div>
       <div class="donut-stat-value red sensitive">${worstStr}</div>
     </div>
     <div class="donut-stat">
-      <div class="donut-stat-label">רצף ניצחונות</div>
+      <div class="donut-stat-label">${t('donut_win_streak')}</div>
       <div class="donut-stat-value sky">${maxWinStreak || none}</div>
     </div>
     <div class="donut-stat">
-      <div class="donut-stat-label">רצף הפסדים</div>
+      <div class="donut-stat-label">${t('donut_loss_streak')}</div>
       <div class="donut-stat-value gold">${maxLossStreak || none}</div>
     </div>`;
   applyPrivacy();
@@ -9227,25 +9262,25 @@ function renderComparison(stTrades, crTrades) {
     const wl    = adv.avgLoss!==0 ? Math.abs(adv.avgWin/adv.avgLoss).toFixed(2)+'x' : '—';
     return `<div class="comp-card" style="border-top:2px solid ${accentColor};">
       <h4 style="color:${accentColor}">${title}
-        <span style="font-size:11px;font-weight:500;color:var(--text2);margin-right:8px;">${st.n} עסקאות</span>
+        <span style="font-size:11px;font-weight:500;color:var(--text2);margin-right:8px;">${st.n} ${t('comp_trades')}</span>
       </h4>
-      <div class="comp-stat"><span class="comp-stat-label">P&L כולל</span><span class="comp-stat-val ${clr(st.total)} sensitive">${st.n?fmtUSD(st.total):'—'}</span></div>
+      <div class="comp-stat"><span class="comp-stat-label">${t('comp_total_pl')}</span><span class="comp-stat-val ${clr(st.total)} sensitive">${st.n?fmtUSD(st.total):'—'}</span></div>
       <div class="comp-stat"><span class="comp-stat-label">Win Rate</span>
         <span class="comp-stat-val"><span class="${st.wr>=50?'num-green':'num-red'}">${fmt(st.wr,1)}%</span>
         <span style="color:var(--text3);font-size:11px;margin-right:5px;">${st.wins}W / ${st.losses}L</span></span>
       </div>
       <div class="comp-stat"><span class="comp-stat-label">Profit Factor</span><span class="comp-stat-val ${pfCls} sensitive">${pf}</span></div>
       <div class="comp-stat"><span class="comp-stat-label">W/L Ratio</span><span class="comp-stat-val sensitive">${wl}</span></div>
-      <div class="comp-stat"><span class="comp-stat-label">ממוצע ניצחון</span><span class="comp-stat-val num-green sensitive">${st.wins?fmtUSD(adv.avgWin):'—'}</span></div>
-      <div class="comp-stat"><span class="comp-stat-label">ממוצע הפסד</span><span class="comp-stat-val num-red sensitive">${st.losses?fmtUSD(adv.avgLoss):'—'}</span></div>
-      <div class="comp-stat"><span class="comp-stat-label">הטובה</span><span class="comp-stat-val num-green sensitive">${st.n?fmtUSD(st.best):'—'}</span></div>
-      <div class="comp-stat"><span class="comp-stat-label">הגרועה</span><span class="comp-stat-val num-red sensitive">${st.n?fmtUSD(st.worst):'—'}</span></div>
-      <div class="comp-stat"><span class="comp-stat-label">ממוצע לעסקה</span><span class="comp-stat-val ${clr(st.avg)} sensitive">${st.n?fmtUSD(st.avg):'—'}</span></div>
+      <div class="comp-stat"><span class="comp-stat-label">${t('comp_avg_win')}</span><span class="comp-stat-val num-green sensitive">${st.wins?fmtUSD(adv.avgWin):'—'}</span></div>
+      <div class="comp-stat"><span class="comp-stat-label">${t('comp_avg_loss')}</span><span class="comp-stat-val num-red sensitive">${st.losses?fmtUSD(adv.avgLoss):'—'}</span></div>
+      <div class="comp-stat"><span class="comp-stat-label">${t('comp_best')}</span><span class="comp-stat-val num-green sensitive">${st.n?fmtUSD(st.best):'—'}</span></div>
+      <div class="comp-stat"><span class="comp-stat-label">${t('comp_worst')}</span><span class="comp-stat-val num-red sensitive">${st.n?fmtUSD(st.worst):'—'}</span></div>
+      <div class="comp-stat"><span class="comp-stat-label">${t('comp_avg_trade')}</span><span class="comp-stat-val ${clr(st.avg)} sensitive">${st.n?fmtUSD(st.avg):'—'}</span></div>
     </div>`;
   }
   document.getElementById('comparison-wrap').innerHTML =
-    card('📈 מניות', stTrades, '#818cf8') +
-    card('₿ קריפטו', crTrades, '#f59e0b');
+    card(t('comp_stocks'), stTrades, '#818cf8') +
+    card(t('comp_crypto'), crTrades, '#f59e0b');
 }
 
 // ─────────────────────────────────────────────
@@ -12244,7 +12279,7 @@ function missedRenderList(list) {
   });
   container.innerHTML = Object.entries(byMonth).map(([key, items]) => {
     const [y, m] = key.split('-');
-    const label = `${MONTHS[+m-1]} ${y}`;
+    const label = `${months()[+m-1]} ${y}`;
     const cards = items.map(r => `
       <div class="missed-card" id="missed-row-${r.id}">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
