@@ -6710,7 +6710,6 @@ function switchTab(name, btn) {
   tabEl.classList.add('tab-entering');
   if (name==='overview') renderOverview();
   else if (_ovLiveTimer) { clearInterval(_ovLiveTimer); _ovLiveTimer = null; }
-  if (name !== 'themes') ttStopTimer();
   if (name==='stocks') {
     renderTable('stock');
   }
@@ -6719,7 +6718,7 @@ function switchTab(name, btn) {
   }
   if (name==='archive') renderArchive();
   if (name==='statistics') renderStatistics();
-  if (name==='themes') { ttLoad(true); ttStartTimer(); }
+  if (name==='themes') ttLoad(true);
   if (name==='ibkr') {
     flexInit();
     renderSecurityStatus();
