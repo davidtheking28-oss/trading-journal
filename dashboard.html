@@ -13555,8 +13555,8 @@ function ttRender(themes, indices) {
   // ── Meta: Top3/Bottom3 + Breadth ──
   const metaEl = document.getElementById('tt-meta');
   if (metaEl) {
-    const top3 = sorted.slice(0, 3);
-    const bot3 = sorted.slice(-3).reverse();
+    const top3 = sorted.slice(0, 5);
+    const bot3 = sorted.slice(-5).reverse();
     const green = sorted.filter(t => t[pKey] > 0).length;
     const red   = sorted.filter(t => t[pKey] < 0).length;
     const total = sorted.length;
@@ -13574,7 +13574,7 @@ function ttRender(themes, indices) {
 
     metaEl.innerHTML = `
       <div class="tt-meta-card">
-        <div class="tt-meta-title">Top 3 &nbsp;·&nbsp; Bottom 3</div>
+        <div class="tt-meta-title">Top 5 &nbsp;·&nbsp; Bottom 5</div>
         <div class="tt-podium">${top3.map(podiumRow).join('')}</div>
         <div style="height:8px"></div>
         <div class="tt-podium">${bot3.map(podiumRow).join('')}</div>
