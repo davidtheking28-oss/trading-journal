@@ -14,15 +14,27 @@ const YF_HEADERS = {
 
 async function fetchPct(symbol: string): Promise<{ symbol: string; name: string; pct: number | null }> {
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=2d&interval=1d`;
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=5d&interval=1d`;
     const res = await fetch(url, { headers: YF_HEADERS });
     if (!res.ok) return { symbol, name: symbol, pct: null };
     const json = await res.json();
-    const meta = json?.chart?.result?.[0]?.meta;
+    const result = json?.chart?.result?.[0];
+    if (!result) return { symbol, name: symbol, pct: null };
+    const meta = result.meta;
+    const closes: number[] = result.indicators?.quote?.[0]?.close ?? [];
+    const valid = closes.filter((c: number) => c != null && c > 0);
+
+    let pct = meta?.regularMarketChangePercent ?? null;
+    if (pct == null && valid.length >= 2) {
+      const last = valid[valid.length - 1];
+      const prev = valid[valid.length - 2];
+      pct = ((last - prev) / prev) * 100;
+    }
+
     return {
       symbol,
       name: meta?.shortName || meta?.longName || symbol,
-      pct:  meta?.regularMarketChangePercent ?? null,
+      pct,
     };
   } catch {
     return { symbol, name: symbol, pct: null };
