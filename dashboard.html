@@ -1490,9 +1490,11 @@
   .tt-breadth-bar-fill { height:100%; background:var(--green); border-radius:4px; transition:width 0.4s ease; }
   .tt-breadth-labels { display:flex; justify-content:space-between; font-size:11px; }
   .tt-breadth-chips { display:grid; grid-template-columns:1fr 1fr; gap:6px 10px; margin-top:10px; }
-  .tt-chip { font-size:11px; font-weight:600; padding:3px 7px; border-radius:4px; display:flex; justify-content:space-between; gap:6px; }
+  .tt-chip { font-size:11px; font-weight:600; padding:3px 7px; border-radius:4px; display:flex; justify-content:space-between; gap:6px; transition:background 0.15s; }
   .tt-chip.green { background:rgba(34,197,94,0.1); color:var(--green); }
+  .tt-chip.green:hover { background:rgba(34,197,94,0.2); }
   .tt-chip.red   { background:rgba(239,68,68,0.1);  color:var(--red); }
+  .tt-chip.red:hover   { background:rgba(239,68,68,0.2); }
   .tt-breadth-green { color:var(--green); font-weight:700; }
   .tt-breadth-red { color:var(--red); font-weight:700; }
   .tt-breadth-neutral { color:var(--text3); }
@@ -14073,10 +14075,10 @@ function ttRender(themes, indices) {
       for (let i = 0; i < rows; i++) {
         const g = greens[i], r = reds[i];
         chipsHtml += r
-          ? '<div class="tt-chip red"><span>' + esc(r.name) + '</span><span>' + r[pKey].toFixed(1) + '%</span></div>'
+          ? `<div class="tt-chip red" style="cursor:pointer" onclick="sectorModalOpen('${esc(r.ticker)}','${esc(r.name)}')"><span>${esc(r.name)}</span><span>${r[pKey].toFixed(1)}%</span></div>`
           : '<div></div>';
         chipsHtml += g
-          ? '<div class="tt-chip green"><span>' + esc(g.name) + '</span><span>+' + g[pKey].toFixed(1) + '%</span></div>'
+          ? `<div class="tt-chip green" style="cursor:pointer" onclick="sectorModalOpen('${esc(g.ticker)}','${esc(g.name)}')"><span>${esc(g.name)}</span><span>+${g[pKey].toFixed(1)}%</span></div>`
           : '<div></div>';
       }
       chipsEl.innerHTML = chipsHtml;
