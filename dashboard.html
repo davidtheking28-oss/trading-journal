@@ -5409,32 +5409,32 @@
         <div class="ibkr-card-header">
           <div class="ibkr-card-title-wrap">
             <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></span>
-            <span class="ibkr-card-title">מניות</span>
+            <span class="ibkr-card-title" data-i18n="set_stocks">Stocks</span>
           </div>
           <span class="ibkr-card-badge badge-live">Finnhub · SEC</span>
         </div>
         <div id="stock-sym-status" class="ibkr-sym-status">
-          <span class="sym-dot loading"></span><span>טוען...</span>
+          <span class="sym-dot loading"></span><span data-i18n="set_loading">Loading...</span>
         </div>
         <div id="finnhub-key-section" style="display:none">
           <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.6;">
-            מפתח Finnhub (Admin בלבד)
+            <span data-i18n="set_finnhub_key">Finnhub Key (Admin only)</span>
           </div>
           <div style="display:flex;gap:8px;margin-top:8px;">
             <input id="finnhub-key-input" class="form-control" type="password"
               placeholder="Finnhub API Key" autocomplete="off"
               style="font-size:12px;padding:6px 10px;flex:1;">
-            <button class="btn btn-secondary btn-sm" onclick="saveFinnhubKey()">שמור</button>
+            <button class="btn btn-secondary btn-sm" onclick="saveFinnhubKey()" data-i18n="m_save_short">Save</button>
             <span id="finnhub-key-status" style="font-size:11px;align-self:center;color:var(--text3);white-space:nowrap;"></span>
           </div>
           <div style="font-size:11px;color:var(--text3);margin-top:12px;line-height:1.6;">
-            מפתח Alpha Vantage — נתונים פיננסיים לכל מניה כולל סמולקאפ (<a href="https://www.alphavantage.co/support/#api-key" target="_blank" style="color:var(--accent);">קבל מפתח חינמי</a>)
+            <span data-i18n="set_av_key">Alpha Vantage Key — financial data for all stocks including small caps</span> (<a href="https://www.alphavantage.co/support/#api-key" target="_blank" style="color:var(--accent);" data-i18n="set_get_free_key">Get free key</a>)
           </div>
           <div style="display:flex;gap:8px;margin-top:8px;">
             <input id="av-key-input" class="form-control" type="password"
               placeholder="Alpha Vantage API Key" autocomplete="off"
               style="font-size:12px;padding:6px 10px;flex:1;">
-            <button class="btn btn-secondary btn-sm" onclick="saveAvKey()">שמור</button>
+            <button class="btn btn-secondary btn-sm" onclick="saveAvKey()" data-i18n="m_save_short">Save</button>
             <span id="av-key-status" style="font-size:11px;align-self:center;color:var(--text3);white-space:nowrap;"></span>
           </div>
         </div>
@@ -5445,12 +5445,12 @@
         <div class="ibkr-card-header">
           <div class="ibkr-card-title-wrap">
             <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 8.5h4a2 2 0 0 1 0 4h-4zm0 4h4.5a2 2 0 0 1 0 4h-4.5z"/><line x1="10.5" y1="8.5" x2="10.5" y2="7"/><line x1="13.5" y1="8.5" x2="13.5" y2="7"/><line x1="10.5" y1="16.5" x2="10.5" y2="18"/><line x1="13.5" y1="16.5" x2="13.5" y2="18"/></svg></span>
-            <span class="ibkr-card-title">קריפטו</span>
+            <span class="ibkr-card-title" data-i18n="set_crypto">Crypto</span>
           </div>
           <span class="ibkr-card-badge badge-live">CoinGecko</span>
         </div>
         <div id="crypto-sym-status" class="ibkr-sym-status">
-          <span class="sym-dot loading"></span><span>טוען...</span>
+          <span class="sym-dot loading"></span><span data-i18n="set_loading">Loading...</span>
         </div>
       </div>
 
@@ -5459,7 +5459,7 @@
         <div class="ibkr-card-header">
           <div class="ibkr-card-title-wrap">
             <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-            <span class="ibkr-card-title">אבטחה</span>
+            <span class="ibkr-card-title" data-i18n="set_security">Security</span>
           </div>
           <span class="ibkr-card-badge badge-secure">Defense in Depth</span>
         </div>
@@ -5469,7 +5469,7 @@
         </div>
         <div class="totp-section">
           <div>
-            <div style="font-size:12px;font-weight:600;color:var(--text);">אימות דו-שלבי</div>
+            <div style="font-size:12px;font-weight:600;color:var(--text);" data-i18n="set_2fa">Two-Factor Authentication</div>
             <div style="font-size:11px;color:var(--text3);margin-top:2px;" id="totp-status-text">בודק...</div>
           </div>
           <button id="totp-toggle-btn" class="btn btn-secondary btn-sm" onclick="totpToggle()">—</button>
@@ -5482,14 +5482,14 @@
         <div class="ibkr-card-header">
           <div class="ibkr-card-title-wrap">
             <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span>
-            <span class="ibkr-card-title">סנכרון IBKR</span>
+            <span class="ibkr-card-title" data-i18n="set_ibkr_sync">IBKR Sync</span>
           </div>
           <span class="ibkr-card-badge badge-sync">Flex Web Service</span>
         </div>
         <div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.6;">
-          מאפשר ייבוא עסקאות אוטומטי מ-Interactive Brokers.<br>
-          <strong style="color:var(--text2);">איך להגדיר:</strong>
-          IBKR → Reports → Flex Queries → צור Flex Query חדש → העתק את Token ו-Query ID
+          <span data-i18n="set_ibkr_desc">Enables automatic trade import from Interactive Brokers.</span><br>
+          <strong style="color:var(--text2);" data-i18n="set_ibkr_how">How to configure:</strong>
+          IBKR → Reports → Flex Queries → <span data-i18n="set_ibkr_steps">Create a new Flex Query → Copy the Token and Query ID</span>
         </div>
         <div style="display:grid;grid-template-columns:1fr 180px auto;gap:10px;align-items:end;margin-bottom:14px;">
           <div>
@@ -5501,8 +5501,8 @@
             <input id="flex-query-id" class="form-control" type="text" placeholder="1462900" autocomplete="off" style="font-size:12px;padding:6px 10px;">
           </div>
           <div class="ibkr-actions" style="margin-bottom:0;">
-            <button class="btn btn-secondary btn-sm" onclick="flexSave()">שמור</button>
-            <button class="btn btn-primary btn-sm" onclick="flexSync()" id="flex-sync-btn">סנכרן</button>
+            <button class="btn btn-secondary btn-sm" onclick="flexSave()" data-i18n="m_save_short">Save</button>
+            <button class="btn btn-primary btn-sm" onclick="flexSync()" id="flex-sync-btn" data-i18n="set_sync">Sync</button>
           </div>
         </div>
         <span class="ibkr-sync-status" id="flex-status"></span>
@@ -5514,7 +5514,7 @@
         <div class="ibkr-card-header">
           <div class="ibkr-card-title-wrap">
             <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>
-            <span class="ibkr-card-title">ייבוא קובץ</span>
+            <span class="ibkr-card-title" data-i18n="set_file_import">File Import</span>
           </div>
           <span class="ibkr-card-badge badge-sync">.tlg</span>
         </div>
@@ -5525,7 +5525,7 @@
           ondragleave="this.classList.remove('tlg-drag-over')"
           ondrop="event.preventDefault();this.classList.remove('tlg-drag-over');tlgLoadFile({files:event.dataTransfer.files})">
           <span class="tlg-drop-icon">📂</span>
-          גרור קובץ .tlg או לחץ לבחירה
+          <span data-i18n="set_tlg_drop">Drag .tlg file or click to select</span>
         </div>
         <div id="tlg-status" style="margin-top:8px;font-size:12px;color:var(--text3);"></div>
         <div id="tlg-preview" class="ibkr-trades-list"></div>
@@ -5536,11 +5536,11 @@
         <div class="ibkr-card-header">
           <div class="ibkr-card-title-wrap">
             <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
-            <span class="ibkr-card-title">ייצוא נתונים</span>
+            <span class="ibkr-card-title" data-i18n="set_export">Export Data</span>
           </div>
         </div>
         <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6;">
-          ייצוא כל העסקאות לקובץ CSV לניתוח חיצוני.
+          <span data-i18n="set_export_desc">Export all trades to a CSV file for external analysis.</span>
         </div>
         <div style="display:flex;gap:8px;">
           <button class="btn btn-secondary btn-sm" onclick="exportCSV('stock')" data-i18n="export_stocks">Export Stocks</button>
@@ -5554,17 +5554,17 @@
         <div class="ibkr-card-header">
           <div class="ibkr-card-title-wrap">
             <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
-            <span class="ibkr-card-title">ייבוא מברוקר</span>
+            <span class="ibkr-card-title" data-i18n="set_broker_import">Broker Import</span>
           </div>
           <span class="ibkr-card-badge badge-sync">CSV</span>
         </div>
         <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6;">
-          ייבוא עסקאות מקובץ ייצוא של הברוקר. בחר ברוקר, העלה קובץ CSV, ואשר את מיפוי העמודות.
+          <span data-i18n="set_broker_desc">Import trades from your broker's export file. Select broker, upload CSV, and confirm column mapping.</span>
         </div>
         <div style="margin-bottom:12px;">
-          <div class="ibkr-field-label">ברוקר</div>
+          <div class="ibkr-field-label" data-i18n="set_broker_label">Broker</div>
           <select id="bi-broker" class="form-control" style="font-size:12px;padding:6px 10px;max-width:220px;">
-            <option value="">בחר ברוקר...</option>
+            <option value="" data-i18n="set_broker_select">Select broker...</option>
             <option value="colmex">Colmex Pro</option>
           </select>
         </div>
@@ -5575,11 +5575,11 @@
           ondragleave="this.classList.remove('tlg-drag-over')"
           ondrop="event.preventDefault();this.classList.remove('tlg-drag-over');brokerLoadFile({files:event.dataTransfer.files})">
           <span class="tlg-drop-icon">📊</span>
-          גרור קובץ CSV או לחץ לבחירה
+          <span data-i18n="set_csv_drop">Drag CSV file or click to select</span>
         </div>
         <div id="bi-mapping" style="display:none;"></div>
         <div id="bi-preview" style="display:none;"></div>
-        <button id="bi-import-btn" class="btn btn-primary btn-sm" style="display:none;margin-top:12px;" onclick="brokerImport()">ייבא עסקאות</button>
+        <button id="bi-import-btn" class="btn btn-primary btn-sm" style="display:none;margin-top:12px;" onclick="brokerImport()" data-i18n="set_import_btn">Import Trades</button>
       </div>
 
       <!-- Profile -->
@@ -6733,7 +6733,13 @@ function stats(trades) {
 // ─────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────
-const MONTHS = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+const MONTHS_HE = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+const MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTHS_SHORT_HE = ['ינו','פבר','מרץ','אפר','מאי','יוני','יולי','אוג','ספט','אוק','נוב','דצ'];
+const MONTHS_SHORT_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTHS = MONTHS_HE;
+function months() { return _lang === 'he' ? MONTHS_HE : MONTHS_EN; }
+function monthsShort() { return _lang === 'he' ? MONTHS_SHORT_HE : MONTHS_SHORT_EN; }
 
 function fmt(n, d=2) {
   if (n === null || n === undefined || isNaN(n)) return '—';
@@ -6801,8 +6807,8 @@ function initFilters() {
     const ms = document.getElementById(p+'-month');
     const ys = document.getElementById(p+'-year');
     if (!ms||!ys) return;
-    ms.innerHTML = '<option value="">כל החודשים</option>' + MONTHS.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('');
-    ys.innerHTML = '<option value="">כל השנים</option>' + yrs.map(y=>`<option value="${y}">${y}</option>`).join('');
+    ms.innerHTML = `<option value="">${t('filter_all_months')}</option>` + months().map((m,i)=>`<option value="${i+1}">${m}</option>`).join('');
+    ys.innerHTML = `<option value="">${t('filter_all_years')}</option>` + yrs.map(y=>`<option value="${y}">${y}</option>`).join('');
     if (p === 'ov') {
       ms.value = new Date().getMonth() + 1;
       ys.value = new Date().getFullYear();
@@ -7018,7 +7024,9 @@ function renderCalendar(type) {
 
   // In RTL grid: HTML order = [Sun, Mon, Tue, Wed, Thu, Fri, Sat, WeekSum]
   // grid-template-columns: repeat(7,1fr) 110px → WeekSum is leftmost in RTL
-  const DAY_HDRS_ORDER = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת','סיכום שבועי'];
+  const DAY_HDRS_HE = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת','סיכום שבועי'];
+  const DAY_HDRS_EN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat','Weekly Sum'];
+  const DAY_HDRS_ORDER = _lang === 'he' ? DAY_HDRS_HE : DAY_HDRS_EN;
 
   const winsCount  = allMonthTrades.filter(t => calcPL(t) > 0).length;
   const lossCount  = allMonthTrades.length - winsCount;
@@ -7037,11 +7045,11 @@ function renderCalendar(type) {
   <div class="cal-header" ${_calBg}>
     <button class="cal-nav-btn" onclick="calNavPrev('${navType}')" title="חודש קודם"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
     <div class="cal-title">
-      <span class="cal-title-month">${MONTHS[month-1]} ${year}</span>
+      <span class="cal-title-month">${months()[month-1]} ${year}</span>
       ${allMonthTrades.length ? `<span class="cal-divider"></span>
       <span class="cal-summary sensitive" style="${totalStyle}">${fmtUSD(monthTotal)}</span>
       <span class="cal-divider"></span>
-      <span class="cal-trade-count">${allMonthTrades.length} עסקאות · ${winsCount}W / ${lossCount}L</span>` : `<span class="cal-trade-count" style="opacity:0.5">אין עסקאות</span>`}
+      <span class="cal-trade-count">${allMonthTrades.length} ${t('trades')} · ${winsCount}W / ${lossCount}L</span>` : `<span class="cal-trade-count" style="opacity:0.5">${t('cal_no_trades')}</span>`}
     </div>
     <button class="cal-nav-btn" onclick="calNavNext('${navType}')" title="חודש הבא"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
   </div>
@@ -7085,7 +7093,7 @@ function renderCalendar(type) {
               <span class="cal-chip-pl sensitive">${plStr}</span>
             </div>`;
           }).join('')}
-          ${dt.length > 1 ? `<div class="cal-day-pl sensitive" style="${dtStyle}">${dt.length} עסקאות · ${fmtUSD(dayTotal)}</div>` : ''}
+          ${dt.length > 1 ? `<div class="cal-day-pl sensitive" style="${dtStyle}">${dt.length} ${t('trades')} · ${fmtUSD(dayTotal)}</div>` : ''}
         </div>`;
       }
     });
@@ -7100,7 +7108,7 @@ function renderCalendar(type) {
       const wCls = wTotal >= 0 ? 'color:var(--green)' : 'color:var(--red)';
       html += `<div class="cal-week-sum">
         <span class="cal-week-pl sensitive" style="${wCls}">${fmtUSD(wTotal)}</span>
-        <span class="cal-week-count">${wTrades.length} עסקאות</span>
+        <span class="cal-week-count">${wTrades.length} ${t('trades')}</span>
       </div>`;
     } else {
       html += `<div class="cal-week-sum"><span class="cal-week-empty">—</span></div>`;
@@ -7119,7 +7127,7 @@ function renderTable(type) {
   const toggleBtn = document.getElementById(p+'-view-toggle');
   if (toggleBtn) {
     const isCalMode = tableViewMode[type] === 'calendar';
-    toggleBtn.innerHTML = isCalMode ? TBL_ICON + ' טבלה' : CAL_ICON + ' חודשי';
+    toggleBtn.innerHTML = isCalMode ? TBL_ICON + ' ' + t('view_table') : CAL_ICON + ' ' + t('view_calendar');
   }
 
   // Calendar mode
@@ -8225,7 +8233,7 @@ function advancedStats(trades) {
   return { avgWin, avgLoss, avgWinDays, avgLossDays };
 }
 
-const MONTHS_SHORT = ['ינו','פבר','מרץ','אפר','מאי','יוני','יולי','אוג','ספט','אוק','נוב','דצ'];
+const MONTHS_SHORT = MONTHS_SHORT_HE;
 
 function _tradePct(t) {
   const base = t.entryPrice * (t.closedShares || t.shares);
@@ -8279,12 +8287,12 @@ function renderMonthlyTracker(trades) {
     const arr = byMonth[mk];
     const s = monthStats(arr);
     if (!s) {
-      rows += `<tr><td>${MONTHS_SHORT[i]}</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td></tr>`;
+      rows += `<tr><td>${monthsShort()[i]}</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td></tr>`;
       return;
     }
     validMonths.push(s);
     rows += `<tr>
-      <td>${MONTHS_SHORT[i]}</td>
+      <td>${monthsShort()[i]}</td>
       <td class="${s.avgGainPct!==null?(s.avgGainPct>=0?'cl-green':'cl-red'):''} sensitive">${pct(s.avgGainPct)}</td>
       <td class="${s.avgLossPct!==null?(s.avgLossPct>=0?'cl-green':'cl-red'):''} sensitive">${pct(s.avgLossPct)}</td>
       <td class="${s.winRate>=50?'cl-green':'cl-red'} sensitive">${fmt(s.winRate,1)}%</td>
@@ -8482,6 +8490,26 @@ const LANG_STRINGS = {
     mc_green:'🟢 Green', mc_orange:'🟠 Orange', mc_red:'🔴 Red',
     mc_easy:'Easy Market', mc_hard:'Hard Market', mc_up:'Uptrend',
     mc_press:'Pressure', mc_down:'Downtrend',
+    cal_no_trades:'No trades', view_table:'Table', view_calendar:'Monthly',
+    filter_all_months:'All Months', filter_all_years:'All Years',
+    set_stocks:'Stocks', set_crypto:'Crypto', set_security:'Security',
+    set_ibkr_sync:'IBKR Sync', set_file_import:'File Import',
+    set_export:'Export Data', set_broker_import:'Broker Import',
+    set_2fa:'Two-Factor Authentication',
+    set_ibkr_desc:'Enables automatic trade import from Interactive Brokers.',
+    set_ibkr_how:'How to configure:',
+    set_ibkr_steps:'Create a new Flex Query → Copy the Token and Query ID',
+    set_sync:'Sync', m_save_short:'Save',
+    set_tlg_drop:'Drag .tlg file or click to select',
+    set_export_desc:'Export all trades to a CSV file for external analysis.',
+    set_broker_desc:'Import trades from your broker\'s export file. Select broker, upload CSV, and confirm column mapping.',
+    set_broker_label:'Broker', set_broker_select:'Select broker...',
+    set_csv_drop:'Drag CSV file or click to select',
+    set_import_btn:'Import Trades',
+    set_loading:'Loading...',
+    set_finnhub_key:'Finnhub Key (Admin only)',
+    set_av_key:'Alpha Vantage Key — financial data for all stocks including small caps',
+    set_get_free_key:'Get free key',
   },
   he: {
     nav_overview:'סקירה כללית', nav_stocks:'מניות', nav_crypto:'קריפטו',
@@ -8558,6 +8586,26 @@ const LANG_STRINGS = {
     mc_green:'🟢 ירוק', mc_orange:'🟠 כתום', mc_red:'🔴 אדום',
     mc_easy:'שוק קל', mc_hard:'שוק קשה', mc_up:'מגמה עולה',
     mc_press:'לחץ', mc_down:'מגמה יורדת',
+    cal_no_trades:'אין עסקאות', view_table:'טבלה', view_calendar:'חודשי',
+    filter_all_months:'כל החודשים', filter_all_years:'כל השנים',
+    set_stocks:'מניות', set_crypto:'קריפטו', set_security:'אבטחה',
+    set_ibkr_sync:'סנכרון IBKR', set_file_import:'ייבוא קובץ',
+    set_export:'ייצוא נתונים', set_broker_import:'ייבוא מברוקר',
+    set_2fa:'אימות דו-שלבי',
+    set_ibkr_desc:'מאפשר ייבוא עסקאות אוטומטי מ-Interactive Brokers.',
+    set_ibkr_how:'איך להגדיר:',
+    set_ibkr_steps:'צור Flex Query חדש → העתק את Token ו-Query ID',
+    set_sync:'סנכרן', m_save_short:'שמור',
+    set_tlg_drop:'גרור קובץ .tlg או לחץ לבחירה',
+    set_export_desc:'ייצוא כל העסקאות לקובץ CSV לניתוח חיצוני.',
+    set_broker_desc:'ייבוא עסקאות מקובץ ייצוא של הברוקר. בחר ברוקר, העלה קובץ CSV, ואשר את מיפוי העמודות.',
+    set_broker_label:'ברוקר', set_broker_select:'בחר ברוקר...',
+    set_csv_drop:'גרור קובץ CSV או לחץ לבחירה',
+    set_import_btn:'ייבא עסקאות',
+    set_loading:'טוען...',
+    set_finnhub_key:'מפתח Finnhub (Admin בלבד)',
+    set_av_key:'מפתח Alpha Vantage — נתונים פיננסיים לכל מניה כולל סמולקאפ',
+    set_get_free_key:'קבל מפתח חינמי',
   }
 };
 
@@ -8597,6 +8645,9 @@ function setLang(lang) {
   const desc = document.getElementById('lang-desc');
   if (desc) desc.textContent = lang === 'he' ? 'ממשק בעברית' : 'Interface in English';
 
+  // Re-populate filter dropdowns with localized month names
+  if (typeof initFilters === 'function') initFilters();
+
   // Re-render active tab content
   const activeTab = document.querySelector('.tab-content.active');
   if (activeTab) {
@@ -8605,7 +8656,7 @@ function setLang(lang) {
     else if (id === 'tab-stocks') renderTable('stock');
     else if (id === 'tab-crypto') renderTable('crypto');
     else if (id === 'tab-statistics') renderStatistics();
-    else if (id === 'tab-investments') { invRenderTable(); invRenderDeposits(); }
+    else if (id === 'tab-investments') { const _invd = invLoad(); invRenderRows(_invd.holdings || []); invRenderDeposits(_invd.deposits || []); }
     else if (id === 'tab-missed') missedRender();
   }
   // Also update modal/quick-add labels dynamically
