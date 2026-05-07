@@ -1318,88 +1318,52 @@
   .cg-refresh-btn:hover { color: var(--accent); border-color: var(--accent); }
 
   /* ══════════════════════════════════════
-     IBKR TAB — Professional Redesign
+     SETTINGS TAB — list layout
   ══════════════════════════════════════ */
   #tab-ibkr { display: none; }
-  #tab-ibkr.active {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 16px;
-    align-items: start;
-  }
+  #tab-ibkr.active { display: block; max-width: 700px; }
 
-  .settings-group-hdr {
-    grid-column: 1 / -1;
-    display: flex; align-items: center; gap: 10px;
-    padding: 4px 0 2px;
-    margin-top: 4px;
-  }
-  .settings-group-hdr:first-child { margin-top: 0; }
-  .settings-group-hdr-label {
-    font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
-    text-transform: uppercase; color: var(--text3);
-    white-space: nowrap;
-  }
-  .settings-group-hdr-line { flex: 1; height: 1px; background: var(--border); }
-
-  /* Collapsible card */
-  .ibkr-card-header.collapsible {
-    cursor: pointer; user-select: none;
-    transition: opacity 150ms;
-  }
-  .ibkr-card-header.collapsible:hover { opacity: 0.85; }
-  .ibkr-collapse-chevron {
-    width: 14px; height: 14px; margin-left: auto; flex-shrink: 0;
-    color: var(--text3); transition: transform 220ms ease;
-  }
-  .ibkr-card.collapsed .ibkr-collapse-chevron { transform: rotate(-90deg); }
-  .ibkr-collapse-body {
-    overflow: hidden;
-    max-height: 600px;
-    transition: max-height 260ms ease, opacity 220ms ease;
-    opacity: 1;
-  }
-  .ibkr-card.collapsed .ibkr-collapse-body {
-    max-height: 0;
-    opacity: 0;
-  }
-
-  .ibkr-card {
+  .s-section {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 20px 22px;
-    margin-bottom: 0;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    position: relative;
     overflow: hidden;
+    margin-bottom: 10px;
   }
-  .ibkr-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    border-radius: 12px 12px 0 0;
+  .s-section-title {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.7px;
+    text-transform: uppercase; color: var(--text3);
+    padding: 9px 16px 8px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.015);
   }
-  .ibkr-card.c-green::before  { background: linear-gradient(90deg, transparent, #22c55e, transparent); }
-  .ibkr-card.c-blue::before   { background: linear-gradient(90deg, transparent, #818cf8, transparent); }
-  .ibkr-card.c-purple::before { background: linear-gradient(90deg, transparent, #818cf8, transparent); }
-  .ibkr-card.c-gray::before   { background: linear-gradient(90deg, transparent, #6e7681, transparent); }
-  .ibkr-card:hover { border-color: rgba(129,140,248,0.22); box-shadow: 0 4px 20px rgba(0,0,0,0.18); }
-  .ibkr-card.span-2 { grid-column: span 2; }
-  .ibkr-card.full-width { grid-column: 1 / -1; }
+  .s-row {
+    display: flex; align-items: center; gap: 16px;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+    min-height: 50px;
+  }
+  .s-row:last-child { border-bottom: none; }
+  .s-row-left { flex: 1; min-width: 0; }
+  .s-row-label { font-size: 13px; font-weight: 500; color: var(--text); }
+  .s-row-desc  { font-size: 11px; color: var(--text3); margin-top: 1px; }
+  .s-row-ctrl  { flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+  .s-row.s-expandable { cursor: pointer; user-select: none; transition: background 150ms; }
+  .s-row.s-expandable:hover { background: rgba(255,255,255,0.025); }
+  .s-chevron { color: var(--text3); transition: transform 220ms ease; flex-shrink: 0; }
+  .s-row.open .s-chevron { transform: rotate(180deg); }
+  .s-expand-body {
+    overflow: hidden; max-height: 0;
+    transition: max-height 280ms ease;
+  }
+  .s-expand-body.open { max-height: 520px; }
+  .s-expand-inner {
+    padding: 14px 16px 16px;
+    border-top: 1px solid var(--border);
+  }
+  .s-profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
 
-  .ibkr-card-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 16px; gap: 8px;
-  }
-  .ibkr-card.collapsed .ibkr-card-header { margin-bottom: 0; }
-  .ibkr-card-title-wrap { display: flex; align-items: center; gap: 7px; }
-  .ibkr-card-icon { width: 16px; height: 16px; opacity: 0.8; flex-shrink: 0; display: flex; align-items: center; }
-  .ibkr-card-title {
-    font-size: 12px; font-weight: 700; letter-spacing: 0.6px;
-    text-transform: uppercase; color: var(--text2);
-  }
+  /* badges (kept for status labels) */
   .ibkr-card-badge {
     font-size: 10px; font-weight: 700; padding: 2px 8px;
     border-radius: 20px; letter-spacing: 0.3px;
@@ -1576,16 +1540,10 @@
   .tlg-drag-over { border-style: solid; }
   .tlg-drop-icon { font-size: 24px; margin-bottom: 6px; display: block; }
 
-  @media (max-width: 960px) {
-    #tab-ibkr.active { grid-template-columns: 1fr 1fr; }
-    .ibkr-card.span-2 { grid-column: span 2; }
-    .ibkr-card.full-width { grid-column: 1 / -1; }
-  }
   @media (max-width: 700px) {
-    #tab-ibkr.active { grid-template-columns: 1fr; }
-    .ibkr-card.span-2, .ibkr-card.full-width { grid-column: 1; }
+    .s-profile-grid { grid-template-columns: 1fr; }
     .ibkr-field-row { grid-template-columns: 1fr; }
-    .sec-grid { grid-template-columns: 1fr; }
+    .s-row-ctrl { flex-wrap: wrap; justify-content: flex-end; }
   }
 
   /* ══════════════════════════════════════
@@ -5441,249 +5399,232 @@
 
     <div id="tab-ibkr" class="tab-content">
 
-      <!-- ── Account ── -->
-      <div class="settings-group-hdr">
-        <span class="settings-group-hdr-label" data-i18n="set_grp_account">Account</span>
-        <span class="settings-group-hdr-line"></span>
-      </div>
+      <!-- Account -->
+      <div class="s-section">
+        <div class="s-section-title" data-i18n="set_grp_account">Account</div>
 
-      <!-- Profile -->
-      <div class="ibkr-card c-purple span-2">
-        <div class="ibkr-card-header">
-          <div class="ibkr-card-title-wrap">
-            <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>
-            <span class="ibkr-card-title" data-i18n="settings_profile">Profile</span>
+        <!-- Profile fields -->
+        <div class="s-row" style="flex-direction:column;align-items:stretch;min-height:0;padding:16px;">
+          <div class="s-profile-grid">
+            <div class="profile-field">
+              <label class="profile-label" data-i18n="settings_first">First Name</label>
+              <input class="profile-input" id="profile-first" type="text" placeholder="First name" oninput="profileMarkDirty()">
+            </div>
+            <div class="profile-field">
+              <label class="profile-label" data-i18n="settings_last">Last Name</label>
+              <input class="profile-input" id="profile-last" type="text" placeholder="Last name" oninput="profileMarkDirty()">
+            </div>
           </div>
+          <div class="s-profile-grid">
+            <div class="profile-field">
+              <label class="profile-label" data-i18n="settings_display">Display Name</label>
+              <input class="profile-input" id="profile-display" type="text" placeholder="How it appears in the header" oninput="profileMarkDirty()">
+            </div>
+            <div class="profile-field">
+              <label class="profile-label" data-i18n="settings_email">Email</label>
+              <input class="profile-input" id="profile-email" type="email" disabled>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" id="profile-save-btn" onclick="profileSave()" style="display:none;margin-top:12px;align-self:flex-start;" data-i18n="settings_save_profile">Save Profile</button>
         </div>
-        <div class="profile-field-row">
-          <div class="profile-field">
-            <label class="profile-label" data-i18n="settings_first">First Name</label>
-            <input class="profile-input" id="profile-first" type="text" placeholder="First name" oninput="profileMarkDirty()">
-          </div>
-          <div class="profile-field">
-            <label class="profile-label" data-i18n="settings_last">Last Name</label>
-            <input class="profile-input" id="profile-last" type="text" placeholder="Last name" oninput="profileMarkDirty()">
-          </div>
-        </div>
-        <div class="profile-field-row">
-          <div class="profile-field">
-            <label class="profile-label" data-i18n="settings_display">Display Name</label>
-            <input class="profile-input" id="profile-display" type="text" placeholder="How it appears in the header" oninput="profileMarkDirty()">
-          </div>
-          <div class="profile-field">
-            <label class="profile-label" data-i18n="settings_email">Email</label>
-            <input class="profile-input" id="profile-email" type="email" disabled>
-          </div>
-        </div>
-        <button class="btn btn-primary btn-sm" id="profile-save-btn" onclick="profileSave()" style="margin-top:4px;display:none;" data-i18n="settings_save_profile">Save Profile</button>
-      </div>
 
-      <!-- Language -->
-      <div class="ibkr-card c-blue">
-        <div class="ibkr-card-header">
-          <div class="ibkr-card-title-wrap">
-            <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
-            <span class="ibkr-card-title" data-i18n="settings_lang">Language</span>
+        <!-- Language -->
+        <div class="s-row">
+          <div class="s-row-left">
+            <div class="s-row-label" data-i18n="settings_lang">Language</div>
+          </div>
+          <div class="s-row-ctrl" style="flex-direction:column;align-items:flex-end;gap:4px;">
+            <div class="lang-seg">
+              <button class="lang-opt" id="lang-en" onclick="setLang('en')">English</button>
+              <button class="lang-opt" id="lang-he" onclick="setLang('he')">עברית</button>
+            </div>
+            <div class="lang-desc" id="lang-desc"></div>
           </div>
         </div>
-        <div class="lang-seg">
-          <button class="lang-opt" id="lang-en" onclick="setLang('en')">English</button>
-          <button class="lang-opt" id="lang-he" onclick="setLang('he')">עברית</button>
-        </div>
-        <div class="lang-desc" id="lang-desc"></div>
-      </div>
-
-      <!-- ── Security & Data Sources ── -->
-      <div class="settings-group-hdr">
-        <span class="settings-group-hdr-label" data-i18n="set_grp_data">Data Sources & Security</span>
-        <span class="settings-group-hdr-line"></span>
       </div>
 
       <!-- Security -->
-      <div class="ibkr-card c-purple">
-        <div class="ibkr-card-header">
-          <div class="ibkr-card-title-wrap">
-            <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-            <span class="ibkr-card-title" data-i18n="set_security">Security</span>
+      <div class="s-section">
+        <div class="s-section-title" data-i18n="set_security">Security</div>
+
+        <div class="s-row">
+          <div class="s-row-left"><div class="s-row-label">PIN</div></div>
+          <div class="s-row-ctrl" style="gap:6px;font-size:12px;color:var(--text3);">
+            <span class="sec-dot" id="sec-pin-dot"></span>
+            <span id="sec-pin-lbl"></span>
           </div>
-          <span class="ibkr-card-badge badge-secure">Defense in Depth</span>
         </div>
-        <div class="sec-grid">
-          <div class="sec-row"><span class="sec-dot" id="sec-pin-dot"></span><span id="sec-pin-lbl">PIN</span></div>
-          <div class="sec-row"><span class="sec-dot" id="sec-2fa-dot"></span><span id="sec-2fa-lbl">TOTP 2FA</span></div>
-        </div>
-        <div class="totp-section">
-          <div>
-            <div style="font-size:12px;font-weight:600;color:var(--text);" data-i18n="set_2fa">Two-Factor Authentication</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:2px;" id="totp-status-text">בודק...</div>
+
+        <div class="s-row">
+          <div class="s-row-left">
+            <div class="s-row-label" data-i18n="set_2fa">Two-Factor Authentication</div>
+            <div class="s-row-desc" id="totp-status-text"></div>
           </div>
-          <button id="totp-toggle-btn" class="btn btn-secondary btn-sm" onclick="totpToggle()">—</button>
+          <div class="s-row-ctrl">
+            <span class="sec-dot" id="sec-2fa-dot"></span>
+            <span id="sec-2fa-lbl" style="font-size:12px;color:var(--text3);"></span>
+            <button id="totp-toggle-btn" class="btn btn-secondary btn-sm" onclick="totpToggle()">—</button>
+          </div>
         </div>
-        <div id="totp-setup-area" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);"></div>
+
+        <div id="totp-setup-area" style="display:none;padding:14px 16px;border-top:1px solid var(--border);"></div>
       </div>
 
-      <!-- Stocks -->
-      <div class="ibkr-card c-green">
-        <div class="ibkr-card-header">
-          <div class="ibkr-card-title-wrap">
-            <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></span>
-            <span class="ibkr-card-title" data-i18n="set_stocks">Stocks</span>
+      <!-- Data Sources -->
+      <div class="s-section">
+        <div class="s-section-title" data-i18n="set_grp_data">Data Sources</div>
+
+        <div class="s-row">
+          <div class="s-row-left">
+            <div class="s-row-label" data-i18n="set_stocks">Stocks</div>
           </div>
-          <span class="ibkr-card-badge badge-live">Finnhub · SEC</span>
+          <div class="s-row-ctrl" style="font-size:12px;">
+            <div id="stock-sym-status"><span class="sym-dot loading"></span></div>
+          </div>
         </div>
-        <div id="stock-sym-status" class="ibkr-sym-status">
-          <span class="sym-dot loading"></span><span data-i18n="set_loading">Loading...</span>
+
+        <div class="s-row">
+          <div class="s-row-left">
+            <div class="s-row-label" data-i18n="set_crypto">Crypto</div>
+          </div>
+          <div class="s-row-ctrl" style="font-size:12px;">
+            <div id="crypto-sym-status"><span class="sym-dot loading"></span></div>
+          </div>
         </div>
-        <div id="finnhub-key-section" style="display:none">
-          <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.6;">
+
+        <!-- Admin API keys (hidden until admin) -->
+        <div id="finnhub-key-section" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border);">
+          <div style="font-size:11px;color:var(--text3);margin-top:12px;margin-bottom:6px;">
             <span data-i18n="set_finnhub_key">Finnhub Key (Admin only)</span>
           </div>
-          <div style="display:flex;gap:8px;margin-top:8px;">
-            <input id="finnhub-key-input" class="form-control" type="password"
-              placeholder="Finnhub API Key" autocomplete="off"
-              style="font-size:12px;padding:6px 10px;flex:1;">
+          <div style="display:flex;gap:8px;">
+            <input id="finnhub-key-input" class="form-control" type="password" placeholder="Finnhub API Key" autocomplete="off" style="font-size:12px;padding:6px 10px;flex:1;">
             <button class="btn btn-secondary btn-sm" onclick="saveFinnhubKey()" data-i18n="m_save_short">Save</button>
             <span id="finnhub-key-status" style="font-size:11px;align-self:center;color:var(--text3);white-space:nowrap;"></span>
           </div>
-          <div style="font-size:11px;color:var(--text3);margin-top:12px;line-height:1.6;">
-            <span data-i18n="set_av_key">Alpha Vantage Key — financial data for all stocks including small caps</span> (<a href="https://www.alphavantage.co/support/#api-key" target="_blank" style="color:var(--accent);" data-i18n="set_get_free_key">Get free key</a>)
+          <div style="font-size:11px;color:var(--text3);margin-top:12px;margin-bottom:6px;">
+            <span data-i18n="set_av_key">Alpha Vantage Key</span> (<a href="https://www.alphavantage.co/support/#api-key" target="_blank" style="color:var(--accent);" data-i18n="set_get_free_key">Get free key</a>)
           </div>
-          <div style="display:flex;gap:8px;margin-top:8px;">
-            <input id="av-key-input" class="form-control" type="password"
-              placeholder="Alpha Vantage API Key" autocomplete="off"
-              style="font-size:12px;padding:6px 10px;flex:1;">
+          <div style="display:flex;gap:8px;">
+            <input id="av-key-input" class="form-control" type="password" placeholder="Alpha Vantage API Key" autocomplete="off" style="font-size:12px;padding:6px 10px;flex:1;">
             <button class="btn btn-secondary btn-sm" onclick="saveAvKey()" data-i18n="m_save_short">Save</button>
             <span id="av-key-status" style="font-size:11px;align-self:center;color:var(--text3);white-space:nowrap;"></span>
           </div>
         </div>
       </div>
 
-      <!-- Crypto -->
-      <div class="ibkr-card c-green">
-        <div class="ibkr-card-header">
-          <div class="ibkr-card-title-wrap">
-            <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 8.5h4a2 2 0 0 1 0 4h-4zm0 4h4.5a2 2 0 0 1 0 4h-4.5z"/><line x1="10.5" y1="8.5" x2="10.5" y2="7"/><line x1="13.5" y1="8.5" x2="13.5" y2="7"/><line x1="10.5" y1="16.5" x2="10.5" y2="18"/><line x1="13.5" y1="16.5" x2="13.5" y2="18"/></svg></span>
-            <span class="ibkr-card-title" data-i18n="set_crypto">Crypto</span>
-          </div>
-          <span class="ibkr-card-badge badge-live">CoinGecko</span>
-        </div>
-        <div id="crypto-sym-status" class="ibkr-sym-status">
-          <span class="sym-dot loading"></span><span data-i18n="set_loading">Loading...</span>
-        </div>
-      </div>
+      <!-- Import / Export -->
+      <div class="s-section">
+        <div class="s-section-title" data-i18n="set_grp_import">Import / Export</div>
 
-      <!-- ── Import / Export ── -->
-      <div class="settings-group-hdr">
-        <span class="settings-group-hdr-label" data-i18n="set_grp_import">Import / Export</span>
-        <span class="settings-group-hdr-line"></span>
-      </div>
-
-      <!-- IBKR Sync (collapsible) -->
-      <div class="ibkr-card c-blue span-2 collapsed" id="ibkr-sync-card">
-        <div class="ibkr-card-header collapsible" onclick="toggleIbkrCard()">
-          <div class="ibkr-card-title-wrap">
-            <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span>
-            <span class="ibkr-card-title" data-i18n="set_ibkr_sync">Broker Connection</span>
+        <!-- Broker Connection (expandable) -->
+        <div class="s-row s-expandable" id="s-ibkr-row" onclick="toggleExpand('s-ibkr-body','s-ibkr-row')">
+          <div class="s-row-left">
+            <div class="s-row-label" data-i18n="set_ibkr_sync">Broker Connection</div>
+            <div class="s-row-desc">Interactive Brokers · Flex Web Service</div>
           </div>
-          <span class="ibkr-card-badge badge-sync">Flex Web Service</span>
-          <svg class="ibkr-collapse-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          <div class="s-row-ctrl">
+            <svg class="s-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
         </div>
-        <div class="ibkr-collapse-body">
-          <div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.6;">
-            <span data-i18n="set_ibkr_desc">Enables automatic trade import from Interactive Brokers.</span><br>
-            <strong style="color:var(--text2);" data-i18n="set_ibkr_how">How to configure:</strong>
-            IBKR → Reports → Flex Queries → <span data-i18n="set_ibkr_steps">Create a new Flex Query → Copy the Token and Query ID</span>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 180px auto;gap:10px;align-items:end;margin-bottom:14px;">
-            <div>
-              <div class="ibkr-field-label">Token</div>
-              <input id="flex-token" class="form-control" type="password" placeholder="••••••••" autocomplete="off" style="font-size:12px;padding:6px 10px;">
+        <div class="s-expand-body" id="s-ibkr-body">
+          <div class="s-expand-inner">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6;">
+              <strong style="color:var(--text2);" data-i18n="set_ibkr_how">How to configure:</strong>
+              IBKR → Reports → Flex Queries → <span data-i18n="set_ibkr_steps">Create a new Flex Query → Copy the Token and Query ID</span>
             </div>
-            <div>
-              <div class="ibkr-field-label">Query ID</div>
-              <input id="flex-query-id" class="form-control" type="text" placeholder="1462900" autocomplete="off" style="font-size:12px;padding:6px 10px;">
+            <div style="display:grid;grid-template-columns:1fr 180px auto;gap:10px;align-items:end;margin-bottom:12px;">
+              <div>
+                <div class="ibkr-field-label">Token</div>
+                <input id="flex-token" class="form-control" type="password" placeholder="••••••••" autocomplete="off" style="font-size:12px;padding:6px 10px;">
+              </div>
+              <div>
+                <div class="ibkr-field-label">Query ID</div>
+                <input id="flex-query-id" class="form-control" type="text" placeholder="1462900" autocomplete="off" style="font-size:12px;padding:6px 10px;">
+              </div>
+              <div class="ibkr-actions" style="margin-bottom:0;">
+                <button class="btn btn-secondary btn-sm" onclick="flexSave()" data-i18n="m_save_short">Save</button>
+                <button class="btn btn-primary btn-sm" onclick="flexSync()" id="flex-sync-btn" data-i18n="set_sync">Sync</button>
+              </div>
             </div>
-            <div class="ibkr-actions" style="margin-bottom:0;">
-              <button class="btn btn-secondary btn-sm" onclick="flexSave()" data-i18n="m_save_short">Save</button>
-              <button class="btn btn-primary btn-sm" onclick="flexSync()" id="flex-sync-btn" data-i18n="set_sync">Sync</button>
+            <span class="ibkr-sync-status" id="flex-status"></span>
+            <div id="flex-preview" class="ibkr-trades-list"></div>
+          </div>
+        </div>
+
+        <!-- File Import (.tlg) — expandable -->
+        <div class="s-row s-expandable" id="s-tlg-row" onclick="toggleExpand('s-tlg-body','s-tlg-row')">
+          <div class="s-row-left">
+            <div class="s-row-label" data-i18n="set_file_import">File Import</div>
+            <div class="s-row-desc">.tlg</div>
+          </div>
+          <div class="s-row-ctrl">
+            <svg class="s-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+        <div class="s-expand-body" id="s-tlg-body">
+          <div class="s-expand-inner">
+            <input type="file" accept=".tlg,.txt" id="tlg-file-input" style="display:none" onchange="tlgLoadFile(this)">
+            <div class="tlg-drop" id="tlg-drop-zone"
+              onclick="document.getElementById('tlg-file-input').click()"
+              ondragover="event.preventDefault();this.classList.add('tlg-drag-over')"
+              ondragleave="this.classList.remove('tlg-drag-over')"
+              ondrop="event.preventDefault();this.classList.remove('tlg-drag-over');tlgLoadFile({files:event.dataTransfer.files})">
+              <span class="tlg-drop-icon">📂</span>
+              <span data-i18n="set_tlg_drop">Drag .tlg file or click to select</span>
             </div>
+            <div id="tlg-status" style="margin-top:8px;font-size:12px;color:var(--text3);"></div>
+            <div id="tlg-preview" class="ibkr-trades-list"></div>
           </div>
-          <span class="ibkr-sync-status" id="flex-status"></span>
-          <div id="flex-preview" class="ibkr-trades-list"></div>
         </div>
-      </div>
 
-      <!-- TLG Import -->
-      <div class="ibkr-card c-blue">
-        <div class="ibkr-card-header">
-          <div class="ibkr-card-title-wrap">
-            <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>
-            <span class="ibkr-card-title" data-i18n="set_file_import">File Import</span>
+        <!-- Broker Import (CSV) — expandable -->
+        <div class="s-row s-expandable" id="s-bi-row" onclick="toggleExpand('s-bi-body','s-bi-row')">
+          <div class="s-row-left">
+            <div class="s-row-label" data-i18n="set_broker_import">Broker Import</div>
+            <div class="s-row-desc">CSV</div>
           </div>
-          <span class="ibkr-card-badge badge-sync">.tlg</span>
+          <div class="s-row-ctrl">
+            <svg class="s-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
         </div>
-        <input type="file" accept=".tlg,.txt" id="tlg-file-input" style="display:none" onchange="tlgLoadFile(this)">
-        <div class="tlg-drop" id="tlg-drop-zone"
-          onclick="document.getElementById('tlg-file-input').click()"
-          ondragover="event.preventDefault();this.classList.add('tlg-drag-over')"
-          ondragleave="this.classList.remove('tlg-drag-over')"
-          ondrop="event.preventDefault();this.classList.remove('tlg-drag-over');tlgLoadFile({files:event.dataTransfer.files})">
-          <span class="tlg-drop-icon">📂</span>
-          <span data-i18n="set_tlg_drop">Drag .tlg file or click to select</span>
+        <div class="s-expand-body" id="s-bi-body">
+          <div class="s-expand-inner">
+            <div style="margin-bottom:12px;">
+              <div class="ibkr-field-label" data-i18n="set_broker_label">Broker</div>
+              <select id="bi-broker" class="form-control" style="font-size:12px;padding:6px 10px;max-width:220px;margin-top:4px;">
+                <option value="" data-i18n="set_broker_select">Select broker...</option>
+                <option value="colmex">Colmex Pro</option>
+              </select>
+            </div>
+            <input type="file" accept=".csv,.txt" id="bi-file-input" style="display:none" onchange="brokerLoadFile(this)">
+            <div class="tlg-drop" id="bi-drop-zone"
+              onclick="if(!document.getElementById('bi-broker').value){toast('בחר ברוקר תחילה',true);return;} document.getElementById('bi-file-input').click()"
+              ondragover="event.preventDefault();this.classList.add('tlg-drag-over')"
+              ondragleave="this.classList.remove('tlg-drag-over')"
+              ondrop="event.preventDefault();this.classList.remove('tlg-drag-over');brokerLoadFile({files:event.dataTransfer.files})">
+              <span class="tlg-drop-icon">📊</span>
+              <span data-i18n="set_csv_drop">Drag CSV file or click to select</span>
+            </div>
+            <div id="bi-mapping" style="display:none;"></div>
+            <div id="bi-preview" style="display:none;"></div>
+            <button id="bi-import-btn" class="btn btn-primary btn-sm" style="display:none;margin-top:12px;" onclick="brokerImport()" data-i18n="set_import_btn">Import Trades</button>
+          </div>
         </div>
-        <div id="tlg-status" style="margin-top:8px;font-size:12px;color:var(--text3);"></div>
-        <div id="tlg-preview" class="ibkr-trades-list"></div>
-      </div>
 
-      <!-- CSV Export -->
-      <div class="ibkr-card c-blue">
-        <div class="ibkr-card-header">
-          <div class="ibkr-card-title-wrap">
-            <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
-            <span class="ibkr-card-title" data-i18n="set_export">Export Data</span>
+        <!-- Export (always visible) -->
+        <div class="s-row">
+          <div class="s-row-left">
+            <div class="s-row-label" data-i18n="set_export">Export Data</div>
+            <div class="s-row-desc" data-i18n="set_export_desc">Export all trades to CSV</div>
+          </div>
+          <div class="s-row-ctrl" style="gap:6px;">
+            <button class="btn btn-secondary btn-sm" onclick="exportCSV('stock')" data-i18n="export_stocks">Export Stocks</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportCSV('crypto')" data-i18n="export_crypto">Export Crypto</button>
+            <button class="btn btn-primary btn-sm" onclick="exportCSV('all')" data-i18n="export_all">Export All</button>
           </div>
         </div>
-        <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6;">
-          <span data-i18n="set_export_desc">Export all trades to a CSV file for external analysis.</span>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn btn-secondary btn-sm" onclick="exportCSV('stock')" data-i18n="export_stocks">Export Stocks</button>
-          <button class="btn btn-secondary btn-sm" onclick="exportCSV('crypto')" data-i18n="export_crypto">Export Crypto</button>
-          <button class="btn btn-primary btn-sm" onclick="exportCSV('all')" data-i18n="export_all">Export All</button>
-        </div>
-      </div>
 
-      <!-- Broker CSV Import -->
-      <div class="ibkr-card c-blue span-2">
-        <div class="ibkr-card-header">
-          <div class="ibkr-card-title-wrap">
-            <span class="ibkr-card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
-            <span class="ibkr-card-title" data-i18n="set_broker_import">Broker Import</span>
-          </div>
-          <span class="ibkr-card-badge badge-sync">CSV</span>
-        </div>
-        <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6;">
-          <span data-i18n="set_broker_desc">Import trades from your broker's export file. Select broker, upload CSV, and confirm column mapping.</span>
-        </div>
-        <div style="margin-bottom:12px;">
-          <div class="ibkr-field-label" data-i18n="set_broker_label">Broker</div>
-          <select id="bi-broker" class="form-control" style="font-size:12px;padding:6px 10px;max-width:220px;">
-            <option value="" data-i18n="set_broker_select">Select broker...</option>
-            <option value="colmex">Colmex Pro</option>
-          </select>
-        </div>
-        <input type="file" accept=".csv,.txt" id="bi-file-input" style="display:none" onchange="brokerLoadFile(this)">
-        <div class="tlg-drop" id="bi-drop-zone"
-          onclick="if(!document.getElementById('bi-broker').value){toast('בחר ברוקר תחילה',true);return;} document.getElementById('bi-file-input').click()"
-          ondragover="event.preventDefault();this.classList.add('tlg-drag-over')"
-          ondragleave="this.classList.remove('tlg-drag-over')"
-          ondrop="event.preventDefault();this.classList.remove('tlg-drag-over');brokerLoadFile({files:event.dataTransfer.files})">
-          <span class="tlg-drop-icon">📊</span>
-          <span data-i18n="set_csv_drop">Drag CSV file or click to select</span>
-        </div>
-        <div id="bi-mapping" style="display:none;"></div>
-        <div id="bi-preview" style="display:none;"></div>
-        <button id="bi-import-btn" class="btn btn-primary btn-sm" style="display:none;margin-top:12px;" onclick="brokerImport()" data-i18n="set_import_btn">Import Trades</button>
       </div>
 
     </div>
@@ -11259,6 +11200,14 @@ function flexInit() {
 
 function toggleIbkrCard() {
   document.getElementById('ibkr-sync-card')?.classList.toggle('collapsed');
+}
+
+function toggleExpand(bodyId, rowId) {
+  const body = document.getElementById(bodyId);
+  const row  = document.getElementById(rowId);
+  if (!body || !row) return;
+  const isOpen = body.classList.toggle('open');
+  row.classList.toggle('open', isOpen);
 }
 
 async function flexSave() {
