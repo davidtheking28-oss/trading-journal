@@ -5601,7 +5601,6 @@
         <span class="tt-updated" id="tt-updated"></span>
       </div>
       <div id="tt-indices" class="tt-indices"></div>
-      <div id="tt-sentiment" class="tt-sentiment" style="display:none"></div>
       <div id="tt-meta" class="tt-meta"></div>
       <div id="tt-grid" class="tt-grid"></div>
     </div>
@@ -13471,8 +13470,6 @@ async function ttLoad(force = false) {
   if (_idxEl) _idxEl.innerHTML = '';
   const _metaEl = document.getElementById('tt-meta');
   if (_metaEl) _metaEl.innerHTML = '';
-  const _sentEl = document.getElementById('tt-sentiment');
-  if (_sentEl) { _sentEl.style.display = 'none'; _sentEl.innerHTML = ''; }
   try {
     const res = await fetch(
       'https://fnklrqxwyeibfptaxewf.supabase.co/functions/v1/theme-tracker',
@@ -13519,9 +13516,8 @@ function ttRender(themes, indices) {
   const sorted = [...valid].sort((a, b) => b[pKey] - a[pKey]);
   if (!sorted.length) { grid.innerHTML = '<div class="tt-loading">אין נתונים לתקופה זו</div>'; return; }
 
-  // ── Sentiment Score ──
-  const sentEl = document.getElementById('tt-sentiment');
-  if (sentEl) {
+  // ── Sentiment Score (overview widget only) ──
+  {
     const green = sorted.filter(t => t[pKey] > 0).length;
     const total = sorted.length;
     const breadthScore = (green / total) * 100;
@@ -13533,16 +13529,6 @@ function ttRender(themes, indices) {
       : score >= 40 ? ['Neutral', '#94a3b8']
       : score >= 20 ? ['Fear', '#f97316']
       : ['Extreme Fear', '#ef4444'];
-    sentEl.style.display = 'flex';
-    sentEl.innerHTML = `
-      <div class="tt-sent-score" style="color:${color}">${score}</div>
-      <div class="tt-sent-right" style="flex:1">
-        <div class="tt-sent-label" style="color:${color}">${label}</div>
-        <div class="tt-sent-bar-wrap">
-          <div class="tt-sent-bar-fill" style="width:${score}%;background:${color}"></div>
-        </div>
-        <div class="tt-sent-sub">Breadth ${Math.round(breadthScore)}% · Avg ${avgPct >= 0 ? '+' : ''}${avgPct.toFixed(2)}% · ${total} themes</div>
-      </div>`;
     ttRenderPulseWidget(score, label, color);
   }
 
