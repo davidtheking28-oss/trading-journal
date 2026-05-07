@@ -9,7 +9,25 @@ const CORS = {
 const YF_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
   'Accept': 'application/json,text/plain,*/*',
+  'Accept-Language': 'en-US,en;q=0.9',
 };
+
+async function fetchPct(symbol: string): Promise<{ symbol: string; name: string; pct: number | null }> {
+  try {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=2d&interval=1d`;
+    const res = await fetch(url, { headers: YF_HEADERS });
+    if (!res.ok) return { symbol, name: symbol, pct: null };
+    const json = await res.json();
+    const meta = json?.chart?.result?.[0]?.meta;
+    return {
+      symbol,
+      name: meta?.shortName || meta?.longName || symbol,
+      pct:  meta?.regularMarketChangePercent ?? null,
+    };
+  } catch {
+    return { symbol, name: symbol, pct: null };
+  }
+}
 
 const HOLDINGS: Record<string, string[]> = {
   SOXX: ['NVDA','AVGO','AMD','QCOM','TXN','INTC','AMAT','LRCX','KLAC','MU'],
@@ -56,22 +74,9 @@ serve(async (req: Request) => {
     const symbols = HOLDINGS[ticker];
     if (!symbols?.length) return new Response(JSON.stringify({ holdings: [] }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
 
-    const quoteUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols.join(',')}`;
-    const res = await fetch(quoteUrl, { headers: YF_HEADERS });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
+    const results = await Promise.all(symbols.map(fetchPct));
 
-    const results = (json?.quoteResponse?.result ?? []).map((q: Record<string, unknown>) => ({
-      symbol: q.symbol,
-      name:   q.shortName || q.longName || q.symbol,
-      pct:    q.regularMarketChangePercent ?? null,
-      price:  q.regularMarketPrice ?? null,
-    }));
-
-    // Sort by absolute % change descending
-    results.sort((a: { pct: number | null }, b: { pct: number | null }) =>
-      Math.abs(b.pct ?? 0) - Math.abs(a.pct ?? 0)
-    );
+    results.sort((a, b) => Math.abs(b.pct ?? 0) - Math.abs(a.pct ?? 0));
 
     return new Response(JSON.stringify({ ticker, holdings: results }), {
       headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'max-age=120' },
