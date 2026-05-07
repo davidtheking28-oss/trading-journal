@@ -5161,7 +5161,7 @@
       <div class="ov-top-bar" style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-bottom:12px;padding:8px 14px;">
         <button class="btn btn-primary" onclick="fabToggle()" style="gap:6px;display:inline-flex;align-items:center;flex-shrink:0;padding:7px 16px;font-size:13px;font-weight:600;border-radius:9px;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          הוסף עסקה
+          <span data-i18n="add_trade">Add Trade</span>
         </button>
         <div class="ov-bar-divider"></div>
         <div id="fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;border:none;background:transparent;box-shadow:none;padding:0;backdrop-filter:none;"></div>
@@ -5171,10 +5171,10 @@
 
       <!-- Period filter -->
       <div class="month-filter" style="margin-bottom:16px;">
-        <label>סינון:</label>
+        <label data-i18n="filter_label">Filter:</label>
         <select id="ov-month" onchange="renderOverview()"></select>
         <select id="ov-year" onchange="renderOverview()"></select>
-        <button class="btn btn-secondary btn-sm" onclick="resetFilter('ov')">כל הזמן</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetFilter('ov')" data-i18n="all_time">All Time</button>
         <div class="filter-stats" id="ov-filter-info"></div>
       </div>
 
@@ -5185,7 +5185,7 @@
       <div class="ov-main-grid">
         <div class="chart-card" style="display:flex;flex-direction:column;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:6px;flex-wrap:wrap;">
-            <div class="chart-title" style="margin-bottom:0">P&L מצטבר</div>
+            <div class="chart-title" style="margin-bottom:0" data-i18n="chart_cum">Cumulative P&L</div>
             <div style="display:flex;align-items:center;gap:5px;">
               <div style="display:flex;background:rgba(255,255,255,0.05);border-radius:6px;overflow:hidden;border:1px solid var(--border);">
                 <button id="cum-mode-pct" onclick="setCumMode('pct')" style="padding:2px 8px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:var(--accent);color:#fff;transition:all 0.15s;">%</button>
@@ -5204,20 +5204,21 @@
     <!-- ===== STOCKS ===== -->
     <div id="tab-stocks" class="tab-content">
       <div class="month-filter">
-        <label>סינון:</label>
+        <label data-i18n="filter_label">Filter:</label>
         <select id="st-month" onchange="renderTable('stock')"></select>
         <select id="st-year" onchange="renderTable('stock')"></select>
-        <button class="btn btn-secondary btn-sm" onclick="resetFilter('st')">כל הזמן</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetFilter('st')" data-i18n="all_time">All Time</button>
         <div class="filter-stats" id="st-filter-info"></div>
       </div>
       <div class="table-toolbar">
-        <button class="btn btn-primary" onclick="openModal('stock')">+ הוסף עסקה חדשה</button>
+        <button class="btn btn-primary" onclick="openModal('stock')" data-i18n="add_new_trade">+ Add New Trade</button>
         <button class="btn btn-export btn-sm view-toggle-btn" id="st-view-toggle" onclick="toggleTableView('stock')" title="החלף תצוגה"></button>
-        <button class="btn btn-danger btn-sm" onclick="deduplicateDB('stock')" title="מחק עסקאות כפולות (זהות בסימבול + תאריך + מחיר)">🧹 נקה כפילויות</button>
-        <button class="btn btn-secondary btn-sm" id="st-archive-btn" onclick="toggleInlineArchive('stock')">📅 ארכיון</button>
+        <button class="btn btn-danger btn-sm" onclick="deduplicateDB('stock')" title="מחק עסקאות כפולות (זהות בסימבול + תאריך + מחיר)" data-i18n="clean_dupes">🧹 Clean Duplicates</button>
+        <button class="btn btn-secondary btn-sm" id="st-archive-btn" onclick="toggleInlineArchive('stock')" data-i18n="archive">📅 Archive</button>
         <span id="st-stats" style="color:var(--text2);font-size:12px;flex:1;text-align:center;"></span>
         <div class="search-input-wrap">
-          <input class="search-input" id="st-search" placeholder="חיפוש סימבול..."
+          <input class="search-input" id="st-search" placeholder="Search symbol..."
+            data-i18n-ph="search"
             oninput="searchQuery.stock=this.value; renderTable('stock')" autocomplete="off">
         </div>
       </div>
@@ -5228,20 +5229,21 @@
     <!-- ===== CRYPTO ===== -->
     <div id="tab-crypto" class="tab-content">
       <div class="month-filter">
-        <label>סינון:</label>
+        <label data-i18n="filter_label">Filter:</label>
         <select id="cr-month" onchange="renderTable('crypto')"></select>
         <select id="cr-year" onchange="renderTable('crypto')"></select>
-        <button class="btn btn-secondary btn-sm" onclick="resetFilter('cr')">כל הזמן</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetFilter('cr')" data-i18n="all_time">All Time</button>
         <div class="filter-stats" id="cr-filter-info"></div>
       </div>
       <div class="table-toolbar">
-        <button class="btn btn-primary" onclick="openModal('crypto')">+ הוסף עסקה חדשה</button>
+        <button class="btn btn-primary" onclick="openModal('crypto')" data-i18n="add_new_trade">+ Add New Trade</button>
         <button class="btn btn-export btn-sm view-toggle-btn" id="cr-view-toggle" onclick="toggleTableView('crypto')" title="החלף תצוגה"></button>
-        <button class="btn btn-danger btn-sm" onclick="deduplicateDB('crypto')" title="מחק עסקאות כפולות (זהות בסימבול + תאריך + מחיר)">🧹 נקה כפילויות</button>
-        <button class="btn btn-secondary btn-sm" id="cr-archive-btn" onclick="toggleInlineArchive('crypto')">📅 ארכיון</button>
+        <button class="btn btn-danger btn-sm" onclick="deduplicateDB('crypto')" title="מחק עסקאות כפולות (זהות בסימבול + תאריך + מחיר)" data-i18n="clean_dupes">🧹 Clean Duplicates</button>
+        <button class="btn btn-secondary btn-sm" id="cr-archive-btn" onclick="toggleInlineArchive('crypto')" data-i18n="archive">📅 Archive</button>
         <span id="cr-stats" style="color:var(--text2);font-size:12px;flex:1;text-align:center;"></span>
         <div class="search-input-wrap">
-          <input class="search-input" id="cr-search" placeholder="חיפוש סימבול..."
+          <input class="search-input" id="cr-search" placeholder="Search symbol..."
+            data-i18n-ph="search"
             oninput="searchQuery.crypto=this.value; renderTable('crypto')" autocomplete="off">
         </div>
       </div>
@@ -5252,10 +5254,10 @@
     <!-- ===== STATISTICS ===== -->
     <div id="tab-statistics" class="tab-content">
       <div class="month-filter" style="margin-bottom:16px;">
-        <label>סינון:</label>
+        <label data-i18n="filter_label">Filter:</label>
         <select id="stats-month" onchange="renderStatistics()"></select>
         <select id="stats-year" onchange="renderStatistics()"></select>
-        <button class="btn btn-secondary btn-sm" onclick="resetFilter('stats')">כל הזמן</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetFilter('stats')" data-i18n="all_time">All Time</button>
         <div class="filter-stats" id="stats-filter-info"></div>
       </div>
       <div class="kpi-grid" id="stats-kpi-grid" style="margin-bottom:24px;"></div>
@@ -5541,9 +5543,9 @@
           ייצוא כל העסקאות לקובץ CSV לניתוח חיצוני.
         </div>
         <div style="display:flex;gap:8px;">
-          <button class="btn btn-secondary btn-sm" onclick="exportCSV('stock')">ייצא מניות</button>
-          <button class="btn btn-secondary btn-sm" onclick="exportCSV('crypto')">ייצא קריפטו</button>
-          <button class="btn btn-primary btn-sm" onclick="exportCSV('all')">ייצא הכל</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportCSV('stock')" data-i18n="export_stocks">Export Stocks</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportCSV('crypto')" data-i18n="export_crypto">Export Crypto</button>
+          <button class="btn btn-primary btn-sm" onclick="exportCSV('all')" data-i18n="export_all">Export All</button>
         </div>
       </div>
 
@@ -5633,37 +5635,37 @@
       <div class="missed-wrap">
         <div class="missed-header">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
-          <h2>הזדמנויות שפוספסו</h2>
+          <h2 data-i18n="missed_title">Missed Opportunities</h2>
         </div>
 
         <!-- Add form -->
         <div class="missed-add-form">
           <div class="form-group">
-            <label class="form-label">סימבול</label>
+            <label class="form-label" data-i18n="missed_symbol">Symbol</label>
             <input type="text" class="form-control" id="missed-sym" placeholder="AAPL" style="text-transform:uppercase" maxlength="20" oninput="missedAutoSector()">
           </div>
           <div class="form-group">
-            <label class="form-label">תאריך</label>
+            <label class="form-label" data-i18n="missed_date">Date</label>
             <input type="date" class="form-control" id="missed-date">
           </div>
           <div class="form-group">
-            <label class="form-label">מחיר ($)</label>
+            <label class="form-label" data-i18n="missed_price">Price ($)</label>
             <input type="number" class="form-control" id="missed-price" placeholder="0.00" step="0.0001">
           </div>
           <div class="form-group">
-            <label class="form-label">סקטור</label>
-            <input type="text" class="form-control" id="missed-sector" placeholder="טכנולוגיה" maxlength="40">
+            <label class="form-label" data-i18n="missed_sector">Sector</label>
+            <input type="text" class="form-control" id="missed-sector" placeholder="Technology" data-i18n-ph="missed_sector_ph" maxlength="40">
           </div>
           <div class="form-group" style="flex:2;min-width:140px;">
-            <label class="form-label">הערה (אופציונלי)</label>
-            <input type="text" class="form-control" id="missed-note" placeholder="למה פוספסה?" maxlength="120">
+            <label class="form-label" data-i18n="missed_note">Note (optional)</label>
+            <input type="text" class="form-control" id="missed-note" placeholder="Why missed?" data-i18n-ph="missed_why" maxlength="120">
           </div>
-          <button class="btn btn-primary btn-sm" onclick="missedAdd()" style="white-space:nowrap;height:36px;align-self:flex-end">+ הוסף</button>
+          <button class="btn btn-primary btn-sm" onclick="missedAdd()" style="white-space:nowrap;height:36px;align-self:flex-end" data-i18n="missed_add">+ Add</button>
         </div>
 
         <!-- Cards -->
         <div class="missed-list" id="missed-tbody">
-          <div class="missed-empty">אין הזדמנויות שנרשמו עדיין — הוסף את הראשונה למעלה</div>
+          <div class="missed-empty" data-i18n="missed_empty">No opportunities recorded yet — add the first one above</div>
         </div>
       </div>
     </div>
@@ -5781,43 +5783,43 @@
       <div class="inv-wrap">
         <div class="inv-header">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          <h2>תיק השקעות</h2>
+          <h2 data-i18n="inv_title">Investment Portfolio</h2>
         </div>
 
         <div class="inv-portfolio-bar">
-          <label>סך התיק</label>
+          <label data-i18n="inv_portfolio_total">Portfolio Total</label>
           <div class="inv-currency-seg">
             <button id="inv-cur-usd" class="inv-cur-opt active" onclick="invSetCurrency('$')">$</button>
             <button id="inv-cur-ils" class="inv-cur-opt" onclick="invSetCurrency('₪')">₪</button>
           </div>
           <input type="number" id="inv-portfolio-total" placeholder="100000" min="0" step="any" oninput="invRecalc();invAutoSaveTotal()">
-          <div class="inv-total-allocated">מוקצה: <span id="inv-allocated-pct">0%</span></div>
+          <div class="inv-total-allocated"><span data-i18n="inv_allocated">Allocated:</span> <span id="inv-allocated-pct">0%</span></div>
         </div>
 
         <div class="inv-alloc-dashboard">
-          <div class="inv-alloc-title">הקצאת תיק — יעד</div>
+          <div class="inv-alloc-title" data-i18n="inv_alloc_title">Portfolio Allocation — Target</div>
           <div class="inv-alloc-donut-row">
             <div class="inv-alloc-bars">
               <div class="inv-alloc-row">
                 <span class="inv-alloc-dot blue"></span>
-                <span class="inv-alloc-label">🔵 כחולות — יעד 60%</span>
+                <span class="inv-alloc-label" data-i18n="inv_blue">🔵 Blue Chips — Target 60%</span>
                 <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-blue" style="width:0%;background:#818cf8;"></div></div>
                 <span class="inv-alloc-cur" id="alloc-cur-blue">0%</span>
-                <span class="inv-alloc-remaining" id="alloc-rem-blue">זמין: —</span>
+                <span class="inv-alloc-remaining" id="alloc-rem-blue"><span data-i18n="inv_available">Available:</span> —</span>
               </div>
               <div class="inv-alloc-row">
                 <span class="inv-alloc-dot green"></span>
-                <span class="inv-alloc-label">🟢 ירוקות — יעד 35%</span>
+                <span class="inv-alloc-label" data-i18n="inv_green">🟢 Growth — Target 35%</span>
                 <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-green" style="width:0%;background:#34d399;"></div></div>
                 <span class="inv-alloc-cur" id="alloc-cur-green">0%</span>
-                <span class="inv-alloc-remaining" id="alloc-rem-green">זמין: —</span>
+                <span class="inv-alloc-remaining" id="alloc-rem-green"><span data-i18n="inv_available">Available:</span> —</span>
               </div>
               <div class="inv-alloc-row">
                 <span class="inv-alloc-dot yellow"></span>
-                <span class="inv-alloc-label">🟡 צהובות — יעד 5%</span>
+                <span class="inv-alloc-label" data-i18n="inv_yellow">🟡 Speculative — Target 5%</span>
                 <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-yellow" style="width:0%;background:#fbbf24;"></div></div>
                 <span class="inv-alloc-cur" id="alloc-cur-yellow">0%</span>
-                <span class="inv-alloc-remaining" id="alloc-rem-yellow">זמין: —</span>
+                <span class="inv-alloc-remaining" id="alloc-rem-yellow"><span data-i18n="inv_available">Available:</span> —</span>
               </div>
             </div>
             <div class="inv-donut-wrap">
@@ -5828,13 +5830,13 @@
                 <circle id="donut-green"  cx="65" cy="65" r="50" fill="none" stroke="#34d399"                stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
                 <circle id="donut-blue"   cx="65" cy="65" r="50" fill="none" stroke="#818cf8"                stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
                 <text x="65" y="58" text-anchor="middle" fill="var(--text)"  font-size="16" font-weight="700" id="donut-label-pct">0%</text>
-                <text x="65" y="74" text-anchor="middle" fill="var(--text3)" font-size="9">מוקצה</text>
+                <text x="65" y="74" text-anchor="middle" fill="var(--text3)" font-size="9" id="donut-allocated-label">Allocated</text>
               </svg>
               <div class="inv-donut-legend">
-                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:#818cf8"></span>🔵 כחולות&nbsp;<b id="leg-blue">0%</b></div>
-                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:#34d399"></span>🟢 ירוקות&nbsp;<b id="leg-green">0%</b></div>
-                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:#fbbf24"></span>🟡 צהובות&nbsp;<b id="leg-yellow">0%</b></div>
-                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:rgba(255,255,255,0.2)"></span>💵 מזומן&nbsp;<b id="leg-cash">100%</b></div>
+                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:#818cf8"></span><span data-i18n="inv_legend_blue">🔵 Blue Chips</span>&nbsp;<b id="leg-blue">0%</b></div>
+                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:#34d399"></span><span data-i18n="inv_legend_green">🟢 Growth</span>&nbsp;<b id="leg-green">0%</b></div>
+                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:#fbbf24"></span><span data-i18n="inv_legend_yellow">🟡 Speculative</span>&nbsp;<b id="leg-yellow">0%</b></div>
+                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:rgba(255,255,255,0.2)"></span><span data-i18n="inv_cash">💵 Cash</span>&nbsp;<b id="leg-cash">100%</b></div>
               </div>
             </div>
           </div>
@@ -5858,45 +5860,45 @@
             </colgroup>
             <thead>
               <tr>
-                <th>סימבול</th>
-                <th>סקטור</th>
-                <th>קטגוריה</th>
-                <th>🔵 כמות</th>
-                <th>🔵 כניסה</th>
-                <th>🟢 כמות</th>
-                <th>🟢 חיזוק</th>
-                <th>ממוצע</th>
-                <th>שווי</th>
-                <th>% תיק</th>
-                <th>נותר</th>
+                <th data-i18n="inv_col_symbol">Symbol</th>
+                <th data-i18n="inv_col_sector">Sector</th>
+                <th data-i18n="inv_col_category">Category</th>
+                <th>🔵 <span data-i18n="inv_col_symbol">Qty</span></th>
+                <th>🔵 <span data-i18n="col_entry">Entry</span></th>
+                <th>🟢 <span data-i18n="inv_col_symbol">Qty</span></th>
+                <th>🟢 Reinforce</th>
+                <th data-i18n="inv_col_avg">Average</th>
+                <th data-i18n="inv_col_value">Value</th>
+                <th data-i18n="inv_col_portfolio_pct">% Portfolio</th>
+                <th data-i18n="inv_col_remaining">Remaining</th>
                 <th></th>
               </tr>
             </thead>
             <tbody id="inv-tbody"></tbody>
           </table>
           <datalist id="inv-sym-list"></datalist>
-          <button class="inv-add-row" onclick="invAddRow()">+ הוסף אחזקה</button>
+          <button class="inv-add-row" onclick="invAddRow()" data-i18n="inv_add_holding">+ Add Holding</button>
         </div>
 
         <div class="inv-actions">
-          <button class="inv-save-btn" onclick="invSave()">💾 שמור</button>
+          <button class="inv-save-btn" onclick="invSave()" data-i18n="inv_save">💾 Save</button>
         </div>
 
         <!-- MONTHLY DEPOSITS -->
         <div class="inv-deposits-card">
           <div class="inv-deposits-header">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            <span>הפקדות חודשיות</span>
+            <span data-i18n="inv_deposits">Monthly Deposits</span>
           </div>
           <div class="inv-deposits-form">
             <input type="month" id="inv-dep-month">
             <input type="number" id="inv-dep-amount" placeholder="סכום ($)" style="width:130px;" min="0" step="any">
-            <button class="inv-deposits-add-btn" onclick="invAddDeposit()">+ הוסף הפקדה</button>
+            <button class="inv-deposits-add-btn" onclick="invAddDeposit()" data-i18n="inv_add_deposit">+ Add Deposit</button>
           </div>
           <div class="inv-deposits-stats">
-            <div class="inv-dep-stat"><span class="inv-dep-stat-label">סה"כ הופקד</span><span class="inv-dep-stat-val" id="dep-total-val">$0</span></div>
-            <div class="inv-dep-stat"><span class="inv-dep-stat-label">שווי תיק כעת</span><span class="inv-dep-stat-val" id="dep-portfolio-val">—</span></div>
-            <div class="inv-dep-stat"><span class="inv-dep-stat-label">רווח / הפסד</span><span class="inv-dep-stat-val" id="dep-pnl-val">—</span></div>
+            <div class="inv-dep-stat"><span class="inv-dep-stat-label" data-i18n="inv_total_dep">Total Deposited</span><span class="inv-dep-stat-val" id="dep-total-val">$0</span></div>
+            <div class="inv-dep-stat"><span class="inv-dep-stat-label" data-i18n="inv_portfolio_now">Portfolio Value Now</span><span class="inv-dep-stat-val" id="dep-portfolio-val">—</span></div>
+            <div class="inv-dep-stat"><span class="inv-dep-stat-label" data-i18n="inv_pnl">P&L</span><span class="inv-dep-stat-val" id="dep-pnl-val">—</span></div>
           </div>
           <div id="dep-list"></div>
         </div>
@@ -6019,10 +6021,10 @@
           </div>
         </div>
         <div class="qa-field">
-          <div class="qa-label">סוג</div>
+          <div class="qa-label" data-i18n="qa_type">Type</div>
           <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
             <input type="checkbox" id="qa-crypto" onchange="qaCalc(); applyTypeBadge(document.getElementById('qa-type-badge'),this.checked);" style="display:none">
-            <span id="qa-type-badge" class="qa-type-badge stock" onclick="qaToggleType()" title="לחץ לשינוי">מניה</span>
+            <span id="qa-type-badge" class="qa-type-badge stock" onclick="qaToggleType()" title="Click to change">Stock</span>
           </div>
         </div>
         <div class="qa-field">
@@ -6037,28 +6039,28 @@
           <div class="sym-status" id="qa-sym-status"></div>
         </div>
         <div class="qa-field">
-          <div class="qa-label">תאריך כניסה</div>
+          <div class="qa-label" data-i18n="qa_entry_date">Entry Date</div>
           <input class="qa-input" id="qa-date" type="date">
         </div>
         <div class="qa-field">
-          <div class="qa-label">מחיר כניסה</div>
+          <div class="qa-label" data-i18n="qa_entry_price">Entry Price</div>
           <input class="qa-input" id="qa-entry" type="number" placeholder="0.00" step="0.0001" oninput="qaCalc()">
         </div>
         <div class="qa-field">
-          <div class="qa-label">מניות</div>
+          <div class="qa-label" data-i18n="qa_shares">Shares</div>
           <input class="qa-input" id="qa-shares" type="number" placeholder="0" step="1" oninput="qaCalc()">
         </div>
         <div class="qa-field">
-          <div class="qa-label">סטופ (SL)</div>
+          <div class="qa-label" data-i18n="qa_stop">Stop (SL)</div>
           <input class="qa-input" id="qa-stop" type="number" placeholder="0.00" step="0.0001" oninput="qaCalc()">
           <div class="qa-stop-pct" id="qa-stop-pct"></div>
         </div>
         <div class="qa-field">
-          <div class="qa-label">עמלה</div>
+          <div class="qa-label" data-i18n="qa_commission">Commission</div>
           <input class="qa-input" id="qa-commission" type="number" placeholder="5.00" value="5.00" step="0.01">
         </div>
         <div class="qa-field full">
-          <div class="qa-label">סיבת כניסה</div>
+          <div class="qa-label" data-i18n="qa_reason">Entry Reason</div>
           <div class="er-pills" id="qa-er-pills">
             <span class="er-pill" data-er="LPS"       onclick="qaSetER('LPS')">LPS</span>
             <span class="er-pill" data-er="Low Cheat" onclick="qaSetER('Low Cheat')">Low Cheat</span>
@@ -6068,31 +6070,31 @@
           </div>
         </div>
         <div class="qa-field">
-          <div class="qa-label">תנאי שוק</div>
+          <div class="qa-label" data-i18n="qa_market_cond">Market Condition</div>
           <select class="qa-input" id="qa-market-cond" style="padding:6px 8px;">
-            <option value="">— בחר —</option>
-            <option value="green">🟢 ירוק</option>
-            <option value="orange">🟠 כתום</option>
-            <option value="red">🔴 אדום</option>
+            <option value="">— Select —</option>
+            <option value="green">🟢 Green</option>
+            <option value="orange">🟠 Orange</option>
+            <option value="red">🔴 Red</option>
           </select>
         </div>
         <div class="qa-field">
-          <div class="qa-label">מצב רגשי</div>
-          <input class="qa-input" id="qa-mood" placeholder="איך הרגשת..." maxlength="300" autocomplete="off">
+          <div class="qa-label" data-i18n="qa_mood">Emotional State</div>
+          <input class="qa-input" id="qa-mood" placeholder="How did you feel..." data-i18n-ph="qa_mood_ph" maxlength="300" autocomplete="off">
         </div>
         <div class="qa-field full">
-          <div class="qa-label">הערה</div>
-          <input class="qa-input" id="qa-note" placeholder="תיאור הכניסה..." maxlength="200" autocomplete="off">
+          <div class="qa-label" data-i18n="qa_note">Note</div>
+          <input class="qa-input" id="qa-note" placeholder="Trade description..." data-i18n-ph="qa_note_ph" maxlength="200" autocomplete="off">
         </div>
       </div>
     </div>
     <div class="qa-modal-footer">
       <div class="qa-modal-stats">
-        <span>גודל פוז׳<strong id="qa-prev-pl">—</strong></span>
-        <span>סיכון %<strong id="qa-prev-pct">—</strong></span>
-        <span>סטופ מ-כניסה<strong id="qa-stop-pct" style="color:var(--red)"></strong></span>
+        <span><span data-i18n="qa_pos_size">Position</span><strong id="qa-prev-pl">—</strong></span>
+        <span><span data-i18n="qa_risk_pct">Risk %</span><strong id="qa-prev-pct">—</strong></span>
+        <span><span data-i18n="qa_stop_from">Stop from Entry</span><strong id="qa-stop-pct" style="color:var(--red)"></strong></span>
       </div>
-      <button class="qa-save" onclick="qaSave()">💾 שמור עסקה</button>
+      <button class="qa-save" onclick="qaSave()" data-i18n="qa_save">💾 Save Trade</button>
     </div>
     <div id="qa-preview" style="display:none"></div>
   </div>
@@ -6102,7 +6104,7 @@
 <div class="modal-overlay" id="trade-modal" onclick="onOverlayClick(event)">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header">
-      <div class="modal-title" id="modal-title">הוסף עסקה</div>
+      <div class="modal-title" id="modal-title">Add Trade</div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-body">
@@ -6110,10 +6112,10 @@
       <input type="hidden" id="m-type">
 
       <div class="form-section">
-        <div class="form-section-title">פתיחת עסקה</div>
+        <div class="form-section-title" data-i18n="modal_open_trade">Trade Entry</div>
         <div class="form-row-3">
           <div class="form-group">
-            <label class="form-label">תאריך כניסה</label>
+            <label class="form-label" data-i18n="m_entry_date">Entry Date</label>
             <input type="date" class="form-control" id="m-entryDate" oninput="liveCalc()">
           </div>
           <div class="form-group">
@@ -6124,7 +6126,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">סימבול</label>
+            <label class="form-label" data-i18n="m_symbol">Symbol</label>
             <div style="display:flex;gap:8px;align-items:center;">
               <div class="sym-ac-wrap" style="flex:1">
                 <input type="text" class="form-control" id="m-symbol" placeholder="AAPL" maxlength="20"
@@ -6133,22 +6135,22 @@
                   autocomplete="off">
                 <div id="m-symbol-drop" class="sym-ac-drop" style="display:none"></div>
               </div>
-              <span id="m-type-badge" class="qa-type-badge stock" onclick="mToggleType()" title="זוהה אוטומטית — לחץ לשינוי ידני" style="cursor:pointer;">מניה</span>
+              <span id="m-type-badge" class="qa-type-badge stock" onclick="mToggleType()" title="Auto-detected — click to change" style="cursor:pointer;">Stock</span>
             </div>
             <div class="sym-status" id="m-sym-status"></div>
           </div>
         </div>
         <div class="form-row-3">
           <div class="form-group">
-            <label class="form-label">שער כניסה</label>
+            <label class="form-label" data-i18n="m_entry_price">Entry Price</label>
             <input type="number" class="form-control" id="m-entryPrice" step="0.0001" autocomplete="off" oninput="liveCalc()">
           </div>
           <div class="form-group">
-            <label class="form-label">מס' מניות</label>
+            <label class="form-label" data-i18n="m_num_shares">Shares</label>
             <input type="number" class="form-control" id="m-shares" autocomplete="off" oninput="liveCalc()">
           </div>
           <div class="form-group">
-            <label class="form-label">סטופ</label>
+            <label class="form-label" data-i18n="m_stop">Stop</label>
             <input type="number" class="form-control" id="m-stop" step="0.0001" autocomplete="off" oninput="liveCalc()">
           </div>
         </div>
@@ -6156,46 +6158,46 @@
 
       <div class="form-section">
         <div class="form-section-title">
-          🎯 יעדים חלקיים (T1–T5)
-          <button type="button" class="btn btn-secondary btn-sm" id="add-tgt-btn" onclick="addTarget()">+ הוסף יעד</button>
+          <span data-i18n="modal_targets">🎯 Partial Targets (T1–T5)</span>
+          <button type="button" class="btn btn-secondary btn-sm" id="add-tgt-btn" onclick="addTarget()" data-i18n="add_target">+ Add Target</button>
         </div>
         <div class="targets-list" id="tgt-list"></div>
       </div>
 
       <div class="form-section">
-        <div class="form-section-title">🔒 סגירת עסקה</div>
+        <div class="form-section-title" data-i18n="modal_close_trade">🔒 Trade Close</div>
         <div class="form-row-3">
           <div class="form-group">
-            <label class="form-label">תאריך סגירה</label>
+            <label class="form-label" data-i18n="m_close_date">Close Date</label>
             <input type="date" class="form-control" id="m-closeDate">
           </div>
           <div class="form-group">
-            <label class="form-label">מניות סגירה</label>
+            <label class="form-label" data-i18n="m_closed_shares">Closed Shares</label>
             <input type="number" class="form-control" id="m-closedShares" autocomplete="off" oninput="liveCalc()">
           </div>
           <div class="form-group">
-            <label class="form-label">מחיר יציאה</label>
+            <label class="form-label" data-i18n="m_exit_price">Exit Price</label>
             <input type="number" class="form-control" id="m-exitPrice" step="0.0001" autocomplete="off" oninput="liveCalc()">
           </div>
         </div>
       </div>
 
       <div class="form-section">
-        <div class="form-section-title">עמלות</div>
+        <div class="form-section-title" data-i18n="modal_fees">Fees</div>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Commission</label>
             <input type="number" class="form-control" id="m-commission" step="0.01" oninput="liveCalc()">
           </div>
           <div class="form-group">
-            <label class="form-label">מצב רגשי לפני הכניסה</label>
-            <textarea class="form-control" id="m-mood" placeholder="איך הרגשת לפני הכניסה..." maxlength="300" rows="1" style="resize:none;height:38px;padding-top:9px;"></textarea>
+            <label class="form-label" data-i18n="m_mood">Emotional State</label>
+            <textarea class="form-control" id="m-mood" placeholder="How did you feel before entry..." data-i18n-ph="m_mood_ph" maxlength="300" rows="1" style="resize:none;height:38px;padding-top:9px;"></textarea>
           </div>
         </div>
       </div>
 
       <div class="form-section">
-        <div class="form-section-title">🧮 חישוב אוטומטי</div>
+        <div class="form-section-title" data-i18n="modal_calc">🧮 Auto Calculation</div>
         <div class="calc-preview">
           <div><div class="cp-label">P/L</div><div class="cp-value" id="cp-pl">—</div></div>
           <div><div class="cp-label">סה"כ</div><div class="cp-value" id="cp-total">—</div></div>
@@ -6205,9 +6207,9 @@
       </div>
 
       <div class="form-section">
-        <div class="form-section-title">📝 הערות ואיכות</div>
+        <div class="form-section-title" data-i18n="modal_notes">📝 Notes & Quality</div>
         <div class="form-group">
-          <label class="form-label">סיבת כניסה</label>
+          <label class="form-label" data-i18n="m_reason">Entry Reason</label>
           <div class="er-pills" id="m-er-pills" style="margin-bottom:16px;">
             <span class="er-pill" data-er="LPS"          onclick="modalSetER('LPS')">LPS</span>
             <span class="er-pill" data-er="Low Cheat"    onclick="modalSetER('Low Cheat')">Low Cheat</span>
@@ -6220,28 +6222,28 @@
         <input type="hidden" id="m-setup-type">
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">תנאי שוק בכניסה</label>
+            <label class="form-label" data-i18n="m_market_cond">Market Condition</label>
             <select class="form-control" id="m-market-cond">
-              <option value="">— בחר —</option>
-              <option value="green">🟢 ירוק</option>
-              <option value="orange">🟠 כתום</option>
-              <option value="red">🔴 אדום</option>
+              <option value="">— Select —</option>
+              <option value="green">🟢 Green</option>
+              <option value="orange">🟠 Orange</option>
+              <option value="red">🔴 Red</option>
             </select>
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">מה אפשר לשמר</label>
-          <textarea class="form-control" id="m-notes-keep" placeholder="מה עבד טוב בעסקה הזו..." maxlength="500"></textarea>
+          <label class="form-label" data-i18n="m_keep">What worked well</label>
+          <textarea class="form-control" id="m-notes-keep" placeholder="What worked well in this trade..." data-i18n-ph="m_keep_ph" maxlength="500"></textarea>
         </div>
         <div class="form-group">
-          <label class="form-label">מה לשפר להבא</label>
-          <textarea class="form-control" id="m-notes-improve" placeholder="מה ניתן לשפר..." maxlength="500"></textarea>
+          <label class="form-label" data-i18n="m_improve">What to improve</label>
+          <textarea class="form-control" id="m-notes-improve" placeholder="What could be improved..." data-i18n-ph="m_improve_ph" maxlength="500"></textarea>
         </div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-primary" onclick="saveTrade()">💾 שמור עסקה</button>
-      <button class="btn btn-secondary" onclick="closeModal()">ביטול</button>
+      <button class="btn btn-primary" onclick="saveTrade()" data-i18n="m_save">💾 Save Trade</button>
+      <button class="btn btn-secondary" onclick="closeModal()" data-i18n="m_cancel">Cancel</button>
     </div>
   </div>
 </div>
@@ -7142,7 +7144,7 @@ function renderTable(type) {
   if (info) info.textContent = (month||year) ? `מציג: ${month ? MONTHS[+month-1] : ''} ${year||''}`.trim() : '';
 
   if (!trades.length) {
-    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">${type==='stock'?'📋':'₿'}</div><p>אין עסקאות להצגה בתקופה זו</p></div>`;
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">${type==='stock'?'📋':'₿'}</div><p>${t('no_trades')}</p></div>`;
     return;
   }
 
@@ -7156,24 +7158,24 @@ function renderTable(type) {
     <col style="width:60px"><col style="min-width:100px">
   </colgroup><thead><tr>
     <th>#</th>
-    ${thSort(type,'entryDate','תאריך כניסה',sc,sd)}
+    ${thSort(type,'entryDate',t('col_entry_date'),sc,sd)}
     <th>L/S</th>
-    <th>סטטוס</th>
-    <th>סיבת כניסה</th>
-    ${thSort(type,'symbol','סימבול',sc,sd)}
-    <th>כניסה</th>
-    <th>מניות</th>
-    <th>סטופ</th>
-    <th>יעדים</th>
-    <th>תאריך סגירה</th>
-    <th>מניות סגירה</th>
-    <th>יציאה</th>
-    <th>סקטור</th>
-    <th>עמלה</th>
-    <th class="calc-cell">${thSort(type,'total','סה"כ',sc,sd).replace('<th','<span').replace('</th>','</span>')}</th>
+    <th>${t('col_status')}</th>
+    <th>${t('col_reason')}</th>
+    ${thSort(type,'symbol',t('col_symbol'),sc,sd)}
+    <th>${t('col_entry')}</th>
+    <th>${t('col_shares')}</th>
+    <th>${t('col_stop')}</th>
+    <th>${t('col_targets')}</th>
+    <th>${t('col_close_date')}</th>
+    <th>${t('col_closed_shares')}</th>
+    <th>${t('col_exit')}</th>
+    <th>${t('col_sector')}</th>
+    <th>${t('col_commission')}</th>
+    <th class="calc-cell">${thSort(type,'total',t('col_total'),sc,sd).replace('<th','<span').replace('</th>','</span>')}</th>
     <th class="calc-cell">${thSort(type,'pct','%',sc,sd).replace('<th','<span').replace('</th>','</span>')}</th>
     <th class="calc-cell">${thSort(type,'r','R',sc,sd).replace('<th','<span').replace('</th>','</span>')}</th>
-    <th>פעולות</th>
+    <th>${t('col_actions')}</th>
   </tr></thead><tbody>`;
 
   // Pre-compute per-year stats when no year filter (for group headers)
@@ -7210,7 +7212,7 @@ function renderTable(type) {
         const ytc = yst.total >= 0 ? 'var(--green)' : 'var(--red)';
         h += `<tr class="year-group-row"><td colspan="20">
           <span class="year-group-label">📅 ${trYear}</span>
-          <span class="year-group-stats">${yearStatsMap[trYear].length} עסקאות &nbsp;|&nbsp; P&L: <strong style="color:${ytc}">${fmtUSD(yst.total)}</strong> &nbsp;|&nbsp; Win: <strong>${fmt(yst.wr,1)}%</strong> &nbsp;|&nbsp; ${yst.wins}W / ${yst.losses}L</span>
+          <span class="year-group-stats">${yearStatsMap[trYear].length} ${t('trades')} &nbsp;|&nbsp; P&L: <strong style="color:${ytc}">${fmtUSD(yst.total)}</strong> &nbsp;|&nbsp; Win: <strong>${fmt(yst.wr,1)}%</strong> &nbsp;|&nbsp; ${yst.wins}W / ${yst.losses}L</span>
         </td></tr>`;
       }
     }
@@ -7275,17 +7277,17 @@ function renderTable(type) {
 
       const tgtsHtml = tr.t && tr.t.length
         ? tr.t.map((tg,i)=>`<span class="tr-target-pill"><strong>T${i+1}</strong> ${tg.shares} @ $${fmtPrice(tg.price)}</span>`).join('')
-        : '<span style="color:var(--text3);font-size:12px;">אין יעדים</span>';
+        : `<span style="color:var(--text3);font-size:12px;">${t('tile_no_targets')}</span>`;
 
-      const mcLabel = {'green':'🟢 ירוק','orange':'🟠 כתום','red':'🔴 אדום','easy':'שוק קל','hard':'שוק קשה','up':'מגמה עולה','press':'לחץ','down':'מגמה יורדת'};
+      const mcLabel = {'green':t('mc_green'),'orange':t('mc_orange'),'red':t('mc_red'),'easy':t('mc_easy'),'hard':t('mc_hard'),'up':t('mc_up'),'press':t('mc_press'),'down':t('mc_down')};
       const mcSafe = Object.prototype.hasOwnProperty.call(mcLabel, tr.market_cond) ? tr.market_cond : '';
 
       const noteKeep = tr.notes_keep
-        ? `<div class="tr-note tr-note-keep"><div class="tr-note-label">מה לשמר</div><div class="tr-note-text">${esc(tr.notes_keep)}</div></div>` : '';
+        ? `<div class="tr-note tr-note-keep"><div class="tr-note-label">${t('tile_keep')}</div><div class="tr-note-text">${esc(tr.notes_keep)}</div></div>` : '';
       const noteImp = tr.notes_improve
-        ? `<div class="tr-note tr-note-imp"><div class="tr-note-label">מה לשפר</div><div class="tr-note-text">${esc(tr.notes_improve)}</div></div>` : '';
+        ? `<div class="tr-note tr-note-imp"><div class="tr-note-label">${t('tile_improve')}</div><div class="tr-note-text">${esc(tr.notes_improve)}</div></div>` : '';
       const noNotes = !tr.notes_keep && !tr.notes_improve
-        ? `<span style="color:var(--text3);font-size:12px;">לא נרשמו הערות</span>` : '';
+        ? `<span style="color:var(--text3);font-size:12px;">${t('tile_no_notes')}</span>` : '';
 
       h += `<tr class="expanded-row">
         <td colspan="20">
@@ -7293,41 +7295,41 @@ function renderTable(type) {
 
             <!-- Metric tiles -->
             <div class="tr-tiles">
-              ${tile('P&L נטו', `<span class="sensitive">${fmtUSD(tot)}</span>`, tot>=0?'var(--green)':'var(--red)')}
-              ${tile('תשואה', `<span class="sensitive">${fmtPct(pct)}</span>`, pct>=0?'var(--green)':'var(--red)')}
-              ${tile('R Multiple', rVal!==null ? fmtR(tot,stopR) : '—', rVal===null?'var(--text3)':rVal>=1?'var(--green)':rVal>=0?'var(--yellow)':'var(--red)')}
-              ${tile('סיכון בעסקה', risk>0?`<span class="sensitive">${fmtUSD(risk)}</span>`:'—', 'var(--text)')}
-              ${tile('מרחק סטופ', stopDist!==null?`${fmt(stopDist,1)}%`:'—', 'var(--text)')}
-              ${tile('עמלה', `<span class="sensitive">$${fmt(commission)}</span>`, 'var(--text3)')}
+              ${tile(t('tile_net_pl'), `<span class="sensitive">${fmtUSD(tot)}</span>`, tot>=0?'var(--green)':'var(--red)')}
+              ${tile(t('tile_return'), `<span class="sensitive">${fmtPct(pct)}</span>`, pct>=0?'var(--green)':'var(--red)')}
+              ${tile(t('tile_r_mult'), rVal!==null ? fmtR(tot,stopR) : '—', rVal===null?'var(--text3)':rVal>=1?'var(--green)':rVal>=0?'var(--yellow)':'var(--red)')}
+              ${tile(t('tile_risk'), risk>0?`<span class="sensitive">${fmtUSD(risk)}</span>`:'—', 'var(--text)')}
+              ${tile(t('tile_stop_dist'), stopDist!==null?`${fmt(stopDist,1)}%`:'—', 'var(--text)')}
+              ${tile(t('tile_commission'), `<span class="sensitive">$${fmt(commission)}</span>`, 'var(--text3)')}
             </div>
 
             <!-- Price flow -->
             <div class="tr-flow-row">
               <div class="tr-flow-block">
-                <div class="tr-flow-label">כניסה</div>
+                <div class="tr-flow-label">${t('tile_entry')}</div>
                 <div class="tr-flow-price sensitive">$${fmtPrice(tr.entryPrice)}</div>
                 <div class="tr-flow-sub">${fmtDate(tr.entryDate)}</div>
               </div>
               <div class="tr-flow-arrow">→</div>
               <div class="tr-flow-block">
-                <div class="tr-flow-label">סטופ</div>
+                <div class="tr-flow-label">${t('tile_stop')}</div>
                 <div class="tr-flow-price sensitive" style="color:var(--red)">$${fmtPrice(tr.stop)}</div>
-                <div class="tr-flow-sub">${stopDist!==null?fmt(stopDist,1)+'% מהכניסה':''}</div>
+                <div class="tr-flow-sub">${stopDist!==null?fmt(stopDist,1)+'% '+t('tile_from_entry'):''}</div>
               </div>
               <div class="tr-flow-arrow">→</div>
               <div class="tr-flow-block">
-                <div class="tr-flow-label">יציאה</div>
+                <div class="tr-flow-label">${t('tile_exit')}</div>
                 <div class="tr-flow-price sensitive" style="color:${isWin?'var(--green)':'var(--red)'}">$${fmtPrice(tr.exitPrice||tr.entryPrice)}</div>
                 <div class="tr-flow-sub">${tr.closeDate?fmtDate(tr.closeDate):''}</div>
               </div>
               ${tr.t&&tr.t.length?`<div class="tr-flow-arrow" style="color:var(--text3)">|</div>
               <div class="tr-flow-block">
-                <div class="tr-flow-label">יעדים חלקיים</div>
+                <div class="tr-flow-label">${t('tile_partial_tgt')}</div>
                 <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">${tgtsHtml}</div>
               </div>`:''}
               ${mcSafe?`<div class="tr-flow-arrow" style="color:var(--text3)">|</div>
               <div class="tr-flow-block">
-                <div class="tr-flow-label">תנאי שוק</div>
+                <div class="tr-flow-label">${t('tile_market_cond')}</div>
                 <div class="tr-flow-price" style="font-size:13px;color:var(--text2)">${mcLabel[mcSafe]}</div>
               </div>`:''}
             </div>
@@ -8064,7 +8066,7 @@ function symIsCrypto(sym) {
 // Apply badge UI for stock/crypto type
 function applyTypeBadge(badgeEl, isCrypto) {
   if (!badgeEl) return;
-  badgeEl.textContent = isCrypto ? 'קריפטו' : 'מניה';
+  badgeEl.textContent = isCrypto ? t('m_crypto_badge') : t('m_stock_badge');
   badgeEl.className   = 'qa-type-badge ' + (isCrypto ? 'crypto' : 'stock');
 }
 
@@ -8401,24 +8403,166 @@ async function profileSave() {
 // ─────────────────────────────────────────────
 // LANGUAGE
 // ─────────────────────────────────────────────
+let _lang = localStorage.getItem('tj_lang') || 'en';
+function t(k) { return (LANG_STRINGS[_lang] || LANG_STRINGS.en)[k] || k; }
+
 const LANG_STRINGS = {
   en: {
-    nav_overview: 'Overview', nav_stocks: 'Stocks', nav_crypto: 'Crypto',
-    nav_statistics: 'Statistics', nav_settings: 'Settings', nav_themes: 'Market Pulse',
-    nav_ai: 'Minervini', nav_missed: 'Missed', nav_investments: 'Investments',
-    nav_section: 'Navigation',
-    add_trade: 'Add Trade',
+    nav_overview:'Overview', nav_stocks:'Stocks', nav_crypto:'Crypto',
+    nav_statistics:'Statistics', nav_settings:'Settings', nav_themes:'Market Pulse',
+    nav_ai:'Minervini', nav_missed:'Missed', nav_investments:'Investments',
+    nav_section:'Navigation', add_trade:'Add Trade',
+    filter_label:'Filter:', all_time:'All Time', archive:'📅 Archive',
+    search:'Search symbol...',
+    add_new_trade:'+ Add New Trade', clean_dupes:'🧹 Clean Duplicates',
+    col_entry_date:'Entry Date', col_status:'Status', col_reason:'Entry Reason',
+    col_symbol:'Symbol', col_entry:'Entry', col_shares:'Shares', col_stop:'Stop',
+    col_targets:'Targets', col_close_date:'Close Date', col_closed_shares:'Closed Shares',
+    col_exit:'Exit', col_sector:'Sector', col_commission:'Commission',
+    col_total:'Total', col_actions:'Actions',
+    kpi_pnl:'Total P&L', kpi_winrate:'Win Rate', kpi_trades:"Trades",
+    kpi_rr:'Risk/Reward', kpi_live:'Live P&L',
+    kpi_with_stop:'trades with stop', kpi_add_stop:'Add stop',
+    kpi_open_pos:'open positions', kpi_no_open:'No open positions',
+    kpi_calculating:'Calculating...', kpi_vs_prev:'vs last month',
+    kpi_updated:'Updated now',
+    tile_net_pl:'Net P&L', tile_return:'Return', tile_r_mult:'R Multiple',
+    tile_risk:'Trade Risk', tile_stop_dist:'Stop Distance', tile_commission:'Commission',
+    tile_entry:'Entry', tile_stop:'Stop', tile_exit:'Exit',
+    tile_partial_tgt:'Partial Targets', tile_market_cond:'Market Condition',
+    tile_no_targets:'No targets', tile_from_entry:'% from entry',
+    tile_keep:'What to keep', tile_improve:'What to improve',
+    tile_no_notes:'No notes recorded',
+    trades:'trades', no_trades:'No trades for this period',
+    modal_add:'Add Trade', modal_edit:'Edit Trade',
+    modal_open_trade:'Trade Entry', modal_targets:'🎯 Partial Targets (T1–T5)',
+    modal_close_trade:'🔒 Trade Close', modal_fees:'Fees',
+    modal_calc:'🧮 Auto Calculation', modal_notes:'📝 Notes & Quality',
+    add_target:'+ Add Target', m_entry_date:'Entry Date',
+    m_symbol:'Symbol', m_entry_price:'Entry Price', m_num_shares:'Shares',
+    m_stop:'Stop', m_close_date:'Close Date', m_closed_shares:'Closed Shares',
+    m_exit_price:'Exit Price', m_mood:'Emotional State', m_reason:'Entry Reason',
+    m_market_cond:'Market Condition', m_keep:'What worked well',
+    m_improve:'What to improve', m_save:'💾 Save Trade', m_cancel:'Cancel',
+    m_stock_badge:'Stock', m_crypto_badge:'Crypto',
+    m_keep_ph:'What worked well in this trade...',
+    m_improve_ph:'What could be improved...',
+    m_mood_ph:'How did you feel before entry...',
+    qa_type:'Type', qa_entry_date:'Entry Date', qa_entry_price:'Entry Price',
+    qa_shares:'Shares', qa_stop:'Stop (SL)', qa_commission:'Commission',
+    qa_reason:'Entry Reason', qa_market_cond:'Market Condition',
+    qa_mood:'Emotional State', qa_note:'Note', qa_save:'💾 Save Trade',
+    qa_pos_size:'Position', qa_risk_pct:'Risk %', qa_stop_from:'Stop from Entry',
+    qa_select:'— Select —', qa_mood_ph:'How did you feel...', qa_note_ph:'Trade description...',
+    inv_title:'Investment Portfolio', inv_portfolio_total:'Portfolio Total',
+    inv_allocated:'Allocated:', inv_alloc_title:'Portfolio Allocation — Target',
+    inv_available:'Available:', inv_donut_allocated:'Allocated',
+    inv_blue:'🔵 Blue Chips — Target 60%', inv_green:'🟢 Growth — Target 35%',
+    inv_yellow:'🟡 Speculative — Target 5%',
+    inv_col_symbol:'Symbol', inv_col_sector:'Sector', inv_col_category:'Category',
+    inv_col_avg:'Average', inv_col_value:'Value',
+    inv_col_portfolio_pct:'% Portfolio', inv_col_remaining:'Remaining',
+    inv_add_holding:'+ Add Holding', inv_save:'💾 Save',
+    inv_deposits:'Monthly Deposits', inv_add_deposit:'+ Add Deposit',
+    inv_total_dep:'Total Deposited', inv_portfolio_now:'Portfolio Value Now',
+    inv_pnl:'P&L', inv_dep_month:'Month', inv_dep_amount:'Deposit',
+    inv_dep_cumulative:'Cumulative', inv_cash:'💵 Cash',
+    inv_legend_blue:'🔵 Blue Chips', inv_legend_green:'🟢 Growth', inv_legend_yellow:'🟡 Speculative',
+    missed_title:'Missed Opportunities', missed_symbol:'Symbol',
+    missed_date:'Date', missed_price:'Price ($)', missed_sector:'Sector',
+    missed_note:'Note (optional)', missed_add:'+ Add',
+    missed_empty:'No opportunities recorded yet — add the first one above',
+    missed_why:'Why missed?', missed_sector_ph:'Technology',
+    chart_cum:'Cumulative P&L',
+    settings_profile:'Profile', settings_first:'First Name',
+    settings_last:'Last Name', settings_display:'Display Name',
+    settings_email:'Email', settings_save_profile:'Save Profile',
+    settings_lang:'Language', settings_export:'Export Data',
+    export_stocks:'Export Stocks', export_crypto:'Export Crypto', export_all:'Export All',
+    mc_green:'🟢 Green', mc_orange:'🟠 Orange', mc_red:'🔴 Red',
+    mc_easy:'Easy Market', mc_hard:'Hard Market', mc_up:'Uptrend',
+    mc_press:'Pressure', mc_down:'Downtrend',
   },
   he: {
-    nav_overview: 'סקירה כללית', nav_stocks: 'מניות', nav_crypto: 'קריפטו',
-    nav_statistics: 'סטטיסטיקות', nav_settings: 'הגדרות', nav_themes: 'Market Pulse',
-    nav_ai: 'Minervini', nav_missed: 'פוספסו', nav_investments: 'השקעות',
-    nav_section: 'ניווט',
-    add_trade: 'הוסף עסקה',
+    nav_overview:'סקירה כללית', nav_stocks:'מניות', nav_crypto:'קריפטו',
+    nav_statistics:'סטטיסטיקות', nav_settings:'הגדרות', nav_themes:'Market Pulse',
+    nav_ai:'Minervini', nav_missed:'פוספסו', nav_investments:'השקעות',
+    nav_section:'ניווט', add_trade:'הוסף עסקה',
+    filter_label:'סינון:', all_time:'כל הזמן', archive:'📅 ארכיון',
+    search:'חיפוש סימבול...',
+    add_new_trade:'+ הוסף עסקה חדשה', clean_dupes:'🧹 נקה כפילויות',
+    col_entry_date:'תאריך כניסה', col_status:'סטטוס', col_reason:'סיבת כניסה',
+    col_symbol:'סימבול', col_entry:'כניסה', col_shares:'מניות', col_stop:'סטופ',
+    col_targets:'יעדים', col_close_date:'תאריך סגירה', col_closed_shares:'מניות סגירה',
+    col_exit:'יציאה', col_sector:'סקטור', col_commission:'עמלה',
+    col_total:'סה"כ', col_actions:'פעולות',
+    kpi_pnl:'P&L כולל', kpi_winrate:'אחוז הצלחה', kpi_trades:"מס' עסקאות",
+    kpi_rr:'יחס סיכוי/סיכון', kpi_live:'רווח/הפסד בזמן אמת',
+    kpi_with_stop:'עסקאות עם סטופ', kpi_add_stop:'הוסף סטופ',
+    kpi_open_pos:'פוזיציות פתוחות', kpi_no_open:'אין פוזיציות פתוחות',
+    kpi_calculating:'מחשב...', kpi_vs_prev:'vs חודש קודם',
+    kpi_updated:'עודכן עכשיו',
+    tile_net_pl:'P&L נטו', tile_return:'תשואה', tile_r_mult:'R Multiple',
+    tile_risk:'סיכון בעסקה', tile_stop_dist:'מרחק סטופ', tile_commission:'עמלה',
+    tile_entry:'כניסה', tile_stop:'סטופ', tile_exit:'יציאה',
+    tile_partial_tgt:'יעדים חלקיים', tile_market_cond:'תנאי שוק',
+    tile_no_targets:'אין יעדים', tile_from_entry:'% מהכניסה',
+    tile_keep:'מה לשמר', tile_improve:'מה לשפר',
+    tile_no_notes:'לא נרשמו הערות',
+    trades:'עסקאות', no_trades:'אין עסקאות להצגה בתקופה זו',
+    modal_add:'הוסף עסקה', modal_edit:'ערוך עסקה',
+    modal_open_trade:'פתיחת עסקה', modal_targets:'🎯 יעדים חלקיים (T1–T5)',
+    modal_close_trade:'🔒 סגירת עסקה', modal_fees:'עמלות',
+    modal_calc:'🧮 חישוב אוטומטי', modal_notes:'📝 הערות ואיכות',
+    add_target:'+ הוסף יעד', m_entry_date:'תאריך כניסה',
+    m_symbol:'סימבול', m_entry_price:'שער כניסה', m_num_shares:"מס' מניות",
+    m_stop:'סטופ', m_close_date:'תאריך סגירה', m_closed_shares:'מניות סגירה',
+    m_exit_price:'מחיר יציאה', m_mood:'מצב רגשי לפני הכניסה', m_reason:'סיבת כניסה',
+    m_market_cond:'תנאי שוק בכניסה', m_keep:'מה אפשר לשמר',
+    m_improve:'מה לשפר להבא', m_save:'💾 שמור עסקה', m_cancel:'ביטול',
+    m_stock_badge:'מניה', m_crypto_badge:'קריפטו',
+    m_keep_ph:'מה עבד טוב בעסקה הזו...',
+    m_improve_ph:'מה ניתן לשפר...',
+    m_mood_ph:'איך הרגשת לפני הכניסה...',
+    qa_type:'סוג', qa_entry_date:'תאריך כניסה', qa_entry_price:'מחיר כניסה',
+    qa_shares:'מניות', qa_stop:'סטופ (SL)', qa_commission:'עמלה',
+    qa_reason:'סיבת כניסה', qa_market_cond:'תנאי שוק',
+    qa_mood:'מצב רגשי', qa_note:'הערה', qa_save:'💾 שמור עסקה',
+    qa_pos_size:"גודל פוז'", qa_risk_pct:'סיכון %', qa_stop_from:'סטופ מ-כניסה',
+    qa_select:'— בחר —', qa_mood_ph:'איך הרגשת...', qa_note_ph:'תיאור הכניסה...',
+    inv_title:'תיק השקעות', inv_portfolio_total:'סך התיק',
+    inv_allocated:'מוקצה:', inv_alloc_title:'הקצאת תיק — יעד',
+    inv_available:'זמין:', inv_donut_allocated:'מוקצה',
+    inv_blue:'🔵 כחולות — יעד 60%', inv_green:'🟢 ירוקות — יעד 35%',
+    inv_yellow:'🟡 צהובות — יעד 5%',
+    inv_col_symbol:'סימבול', inv_col_sector:'סקטור', inv_col_category:'קטגוריה',
+    inv_col_avg:'ממוצע', inv_col_value:'שווי',
+    inv_col_portfolio_pct:'% תיק', inv_col_remaining:'נותר',
+    inv_add_holding:'+ הוסף אחזקה', inv_save:'💾 שמור',
+    inv_deposits:'הפקדות חודשיות', inv_add_deposit:'+ הוסף הפקדה',
+    inv_total_dep:'סה"כ הופקד', inv_portfolio_now:'שווי תיק כעת',
+    inv_pnl:'רווח / הפסד', inv_dep_month:'חודש', inv_dep_amount:'הפקדה',
+    inv_dep_cumulative:'מצטבר', inv_cash:'💵 מזומן',
+    inv_legend_blue:'🔵 כחולות', inv_legend_green:'🟢 ירוקות', inv_legend_yellow:'🟡 צהובות',
+    missed_title:'הזדמנויות שפוספסו', missed_symbol:'סימבול',
+    missed_date:'תאריך', missed_price:'מחיר ($)', missed_sector:'סקטור',
+    missed_note:'הערה (אופציונלי)', missed_add:'+ הוסף',
+    missed_empty:'אין הזדמנויות שנרשמו עדיין — הוסף את הראשונה למעלה',
+    missed_why:'למה פוספסה?', missed_sector_ph:'טכנולוגיה',
+    chart_cum:'P&L מצטבר',
+    settings_profile:'פרופיל', settings_first:'שם פרטי',
+    settings_last:'שם משפחה', settings_display:'שם תצוגה',
+    settings_email:'אימייל', settings_save_profile:'שמור פרופיל',
+    settings_lang:'שפה', settings_export:'ייצוא נתונים',
+    export_stocks:'ייצא מניות', export_crypto:'ייצא קריפטו', export_all:'ייצא הכל',
+    mc_green:'🟢 ירוק', mc_orange:'🟠 כתום', mc_red:'🔴 אדום',
+    mc_easy:'שוק קל', mc_hard:'שוק קשה', mc_up:'מגמה עולה',
+    mc_press:'לחץ', mc_down:'מגמה יורדת',
   }
 };
 
 function setLang(lang) {
+  _lang = lang;
   localStorage.setItem('tj_lang', lang);
   const s = LANG_STRINGS[lang] || LANG_STRINGS.en;
 
@@ -8435,19 +8579,69 @@ function setLang(lang) {
   const sectionEl = document.querySelector('.sidebar-section-label');
   if (sectionEl) sectionEl.textContent = s.nav_section;
 
-  // Add trade button
-  const addBtn = document.querySelector('.ov-top-bar .btn-primary');
-  if (addBtn) addBtn.childNodes[addBtn.childNodes.length - 1].textContent = ' ' + s.add_trade;
+  // Add trade button handled via data-i18n on the inner span
+
+  // data-i18n elements
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.dataset.i18n;
+    if (s[k]) el.textContent = s[k];
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    const k = el.dataset.i18nPh;
+    if (s[k]) el.placeholder = s[k];
+  });
 
   // Toggle buttons
   document.getElementById('lang-en')?.classList.toggle('active', lang === 'en');
   document.getElementById('lang-he')?.classList.toggle('active', lang === 'he');
   const desc = document.getElementById('lang-desc');
   if (desc) desc.textContent = lang === 'he' ? 'ממשק בעברית' : 'Interface in English';
+
+  // Re-render active tab content
+  const activeTab = document.querySelector('.tab-content.active');
+  if (activeTab) {
+    const id = activeTab.id;
+    if (id === 'tab-overview') renderOverview();
+    else if (id === 'tab-stocks') renderTable('stock');
+    else if (id === 'tab-crypto') renderTable('crypto');
+    else if (id === 'tab-statistics') renderStatistics();
+    else if (id === 'tab-investments') { invRenderTable(); invRenderDeposits(); }
+    else if (id === 'tab-missed') missedRender();
+  }
+  // Also update modal/quick-add labels dynamically
+  _applyModalLang(s);
+}
+
+function _applyModalLang(s) {
+  // Type badge (dynamic, not covered by data-i18n)
+  const qaBadge = document.getElementById('qa-type-badge');
+  if (qaBadge) {
+    const isCrypto = document.getElementById('qa-crypto')?.checked;
+    qaBadge.textContent = isCrypto ? s.m_crypto_badge : s.m_stock_badge;
+  }
+  const mBadge = document.getElementById('m-type-badge');
+  if (mBadge) {
+    mBadge.textContent = mBadge.classList.contains('crypto') ? s.m_crypto_badge : s.m_stock_badge;
+  }
+  // Select options (option text not covered by data-i18n)
+  const updateSelect = id => {
+    const sel = document.getElementById(id);
+    if (!sel || sel.options.length < 2) return;
+    sel.options[0].textContent = s.qa_select;
+    sel.options[1].textContent = s.mc_green;
+    sel.options[2].textContent = s.mc_orange;
+    sel.options[3].textContent = s.mc_red;
+  };
+  updateSelect('qa-market-cond');
+  updateSelect('m-market-cond');
+  // Donut SVG text (SVG text elements can't use data-i18n textContent update)
+  const dotEl = document.getElementById('donut-allocated-label');
+  if (dotEl) dotEl.textContent = s.inv_donut_allocated;
 }
 
 function langInit() {
   const saved = localStorage.getItem('tj_lang') || 'en';
+  _lang = saved;
   setLang(saved);
 }
 
@@ -8584,44 +8778,44 @@ function renderOverview() {
   if (monKeys.length >= 2) {
     const diff = byMon[monKeys[monKeys.length-1]] - byMon[monKeys[monKeys.length-2]];
     trendCls = diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat';
-    trendLbl = (diff > 0 ? '▲ ' : diff < 0 ? '▼ ' : '') + fmtUSD(Math.abs(diff)) + ' vs חודש קודם';
+    trendLbl = (diff > 0 ? '▲ ' : diff < 0 ? '▼ ' : '') + fmtUSD(Math.abs(diff)) + ' ' + t('kpi_vs_prev');
   }
 
   // Avg R
-  const withR = trades.filter(t => calcStopRisk(t) > 0);
-  const avgR  = withR.length ? withR.reduce((s,t) => s + calcPL(t)/calcStopRisk(t), 0) / withR.length : null;
+  const withR = trades.filter(tr2 => calcStopRisk(tr2) > 0);
+  const avgR  = withR.length ? withR.reduce((s,tr2) => s + calcPL(tr2)/calcStopRisk(tr2), 0) / withR.length : null;
 
   // Open positions
-  const openTrades = [...db.stocks, ...db.crypto].filter(t => !t.deleted && !t.exitPrice);
+  const openTrades = [...db.stocks, ...db.crypto].filter(tr2 => !tr2.deleted && !tr2.exitPrice);
 
   // 5 KPI cards
   document.getElementById('kpi-grid').innerHTML = `
     <div class="kpi-card ${st.total>=0?'c-green':'c-red'}">
-      <div class="kpi-label">P&amp;L כולל</div>
+      <div class="kpi-label">${t('kpi_pnl')}</div>
       <div class="kpi-value ${st.total>=0?'green':'red'} sensitive">${fmtUSD(st.total)}</div>
-      <div class="kpi-sub">${st.n} עסקאות</div>
+      <div class="kpi-sub">${st.n} ${t('trades')}</div>
       ${monKeys.length>=2 ? `<div class="kpi-trend ${trendCls} sensitive">${trendLbl}</div>` : ''}
     </div>
     <div class="kpi-card c-blue">
-      <div class="kpi-label">אחוז הצלחה</div>
+      <div class="kpi-label">${t('kpi_winrate')}</div>
       <div class="kpi-value ${st.wr>=50?'green':'red'} sensitive">${fmt(st.wr,1)}%</div>
       <div class="kpi-sub">${st.wins}W / ${st.losses}L</div>
       <div class="kpi-progress-track"><div class="kpi-progress-bar" style="width:${Math.min(st.wr,100)}%;background:${st.wr>=50?'#22c55e':'#ef4444'}"></div></div>
     </div>
     <div class="kpi-card c-blue">
-      <div class="kpi-label">מס&apos; עסקאות</div>
+      <div class="kpi-label">${t('kpi_trades')}</div>
       <div class="kpi-value">${st.n}</div>
-      <div class="kpi-sub">${stTrades.length} לונגים / ${crTrades.length} שורטים</div>
+      <div class="kpi-sub">${stTrades.length} L / ${crTrades.length} S</div>
     </div>
     <div class="kpi-card ${avgR!==null&&avgR>=0?'c-green':'c-yellow'}">
-      <div class="kpi-label">יחס סיכוי/סיכון</div>
+      <div class="kpi-label">${t('kpi_rr')}</div>
       <div class="kpi-value ${avgR!==null?(avgR>=0?'green':'red'):''} sensitive">${avgR!==null?avgR.toFixed(2)+'R':'—'}</div>
-      <div class="kpi-sub">${withR.length ? withR.length+' עסקאות עם סטופ' : 'הוסף סטופ'}</div>
+      <div class="kpi-sub">${withR.length ? withR.length+' '+t('kpi_with_stop') : t('kpi_add_stop')}</div>
     </div>
     <div class="kpi-card c-yellow" id="kpi-live-card">
-      <div class="kpi-label">רווח/הפסד בזמן אמת</div>
-      <div class="kpi-value" id="kpi-live-pl">מחשב...</div>
-      <div class="kpi-sub" id="kpi-live-sub">${openTrades.length} פוזיציות פתוחות</div>
+      <div class="kpi-label">${t('kpi_live')}</div>
+      <div class="kpi-value" id="kpi-live-pl">${t('kpi_calculating')}</div>
+      <div class="kpi-sub" id="kpi-live-sub">${openTrades.length} ${t('kpi_open_pos')}</div>
     </div>
   `;
   document.querySelectorAll('#kpi-grid .kpi-card').forEach((el, i) => {
@@ -8652,7 +8846,7 @@ async function _updateLivePL() {
   );
   if (!open.length) {
     el.textContent = '$0.00';
-    if (sub) sub.textContent = 'אין פוזיציות פתוחות';
+    if (sub) sub.textContent = t('kpi_no_open');
     return;
   }
   const key = await getFinnhubKey().catch(() => null);
@@ -8675,7 +8869,7 @@ async function _updateLivePL() {
   const sign = totalUnreal >= 0 ? '+' : '';
   el.textContent = sign + '$' + Math.abs(totalUnreal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   el.className = totalUnreal >= 0 ? 'num-green' : 'num-red';
-  if (sub) sub.textContent = `${open.length} פוזיציות פתוחות · עודכן עכשיו`;
+  if (sub) sub.textContent = `${open.length} ${t('kpi_open_pos')} · ${t('kpi_updated')}`;
 }
 
 function renderStatistics() {
@@ -8998,7 +9192,7 @@ function renderComparison(stTrades, crTrades) {
 function openModal(type, tr=null) {
   document.getElementById('tgt-list').innerHTML = '';
   document.getElementById('m-type').value = type;
-  document.getElementById('modal-title').textContent = tr ? 'ערוך עסקה' : 'הוסף עסקה חדשה';
+  document.getElementById('modal-title').textContent = tr ? t('modal_edit') : t('modal_add');
   document.getElementById('m-id').value = tr ? tr.id : '';
 
   const today = new Date().toISOString().split('T')[0];
@@ -11962,7 +12156,7 @@ function missedRenderList(list) {
   const container = document.getElementById('missed-tbody');
   if (!container) return;
   if (!list.length) {
-    container.innerHTML = '<div class="missed-empty">אין הזדמנויות שנרשמו עדיין — הוסף את הראשונה למעלה</div>';
+    container.innerHTML = `<div class="missed-empty">${t('missed_empty')}</div>`;
     return;
   }
   const sorted = [...list].sort((a, b) => b.date.localeCompare(a.date));
@@ -12964,7 +13158,7 @@ function invRenderDeposits(deposits = []) {
     return new Date(+y, +mo - 1, 1).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' });
   };
   let cumul = totalDeposited;
-  listEl.innerHTML = `<table class="inv-dep-table"><thead><tr><th>חודש</th><th>הפקדה</th><th>מצטבר</th><th></th></tr></thead><tbody>${
+  listEl.innerHTML = `<table class="inv-dep-table"><thead><tr><th>${t('inv_dep_month')}</th><th>${t('inv_dep_amount')}</th><th>${t('inv_dep_cumulative')}</th><th></th></tr></thead><tbody>${
     deposits.map((d, i) => {
       const row = `<tr><td>${heMonth(d.month)}</td><td>${cur}${(+d.amount).toLocaleString('en-US',{maximumFractionDigits:0})}</td><td>${cur}${cumul.toLocaleString('en-US',{maximumFractionDigits:0})}</td><td><button class="inv-dep-del" onclick="invDeleteDeposit(${i})">×</button></td></tr>`;
       cumul -= +d.amount;
