@@ -67,3 +67,5 @@ jobs:
           supabase functions deploy coingecko   --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
           supabase functions deploy fear-greed        --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
           supabase functions deploy crypto-fear-greed --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
+          supabase functions deploy theme-tracker     --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
+          supabase functions deploy sector-holdings   --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
