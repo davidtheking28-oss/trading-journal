@@ -6,6 +6,12 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
 };
 
+const INDICES = [
+  { name: 'S&P 500',     ticker: 'SPY'  },
+  { name: 'Nasdaq 100',  ticker: 'QQQ'  },
+  { name: 'Russell 2000',ticker: 'IWM'  },
+];
+
 const THEMES = [
   { name: 'Semiconductors',  ticker: 'SOXX'  },
   { name: 'AI',              ticker: 'AIQ'   },
@@ -103,8 +109,11 @@ serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
   try {
-    const results = await Promise.all(THEMES.map(fetchTheme));
-    return new Response(JSON.stringify({ themes: results, ts: Date.now() }), {
+    const [results, indices] = await Promise.all([
+      Promise.all(THEMES.map(fetchTheme)),
+      Promise.all(INDICES.map(fetchTheme)),
+    ]);
+    return new Response(JSON.stringify({ themes: results, indices, ts: Date.now() }), {
       headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'max-age=60' },
     });
   } catch (e) {

@@ -1457,6 +1457,33 @@
   .tt-loading { grid-column:1/-1; text-align:center; padding:60px 0; color:var(--text3); font-size:13px; }
   @media(max-width:700px) { .tt-grid { grid-template-columns:1fr; } .tt-name { width:110px; } }
 
+  /* TT market overview */
+  .tt-indices { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px; }
+  .tt-index-card { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+  .tt-index-name { font-size:11px; color:var(--text3); font-weight:600; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:6px; }
+  .tt-index-pct { font-size:22px; font-weight:800; font-variant-numeric:tabular-nums; line-height:1; }
+  .tt-index-ticker { font-size:11px; color:var(--text3); margin-top:4px; }
+  .tt-index-pct.pos { color:var(--green); }
+  .tt-index-pct.neg { color:var(--red); }
+  .tt-index-pct.flat { color:var(--text2); }
+
+  .tt-meta { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+  .tt-meta-card { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+  .tt-meta-title { font-size:11px; color:var(--text3); font-weight:600; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:10px; }
+  .tt-podium { display:flex; flex-direction:column; gap:5px; }
+  .tt-podium-row { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:12px; }
+  .tt-podium-name { color:var(--text2); flex:1; }
+  .tt-podium-pct { font-weight:700; font-variant-numeric:tabular-nums; }
+  .tt-podium-pct.pos { color:var(--green); }
+  .tt-podium-pct.neg { color:var(--red); }
+  .tt-breadth-bar-wrap { height:8px; border-radius:4px; overflow:hidden; background:rgba(239,68,68,0.3); margin:10px 0 8px; }
+  .tt-breadth-bar-fill { height:100%; background:var(--green); border-radius:4px; transition:width 0.4s ease; }
+  .tt-breadth-labels { display:flex; justify-content:space-between; font-size:11px; }
+  .tt-breadth-green { color:var(--green); font-weight:700; }
+  .tt-breadth-red { color:var(--red); font-weight:700; }
+  .tt-breadth-neutral { color:var(--text3); }
+  @media(max-width:700px) { .tt-indices { grid-template-columns:1fr 1fr 1fr; } .tt-meta { grid-template-columns:1fr; } .tt-index-pct { font-size:18px; } }
+
   /* TLG drop zone */
   .tlg-drop {
     border: 1.5px dashed var(--border);
@@ -5564,6 +5591,8 @@
         </div>
         <span class="tt-updated" id="tt-updated"></span>
       </div>
+      <div id="tt-indices" class="tt-indices"></div>
+      <div id="tt-meta" class="tt-meta"></div>
       <div id="tt-grid" class="tt-grid"></div>
     </div>
 
@@ -13392,13 +13421,13 @@ ${edgarData.latest8K.text.slice(0, 1500)}` : ''}`.trim();
 // ─────────────────────────────────────────────
 // THEME TRACKER
 // ─────────────────────────────────────────────
-let _ttData = null, _ttPeriod = 'today', _ttLoading = false, _ttTimer = null;
+let _ttData = null, _ttIndices = null, _ttPeriod = 'today', _ttLoading = false, _ttTimer = null;
 
 function ttSetPeriod(p, btn) {
   _ttPeriod = p;
   document.querySelectorAll('.tt-period').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  if (_ttData) ttRender(_ttData);
+  if (_ttData) ttRender(_ttData, _ttIndices);
 }
 
 function ttStartTimer() {
@@ -13426,7 +13455,11 @@ async function ttLoad(force = false) {
   if (_ttLoading) return;
   if (_ttData && !force) { ttRender(_ttData); return; }
   _ttLoading = true;
-  document.getElementById('tt-grid').innerHTML = '<div class="tt-loading">טוען נתונים...</div>';
+  document.getElementById('tt-grid').innerHTML = '<div class="tt-loading">Loading...</div>';
+  const _idxEl = document.getElementById('tt-indices');
+  if (_idxEl) _idxEl.innerHTML = '';
+  const _metaEl = document.getElementById('tt-meta');
+  if (_metaEl) _metaEl.innerHTML = '';
   try {
     const res = await fetch(
       'https://fnklrqxwyeibfptaxewf.supabase.co/functions/v1/theme-tracker',
@@ -13435,10 +13468,11 @@ async function ttLoad(force = false) {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const json = await res.json();
     _ttData = json.themes;
+    _ttIndices = json.indices || [];
     const ts = new Date(json.ts);
     const el = document.getElementById('tt-updated');
     if (el) el.textContent = 'עודכן: ' + ts.toLocaleTimeString('he-IL', { hour:'2-digit', minute:'2-digit' });
-    ttRender(_ttData);
+    ttRender(_ttData, _ttIndices);
   } catch(e) {
     document.getElementById('tt-grid').innerHTML = '<div class="tt-loading">שגיאה בטעינת נתונים — נסה שוב</div>';
   } finally {
@@ -13446,13 +13480,72 @@ async function ttLoad(force = false) {
   }
 }
 
-function ttRender(themes) {
+function ttRender(themes, indices) {
   const grid = document.getElementById('tt-grid');
   if (!grid) return;
-  const pKey = { today:'today', w1:'w1', m1:'m1', m3:'m3', ytd:'ytd' }[_ttPeriod];
+  const pKey = _ttPeriod;
+
+  // ── Indices bar ──
+  const indicesEl = document.getElementById('tt-indices');
+  if (indicesEl && indices?.length) {
+    indicesEl.innerHTML = indices.map(idx => {
+      const pct = idx.today;
+      const cls = pct == null ? 'flat' : pct > 0 ? 'pos' : pct < 0 ? 'neg' : 'flat';
+      const sign = pct != null && pct > 0 ? '+' : '';
+      const display = pct != null ? sign + pct.toFixed(2) + '%' : '—';
+      return `<div class="tt-index-card">
+        <div class="tt-index-name">${esc(idx.name)}</div>
+        <div class="tt-index-pct ${cls}">${display}</div>
+        <div class="tt-index-ticker">${esc(idx.ticker)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Theme list ──
   const valid = themes.filter(t => t[pKey] != null);
   const sorted = [...valid].sort((a, b) => b[pKey] - a[pKey]);
   if (!sorted.length) { grid.innerHTML = '<div class="tt-loading">אין נתונים לתקופה זו</div>'; return; }
+
+  // ── Meta: Top3/Bottom3 + Breadth ──
+  const metaEl = document.getElementById('tt-meta');
+  if (metaEl) {
+    const top3 = sorted.slice(0, 3);
+    const bot3 = sorted.slice(-3).reverse();
+    const green = sorted.filter(t => t[pKey] > 0).length;
+    const red   = sorted.filter(t => t[pKey] < 0).length;
+    const total = sorted.length;
+    const greenPct = Math.round((green / total) * 100);
+
+    const podiumRow = t => {
+      const pct = t[pKey];
+      const pos = pct >= 0;
+      const sign = pos ? '+' : '';
+      return `<div class="tt-podium-row">
+        <span class="tt-podium-name">${esc(t.name)}</span>
+        <span class="tt-podium-pct ${pos?'pos':'neg'}">${sign}${pct.toFixed(2)}%</span>
+      </div>`;
+    };
+
+    metaEl.innerHTML = `
+      <div class="tt-meta-card">
+        <div class="tt-meta-title">Top 3 &nbsp;·&nbsp; Bottom 3</div>
+        <div class="tt-podium">${top3.map(podiumRow).join('')}</div>
+        <div style="height:8px"></div>
+        <div class="tt-podium">${bot3.map(podiumRow).join('')}</div>
+      </div>
+      <div class="tt-meta-card">
+        <div class="tt-meta-title">Market Breadth</div>
+        <div class="tt-breadth-bar-wrap">
+          <div class="tt-breadth-bar-fill" style="width:${greenPct}%"></div>
+        </div>
+        <div class="tt-breadth-labels">
+          <span class="tt-breadth-green">▲ ${green} Green</span>
+          <span class="tt-breadth-neutral">${total} themes</span>
+          <span class="tt-breadth-red">${red} Red ▼</span>
+        </div>
+      </div>`;
+  }
+
   const maxAbs = Math.max(...sorted.map(t => Math.abs(t[pKey])), 0.01);
   grid.innerHTML = sorted.map(t => {
     const pct = t[pKey];
