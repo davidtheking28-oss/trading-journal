@@ -1321,7 +1321,9 @@
      SETTINGS TAB — list layout
   ══════════════════════════════════════ */
   #tab-ibkr { display: none; }
-  #tab-ibkr.active { display: block; max-width: 700px; }
+  #tab-ibkr.active { display: block; }
+  .s-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 900px) { .s-grid { grid-template-columns: 1fr; } }
 
   .s-section {
     background: var(--card);
@@ -5398,6 +5400,8 @@
     <!-- ===== SETTINGS ===== -->
 
     <div id="tab-ibkr" class="tab-content">
+    <div class="s-grid">
+    <div class="s-col">
 
       <!-- Account -->
       <div class="s-section">
@@ -5469,6 +5473,9 @@
 
         <div id="totp-setup-area" style="display:none;padding:14px 16px;border-top:1px solid var(--border);"></div>
       </div>
+
+    </div><!-- /s-col left -->
+    <div class="s-col">
 
       <!-- Data Sources -->
       <div class="s-section">
@@ -5627,6 +5634,8 @@
 
       </div>
 
+    </div><!-- /s-col right -->
+    </div><!-- /s-grid -->
     </div>
 
     <!-- ===== MISSED OPPORTUNITIES ===== -->
