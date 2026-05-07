@@ -13518,6 +13518,24 @@ function ttRender(themes, indices) {
   const sorted = [...valid].sort((a, b) => b[pKey] - a[pKey]);
   if (!sorted.length) { grid.innerHTML = '<div class="tt-loading">אין נתונים לתקופה זו</div>'; return; }
 
+  const chipsEl = document.getElementById('tt-breadth-chips-inner');
+  if (chipsEl) {
+    const greens = sorted.filter(t => t[pKey] > 0).slice(0, 6);
+    const reds   = sorted.filter(t => t[pKey] < 0).slice(-6).reverse();
+    const rows = Math.max(greens.length, reds.length);
+    let chipsHtml = '';
+    for (let i = 0; i < rows; i++) {
+      const g = greens[i], r = reds[i];
+      chipsHtml += r
+        ? '<div class="tt-chip red"><span>' + esc(r.name) + '</span><span>' + r[pKey].toFixed(1) + '%</span></div>'
+        : '<div></div>';
+      chipsHtml += g
+        ? '<div class="tt-chip green"><span>' + esc(g.name) + '</span><span>+' + g[pKey].toFixed(1) + '%</span></div>'
+        : '<div></div>';
+    }
+    chipsEl.innerHTML = chipsHtml;
+  }
+
   // ── Sentiment Score (overview widget only) ──
   {
     const green = sorted.filter(t => t[pKey] > 0).length;
@@ -13571,18 +13589,7 @@ function ttRender(themes, indices) {
           <span class="tt-breadth-neutral">${total} themes</span>
           <span class="tt-breadth-red">${100 - greenPct}% <span style="opacity:0.7">(${red})</span> ▼</span>
         </div>
-        <div class="tt-breadth-chips">${(() => {
-          const greens = sorted.filter(t => t[pKey] > 0).slice(0, 6);
-          const reds   = sorted.filter(t => t[pKey] < 0).slice(-6).reverse();
-          const rows = Math.max(greens.length, reds.length);
-          let html = '';
-          for (let i = 0; i < rows; i++) {
-            const g = greens[i], r = reds[i];
-            html += r ? `<div class="tt-chip red"><span>${esc(r.name)}</span><span>${r[pKey].toFixed(1)}%</span></div>` : '<div></div>';
-            html += g ? `<div class="tt-chip green"><span>${esc(g.name)}</span><span>+${g[pKey].toFixed(1)}%</span></div>` : '<div></div>';
-          }
-          return html;
-        })()}</div>
+        <div class="tt-breadth-chips" id="tt-breadth-chips-inner"></div>
       </div>`;
   }
 
