@@ -28,7 +28,7 @@ self.addEventListener('fetch', e => {
   // Never cache dashboard.html or sw.js — always fetch fresh
   const url = new URL(e.request.url);
   if (url.pathname.endsWith('/dashboard.html') || url.pathname.endsWith('/sw.js') || url.pathname.endsWith('/')) {
-    e.respondWith(fetch(e.request));
+    e.respondWith(fetch(e.request, { cache: 'no-cache' }).catch(() => caches.match(e.request)));
     return;
   }
 

@@ -13320,6 +13320,10 @@ ${edgarData.latest8K.text.slice(0, 1500)}` : ''}`.trim();
     btn.textContent = '▶ נתח מניה';
   }
 }
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
 </script>
 
 
