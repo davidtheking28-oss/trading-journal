@@ -13539,9 +13539,9 @@ function ttRender(themes, indices) {
           <div class="tt-breadth-bar-fill" style="width:${greenPct}%"></div>
         </div>
         <div class="tt-breadth-labels">
-          <span class="tt-breadth-green">▲ ${green} Green</span>
+          <span class="tt-breadth-green">▲ ${green} <span style="opacity:0.7">(${greenPct}%)</span></span>
           <span class="tt-breadth-neutral">${total} themes</span>
-          <span class="tt-breadth-red">${red} Red ▼</span>
+          <span class="tt-breadth-red">${100 - greenPct}% <span style="opacity:0.7">(${red})</span> ▼</span>
         </div>
       </div>`;
   }
