@@ -63,21 +63,23 @@ serve(async (req: Request) => {
       `https://financialmodelingprep.com/stable/etf-holder?symbol=${encodeURIComponent(ticker)}&apikey=${encodeURIComponent(fmpKey)}`,
       { headers: { 'User-Agent': 'trading-journal/2.0' } }
     );
+    const holdingsText = await holdingsRes.text();
+    console.log('[sector-holdings] etf-holder status:', holdingsRes.status, 'body:', holdingsText.slice(0, 300));
     if (!holdingsRes.ok) throw new Error(`etf-holder ${holdingsRes.status}`);
 
-    const holdingsData = await holdingsRes.json();
+    let holdingsData: Record<string, unknown>[];
+    try { holdingsData = JSON.parse(holdingsText); } catch { holdingsData = []; }
     if (!Array.isArray(holdingsData) || holdingsData.length === 0) {
       return new Response(JSON.stringify({ holdings: [] }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
     }
 
-    // Top 40 by weight, US-exchange symbols only
+    // Top 40 by weight — accept both 'asset' and 'symbol' field names
     const topSymbols: string[] = holdingsData
-      .filter((h: Record<string, unknown>) => typeof h.asset === 'string' && /^[A-Z]{1,5}$/.test(h.asset as string))
-      .sort((a: Record<string, unknown>, b: Record<string, unknown>) =>
-        ((b.weightPercentage as number) || 0) - ((a.weightPercentage as number) || 0)
-      )
-      .slice(0, 40)
-      .map((h: Record<string, unknown>) => h.asset as string);
+      .map((h: Record<string, unknown>) => (h.asset || h.symbol) as string)
+      .filter((s: string) => typeof s === 'string' && /^[A-Z]{1,5}$/.test(s))
+      .slice(0, 40);
+
+    console.log('[sector-holdings] topSymbols:', topSymbols.slice(0, 5));
 
     if (!topSymbols.length) {
       return new Response(JSON.stringify({ holdings: [] }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
@@ -88,19 +90,25 @@ serve(async (req: Request) => {
       `https://financialmodelingprep.com/stable/quote?symbol=${topSymbols.join(',')}&apikey=${encodeURIComponent(fmpKey)}`,
       { headers: { 'User-Agent': 'trading-journal/2.0' } }
     );
+    const quotesText = await quotesRes.text();
+    console.log('[sector-holdings] quote status:', quotesRes.status, 'body:', quotesText.slice(0, 300));
     if (!quotesRes.ok) throw new Error(`quote ${quotesRes.status}`);
 
-    const quotesData = await quotesRes.json();
+    let quotesData: Record<string, unknown>[];
+    try { quotesData = JSON.parse(quotesText); } catch { quotesData = []; }
     if (!Array.isArray(quotesData)) {
       return new Response(JSON.stringify({ holdings: [] }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
     }
 
     // Sort by absolute % change, return top 10
+    // FMP field: changesPercentage or change_percentage
     const results = quotesData
       .map((q: Record<string, unknown>) => ({
         symbol: q.symbol as string,
         name:   (q.name as string) || (q.symbol as string),
-        pct:    typeof q.changesPercentage === 'number' ? q.changesPercentage as number : null,
+        pct:    typeof q.changesPercentage === 'number' ? q.changesPercentage as number
+              : typeof q.changePercent     === 'number' ? q.changePercent     as number
+              : null,
       }))
       .filter(r => r.pct !== null)
       .sort((a, b) => Math.abs(b.pct!) - Math.abs(a.pct!))
