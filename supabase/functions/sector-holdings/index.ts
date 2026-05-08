@@ -145,9 +145,8 @@ serve(async (req: Request) => {
 
     results.sort((a, b) => (b.pct ?? -Infinity) - (a.pct ?? -Infinity));
 
-    const cacheSeconds = period === 'today' ? 120 : 600;
     return new Response(JSON.stringify({ ticker, holdings: results }), {
-      headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': `max-age=${cacheSeconds}` },
+      headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
     });
   } catch (e) {
     console.error('[sector-holdings] error:', e);
