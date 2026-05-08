@@ -13,37 +13,36 @@ const YF_HEADERS = {
   'Accept-Language': 'en-US,en;q=0.9',
 };
 
-async function fetchPct(symbol: string, idx: number): Promise<{ symbol: string; name: string; pct: number | null }> {
-  await new Promise(r => setTimeout(r, idx * 200));
-  const hosts = ['query1', 'query2'];
+async function fetchBatch(symbols: string[]): Promise<{ symbol: string; name: string; pct: number | null }[]> {
+  const joined = symbols.map(s => encodeURIComponent(s)).join('%2C');
+  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${joined}&fields=shortName,regularMarketChangePercent`;
 
   for (let attempt = 0; attempt < 2; attempt++) {
-    const host = hosts[(idx + attempt) % 2];
+    const host = attempt === 0 ? 'query1' : 'query2';
     try {
-      const url = `https://${host}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=5d&interval=1d`;
-      const res = await fetch(url, { headers: YF_HEADERS });
+      const res = await fetch(
+        `https://${host}.finance.yahoo.com/v7/finance/quote?symbols=${joined}&fields=shortName,regularMarketChangePercent`,
+        { headers: YF_HEADERS }
+      );
       if (!res.ok) {
-        if (res.status === 429 && attempt === 0) { await new Promise(r => setTimeout(r, 600)); continue; }
-        throw new Error(`HTTP ${res.status}`);
+        if (attempt === 0) { await new Promise(r => setTimeout(r, 500)); continue; }
+        break;
       }
       const json = await res.json();
-      const result = json?.chart?.result?.[0];
-      if (!result) return { symbol, name: symbol, pct: null };
-      const meta = result.meta;
-      const closes: number[] = (result.indicators?.quote?.[0]?.close ?? []).filter((c: number) => c != null && c > 0);
+      const quotes: Record<string, unknown>[] = json?.quoteResponse?.result ?? [];
+      const map = new Map(quotes.map((q: Record<string, unknown>) => [q.symbol as string, q]));
 
-      let pct: number | null = typeof meta?.regularMarketChangePercent === 'number' ? meta.regularMarketChangePercent : null;
-      if (pct == null && closes.length >= 2) {
-        pct = ((closes[closes.length - 1] - closes[closes.length - 2]) / closes[closes.length - 2]) * 100;
-      }
-
-      return { symbol, name: meta?.shortName || meta?.longName || symbol, pct };
+      return symbols.map(sym => {
+        const q = map.get(sym) as Record<string, unknown> | undefined;
+        const pct = typeof q?.regularMarketChangePercent === 'number' ? q.regularMarketChangePercent as number : null;
+        const name = (q?.shortName as string) || sym;
+        return { symbol: sym, name, pct };
+      });
     } catch {
-      if (attempt === 0) { await new Promise(r => setTimeout(r, 400)); continue; }
-      return { symbol, name: symbol, pct: null };
+      if (attempt === 0) { await new Promise(r => setTimeout(r, 500)); continue; }
     }
   }
-  return { symbol, name: symbol, pct: null };
+  return symbols.map(sym => ({ symbol: sym, name: sym, pct: null }));
 }
 
 const HOLDINGS: Record<string, string[]> = {
@@ -119,7 +118,7 @@ serve(async (req: Request) => {
     const symbols = HOLDINGS[ticker];
     if (!symbols?.length) return new Response(JSON.stringify({ holdings: [] }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
 
-    const results = await Promise.all(symbols.map((s, i) => fetchPct(s, i)));
+    const results = await fetchBatch(symbols);
 
     results.sort((a, b) => Math.abs(b.pct ?? 0) - Math.abs(a.pct ?? 0));
 
