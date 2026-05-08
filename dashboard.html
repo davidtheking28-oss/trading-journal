@@ -14205,6 +14205,7 @@ async function _fetchAndRender(ticker, showLoading) {
       { headers: { 'Authorization': `Bearer ${_shToken}` } }
     );
     const json = await res.json();
+    if (json.error) { body.innerHTML = `<div class="sector-modal-loading">${json.error}</div>`; return; }
     if (!json.holdings?.length) { body.innerHTML = '<div class="sector-modal-loading">No holdings data</div>'; return; }
     _renderHoldings(json.holdings);
     const sub = document.getElementById('sector-modal-sub');
