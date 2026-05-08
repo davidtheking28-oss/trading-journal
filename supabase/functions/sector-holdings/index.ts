@@ -38,7 +38,7 @@ const HOLDINGS: Record<string, string[]> = {
   SOCL: ['META','SNAP','PINS','SPOT','MTCH','RDDT','GOOGL','ZG','YELP','BMBL'],
   JETS: ['DAL','UAL','AAL','LUV','ALK','JBLU','HA','ULCC','RYAAY','ICAGY'],
   HACK: ['PANW','CRWD','ZS','FTNT','CYBR','OKTA','S','QLYS','TENB','VRNS'],
-  SIL:  ['WPM','PAAS','HL','AG','SSRM','SAND','MTA','FSM','EXK','SILV'],
+  SIL:  ['WPM','PAAS','HL','AG','SSRM','CDE','MTA','FSM','EXK','MAG'],
   IYZ:  ['TMUS','VZ','T','LUMN','SATS','IDT','IRDM','GSAT','USM','TDS'],
   XLB:  ['LIN','APD','SHW','FCX','NEM','ECL','NUE','VMC','MLM','ALB'],
   XLU:  ['NEE','SO','DUK','AEP','SRE','EXC','XEL','ED','ETR','WEC'],
