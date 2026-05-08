@@ -6528,13 +6528,13 @@ async function offerMigration() {
       await _sb.from('missed_opportunities').insert(missedRows);
     }
 
-    // Migrate plaintext Groq key (if not yet saved in user_settings)
+    // Migrate plaintext Groq key from localStorage (one-time cleanup)
     const localGroqKey = localStorage.getItem('tj-ai-key');
-    if (localGroqKey && !_userSettings.groq_api_key) {
-      await _saveUserSettings({ groq_api_key: localGroqKey });
-      const el = document.getElementById('ai-api-key');
-      if (el) el.value = localGroqKey;
+    if (localGroqKey) {
+      if (!_userSettings.groq_api_key) await _saveUserSettings({ groq_api_key: localGroqKey });
+      localStorage.removeItem('tj-ai-key');
     }
+    localStorage.removeItem('groq-inv-key');
 
     toast(`✓ ${localTrades.length} עסקאות הועברו לענן`, 'success');
     await loadDB();
@@ -7853,16 +7853,14 @@ async function loadUserSettings() {
     .single();
   _userSettings = data || {};
 
-  // Pre-fill UI inputs
+  // Show saved status without exposing key value
   if (_userSettings.groq_api_key) {
     const el = document.getElementById('ai-api-key');
-    if (el) el.value = _userSettings.groq_api_key;
+    if (el) { el.value = ''; el.placeholder = 'מפתח שמור ✓'; }
   }
-  const savedInvKey = localStorage.getItem('groq-inv-key') || _userSettings.groq_inv_key;
-  if (savedInvKey) {
-    if (savedInvKey && !localStorage.getItem('groq-inv-key')) localStorage.setItem('groq-inv-key', savedInvKey);
+  if (_userSettings.groq_inv_key) {
     const el = document.getElementById('inv-groq-key-input');
-    if (el) el.placeholder = 'מפתח שמור ✓';
+    if (el) { el.value = ''; el.placeholder = 'מפתח שמור ✓'; }
   }
   if (_userSettings.finnhub_key) {
     const el = document.getElementById('finnhub-key-input');
@@ -12093,10 +12091,8 @@ function cookieAccept() {
 
 function cookieDecline() {
   localStorage.setItem('tj-cookie-consent', JSON.stringify({ necessary: true, ai: false, ts: Date.now() }));
-  // remove stored AI key if declined
   localStorage.removeItem('tj-ai-key');
-  const inp = document.getElementById('ai-api-key');
-  if (inp) inp.value = '';
+  localStorage.removeItem('groq-inv-key');
   _cookieHide();
 }
 
@@ -12373,25 +12369,27 @@ function aiSetPeriod(p, btn) {
 
 async function aiSaveKey() {
   const k = document.getElementById('ai-api-key').value.trim();
-  if (!k) return;
+  if (!k || !k.startsWith('gsk_')) return;
   await _saveUserSettings({ groq_api_key: k });
+  const el = document.getElementById('ai-api-key');
+  if (el) { el.value = ''; el.placeholder = 'מפתח שמור ✓'; }
   toast('מפתח Groq נשמר 🔐', 'success');
 }
 
 async function invSaveGroqKey() {
   const k = document.getElementById('inv-groq-key-input').value.trim();
   if (!k || !k.startsWith('gsk_')) return;
-  localStorage.setItem('groq-inv-key', k);
   _userSettings.groq_inv_key = k;
-  _saveUserSettings({ groq_inv_key: k });
-  document.getElementById('inv-groq-key-input').placeholder = 'מפתח שמור ✓';
+  await _saveUserSettings({ groq_inv_key: k });
+  const el = document.getElementById('inv-groq-key-input');
+  if (el) { el.value = ''; el.placeholder = 'מפתח שמור ✓'; }
   toast('מפתח Groq ליועץ השקעות נשמר 🔐', 'success');
 }
 
 function _getInvGroqKey() {
   const fromInput = (document.getElementById('inv-groq-key-input')?.value || '').trim();
   if (fromInput.startsWith('gsk_')) return fromInput;
-  return localStorage.getItem('groq-inv-key') || _userSettings.groq_inv_key || '';
+  return _userSettings.groq_inv_key || '';
 }
 
 function aiToggleKey() {
