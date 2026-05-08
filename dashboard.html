@@ -1446,7 +1446,8 @@
   .tt-period:hover { color:var(--text); }
   .tt-period.active { background:var(--accent); color:#fff; }
   .tt-updated { font-size:11px; color:var(--text3); margin-right:auto; }
-  .tt-grid { display:grid; grid-template-columns:1fr 1fr; gap:2px; }
+  .tt-grid { display:flex; gap:2px; }
+  .tt-col  { flex:1; display:flex; flex-direction:column; gap:2px; }
   .tt-row { display:flex; align-items:center; gap:10px; padding:5px 8px; border-radius:6px; transition:background 0.1s; }
   .tt-row:hover { background:rgba(255,255,255,0.03); }
   .tt-name { font-size:12px; color:var(--text2); width:130px; flex-shrink:0; text-align:right; order:3; }
@@ -14131,7 +14132,7 @@ function ttRender(themes, indices) {
   }
 
   const maxAbs = Math.max(...sorted.map(t => Math.abs(t[pKey])), 0.01);
-  grid.innerHTML = sorted.map(t => {
+  const renderRow = t => {
     const pct = t[pKey];
     const pos = pct >= 0;
     const barW = Math.min((Math.abs(pct) / maxAbs) * 48, 48);
@@ -14144,7 +14145,10 @@ function ttRender(themes, indices) {
       </div>
       <div class="tt-pct ${pos?'pos':'neg'}">${sign}${pct.toFixed(2)}%</div>
     </div>`;
-  }).join('');
+  };
+  const half = Math.ceil(sorted.length / 2);
+  grid.innerHTML = `<div class="tt-col">${sorted.slice(0, half).map(renderRow).join('')}</div>`
+                 + `<div class="tt-col">${sorted.slice(half).map(renderRow).join('')}</div>`;
 }
 
 function ttRenderPulseWidget(score, label, color) {
