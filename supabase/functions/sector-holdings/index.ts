@@ -13,11 +13,12 @@ async function fetchQuote(symbol: string, apiKey: string): Promise<{ symbol: str
     const res = await fetch(url, { headers: { 'User-Agent': 'trading-journal/2.0' } });
     if (!res.ok) return { symbol, name: symbol, pct: null };
     const json = await res.json();
-    let pct: number | null = typeof json?.dp === 'number' && json.dp !== 0 ? json.dp : null;
+    const unknownSymbol = json?.c === 0 && json?.pc === 0 && json?.t === 0;
+    if (unknownSymbol) return { symbol, name: symbol, pct: null };
+    let pct: number | null = typeof json?.dp === 'number' ? json.dp : null;
     if (pct == null && typeof json?.c === 'number' && typeof json?.pc === 'number' && json.pc > 0) {
       pct = ((json.c - json.pc) / json.pc) * 100;
     }
-    if (pct === 0 || (json?.c === 0 && json?.pc === 0)) pct = null;
     return { symbol, name: symbol, pct };
   } catch {
     return { symbol, name: symbol, pct: null };
