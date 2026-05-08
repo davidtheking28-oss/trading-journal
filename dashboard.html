@@ -13966,9 +13966,10 @@ async function ttLoad(force = false) {
   const _metaEl = document.getElementById('tt-meta');
   if (_metaEl) _metaEl.innerHTML = '';
   try {
+    const _ttToken = await _getToken();
     const res = await fetch(
-      'https://fnklrqxwyeibfptaxewf.supabase.co/functions/v1/theme-tracker',
-      { headers: { 'Authorization': `Bearer ${_sb.supabaseKey}`, 'apikey': _sb.supabaseKey } }
+      `${SUPABASE_URL}/functions/v1/theme-tracker`,
+      { headers: { 'Authorization': `Bearer ${_ttToken}` } }
     );
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const json = await res.json();
