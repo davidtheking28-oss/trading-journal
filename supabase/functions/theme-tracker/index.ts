@@ -1,4 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const CORS = {
   'Access-Control-Allow-Origin': 'https://davidtheking28-oss.github.io',
@@ -85,7 +86,6 @@ async function fetchTheme(theme: { name: string; ticker: string }) {
     const closes: number[] = result.indicators?.quote?.[0]?.close ?? [];
     const timestamps: number[] = result.timestamp ?? [];
 
-    // Filter out null closes
     const valid = closes.map((c: number, i: number) => ({ c, t: timestamps[i] }))
                         .filter(x => x.c != null && x.c > 0);
     const filteredCloses = valid.map(x => x.c);
@@ -108,6 +108,32 @@ async function fetchTheme(theme: { name: string; ticker: string }) {
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
+  const authHeader = req.headers.get('Authorization') ?? '';
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_ANON_KEY')!,
+    { global: { headers: { Authorization: authHeader } } }
+  );
+  const { data: { user }, error: authErr } = await supabase.auth.getUser();
+  if (authErr || !user) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } });
+  }
+
+  const windowStart = new Date(Date.now() - 60_000).toISOString();
+  const { count: recentCount } = await supabase
+    .from('ai_requests')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .gte('created_at', windowStart);
+
+  if ((recentCount ?? 0) >= 10) {
+    return new Response(
+      JSON.stringify({ error: 'Rate limit exceeded. Try again in a minute.' }),
+      { status: 429, headers: { ...CORS, 'Content-Type': 'application/json' } }
+    );
+  }
+  supabase.from('ai_requests').insert({ user_id: user.id }).then(() => {});
+
   try {
     const [results, indices] = await Promise.all([
       Promise.all(THEMES.map(fetchTheme)),
@@ -117,7 +143,8 @@ serve(async (req: Request) => {
       headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'max-age=60' },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), {
+    console.error('[theme-tracker] error:', e);
+    return new Response(JSON.stringify({ error: 'Failed to fetch data' }), {
       status: 500,
       headers: { ...CORS, 'Content-Type': 'application/json' },
     });

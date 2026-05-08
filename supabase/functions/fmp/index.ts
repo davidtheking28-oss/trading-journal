@@ -30,15 +30,34 @@ serve(async (req: Request) => {
     .eq('user_id', user.id)
     .single();
 
-  const apiKey = (settings?.fmp_key && /^[A-Za-z0-9]{10,40}$/.test(settings.fmp_key))
+  const userKey = (settings?.fmp_key && /^[A-Za-z0-9]{10,40}$/.test(settings.fmp_key))
     ? settings.fmp_key
-    : (Deno.env.get('FMP_API_KEY') ?? '');
+    : null;
+  const apiKey = userKey ?? (Deno.env.get('FMP_API_KEY') ?? '');
+  const usingSharedKey = !userKey;
 
   if (!apiKey || !/^[A-Za-z0-9]{10,40}$/.test(apiKey)) {
     return new Response(
       JSON.stringify({ error: 'No FMP API key configured.' }),
       { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } }
     );
+  }
+
+  if (usingSharedKey) {
+    const windowStart = new Date(Date.now() - 60_000).toISOString();
+    const { count: recentCount } = await supabase
+      .from('ai_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('created_at', windowStart);
+
+    if ((recentCount ?? 0) >= 20) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded. Try again in a minute.' }),
+        { status: 429, headers: { ...CORS, 'Content-Type': 'application/json' } }
+      );
+    }
+    supabase.from('ai_requests').insert({ user_id: user.id }).then(() => {});
   }
 
   const url = new URL(req.url);
@@ -58,11 +77,18 @@ serve(async (req: Request) => {
     fmpUrl += `&period=${encodeURIComponent(period)}&limit=4`;
   }
 
-  const upstream = await fetch(fmpUrl, { headers: { 'User-Agent': 'trading-journal/2.0' } });
-  const data = await upstream.text();
+  try {
+    const upstream = await fetch(fmpUrl, { headers: { 'User-Agent': 'trading-journal/2.0' } });
+    const data = await upstream.text();
 
-  return new Response(data, {
-    status: upstream.status,
-    headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'max-age=3600' },
-  });
+    return new Response(data, {
+      status: upstream.status,
+      headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'max-age=3600' },
+    });
+  } catch (e) {
+    console.error('[fmp] upstream error:', e);
+    return new Response(JSON.stringify({ error: 'Failed to fetch data' }), {
+      status: 502, headers: { ...CORS, 'Content-Type': 'application/json' },
+    });
+  }
 });

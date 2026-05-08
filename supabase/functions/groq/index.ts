@@ -94,7 +94,8 @@ serve(async (req: Request) => {
 
   if (!upstream.ok) {
     const errText = await upstream.text();
-    return new Response(errText, { status: upstream.status, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    console.error('[groq] upstream error:', upstream.status, errText);
+    return new Response(JSON.stringify({ error: 'AI request failed' }), { status: upstream.status, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 
   return new Response(upstream.body, {

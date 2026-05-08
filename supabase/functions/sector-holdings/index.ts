@@ -1,4 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const CORS = {
   'Access-Control-Allow-Origin': 'https://davidtheking28-oss.github.io',
@@ -13,7 +14,6 @@ const YF_HEADERS = {
 };
 
 async function fetchPct(symbol: string, idx: number): Promise<{ symbol: string; name: string; pct: number | null }> {
-  // Stagger requests to avoid Yahoo Finance rate limiting
   await new Promise(r => setTimeout(r, idx * 120));
   const hosts = ['query1', 'query2'];
   const host = hosts[idx % 2];
@@ -75,10 +75,38 @@ const HOLDINGS: Record<string, string[]> = {
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
+  const authHeader = req.headers.get('Authorization') ?? '';
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_ANON_KEY')!,
+    { global: { headers: { Authorization: authHeader } } }
+  );
+  const { data: { user }, error: authErr } = await supabase.auth.getUser();
+  if (authErr || !user) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } });
+  }
+
+  const windowStart = new Date(Date.now() - 60_000).toISOString();
+  const { count: recentCount } = await supabase
+    .from('ai_requests')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .gte('created_at', windowStart);
+
+  if ((recentCount ?? 0) >= 10) {
+    return new Response(
+      JSON.stringify({ error: 'Rate limit exceeded. Try again in a minute.' }),
+      { status: 429, headers: { ...CORS, 'Content-Type': 'application/json' } }
+    );
+  }
+  supabase.from('ai_requests').insert({ user_id: user.id }).then(() => {});
+
   try {
     const url    = new URL(req.url);
     const ticker = url.searchParams.get('ticker')?.toUpperCase();
-    if (!ticker) return new Response(JSON.stringify({ error: 'missing ticker' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    if (!ticker || !/^[A-Z0-9]{1,10}$/.test(ticker)) {
+      return new Response(JSON.stringify({ error: 'Invalid ticker' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    }
 
     const symbols = HOLDINGS[ticker];
     if (!symbols?.length) return new Response(JSON.stringify({ holdings: [] }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
@@ -91,7 +119,8 @@ serve(async (req: Request) => {
       headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'max-age=120' },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), {
+    console.error('[sector-holdings] error:', e);
+    return new Response(JSON.stringify({ error: 'Failed to fetch data' }), {
       status: 500,
       headers: { ...CORS, 'Content-Type': 'application/json' },
     });
