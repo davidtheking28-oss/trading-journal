@@ -7,6 +7,60 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
 };
 
+const HOLDINGS: Record<string, string[]> = {
+  SOXX: ['NVDA','AVGO','AMD','QCOM','TXN','INTC','AMAT','LRCX','KLAC','MU'],
+  AIQ:  ['NVDA','MSFT','META','GOOGL','AMZN','CRM','IBM','ORCL','AMD','PLTR'],
+  XOP:  ['XOM','CVX','EOG','PXD','MPC','PSX','VLO','OXY','COP','DVN'],
+  QTUM: ['IONQ','RGTI','QBTS','QUBT','IBM','GOOGL','MSFT','NVDA','HON','AMZN'],
+  GDX:  ['NEM','GOLD','AEM','WPM','KGC','AGI','PAAS','FNV','HL','SSRM'],
+  IGV:  ['MSFT','ORCL','CRM','ADBE','NOW','INTU','PANW','SNPS','CDNS','FTNT'],
+  ROBO: ['ABB','ISRG','CGNX','ZBRA','TRMB','ROK','PTC','NXPI','BRKS','TER'],
+  KWEB: ['PDD','JD','BIDU','NTES','TCOM','BEKE','VIPS','KC','FINV','NOAH'],
+  IWF:  ['AAPL','MSFT','NVDA','AMZN','META','GOOGL','GOOG','LLY','AVGO','TSLA'],
+  SOCL: ['META','SNAP','PINS','SPOT','MTCH','RDDT','GOOGL','ZG','YELP','BMBL'],
+  JETS: ['DAL','UAL','AAL','LUV','ALK','JBLU','ALGT','ULCC','RYAAY','ICAGY'],
+  HACK: ['PANW','CRWD','ZS','FTNT','CYBR','OKTA','S','QLYS','TENB','VRNS'],
+  SIL:  ['WPM','PAAS','HL','AG','SSRM','CDE','MTA','FSM','EXK','RGLD'],
+  IYZ:  ['TMUS','VZ','T','LUMN','SATS','IDT','IRDM','GSAT','USM','TDS'],
+  XLB:  ['LIN','APD','SHW','FCX','NEM','ECL','NUE','VMC','MLM','ALB'],
+  XLU:  ['NEE','SO','DUK','AEP','SRE','EXC','XEL','ED','ETR','WEC'],
+  SLX:  ['NUE','STLD','CMC','X','CLF','RS','ATI','WOR','HCC','TS'],
+  BITO: ['MARA','RIOT','CLSK','COIN','MSTR','HUT','CIFR','BTDR','CORZ','WULF'],
+  XRT:  ['AMZN','HD','TGT','COST','WMT','LOW','TJX','ROST','BURL','DG'],
+  IYR:  ['PLD','AMT','EQIX','PSA','O','SPG','WELL','DLR','CCI','EQR'],
+  IYT:  ['UPS','FDX','CSX','UNP','NSC','JBHT','ODFL','XPO','CHRW','SAIA'],
+  IHI:  ['MDT','ABT','SYK','BSX','EW','ISRG','ZBH','RMD','TFX','HOLX'],
+  TAN:  ['ENPH','FSLR','SEDG','RUN','DQ','ARRY','CSIQ','JKS','CWEN','SHLS'],
+  ARKG: ['RXRX','NTLA','CRSP','BEAM','PACB','VEEV','IOVA','FATE','TWST','EXAS'],
+  XLI:  ['GE','RTX','CAT','HON','UNP','DE','BA','LMT','ETN','WM'],
+  WGMI: ['MARA','RIOT','CLSK','IREN','BTBT','HUT','CIFR','BTDR','CORZ','WULF'],
+  XBI:  ['MRNA','ALNY','VRTX','REGN','INCY','BMRN','BLUE','KYMR','IONS','ACAD'],
+  XLV:  ['UNH','LLY','JNJ','ABBV','MRK','TMO','ABT','DHR','BMY','AMGN'],
+  KBE:  ['JPM','BAC','WFC','GS','MS','C','USB','PNC','TFC','COF'],
+  ITB:  ['DHI','LEN','NVR','PHM','TMHC','MDC','MHO','BECN','BLDR','IBP'],
+  ITA:  ['RTX','LMT','NOC','GD','BA','TDG','HEI','TXT','LHX','KTOS'],
+};
+
+async function fetchQuote(symbol: string, apiKey: string): Promise<{ symbol: string; name: string; pct: number | null }> {
+  try {
+    const res = await fetch(
+      `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${encodeURIComponent(apiKey)}`,
+      { headers: { 'User-Agent': 'trading-journal/2.0' } }
+    );
+    if (!res.ok) return { symbol, name: symbol, pct: null };
+    const json = await res.json();
+    const unknownSymbol = json?.c === 0 && json?.pc === 0 && json?.t === 0;
+    if (unknownSymbol) return { symbol, name: symbol, pct: null };
+    let pct: number | null = typeof json?.dp === 'number' ? json.dp : null;
+    if (pct == null && typeof json?.c === 'number' && typeof json?.pc === 'number' && json.pc > 0) {
+      pct = ((json.c - json.pc) / json.pc) * 100;
+    }
+    return { symbol, name: symbol, pct };
+  } catch {
+    return { symbol, name: symbol, pct: null };
+  }
+}
+
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
@@ -16,7 +70,6 @@ serve(async (req: Request) => {
     Deno.env.get('SUPABASE_ANON_KEY')!,
     { global: { headers: { Authorization: authHeader } } }
   );
-
   const { data: { user }, error: authErr } = await supabase.auth.getUser();
   if (authErr || !user) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } });
@@ -37,82 +90,26 @@ serve(async (req: Request) => {
   }
   supabase.from('ai_requests').insert({ user_id: user.id }).then(() => {});
 
-  const url = new URL(req.url);
-  const ticker = url.searchParams.get('ticker')?.toUpperCase();
-  if (!ticker || !/^[A-Z0-9]{1,10}$/.test(ticker)) {
-    return new Response(JSON.stringify({ error: 'Invalid ticker' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
-  }
-
-  const { data: settings } = await supabase
-    .from('user_settings')
-    .select('fmp_key')
-    .eq('user_id', user.id)
-    .single();
-
-  const fmpKey = (settings?.fmp_key && /^[A-Za-z0-9]{10,40}$/.test(settings.fmp_key))
-    ? settings.fmp_key
-    : (Deno.env.get('FMP_API_KEY') ?? '');
-
-  if (!fmpKey) {
-    return new Response(JSON.stringify({ error: 'No FMP API key configured.' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
-  }
-
   try {
-    // 1. Fetch ETF holdings from FMP
-    const holdingsRes = await fetch(
-      `https://financialmodelingprep.com/api/v3/etf-holder/${encodeURIComponent(ticker)}?apikey=${encodeURIComponent(fmpKey)}`,
-      { headers: { 'User-Agent': 'trading-journal/2.0' } }
-    );
-    const holdingsText = await holdingsRes.text();
-    console.log('[sector-holdings] etf-holder status:', holdingsRes.status, 'body:', holdingsText.slice(0, 300));
-    if (!holdingsRes.ok) throw new Error(`etf-holder ${holdingsRes.status}`);
-
-    let holdingsData: Record<string, unknown>[];
-    try { holdingsData = JSON.parse(holdingsText); } catch { holdingsData = []; }
-    if (!Array.isArray(holdingsData) || holdingsData.length === 0) {
-      return new Response(JSON.stringify({ holdings: [] }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
+    const url    = new URL(req.url);
+    const ticker = url.searchParams.get('ticker')?.toUpperCase();
+    if (!ticker || !/^[A-Z0-9]{1,10}$/.test(ticker)) {
+      return new Response(JSON.stringify({ error: 'Invalid ticker' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
     }
 
-    // Top 40 by weight — accept both 'asset' and 'symbol' field names
-    const topSymbols: string[] = holdingsData
-      .map((h: Record<string, unknown>) => (h.asset || h.symbol) as string)
-      .filter((s: string) => typeof s === 'string' && /^[A-Z]{1,5}$/.test(s))
-      .slice(0, 40);
+    const symbols = HOLDINGS[ticker];
+    if (!symbols?.length) return new Response(JSON.stringify({ holdings: [] }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
 
-    console.log('[sector-holdings] topSymbols:', topSymbols.slice(0, 5));
+    const { data: settings } = await supabase.from('user_settings').select('finnhub_key').eq('user_id', user.id).single();
+    const apiKey = (settings?.finnhub_key && /^[A-Za-z0-9_]{10,40}$/.test(settings.finnhub_key))
+      ? settings.finnhub_key
+      : (Deno.env.get('FINNHUB_API_KEY') ?? '');
 
-    if (!topSymbols.length) {
-      return new Response(JSON.stringify({ holdings: [] }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
-    }
+    if (!apiKey) return new Response(JSON.stringify({ error: 'No Finnhub API key configured.' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
 
-    // 2. Fetch batch quotes from FMP
-    const quotesRes = await fetch(
-      `https://financialmodelingprep.com/api/v3/quote/${topSymbols.join(',')}?apikey=${encodeURIComponent(fmpKey)}`,
-      { headers: { 'User-Agent': 'trading-journal/2.0' } }
-    );
-    const quotesText = await quotesRes.text();
-    console.log('[sector-holdings] quote status:', quotesRes.status, 'body:', quotesText.slice(0, 300));
-    if (!quotesRes.ok) throw new Error(`quote ${quotesRes.status}`);
+    const results = await Promise.all(symbols.map(s => fetchQuote(s, apiKey)));
 
-    let quotesData: Record<string, unknown>[];
-    try { quotesData = JSON.parse(quotesText); } catch { quotesData = []; }
-    if (!Array.isArray(quotesData)) {
-      return new Response(JSON.stringify({ holdings: [] }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
-    }
-
-    // Sort by absolute % change, return top 10
-    // FMP field: changesPercentage or change_percentage
-    const results = quotesData
-      .map((q: Record<string, unknown>) => ({
-        symbol: q.symbol as string,
-        name:   (q.name as string) || (q.symbol as string),
-        pct:    typeof q.changesPercentage === 'number' ? q.changesPercentage as number
-              : typeof q.changePercent     === 'number' ? q.changePercent     as number
-              : null,
-      }))
-      .filter(r => r.pct !== null)
-      .sort((a, b) => Math.abs(b.pct!) - Math.abs(a.pct!))
-      .slice(0, 10);
+    results.sort((a, b) => Math.abs(b.pct ?? 0) - Math.abs(a.pct ?? 0));
 
     return new Response(JSON.stringify({ ticker, holdings: results }), {
       headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'max-age=120' },
