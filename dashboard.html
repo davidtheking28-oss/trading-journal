@@ -4981,6 +4981,45 @@
 
   html[data-theme="dark"] .kpi-label { letter-spacing: 0.8px !important; }
 
+  /* ══════════════════════════════════════════
+     MOBILE RESPONSIVE — Table + Touch Targets
+  ══════════════════════════════════════════ */
+
+  /* Tablet (≤768px): hide low-priority columns, reduce min-width */
+  @media (max-width: 768px) {
+    table { min-width: 900px; }
+
+    /* Hide: Reason(5), Close Date(11), Closed Shares(12), Sector(14), Commission(15), R(18) */
+    table th:nth-child(5),  table td:nth-child(5),
+    table th:nth-child(11), table td:nth-child(11),
+    table th:nth-child(12), table td:nth-child(12),
+    table th:nth-child(14), table td:nth-child(14),
+    table th:nth-child(15), table td:nth-child(15),
+    table th:nth-child(18), table td:nth-child(18) { display: none; }
+
+    /* Touch targets */
+    .tnav-btn { min-height: 44px; padding: 0 10px; }
+    .btn-icon  { min-width: 36px; min-height: 36px; padding: 8px; }
+    .tab-btn   { min-height: 44px; }
+  }
+
+  /* Phone (≤480px): also hide Shares(8), Stop(9), Targets(10), %(17) */
+  @media (max-width: 480px) {
+    table { min-width: 500px; }
+
+    table th:nth-child(8),  table td:nth-child(8),
+    table th:nth-child(9),  table td:nth-child(9),
+    table th:nth-child(10), table td:nth-child(10),
+    table th:nth-child(17), table td:nth-child(17) { display: none; }
+
+    /* Chart heights */
+    .chart-card canvas,
+    .chart-wrap canvas { max-height: 200px; }
+
+    /* Touch targets — full 44px on smallest screens */
+    .btn-icon { min-width: 44px; min-height: 44px; padding: 10px; }
+  }
+
 </style>
 </head>
 <body>
