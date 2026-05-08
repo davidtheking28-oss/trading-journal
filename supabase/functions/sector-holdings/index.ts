@@ -34,7 +34,7 @@ const HOLDINGS: Record<string, string[]> = {
   ARKG: ['RXRX','NTLA','CRSP','BEAM','PACB','VEEV','IOVA','FATE','TWST','EXAS'],
   XLI:  ['GE','RTX','CAT','HON','UNP','DE','BA','LMT','ETN','WM'],
   WGMI: ['MARA','RIOT','CLSK','IREN','BTBT','HUT','CIFR','BTDR','CORZ','WULF'],
-  XBI:  ['MRNA','ALNY','VRTX','REGN','INCY','BMRN','BPMC','KYMR','IONS','ACAD'],
+  XBI:  ['MRNA','ALNY','VRTX','REGN','INCY','BMRN','SRPT','KYMR','IONS','ACAD'],
   XLV:  ['UNH','LLY','JNJ','ABBV','MRK','TMO','ABT','DHR','BMY','AMGN'],
   KBE:  ['JPM','BAC','WFC','GS','MS','C','USB','PNC','TFC','COF'],
   ITB:  ['DHI','LEN','NVR','PHM','TMHC','MDC','MHO','BECN','BLDR','IBP'],
