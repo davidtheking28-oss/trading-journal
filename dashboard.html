@@ -13959,13 +13959,16 @@ function ttStopTimer() {
 
 async function ttLoad(force = false) {
   if (_ttLoading) return;
-  if (_ttData && !force) { ttRender(_ttData); return; }
+  if (_ttData && !force) { ttRender(_ttData, _ttIndices); return; }
   _ttLoading = true;
-  document.getElementById('tt-grid').innerHTML = '<div class="tt-loading">Loading...</div>';
-  const _idxEl = document.getElementById('tt-indices');
-  if (_idxEl) _idxEl.innerHTML = '';
-  const _metaEl = document.getElementById('tt-meta');
-  if (_metaEl) _metaEl.innerHTML = '';
+  const silent = !!_ttData;
+  if (!silent) {
+    document.getElementById('tt-grid').innerHTML = '<div class="tt-loading">Loading...</div>';
+    const _idxEl = document.getElementById('tt-indices');
+    if (_idxEl) _idxEl.innerHTML = '';
+    const _metaEl = document.getElementById('tt-meta');
+    if (_metaEl) _metaEl.innerHTML = '';
+  }
   try {
     const _ttToken = await _getToken();
     const res = await fetch(
@@ -13981,7 +13984,7 @@ async function ttLoad(force = false) {
     if (el) el.textContent = 'עודכן: ' + ts.toLocaleTimeString('he-IL', { hour:'2-digit', minute:'2-digit' });
     ttRender(_ttData, _ttIndices);
   } catch(e) {
-    document.getElementById('tt-grid').innerHTML = '<div class="tt-loading">שגיאה בטעינת נתונים — נסה שוב</div>';
+    if (!silent) document.getElementById('tt-grid').innerHTML = '<div class="tt-loading">שגיאה בטעינת נתונים — נסה שוב</div>';
   } finally {
     _ttLoading = false;
   }
