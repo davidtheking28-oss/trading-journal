@@ -14147,8 +14147,8 @@ function ttRender(themes, indices) {
     </div>`;
   };
   const half = Math.ceil(sorted.length / 2);
-  grid.innerHTML = `<div class="tt-col">${sorted.slice(0, half).map(renderRow).join('')}</div>`
-                 + `<div class="tt-col">${sorted.slice(half).map(renderRow).join('')}</div>`;
+  grid.innerHTML = `<div class="tt-col">${sorted.slice(half).map(renderRow).join('')}</div>`
+                 + `<div class="tt-col">${sorted.slice(0, half).map(renderRow).join('')}</div>`;
 }
 
 function ttRenderPulseWidget(score, label, color) {
