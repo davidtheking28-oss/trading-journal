@@ -109,7 +109,7 @@ serve(async (req: Request) => {
 
     const results = await Promise.all(symbols.map(s => fetchQuote(s, apiKey)));
 
-    results.sort((a, b) => Math.abs(b.pct ?? 0) - Math.abs(a.pct ?? 0));
+    results.sort((a, b) => (b.pct ?? -Infinity) - (a.pct ?? -Infinity));
 
     return new Response(JSON.stringify({ ticker, holdings: results }), {
       headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'max-age=120' },
