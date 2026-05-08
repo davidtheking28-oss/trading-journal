@@ -41,6 +41,17 @@ const HOLDINGS: Record<string, string[]> = {
   ITA:  ['RTX','LMT','NOC','GD','BA','TDG','HEI','TXT','LHX','KTOS'],
 };
 
+function periodToFrom(period: string): number {
+  const now = Math.floor(Date.now() / 1000);
+  switch (period) {
+    case 'w1':  return now - 7 * 86400;
+    case 'm1':  return now - 30 * 86400;
+    case 'm3':  return now - 90 * 86400;
+    case 'ytd': return Math.floor(new Date(new Date().getFullYear(), 0, 1).getTime() / 1000);
+    default:    return 0;
+  }
+}
+
 async function fetchQuote(symbol: string, apiKey: string): Promise<{ symbol: string; name: string; pct: number | null }> {
   try {
     const res = await fetch(
@@ -49,13 +60,31 @@ async function fetchQuote(symbol: string, apiKey: string): Promise<{ symbol: str
     );
     if (!res.ok) return { symbol, name: symbol, pct: null };
     const json = await res.json();
-    const unknownSymbol = json?.c === 0 && json?.pc === 0 && json?.t === 0;
-    if (unknownSymbol) return { symbol, name: symbol, pct: null };
+    if (json?.c === 0 && json?.pc === 0 && json?.t === 0) return { symbol, name: symbol, pct: null };
     let pct: number | null = typeof json?.dp === 'number' ? json.dp : null;
     if (pct == null && typeof json?.c === 'number' && typeof json?.pc === 'number' && json.pc > 0) {
       pct = ((json.c - json.pc) / json.pc) * 100;
     }
     return { symbol, name: symbol, pct };
+  } catch {
+    return { symbol, name: symbol, pct: null };
+  }
+}
+
+async function fetchCandle(symbol: string, apiKey: string, from: number): Promise<{ symbol: string; name: string; pct: number | null }> {
+  try {
+    const to = Math.floor(Date.now() / 1000);
+    const res = await fetch(
+      `https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=D&from=${from}&to=${to}&token=${encodeURIComponent(apiKey)}`,
+      { headers: { 'User-Agent': 'trading-journal/2.0' } }
+    );
+    if (!res.ok) return { symbol, name: symbol, pct: null };
+    const json = await res.json();
+    if (json?.s !== 'ok' || !json.o?.length || !json.c?.length) return { symbol, name: symbol, pct: null };
+    const startPrice = json.o[0];
+    const endPrice = json.c[json.c.length - 1];
+    if (!startPrice) return { symbol, name: symbol, pct: null };
+    return { symbol, name: symbol, pct: ((endPrice - startPrice) / startPrice) * 100 };
   } catch {
     return { symbol, name: symbol, pct: null };
   }
@@ -93,6 +122,8 @@ serve(async (req: Request) => {
   try {
     const url    = new URL(req.url);
     const ticker = url.searchParams.get('ticker')?.toUpperCase();
+    const period = url.searchParams.get('period') ?? 'today';
+
     if (!ticker || !/^[A-Z0-9]{1,10}$/.test(ticker)) {
       return new Response(JSON.stringify({ error: 'Invalid ticker' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
     }
@@ -107,12 +138,16 @@ serve(async (req: Request) => {
 
     if (!apiKey) return new Response(JSON.stringify({ error: 'No Finnhub API key configured.' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
 
-    const results = await Promise.all(symbols.map(s => fetchQuote(s, apiKey)));
+    const from = periodToFrom(period);
+    const results = await Promise.all(
+      symbols.map(s => period === 'today' ? fetchQuote(s, apiKey) : fetchCandle(s, apiKey, from))
+    );
 
     results.sort((a, b) => (b.pct ?? -Infinity) - (a.pct ?? -Infinity));
 
+    const cacheSeconds = period === 'today' ? 120 : 600;
     return new Response(JSON.stringify({ ticker, holdings: results }), {
-      headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'max-age=120' },
+      headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': `max-age=${cacheSeconds}` },
     });
   } catch (e) {
     console.error('[sector-holdings] error:', e);

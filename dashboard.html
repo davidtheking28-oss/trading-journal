@@ -13975,6 +13975,7 @@ function ttSetPeriod(p, btn) {
   document.querySelectorAll('.tt-period').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   if (_ttData) ttRender(_ttData, _ttIndices);
+  if (_sectorTicker) _fetchAndRender(_sectorTicker, true);
 }
 
 function ttStartTimer() {
@@ -14205,7 +14206,7 @@ async function _fetchAndRender(ticker, showLoading) {
   try {
     const _shToken = await _getToken();
     const res = await fetch(
-      `${SUPABASE_URL}/functions/v1/sector-holdings?ticker=${encodeURIComponent(ticker)}`,
+      `${SUPABASE_URL}/functions/v1/sector-holdings?ticker=${encodeURIComponent(ticker)}&period=${encodeURIComponent(_ttPeriod || 'today')}`,
       { headers: { 'Authorization': `Bearer ${_shToken}` } }
     );
     const json = await res.json();
