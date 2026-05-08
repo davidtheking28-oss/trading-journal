@@ -14,44 +14,52 @@ const YF_HEADERS = {
 };
 
 async function fetchPct(symbol: string, idx: number): Promise<{ symbol: string; name: string; pct: number | null }> {
-  await new Promise(r => setTimeout(r, idx * 120));
+  await new Promise(r => setTimeout(r, idx * 200));
   const hosts = ['query1', 'query2'];
-  const host = hosts[idx % 2];
-  try {
-    const url = `https://${host}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=5d&interval=1d`;
-    const res = await fetch(url, { headers: YF_HEADERS });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
-    const result = json?.chart?.result?.[0];
-    if (!result) return { symbol, name: symbol, pct: null };
-    const meta = result.meta;
-    const closes: number[] = (result.indicators?.quote?.[0]?.close ?? []).filter((c: number) => c != null && c > 0);
 
-    let pct: number | null = typeof meta?.regularMarketChangePercent === 'number' ? meta.regularMarketChangePercent : null;
-    if (pct == null && closes.length >= 2) {
-      pct = ((closes[closes.length - 1] - closes[closes.length - 2]) / closes[closes.length - 2]) * 100;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const host = hosts[(idx + attempt) % 2];
+    try {
+      const url = `https://${host}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=5d&interval=1d`;
+      const res = await fetch(url, { headers: YF_HEADERS });
+      if (!res.ok) {
+        if (res.status === 429 && attempt === 0) { await new Promise(r => setTimeout(r, 600)); continue; }
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const json = await res.json();
+      const result = json?.chart?.result?.[0];
+      if (!result) return { symbol, name: symbol, pct: null };
+      const meta = result.meta;
+      const closes: number[] = (result.indicators?.quote?.[0]?.close ?? []).filter((c: number) => c != null && c > 0);
+
+      let pct: number | null = typeof meta?.regularMarketChangePercent === 'number' ? meta.regularMarketChangePercent : null;
+      if (pct == null && closes.length >= 2) {
+        pct = ((closes[closes.length - 1] - closes[closes.length - 2]) / closes[closes.length - 2]) * 100;
+      }
+
+      return { symbol, name: meta?.shortName || meta?.longName || symbol, pct };
+    } catch {
+      if (attempt === 0) { await new Promise(r => setTimeout(r, 400)); continue; }
+      return { symbol, name: symbol, pct: null };
     }
-
-    return { symbol, name: meta?.shortName || meta?.longName || symbol, pct };
-  } catch {
-    return { symbol, name: symbol, pct: null };
   }
+  return { symbol, name: symbol, pct: null };
 }
 
 const HOLDINGS: Record<string, string[]> = {
   SOXX: ['NVDA','AVGO','AMD','QCOM','TXN','INTC','AMAT','LRCX','KLAC','MU'],
   AIQ:  ['NVDA','MSFT','META','GOOGL','AMZN','CRM','IBM','ORCL','AMD','PLTR'],
   XOP:  ['XOM','CVX','EOG','PXD','MPC','PSX','VLO','OXY','COP','DVN'],
-  QTUM: ['IONQ','RGTI','QBTS','QUBT','IBM','GOOGL','MSFT','NVDA','HONEYWELL','AMZN'],
+  QTUM: ['IONQ','RGTI','QBTS','QUBT','IBM','GOOGL','MSFT','NVDA','HON','AMZN'],
   GDX:  ['NEM','GOLD','AEM','WPM','KGC','AGI','PAAS','FNV','HL','SSRM'],
   IGV:  ['MSFT','ORCL','CRM','ADBE','NOW','INTU','PANW','SNPS','CDNS','FTNT'],
-  ROBO: ['ABB','ISRG','FANUC','YASKAWA','KEYENCE','ROK','PTC','OMRN','BRKS','IRBT'],
+  ROBO: ['ABB','ISRG','CGNX','ZBRA','TRMB','ROK','PTC','NXPI','BRKS','TER'],
   KWEB: ['PDD','JD','BIDU','NTES','TCOM','BEKE','VIPS','KC','FINV','NOAH'],
   IWF:  ['AAPL','MSFT','NVDA','AMZN','META','GOOGL','GOOG','LLY','AVGO','TSLA'],
-  SOCL: ['META','SNAP','PINS','SPOT','MTCH','TWTR','NAVER','KAKAO','ZG','YELP'],
+  SOCL: ['META','SNAP','PINS','SPOT','MTCH','RDDT','GOOGL','ZG','YELP','BMBL'],
   JETS: ['DAL','UAL','AAL','LUV','ALK','JBLU','HA','ULCC','RYAAY','ICAGY'],
   HACK: ['PANW','CRWD','ZS','FTNT','CYBR','OKTA','S','QLYS','TENB','VRNS'],
-  SIL:  ['WPM','PAAS','HL','AG','SSRM','SAND','MTA','FSM','EXK','GPL'],
+  SIL:  ['WPM','PAAS','HL','AG','SSRM','SAND','MTA','FSM','EXK','SILV'],
   IYZ:  ['TMUS','VZ','T','LUMN','SATS','IDT','IRDM','GSAT','USM','TDS'],
   XLB:  ['LIN','APD','SHW','FCX','NEM','ECL','NUE','VMC','MLM','ALB'],
   XLU:  ['NEE','SO','DUK','AEP','SRE','EXC','XEL','ED','ETR','WEC'],
@@ -69,7 +77,7 @@ const HOLDINGS: Record<string, string[]> = {
   XLV:  ['UNH','LLY','JNJ','ABBV','MRK','TMO','ABT','DHR','BMY','AMGN'],
   KBE:  ['JPM','BAC','WFC','GS','MS','C','USB','PNC','TFC','COF'],
   ITB:  ['DHI','LEN','NVR','PHM','TMHC','MDC','MHO','BECN','BLDR','IBP'],
-  ITA:  ['RTX','LMT','NOC','GD','BA','TDG','HEI','TXT','L3H','KTOS'],
+  ITA:  ['RTX','LMT','NOC','GD','BA','TDG','HEI','TXT','LHX','KTOS'],
 };
 
 serve(async (req: Request) => {
