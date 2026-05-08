@@ -8946,13 +8946,15 @@ async function _updateLivePL() {
     if (sub) sub.textContent = t('kpi_no_open');
     return;
   }
-  const key = await getFinnhubKey().catch(() => null);
+  const key = getFinnhubKey();
   if (!key) { el.textContent = '—'; return; }
+  const token = await _getToken();
   const symbols = [...new Set(open.map(t => t.symbol.toUpperCase()))];
   let totalUnreal = 0;
   await Promise.all(symbols.map(async sym => {
     try {
-      const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${key}`);
+      const r = await fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=quote&symbol=${encodeURIComponent(sym)}`,
+        { headers: { 'Authorization': `Bearer ${token}` } });
       const data = await r.json();
       const price = data.c;
       if (!price) return;
