@@ -7,42 +7,17 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
 };
 
-const YF_HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  'Accept': 'application/json,text/plain,*/*',
-  'Accept-Language': 'en-US,en;q=0.9',
-};
-
-async function fetchBatch(symbols: string[]): Promise<{ symbol: string; name: string; pct: number | null }[]> {
-  const joined = symbols.map(s => encodeURIComponent(s)).join('%2C');
-  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${joined}&fields=shortName,regularMarketChangePercent`;
-
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const host = attempt === 0 ? 'query1' : 'query2';
-    try {
-      const res = await fetch(
-        `https://${host}.finance.yahoo.com/v7/finance/quote?symbols=${joined}&fields=shortName,regularMarketChangePercent`,
-        { headers: YF_HEADERS }
-      );
-      if (!res.ok) {
-        if (attempt === 0) { await new Promise(r => setTimeout(r, 500)); continue; }
-        break;
-      }
-      const json = await res.json();
-      const quotes: Record<string, unknown>[] = json?.quoteResponse?.result ?? [];
-      const map = new Map(quotes.map((q: Record<string, unknown>) => [q.symbol as string, q]));
-
-      return symbols.map(sym => {
-        const q = map.get(sym) as Record<string, unknown> | undefined;
-        const pct = typeof q?.regularMarketChangePercent === 'number' ? q.regularMarketChangePercent as number : null;
-        const name = (q?.shortName as string) || sym;
-        return { symbol: sym, name, pct };
-      });
-    } catch {
-      if (attempt === 0) { await new Promise(r => setTimeout(r, 500)); continue; }
-    }
+async function fetchQuote(symbol: string, apiKey: string): Promise<{ symbol: string; name: string; pct: number | null }> {
+  try {
+    const url = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${encodeURIComponent(apiKey)}`;
+    const res = await fetch(url, { headers: { 'User-Agent': 'trading-journal/2.0' } });
+    if (!res.ok) return { symbol, name: symbol, pct: null };
+    const json = await res.json();
+    const pct = typeof json?.dp === 'number' ? json.dp : null;
+    return { symbol, name: symbol, pct };
+  } catch {
+    return { symbol, name: symbol, pct: null };
   }
-  return symbols.map(sym => ({ symbol: sym, name: sym, pct: null }));
 }
 
 const HOLDINGS: Record<string, string[]> = {
@@ -118,7 +93,14 @@ serve(async (req: Request) => {
     const symbols = HOLDINGS[ticker];
     if (!symbols?.length) return new Response(JSON.stringify({ holdings: [] }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
 
-    const results = await fetchBatch(symbols);
+    const { data: settings } = await supabase.from('user_settings').select('finnhub_key').eq('user_id', user.id).single();
+    const apiKey = (settings?.finnhub_key && /^[A-Za-z0-9_]{10,40}$/.test(settings.finnhub_key))
+      ? settings.finnhub_key
+      : (Deno.env.get('FINNHUB_API_KEY') ?? '');
+
+    if (!apiKey) return new Response(JSON.stringify({ error: 'No Finnhub API key configured.' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
+
+    const results = await Promise.all(symbols.map(s => fetchQuote(s, apiKey)));
 
     results.sort((a, b) => Math.abs(b.pct ?? 0) - Math.abs(a.pct ?? 0));
 
