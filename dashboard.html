@@ -7789,9 +7789,10 @@ async function loadCryptoSymbolsFromCoinGecko() {
   try {
     const controller = new AbortController();
     const tid = setTimeout(() => controller.abort(), 30000);
+    const _cgToken = await _getToken();
     const res = await fetch(
       `${SUPABASE_URL}/functions/v1/coingecko`,
-      { signal: controller.signal }
+      { signal: controller.signal, headers: { 'Authorization': `Bearer ${_cgToken}` } }
     );
     clearTimeout(tid);
     if (!res.ok) throw new Error('HTTP ' + res.status);
