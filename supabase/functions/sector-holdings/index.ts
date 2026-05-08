@@ -60,7 +60,7 @@ serve(async (req: Request) => {
   try {
     // 1. Fetch ETF holdings from FMP
     const holdingsRes = await fetch(
-      `https://financialmodelingprep.com/stable/etf-holder?symbol=${encodeURIComponent(ticker)}&apikey=${encodeURIComponent(fmpKey)}`,
+      `https://financialmodelingprep.com/api/v3/etf-holder/${encodeURIComponent(ticker)}?apikey=${encodeURIComponent(fmpKey)}`,
       { headers: { 'User-Agent': 'trading-journal/2.0' } }
     );
     const holdingsText = await holdingsRes.text();
@@ -87,7 +87,7 @@ serve(async (req: Request) => {
 
     // 2. Fetch batch quotes from FMP
     const quotesRes = await fetch(
-      `https://financialmodelingprep.com/stable/quote?symbol=${topSymbols.join(',')}&apikey=${encodeURIComponent(fmpKey)}`,
+      `https://financialmodelingprep.com/api/v3/quote/${topSymbols.join(',')}?apikey=${encodeURIComponent(fmpKey)}`,
       { headers: { 'User-Agent': 'trading-journal/2.0' } }
     );
     const quotesText = await quotesRes.text();
