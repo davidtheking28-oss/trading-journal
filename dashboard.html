@@ -14156,9 +14156,10 @@ async function _fetchAndRender(ticker, showLoading) {
   if (!body) return;
   if (showLoading) body.innerHTML = '<div class="sector-modal-loading">Loading...</div>';
   try {
+    const _shToken = await _getToken();
     const res = await fetch(
-      'https://fnklrqxwyeibfptaxewf.supabase.co/functions/v1/sector-holdings?ticker=' + ticker,
-      { headers: { 'Authorization': 'Bearer ' + _sb.supabaseKey, 'apikey': _sb.supabaseKey } }
+      `${SUPABASE_URL}/functions/v1/sector-holdings?ticker=${encodeURIComponent(ticker)}`,
+      { headers: { 'Authorization': `Bearer ${_shToken}` } }
     );
     const json = await res.json();
     if (!json.holdings?.length) { body.innerHTML = '<div class="sector-modal-loading">No holdings data</div>'; return; }
