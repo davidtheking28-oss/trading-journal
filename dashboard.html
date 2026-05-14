@@ -5214,8 +5214,8 @@
       <!-- Period filter -->
       <div class="month-filter" style="margin-bottom:16px;">
         <label data-i18n="filter_label">Filter:</label>
-        <select id="ov-month" onchange="syncFilters(this.value,document.getElementById('ov-year').value)"></select>
-        <select id="ov-year" onchange="syncFilters(document.getElementById('ov-month').value,this.value)"></select>
+        <select id="ov-month" onchange="renderOverview()"></select>
+        <select id="ov-year" onchange="renderOverview()"></select>
         <button class="btn btn-secondary btn-sm" onclick="resetFilter('ov')" data-i18n="all_time">All Time</button>
         <div class="filter-stats" id="ov-filter-info"></div>
       </div>
@@ -5247,8 +5247,8 @@
     <div id="tab-stocks" class="tab-content">
       <div class="month-filter">
         <label data-i18n="filter_label">Filter:</label>
-        <select id="st-month" onchange="syncFilters(this.value,document.getElementById('st-year').value)"></select>
-        <select id="st-year" onchange="syncFilters(document.getElementById('st-month').value,this.value)"></select>
+        <select id="st-month" onchange="renderTable('stock')"></select>
+        <select id="st-year" onchange="renderTable('stock')"></select>
         <button class="btn btn-secondary btn-sm" onclick="resetFilter('st')" data-i18n="all_time">All Time</button>
         <div class="filter-stats" id="st-filter-info"></div>
       </div>
@@ -5272,8 +5272,8 @@
     <div id="tab-crypto" class="tab-content">
       <div class="month-filter">
         <label data-i18n="filter_label">Filter:</label>
-        <select id="cr-month" onchange="syncFilters(this.value,document.getElementById('cr-year').value)"></select>
-        <select id="cr-year" onchange="syncFilters(document.getElementById('cr-month').value,this.value)"></select>
+        <select id="cr-month" onchange="renderTable('crypto')"></select>
+        <select id="cr-year" onchange="renderTable('crypto')"></select>
         <button class="btn btn-secondary btn-sm" onclick="resetFilter('cr')" data-i18n="all_time">All Time</button>
         <div class="filter-stats" id="cr-filter-info"></div>
       </div>
@@ -6723,7 +6723,7 @@ async function loadDB() {
       `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`
     )
   );
-  initFilters(); renderOverview(); renderTable('stock'); renderTable('crypto');
+  initFilters(); _initFilterSync(); renderOverview(); renderTable('stock'); renderTable('crypto');
 }
 // ─────────────────────────────────────────────
 // CALCULATIONS
@@ -6875,9 +6875,25 @@ function syncFilters(month, year) {
     if (m) m.value = month;
     if (y) y.value = year;
   });
-  renderOverview();
-  renderTable('stock');
-  renderTable('crypto');
+}
+
+function _initFilterSync() {
+  ['ov','st','cr'].forEach(prefix => {
+    ['month','year'].forEach(field => {
+      const el = document.getElementById(prefix+'-'+field);
+      if (!el) return;
+      el.addEventListener('change', () => {
+        const month = document.getElementById(prefix+'-month')?.value || '';
+        const year  = document.getElementById(prefix+'-year')?.value  || '';
+        ['ov','st','cr'].filter(p => p !== prefix).forEach(p => {
+          const m = document.getElementById(p+'-month');
+          const y = document.getElementById(p+'-year');
+          if (m) m.value = month;
+          if (y) y.value = year;
+        });
+      });
+    });
+  });
 }
 
 function resetFilter(p) {
@@ -9205,7 +9221,7 @@ function renderCumChart(trades) {
       },
       scales: {
         x: { ticks: { color: TICK_COLOR, font: CHART_FONT, maxTicksLimit: 8 }, grid: { color: GRID_COLOR, drawBorder: false } },
-        y: { ticks: { color: TICK_COLOR, font: CHART_FONT, callback: v => isPct ? v + '%' : '$' + v }, grid: { color: GRID_COLOR, drawBorder: false } }
+        y: { ticks: { color: TICK_COLOR, font: CHART_FONT, callback: v => isPct ? (+v).toFixed(1) + '%' : '$' + (+v).toFixed(2) }, grid: { color: GRID_COLOR, drawBorder: false } }
       }
     }
   });
