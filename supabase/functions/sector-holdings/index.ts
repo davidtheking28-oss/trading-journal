@@ -145,7 +145,6 @@ serve(async (req: Request) => {
   try {
     const url    = new URL(req.url);
     const ticker = url.searchParams.get('ticker')?.toUpperCase();
-    const period = url.searchParams.get('period') ?? 'today';
 
     if (!ticker || !/^[A-Z0-9]{1,10}$/.test(ticker)) {
       return new Response(JSON.stringify({ error: 'Invalid ticker' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
