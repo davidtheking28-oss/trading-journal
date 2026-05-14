@@ -14023,7 +14023,10 @@ function ttSetPeriod(p, btn) {
   _ttPeriod = p;
   document.querySelectorAll('.tt-period').forEach(b => b.classList.toggle('active', b.dataset.p === p));
   if (_ttData) ttRender(_ttData, _ttIndices);
-  if (_sectorTicker) _fetchAndRender(_sectorTicker, false);
+  if (_sectorTicker) {
+    if (_sectorCache[_sectorTicker]) _renderHoldingsForPeriod(_sectorCache[_sectorTicker], p);
+    else _fetchAndRender(_sectorTicker, false);
+  }
 }
 
 function ttStartTimer() {
@@ -14229,20 +14232,26 @@ function ttRenderPulseWidget(score, label, color) {
 // ─────────────────────────────────────────────
 // SECTOR HOLDINGS MODAL
 // ─────────────────────────────────────────────
-let _sectorTimer = null, _sectorTicker = null;
+let _sectorTimer = null, _sectorTicker = null, _sectorCache = {};
 
-function _renderHoldings(holdings) {
+function _renderHoldingsForPeriod(allHoldings, period) {
   const body = document.getElementById('sector-modal-body');
   if (!body) return;
-  body.innerHTML = holdings.map(h => {
-    const pos = h.pct > 0, neg = h.pct < 0;
+  const key = period || 'today';
+  const sorted = allHoldings
+    .filter(h => h[key] != null)
+    .sort((a, b) => b[key] - a[key])
+    .slice(0, 10);
+  if (!sorted.length) { body.innerHTML = '<div class="sector-modal-loading">אין נתונים לתקופה זו</div>'; return; }
+  body.innerHTML = sorted.map(h => {
+    const pct = h[key];
+    const pos = pct > 0, neg = pct < 0;
     const cls = pos ? 'pos' : neg ? 'neg' : '';
     const sign = pos ? '+' : '';
-    const pctStr = h.pct != null ? sign + h.pct.toFixed(2) + '%' : '—';
     return '<div class="sector-holding-row">'
       + '<span class="sector-holding-sym">' + esc(h.symbol) + '</span>'
       + '<span class="sector-holding-name">' + esc(h.name) + '</span>'
-      + '<span class="sector-holding-pct ' + cls + '">' + pctStr + '</span>'
+      + '<span class="sector-holding-pct ' + cls + '">' + sign + pct.toFixed(2) + '%</span>'
       + '</div>';
   }).join('');
 }
@@ -14254,13 +14263,14 @@ async function _fetchAndRender(ticker, showLoading) {
   try {
     const _shToken = await _getToken();
     const res = await fetch(
-      `${SUPABASE_URL}/functions/v1/sector-holdings?ticker=${encodeURIComponent(ticker)}&period=${encodeURIComponent(_ttPeriod || 'today')}`,
+      `${SUPABASE_URL}/functions/v1/sector-holdings?ticker=${encodeURIComponent(ticker)}`,
       { headers: { 'Authorization': `Bearer ${_shToken}` } }
     );
     const json = await res.json();
     if (json.error) { body.innerHTML = `<div class="sector-modal-loading">${json.error}</div>`; return; }
     if (!json.holdings?.length) { body.innerHTML = '<div class="sector-modal-loading">No holdings data</div>'; return; }
-    _renderHoldings(json.holdings);
+    _sectorCache[ticker] = json.holdings;
+    _renderHoldingsForPeriod(json.holdings, _ttPeriod);
     const sub = document.getElementById('sector-modal-sub');
     if (sub) sub.textContent = ticker + ' — updated ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   } catch {
@@ -14279,9 +14289,13 @@ async function sectorModalOpen(ticker, name) {
   overlay.style.display = 'block';
   modal.style.display   = 'block';
 
-  clearInterval(_sectorTimer);
-  await _fetchAndRender(ticker, true);
-  _sectorTimer = setInterval(() => _fetchAndRender(_sectorTicker, false), 30000);
+  if (_sectorCache[ticker]) {
+    _renderHoldingsForPeriod(_sectorCache[ticker], _ttPeriod);
+  } else {
+    clearInterval(_sectorTimer);
+    await _fetchAndRender(ticker, true);
+    _sectorTimer = setInterval(() => _fetchAndRender(_sectorTicker, false), 60000);
+  }
 }
 
 function sectorModalClose() {

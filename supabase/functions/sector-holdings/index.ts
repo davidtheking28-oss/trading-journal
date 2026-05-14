@@ -81,24 +81,14 @@ function calcYtd(closes: number[], timestamps: number[]): number | null {
   return ((last - base) / base) * 100;
 }
 
-function periodRange(period: string): string {
-  switch (period) {
-    case 'w1':  return '1mo';
-    case 'm1':  return '3mo';
-    case 'm3':  return '6mo';
-    case 'ytd': return 'ytd';
-    default:    return '5d';
-  }
-}
-
-async function fetchStock(symbol: string, period: string): Promise<{ symbol: string; name: string; pct: number | null }> {
+async function fetchStockAll(symbol: string): Promise<{ symbol: string; name: string; today: number|null; w1: number|null; m1: number|null; m3: number|null; ytd: number|null }> {
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${periodRange(period)}&interval=1d`;
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=ytd&interval=1d`;
     const res = await fetch(url, { headers: YF_HEADERS });
-    if (!res.ok) return { symbol, name: symbol, pct: null };
+    if (!res.ok) return { symbol, name: symbol, today: null, w1: null, m1: null, m3: null, ytd: null };
     const json = await res.json();
     const result = json?.chart?.result?.[0];
-    if (!result) return { symbol, name: symbol, pct: null };
+    if (!result) return { symbol, name: symbol, today: null, w1: null, m1: null, m3: null, ytd: null };
 
     const meta = result.meta;
     const closes: number[] = result.indicators?.quote?.[0]?.close ?? [];
@@ -107,20 +97,19 @@ async function fetchStock(symbol: string, period: string): Promise<{ symbol: str
     const valid = closes
       .map((c: number, i: number) => ({ c, t: timestamps[i] }))
       .filter(x => x.c != null && x.c > 0);
-    const filteredCloses = valid.map(x => x.c);
-    const filteredTs     = valid.map(x => x.t);
+    const fc = valid.map(x => x.c);
+    const ft = valid.map(x => x.t);
 
-    let pct: number | null = null;
-    switch (period) {
-      case 'today': pct = meta.regularMarketChangePercent ?? calcPct(filteredCloses, 1); break;
-      case 'w1':    pct = calcPct(filteredCloses, 5);  break;
-      case 'm1':    pct = calcPct(filteredCloses, 21); break;
-      case 'm3':    pct = calcPct(filteredCloses, 63); break;
-      case 'ytd':   pct = calcYtd(filteredCloses, filteredTs); break;
-    }
-    return { symbol, name: symbol, pct };
+    return {
+      symbol, name: symbol,
+      today: meta.regularMarketChangePercent ?? calcPct(fc, 1),
+      w1:    calcPct(fc, 5),
+      m1:    calcPct(fc, 21),
+      m3:    calcPct(fc, 63),
+      ytd:   calcYtd(fc, ft),
+    };
   } catch {
-    return { symbol, name: symbol, pct: null };
+    return { symbol, name: symbol, today: null, w1: null, m1: null, m3: null, ytd: null };
   }
 }
 
@@ -166,13 +155,9 @@ serve(async (req: Request) => {
     if (!symbols.length) symbols = HOLDINGS[ticker] ?? [];
     if (!symbols.length) return new Response(JSON.stringify({ holdings: [] }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
 
-    const results = await Promise.all(symbols.map(s => fetchStock(s, period)));
-    const top10 = results
-      .filter(r => r.pct !== null)
-      .sort((a, b) => (b.pct ?? -Infinity) - (a.pct ?? -Infinity))
-      .slice(0, 10);
+    const results = await Promise.all(symbols.map(s => fetchStockAll(s)));
 
-    return new Response(JSON.stringify({ ticker, holdings: top10 }), {
+    return new Response(JSON.stringify({ ticker, holdings: results }), {
       headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
     });
   } catch (e) {
