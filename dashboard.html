@@ -14289,13 +14289,13 @@ async function sectorModalOpen(ticker, name) {
   overlay.style.display = 'block';
   modal.style.display   = 'block';
 
+  clearInterval(_sectorTimer);
   if (_sectorCache[ticker]) {
     _renderHoldingsForPeriod(_sectorCache[ticker], _ttPeriod);
   } else {
-    clearInterval(_sectorTimer);
     await _fetchAndRender(ticker, true);
-    _sectorTimer = setInterval(() => _fetchAndRender(_sectorTicker, false), 60000);
   }
+  _sectorTimer = setInterval(() => _fetchAndRender(_sectorTicker, false), 60000);
 }
 
 function sectorModalClose() {
