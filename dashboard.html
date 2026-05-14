@@ -7914,9 +7914,6 @@ async function loadUserSettings() {
   if (_userSettings.portfolio_total != null) {
     const ptEl = document.getElementById('inv-portfolio-total');
     if (ptEl) { ptEl.value = _userSettings.portfolio_total; invRecalc(); }
-    const invData = invLoad();
-    invData.portfolioTotal = String(_userSettings.portfolio_total);
-    invSaveData(invData);
   }
 }
 
@@ -8744,7 +8741,7 @@ function setLang(lang) {
     else if (id === 'tab-stocks') renderTable('stock');
     else if (id === 'tab-crypto') renderTable('crypto');
     else if (id === 'tab-statistics') renderStatistics();
-    else if (id === 'tab-investments') { const _invd = invLoad(); invRenderRows(_invd.holdings || []); invRenderDeposits(_invd.deposits || []); }
+    else if (id === 'tab-investments') invInit();
     else if (id === 'tab-missed') missedRender();
   }
   // Also update modal/quick-add labels dynamically
@@ -12973,6 +12970,7 @@ if ('serviceWorker' in navigator) {
 
 // ===== INVESTMENTS TAB =====
 const INV_KEY = 'inv_data_v1';
+let _invData = null;
 
 function invGetCurrency() {
   return localStorage.getItem('inv_currency') || '$';
@@ -12982,21 +12980,48 @@ function invSetCurrency(cur) {
   document.getElementById('inv-cur-usd')?.classList.toggle('active', cur === '$');
   document.getElementById('inv-cur-ils')?.classList.toggle('active', cur === '₪');
   invRecalc();
+  invSaveData(invLoad());
 }
 
 function invLoad() {
+  if (_invData) return _invData;
   try {
     const raw = localStorage.getItem(INV_KEY);
     return raw ? JSON.parse(raw) : { portfolioTotal: '', holdings: [], deposits: [] };
   } catch { return { portfolioTotal: '', holdings: [], deposits: [] }; }
 }
 
-function invSaveData(data) {
-  localStorage.setItem(INV_KEY, JSON.stringify(data));
+async function invLoadFromDB() {
+  if (!_currentUser) return invLoad();
+  const portfolioTotal = _userSettings.portfolio_total != null
+    ? String(_userSettings.portfolio_total)
+    : (invLoad().portfolioTotal || '');
+  const { data } = await _sb.from('investments')
+    .select('holdings, deposits, currency')
+    .eq('user_id', _currentUser.id)
+    .single();
+  if (data) {
+    _invData = { portfolioTotal, holdings: data.holdings || [], deposits: data.deposits || [] };
+    if (data.currency) localStorage.setItem('inv_currency', data.currency);
+  } else {
+    const local = invLoad();
+    _invData = { portfolioTotal, holdings: local.holdings || [], deposits: local.deposits || [] };
+    if (_invData.holdings.length || _invData.deposits.length) invSaveData(_invData);
+  }
+  return _invData;
 }
 
-function invInit() {
-  const data = invLoad();
+function invSaveData(data) {
+  _invData = data;
+  if (!_currentUser) return;
+  _sb.from('investments').upsert(
+    { user_id: _currentUser.id, holdings: data.holdings || [], deposits: data.deposits || [], currency: invGetCurrency() },
+    { onConflict: 'user_id' }
+  ).then(() => {}).catch(() => {});
+}
+
+async function invInit() {
+  const data = await invLoadFromDB();
   const cur = invGetCurrency();
   document.getElementById('inv-cur-usd')?.classList.toggle('active', cur === '$');
   document.getElementById('inv-cur-ils')?.classList.toggle('active', cur === '₪');
