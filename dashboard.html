@@ -1323,8 +1323,8 @@
   ══════════════════════════════════════ */
   #tab-ibkr { display: none; }
   #tab-ibkr.active { display: block; }
-  .s-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
-  @media (max-width: 900px) { .s-grid { grid-template-columns: 1fr; } }
+  .s-grid { display: flex; flex-direction: column; gap: 8px; max-width: 680px; }
+  .s-col { display: contents; }
 
   .s-section {
     background: rgba(255,255,255,0.03);
