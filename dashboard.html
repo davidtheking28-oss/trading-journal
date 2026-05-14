@@ -14023,7 +14023,7 @@ function ttSetPeriod(p, btn) {
   _ttPeriod = p;
   document.querySelectorAll('.tt-period').forEach(b => b.classList.toggle('active', b.dataset.p === p));
   if (_ttData) ttRender(_ttData, _ttIndices);
-  if (_sectorTicker) _fetchAndRender(_sectorTicker, true);
+  if (_sectorTicker) _fetchAndRender(_sectorTicker, false);
 }
 
 function ttStartTimer() {
