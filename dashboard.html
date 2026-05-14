@@ -7201,7 +7201,7 @@ function renderTable(type) {
   const el = document.getElementById(p+'-stats');
   if (el) {
     const totalColor = st.total >= 0 ? 'var(--green)' : 'var(--red)';
-    el.innerHTML = `${trades.length} עסקאות &nbsp;|&nbsp; P&amp;L: <strong style="color:${totalColor}">${fmtUSD(st.total)}</strong> &nbsp;|&nbsp; Win: <strong>${fmt(st.wr,1)}%</strong> &nbsp;|&nbsp; ${st.wins}W / ${st.losses}L`;
+    el.innerHTML = `${trades.length} trades &nbsp;|&nbsp; P&amp;L: <strong style="color:${totalColor}">${fmtUSD(st.total)}</strong> &nbsp;|&nbsp; Win: <strong>${fmt(st.wr,1)}%</strong> &nbsp;|&nbsp; ${st.wins}W / ${st.losses}L`;
   }
 
   // info
