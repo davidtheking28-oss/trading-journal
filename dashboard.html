@@ -1510,6 +1510,7 @@
   .sector-modal-sub { font-size:11px; color:var(--text3); margin-top:3px; }
   .sector-modal-close { background:none; border:none; color:var(--text3); font-size:16px; cursor:pointer; padding:0 2px; line-height:1; }
   .sector-modal-close:hover { color:var(--text); }
+  .sector-modal-periods { display:flex; gap:3px; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:8px; padding:3px; margin-bottom:12px; }
   .sector-modal-body { display:flex; flex-direction:column; gap:4px; }
   .sector-holding-row { display:flex; align-items:center; gap:10px; padding:7px 10px; border-radius:7px; background:rgba(255,255,255,0.03); }
   .sector-holding-sym { font-size:13px; font-weight:700; color:var(--text); width:54px; flex-shrink:0; }
@@ -5724,6 +5725,13 @@
           <div class="sector-modal-sub" id="sector-modal-sub"></div>
         </div>
         <button class="sector-modal-close" onclick="sectorModalClose()">✕</button>
+      </div>
+      <div class="sector-modal-periods">
+        <button class="tt-period active" data-p="today" onclick="ttSetPeriod('today',this)">Today</button>
+        <button class="tt-period" data-p="w1" onclick="ttSetPeriod('w1',this)">1W</button>
+        <button class="tt-period" data-p="m1" onclick="ttSetPeriod('m1',this)">1M</button>
+        <button class="tt-period" data-p="m3" onclick="ttSetPeriod('m3',this)">3M</button>
+        <button class="tt-period" data-p="ytd" onclick="ttSetPeriod('ytd',this)">YTD</button>
       </div>
       <div id="sector-modal-body" class="sector-modal-body"></div>
     </div>
@@ -14013,8 +14021,7 @@ let _ttData = null, _ttIndices = null, _ttPeriod = 'today', _ttLoading = false, 
 
 function ttSetPeriod(p, btn) {
   _ttPeriod = p;
-  document.querySelectorAll('.tt-period').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  document.querySelectorAll('.tt-period').forEach(b => b.classList.toggle('active', b.dataset.p === p));
   if (_ttData) ttRender(_ttData, _ttIndices);
   if (_sectorTicker) _fetchAndRender(_sectorTicker, true);
 }
