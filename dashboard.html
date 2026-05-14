@@ -6919,12 +6919,17 @@ function switchTab(name, btn) {
   tabEl.classList.remove('tab-entering');
   void tabEl.offsetWidth;
   tabEl.classList.add('tab-entering');
-  if (name==='overview') renderOverview();
+  if (name==='overview') {
+    syncFilters(document.getElementById('st-month')?.value||document.getElementById('ov-month')?.value||'', document.getElementById('st-year')?.value||document.getElementById('ov-year')?.value||'');
+    renderOverview();
+  }
   else if (_ovLiveTimer) { clearInterval(_ovLiveTimer); _ovLiveTimer = null; }
   if (name==='stocks') {
+    syncFilters(document.getElementById('ov-month')?.value||'', document.getElementById('ov-year')?.value||'');
     renderTable('stock');
   }
   if (name==='crypto') {
+    syncFilters(document.getElementById('ov-month')?.value||'', document.getElementById('ov-year')?.value||'');
     renderTable('crypto');
   }
   if (name==='archive') renderArchive();
