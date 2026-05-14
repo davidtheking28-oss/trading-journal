@@ -13039,9 +13039,9 @@ function invRenderRows(holdings) {
       <td>
         <select class="inv-cat-sel" onchange="invRecalc();invAutoSave()">
           <option value="">—</option>
-          <option value="blue" ${h.cat==='blue'?'selected':''}>🔵 כחולה</option>
-          <option value="green" ${h.cat==='green'?'selected':''}>🟢 ירוקה</option>
-          <option value="yellow" ${h.cat==='yellow'?'selected':''}>🟡 צהובה</option>
+          <option value="blue" ${h.cat==='blue'?'selected':''}>🔵 Blue Chip</option>
+          <option value="green" ${h.cat==='green'?'selected':''}>🟢 Growth</option>
+          <option value="yellow" ${h.cat==='yellow'?'selected':''}>🟡 Speculative</option>
         </select>
       </td>
       <td><input type="number" value="${h.entryShares||''}" placeholder="0" min="0" step="any" oninput="invRecalc();invAutoSave()"></td>
