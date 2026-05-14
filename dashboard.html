@@ -7262,10 +7262,8 @@ function renderTable(type) {
         const yst = stats(yearStatsMap[trYear]);
         const ytc = yst.total >= 0 ? 'var(--green)' : 'var(--red)';
         h += `<tr class="year-group-row"><td colspan="20">
-          <div style="display:flex;align-items:center;gap:12px;direction:ltr;width:100%">
-            <span class="year-group-label">📅 ${trYear} &nbsp;·&nbsp; ${yearStatsMap[trYear].length} trades</span>
-            <span class="year-group-stats">P&L: <strong style="color:${ytc}">${fmtUSD(yst.total)}</strong> &nbsp;|&nbsp; Win: <strong>${fmt(yst.wr,1)}%</strong> &nbsp;|&nbsp; ${yst.wins}W / ${yst.losses}L</span>
-          </div>
+          <span class="year-group-label">📅 ${trYear}</span>
+          <span class="year-group-stats">&nbsp;·&nbsp; <bdi>${yearStatsMap[trYear].length}</bdi> trades &nbsp;|&nbsp; P&L: <strong style="color:${ytc}">${fmtUSD(yst.total)}</strong> &nbsp;|&nbsp; Win: <strong>${fmt(yst.wr,1)}%</strong> &nbsp;|&nbsp; ${yst.wins}W / ${yst.losses}L</span>
         </td></tr>`;
       }
     }
