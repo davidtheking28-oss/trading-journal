@@ -3537,8 +3537,9 @@
   .inv-alloc-label { width: 120px; color: var(--text2); white-space: nowrap; }
   .inv-alloc-bar-wrap { flex: 1; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
   .inv-alloc-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
-  .inv-alloc-cur { min-width: 48px; text-align: right; color: var(--text); font-weight: 700; }
-  .inv-alloc-remaining { color: var(--text3); white-space: nowrap; font-size: 11px; min-width: 130px; text-align: right; }
+  .inv-alloc-invested { min-width: 80px; text-align: right; color: var(--text); font-weight: 600; font-size: 11px; white-space: nowrap; }
+  .inv-alloc-cur { min-width: 44px; text-align: right; color: var(--text2); font-size: 11px; }
+  .inv-alloc-remaining { color: var(--text3); white-space: nowrap; font-size: 11px; min-width: 110px; text-align: right; }
   .inv-alloc-donut-row { display: flex; gap: 20px; align-items: flex-start; }
   .inv-alloc-bars { flex: 1; display: flex; flex-direction: column; gap: 10px; }
   .inv-donut-wrap { display: flex; flex-direction: row; align-items: center; gap: 16px; flex-shrink: 0; }
@@ -5857,22 +5858,25 @@
                 <span class="inv-alloc-dot blue"></span>
                 <span class="inv-alloc-label" data-i18n="inv_blue">🔵 Blue Chips — Target 60%</span>
                 <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-blue" style="width:0%;background:#818cf8;"></div></div>
+                <span class="inv-alloc-invested" id="alloc-inv-blue">—</span>
                 <span class="inv-alloc-cur" id="alloc-cur-blue">0%</span>
-                <span class="inv-alloc-remaining" id="alloc-rem-blue"><span data-i18n="inv_available">Available:</span> —</span>
+                <span class="inv-alloc-remaining" id="alloc-rem-blue">—</span>
               </div>
               <div class="inv-alloc-row">
                 <span class="inv-alloc-dot green"></span>
                 <span class="inv-alloc-label" data-i18n="inv_green">🟢 Growth — Target 35%</span>
                 <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-green" style="width:0%;background:#34d399;"></div></div>
+                <span class="inv-alloc-invested" id="alloc-inv-green">—</span>
                 <span class="inv-alloc-cur" id="alloc-cur-green">0%</span>
-                <span class="inv-alloc-remaining" id="alloc-rem-green"><span data-i18n="inv_available">Available:</span> —</span>
+                <span class="inv-alloc-remaining" id="alloc-rem-green">—</span>
               </div>
               <div class="inv-alloc-row">
                 <span class="inv-alloc-dot yellow"></span>
                 <span class="inv-alloc-label" data-i18n="inv_yellow">🟡 Speculative — Target 5%</span>
                 <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-yellow" style="width:0%;background:#fbbf24;"></div></div>
+                <span class="inv-alloc-invested" id="alloc-inv-yellow">—</span>
                 <span class="inv-alloc-cur" id="alloc-cur-yellow">0%</span>
-                <span class="inv-alloc-remaining" id="alloc-rem-yellow"><span data-i18n="inv_available">Available:</span> —</span>
+                <span class="inv-alloc-remaining" id="alloc-rem-yellow">—</span>
               </div>
             </div>
             <div class="inv-donut-wrap">
@@ -13129,17 +13133,19 @@ function invRecalc() {
     const barW       = portfolioTotal > 0 ? Math.min(currentAmt / targetAmt * 100, 100) : 0;
 
     const barEl = document.getElementById(`alloc-bar-${cat}`);
+    const invEl = document.getElementById(`alloc-inv-${cat}`);
     const curEl = document.getElementById(`alloc-cur-${cat}`);
     const remEl = document.getElementById(`alloc-rem-${cat}`);
+    const c = invGetCurrency();
 
     if (barEl) { barEl.style.width = barW + '%'; barEl.style.background = over ? 'var(--red)' : ALLOC_COLORS[cat]; }
-    if (curEl) { curEl.textContent = currentPct.toFixed(1) + '%'; curEl.style.color = over ? 'var(--red)' : 'var(--text)'; }
+    if (invEl) invEl.textContent = currentAmt > 0 ? `${c}${currentAmt.toLocaleString('en-US', {maximumFractionDigits:0})}` : '—';
+    if (curEl) { curEl.textContent = currentPct.toFixed(1) + '%'; curEl.style.color = over ? 'var(--red)' : 'var(--text2)'; }
     if (remEl) {
-      if (portfolioTotal === 0) { remEl.textContent = 'זמין: —'; return; }
-      const c = invGetCurrency();
+      if (portfolioTotal === 0) { remEl.textContent = ''; return; }
       remEl.textContent = over
         ? `חרגת ב-${c}${(currentAmt - targetAmt).toLocaleString('en-US', {maximumFractionDigits:0})}`
-        : `זמין: ${c}${remaining.toLocaleString('en-US', {maximumFractionDigits:0})}`;
+        : `פנוי: ${c}${remaining.toLocaleString('en-US', {maximumFractionDigits:0})}`;
       remEl.style.color = over ? 'var(--red)' : 'var(--text3)';
     }
   });
