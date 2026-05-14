@@ -8,37 +8,37 @@ const CORS = {
 };
 
 const HOLDINGS: Record<string, string[]> = {
-  SOXX: ['NVDA','AVGO','AMD','QCOM','TXN','INTC','AMAT','LRCX','KLAC','MU','MRVL','ON','MPWR','NXPI','ADI','MCHP','TER','ENTG','SWKS','QRVO','WOLF','SLAB','AMBA','CRUS','DIOD'],
-  AIQ:  ['NVDA','MSFT','META','GOOGL','AMZN','CRM','IBM','ORCL','AMD','PLTR','SNOW','AI','PATH','SOUN','NET','MDB','DDOG','GTLB','APP','BBAI','ARISTA','CFLT','UPST','ASAN','ZS'],
-  XOP:  ['XOM','CVX','EOG','FANG','MPC','PSX','VLO','OXY','COP','DVN','HES','APA','MRO','SLB','HAL','BKR','CIVI','SM','MTDR','PR','VTLE','NOG','KOS','CNX','AR'],
-  QTUM: ['IONQ','RGTI','QBTS','QUBT','IBM','GOOGL','MSFT','NVDA','HON','AMZN','INTC','ARQQ','BIDU','DEFN','QTUM','FORM','SPSC','SMAR','MU','AVGO'],
-  GDX:  ['NEM','GOLD','AEM','WPM','KGC','AGI','PAAS','FNV','HL','SSRM','KL','OR','MAG','RGLD','SAND','BTG','EDV','NST','CDE','MTA','EXK','FSM','SILV','PVG','GATO'],
-  IGV:  ['MSFT','ORCL','CRM','ADBE','NOW','INTU','PANW','SNPS','CDNS','FTNT','TEAM','WDAY','DDOG','MDB','HUBS','ZI','GTLB','ESTC','APPF','AZPN','PCTY','SMAR','COUP','BSY','VEEV'],
-  ROBO: ['ABB','ISRG','CGNX','ZBRA','TRMB','ROK','PTC','NXPI','BRKS','TER','NVDA','OMCL','NNDM','MBOT','EXLS','ONTO','MKSI','AZTA','ICAD','IRTC','NEOG','RCAT','ACMR','FORM','LSCC'],
-  KWEB: ['PDD','JD','BIDU','NTES','TCOM','BEKE','VIPS','KC','BABA','TME','IQ','BILI','EDU','TAL','XPEV','NIO','LI','WB','TIGR','DOYU','HUYA','RLX','NOAH','LAIX','YMM'],
-  IWF:  ['AAPL','MSFT','NVDA','AMZN','META','GOOGL','GOOG','LLY','AVGO','TSLA','JPM','V','MA','UNH','HD','COST','ABBV','MRK','AMD','CRM','ORCL','NFLX','ADBE','TMO','NOW'],
-  SOCL: ['META','SNAP','PINS','SPOT','MTCH','RDDT','GOOGL','YELP','BMBL','RBLX','DUOL','ZG','HOOD','ETSY','LYFT','UBER','ABNB','DASH','VRSK','YELP','CARS','IAC','ANGI','TKO','MSGS'],
-  JETS: ['DAL','UAL','AAL','LUV','ALK','JBLU','ALGT','ULCC','RYAAY','SKYW','MESA','HA','JOBY','ACHR','BA','SAVE','MESA','SNCY','GOL','AZUL','DESP','MMYT','JBLU','LIND','FLYA'],
-  HACK: ['PANW','CRWD','ZS','FTNT','NET','OKTA','S','QLYS','TENB','VRNS','CYBR','RPD','SAIL','CSCO','IBM','SPLK','BAH','LDOS','SAIC','CACI','MNDT','ORCL','DDOG','ESTC','SUMO'],
-  SIL:  ['WPM','PAAS','HL','AG','SSRM','CDE','MTA','FSM','EXK','RGLD','SVM','SILV','MAG','GATO','AXU','GPL','EXK','USAS','ABRA','RSNVF','GATO','CDE','SVB','SAND','BTG'],
-  IYZ:  ['TMUS','VZ','T','LUMN','SATS','IDT','IRDM','GSAT','USM','TDS','ATNI','OOMA','BAND','LBRDA','CHTR','CMCSA','DISH','SHEN','CNSL','CABO','WOW','ATUS','FYBR','LBTYA','LILAK'],
-  XLB:  ['LIN','APD','SHW','FCX','NEM','ECL','NUE','VMC','MLM','ALB','DD','PPG','IFF','EMN','CF','MOS','FMC','RPM','PKG','IP','BALL','SEE','BMS','SON','GEF'],
-  XLU:  ['NEE','SO','DUK','AEP','SRE','EXC','XEL','ED','ETR','WEC','ES','PPL','CNP','CMS','NI','ATO','LNT','PNW','EVRG','OGE','POR','AVA','MGEE','SJW','YORW'],
-  SLX:  ['NUE','STLD','CMC','X','CLF','RS','ATI','WOR','HCC','TS','ZEUS','HAYN','PKX','MT','SCHN','GGB','SID','TX','METC','CSTM','ESAB','WIRE','KALU','CRS','TRQ'],
-  BITO: ['MARA','RIOT','CLSK','COIN','MSTR','HUT','CIFR','BTDR','BITF','WULF','IREN','BTBT','SQ','PYPL','HOOD','CORZ','HIVE','ARBK','BTCM','SMLR','DGHI','BTCWF','DMGI','MGTI','AESE'],
-  XRT:  ['AMZN','HD','TGT','COST','WMT','LOW','TJX','ROST','BURL','DG','DLTR','BBY','KSS','ULTA','FIVE','OLLI','BOOT','LULU','GPS','ANF','AEO','URBN','VSCO','PRTY','JOANN'],
-  IYR:  ['PLD','AMT','EQIX','PSA','O','SPG','WELL','DLR','CCI','EQR','AVB','MAA','UDR','CPT','NNN','VICI','GLPI','ARE','BXP','KIM','REG','FRT','EXR','CUBE','LSI'],
-  IYT:  ['UPS','FDX','CSX','UNP','NSC','JBHT','ODFL','XPO','CHRW','SAIA','EXPD','GXO','RXO','TFII','LSTR','WERN','KNX','MRTN','HUBG','ECHO','RADNR','SNDR','ARCB','HTLD','CVLG'],
-  IHI:  ['MDT','ABT','SYK','BSX','EW','ISRG','ZBH','RMD','TFX','HOLX','BDX','SWAV','IRTC','NVCR','AXNX','NARI','INSP','TNDM','DXCM','ICAD','MASI','ITRI','NVRO','GKOS','LMAT'],
-  TAN:  ['ENPH','FSLR','SEDG','RUN','DQ','ARRY','CSIQ','JKS','CWEN','SHLS','NOVA','MAXN','SPWR','NEP','BE','STEM','AMPX','ARRY','FLNC','GXII','AES','ORA','HASI','CERE','PLTK'],
-  ARKG: ['RXRX','NTLA','CRSP','BEAM','PACB','VEEV','IOVA','FATE','TWST','ILMN','EDIT','RARE','ALNY','EXAS','GH','SDGR','ACMR','OMIC','NTRA','TDOC','QDEL','TRIL','IMMU','FATE','KRTX'],
-  XLI:  ['GE','RTX','CAT','HON','UNP','DE','BA','LMT','ETN','WM','MMM','EMR','PH','ROK','FTV','CARR','OTIS','TT','NDSN','ROP','CPRT','GEV','AXON','VRSK','PWR'],
-  WGMI: ['MARA','RIOT','CLSK','IREN','BTBT','HUT','CIFR','BTDR','BITF','WULF','CORZ','HIVE','SOS','ARBK','BTCM','DGHI','MGTI','AESE','DMGI','SMLR','BTCWF','MIGI','BFARF','HSSHF','DGHI'],
-  XBI:  ['MRNA','ALNY','VRTX','REGN','INCY','BMRN','SRPT','KYMR','IONS','ACAD','EXEL','HALO','INSM','ARWR','ITCI','FOLD','RCKT','SGEN','BGNE','ZYME','PRGO','CYTK','PTGX','NKTR','MGNX'],
-  XLV:  ['UNH','LLY','JNJ','ABBV','MRK','TMO','ABT','DHR','BMY','AMGN','GILD','ISRG','CVS','CI','HUM','CNC','MDT','ZBH','BAX','MCK','CAH','ABC','DGX','LH','IQV'],
-  KBE:  ['JPM','BAC','WFC','GS','MS','C','USB','PNC','TFC','COF','SCHW','BK','STT','RF','KEY','FITB','HBAN','CFG','MTB','ZION','WAL','EWBC','OZK','PACW','FHN'],
-  ITB:  ['DHI','LEN','NVR','PHM','TMHC','MDC','MHO','BECN','BLDR','IBP','SKY','CVCO','LGIH','TPH','CCS','GRBK','JELD','MAS','AWI','FBHS','SSD','TREX','AZEK','DOOR','USG'],
-  ITA:  ['RTX','LMT','NOC','GD','BA','TDG','HEI','TXT','LHX','KTOS','BWXT','DRS','LDOS','CACI','SAIC','MOOG','CW','HII','BWA','AXON','FLIR','VSE','DGE','RCAT','AVAV'],
+  SOXX: ['NVDA','AVGO','AMD','QCOM','TXN','INTC','AMAT','LRCX','KLAC','MU','MRVL','ON','MPWR','NXPI','ADI'],
+  AIQ:  ['NVDA','MSFT','META','GOOGL','AMZN','CRM','IBM','ORCL','AMD','PLTR','SNOW','AI','PATH','SOUN','ARISTA'],
+  XOP:  ['XOM','CVX','EOG','FANG','MPC','PSX','VLO','OXY','COP','DVN','HES','APA','MRO','SLB','HAL'],
+  QTUM: ['IONQ','RGTI','QBTS','QUBT','IBM','GOOGL','MSFT','NVDA','HON','AMZN','INTC','ARQQ','DEFN','MU','AVGO'],
+  GDX:  ['NEM','GOLD','AEM','WPM','KGC','AGI','PAAS','FNV','HL','SSRM','KL','OR','MAG','RGLD','BTG'],
+  IGV:  ['MSFT','ORCL','CRM','ADBE','NOW','INTU','PANW','SNPS','CDNS','FTNT','TEAM','WDAY','DDOG','MDB','VEEV'],
+  ROBO: ['ABB','ISRG','CGNX','ZBRA','TRMB','ROK','PTC','NXPI','BRKS','TER','NVDA','OMCL','ONTO','MKSI','AZTA'],
+  KWEB: ['PDD','JD','BIDU','NTES','TCOM','BEKE','VIPS','KC','BABA','TME','IQ','BILI','EDU','XPEV','NIO'],
+  IWF:  ['AAPL','MSFT','NVDA','AMZN','META','GOOGL','LLY','AVGO','TSLA','V','MA','UNH','HD','COST','NFLX'],
+  SOCL: ['META','SNAP','PINS','SPOT','MTCH','RDDT','GOOGL','YELP','BMBL','RBLX','DUOL','HOOD','ETSY','LYFT','UBER'],
+  JETS: ['DAL','UAL','AAL','LUV','ALK','JBLU','ALGT','ULCC','RYAAY','SKYW','HA','JOBY','ACHR','SNCY','GOL'],
+  HACK: ['PANW','CRWD','ZS','FTNT','NET','OKTA','S','QLYS','TENB','VRNS','CYBR','RPD','CSCO','DDOG','DT'],
+  SIL:  ['WPM','PAAS','HL','AG','SSRM','CDE','MTA','FSM','EXK','RGLD','SVM','SILV','MAG','SAND','BTG'],
+  IYZ:  ['TMUS','VZ','T','LUMN','SATS','IDT','IRDM','GSAT','USM','TDS','CHTR','CMCSA','CABO','FYBR','BAND'],
+  XLB:  ['LIN','APD','SHW','FCX','NEM','ECL','NUE','VMC','MLM','ALB','DD','PPG','IFF','CF','MOS'],
+  XLU:  ['NEE','SO','DUK','AEP','SRE','EXC','XEL','ED','ETR','WEC','ES','PPL','CNP','CMS','ATO'],
+  SLX:  ['NUE','STLD','CMC','X','CLF','RS','ATI','WOR','HCC','TS','MT','GGB','SID','METC','ESAB'],
+  BITO: ['MARA','RIOT','CLSK','COIN','MSTR','HUT','CIFR','BTDR','BITF','WULF','IREN','BTBT','SQ','HOOD','CORZ'],
+  XRT:  ['AMZN','HD','TGT','COST','WMT','LOW','TJX','ROST','BURL','DG','DLTR','BBY','ULTA','LULU','FIVE'],
+  IYR:  ['PLD','AMT','EQIX','PSA','O','SPG','WELL','DLR','CCI','EQR','AVB','VICI','ARE','BXP','EXR'],
+  IYT:  ['UPS','FDX','CSX','UNP','NSC','JBHT','ODFL','XPO','CHRW','SAIA','EXPD','GXO','TFII','LSTR','KNX'],
+  IHI:  ['MDT','ABT','SYK','BSX','EW','ISRG','ZBH','RMD','TFX','HOLX','BDX','DXCM','SWAV','NARI','INSP'],
+  TAN:  ['ENPH','FSLR','SEDG','RUN','DQ','ARRY','CSIQ','JKS','CWEN','SHLS','NOVA','MAXN','SPWR','BE','FLNC'],
+  ARKG: ['RXRX','NTLA','CRSP','BEAM','PACB','VEEV','IOVA','TWST','ILMN','EDIT','ALNY','EXAS','GH','NTRA','TDOC'],
+  XLI:  ['GE','RTX','CAT','HON','UNP','DE','BA','LMT','ETN','WM','MMM','EMR','PH','ROK','CARR'],
+  WGMI: ['MARA','RIOT','CLSK','IREN','BTBT','HUT','CIFR','BTDR','BITF','WULF','CORZ','HIVE','SOS','ARBK','SMLR'],
+  XBI:  ['MRNA','ALNY','VRTX','REGN','INCY','BMRN','SRPT','KYMR','IONS','ACAD','EXEL','INSM','ARWR','ITCI','CYTK'],
+  XLV:  ['UNH','LLY','JNJ','ABBV','MRK','TMO','ABT','DHR','BMY','AMGN','GILD','ISRG','CVS','CI','MCK'],
+  KBE:  ['JPM','BAC','WFC','GS','MS','C','USB','PNC','TFC','COF','SCHW','BK','STT','RF','KEY'],
+  ITB:  ['DHI','LEN','NVR','PHM','TMHC','MDC','MHO','BECN','BLDR','IBP','SKY','LGIH','TPH','TREX','AZEK'],
+  ITA:  ['RTX','LMT','NOC','GD','BA','TDG','HEI','TXT','LHX','KTOS','BWXT','LDOS','SAIC','MOOG','HII'],
 };
 
 const YF_HEADERS = {
@@ -81,9 +81,19 @@ function calcYtd(closes: number[], timestamps: number[]): number | null {
   return ((last - base) / base) * 100;
 }
 
+function periodRange(period: string): string {
+  switch (period) {
+    case 'w1':  return '1mo';
+    case 'm1':  return '3mo';
+    case 'm3':  return '6mo';
+    case 'ytd': return 'ytd';
+    default:    return '5d';
+  }
+}
+
 async function fetchStock(symbol: string, period: string): Promise<{ symbol: string; name: string; pct: number | null }> {
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1y&interval=1d`;
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${periodRange(period)}&interval=1d`;
     const res = await fetch(url, { headers: YF_HEADERS });
     if (!res.ok) return { symbol, name: symbol, pct: null };
     const json = await res.json();
