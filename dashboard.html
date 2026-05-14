@@ -8972,7 +8972,7 @@ function renderOverview() {
   });
 
   // Calendar
-  calendarNav.overview = { year: now.getFullYear(), month: now.getMonth()+1 };
+  calendarNav.overview = { year: year ? +year : now.getFullYear(), month: month ? +month : now.getMonth()+1 };
   renderCalendar('all');
 
   renderCumChart(trades);
