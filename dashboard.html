@@ -5214,8 +5214,8 @@
       <!-- Period filter -->
       <div class="month-filter" style="margin-bottom:16px;">
         <label data-i18n="filter_label">Filter:</label>
-        <select id="ov-month" onchange="renderOverview()"></select>
-        <select id="ov-year" onchange="renderOverview()"></select>
+        <select id="ov-month" onchange="syncFilters(this.value,document.getElementById('ov-year').value)"></select>
+        <select id="ov-year" onchange="syncFilters(document.getElementById('ov-month').value,this.value)"></select>
         <button class="btn btn-secondary btn-sm" onclick="resetFilter('ov')" data-i18n="all_time">All Time</button>
         <div class="filter-stats" id="ov-filter-info"></div>
       </div>
@@ -5247,8 +5247,8 @@
     <div id="tab-stocks" class="tab-content">
       <div class="month-filter">
         <label data-i18n="filter_label">Filter:</label>
-        <select id="st-month" onchange="renderTable('stock')"></select>
-        <select id="st-year" onchange="renderTable('stock')"></select>
+        <select id="st-month" onchange="syncFilters(this.value,document.getElementById('st-year').value)"></select>
+        <select id="st-year" onchange="syncFilters(document.getElementById('st-month').value,this.value)"></select>
         <button class="btn btn-secondary btn-sm" onclick="resetFilter('st')" data-i18n="all_time">All Time</button>
         <div class="filter-stats" id="st-filter-info"></div>
       </div>
@@ -5272,8 +5272,8 @@
     <div id="tab-crypto" class="tab-content">
       <div class="month-filter">
         <label data-i18n="filter_label">Filter:</label>
-        <select id="cr-month" onchange="renderTable('crypto')"></select>
-        <select id="cr-year" onchange="renderTable('crypto')"></select>
+        <select id="cr-month" onchange="syncFilters(this.value,document.getElementById('cr-year').value)"></select>
+        <select id="cr-year" onchange="syncFilters(document.getElementById('cr-month').value,this.value)"></select>
         <button class="btn btn-secondary btn-sm" onclick="resetFilter('cr')" data-i18n="all_time">All Time</button>
         <div class="filter-stats" id="cr-filter-info"></div>
       </div>
@@ -6868,15 +6868,25 @@ function getFilter(p) {
   };
 }
 
+function syncFilters(month, year) {
+  ['ov','st','cr'].forEach(p => {
+    const m = document.getElementById(p+'-month');
+    const y = document.getElementById(p+'-year');
+    if (m) m.value = month;
+    if (y) y.value = year;
+  });
+  renderOverview();
+  renderTable('stock');
+  renderTable('crypto');
+}
+
 function resetFilter(p) {
   const ms = document.getElementById(p+'-month');
   const ys = document.getElementById(p+'-year');
   if (ms) ms.value = '';
   if (ys) ys.value = '';
-  if (p==='st') renderTable('stock');
-  else if (p==='cr') renderTable('crypto');
-  else if (p==='stats') renderStatistics();
-  else renderOverview();
+  if (p==='stats') { renderStatistics(); return; }
+  syncFilters('', '');
 }
 
 // ─────────────────────────────────────────────
