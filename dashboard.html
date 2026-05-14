@@ -5895,10 +5895,8 @@
               <col style="width:7%">  <!-- סימבול -->
               <col style="width:10%"> <!-- סקטור -->
               <col style="width:8%">  <!-- קטגוריה -->
-              <col style="width:8%">  <!-- כמות מניות -->
-              <col style="width:8%">  <!-- מחיר כניסה -->
-              <col style="width:8%">  <!-- כמות חיזוק -->
-              <col style="width:8%">  <!-- מחיר חיזוק -->
+              <col style="width:10%"> <!-- כמות מניות -->
+              <col style="width:10%"> <!-- מחיר כניסה -->
               <col style="width:8%">  <!-- ממוצע -->
               <col style="width:9%">  <!-- שווי -->
               <col style="width:9%">  <!-- % תיק -->
@@ -5910,10 +5908,8 @@
                 <th data-i18n="inv_col_symbol">Symbol</th>
                 <th data-i18n="inv_col_sector">Sector</th>
                 <th data-i18n="inv_col_category">Category</th>
-                <th>🔵 Qty</th>
-                <th>🔵 <span data-i18n="col_entry">Entry</span></th>
-                <th>🟢 Qty</th>
-                <th>🟢 Reinforce</th>
+                <th>Qty</th>
+                <th>Entry Price</th>
                 <th data-i18n="inv_col_avg">Average</th>
                 <th data-i18n="inv_col_value">Value</th>
                 <th data-i18n="inv_col_portfolio_pct">% Portfolio</th>
@@ -13033,7 +13029,7 @@ function invRenderRows(holdings) {
   const tbody = document.getElementById('inv-tbody');
   if (!tbody) return;
   if (!holdings.length) {
-    tbody.innerHTML = `<tr><td colspan="12" class="inv-empty">אין אחזקות — לחץ "+ הוסף אחזקה"</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" class="inv-empty">אין אחזקות — לחץ "+ הוסף אחזקה"</td></tr>`;
     return;
   }
   tbody.innerHTML = holdings.map((h, i) => `
@@ -13050,8 +13046,6 @@ function invRenderRows(holdings) {
       </td>
       <td><input type="number" value="${h.entryShares||''}" placeholder="0" min="0" step="any" oninput="invRecalc();invAutoSave()"></td>
       <td><input type="number" value="${h.entryPrice||''}" placeholder="0.00" min="0" step="any" oninput="invRecalc();invAutoSave()"></td>
-      <td><input type="number" value="${h.reinShares||''}" placeholder="—" min="0" step="any" oninput="invRecalc();invAutoSave()"></td>
-      <td><input type="number" value="${h.reinPrice||''}" placeholder="—" min="0" step="any" oninput="invRecalc();invAutoSave()"></td>
       <td><span class="inv-avg-label" id="inv-avg-${i}">—</span></td>
       <td><span class="inv-value-label" id="inv-val-${i}">—</span></td>
       <td>
@@ -13084,12 +13078,10 @@ function invRecalc() {
     const cat         = row.querySelector('.inv-cat-sel')?.value || '';
     const entryShares = +(inputs[2]?.value) || 0;
     const entryPrice  = +(inputs[3]?.value) || 0;
-    const reinShares  = +(inputs[4]?.value) || 0;
-    const reinPrice   = +(inputs[5]?.value) || 0;
 
-    const totalShares = entryShares + reinShares;
-    const totalCost   = (entryShares * entryPrice) + (reinShares * reinPrice);
-    const avgPrice    = totalShares > 0 ? totalCost / totalShares : 0;
+    const totalShares = entryShares;
+    const totalCost   = entryShares * entryPrice;
+    const avgPrice    = entryPrice;
     const value       = totalCost;
     const pct         = portfolioTotal > 0 ? (value / portfolioTotal) * 100 : 0;
 
@@ -13171,8 +13163,6 @@ function invGetCurrentData() {
       cat,
       entryShares: +(inputs[2]?.value) || 0,
       entryPrice:  +(inputs[3]?.value) || 0,
-      reinShares:  +(inputs[4]?.value) || 0,
-      reinPrice:   +(inputs[5]?.value) || 0,
     });
   });
   return {
@@ -13184,7 +13174,7 @@ function invGetCurrentData() {
 
 function invAddRow() {
   const data = invGetCurrentData();
-  data.holdings.push({ symbol:'', entryShares:0, entryPrice:0, reinShares:0, reinPrice:0 });
+  data.holdings.push({ symbol:'', entryShares:0, entryPrice:0 });
   invRenderRows(data.holdings);
   const tbody = document.getElementById('inv-tbody');
   if (tbody) {
@@ -13199,11 +13189,36 @@ function invDeleteRow(i) {
   invRenderRows(data.holdings);
 }
 
+function invMergeDuplicates(holdings) {
+  const merged = [];
+  holdings.forEach(h => {
+    if (!h.symbol) { merged.push(h); return; }
+    const existing = merged.find(m => m.symbol === h.symbol);
+    if (existing) {
+      const totalShares = existing.entryShares + h.entryShares;
+      const totalCost   = (existing.entryShares * existing.entryPrice) + (h.entryShares * h.entryPrice);
+      existing.entryShares = totalShares;
+      existing.entryPrice  = totalShares > 0 ? totalCost / totalShares : 0;
+      if (!existing.sector && h.sector) existing.sector = h.sector;
+      if (!existing.cat && h.cat) existing.cat = h.cat;
+    } else {
+      merged.push({ ...h });
+    }
+  });
+  return merged;
+}
+
 function invAutoSave() {
   clearTimeout(_invSaveTimer);
   _invSaveTimer = setTimeout(() => {
     if (!_invData) return;
-    invSaveData(invGetCurrentData());
+    const data = invGetCurrentData();
+    const merged = invMergeDuplicates(data.holdings);
+    if (merged.length !== data.holdings.length) {
+      data.holdings = merged;
+      invRenderRows(merged);
+    }
+    invSaveData(data);
   }, 800);
 }
 
