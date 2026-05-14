@@ -41,42 +41,58 @@ const HOLDINGS: Record<string, string[]> = {
   ITA:  ['RTX','LMT','NOC','GD','BA','TDG','HEI','TXT','LHX','KTOS'],
 };
 
+const YF_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Accept': 'application/json,text/plain,*/*',
+  'Accept-Language': 'en-US,en;q=0.9',
+};
 
-async function fetchQuote(symbol: string, apiKey: string): Promise<{ symbol: string; name: string; pct: number | null }> {
-  try {
-    const res = await fetch(
-      `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${encodeURIComponent(apiKey)}`,
-      { headers: { 'User-Agent': 'trading-journal/2.0' } }
-    );
-    if (!res.ok) return { symbol, name: symbol, pct: null };
-    const json = await res.json();
-    if (json?.c === 0 && json?.pc === 0 && json?.t === 0) return { symbol, name: symbol, pct: null };
-    let pct: number | null = typeof json?.dp === 'number' ? json.dp : null;
-    if (pct == null && typeof json?.c === 'number' && typeof json?.pc === 'number' && json.pc > 0) {
-      pct = ((json.c - json.pc) / json.pc) * 100;
-    }
-    return { symbol, name: symbol, pct };
-  } catch {
-    return { symbol, name: symbol, pct: null };
-  }
+function calcPct(closes: number[], daysBack: number): number | null {
+  const last = closes[closes.length - 1];
+  const idx = closes.length - 1 - daysBack;
+  if (idx < 0) return null;
+  const base = closes[idx];
+  if (!base) return null;
+  return ((last - base) / base) * 100;
 }
 
-async function fetchMetric(symbol: string, apiKey: string, period: string): Promise<{ symbol: string; name: string; pct: number | null }> {
+function calcYtd(closes: number[], timestamps: number[]): number | null {
+  const now = new Date();
+  const yearStart = new Date(now.getFullYear(), 0, 1).getTime() / 1000;
+  const ytdIdx = timestamps.findIndex(t => t >= yearStart);
+  if (ytdIdx < 0) return null;
+  const base = closes[ytdIdx > 0 ? ytdIdx - 1 : ytdIdx];
+  const last = closes[closes.length - 1];
+  if (!base) return null;
+  return ((last - base) / base) * 100;
+}
+
+async function fetchStock(symbol: string, period: string): Promise<{ symbol: string; name: string; pct: number | null }> {
   try {
-    const res = await fetch(
-      `https://finnhub.io/api/v1/stock/metric?symbol=${encodeURIComponent(symbol)}&metric=all&token=${encodeURIComponent(apiKey)}`,
-      { headers: { 'User-Agent': 'trading-journal/2.0' } }
-    );
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1y&interval=1d`;
+    const res = await fetch(url, { headers: YF_HEADERS });
     if (!res.ok) return { symbol, name: symbol, pct: null };
     const json = await res.json();
-    const m = json?.metric;
-    if (!m) return { symbol, name: symbol, pct: null };
+    const result = json?.chart?.result?.[0];
+    if (!result) return { symbol, name: symbol, pct: null };
+
+    const meta = result.meta;
+    const closes: number[] = result.indicators?.quote?.[0]?.close ?? [];
+    const timestamps: number[] = result.timestamp ?? [];
+
+    const valid = closes
+      .map((c: number, i: number) => ({ c, t: timestamps[i] }))
+      .filter(x => x.c != null && x.c > 0);
+    const filteredCloses = valid.map(x => x.c);
+    const filteredTs     = valid.map(x => x.t);
+
     let pct: number | null = null;
     switch (period) {
-      case 'w1':  pct = m.weekPriceReturnDaily ?? null; break;
-      case 'm1':  pct = m.monthPriceReturnDaily ?? null; break;
-      case 'm3':  pct = m['3MonthPriceReturnDaily'] ?? null; break;
-      case 'ytd': pct = m.ytdPriceReturn ?? null; break;
+      case 'today': pct = meta.regularMarketChangePercent ?? calcPct(filteredCloses, 1); break;
+      case 'w1':    pct = calcPct(filteredCloses, 5);  break;
+      case 'm1':    pct = calcPct(filteredCloses, 21); break;
+      case 'm3':    pct = calcPct(filteredCloses, 63); break;
+      case 'ytd':   pct = calcYtd(filteredCloses, filteredTs); break;
     }
     return { symbol, name: symbol, pct };
   } catch {
@@ -125,17 +141,7 @@ serve(async (req: Request) => {
     const symbols = HOLDINGS[ticker];
     if (!symbols?.length) return new Response(JSON.stringify({ holdings: [] }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
 
-    const { data: settings } = await supabase.from('user_settings').select('finnhub_key').eq('user_id', user.id).single();
-    const apiKey = (settings?.finnhub_key && /^[A-Za-z0-9_]{10,40}$/.test(settings.finnhub_key))
-      ? settings.finnhub_key
-      : (Deno.env.get('FINNHUB_API_KEY') ?? '');
-
-    if (!apiKey) return new Response(JSON.stringify({ error: 'No Finnhub API key configured.' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
-
-    const results = await Promise.all(
-      symbols.map(s => period === 'today' ? fetchQuote(s, apiKey) : fetchMetric(s, apiKey, period))
-    );
-
+    const results = await Promise.all(symbols.map(s => fetchStock(s, period)));
     results.sort((a, b) => (b.pct ?? -Infinity) - (a.pct ?? -Infinity));
 
     return new Response(JSON.stringify({ ticker, holdings: results }), {
