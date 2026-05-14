@@ -47,6 +47,20 @@ const YF_HEADERS = {
   'Accept-Language': 'en-US,en;q=0.9',
 };
 
+async function fetchETFHoldings(etfTicker: string): Promise<string[]> {
+  try {
+    const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(etfTicker)}?modules=topHoldings`;
+    const res = await fetch(url, { headers: YF_HEADERS });
+    if (!res.ok) return [];
+    const json = await res.json();
+    const holdings: { symbol?: string }[] = json?.quoteSummary?.result?.[0]?.topHoldings?.holdings ?? [];
+    const symbols = holdings.map(h => h.symbol).filter((s): s is string => !!s && /^[A-Z0-9.]{1,10}$/.test(s));
+    return symbols;
+  } catch {
+    return [];
+  }
+}
+
 function calcPct(closes: number[], daysBack: number): number | null {
   const last = closes[closes.length - 1];
   const idx = closes.length - 1 - daysBack;
@@ -138,8 +152,9 @@ serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: 'Invalid ticker' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
     }
 
-    const symbols = HOLDINGS[ticker];
-    if (!symbols?.length) return new Response(JSON.stringify({ holdings: [] }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
+    let symbols = await fetchETFHoldings(ticker);
+    if (!symbols.length) symbols = HOLDINGS[ticker] ?? [];
+    if (!symbols.length) return new Response(JSON.stringify({ holdings: [] }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
 
     const results = await Promise.all(symbols.map(s => fetchStock(s, period)));
     results.sort((a, b) => (b.pct ?? -Infinity) - (a.pct ?? -Infinity));
