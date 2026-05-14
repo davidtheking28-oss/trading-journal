@@ -21,7 +21,7 @@ const HOLDINGS: Record<string, string[]> = {
   JETS: ['DAL','UAL','AAL','LUV','ALK','JBLU','ALGT','ULCC','RYAAY','SKYW','HA','JOBY','ACHR','SNCY','GOL','AZUL','MESA','BA','SPR','HXL','TDG','TNL','MMYT','CCL','RCL'],
   HACK: ['PANW','CRWD','ZS','FTNT','NET','OKTA','S','QLYS','TENB','VRNS','CYBR','RPD','CSCO','DDOG','DT','ESTC','MNDT','JAMF','TELOS','BAH','LDOS','SAIC','CACI','SAIL','OSPN','RDWR','ATEN','SCWX'],
   SIL:  ['WPM','PAAS','HL','AG','SSRM','CDE','MTA','FSM','EXK','RGLD','SVM','SILV','MAG','SAND','BTG','PVG','GATO','GPL','SA','AXU','EDR','GFI','SBSW','DRD','HMY'],
-  IYZ:  ['TMUS','VZ','T','LUMN','SATS','IDT','IRDM','GSAT','USM','TDS','CHTR','CMCSA','CABO','FYBR','BAND','OOMA','ATNI','LBRDA','ATUS','LBTYA','SHEN','CNSL','WOW','LBRDAK','ATUS'],
+  IYZ:  ['TMUS','VZ','T','LUMN','SATS','IDT','IRDM','GSAT','USM','TDS','CHTR','CMCSA','CABO','FYBR','BAND','OOMA','ATNI','LBRDA','ATUS','LBTYA','SHEN','CNSL','WOW','LBRDAK'],
   XLB:  ['LIN','APD','SHW','FCX','NEM','ECL','NUE','VMC','MLM','ALB','DD','PPG','IFF','CF','MOS','FMC','RPM','PKG','IP','BALL','SEE','BMS','SON','GEF','EMN','HUN','OLN','KRO','TROX'],
   XLU:  ['NEE','SO','DUK','AEP','SRE','EXC','XEL','ED','ETR','WEC','ES','PPL','CNP','CMS','ATO','LNT','PNW','EVRG','OGE','POR','AVA','NI','AWK','SJW','MGEE'],
   SLX:  ['NUE','STLD','CMC','X','CLF','RS','ATI','WOR','HCC','TS','MT','GGB','SID','METC','ESAB','ZEUS','HAYN','PKX','SCHN','TX','WIRE','KALU','CRS','CSTM'],
@@ -30,10 +30,10 @@ const HOLDINGS: Record<string, string[]> = {
   IYR:  ['PLD','AMT','EQIX','PSA','O','SPG','WELL','DLR','CCI','EQR','AVB','VICI','ARE','BXP','EXR','CUBE','LSI','MAA','UDR','CPT','NNN','GLPI','KIM','REG','FRT'],
   IYT:  ['UPS','FDX','CSX','UNP','NSC','JBHT','ODFL','XPO','CHRW','SAIA','EXPD','GXO','TFII','LSTR','KNX','WERN','MRTN','HUBG','ARCB','SNDR','HTLD','CVLG','RXO'],
   IHI:  ['MDT','ABT','SYK','BSX','EW','ISRG','ZBH','RMD','TFX','HOLX','BDX','DXCM','SWAV','NARI','INSP','TNDM','ICAD','MASI','NVRO','GKOS','LMAT','AXNX','IRTC'],
-  TAN:  ['ENPH','FSLR','SEDG','RUN','DQ','ARRY','CSIQ','JKS','CWEN','SHLS','NOVA','MAXN','SPWR','BE','FLNC','STEM','AMPX','NEP','ORA','HASI','AES','FTCI','PEGI','SPWR','VVPR'],
+  TAN:  ['ENPH','FSLR','SEDG','RUN','DQ','ARRY','CSIQ','JKS','CWEN','SHLS','NOVA','MAXN','SPWR','BE','FLNC','STEM','AMPX','NEP','ORA','HASI','AES','FTCI','PEGI','VVPR'],
   ARKG: ['RXRX','NTLA','CRSP','BEAM','PACB','VEEV','IOVA','TWST','ILMN','EDIT','ALNY','EXAS','GH','NTRA','TDOC','SDGR','QDEL','KRTX','RARE','INSM','FOLD','VERV','PRME','TGTX','DNLI'],
   XLI:  ['GE','RTX','CAT','HON','UNP','DE','BA','LMT','ETN','WM','MMM','EMR','PH','ROK','CARR','OTIS','TT','NDSN','ROP','CPRT','GEV','AXON','VRSK','PWR','FTV'],
-  WGMI: ['MARA','RIOT','CLSK','IREN','BTBT','HUT','CIFR','BTDR','BITF','WULF','CORZ','HIVE','SOS','ARBK','GREE','COIN','MSTR','CLBT','PAYO','LTRY','BTBT','BRPHF','MIGI','SDIG','AULT'],
+  WGMI: ['MARA','RIOT','CLSK','IREN','BTBT','HUT','CIFR','BTDR','BITF','WULF','CORZ','HIVE','SOS','ARBK','GREE','COIN','MSTR','CLBT','PAYO','LTRY','BRPHF','MIGI','SDIG','AULT'],
   XBI:  ['MRNA','ALNY','VRTX','REGN','INCY','BMRN','SRPT','KYMR','IONS','ACAD','EXEL','INSM','ARWR','ITCI','CYTK','HALO','FOLD','RCKT','BGNE','ZYME','PTGX','MGNX','PRGO','RARE','TGTX'],
   XLV:  ['UNH','LLY','JNJ','ABBV','MRK','TMO','ABT','DHR','BMY','AMGN','GILD','ISRG','CVS','CI','MCK','CAH','ABC','DGX','LH','IQV','HUM','CNC','MDT','ZBH','BAX'],
   KBE:  ['JPM','BAC','WFC','GS','MS','C','USB','PNC','TFC','COF','SCHW','BK','STT','RF','KEY','FITB','HBAN','CFG','MTB','ZION','WAL','EWBC','OZK','FHN','SNV'],
@@ -153,6 +153,7 @@ serve(async (req: Request) => {
 
     let symbols = await fetchETFHoldings(ticker);
     if (!symbols.length) symbols = HOLDINGS[ticker] ?? [];
+    symbols = [...new Set(symbols)];
     if (!symbols.length) return new Response(JSON.stringify({ holdings: [] }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
 
     const results = await Promise.all(symbols.map(s => fetchStockAll(s)));
