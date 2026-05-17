@@ -1323,8 +1323,19 @@
   ══════════════════════════════════════ */
   #tab-ibkr { display: none; }
   #tab-ibkr.active { display: block; }
-  .s-grid { display: flex; flex-direction: column; gap: 8px; max-width: 760px; margin: 0 auto; width: 100%; }
-  .s-col { display: contents; }
+  .s-layout { display: flex; max-width: 900px; margin: 0 auto; width: 100%; min-height: 480px; background: rgba(255,255,255,0.015); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .s-nav { width: 188px; flex-shrink: 0; border-right: 1px solid var(--border); padding: 8px 6px; display: flex; flex-direction: column; gap: 1px; background: rgba(0,0,0,0.18); }
+  .s-nav-label { font-size: 10px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text3); padding: 10px 10px 5px; }
+  .s-nav-item { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 7px; cursor: pointer; color: var(--text2); font-size: 13px; font-weight: 500; transition: all 0.14s; border: 1px solid transparent; user-select: none; }
+  .s-nav-item:hover { background: rgba(255,255,255,0.045); color: var(--text); }
+  .s-nav-item.active { background: rgba(129,140,248,0.11); color: var(--accent); border-color: rgba(129,140,248,0.18); }
+  .s-nav-icon { width: 15px; height: 15px; flex-shrink: 0; stroke: currentColor; }
+  .s-nav-divider { height: 1px; background: var(--border); margin: 6px 4px; }
+  .s-panels { flex: 1; min-width: 0; padding: 22px 24px; overflow-y: auto; }
+  .s-panel { display: none; }
+  .s-panel.active { display: block; }
+  .s-panel-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
+  @media (max-width: 600px) { .s-layout { flex-direction: column; } .s-nav { width: 100%; border-right: none; border-bottom: 1px solid var(--border); flex-direction: row; flex-wrap: wrap; padding: 6px; } .s-nav-label, .s-nav-divider { display: none; } }
 
   .s-section {
     background: rgba(255,255,255,0.03);
@@ -5446,233 +5457,300 @@
     <!-- ===== SETTINGS ===== -->
 
     <div id="tab-ibkr" class="tab-content">
-    <div class="s-grid">
-    <div class="s-col">
+    <div class="s-layout">
 
-      <!-- Account -->
-      <div class="s-section">
-        <div class="s-section-title" data-i18n="set_grp_account">Account</div>
-        <div class="s-row" style="flex-direction:column;align-items:stretch;min-height:0;padding:16px;">
-          <div class="s-profile-grid">
-            <div class="profile-field">
-              <label class="profile-label" data-i18n="settings_first">First Name</label>
-              <input class="profile-input" id="profile-first" type="text" placeholder="First name" oninput="profileMarkDirty()">
-            </div>
-            <div class="profile-field">
-              <label class="profile-label" data-i18n="settings_last">Last Name</label>
-              <input class="profile-input" id="profile-last" type="text" placeholder="Last name" oninput="profileMarkDirty()">
-            </div>
-          </div>
-          <div class="s-profile-grid">
-            <div class="profile-field">
-              <label class="profile-label" data-i18n="settings_display">Display Name</label>
-              <input class="profile-input" id="profile-display" type="text" placeholder="How it appears in the header" oninput="profileMarkDirty()">
-            </div>
-            <div class="profile-field">
-              <label class="profile-label" data-i18n="settings_email">Email</label>
-              <input class="profile-input" id="profile-email" type="email" disabled>
-            </div>
-          </div>
-          <button class="btn btn-primary btn-sm" id="profile-save-btn" onclick="profileSave()" style="display:none;margin-top:12px;align-self:flex-start;" data-i18n="settings_save_profile">Save Profile</button>
+      <!-- Sidebar nav -->
+      <nav class="s-nav">
+        <div class="s-nav-label">General</div>
+        <div class="s-nav-item active" data-panel="account" onclick="switchSettingsPanel('account')">
+          <svg class="s-nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          Account
         </div>
-      </div>
+        <div class="s-nav-item" data-panel="prefs" onclick="switchSettingsPanel('prefs')">
+          <svg class="s-nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+          Preferences
+        </div>
+        <div class="s-nav-item" data-panel="security" onclick="switchSettingsPanel('security')">
+          <svg class="s-nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Security
+        </div>
+        <div class="s-nav-divider"></div>
+        <div class="s-nav-label">Data</div>
+        <div class="s-nav-item" data-panel="data" onclick="switchSettingsPanel('data')">
+          <svg class="s-nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          Data Sources
+        </div>
+        <div class="s-nav-item" data-panel="import" onclick="switchSettingsPanel('import')">
+          <svg class="s-nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Import
+        </div>
+        <div class="s-nav-item" data-panel="export" onclick="switchSettingsPanel('export')">
+          <svg class="s-nav-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export
+        </div>
+      </nav>
 
-      <!-- Preferences -->
-      <div class="s-section">
-        <div class="s-section-title" data-i18n="set_grp_prefs">Preferences</div>
-        <div class="s-row">
-          <div class="s-row-left">
-            <div class="s-row-label" data-i18n="settings_lang">Language</div>
-          </div>
-          <div class="s-row-ctrl" style="flex-direction:column;align-items:flex-end;gap:4px;">
-            <div class="lang-seg">
-              <button class="lang-opt" id="lang-en" onclick="setLang('en')">English</button>
-              <button class="lang-opt" id="lang-he" onclick="setLang('he')">עברית</button>
-            </div>
-            <div class="lang-desc" id="lang-desc"></div>
-          </div>
-        </div>
-      </div>
+      <!-- Panels -->
+      <div class="s-panels">
 
-      <!-- Security -->
-      <div class="s-section">
-        <div class="s-section-title" data-i18n="set_security">Security</div>
-        <div class="s-row">
-          <div class="s-row-left"><div class="s-row-label">PIN</div></div>
-          <div class="s-row-ctrl" style="gap:6px;font-size:12px;color:var(--text3);">
-            <span class="sec-dot" id="sec-pin-dot"></span>
-            <span id="sec-pin-lbl"></span>
-          </div>
-        </div>
-        <div class="s-row">
-          <div class="s-row-left">
-            <div class="s-row-label" data-i18n="set_2fa">Two-Factor Authentication</div>
-            <div class="s-row-desc" id="totp-status-text"></div>
-          </div>
-          <div class="s-row-ctrl">
-            <span class="sec-dot" id="sec-2fa-dot"></span>
-            <span id="sec-2fa-lbl" style="font-size:12px;color:var(--text3);"></span>
-            <button id="totp-toggle-btn" class="btn btn-secondary btn-sm" onclick="totpToggle()">—</button>
-          </div>
-        </div>
-        <div id="totp-setup-area" style="display:none;padding:14px 16px;border-top:1px solid var(--border);"></div>
-      </div>
-
-    </div><!-- /s-col left -->
-    <div class="s-col">
-
-      <!-- Data Sources -->
-      <div class="s-section">
-        <div class="s-section-title" data-i18n="set_grp_data">Data Sources</div>
-        <div class="s-row">
-          <div class="s-row-left">
-            <div class="s-row-label" data-i18n="set_stocks">Stocks</div>
-          </div>
-          <div class="s-row-ctrl" style="font-size:12px;">
-            <div id="stock-sym-status"><span class="sym-dot loading"></span></div>
-          </div>
-        </div>
-        <div class="s-row">
-          <div class="s-row-left">
-            <div class="s-row-label" data-i18n="set_crypto">Crypto</div>
-          </div>
-          <div class="s-row-ctrl" style="font-size:12px;">
-            <div id="crypto-sym-status"><span class="sym-dot loading"></span></div>
-          </div>
-        </div>
-        <div id="finnhub-key-section" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border);">
-          <div style="font-size:11px;color:var(--text3);margin-top:12px;margin-bottom:6px;">
-            <span data-i18n="set_finnhub_key">Finnhub Key (Admin only)</span>
-          </div>
-          <div style="display:flex;gap:8px;">
-            <input id="finnhub-key-input" class="form-control" type="password" placeholder="Finnhub API Key" autocomplete="off" style="font-size:12px;padding:6px 10px;flex:1;">
-            <button class="btn btn-secondary btn-sm" onclick="saveFinnhubKey()" data-i18n="m_save_short">Save</button>
-            <span id="finnhub-key-status" style="font-size:11px;align-self:center;color:var(--text3);white-space:nowrap;"></span>
-          </div>
-          <div style="font-size:11px;color:var(--text3);margin-top:12px;margin-bottom:6px;">
-            <span data-i18n="set_av_key">Alpha Vantage Key</span> (<a href="https://www.alphavantage.co/support/#api-key" target="_blank" style="color:var(--accent);" data-i18n="set_get_free_key">Get free key</a>)
-          </div>
-          <div style="display:flex;gap:8px;">
-            <input id="av-key-input" class="form-control" type="password" placeholder="Alpha Vantage API Key" autocomplete="off" style="font-size:12px;padding:6px 10px;flex:1;">
-            <button class="btn btn-secondary btn-sm" onclick="saveAvKey()" data-i18n="m_save_short">Save</button>
-            <span id="av-key-status" style="font-size:11px;align-self:center;color:var(--text3);white-space:nowrap;"></span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Import -->
-      <div class="s-section">
-        <div class="s-section-title" data-i18n="set_grp_import">Import</div>
-        <div class="s-row s-expandable" id="s-ibkr-row" onclick="toggleExpand('s-ibkr-body','s-ibkr-row')">
-          <div class="s-row-left">
-            <div class="s-row-label" data-i18n="set_ibkr_sync">Broker Connection</div>
-            <div class="s-row-desc">Interactive Brokers · Flex Web Service</div>
-          </div>
-          <div class="s-row-ctrl">
-            <span id="ibkr-conn-dot" style="display:none;width:8px;height:8px;border-radius:50%;background:#3fb950;box-shadow:0 0 6px rgba(63,185,80,0.6);flex-shrink:0;"></span>
-            <svg class="s-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </div>
-        </div>
-        <div class="s-expand-body" id="s-ibkr-body">
-          <div class="s-expand-inner">
-            <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6;">
-              <strong style="color:var(--text2);" data-i18n="set_ibkr_how">How to configure:</strong>
-              IBKR → Reports → Flex Queries → <span data-i18n="set_ibkr_steps">Create a new Flex Query → Copy the Token and Query ID</span>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 180px auto;gap:10px;align-items:end;margin-bottom:12px;">
-              <div>
-                <div class="ibkr-field-label">Token</div>
-                <input id="flex-token" class="form-control" type="password" placeholder="••••••••" autocomplete="off" style="font-size:12px;padding:6px 10px;">
+        <!-- ACCOUNT -->
+        <div class="s-panel active" id="s-panel-account">
+          <div class="s-panel-title">Account</div>
+          <div class="s-section">
+            <div class="s-section-title" data-i18n="set_grp_account">Profile</div>
+            <div class="s-row" style="flex-direction:column;align-items:stretch;min-height:0;padding:16px;">
+              <div class="s-profile-grid">
+                <div class="profile-field">
+                  <label class="profile-label" data-i18n="settings_first">First Name</label>
+                  <input class="profile-input" id="profile-first" type="text" placeholder="First name" oninput="profileMarkDirty()">
+                </div>
+                <div class="profile-field">
+                  <label class="profile-label" data-i18n="settings_last">Last Name</label>
+                  <input class="profile-input" id="profile-last" type="text" placeholder="Last name" oninput="profileMarkDirty()">
+                </div>
               </div>
-              <div>
-                <div class="ibkr-field-label">Query ID</div>
-                <input id="flex-query-id" class="form-control" type="text" placeholder="1462900" autocomplete="off" style="font-size:12px;padding:6px 10px;">
+              <div class="s-profile-grid">
+                <div class="profile-field">
+                  <label class="profile-label" data-i18n="settings_display">Display Name</label>
+                  <input class="profile-input" id="profile-display" type="text" placeholder="How it appears in the header" oninput="profileMarkDirty()">
+                </div>
+                <div class="profile-field">
+                  <label class="profile-label" data-i18n="settings_email">Email</label>
+                  <input class="profile-input" id="profile-email" type="email" disabled>
+                </div>
               </div>
-              <div class="ibkr-actions" style="margin-bottom:0;">
-                <button class="btn btn-secondary btn-sm" onclick="flexSave()" data-i18n="m_save_short">Save</button>
-                <button class="btn btn-primary btn-sm" onclick="flexSync()" id="flex-sync-btn" data-i18n="set_sync">Sync</button>
+              <button class="btn btn-primary btn-sm" id="profile-save-btn" onclick="profileSave()" style="display:none;margin-top:12px;align-self:flex-start;" data-i18n="settings_save_profile">Save Profile</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PREFERENCES -->
+        <div class="s-panel" id="s-panel-prefs">
+          <div class="s-panel-title">Preferences</div>
+          <div class="s-section">
+            <div class="s-section-title" data-i18n="set_grp_prefs">Display</div>
+            <div class="s-row">
+              <div class="s-row-left">
+                <div class="s-row-label" data-i18n="settings_lang">Language</div>
+              </div>
+              <div class="s-row-ctrl" style="flex-direction:column;align-items:flex-end;gap:4px;">
+                <div class="lang-seg">
+                  <button class="lang-opt" id="lang-en" onclick="setLang('en')">English</button>
+                  <button class="lang-opt" id="lang-he" onclick="setLang('he')">עברית</button>
+                </div>
+                <div class="lang-desc" id="lang-desc"></div>
               </div>
             </div>
-            <span class="ibkr-sync-status" id="flex-status"></span>
-            <div id="flex-preview" class="ibkr-trades-list"></div>
           </div>
         </div>
-        <div class="s-row s-expandable" id="s-tlg-row" onclick="toggleExpand('s-tlg-body','s-tlg-row')">
-          <div class="s-row-left">
-            <div class="s-row-label" data-i18n="set_file_import">File Import</div>
-            <div class="s-row-desc">.tlg</div>
-          </div>
-          <div class="s-row-ctrl">
-            <svg class="s-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </div>
-        </div>
-        <div class="s-expand-body" id="s-tlg-body">
-          <div class="s-expand-inner">
-            <input type="file" accept=".tlg,.txt" id="tlg-file-input" style="display:none" onchange="tlgLoadFile(this)">
-            <div class="tlg-drop" id="tlg-drop-zone"
-              onclick="document.getElementById('tlg-file-input').click()"
-              ondragover="event.preventDefault();this.classList.add('tlg-drag-over')"
-              ondragleave="this.classList.remove('tlg-drag-over')"
-              ondrop="event.preventDefault();this.classList.remove('tlg-drag-over');tlgLoadFile({files:event.dataTransfer.files})">
-              <span class="tlg-drop-icon">📂</span>
-              <span data-i18n="set_tlg_drop">Drag .tlg file or click to select</span>
-            </div>
-            <div id="tlg-status" style="margin-top:8px;font-size:12px;color:var(--text3);"></div>
-            <div id="tlg-preview" class="ibkr-trades-list"></div>
-          </div>
-        </div>
-        <div class="s-row s-expandable" id="s-bi-row" onclick="toggleExpand('s-bi-body','s-bi-row')">
-          <div class="s-row-left">
-            <div class="s-row-label" data-i18n="set_broker_import">Broker Import</div>
-            <div class="s-row-desc">CSV</div>
-          </div>
-          <div class="s-row-ctrl">
-            <svg class="s-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </div>
-        </div>
-        <div class="s-expand-body" id="s-bi-body">
-          <div class="s-expand-inner">
-            <div style="margin-bottom:12px;">
-              <div class="ibkr-field-label" data-i18n="set_broker_label">Broker</div>
-              <select id="bi-broker" class="form-control" style="font-size:12px;padding:6px 10px;max-width:220px;margin-top:4px;">
-                <option value="" data-i18n="set_broker_select">Select broker...</option>
-                <option value="colmex">Colmex Pro</option>
-              </select>
-            </div>
-            <input type="file" accept=".csv,.txt" id="bi-file-input" style="display:none" onchange="brokerLoadFile(this)">
-            <div class="tlg-drop" id="bi-drop-zone"
-              onclick="if(!document.getElementById('bi-broker').value){toast('בחר ברוקר תחילה',true);return;} document.getElementById('bi-file-input').click()"
-              ondragover="event.preventDefault();this.classList.add('tlg-drag-over')"
-              ondragleave="this.classList.remove('tlg-drag-over')"
-              ondrop="event.preventDefault();this.classList.remove('tlg-drag-over');brokerLoadFile({files:event.dataTransfer.files})">
-              <span class="tlg-drop-icon">📊</span>
-              <span data-i18n="set_csv_drop">Drag CSV file or click to select</span>
-            </div>
-            <div id="bi-mapping" style="display:none;"></div>
-            <div id="bi-preview" style="display:none;"></div>
-            <button id="bi-import-btn" class="btn btn-primary btn-sm" style="display:none;margin-top:12px;" onclick="brokerImport()" data-i18n="set_import_btn">Import Trades</button>
-          </div>
-        </div>
-      </div>
 
-      <!-- Export -->
-      <div class="s-section">
-        <div class="s-section-title" data-i18n="set_export">Export</div>
-        <div class="s-row">
-          <div class="s-row-left">
-            <div class="s-row-label" data-i18n="set_export">Export Data</div>
-            <div class="s-row-desc" data-i18n="set_export_desc">Export all trades to CSV</div>
+        <!-- SECURITY -->
+        <div class="s-panel" id="s-panel-security">
+          <div class="s-panel-title">Security</div>
+          <div class="s-section">
+            <div class="s-section-title" data-i18n="set_security">Authentication</div>
+            <div class="s-row">
+              <div class="s-row-left"><div class="s-row-label">PIN</div></div>
+              <div class="s-row-ctrl" style="gap:6px;font-size:12px;color:var(--text3);">
+                <span class="sec-dot" id="sec-pin-dot"></span>
+                <span id="sec-pin-lbl"></span>
+              </div>
+            </div>
+            <div class="s-row">
+              <div class="s-row-left">
+                <div class="s-row-label" data-i18n="set_2fa">Two-Factor Authentication</div>
+                <div class="s-row-desc" id="totp-status-text"></div>
+              </div>
+              <div class="s-row-ctrl">
+                <span class="sec-dot" id="sec-2fa-dot"></span>
+                <span id="sec-2fa-lbl" style="font-size:12px;color:var(--text3);"></span>
+                <button id="totp-toggle-btn" class="btn btn-secondary btn-sm" onclick="totpToggle()">—</button>
+              </div>
+            </div>
+            <div id="totp-setup-area" style="display:none;padding:14px 16px;border-top:1px solid var(--border);"></div>
           </div>
-          <div class="s-row-ctrl" style="gap:6px;">
-            <button class="btn btn-secondary btn-sm" onclick="exportCSV('stock')" data-i18n="export_stocks">Export Stocks</button>
-            <button class="btn btn-secondary btn-sm" onclick="exportCSV('crypto')" data-i18n="export_crypto">Export Crypto</button>
-            <button class="btn btn-primary btn-sm" onclick="exportCSV('all')" data-i18n="export_all">Export All</button>
+          <div class="s-section">
+            <div class="s-section-title">Password</div>
+            <div class="s-row" style="flex-direction:column;align-items:stretch;min-height:0;padding:16px;gap:10px;">
+              <div class="s-profile-grid">
+                <div class="profile-field">
+                  <label class="profile-label">New Password</label>
+                  <input class="profile-input" id="pw-new" type="password" placeholder="New password" autocomplete="new-password">
+                </div>
+                <div class="profile-field">
+                  <label class="profile-label">Confirm Password</label>
+                  <input class="profile-input" id="pw-confirm" type="password" placeholder="Confirm password" autocomplete="new-password">
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <button class="btn btn-primary btn-sm" onclick="settingsChangePassword()">Update Password</button>
+                <span id="pw-change-status" style="font-size:12px;color:var(--text3);"></span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-    </div><!-- /s-col right -->
-    </div><!-- /s-grid -->
+        <!-- DATA SOURCES -->
+        <div class="s-panel" id="s-panel-data">
+          <div class="s-panel-title">Data Sources</div>
+          <div class="s-section">
+            <div class="s-section-title" data-i18n="set_grp_data">Market Data</div>
+            <div class="s-row">
+              <div class="s-row-left">
+                <div class="s-row-label" data-i18n="set_stocks">Stocks</div>
+              </div>
+              <div class="s-row-ctrl" style="font-size:12px;">
+                <div id="stock-sym-status"><span class="sym-dot loading"></span></div>
+              </div>
+            </div>
+            <div class="s-row">
+              <div class="s-row-left">
+                <div class="s-row-label" data-i18n="set_crypto">Crypto</div>
+              </div>
+              <div class="s-row-ctrl" style="font-size:12px;">
+                <div id="crypto-sym-status"><span class="sym-dot loading"></span></div>
+              </div>
+            </div>
+            <div id="finnhub-key-section" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border);">
+              <div style="font-size:11px;color:var(--text3);margin-top:12px;margin-bottom:6px;">
+                <span data-i18n="set_finnhub_key">Finnhub Key (Admin only)</span>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <input id="finnhub-key-input" class="form-control" type="password" placeholder="Finnhub API Key" autocomplete="off" style="font-size:12px;padding:6px 10px;flex:1;">
+                <button class="btn btn-secondary btn-sm" onclick="saveFinnhubKey()" data-i18n="m_save_short">Save</button>
+                <span id="finnhub-key-status" style="font-size:11px;align-self:center;color:var(--text3);white-space:nowrap;"></span>
+              </div>
+              <div style="font-size:11px;color:var(--text3);margin-top:12px;margin-bottom:6px;">
+                <span data-i18n="set_av_key">Alpha Vantage Key</span> (<a href="https://www.alphavantage.co/support/#api-key" target="_blank" style="color:var(--accent);" data-i18n="set_get_free_key">Get free key</a>)
+              </div>
+              <div style="display:flex;gap:8px;">
+                <input id="av-key-input" class="form-control" type="password" placeholder="Alpha Vantage API Key" autocomplete="off" style="font-size:12px;padding:6px 10px;flex:1;">
+                <button class="btn btn-secondary btn-sm" onclick="saveAvKey()" data-i18n="m_save_short">Save</button>
+                <span id="av-key-status" style="font-size:11px;align-self:center;color:var(--text3);white-space:nowrap;"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- IMPORT -->
+        <div class="s-panel" id="s-panel-import">
+          <div class="s-panel-title">Import</div>
+          <div class="s-section">
+            <div class="s-section-title" data-i18n="set_grp_import">Connections &amp; Files</div>
+            <div class="s-row s-expandable" id="s-ibkr-row" onclick="toggleExpand('s-ibkr-body','s-ibkr-row')">
+              <div class="s-row-left">
+                <div class="s-row-label" data-i18n="set_ibkr_sync">Broker Connection</div>
+                <div class="s-row-desc">Interactive Brokers · Flex Web Service</div>
+              </div>
+              <div class="s-row-ctrl">
+                <span id="ibkr-conn-dot" style="display:none;width:8px;height:8px;border-radius:50%;background:#3fb950;box-shadow:0 0 6px rgba(63,185,80,0.6);flex-shrink:0;"></span>
+                <svg class="s-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </div>
+            <div class="s-expand-body" id="s-ibkr-body">
+              <div class="s-expand-inner">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6;">
+                  <strong style="color:var(--text2);" data-i18n="set_ibkr_how">How to configure:</strong>
+                  IBKR → Reports → Flex Queries → <span data-i18n="set_ibkr_steps">Create a new Flex Query → Copy the Token and Query ID</span>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 180px auto;gap:10px;align-items:end;margin-bottom:12px;">
+                  <div>
+                    <div class="ibkr-field-label">Token</div>
+                    <input id="flex-token" class="form-control" type="password" placeholder="••••••••" autocomplete="off" style="font-size:12px;padding:6px 10px;">
+                  </div>
+                  <div>
+                    <div class="ibkr-field-label">Query ID</div>
+                    <input id="flex-query-id" class="form-control" type="text" placeholder="1462900" autocomplete="off" style="font-size:12px;padding:6px 10px;">
+                  </div>
+                  <div class="ibkr-actions" style="margin-bottom:0;">
+                    <button class="btn btn-secondary btn-sm" onclick="flexSave()" data-i18n="m_save_short">Save</button>
+                    <button class="btn btn-primary btn-sm" onclick="flexSync()" id="flex-sync-btn" data-i18n="set_sync">Sync</button>
+                  </div>
+                </div>
+                <span class="ibkr-sync-status" id="flex-status"></span>
+                <div id="flex-preview" class="ibkr-trades-list"></div>
+              </div>
+            </div>
+            <div class="s-row s-expandable" id="s-tlg-row" onclick="toggleExpand('s-tlg-body','s-tlg-row')">
+              <div class="s-row-left">
+                <div class="s-row-label" data-i18n="set_file_import">File Import</div>
+                <div class="s-row-desc">.tlg</div>
+              </div>
+              <div class="s-row-ctrl">
+                <svg class="s-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </div>
+            <div class="s-expand-body" id="s-tlg-body">
+              <div class="s-expand-inner">
+                <input type="file" accept=".tlg,.txt" id="tlg-file-input" style="display:none" onchange="tlgLoadFile(this)">
+                <div class="tlg-drop" id="tlg-drop-zone"
+                  onclick="document.getElementById('tlg-file-input').click()"
+                  ondragover="event.preventDefault();this.classList.add('tlg-drag-over')"
+                  ondragleave="this.classList.remove('tlg-drag-over')"
+                  ondrop="event.preventDefault();this.classList.remove('tlg-drag-over');tlgLoadFile({files:event.dataTransfer.files})">
+                  <span class="tlg-drop-icon">📂</span>
+                  <span data-i18n="set_tlg_drop">Drag .tlg file or click to select</span>
+                </div>
+                <div id="tlg-status" style="margin-top:8px;font-size:12px;color:var(--text3);"></div>
+                <div id="tlg-preview" class="ibkr-trades-list"></div>
+              </div>
+            </div>
+            <div class="s-row s-expandable" id="s-bi-row" onclick="toggleExpand('s-bi-body','s-bi-row')">
+              <div class="s-row-left">
+                <div class="s-row-label" data-i18n="set_broker_import">Broker Import</div>
+                <div class="s-row-desc">CSV</div>
+              </div>
+              <div class="s-row-ctrl">
+                <svg class="s-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </div>
+            <div class="s-expand-body" id="s-bi-body">
+              <div class="s-expand-inner">
+                <div style="margin-bottom:12px;">
+                  <div class="ibkr-field-label" data-i18n="set_broker_label">Broker</div>
+                  <select id="bi-broker" class="form-control" style="font-size:12px;padding:6px 10px;max-width:220px;margin-top:4px;">
+                    <option value="" data-i18n="set_broker_select">Select broker...</option>
+                    <option value="colmex">Colmex Pro</option>
+                  </select>
+                </div>
+                <input type="file" accept=".csv,.txt" id="bi-file-input" style="display:none" onchange="brokerLoadFile(this)">
+                <div class="tlg-drop" id="bi-drop-zone"
+                  onclick="if(!document.getElementById('bi-broker').value){toast('בחר ברוקר תחילה',true);return;} document.getElementById('bi-file-input').click()"
+                  ondragover="event.preventDefault();this.classList.add('tlg-drag-over')"
+                  ondragleave="this.classList.remove('tlg-drag-over')"
+                  ondrop="event.preventDefault();this.classList.remove('tlg-drag-over');brokerLoadFile({files:event.dataTransfer.files})">
+                  <span class="tlg-drop-icon">📊</span>
+                  <span data-i18n="set_csv_drop">Drag CSV file or click to select</span>
+                </div>
+                <div id="bi-mapping" style="display:none;"></div>
+                <div id="bi-preview" style="display:none;"></div>
+                <button id="bi-import-btn" class="btn btn-primary btn-sm" style="display:none;margin-top:12px;" onclick="brokerImport()" data-i18n="set_import_btn">Import Trades</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- EXPORT -->
+        <div class="s-panel" id="s-panel-export">
+          <div class="s-panel-title">Export</div>
+          <div class="s-section">
+            <div class="s-section-title" data-i18n="set_export">Export Data</div>
+            <div class="s-row">
+              <div class="s-row-left">
+                <div class="s-row-label" data-i18n="set_export">Export Data</div>
+                <div class="s-row-desc" data-i18n="set_export_desc">Export all trades to CSV</div>
+              </div>
+              <div class="s-row-ctrl" style="gap:6px;">
+                <button class="btn btn-secondary btn-sm" onclick="exportCSV('stock')" data-i18n="export_stocks">Export Stocks</button>
+                <button class="btn btn-secondary btn-sm" onclick="exportCSV('crypto')" data-i18n="export_crypto">Export Crypto</button>
+                <button class="btn btn-primary btn-sm" onclick="exportCSV('all')" data-i18n="export_all">Export All</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /s-panels -->
+    </div><!-- /s-layout -->
     </div>
 
     <!-- ===== MISSED OPPORTUNITIES ===== -->
@@ -11280,6 +11358,29 @@ function flexInit() {
 
 function toggleIbkrCard() {
   document.getElementById('ibkr-sync-card')?.classList.toggle('collapsed');
+}
+
+function switchSettingsPanel(id) {
+  document.querySelectorAll('.s-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.s-nav-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('s-panel-' + id)?.classList.add('active');
+  document.querySelector(`.s-nav-item[data-panel="${id}"]`)?.classList.add('active');
+}
+
+async function settingsChangePassword() {
+  const pw  = document.getElementById('pw-new')?.value?.trim();
+  const pw2 = document.getElementById('pw-confirm')?.value?.trim();
+  const st  = document.getElementById('pw-change-status');
+  if (!pw) { st.textContent = 'Enter a new password.'; st.style.color = 'var(--red)'; return; }
+  if (pw !== pw2) { st.textContent = 'Passwords do not match.'; st.style.color = 'var(--red)'; return; }
+  if (pw.length < 6) { st.textContent = 'Minimum 6 characters.'; st.style.color = 'var(--red)'; return; }
+  st.textContent = 'Saving…'; st.style.color = 'var(--text3)';
+  const { error } = await _sb.auth.updateUser({ password: pw });
+  if (error) { st.textContent = error.message; st.style.color = 'var(--red)'; return; }
+  st.textContent = 'Password updated.'; st.style.color = 'var(--green)';
+  document.getElementById('pw-new').value = '';
+  document.getElementById('pw-confirm').value = '';
+  setTimeout(() => { st.textContent = ''; }, 3000);
 }
 
 function toggleExpand(bodyId, rowId) {
