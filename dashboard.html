@@ -1323,8 +1323,10 @@
   ══════════════════════════════════════ */
   #tab-ibkr { display: none; }
   #tab-ibkr.active { display: block; }
-  .s-grid { display: flex; flex-direction: column; gap: 8px; max-width: 720px; margin: 0 auto; width: 100%; }
+  .s-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 960px; margin: 0 auto; width: 100%; }
   .s-col { display: contents; }
+  .s-section-full { grid-column: 1 / -1; }
+  @media (max-width: 700px) { .s-grid { grid-template-columns: 1fr; } }
 
   .s-section {
     background: linear-gradient(160deg, rgba(255,255,255,0.035), rgba(255,255,255,0.018));
@@ -5449,7 +5451,7 @@
 
     <div id="tab-ibkr" class="tab-content">
     <div class="s-grid">
-    <div class="s-col">
+    <div class="s-col" style="display:contents">
 
       <!-- Account -->
       <div class="s-section">
@@ -5491,7 +5493,6 @@
               <button class="lang-opt" id="lang-en" onclick="setLang('en')">English</button>
               <button class="lang-opt" id="lang-he" onclick="setLang('he')">עברית</button>
             </div>
-            <div class="lang-desc" id="lang-desc"></div>
           </div>
         </div>
       </div>
@@ -5577,7 +5578,7 @@
       </div>
 
       <!-- Import -->
-      <div class="s-section">
+      <div class="s-section s-section-full">
         <div class="s-section-title" data-i18n="set_grp_import">Import</div>
         <div class="s-row s-expandable" id="s-ibkr-row" onclick="toggleExpand('s-ibkr-body','s-ibkr-row')">
           <div class="s-row-left">
@@ -5672,7 +5673,7 @@
       </div>
 
       <!-- Export -->
-      <div class="s-section">
+      <div class="s-section s-section-full">
         <div class="s-section-title" data-i18n="set_export">Export</div>
         <div class="s-row">
           <div class="s-row-left">
