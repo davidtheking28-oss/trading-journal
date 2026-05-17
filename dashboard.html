@@ -1323,19 +1323,19 @@
   ══════════════════════════════════════ */
   #tab-ibkr { display: none; }
   #tab-ibkr.active { display: block; }
-  .s-layout { display: flex; flex-direction: row; direction: ltr; max-width: 900px; margin: 0 auto; width: 100%; min-height: 480px; background: rgba(255,255,255,0.015); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
-  .s-nav { width: 188px; flex-shrink: 0; border-inline-end: 1px solid var(--border); padding: 8px 6px; display: flex; flex-direction: column; gap: 1px; background: rgba(255,255,255,0.03); }
+  .s-layout { display: grid; grid-template-columns: 188px 1fr; grid-template-areas: "nav panels"; max-width: 900px; margin: 0 auto; width: 100%; min-height: 480px; background: rgba(255,255,255,0.015); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .s-nav { grid-area: nav; border-right: 1px solid var(--border); padding: 8px 6px; display: flex; flex-direction: column; gap: 1px; background: rgba(255,255,255,0.03); direction: ltr; }
   .s-nav-label { font-size: 10px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text3); padding: 10px 10px 5px; }
   .s-nav-item { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 7px; cursor: pointer; color: var(--text2); font-size: 13px; font-weight: 500; transition: all 0.14s; border: 1px solid transparent; user-select: none; }
   .s-nav-item:hover { background: rgba(255,255,255,0.045); color: var(--text); }
   .s-nav-item.active { background: rgba(129,140,248,0.11); color: var(--accent); border-color: rgba(129,140,248,0.18); }
   .s-nav-icon { width: 15px; height: 15px; flex-shrink: 0; stroke: currentColor; }
   .s-nav-divider { height: 1px; background: var(--border); margin: 6px 4px; }
-  .s-panels { flex: 1; min-width: 0; padding: 22px 24px; overflow-y: auto; }
+  .s-panels { grid-area: panels; padding: 22px 24px; overflow-y: auto; min-width: 0; }
   .s-panel { display: none; }
   .s-panel.active { display: block; }
   .s-panel-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
-  @media (max-width: 600px) { .s-layout { flex-direction: column; } .s-nav { width: 100%; border-right: none; border-bottom: 1px solid var(--border); flex-direction: row; flex-wrap: wrap; padding: 6px; } .s-nav-label, .s-nav-divider { display: none; } }
+  @media (max-width: 600px) { .s-layout { grid-template-columns: 1fr; grid-template-areas: "nav" "panels"; } .s-nav { border-right: none; border-bottom: 1px solid var(--border); flex-direction: row; flex-wrap: wrap; padding: 6px; } .s-nav-label, .s-nav-divider { display: none; } }
 
   .s-section {
     background: rgba(255,255,255,0.03);
