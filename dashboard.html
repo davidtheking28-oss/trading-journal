@@ -4671,7 +4671,8 @@
   .cal-date { font-size: 13px; font-weight: 700; color: rgba(148,163,184,0.5); line-height: 1; margin-bottom: 2px; }
   .cal-cell.has-trades .cal-date { color: var(--text2); }
   .cal-cell.today .cal-date { color: var(--accent); }
-  .cal-chip { font-size: 10px; font-weight: 600; padding: 3px 6px; border-radius: 5px; display: flex; align-items: center; justify-content: space-between; gap: 5px; }
+  .cal-chip { font-size: 10px; font-weight: 600; padding: 3px 6px; border-radius: 5px; display: flex; align-items: center; justify-content: space-between; gap: 5px; cursor: pointer; transition: opacity 0.15s; }
+  .cal-chip:hover { opacity: 0.75; }
   .cal-chip.win { background: rgba(0,209,122,0.12); border: 1px solid rgba(0,209,122,0.2); }
   .cal-chip.loss { background: rgba(255,71,87,0.1); border: 1px solid rgba(255,71,87,0.18); }
   .cal-chip-sym { color: var(--text); font-weight: 700; }
@@ -6139,6 +6140,17 @@
   <img id="ss-lightbox-img" src="" alt="Screenshot">
 </div>
 
+<!-- CALENDAR TRADE MODAL -->
+<div class="modal-overlay" id="cal-trade-modal" onclick="if(event.target===this)closeCalTradeModal()">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:700px;">
+    <div class="modal-header">
+      <div class="modal-title" id="cal-trade-modal-title"></div>
+      <button class="modal-close" onclick="closeCalTradeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="cal-trade-modal-body" style="padding:20px 24px 24px;"></div>
+  </div>
+</div>
+
 <!-- QA MODAL -->
 <div class="modal-overlay" id="qa-modal" onclick="if(event.target===this)fabToggle()">
   <div class="modal" onclick="event.stopPropagation()" style="max-width:680px;">
@@ -7219,7 +7231,7 @@ function renderCalendar(type) {
           ${dt.map(t => {
             const pl = calcTotal(t);
             const plStr = (pl >= 0 ? '+' : '') + fmtUSD(pl);
-            return `<div class="cal-chip ${calcPL(t)>=0?'win':'loss'}">
+            return `<div class="cal-chip ${calcPL(t)>=0?'win':'loss'}" onclick="showCalTradeModal('${t.type}','${t.id}')">
               <span class="cal-chip-sym">${t.symbol}</span>
               <span class="cal-chip-pl sensitive">${plStr}</span>
             </div>`;
@@ -7532,6 +7544,88 @@ function toggleExpand(type, id) {
   const key = type+'-'+id;
   expanded[key] = !expanded[key];
   renderTable(type);
+}
+
+function showCalTradeModal(type, id) {
+  const arr = type === 'stock' ? db.stocks : db.crypto;
+  const tr = arr.find(x => String(x.id) === String(id));
+  if (!tr) return;
+
+  const tot   = calcTotal(tr);
+  const risk  = calcRisk(tr);
+  const pct   = calcPct(tr);
+  const stopR = calcStopRisk(tr);
+  const rVal  = stopR ? tot / stopR : null;
+  const stopDist = tr.entryPrice && tr.stop
+    ? Math.abs((tr.entryPrice - tr.stop) / tr.entryPrice * 100)
+    : null;
+  const commission = +(tr.commission || 0);
+  const isWin = tot > 0;
+
+  const tile = (label, val, col) =>
+    `<div class="tr-tile"><div class="tr-tile-val" style="color:${col||'var(--text)'}">${val}</div><div class="tr-tile-label">${label}</div></div>`;
+
+  const tgtsHtml = tr.t && tr.t.length
+    ? tr.t.map((tg,i)=>`<span class="tr-target-pill"><strong>T${i+1}</strong> ${tg.shares} @ $${fmtPrice(tg.price)}</span>`).join('')
+    : `<span style="color:var(--text3);font-size:12px;">${t('tile_no_targets')}</span>`;
+
+  const mcLabel = {'green':t('mc_green'),'orange':t('mc_orange'),'red':t('mc_red'),'easy':t('mc_easy'),'hard':t('mc_hard'),'up':t('mc_up'),'press':t('mc_press'),'down':t('mc_down')};
+  const mcSafe = Object.prototype.hasOwnProperty.call(mcLabel, tr.market_cond) ? tr.market_cond : '';
+
+  const noteKeep = tr.notes_keep
+    ? `<div class="tr-note tr-note-keep"><div class="tr-note-label">${t('tile_keep')}</div><div class="tr-note-text">${esc(tr.notes_keep)}</div></div>` : '';
+  const noteImp = tr.notes_improve
+    ? `<div class="tr-note tr-note-imp"><div class="tr-note-label">${t('tile_improve')}</div><div class="tr-note-text">${esc(tr.notes_improve)}</div></div>` : '';
+  const noNotes = !tr.notes_keep && !tr.notes_improve
+    ? `<span style="color:var(--text3);font-size:12px;">${t('tile_no_notes')}</span>` : '';
+
+  document.getElementById('cal-trade-modal-title').textContent = `${tr.symbol} · ${fmtDate(tr.entryDate)}`;
+  document.getElementById('cal-trade-modal-body').innerHTML = `<div class="tr-review">
+    <div class="tr-tiles">
+      ${tile(t('tile_net_pl'), `<span class="sensitive">${fmtUSD(tot)}</span>`, tot>=0?'var(--green)':'var(--red)')}
+      ${tile(t('tile_return'), `<span class="sensitive">${fmtPct(pct)}</span>`, pct>=0?'var(--green)':'var(--red)')}
+      ${tile(t('tile_r_mult'), rVal!==null ? fmtR(tot,stopR) : '—', rVal===null?'var(--text3)':rVal>=1?'var(--green)':rVal>=0?'var(--yellow)':'var(--red)')}
+      ${tile(t('tile_risk'), risk>0?`<span class="sensitive">${fmtUSD(risk)}</span>`:'—', 'var(--text)')}
+      ${tile(t('tile_stop_dist'), stopDist!==null?`${fmt(stopDist,1)}%`:'—', 'var(--text)')}
+      ${tile(t('tile_commission'), `<span class="sensitive">$${fmt(commission)}</span>`, 'var(--text3)')}
+    </div>
+    <div class="tr-flow-row">
+      <div class="tr-flow-block">
+        <div class="tr-flow-label">${t('tile_entry')}</div>
+        <div class="tr-flow-price sensitive">$${fmtPrice(tr.entryPrice)}</div>
+        <div class="tr-flow-sub">${fmtDate(tr.entryDate)}</div>
+      </div>
+      <div class="tr-flow-arrow">→</div>
+      <div class="tr-flow-block">
+        <div class="tr-flow-label">${t('tile_stop')}</div>
+        <div class="tr-flow-price sensitive" style="color:var(--red)">$${fmtPrice(tr.stop)}</div>
+        <div class="tr-flow-sub">${stopDist!==null?fmt(stopDist,1)+'% '+t('tile_from_entry'):''}</div>
+      </div>
+      <div class="tr-flow-arrow">→</div>
+      <div class="tr-flow-block">
+        <div class="tr-flow-label">${t('tile_exit')}</div>
+        <div class="tr-flow-price sensitive" style="color:${isWin?'var(--green)':'var(--red)'}">$${fmtPrice(tr.exitPrice||tr.entryPrice)}</div>
+        <div class="tr-flow-sub">${tr.closeDate?fmtDate(tr.closeDate):''}</div>
+      </div>
+      ${tr.t&&tr.t.length?`<div class="tr-flow-arrow" style="color:var(--text3)">|</div>
+      <div class="tr-flow-block">
+        <div class="tr-flow-label">${t('tile_partial_tgt')}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">${tgtsHtml}</div>
+      </div>`:''}
+      ${mcSafe?`<div class="tr-flow-arrow" style="color:var(--text3)">|</div>
+      <div class="tr-flow-block">
+        <div class="tr-flow-label">${t('tile_market_cond')}</div>
+        <div class="tr-flow-price" style="font-size:13px;color:var(--text2)">${mcLabel[mcSafe]}</div>
+      </div>`:''}
+    </div>
+    ${noteKeep||noteImp||noNotes?`<div class="tr-notes-row">${noteKeep}${noteImp}${noNotes}</div>`:''}
+  </div>`;
+  document.getElementById('cal-trade-modal').classList.add('open');
+  applyPrivacy();
+}
+
+function closeCalTradeModal() {
+  document.getElementById('cal-trade-modal').classList.remove('open');
 }
 
 // ══════════════════════════════════════════════
