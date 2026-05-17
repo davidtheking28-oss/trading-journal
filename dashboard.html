@@ -1319,39 +1319,55 @@
   .cg-refresh-btn:hover { color: var(--accent); border-color: var(--accent); }
 
   /* ══════════════════════════════════════
-     SETTINGS TAB — list layout
+     SETTINGS TAB
   ══════════════════════════════════════ */
   #tab-ibkr { display: none; }
   #tab-ibkr.active { display: block; }
-  .s-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 960px; margin: 0 auto; width: 100%; }
+
+  .s-page-header { margin-bottom: 20px; }
+  .s-page-header h2 { font-size: 20px; font-weight: 700; color: var(--text); margin: 0 0 4px; }
+  .s-page-header p  { font-size: 12px; color: var(--text3); margin: 0; }
+
+  .s-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
   .s-col { display: contents; }
   .s-section-full { grid-column: 1 / -1; }
   @media (max-width: 700px) { .s-grid { grid-template-columns: 1fr; } }
 
   .s-section {
-    background: linear-gradient(160deg, rgba(255,255,255,0.035), rgba(255,255,255,0.018));
-    border: 1px solid rgba(255,255,255,0.08);
+    background: var(--card);
+    border: 1px solid var(--border);
     border-radius: 14px;
     overflow: hidden;
-    margin-bottom: 0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
   }
+  .s-section-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 18px 13px;
+    border-bottom: 1px solid var(--border);
+  }
+  .s-section-icon {
+    width: 30px; height: 30px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .s-section-icon svg { width: 15px; height: 15px; }
+  .s-section-icon.blue  { background: rgba(129,140,248,0.12); color: var(--accent); }
+  .s-section-icon.green { background: rgba(52,211,153,0.10); color: #34d399; }
+  .s-section-icon.red   { background: rgba(255,107,138,0.10); color: var(--red); }
+  .s-section-icon.yellow{ background: rgba(251,191,36,0.10);  color: var(--yellow); }
   .s-section-title {
-    font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
-    text-transform: uppercase; color: var(--accent);
-    opacity: 0.7;
-    padding: 11px 16px 10px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: 13px; font-weight: 650; color: var(--text); letter-spacing: 0;
+    text-transform: none;
   }
+  .s-section-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
   .s-row {
     display: flex; align-items: center; gap: 16px;
-    padding: 13px 16px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    min-height: 50px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    min-height: 48px;
     transition: background 120ms;
   }
   .s-row:last-child { border-bottom: none; }
-  .s-row:hover { background: rgba(255,255,255,0.025); }
+  .s-row:hover { background: rgba(255,255,255,0.02); }
   .s-row-left { flex: 1; min-width: 0; }
   .s-row-label { font-size: 13px; font-weight: 500; color: var(--text); }
   .s-row-desc  { font-size: 11px; color: var(--text3); margin-top: 2px; line-height: 1.4; }
@@ -1359,14 +1375,11 @@
   .s-row.s-expandable { cursor: pointer; user-select: none; }
   .s-chevron { color: var(--text3); transition: transform 220ms ease; flex-shrink: 0; }
   .s-row.open .s-chevron { transform: rotate(180deg); }
-  .s-expand-body {
-    overflow: hidden; max-height: 0;
-    transition: max-height 280ms ease;
-  }
+  .s-expand-body { overflow: hidden; max-height: 0; transition: max-height 280ms ease; }
   .s-expand-body.open { max-height: 520px; }
   .s-expand-inner {
-    padding: 14px 16px 16px;
-    border-top: 1px solid rgba(255,255,255,0.05);
+    padding: 14px 18px 16px;
+    border-top: 1px solid var(--border);
   }
   .s-profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
 
@@ -5450,12 +5463,19 @@
     <!-- ===== SETTINGS ===== -->
 
     <div id="tab-ibkr" class="tab-content">
+    <div class="s-page-header">
+      <h2>Settings</h2>
+      <p>Manage your account, security, and data preferences.</p>
+    </div>
     <div class="s-grid">
     <div class="s-col" style="display:contents">
 
       <!-- Account -->
       <div class="s-section">
-        <div class="s-section-title" data-i18n="set_grp_account">Account</div>
+        <div class="s-section-header">
+          <div class="s-section-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+          <div><div class="s-section-title" data-i18n="set_grp_account">Account</div><div class="s-section-sub">Name, display name, email</div></div>
+        </div>
         <div class="s-row" style="flex-direction:column;align-items:stretch;min-height:0;padding:16px;">
           <div class="s-profile-grid">
             <div class="profile-field">
@@ -5483,7 +5503,10 @@
 
       <!-- Preferences -->
       <div class="s-section">
-        <div class="s-section-title" data-i18n="set_grp_prefs">Preferences</div>
+        <div class="s-section-header">
+          <div class="s-section-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="9" cy="6" r="2" fill="currentColor" opacity="0.5"/><circle cx="15" cy="12" r="2" fill="currentColor" opacity="0.5"/><circle cx="9" cy="18" r="2" fill="currentColor" opacity="0.5"/></svg></div>
+          <div><div class="s-section-title" data-i18n="set_grp_prefs">Preferences</div><div class="s-section-sub">Language and display</div></div>
+        </div>
         <div class="s-row">
           <div class="s-row-left">
             <div class="s-row-label" data-i18n="settings_lang">Language</div>
@@ -5499,7 +5522,10 @@
 
       <!-- Security -->
       <div class="s-section">
-        <div class="s-section-title" data-i18n="set_security">Security</div>
+        <div class="s-section-header">
+          <div class="s-section-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+          <div><div class="s-section-title" data-i18n="set_security">Security</div><div class="s-section-sub">PIN, 2FA, password</div></div>
+        </div>
         <div class="s-row">
           <div class="s-row-left"><div class="s-row-label">PIN</div></div>
           <div class="s-row-ctrl" style="gap:6px;font-size:12px;color:var(--text3);">
@@ -5520,7 +5546,7 @@
         </div>
         <div id="totp-setup-area" style="display:none;padding:14px 16px;border-top:1px solid var(--border);"></div>
         <div class="s-row" style="flex-direction:column;align-items:stretch;min-height:0;padding:16px;gap:10px;border-top:1px solid var(--border);">
-          <div class="s-section-title" style="padding:0 0 8px;margin:0;border:none;">Password</div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:var(--text3);padding-bottom:8px;">Password</div>
           <div class="s-profile-grid">
             <div class="profile-field">
               <label class="profile-label">New Password</label>
@@ -5540,7 +5566,10 @@
 
       <!-- Data Sources -->
       <div class="s-section">
-        <div class="s-section-title" data-i18n="set_grp_data">Data Sources</div>
+        <div class="s-section-header">
+          <div class="s-section-icon yellow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></div>
+          <div><div class="s-section-title" data-i18n="set_grp_data">Data Sources</div><div class="s-section-sub">Stocks &amp; crypto market data</div></div>
+        </div>
         <div class="s-row">
           <div class="s-row-left">
             <div class="s-row-label" data-i18n="set_stocks">Stocks</div>
@@ -5579,7 +5608,10 @@
 
       <!-- Import -->
       <div class="s-section s-section-full">
-        <div class="s-section-title" data-i18n="set_grp_import">Import</div>
+        <div class="s-section-header">
+          <div class="s-section-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+          <div><div class="s-section-title" data-i18n="set_grp_import">Import</div><div class="s-section-sub">Broker connection &amp; file import</div></div>
+        </div>
         <div class="s-row s-expandable" id="s-ibkr-row" onclick="toggleExpand('s-ibkr-body','s-ibkr-row')">
           <div class="s-row-left">
             <div class="s-row-label" data-i18n="set_ibkr_sync">Broker Connection</div>
@@ -5674,7 +5706,10 @@
 
       <!-- Export -->
       <div class="s-section s-section-full">
-        <div class="s-section-title" data-i18n="set_export">Export</div>
+        <div class="s-section-header">
+          <div class="s-section-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+          <div><div class="s-section-title" data-i18n="set_export">Export</div><div class="s-section-sub">Download your trade data as CSV</div></div>
+        </div>
         <div class="s-row">
           <div class="s-row-left">
             <div class="s-row-label" data-i18n="set_export">Export Data</div>
