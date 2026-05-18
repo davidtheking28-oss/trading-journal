@@ -6824,12 +6824,15 @@ async function _onAuthSuccess(user) {
   document.getElementById('auth-overlay').style.display = 'none';
   await Promise.all([loadDB(), loadUserSettings()]);
 
-  // Show API key fields only to admin
+  // Show admin-only UI elements
   const isAdmin = user.id === ADMIN_ID;
   const aiKey = document.getElementById('ai-key-section');
   const fhKey = document.getElementById('finnhub-key-section');
   if (aiKey) aiKey.style.display = isAdmin ? '' : 'none';
   if (fhKey) fhKey.style.display = isAdmin ? '' : 'none';
+  document.querySelectorAll('.ai-tab-btn, .tnav-btn').forEach(btn => {
+    if (btn.getAttribute('onclick')?.includes("'ai'")) btn.style.display = isAdmin ? '' : 'none';
+  });
   // Post-load UI setup
   initFilters();
   applyPrivacy();
