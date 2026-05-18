@@ -5950,11 +5950,7 @@
             <button id="inv-cur-usd" class="inv-cur-opt active" onclick="invSetCurrency('$')">$</button>
             <button id="inv-cur-ils" class="inv-cur-opt" onclick="invSetCurrency('₪')">₪</button>
           </div>
-          <span id="inv-portfolio-total-display" style="font-size:18px;font-weight:700;color:var(--text);min-width:110px;">—</span>
-          <input type="hidden" id="inv-portfolio-total">
-          <div style="width:1px;height:28px;background:rgba(255,255,255,0.08);margin:0 4px;"></div>
-          <label data-i18n="inv_cash_label" style="font-size:12px;">Cash</label>
-          <input type="number" id="inv-cash" placeholder="0" min="0" step="any" style="width:110px;" oninput="invRecalc();invAutoSaveCash()">
+          <input type="number" id="inv-portfolio-total" placeholder="100000" min="0" step="any" oninput="invRecalc();invAutoSaveTotal()">
           <div class="inv-total-allocated"><span data-i18n="inv_allocated">Allocated:</span> <span id="inv-allocated-pct">0%</span></div>
         </div>
 
@@ -13327,9 +13323,8 @@ async function invLoadFromDB() {
 function invSaveData(data) {
   _invData = data;
   if (!_currentUser) return;
-  const cash = +(localStorage.getItem('inv_cash')) || 0;
   _sb.from('investments').upsert(
-    { user_id: _currentUser.id, holdings: data.holdings || [], deposits: data.deposits || [], currency: invGetCurrency(), cash },
+    { user_id: _currentUser.id, holdings: data.holdings || [], deposits: data.deposits || [], currency: invGetCurrency() },
     { onConflict: 'user_id' }
   ).then(() => {}).catch(() => {});
 }
@@ -13340,8 +13335,8 @@ async function invInit() {
   document.getElementById('inv-cur-usd')?.classList.toggle('active', cur === '$');
   document.getElementById('inv-cur-ils')?.classList.toggle('active', cur === '₪');
   invSyncPnlBtn();
-  const cashEl = document.getElementById('inv-cash');
-  if (cashEl) cashEl.value = localStorage.getItem('inv_cash') || '';
+  const totalEl = document.getElementById('inv-portfolio-total');
+  if (totalEl) totalEl.value = data.portfolioTotal || '';
   const dl = document.getElementById('inv-sym-list');
   if (dl) dl.innerHTML = Object.keys(SECTOR_MAP).filter(s => !symIsCrypto(s)).map(s => `<option value="${s}">`).join('');
   invRenderRows(data.holdings || []);
@@ -13420,14 +13415,8 @@ function invRecalc() {
     rowData.push({ i: +row.dataset.idx, cat, value, cost, pnlAmt, pnlPct });
   });
 
-  // Total portfolio = holdings market value + cash
-  const cash = +(document.getElementById('inv-cash')?.value) || 0;
-  const totalPortfolio = totalCurrentValue + cash;
-  const ptDisplay = document.getElementById('inv-portfolio-total-display');
-  const ptHidden  = document.getElementById('inv-portfolio-total');
-  const dispCur = invGetCurrency();
-  if (ptDisplay) ptDisplay.textContent = totalPortfolio > 0 ? dispCur + totalPortfolio.toLocaleString('en-US', {maximumFractionDigits:0}) : '—';
-  if (ptHidden)  ptHidden.value = totalPortfolio > 0 ? totalPortfolio.toFixed(2) : '';
+  const portfolioTotal = +(document.getElementById('inv-portfolio-total')?.value) || 0;
+  const cash = Math.max(0, portfolioTotal - totalCurrentValue);
 
   // Pass 2: render per-row display (pct now uses totalCost as denominator)
   const cur = invGetCurrency();
@@ -13505,7 +13494,7 @@ function invRecalc() {
     remEl.style.color = over ? 'var(--red)' : 'var(--green)';
   });
 
-  invUpdateDonut(byCat, totalCost, cash);
+  invUpdateDonut(byCat, portfolioTotal, cash);
   invRenderDeposits(invLoad().deposits || [], totalCurrentValue);
 
   // Summary bar
@@ -13737,21 +13726,16 @@ function invAutoSaveTotal() {
   invSaveData(data);
   _saveUserSettings({ portfolio_total: val ? +val : null });
 }
-function invAutoSaveCash() {
-  const val = +(document.getElementById('inv-cash')?.value) || 0;
-  localStorage.setItem('inv_cash', val);
-  invSaveData(invLoad());
-}
 
-function invUpdateDonut(byCat, totalCost, cash = 0) {
+
+function invUpdateDonut(byCat, portfolioTotal, cash = 0) {
   const C = 314.159;
-  const base = totalCost + cash;
   const pcts = {
-    blue:   base > 0 ? byCat.blue   / base * 100 : 0,
-    green:  base > 0 ? byCat.green  / base * 100 : 0,
-    yellow: base > 0 ? byCat.yellow / base * 100 : 0,
+    blue:   portfolioTotal > 0 ? byCat.blue   / portfolioTotal * 100 : 0,
+    green:  portfolioTotal > 0 ? byCat.green  / portfolioTotal * 100 : 0,
+    yellow: portfolioTotal > 0 ? byCat.yellow / portfolioTotal * 100 : 0,
   };
-  pcts.cash = base > 0 ? cash / base * 100 : 0;
+  pcts.cash = portfolioTotal > 0 ? cash / portfolioTotal * 100 : 0;
   const totalAllocated = pcts.blue + pcts.green + pcts.yellow;
 
   const order = ['blue', 'green', 'yellow', 'cash'];
