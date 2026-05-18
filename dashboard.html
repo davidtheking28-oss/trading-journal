@@ -5950,7 +5950,11 @@
             <button id="inv-cur-usd" class="inv-cur-opt active" onclick="invSetCurrency('$')">$</button>
             <button id="inv-cur-ils" class="inv-cur-opt" onclick="invSetCurrency('₪')">₪</button>
           </div>
-          <input type="number" id="inv-portfolio-total" placeholder="100000" min="0" step="any" oninput="invRecalc();invAutoSaveTotal()">
+          <span id="inv-portfolio-total-display" style="font-size:18px;font-weight:700;color:var(--text);min-width:110px;">—</span>
+          <input type="hidden" id="inv-portfolio-total">
+          <div style="width:1px;height:28px;background:rgba(255,255,255,0.08);margin:0 4px;"></div>
+          <label data-i18n="inv_cash_label" style="font-size:12px;">Cash</label>
+          <input type="number" id="inv-cash" placeholder="0" min="0" step="any" style="width:110px;" oninput="invRecalc();invAutoSaveCash()">
           <div class="inv-total-allocated"><span data-i18n="inv_allocated">Allocated:</span> <span id="inv-allocated-pct">0%</span></div>
         </div>
 
@@ -8743,7 +8747,7 @@ const LANG_STRINGS = {
     inv_add_holding:'+ Add Holding', inv_save:'💾 Save',
     inv_deposits:'Monthly Deposits', inv_add_deposit:'+ Add Deposit',
     inv_total_dep:'Total Deposited', inv_portfolio_now:'Portfolio Value Now',
-    inv_pnl:'P&L vs Deposits', inv_unrealized:'Unrealized P&L', inv_refresh_prices:'Refresh Prices', inv_over:'Exceeded', inv_overby:'Exceeded by', inv_free:'Available', inv_saved:'Portfolio saved ✓', inv_sum_invested:'Total Invested', inv_sum_value:'Current Value', inv_sum_pnl:'Unrealized P&L', inv_sum_updated:'Prices updated', inv_just_now:'just now', inv_dep_month:'Month', inv_dep_amount:'Deposit',
+    inv_pnl:'P&L vs Deposits', inv_unrealized:'Unrealized P&L', inv_refresh_prices:'Refresh Prices', inv_over:'Exceeded', inv_overby:'Exceeded by', inv_free:'Available', inv_saved:'Portfolio saved ✓', inv_cash_label:'Cash', inv_sum_invested:'Total Invested', inv_sum_value:'Current Value', inv_sum_pnl:'Unrealized P&L', inv_sum_updated:'Prices updated', inv_just_now:'just now', inv_dep_month:'Month', inv_dep_amount:'Deposit',
     inv_dep_cumulative:'Cumulative', inv_cash:'Cash',
     inv_legend_blue:'Blue Chips', inv_legend_green:'Growth', inv_legend_yellow:'Speculative',
     missed_title:'Missed Opportunities', missed_symbol:'Symbol',
@@ -8857,7 +8861,7 @@ const LANG_STRINGS = {
     inv_add_holding:'+ הוסף אחזקה', inv_save:'💾 שמור',
     inv_deposits:'הפקדות חודשיות', inv_add_deposit:'+ הוסף הפקדה',
     inv_total_dep:'סה"כ הופקד', inv_portfolio_now:'שווי תיק כעת',
-    inv_pnl:'רווח/הפסד vs הפקדות', inv_unrealized:'רווח לא ממומש', inv_refresh_prices:'רענן מחירים', inv_over:'חרגת', inv_overby:'חרגת ב-', inv_free:'פנוי', inv_saved:'תיק ההשקעות נשמר ✓', inv_sum_invested:'סה"כ הושקע', inv_sum_value:'שווי נוכחי', inv_sum_pnl:'רווח לא ממומש', inv_sum_updated:'מחירים עודכנו', inv_just_now:'הרגע', inv_dep_month:'חודש', inv_dep_amount:'הפקדה',
+    inv_pnl:'רווח/הפסד vs הפקדות', inv_unrealized:'רווח לא ממומש', inv_refresh_prices:'רענן מחירים', inv_over:'חרגת', inv_overby:'חרגת ב-', inv_free:'פנוי', inv_saved:'תיק ההשקעות נשמר ✓', inv_cash_label:'מזומן', inv_sum_invested:'סה"כ הושקע', inv_sum_value:'שווי נוכחי', inv_sum_pnl:'רווח לא ממומש', inv_sum_updated:'מחירים עודכנו', inv_just_now:'הרגע', inv_dep_month:'חודש', inv_dep_amount:'הפקדה',
     inv_dep_cumulative:'מצטבר', inv_cash:'מזומן',
     inv_legend_blue:'כחולות', inv_legend_green:'ירוקות', inv_legend_yellow:'צהובות',
     missed_title:'הזדמנויות שפוספסו', missed_symbol:'סימבול',
@@ -13334,8 +13338,8 @@ async function invInit() {
   document.getElementById('inv-cur-usd')?.classList.toggle('active', cur === '$');
   document.getElementById('inv-cur-ils')?.classList.toggle('active', cur === '₪');
   invSyncPnlBtn();
-  const totalEl = document.getElementById('inv-portfolio-total');
-  if (totalEl) totalEl.value = data.portfolioTotal || '';
+  const cashEl = document.getElementById('inv-cash');
+  if (cashEl) cashEl.value = localStorage.getItem('inv_cash') || '';
   const dl = document.getElementById('inv-sym-list');
   if (dl) dl.innerHTML = Object.keys(SECTOR_MAP).filter(s => !symIsCrypto(s)).map(s => `<option value="${s}">`).join('');
   invRenderRows(data.holdings || []);
@@ -13414,11 +13418,14 @@ function invRecalc() {
     rowData.push({ i: +row.dataset.idx, cat, value, cost, pnlAmt, pnlPct });
   });
 
-  // Auto-sync portfolio total field to current market value
-  if (totalCurrentValue > 0) {
-    const ptEl = document.getElementById('inv-portfolio-total');
-    if (ptEl) ptEl.value = totalCurrentValue.toFixed(2);
-  }
+  // Total portfolio = holdings market value + cash
+  const cash = +(document.getElementById('inv-cash')?.value) || 0;
+  const totalPortfolio = totalCurrentValue + cash;
+  const ptDisplay = document.getElementById('inv-portfolio-total-display');
+  const ptHidden  = document.getElementById('inv-portfolio-total');
+  const dispCur = invGetCurrency();
+  if (ptDisplay) ptDisplay.textContent = totalPortfolio > 0 ? dispCur + totalPortfolio.toLocaleString('en-US', {maximumFractionDigits:0}) : '—';
+  if (ptHidden)  ptHidden.value = totalPortfolio > 0 ? totalPortfolio.toFixed(2) : '';
 
   // Pass 2: render per-row display (pct now uses totalCost as denominator)
   const cur = invGetCurrency();
@@ -13496,7 +13503,7 @@ function invRecalc() {
     remEl.style.color = over ? 'var(--red)' : 'var(--green)';
   });
 
-  invUpdateDonut(byCat, totalCost);
+  invUpdateDonut(byCat, totalCost, cash);
   invRenderDeposits(invLoad().deposits || [], totalCurrentValue);
 
   // Summary bar
@@ -13728,15 +13735,20 @@ function invAutoSaveTotal() {
   invSaveData(data);
   _saveUserSettings({ portfolio_total: val ? +val : null });
 }
+function invAutoSaveCash() {
+  const val = +(document.getElementById('inv-cash')?.value) || 0;
+  localStorage.setItem('inv_cash', val);
+}
 
-function invUpdateDonut(byCat, portfolioTotal) {
+function invUpdateDonut(byCat, totalCost, cash = 0) {
   const C = 314.159;
+  const base = totalCost + cash;
   const pcts = {
-    blue:   portfolioTotal > 0 ? byCat.blue   / portfolioTotal * 100 : 0,
-    green:  portfolioTotal > 0 ? byCat.green  / portfolioTotal * 100 : 0,
-    yellow: portfolioTotal > 0 ? byCat.yellow / portfolioTotal * 100 : 0,
+    blue:   base > 0 ? byCat.blue   / base * 100 : 0,
+    green:  base > 0 ? byCat.green  / base * 100 : 0,
+    yellow: base > 0 ? byCat.yellow / base * 100 : 0,
   };
-  pcts.cash = Math.max(0, 100 - pcts.blue - pcts.green - pcts.yellow);
+  pcts.cash = base > 0 ? cash / base * 100 : 0;
   const totalAllocated = pcts.blue + pcts.green + pcts.yellow;
 
   const order = ['blue', 'green', 'yellow', 'cash'];
