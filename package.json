@@ -1,0 +1,13 @@
+{
+    "name": "trading-journal",
+    "version": "2.0.0",
+    "description": "Personal trading journal with performance analytics",
+    "type": "module",
+    "scripts": {
+          "dev": "vite",
+          "build": "vite build",
+          "preview": "vite preview"
+    },
+    "dependencies": {},
+    "devDependencies": {}
+}
