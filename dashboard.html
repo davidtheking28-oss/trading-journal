@@ -3513,6 +3513,17 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   }
   .inv-del-btn:hover { color: var(--red); background: rgba(239,68,68,0.1); }
   .inv-buy-btn { display:none; }
+  .inv-edit-btn {
+    background: none; border: none; color: rgba(255,255,255,0.25); cursor: pointer;
+    padding: 4px 6px; border-radius: 5px; transition: all 0.15s; vertical-align: middle;
+  }
+  .inv-edit-btn:hover { color: var(--accent); background: rgba(129,140,248,0.1); }
+  .inv-lock-btn {
+    background: none; border: none; color: var(--green); cursor: pointer;
+    padding: 4px 6px; border-radius: 5px; transition: all 0.15s; vertical-align: middle;
+  }
+  .inv-lock-btn:hover { background: rgba(63,185,80,0.1); }
+  .inv-row-edit td input:not([type=hidden]), .inv-row-edit td select { border-color: rgba(129,140,248,0.3) !important; }
   .inv-sym-chip {
     display: inline-block; font-family: monospace; font-weight: 800; font-size: 13px;
     color: var(--accent); letter-spacing: 0.5px; padding: 3px 10px;
@@ -13712,7 +13723,8 @@ async function invLoadFromDB() {
     .eq('user_id', _currentUser.id)
     .single();
   if (data) {
-    _invData = { portfolioTotal, holdings: data.holdings || [], deposits: data.deposits || [] };
+    const holdings = (data.holdings || []).map(h => ({ ...h, locked: h.locked !== false ? true : false }));
+    _invData = { portfolioTotal, holdings, deposits: data.deposits || [] };
     if (data.currency) localStorage.setItem('inv_currency', data.currency);
   } else {
     const local = invLoad();
@@ -13756,42 +13768,42 @@ function invRenderRows(holdings) {
     tbody.innerHTML = `<tr><td colspan="12" class="inv-empty">אין אחזקות — לחץ "+ הוסף אחזקה"</td></tr>`;
     return;
   }
-  tbody.innerHTML = holdings.map((h, i) => `
-    <tr data-idx="${i}">
-      <td ${h.symbol ? `onclick="invToggleBuyRow(${i})" style="cursor:pointer"` : ''}>
-        ${h.symbol
-          ? `<input type="hidden" value="${h.symbol}"><span class="inv-sym-chip">${h.symbol}</span>`
-          : `<input class="inv-sym-input" type="text" value="" placeholder="AAPL" list="inv-sym-list" oninput="this.value=this.value.toUpperCase();invRecalc();invAutoSector(${i});invAutoSave()">`
-        }
-      </td>
-      <td><input class="inv-sector-input" type="text" value="${h.sector||''}" placeholder="טכנולוגיה" data-sector-idx="${i}" ${h.symbol?'readonly':'oninput="invAutoSave()"'}></td>
+  tbody.innerHTML = holdings.map((h, i) => {
+    const locked = h.locked !== false;
+    const ro = locked ? 'disabled' : '';
+    const symCell = locked
+      ? `<input type="hidden" value="${h.symbol||''}"><span class="inv-sym-chip">${h.symbol||'—'}</span>`
+      : `<input class="inv-sym-input" type="text" value="${h.symbol||''}" placeholder="AAPL" list="inv-sym-list" oninput="this.value=this.value.toUpperCase();invRecalc();invAutoSector(${i});">`;
+    return `
+    <tr data-idx="${i}" class="${locked?'inv-row-locked':'inv-row-edit'}">
+      <td ${locked&&h.symbol?`onclick="invToggleBuyRow(${i})" style="cursor:pointer"`:''}>${symCell}</td>
+      <td><input class="inv-sector-input" type="text" value="${h.sector||''}" placeholder="טכנולוגיה" data-sector-idx="${i}" ${ro} ${locked?'':'oninput="invAutoSave()"'}></td>
       <td>
-        <select class="inv-cat-sel" ${h.symbol?'disabled':''} onchange="invRecalc();invAutoSave()">
+        <select class="inv-cat-sel" ${ro} onchange="invRecalc();${locked?'':'invAutoSave()'}">
           <option value="">—</option>
           <option value="blue" ${h.cat==='blue'?'selected':''}>🔵 Blue Chip</option>
           <option value="green" ${h.cat==='green'?'selected':''}>🟢 Growth</option>
           <option value="yellow" ${h.cat==='yellow'?'selected':''}>🟡 Speculative</option>
         </select>
       </td>
-      <td><input type="number" value="${h.entryShares||''}" placeholder="0" min="0" step="any" ${h.symbol?'readonly':'oninput="invRecalc();invAutoSave()"'}></td>
-      <td><input type="number" value="${h.entryPrice||''}" placeholder="0.00" min="0" step="any" ${h.symbol?'readonly':'oninput="invRecalc();invAutoSave()"'}></td>
-      <td><input type="number" value="${h.currentPrice||''}" placeholder="0.00" min="0" step="any" ${h.symbol?'readonly':'oninput="invRecalc();invAutoSave()"'}></td>
+      <td><input type="number" value="${h.entryShares||''}" placeholder="0" min="0" step="any" ${ro} ${locked?'':'oninput="invRecalc();invAutoSave()"'}></td>
+      <td><input type="number" value="${h.entryPrice||''}" placeholder="0.00" min="0" step="any" ${ro} ${locked?'':'oninput="invRecalc();invAutoSave()"'}></td>
+      <td><input type="number" value="${h.currentPrice||''}" placeholder="0.00" min="0" step="any" ${ro} ${locked?'':'oninput="invRecalc();invAutoSave()"'}></td>
       <td><span class="inv-avg-label" id="inv-avg-${i}">—</span></td>
       <td><span class="inv-value-label" id="inv-val-${i}">—</span></td>
       <td><span class="inv-pnl-label" id="inv-pnl-${i}">—</span></td>
-      <td>
-        <div class="inv-pct-bar">
-          <div class="inv-pct-fill" id="inv-bar-${i}" style="width:0%"></div>
-          <span class="inv-pct-label" id="inv-pct-${i}">0%</span>
-        </div>
-      </td>
+      <td><div class="inv-pct-bar"><div class="inv-pct-fill" id="inv-bar-${i}" style="width:0%"></div><span class="inv-pct-label" id="inv-pct-${i}">0%</span></div></td>
       <td><span class="inv-cat-rem" id="inv-catrem-${i}">—</span></td>
       <td style="white-space:nowrap">
-        <button class="inv-buy-btn" onclick="invToggleBuyRow(${i})" title="Add purchase">+</button>
+        ${locked
+          ? `<button class="inv-edit-btn" onclick="invEditRow(${i})" title="ערוך"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`
+          : `<button class="inv-lock-btn" onclick="invLockRow(${i})" title="שמור"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>`
+        }
+        ${locked ? `<button class="inv-buy-btn" onclick="invToggleBuyRow(${i})" title="הוסף רכישה">+</button>` : ''}
         <button class="inv-del-btn" onclick="invDeleteRow(${i})">×</button>
       </td>
-    </tr>
-  `).join('');
+    </tr>`;
+  }).join('');
   invRecalc();
 }
 
@@ -13961,9 +13973,19 @@ function invGetCurrentData() {
   };
 }
 
+function invEditRow(i) {
+  const data = invGetCurrentData();
+  if (data.holdings[i]) { data.holdings[i].locked = false; _invData = data; invRenderRows(data.holdings); }
+}
+
+function invLockRow(i) {
+  const data = invGetCurrentData();
+  if (data.holdings[i]) { data.holdings[i].locked = true; invSaveData(data); invRenderRows(data.holdings); invRecalc(); }
+}
+
 function invAddRow() {
   const data = invGetCurrentData();
-  data.holdings.push({ symbol:'', entryShares:0, entryPrice:0 });
+  data.holdings.push({ symbol:'', entryShares:0, entryPrice:0, locked: false });
   invRenderRows(data.holdings);
   const tbody = document.getElementById('inv-tbody');
   if (tbody) {
