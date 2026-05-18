@@ -13309,12 +13309,13 @@ async function invLoadFromDB() {
     ? String(_userSettings.portfolio_total)
     : (invLoad().portfolioTotal || '');
   const { data } = await _sb.from('investments')
-    .select('holdings, deposits, currency')
+    .select('holdings, deposits, currency, cash')
     .eq('user_id', _currentUser.id)
     .single();
   if (data) {
     _invData = { portfolioTotal, holdings: data.holdings || [], deposits: data.deposits || [] };
     if (data.currency) localStorage.setItem('inv_currency', data.currency);
+    if (data.cash != null) localStorage.setItem('inv_cash', data.cash);
   } else {
     const local = invLoad();
     _invData = { portfolioTotal, holdings: local.holdings || [], deposits: local.deposits || [] };
@@ -13326,8 +13327,9 @@ async function invLoadFromDB() {
 function invSaveData(data) {
   _invData = data;
   if (!_currentUser) return;
+  const cash = +(localStorage.getItem('inv_cash')) || 0;
   _sb.from('investments').upsert(
-    { user_id: _currentUser.id, holdings: data.holdings || [], deposits: data.deposits || [], currency: invGetCurrency() },
+    { user_id: _currentUser.id, holdings: data.holdings || [], deposits: data.deposits || [], currency: invGetCurrency(), cash },
     { onConflict: 'user_id' }
   ).then(() => {}).catch(() => {});
 }
@@ -13738,6 +13740,7 @@ function invAutoSaveTotal() {
 function invAutoSaveCash() {
   const val = +(document.getElementById('inv-cash')?.value) || 0;
   localStorage.setItem('inv_cash', val);
+  invSaveData(invLoad());
 }
 
 function invUpdateDonut(byCat, totalCost, cash = 0) {
