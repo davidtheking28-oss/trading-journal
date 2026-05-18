@@ -13392,127 +13392,124 @@ function invRecalc() {
   const tbody = document.getElementById('inv-tbody');
   if (!tbody) return;
   const rows = tbody.querySelectorAll('tr[data-idx]');
-  const portfolioTotal = +(document.getElementById('inv-portfolio-total')?.value) || 0;
-  let totalAllocated = 0;
-  let totalCurrentValue = 0;
-  let totalUnrealizedPnL = null;
-  const byCat = { blue: 0, green: 0, yellow: 0 };
 
+  // Pass 1: accumulate totals
+  let totalCost = 0, totalCurrentValue = 0, totalUnrealizedPnL = null;
+  const byCat = { blue: 0, green: 0, yellow: 0 };
+  const rowData = [];
   rows.forEach(row => {
-    const i = +row.dataset.idx;
     const inputs = row.querySelectorAll('input');
     const cat          = row.querySelector('.inv-cat-sel')?.value || '';
     const entryShares  = +(inputs[2]?.value) || 0;
     const entryPrice   = +(inputs[3]?.value) || 0;
     const currentPrice = +(inputs[4]?.value) || 0;
-
-    const avgPrice  = entryPrice;
-    const value     = currentPrice > 0 ? entryShares * currentPrice : entryShares * entryPrice;
-    const cost      = entryShares * entryPrice;
-    const pnlAmt    = (currentPrice > 0 && avgPrice > 0) ? (currentPrice - avgPrice) * entryShares : null;
-    const pnlPct    = (pnlAmt !== null && cost > 0) ? (pnlAmt / cost) * 100 : null;
-    const pct       = portfolioTotal > 0 ? (cost / portfolioTotal) * 100 : 0;
-
-    totalAllocated += pct;
+    const value  = currentPrice > 0 ? entryShares * currentPrice : entryShares * entryPrice;
+    const cost   = entryShares * entryPrice;
+    const pnlAmt = (currentPrice > 0 && entryPrice > 0) ? (currentPrice - entryPrice) * entryShares : null;
+    const pnlPct = (pnlAmt !== null && cost > 0) ? (pnlAmt / cost) * 100 : null;
+    totalCost         += cost;
     totalCurrentValue += value;
     if (pnlAmt !== null) totalUnrealizedPnL = (totalUnrealizedPnL || 0) + pnlAmt;
     if (cat && byCat[cat] !== undefined) byCat[cat] += cost;
+    rowData.push({ i: +row.dataset.idx, cat, value, cost, pnlAmt, pnlPct });
+  });
 
+  // Auto-sync portfolio total field to current market value
+  if (totalCurrentValue > 0) {
+    const ptEl = document.getElementById('inv-portfolio-total');
+    if (ptEl) ptEl.value = totalCurrentValue.toFixed(2);
+  }
+
+  // Pass 2: render per-row display (pct now uses totalCost as denominator)
+  const cur = invGetCurrency();
+  const pnlMode = invGetPnlMode();
+  rowData.forEach(({ i, value, cost, pnlAmt, pnlPct }) => {
+    const pct   = totalCost > 0 ? (cost / totalCost) * 100 : 0;
     const avgEl = document.getElementById(`inv-avg-${i}`);
     const valEl = document.getElementById(`inv-val-${i}`);
     const pnlEl = document.getElementById(`inv-pnl-${i}`);
     const barEl = document.getElementById(`inv-bar-${i}`);
     const pctEl = document.getElementById(`inv-pct-${i}`);
-
-    const cur = invGetCurrency();
-    const pnlMode = invGetPnlMode();
-    if (avgEl) avgEl.textContent = avgPrice > 0 ? cur + avgPrice.toFixed(2) : '—';
+    const inputs = tbody.querySelector(`tr[data-idx="${i}"]`)?.querySelectorAll('input');
+    const entryPrice = +(inputs?.[3]?.value) || 0;
+    if (avgEl) avgEl.textContent = entryPrice > 0 ? cur + entryPrice.toFixed(2) : '—';
     if (valEl) valEl.textContent = value > 0 ? cur + value.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
     if (pnlEl) {
       if (pnlAmt !== null) {
         const sign = pnlAmt >= 0 ? '+' : '';
-        if (pnlMode === 'amount') {
-          pnlEl.textContent = `${sign}${cur}${Math.abs(pnlAmt).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
-        } else {
-          pnlEl.textContent = `${sign}${pnlPct.toFixed(2)}%`;
-        }
+        pnlEl.textContent = pnlMode === 'amount'
+          ? `${sign}${cur}${Math.abs(pnlAmt).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`
+          : `${sign}${pnlPct.toFixed(2)}%`;
         pnlEl.style.color = pnlAmt >= 0 ? 'var(--green)' : 'var(--red)';
         pnlEl.style.fontWeight = '600';
       } else {
-        pnlEl.textContent = '—';
-        pnlEl.style.color = '';
-        pnlEl.style.fontWeight = '';
+        pnlEl.textContent = '—'; pnlEl.style.color = ''; pnlEl.style.fontWeight = '';
       }
     }
     if (barEl) barEl.style.width = Math.min(pct, 100) + '%';
     if (pctEl) pctEl.textContent = pct > 0 ? pct.toFixed(1) + '%' : '0%';
   });
 
+  // Allocated % = totalCost / totalCurrentValue
   const allocEl = document.getElementById('inv-allocated-pct');
   if (allocEl) {
-    allocEl.textContent = totalAllocated.toFixed(1) + '%';
-    allocEl.style.color = totalAllocated > 100 ? 'var(--red)' : 'var(--accent)';
+    const allocPct = totalCurrentValue > 0 ? (totalCost / totalCurrentValue * 100) : 0;
+    allocEl.textContent = allocPct.toFixed(1) + '%';
+    allocEl.style.color = 'var(--accent)';
   }
 
+  // Allocation bars — based on cost vs totalCost target
+  const c = invGetCurrency();
   Object.entries(ALLOC_TARGETS).forEach(([cat, target]) => {
-    const targetAmt  = portfolioTotal * target;
+    const targetAmt  = totalCost * target;
     const currentAmt = byCat[cat];
-    const currentPct = portfolioTotal > 0 ? (currentAmt / portfolioTotal * 100) : 0;
+    const currentPct = totalCost > 0 ? (currentAmt / totalCost * 100) : 0;
     const remaining  = Math.max(0, targetAmt - currentAmt);
     const over       = currentAmt > targetAmt;
-    const barW       = portfolioTotal > 0 ? Math.min(currentAmt / targetAmt * 100, 100) : 0;
-
+    const barW       = targetAmt > 0 ? Math.min(currentAmt / targetAmt * 100, 100) : 0;
     const barEl = document.getElementById(`alloc-bar-${cat}`);
     const invEl = document.getElementById(`alloc-inv-${cat}`);
     const curEl = document.getElementById(`alloc-cur-${cat}`);
     const remEl = document.getElementById(`alloc-rem-${cat}`);
-    const c = invGetCurrency();
-
     if (barEl) { barEl.style.width = barW + '%'; barEl.style.background = over ? 'var(--red)' : ALLOC_COLORS[cat]; }
     if (invEl) invEl.textContent = currentAmt > 0 ? `${c}${currentAmt.toLocaleString('en-US', {maximumFractionDigits:0})}` : '—';
     if (curEl) { curEl.textContent = currentPct.toFixed(1) + '%'; curEl.style.color = over ? 'var(--red)' : 'var(--text2)'; }
     if (remEl) {
-      if (portfolioTotal === 0) { remEl.textContent = ''; return; }
+      if (totalCost === 0) { remEl.textContent = ''; return; }
       remEl.textContent = over
         ? `${t('inv_overby')} ${c}${(currentAmt - targetAmt).toLocaleString('en-US', {maximumFractionDigits:0})}`
         : `${t('inv_free')}: ${c}${remaining.toLocaleString('en-US', {maximumFractionDigits:0})}`;
       remEl.style.color = over ? 'var(--red)' : 'var(--text3)';
     }
   });
+
   const catRemaining = {};
   Object.entries(ALLOC_TARGETS).forEach(([cat, target]) => {
-    catRemaining[cat] = Math.max(0, portfolioTotal * target - byCat[cat]);
+    catRemaining[cat] = Math.max(0, totalCost * target - byCat[cat]);
   });
-  rows.forEach(row => {
-    const idx = +row.dataset.idx;
-    const cat = row.querySelector('.inv-cat-sel')?.value || '';
-    const remEl = document.getElementById(`inv-catrem-${idx}`);
+  rowData.forEach(({ i, cat }) => {
+    const remEl = document.getElementById(`inv-catrem-${i}`);
     if (!remEl) return;
-    if (!cat || portfolioTotal === 0) { remEl.textContent = '—'; remEl.style.color = ''; return; }
-    const over = byCat[cat] > portfolioTotal * ALLOC_TARGETS[cat];
-    const rem  = catRemaining[cat];
-    remEl.textContent = over ? t('inv_over') : `${invGetCurrency()}${rem.toLocaleString('en-US',{maximumFractionDigits:0})}`;
+    if (!cat || totalCost === 0) { remEl.textContent = '—'; remEl.style.color = ''; return; }
+    const over = byCat[cat] > totalCost * ALLOC_TARGETS[cat];
+    remEl.textContent = over ? t('inv_over') : `${c}${catRemaining[cat].toLocaleString('en-US',{maximumFractionDigits:0})}`;
     remEl.style.color = over ? 'var(--red)' : 'var(--green)';
   });
-  invUpdateDonut(byCat, portfolioTotal);
+
+  invUpdateDonut(byCat, totalCost);
   invRenderDeposits(invLoad().deposits || [], totalCurrentValue);
 
-  let totalCost = 0;
-  rows.forEach(row => {
-    const inputs = row.querySelectorAll('input');
-    totalCost += (+(inputs[2]?.value) || 0) * (+(inputs[3]?.value) || 0);
-  });
-  const cur2   = invGetCurrency();
+  // Summary bar
   const costEl = document.getElementById('inv-sum-cost');
   const valEl2 = document.getElementById('inv-sum-value');
   const pnlEl2 = document.getElementById('inv-sum-pnl');
-  if (costEl) costEl.textContent = totalCost > 0 ? cur2 + totalCost.toLocaleString('en-US',{maximumFractionDigits:0}) : '—';
-  if (valEl2) valEl2.textContent = totalCurrentValue > 0 ? cur2 + totalCurrentValue.toLocaleString('en-US',{maximumFractionDigits:0}) : '—';
+  if (costEl) costEl.textContent = totalCost > 0 ? cur + totalCost.toLocaleString('en-US',{maximumFractionDigits:0}) : '—';
+  if (valEl2) valEl2.textContent = totalCurrentValue > 0 ? cur + totalCurrentValue.toLocaleString('en-US',{maximumFractionDigits:0}) : '—';
   if (pnlEl2) {
     if (totalUnrealizedPnL !== null) {
       const sign = totalUnrealizedPnL >= 0 ? '+' : '';
       const pct  = totalCost > 0 ? (totalUnrealizedPnL / totalCost * 100).toFixed(1) : null;
-      pnlEl2.textContent = `${sign}${cur2}${Math.abs(totalUnrealizedPnL).toLocaleString('en-US',{maximumFractionDigits:0})}${pct !== null ? ` (${sign}${pct}%)` : ''}`;
+      pnlEl2.textContent = `${sign}${cur}${Math.abs(totalUnrealizedPnL).toLocaleString('en-US',{maximumFractionDigits:0})}${pct !== null ? ` (${sign}${pct}%)` : ''}`;
       pnlEl2.style.color = totalUnrealizedPnL >= 0 ? 'var(--green)' : 'var(--red)';
     } else { pnlEl2.textContent = '—'; pnlEl2.style.color = ''; }
   }
