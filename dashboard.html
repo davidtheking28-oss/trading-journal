@@ -3510,6 +3510,19 @@
     font-size: 14px; padding: 4px 6px; border-radius: 5px; transition: all 0.15s;
   }
   .inv-del-btn:hover { color: var(--red); background: rgba(239,68,68,0.1); }
+  .inv-buy-btn {
+    background: none; border: none; color: rgba(79,131,255,0.45); cursor: pointer;
+    font-size: 15px; padding: 4px 5px; border-radius: 5px; transition: all 0.15s; line-height: 1;
+  }
+  .inv-buy-btn:hover { color: var(--accent); background: rgba(79,131,255,0.12); }
+  .inv-buy-row td { background: rgba(79,131,255,0.04); border-bottom: 1px solid rgba(79,131,255,0.1); }
+  .inv-buy-form { display: flex; align-items: center; gap: 8px; padding: 6px 8px; flex-wrap: wrap; }
+  .inv-buy-form label { font-size: 11px; color: var(--text3); white-space: nowrap; }
+  .inv-buy-form input { width: 90px; }
+  .inv-buy-confirm { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 5px 14px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .inv-buy-confirm:hover { opacity: 0.85; }
+  .inv-buy-cancel { background: none; border: 1px solid rgba(255,255,255,0.1); color: var(--text3); border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
+  .inv-buy-cancel:hover { border-color: rgba(255,255,255,0.25); color: var(--text2); }
   .inv-actions { display: flex; gap: 10px; justify-content: flex-end; }
   .inv-save-btn {
     background: linear-gradient(135deg, #818cf8, #6366f1);
@@ -13363,7 +13376,10 @@ function invRenderRows(holdings) {
         </div>
       </td>
       <td><span class="inv-cat-rem" id="inv-catrem-${i}">—</span></td>
-      <td><button class="inv-del-btn" onclick="invDeleteRow(${i})">×</button></td>
+      <td style="white-space:nowrap">
+        <button class="inv-buy-btn" onclick="invToggleBuyRow(${i})" title="Add purchase">+</button>
+        <button class="inv-del-btn" onclick="invDeleteRow(${i})">×</button>
+      </td>
     </tr>
   `).join('');
   invRecalc();
@@ -13577,6 +13593,54 @@ function invUpdatePricesTimestamp() {
   if (!el || !_invPricesUpdatedAt) return;
   const mins = Math.round((Date.now() - _invPricesUpdatedAt) / 60000);
   el.textContent = mins === 0 ? t('inv_just_now') : `${mins} min ago`;
+}
+
+function invToggleBuyRow(i) {
+  const tbody = document.getElementById('inv-tbody');
+  const existing = tbody?.querySelector(`.inv-buy-row[data-buy-for="${i}"]`);
+  if (existing) { existing.remove(); return; }
+  const mainRow = tbody?.querySelector(`tr[data-idx="${i}"]`);
+  if (!mainRow) return;
+  const colspan = mainRow.querySelectorAll('td').length;
+  const buyRow = document.createElement('tr');
+  buyRow.className = 'inv-buy-row';
+  buyRow.dataset.buyFor = i;
+  buyRow.innerHTML = `<td colspan="${colspan}">
+    <div class="inv-buy-form">
+      <label>New Qty</label>
+      <input type="number" id="inv-buy-qty-${i}" placeholder="0" min="0" step="any" class="inv-input" style="width:90px;">
+      <label>Price Paid</label>
+      <input type="number" id="inv-buy-price-${i}" placeholder="0.00" min="0" step="any" class="inv-input" style="width:100px;">
+      <button class="inv-buy-confirm" onclick="invConfirmPurchase(${i})">✓ Add</button>
+      <button class="inv-buy-cancel" onclick="this.closest('.inv-buy-row').remove()">Cancel</button>
+    </div>
+  </td>`;
+  mainRow.insertAdjacentElement('afterend', buyRow);
+  buyRow.querySelector('input')?.focus();
+}
+
+function invConfirmPurchase(i) {
+  const newQty   = +(document.getElementById(`inv-buy-qty-${i}`)?.value) || 0;
+  const newPrice = +(document.getElementById(`inv-buy-price-${i}`)?.value) || 0;
+  if (!newQty || !newPrice) { toast('הכנס כמות ומחיר', 'error'); return; }
+
+  const tbody = document.getElementById('inv-tbody');
+  const mainRow = tbody?.querySelector(`tr[data-idx="${i}"]`);
+  if (!mainRow) return;
+  const inputs = mainRow.querySelectorAll('input');
+  const oldQty   = +(inputs[2]?.value) || 0;
+  const oldPrice = +(inputs[3]?.value) || 0;
+
+  const totalQty   = oldQty + newQty;
+  const avgPrice   = totalQty > 0 ? ((oldQty * oldPrice) + (newQty * newPrice)) / totalQty : newPrice;
+
+  if (inputs[2]) inputs[2].value = totalQty;
+  if (inputs[3]) inputs[3].value = avgPrice.toFixed(4);
+
+  tbody.querySelector(`.inv-buy-row[data-buy-for="${i}"]`)?.remove();
+  invRecalc();
+  invAutoSave();
+  toast(`עודכן: ${totalQty} מניות @ ${invGetCurrency()}${avgPrice.toFixed(2)} ממוצע`, 'success');
 }
 
 function invDeleteRow(i) {
