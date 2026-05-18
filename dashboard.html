@@ -3484,6 +3484,8 @@
     width: 100%; box-sizing: border-box; transition: border-color 0.15s, background 0.15s;
   }
   .inv-table input:focus { border-color: var(--accent); outline: none; background: rgba(129,140,248,0.06); }
+  .inv-table input[readonly] { background: transparent; border-color: transparent; cursor: default; pointer-events: none; color: var(--text2); }
+  .inv-table select:disabled { background: transparent; border-color: transparent; cursor: default; pointer-events: none; opacity: 1; color: var(--text2); -webkit-appearance: none; appearance: none; }
   .inv-table select {
     background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
     border-radius: 6px; padding: 5px 4px; font-size: 11px; color: var(--text);
@@ -6334,9 +6336,15 @@
             <input type="number" id="inv-pos-price" class="form-control" placeholder="0.00" min="0" step="any">
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">תאריך הוספה</label>
-          <input type="date" id="inv-pos-date" class="form-control">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="form-group">
+            <label class="form-label">מחיר נוכחי</label>
+            <input type="number" id="inv-pos-current-price" class="form-control" placeholder="0.00" min="0" step="any">
+          </div>
+          <div class="form-group">
+            <label class="form-label">תאריך הוספה</label>
+            <input type="date" id="inv-pos-date" class="form-control">
+          </div>
         </div>
       </div>
       <div id="inv-pos-result" style="display:none;background:rgba(79,131,255,0.08);border:1px solid rgba(79,131,255,0.2);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--text2)"></div>
@@ -13414,18 +13422,18 @@ function invRenderRows(holdings) {
           : `<input class="inv-sym-input" type="text" value="" placeholder="AAPL" list="inv-sym-list" oninput="this.value=this.value.toUpperCase();invRecalc();invAutoSector(${i});invAutoSave()">`
         }
       </td>
-      <td><input class="inv-sector-input" type="text" value="${h.sector||''}" placeholder="טכנולוגיה" data-sector-idx="${i}" oninput="invAutoSave()"></td>
+      <td><input class="inv-sector-input" type="text" value="${h.sector||''}" placeholder="טכנולוגיה" data-sector-idx="${i}" ${h.symbol?'readonly':'oninput="invAutoSave()"'}></td>
       <td>
-        <select class="inv-cat-sel" onchange="invRecalc();invAutoSave()">
+        <select class="inv-cat-sel" ${h.symbol?'disabled':''} onchange="invRecalc();invAutoSave()">
           <option value="">—</option>
           <option value="blue" ${h.cat==='blue'?'selected':''}>🔵 Blue Chip</option>
           <option value="green" ${h.cat==='green'?'selected':''}>🟢 Growth</option>
           <option value="yellow" ${h.cat==='yellow'?'selected':''}>🟡 Speculative</option>
         </select>
       </td>
-      <td><input type="number" value="${h.entryShares||''}" placeholder="0" min="0" step="any" oninput="invRecalc();invAutoSave()"></td>
-      <td><input type="number" value="${h.entryPrice||''}" placeholder="0.00" min="0" step="any" oninput="invRecalc();invAutoSave()"></td>
-      <td><input type="number" value="${h.currentPrice||''}" placeholder="0.00" min="0" step="any" oninput="invRecalc();invAutoSave()"></td>
+      <td><input type="number" value="${h.entryShares||''}" placeholder="0" min="0" step="any" ${h.symbol?'readonly':'oninput="invRecalc();invAutoSave()"'}></td>
+      <td><input type="number" value="${h.entryPrice||''}" placeholder="0.00" min="0" step="any" ${h.symbol?'readonly':'oninput="invRecalc();invAutoSave()"'}></td>
+      <td><input type="number" value="${h.currentPrice||''}" placeholder="0.00" min="0" step="any" ${h.symbol?'readonly':'oninput="invRecalc();invAutoSave()"'}></td>
       <td><span class="inv-avg-label" id="inv-avg-${i}">—</span></td>
       <td><span class="inv-value-label" id="inv-val-${i}">—</span></td>
       <td><span class="inv-pnl-label" id="inv-pnl-${i}">—</span></td>
@@ -13679,8 +13687,10 @@ function invToggleBuyRow(i) {
   const cur = invGetCurrency();
 
   document.getElementById('inv-pos-modal-title').textContent = sym;
+  const currentPrice = +(inputs[4]?.value) || 0;
   document.getElementById('inv-pos-qty').value = '';
   document.getElementById('inv-pos-price').value = '';
+  document.getElementById('inv-pos-current-price').value = currentPrice || '';
   document.getElementById('inv-pos-date').value = new Date().toISOString().slice(0,10);
   document.getElementById('inv-pos-result').style.display = 'none';
   invSetPosMode('buy');
@@ -13748,6 +13758,9 @@ function invConfirmPositionModal() {
   const cur = invGetCurrency();
 
   invClosePositionModal();
+
+  const newCurrentPrice = +(document.getElementById('inv-pos-current-price')?.value) || 0;
+  if (newCurrentPrice && inputs[4]) inputs[4].value = newCurrentPrice;
 
   if (mode === 'buy') {
     const totalQty = oldQty + qty;
