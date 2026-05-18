@@ -3545,7 +3545,6 @@
   .inv-sum-updated .inv-sum-val { font-size: 12px; font-weight: 500; color: var(--text3); }
   .inv-empty {
     text-align: center; padding: 40px 28px; color: var(--text3); font-size: 13px;
-    display: flex; flex-direction: column; align-items: center; gap: 8px;
   }
   /* ── Investment Advisor card ── */
   .inv-advisor-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 0; display: flex; flex-direction: column; gap: 0; position: relative; overflow: hidden; }
@@ -13348,7 +13347,7 @@ function invRenderRows(holdings) {
   const tbody = document.getElementById('inv-tbody');
   if (!tbody) return;
   if (!holdings.length) {
-    tbody.innerHTML = `<tr><td colspan="10" class="inv-empty">אין אחזקות — לחץ "+ הוסף אחזקה"</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="12" class="inv-empty">אין אחזקות — לחץ "+ הוסף אחזקה"</td></tr>`;
     return;
   }
   tbody.innerHTML = holdings.map((h, i) => `
