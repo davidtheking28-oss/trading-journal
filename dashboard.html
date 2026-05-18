@@ -13757,8 +13757,8 @@ function invUpdateDonut(byCat, portfolioTotal, cash = 0) {
     green:  portfolioTotal > 0 ? byCat.green  / portfolioTotal * 100 : 0,
     yellow: portfolioTotal > 0 ? byCat.yellow / portfolioTotal * 100 : 0,
   };
-  pcts.cash = portfolioTotal > 0 ? cash / portfolioTotal * 100 : 0;
   const totalAllocated = pcts.blue + pcts.green + pcts.yellow;
+  pcts.cash = portfolioTotal > 0 ? Math.max(0, 100 - totalAllocated) : 0;
 
   const order = ['blue', 'green', 'yellow', 'cash'];
   let offset = 0;
