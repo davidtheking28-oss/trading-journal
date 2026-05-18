@@ -13360,7 +13360,7 @@ function invRecalc() {
     totalAllocated += pct;
     totalCurrentValue += value;
     if (pnlAmt !== null) totalUnrealizedPnL = (totalUnrealizedPnL || 0) + pnlAmt;
-    if (cat && byCat[cat] !== undefined) byCat[cat] += value;
+    if (cat && byCat[cat] !== undefined) byCat[cat] += cost;
 
     const avgEl = document.getElementById(`inv-avg-${i}`);
     const valEl = document.getElementById(`inv-val-${i}`);
