@@ -5981,6 +5981,14 @@
                 <span class="inv-alloc-cur" id="alloc-cur-yellow">0%</span>
                 <span class="inv-alloc-remaining" id="alloc-rem-yellow">—</span>
               </div>
+              <div class="inv-alloc-row">
+                <span class="inv-alloc-dot" style="background:#94a3b8"></span>
+                <span class="inv-alloc-label">💵 Cash — Target 5%</span>
+                <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-cash" style="width:0%;background:#94a3b8;"></div></div>
+                <span class="inv-alloc-invested" id="alloc-inv-cash">—</span>
+                <span class="inv-alloc-cur" id="alloc-cur-cash">0%</span>
+                <span class="inv-alloc-remaining" id="alloc-rem-cash">—</span>
+              </div>
             </div>
             <div class="inv-donut-wrap">
               <svg width="180" height="180" viewBox="0 0 130 130">
@@ -13478,6 +13486,28 @@ function invRecalc() {
       remEl.style.color = over ? 'var(--red)' : 'var(--text3)';
     }
   });
+
+  // Cash row
+  const cashTarget = portfolioTotal * 0.05;
+  const cashPct = portfolioTotal > 0 ? (cash / portfolioTotal * 100) : 0;
+  const cashBarW = cashTarget > 0 ? Math.min(cash / cashTarget * 100, 100) : 0;
+  const cashOver = portfolioTotal > 0 && cash > cashTarget;
+  const cashBarEl = document.getElementById('alloc-bar-cash');
+  const cashInvEl = document.getElementById('alloc-inv-cash');
+  const cashCurEl = document.getElementById('alloc-cur-cash');
+  const cashRemEl = document.getElementById('alloc-rem-cash');
+  if (cashBarEl) { cashBarEl.style.width = cashBarW + '%'; cashBarEl.style.background = cashOver ? 'var(--red)' : '#94a3b8'; }
+  if (cashInvEl) cashInvEl.textContent = cash > 0 ? `${c}${cash.toLocaleString('en-US', {maximumFractionDigits:0})}` : '—';
+  if (cashCurEl) { cashCurEl.textContent = cashPct.toFixed(1) + '%'; cashCurEl.style.color = cashOver ? 'var(--red)' : 'var(--text2)'; }
+  if (cashRemEl) {
+    if (portfolioTotal === 0) { cashRemEl.textContent = ''; }
+    else {
+      cashRemEl.textContent = cashOver
+        ? `${t('inv_overby')} ${c}${(cash - cashTarget).toLocaleString('en-US', {maximumFractionDigits:0})}`
+        : `${t('inv_free')}: ${c}${Math.max(0, cashTarget - cash).toLocaleString('en-US', {maximumFractionDigits:0})}`;
+      cashRemEl.style.color = cashOver ? 'var(--red)' : 'var(--text3)';
+    }
+  }
 
   const catRemaining = {};
   Object.entries(ALLOC_TARGETS).forEach(([cat, target]) => {
