@@ -827,12 +827,12 @@
     align-items: center; justify-content: center; gap: 0;
   }
   .fg-score { font-size: 22px; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
-  .fg-score-sub { font-size: 9px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+  .fg-score-sub { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
   .fg-info { display: flex; flex-direction: column; gap: 4px; }
   .fg-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text2); }
   .fg-rating { font-size: 17px; font-weight: 800; line-height: 1.2; }
   .fg-source { font-size: 10px; color: var(--text2); margin-top: 2px; font-weight: 600; }
-  .fg-updated { font-size: 9px; color: var(--text3); }
+  .fg-updated { font-size: 11px; color: var(--text3); }
 
   /* ── Motion Design System ── */
   @keyframes slide-up-fade {
@@ -903,7 +903,7 @@
     display: flex; flex-direction: column; gap: 3px;
   }
   .donut-stat-label {
-    font-size: 9px; color: var(--text2);
+    font-size: 11px; color: var(--text2);
     text-transform: uppercase; letter-spacing: 0.7px; font-weight: 700;
   }
   .donut-stat-value {
@@ -3528,9 +3528,9 @@
   .inv-buy-mode { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--text2); cursor: pointer; padding: 5px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; transition: all 0.15s; }
   .inv-buy-mode.buy-active { background: rgba(52,211,153,0.15); border-color: rgba(52,211,153,0.4); color: #34d399; }
   .inv-buy-mode.sell-active { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.3); color: var(--red); }
-  .inv-buy-confirm { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 5px 14px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .inv-buy-confirm { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 5px 14px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
   .inv-buy-confirm:hover { opacity: 0.85; }
-  .inv-buy-cancel { background: none; border: 1px solid rgba(255,255,255,0.1); color: var(--text3); border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
+  .inv-buy-cancel { background: none; border: 1px solid rgba(255,255,255,0.1); color: var(--text3); border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; transition: all 0.15s; }
   .inv-buy-cancel:hover { border-color: rgba(255,255,255,0.25); color: var(--text2); }
   .inv-actions { display: flex; gap: 10px; justify-content: flex-end; }
   .inv-save-btn {
@@ -4691,7 +4691,7 @@
   .cal-trade-count { font-size: 11px; color: var(--text3); font-weight: 500; }
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr) 110px; gap: 1px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius2); overflow: hidden; }
   .cal-day-hdr { background: #111111 !important; color: var(--text3); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; padding: 9px 8px; text-align: center; }
-  .cal-day-hdr.hdr-week { font-size: 9px; letter-spacing: 0.4px; }
+  .cal-day-hdr.hdr-week { font-size: 11px; letter-spacing: 0.4px; }
   .cal-cell { background: #111111 !important; min-height: 96px; padding: 8px 9px; display: flex; flex-direction: column; gap: 4px; transition: background 0.15s; }
   .cal-cell.weekend { background: #111111 !important; }
   .cal-cell.has-trades { background: #111111 !important; }
@@ -4707,13 +4707,13 @@
   .cal-chip.win { background: rgba(0,209,122,0.12); border: 1px solid rgba(0,209,122,0.2); }
   .cal-chip.loss { background: rgba(255,71,87,0.1); border: 1px solid rgba(255,71,87,0.18); }
   .cal-chip-sym { color: var(--text); font-weight: 700; }
-  .cal-chip-pl { font-size: 9px; font-weight: 700; }
+  .cal-chip-pl { font-size: 11px; font-weight: 700; }
   .cal-chip.win .cal-chip-pl { color: var(--green); }
   .cal-chip.loss .cal-chip-pl { color: var(--red); }
   .cal-day-pl { font-size: 10px; font-weight: 700; margin-top: auto; padding-top: 3px; border-top: 1px solid rgba(255,255,255,0.05); }
   .cal-week-sum { background: #111111 !important; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 8px 6px; min-height: 96px; gap: 3px; border-left: 1px solid rgba(255,255,255,0.04); }
   .cal-week-pl { font-size: 12px; font-weight: 700; }
-  .cal-week-count { font-size: 9px; color: var(--text3); font-weight: 500; margin-top: 1px; }
+  .cal-week-count { font-size: 11px; color: var(--text3); font-weight: 500; margin-top: 1px; }
   .cal-week-empty { font-size: 18px; color: rgba(148,163,184,0.15); }
   .view-toggle-btn { padding: 5px 9px !important; display: inline-flex !important; align-items: center !important; gap: 5px !important; font-size: 11px !important; }
   .view-toggle-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
@@ -6045,7 +6045,7 @@
                 <th data-i18n="inv_col_cur_price">Current Price</th>
                 <th data-i18n="inv_col_avg">Average</th>
                 <th data-i18n="inv_col_value">Value</th>
-                <th><span data-i18n="inv_col_pnl">P&L</span> <button id="inv-pnl-toggle" onclick="invTogglePnlMode()" style="font-size:10px;padding:1px 5px;border-radius:4px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.07);color:var(--text2);cursor:pointer;margin-right:4px;vertical-align:middle;">$</button></th>
+                <th><span data-i18n="inv_col_pnl">P&L</span> <button id="inv-pnl-toggle" onclick="invTogglePnlMode()" style="font-size:11px;padding:4px 8px;border-radius:5px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.07);color:var(--text2);cursor:pointer;margin-right:4px;vertical-align:middle;transition:all 0.15s;">$</button></th>
                 <th data-i18n="inv_col_portfolio_pct">% Portfolio</th>
                 <th data-i18n="inv_col_remaining">Remaining</th>
                 <th></th>
