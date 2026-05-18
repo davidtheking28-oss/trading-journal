@@ -13496,17 +13496,11 @@ function invRecalc() {
   const cashInvEl = document.getElementById('alloc-inv-cash');
   const cashCurEl = document.getElementById('alloc-cur-cash');
   const cashRemEl = document.getElementById('alloc-rem-cash');
-  if (cashBarEl) { cashBarEl.style.width = cashBarW + '%'; cashBarEl.style.background = cashOver ? 'var(--red)' : '#94a3b8'; }
+  if (cashBarEl) { cashBarEl.style.width = cashBarW + '%'; cashBarEl.style.background = '#94a3b8'; }
   if (cashInvEl) cashInvEl.textContent = cash > 0 ? `${c}${cash.toLocaleString('en-US', {maximumFractionDigits:0})}` : '—';
-  if (cashCurEl) { cashCurEl.textContent = cashPct.toFixed(1) + '%'; cashCurEl.style.color = cashOver ? 'var(--red)' : 'var(--text2)'; }
+  if (cashCurEl) { cashCurEl.textContent = cashPct.toFixed(1) + '%'; cashCurEl.style.color = 'var(--text2)'; }
   if (cashRemEl) {
-    if (portfolioTotal === 0) { cashRemEl.textContent = ''; }
-    else {
-      cashRemEl.textContent = cashOver
-        ? `${t('inv_overby')} ${c}${(cash - cashTarget).toLocaleString('en-US', {maximumFractionDigits:0})}`
-        : `${t('inv_free')}: ${c}${Math.max(0, cashTarget - cash).toLocaleString('en-US', {maximumFractionDigits:0})}`;
-      cashRemEl.style.color = cashOver ? 'var(--red)' : 'var(--text3)';
-    }
+    cashRemEl.textContent = '';
   }
 
   const catRemaining = {};
