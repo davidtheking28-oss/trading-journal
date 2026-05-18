@@ -5983,15 +5983,17 @@
         <div class="inv-table-wrap">
           <table class="inv-table">
             <colgroup>
-              <col style="width:7%">  <!-- סימבול -->
-              <col style="width:10%"> <!-- סקטור -->
-              <col style="width:8%">  <!-- קטגוריה -->
-              <col style="width:10%"> <!-- כמות מניות -->
-              <col style="width:10%"> <!-- מחיר כניסה -->
-              <col style="width:8%">  <!-- ממוצע -->
-              <col style="width:9%">  <!-- שווי -->
-              <col style="width:9%">  <!-- % תיק -->
-              <col style="width:14%"> <!-- נותר -->
+              <col style="width:6%">  <!-- סימבול -->
+              <col style="width:9%">  <!-- סקטור -->
+              <col style="width:7%">  <!-- קטגוריה -->
+              <col style="width:7%">  <!-- כמות מניות -->
+              <col style="width:8%">  <!-- מחיר כניסה -->
+              <col style="width:8%">  <!-- מחיר נוכחי -->
+              <col style="width:7%">  <!-- ממוצע -->
+              <col style="width:8%">  <!-- שווי -->
+              <col style="width:10%"> <!-- רווח/הפסד -->
+              <col style="width:8%">  <!-- % תיק -->
+              <col style="width:12%"> <!-- נותר -->
               <col style="width:3%">  <!-- מחק -->
             </colgroup>
             <thead>
@@ -6001,8 +6003,10 @@
                 <th data-i18n="inv_col_category">Category</th>
                 <th>Qty</th>
                 <th>Entry Price</th>
+                <th data-i18n="inv_col_cur_price">Current Price</th>
                 <th data-i18n="inv_col_avg">Average</th>
                 <th data-i18n="inv_col_value">Value</th>
+                <th data-i18n="inv_col_pnl">P&L</th>
                 <th data-i18n="inv_col_portfolio_pct">% Portfolio</th>
                 <th data-i18n="inv_col_remaining">Remaining</th>
                 <th></th>
@@ -6033,6 +6037,7 @@
             <div class="inv-dep-stat"><span class="inv-dep-stat-label" data-i18n="inv_total_dep">Total Deposited</span><span class="inv-dep-stat-val" id="dep-total-val">$0</span></div>
             <div class="inv-dep-stat"><span class="inv-dep-stat-label" data-i18n="inv_portfolio_now">Portfolio Value Now</span><span class="inv-dep-stat-val" id="dep-portfolio-val">—</span></div>
             <div class="inv-dep-stat"><span class="inv-dep-stat-label" data-i18n="inv_pnl">P&L</span><span class="inv-dep-stat-val" id="dep-pnl-val">—</span></div>
+            <div class="inv-dep-stat"><span class="inv-dep-stat-label" data-i18n="inv_unrealized">רווח לא ממומש</span><span class="inv-dep-stat-val" id="dep-unrealized-val">—</span></div>
           </div>
           <div id="dep-list"></div>
         </div>
@@ -8698,7 +8703,7 @@ const LANG_STRINGS = {
     inv_add_holding:'+ Add Holding', inv_save:'💾 Save',
     inv_deposits:'Monthly Deposits', inv_add_deposit:'+ Add Deposit',
     inv_total_dep:'Total Deposited', inv_portfolio_now:'Portfolio Value Now',
-    inv_pnl:'P&L', inv_dep_month:'Month', inv_dep_amount:'Deposit',
+    inv_pnl:'P&L', inv_unrealized:'Unrealized P&L', inv_dep_month:'Month', inv_dep_amount:'Deposit',
     inv_dep_cumulative:'Cumulative', inv_cash:'Cash',
     inv_legend_blue:'Blue Chips', inv_legend_green:'Growth', inv_legend_yellow:'Speculative',
     missed_title:'Missed Opportunities', missed_symbol:'Symbol',
@@ -8812,7 +8817,7 @@ const LANG_STRINGS = {
     inv_add_holding:'+ הוסף אחזקה', inv_save:'💾 שמור',
     inv_deposits:'הפקדות חודשיות', inv_add_deposit:'+ הוסף הפקדה',
     inv_total_dep:'סה"כ הופקד', inv_portfolio_now:'שווי תיק כעת',
-    inv_pnl:'רווח / הפסד', inv_dep_month:'חודש', inv_dep_amount:'הפקדה',
+    inv_pnl:'רווח / הפסד', inv_unrealized:'רווח לא ממומש', inv_dep_month:'חודש', inv_dep_amount:'הפקדה',
     inv_dep_cumulative:'מצטבר', inv_cash:'מזומן',
     inv_legend_blue:'כחולות', inv_legend_green:'ירוקות', inv_legend_yellow:'צהובות',
     missed_title:'הזדמנויות שפוספסו', missed_symbol:'סימבול',
@@ -13306,8 +13311,10 @@ function invRenderRows(holdings) {
       </td>
       <td><input type="number" value="${h.entryShares||''}" placeholder="0" min="0" step="any" oninput="invRecalc();invAutoSave()"></td>
       <td><input type="number" value="${h.entryPrice||''}" placeholder="0.00" min="0" step="any" oninput="invRecalc();invAutoSave()"></td>
+      <td><input type="number" value="${h.currentPrice||''}" placeholder="0.00" min="0" step="any" oninput="invRecalc();invAutoSave()"></td>
       <td><span class="inv-avg-label" id="inv-avg-${i}">—</span></td>
       <td><span class="inv-value-label" id="inv-val-${i}">—</span></td>
+      <td><span class="inv-pnl-label" id="inv-pnl-${i}">—</span></td>
       <td>
         <div class="inv-pct-bar">
           <div class="inv-pct-fill" id="inv-bar-${i}" style="width:0%"></div>
@@ -13330,32 +13337,51 @@ function invRecalc() {
   const rows = tbody.querySelectorAll('tr[data-idx]');
   const portfolioTotal = +(document.getElementById('inv-portfolio-total')?.value) || 0;
   let totalAllocated = 0;
+  let totalCurrentValue = 0;
+  let totalUnrealizedPnL = null;
   const byCat = { blue: 0, green: 0, yellow: 0 };
 
   rows.forEach(row => {
     const i = +row.dataset.idx;
     const inputs = row.querySelectorAll('input');
-    const cat         = row.querySelector('.inv-cat-sel')?.value || '';
-    const entryShares = +(inputs[2]?.value) || 0;
-    const entryPrice  = +(inputs[3]?.value) || 0;
+    const cat          = row.querySelector('.inv-cat-sel')?.value || '';
+    const entryShares  = +(inputs[2]?.value) || 0;
+    const entryPrice   = +(inputs[3]?.value) || 0;
+    const currentPrice = +(inputs[4]?.value) || 0;
 
-    const totalShares = entryShares;
-    const totalCost   = entryShares * entryPrice;
-    const avgPrice    = entryPrice;
-    const value       = totalCost;
-    const pct         = portfolioTotal > 0 ? (value / portfolioTotal) * 100 : 0;
+    const avgPrice  = entryPrice;
+    const value     = currentPrice > 0 ? entryShares * currentPrice : entryShares * entryPrice;
+    const cost      = entryShares * entryPrice;
+    const pnlAmt    = (currentPrice > 0 && avgPrice > 0) ? (currentPrice - avgPrice) * entryShares : null;
+    const pnlPct    = (pnlAmt !== null && cost > 0) ? (pnlAmt / cost) * 100 : null;
+    const pct       = portfolioTotal > 0 ? (value / portfolioTotal) * 100 : 0;
 
     totalAllocated += pct;
+    totalCurrentValue += value;
+    if (pnlAmt !== null) totalUnrealizedPnL = (totalUnrealizedPnL || 0) + pnlAmt;
     if (cat && byCat[cat] !== undefined) byCat[cat] += value;
 
     const avgEl = document.getElementById(`inv-avg-${i}`);
     const valEl = document.getElementById(`inv-val-${i}`);
+    const pnlEl = document.getElementById(`inv-pnl-${i}`);
     const barEl = document.getElementById(`inv-bar-${i}`);
     const pctEl = document.getElementById(`inv-pct-${i}`);
 
     const cur = invGetCurrency();
     if (avgEl) avgEl.textContent = avgPrice > 0 ? cur + avgPrice.toFixed(2) : '—';
     if (valEl) valEl.textContent = value > 0 ? cur + value.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
+    if (pnlEl) {
+      if (pnlAmt !== null) {
+        const sign = pnlAmt >= 0 ? '+' : '';
+        pnlEl.textContent = `${sign}${cur}${Math.abs(pnlAmt).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} (${sign}${pnlPct.toFixed(1)}%)`;
+        pnlEl.style.color = pnlAmt >= 0 ? 'var(--green)' : 'var(--red)';
+        pnlEl.style.fontWeight = '600';
+      } else {
+        pnlEl.textContent = '—';
+        pnlEl.style.color = '';
+        pnlEl.style.fontWeight = '';
+      }
+    }
     if (barEl) barEl.style.width = Math.min(pct, 100) + '%';
     if (pctEl) pctEl.textContent = pct > 0 ? pct.toFixed(1) + '%' : '0%';
   });
@@ -13407,7 +13433,7 @@ function invRecalc() {
     remEl.style.color = over ? 'var(--red)' : 'var(--green)';
   });
   invUpdateDonut(byCat, portfolioTotal);
-  invRenderDeposits(invLoad().deposits || []);
+  invRenderDeposits(invLoad().deposits || [], totalCurrentValue, totalUnrealizedPnL);
 }
 
 function invGetCurrentData() {
@@ -13418,11 +13444,12 @@ function invGetCurrentData() {
     const inputs = row.querySelectorAll('input');
     const cat = row.querySelector('.inv-cat-sel')?.value || '';
     holdings.push({
-      symbol:      (inputs[0]?.value || '').toUpperCase().trim(),
-      sector:      (inputs[1]?.value || '').trim(),
+      symbol:       (inputs[0]?.value || '').toUpperCase().trim(),
+      sector:       (inputs[1]?.value || '').trim(),
       cat,
-      entryShares: +(inputs[2]?.value) || 0,
-      entryPrice:  +(inputs[3]?.value) || 0,
+      entryShares:  +(inputs[2]?.value) || 0,
+      entryPrice:   +(inputs[3]?.value) || 0,
+      currentPrice: +(inputs[4]?.value) || 0,
     });
   });
   return {
@@ -13587,28 +13614,51 @@ function invDeleteDeposit(idx) {
   invRenderDeposits(data.deposits);
 }
 
-function invRenderDeposits(deposits = []) {
+function invRenderDeposits(deposits = [], totalCurrentValue = 0, totalUnrealizedPnL = null) {
   const listEl = document.getElementById('dep-list');
   if (!listEl) return;
-  const portfolioTotal = +(document.getElementById('inv-portfolio-total')?.value) || 0;
   const totalDeposited = deposits.reduce((s, d) => s + (+d.amount || 0), 0);
 
-  const totalEl = document.getElementById('dep-total-val');
-  const portEl  = document.getElementById('dep-portfolio-val');
-  const pnlEl   = document.getElementById('dep-pnl-val');
+  const totalEl      = document.getElementById('dep-total-val');
+  const portEl       = document.getElementById('dep-portfolio-val');
+  const pnlEl        = document.getElementById('dep-pnl-val');
+  const unrealizedEl = document.getElementById('dep-unrealized-val');
 
   const cur = invGetCurrency();
   if (totalEl) totalEl.textContent = cur + totalDeposited.toLocaleString('en-US', { maximumFractionDigits: 0 });
-  if (portEl)  portEl.textContent  = portfolioTotal ? cur + portfolioTotal.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '—';
+  if (portEl)  portEl.textContent  = totalCurrentValue > 0 ? cur + totalCurrentValue.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '—';
   if (pnlEl) {
-    if (portfolioTotal && totalDeposited) {
-      const pnl    = portfolioTotal - totalDeposited;
+    if (totalCurrentValue > 0 && totalDeposited) {
+      const pnl    = totalCurrentValue - totalDeposited;
       const pnlPct = (pnl / totalDeposited * 100).toFixed(1);
       pnlEl.textContent = (pnl >= 0 ? '+' : '') + cur + Math.abs(pnl).toLocaleString('en-US', { maximumFractionDigits: 0 }) + ` (${pnl >= 0 ? '+' : ''}${pnlPct}%)`;
       pnlEl.style.color = pnl >= 0 ? 'var(--green)' : 'var(--red)';
     } else {
       pnlEl.textContent = '—';
       pnlEl.style.color = '';
+    }
+  }
+  if (unrealizedEl) {
+    if (totalUnrealizedPnL !== null) {
+      const totalCost = (() => {
+        const tbody = document.getElementById('inv-tbody');
+        if (!tbody) return 0;
+        let cost = 0;
+        tbody.querySelectorAll('tr[data-idx]').forEach(row => {
+          const inputs = row.querySelectorAll('input');
+          cost += (+(inputs[2]?.value) || 0) * (+(inputs[3]?.value) || 0);
+        });
+        return cost;
+      })();
+      const pnlPct = totalCost > 0 ? (totalUnrealizedPnL / totalCost * 100).toFixed(1) : null;
+      const sign = totalUnrealizedPnL >= 0 ? '+' : '';
+      unrealizedEl.textContent = `${sign}${cur}${Math.abs(totalUnrealizedPnL).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0})}${pnlPct !== null ? ` (${sign}${pnlPct}%)` : ''}`;
+      unrealizedEl.style.color = totalUnrealizedPnL >= 0 ? 'var(--green)' : 'var(--red)';
+      unrealizedEl.style.fontWeight = '700';
+    } else {
+      unrealizedEl.textContent = '—';
+      unrealizedEl.style.color = '';
+      unrealizedEl.style.fontWeight = '';
     }
   }
 
