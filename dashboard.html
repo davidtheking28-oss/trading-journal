@@ -6547,7 +6547,14 @@
       <input id="auth-pass" class="form-control" type="password" placeholder="סיסמה (מינ׳ 8 תווים)"
         style="background:rgba(10,10,10,0.95);border:1px solid rgba(148,163,184,0.12);border-radius:10px;padding:12px 14px;font-size:14px;color:#f1f5f9;"
         autocomplete="current-password"
+        oninput="authPasswordStrength(this.value)"
         onkeydown="if(event.key==='Enter')authSubmit()">
+      <div id="auth-strength" style="display:none;margin-top:-4px;">
+        <div style="height:3px;border-radius:2px;background:rgba(148,163,184,0.1);overflow:hidden;">
+          <div id="auth-strength-bar" style="height:100%;width:0;border-radius:2px;transition:width .3s,background .3s;"></div>
+        </div>
+        <div id="auth-strength-txt" style="font-size:11px;text-align:right;margin-top:3px;"></div>
+      </div>
       <input id="auth-pass2" class="form-control" type="password" placeholder="אימות סיסמה"
         style="display:none;background:rgba(10,10,10,0.95);border:1px solid rgba(148,163,184,0.12);border-radius:10px;padding:12px 14px;font-size:14px;color:#f1f5f9;" autocomplete="new-password"
         onkeydown="if(event.key==='Enter')authSubmit()">
@@ -6586,6 +6593,51 @@
   </div>
 </div>
 
+<!-- ONBOARDING WIZARD -->
+<div id="ob-overlay" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(5,10,22,0.85);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:linear-gradient(145deg,#091525,#0b1e38);border:1px solid rgba(79,131,255,0.18);border-radius:22px;padding:36px 32px 32px;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,.8);position:relative;">
+    <!-- Progress dots -->
+    <div style="display:flex;justify-content:center;gap:8px;margin-bottom:28px;">
+      <div id="ob-dot-1" style="width:8px;height:8px;border-radius:50%;background:var(--accent);transition:background .3s;"></div>
+      <div id="ob-dot-2" style="width:8px;height:8px;border-radius:50%;background:rgba(148,163,184,0.2);transition:background .3s;"></div>
+      <div id="ob-dot-3" style="width:8px;height:8px;border-radius:50%;background:rgba(148,163,184,0.2);transition:background .3s;"></div>
+    </div>
+
+    <!-- Step 1: Welcome -->
+    <div id="ob-step-1">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-size:40px;margin-bottom:12px;">📈</div>
+        <div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;color:var(--text);margin-bottom:8px;">ברוך הבא ל-Trading Journal</div>
+        <div style="font-size:14px;color:var(--text3);line-height:1.6;">יומן מסחר מקצועי — עקוב אחרי העסקאות שלך,<br>נתח ביצועים, וקבל תובנות AI חכמות.</div>
+      </div>
+      <button onclick="onboardingStep(2)" style="width:100%;padding:13px;background:linear-gradient(135deg,#4f83ff,#818cf8);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 20px rgba(79,131,255,0.35);transition:opacity .2s;">נתחיל →</button>
+      <button onclick="onboardingDone()" style="width:100%;margin-top:10px;padding:10px;background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:inherit;">דלג</button>
+    </div>
+
+    <!-- Step 2: Add trade -->
+    <div id="ob-step-2" style="display:none;">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-size:40px;margin-bottom:12px;">➕</div>
+        <div style="font-size:20px;font-weight:800;letter-spacing:-0.5px;color:var(--text);margin-bottom:8px;">הוסף את העסקה הראשונה</div>
+        <div style="font-size:14px;color:var(--text3);line-height:1.6;">לחץ על <strong style="color:var(--text2)">Stocks</strong> או <strong style="color:var(--text2)">Crypto</strong> בתפריט,<br>ואז על כפתור <strong style="color:var(--accent)">+ Add New Trade</strong>.<br>רשום את הכניסה, יציאה וגודל הפוזיציה.</div>
+      </div>
+      <button onclick="onboardingOpenTrade()" style="width:100%;padding:13px;background:linear-gradient(135deg,#4f83ff,#818cf8);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 20px rgba(79,131,255,0.35);transition:opacity .2s;">פתח טופס עסקה</button>
+      <button onclick="onboardingStep(3)" style="width:100%;margin-top:10px;padding:10px;background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:inherit;">הבא →</button>
+    </div>
+
+    <!-- Step 3: API Keys -->
+    <div id="ob-step-3" style="display:none;">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-size:40px;margin-bottom:12px;">🔑</div>
+        <div style="font-size:20px;font-weight:800;letter-spacing:-0.5px;color:var(--text);margin-bottom:8px;">מפתחות API (אופציונלי)</div>
+        <div style="font-size:14px;color:var(--text3);line-height:1.6;">חבר <strong style="color:var(--text2)">Groq AI</strong> לניתוח חכם של עסקאות,<br>ו-<strong style="color:var(--text2)">Finnhub</strong> לנתוני מניות בזמן אמת.<br>אפשר לדלג ולהגדיר אחר כך בהגדרות.</div>
+      </div>
+      <button onclick="onboardingGoSettings()" style="width:100%;padding:13px;background:linear-gradient(135deg,#4f83ff,#818cf8);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 20px rgba(79,131,255,0.35);transition:opacity .2s;">הגדר מפתחות עכשיו</button>
+      <button onclick="onboardingDone()" style="width:100%;margin-top:10px;padding:10px;background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:inherit;">אחר כך</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast-container" id="toasts"></div>
 
 <script>
@@ -6619,7 +6671,30 @@ function authSetMode(mode) {
   document.getElementById('auth-tab-login').style.color         = isReg ? 'var(--text2)' : '#fff';
   document.getElementById('auth-tab-register').style.background = isReg ? 'var(--accent)' : 'transparent';
   document.getElementById('auth-tab-register').style.color      = isReg ? '#fff' : 'var(--text2)';
+  document.getElementById('auth-strength').style.display = 'none';
+  document.getElementById('auth-strength-bar').style.width = '0';
   _authMsg('', '');
+}
+
+function authPasswordStrength(val) {
+  if (_authMode !== 'register') return;
+  const el  = document.getElementById('auth-strength');
+  const bar = document.getElementById('auth-strength-bar');
+  const txt = document.getElementById('auth-strength-txt');
+  if (!val) { el.style.display = 'none'; return; }
+  el.style.display = '';
+  const score = [val.length >= 8, /[A-Z]/.test(val), /[0-9]/.test(val), /[^A-Za-z0-9]/.test(val)].filter(Boolean).length;
+  const levels = [
+    { w: '25%', color: '#ef4444', label: 'חלשה' },
+    { w: '50%', color: '#f59e0b', label: 'בינונית' },
+    { w: '75%', color: '#3b82f6', label: 'טובה' },
+    { w: '100%', color: '#22c55e', label: 'חזקה' },
+  ];
+  const lvl = levels[score - 1] || levels[0];
+  bar.style.width      = lvl.w;
+  bar.style.background = lvl.color;
+  txt.style.color      = lvl.color;
+  txt.textContent      = lvl.label;
 }
 
 function _authMsg(text, type) {
@@ -6654,8 +6729,16 @@ async function authSubmit() {
       await _onAuthSuccess(data.user);
     }
   } catch (e) {
-    const msg = e.message || 'שגיאה בכניסה';
-    _authMsg(msg.includes('Invalid') ? 'אימייל או סיסמה שגויים' : msg, 'error');
+    const msg = e.message || '';
+    let friendly = 'שגיאה — נסה שוב';
+    if (msg.includes('Invalid login credentials') || msg.includes('invalid_credentials') || msg.includes('Invalid email or password')) friendly = 'אימייל או סיסמה שגויים';
+    else if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('User already registered')) friendly = 'אימייל זה כבר רשום — נסה להתחבר';
+    else if (msg.includes('Email not confirmed') || msg.includes('not confirmed')) friendly = 'יש לאשר את האימייל תחילה — בדוק את תיבת הדואר';
+    else if (msg.includes('invalid format') || msg.includes('Invalid email')) friendly = 'כתובת אימייל לא תקינה';
+    else if (msg.includes('Too many requests') || msg.includes('rate limit')) friendly = 'יותר מדי ניסיונות — המתן דקה ונסה שוב';
+    else if (msg.includes('Password') && msg.includes('characters')) friendly = 'הסיסמה חייבת להכיל לפחות 8 תווים';
+    else if (msg) friendly = msg;
+    _authMsg(friendly, 'error');
   } finally {
     btn.disabled = false;
     btn.textContent = _authMode === 'register' ? 'הרשמה' : 'כניסה';
@@ -6685,6 +6768,39 @@ async function authSignOut() {
   _currentUser = null;
   document.getElementById('auth-overlay').style.display = 'flex';
   toast('יצאת מהחשבון', 'info');
+}
+
+// ─────────────────────────────────────────────
+// ONBOARDING WIZARD
+// ─────────────────────────────────────────────
+function onboardingCheck(userId) {
+  if (localStorage.getItem('ob_done_' + userId)) return;
+  const el = document.getElementById('ob-overlay');
+  el.style.display = 'flex';
+  onboardingStep(1);
+}
+
+function onboardingStep(n) {
+  [1,2,3].forEach(i => {
+    document.getElementById('ob-step-' + i).style.display = i === n ? '' : 'none';
+    document.getElementById('ob-dot-' + i).style.background = i === n ? 'var(--accent)' : i < n ? 'rgba(79,131,255,0.4)' : 'rgba(148,163,184,0.2)';
+  });
+}
+
+function onboardingDone() {
+  localStorage.setItem('ob_done_' + _currentUser?.id, '1');
+  document.getElementById('ob-overlay').style.display = 'none';
+}
+
+function onboardingOpenTrade() {
+  onboardingDone();
+  openModal('stock');
+}
+
+function onboardingGoSettings() {
+  onboardingDone();
+  const settingsBtn = document.querySelector('.tab-btn[aria-label="Settings"]');
+  if (settingsBtn) switchTab('ibkr', settingsBtn);
 }
 
 const ADMIN_ID = '9f9ffff4-0936-446c-b816-410b50894e8b';
@@ -6729,6 +6845,7 @@ async function _onAuthSuccess(user) {
   langInit();
   // Offer localStorage migration on first login
   await offerMigration();
+  onboardingCheck(user.id);
 }
 
 // ─────────────────────────────────────────────
