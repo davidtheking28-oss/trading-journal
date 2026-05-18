@@ -6877,7 +6877,8 @@ async function _onAuthSuccess(user) {
   _migrateCommission();
   loadStockSymbols();
   _autoFlexSync();
-  setInterval(_autoFlexSync, 30 * 60 * 1000);
+  _autoBybitSync();
+  setInterval(() => { _autoFlexSync(); _autoBybitSync(); }, 30 * 60 * 1000);
   loadFearGreed();
   loadCryptoFearGreed();
   ttLoad(false);
@@ -10343,8 +10344,9 @@ function pinUnlock() {
   startAutoLock();
   const link = document.getElementById('pin-toggle-link');
   if (link) link.textContent = hasPIN() ? 'שנה / מחק PIN' : 'הגדר קוד PIN';
-  // Auto-sync Flex on unlock — runs silently in background
+  // Auto-sync Flex + Bybit on unlock — runs silently in background
   _autoFlexSync();
+  _autoBybitSync();
 }
 
 async function _flexFetch(jwt, { debug } = {}) {
@@ -10469,6 +10471,51 @@ async function _autoFlexSync() {
     }
   } catch(e) {
     flexSetStatus('סנכרון אוטומטי נכשל — לחץ סנכרן ידנית', 'var(--text3)');
+  }
+}
+
+async function _autoBybitSync() {
+  if (!_currentUser) return;
+  if (!_userSettings.bybit_api_key) return;
+  const COOLDOWN_MS = 6 * 60 * 60 * 1000;
+  const lastKey = 'bybit_sync_ts_' + _currentUser.id;
+  const last = parseInt(localStorage.getItem(lastKey) || '0', 10);
+  if (Date.now() - last < COOLDOWN_MS) return;
+  const jwt = await _getToken();
+  if (!jwt) return;
+  bybitSetStatus('מסנכרן אוטומטי...', 'var(--text2)');
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/bybit`, {
+      headers: { Authorization: `Bearer ${jwt}` }
+    });
+    const json = await res.json();
+    if (!res.ok || json.error) throw new Error(json.error || 'שגיאה');
+    localStorage.setItem(lastKey, String(Date.now()));
+
+    const trades = json.trades || [];
+    let imported = 0;
+    for (const t of trades) {
+      const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
+      if (db._deletedFingerprints?.has(fp)) continue;
+      const existing = db.crypto.find(e =>
+        `${e.symbol}||${e.entryDate}||${Math.round((e.entryPrice||0)*1000)}||${Math.round((e.shares||0)*1000)}` === fp
+      );
+      if (existing) continue;
+      const { data, error } = await _sb.from('trades').insert(_tradeToRow({ ...t, deleted: false })).select().single();
+      if (!error) { db.crypto.unshift(_rowToTrade(data)); imported++; }
+    }
+    if (imported > 0) {
+      initFilters();
+      renderTable('crypto');
+      renderOverview();
+      bybitSetStatus(`✓ ${imported} עסקאות חדשות`, 'var(--green)');
+      toast(`✓ Bybit: ${imported} עסקאות יובאו`, 'success');
+      auditLog('bybit_auto_import', `imported:${imported}`);
+    } else {
+      bybitSetStatus('✓ סונכרן — אין עסקאות חדשות', 'var(--text3)');
+    }
+  } catch(e) {
+    bybitSetStatus('סנכרון אוטומטי נכשל — לחץ סנכרן ידנית', 'var(--text3)');
   }
 }
 
