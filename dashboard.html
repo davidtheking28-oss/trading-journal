@@ -6307,6 +6307,47 @@
   </div>
 </div>
 
+<!-- POSITION UPDATE MODAL -->
+<div class="modal-overlay" id="inv-position-modal" onclick="if(event.target===this)invClosePositionModal()">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:480px;">
+    <div class="modal-header">
+      <div class="modal-title" id="inv-pos-modal-title">עדכון פוזיציה</div>
+      <button class="modal-close" onclick="invClosePositionModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">
+        <div class="form-section-title">סוג פעולה</div>
+        <div style="display:flex;gap:8px;margin-bottom:20px">
+          <button class="inv-buy-mode buy-active" id="inv-pos-buy-btn" onclick="invSetPosMode('buy')" style="flex:1;padding:10px;font-size:13px">+ קנייה</button>
+          <button class="inv-buy-mode" id="inv-pos-sell-btn" onclick="invSetPosMode('sell')" style="flex:1;padding:10px;font-size:13px">− מכירה</button>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">פרטי עסקה</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="form-group">
+            <label class="form-label">כמות מניות</label>
+            <input type="number" id="inv-pos-qty" class="form-control" placeholder="0" min="0" step="any">
+          </div>
+          <div class="form-group" id="inv-pos-price-group">
+            <label class="form-label">מחיר לעסקה</label>
+            <input type="number" id="inv-pos-price" class="form-control" placeholder="0.00" min="0" step="any">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">תאריך הוספה</label>
+          <input type="date" id="inv-pos-date" class="form-control">
+        </div>
+      </div>
+      <div id="inv-pos-result" style="display:none;background:rgba(79,131,255,0.08);border:1px solid rgba(79,131,255,0.2);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--text2)"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="invClosePositionModal()" style="flex:1">ביטול</button>
+      <button class="btn btn-primary" onclick="invConfirmPositionModal()" style="flex:2">✓ אשר</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL -->
 <div class="modal-overlay" id="trade-modal" onclick="onOverlayClick(event)">
   <div class="modal" onclick="event.stopPropagation()">
@@ -13624,56 +13665,77 @@ function invUpdatePricesTimestamp() {
   el.textContent = mins === 0 ? t('inv_just_now') : `${mins} min ago`;
 }
 
+let _invPosRowIdx = null;
+
 function invToggleBuyRow(i) {
+  _invPosRowIdx = i;
   const tbody = document.getElementById('inv-tbody');
-  const existing = tbody?.querySelector(`.inv-buy-row[data-buy-for="${i}"]`);
-  if (existing) { existing.remove(); return; }
   const mainRow = tbody?.querySelector(`tr[data-idx="${i}"]`);
   if (!mainRow) return;
-  const colspan = mainRow.querySelectorAll('td').length;
   const inputs = mainRow.querySelectorAll('input');
   const sym = inputs[0]?.value || '';
-  const buyRow = document.createElement('tr');
-  buyRow.className = 'inv-buy-row';
-  buyRow.dataset.buyFor = i;
-  buyRow.dataset.mode = 'buy';
-  buyRow.innerHTML = `<td colspan="${colspan}">
-    <div class="inv-buy-form">
-      <strong style="font-family:monospace;color:var(--accent);font-size:13px">${sym}</strong>
-      <div class="inv-buy-mode-toggle">
-        <button class="inv-buy-mode buy-active" id="inv-mode-buy-${i}" onclick="invSetPositionMode(${i},'buy')">+ קנייה</button>
-        <button class="inv-buy-mode" id="inv-mode-sell-${i}" onclick="invSetPositionMode(${i},'sell')">− מכירה</button>
-      </div>
-      <label>כמות</label>
-      <input type="number" id="inv-buy-qty-${i}" placeholder="0" min="0" step="any" class="inv-input" style="width:90px;">
-      <span id="inv-price-wrap-${i}" style="display:flex;align-items:center;gap:8px">
-        <label>מחיר</label>
-        <input type="number" id="inv-buy-price-${i}" placeholder="0.00" min="0" step="any" class="inv-input" style="width:100px;">
-      </span>
-      <button class="inv-buy-confirm" onclick="invConfirmPositionUpdate(${i})">✓ אשר</button>
-      <button class="inv-buy-cancel" onclick="this.closest('.inv-buy-row').remove()">ביטול</button>
-    </div>
-  </td>`;
-  mainRow.insertAdjacentElement('afterend', buyRow);
-  document.getElementById(`inv-buy-qty-${i}`)?.focus();
+  const oldQty   = +(inputs[2]?.value) || 0;
+  const oldPrice = +(inputs[3]?.value) || 0;
+  const cur = invGetCurrency();
+
+  document.getElementById('inv-pos-modal-title').textContent = sym;
+  document.getElementById('inv-pos-qty').value = '';
+  document.getElementById('inv-pos-price').value = '';
+  document.getElementById('inv-pos-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('inv-pos-result').style.display = 'none';
+  invSetPosMode('buy');
+
+  const updatePreview = () => {
+    const qty   = +(document.getElementById('inv-pos-qty')?.value) || 0;
+    const price = +(document.getElementById('inv-pos-price')?.value) || 0;
+    const mode  = document.getElementById('inv-pos-modal')?.dataset.mode || 'buy';
+    const res   = document.getElementById('inv-pos-result');
+    if (!qty) { res.style.display = 'none'; return; }
+    res.style.display = 'block';
+    if (mode === 'buy' && price) {
+      const totalQty = oldQty + qty;
+      const avg = (oldQty * oldPrice + qty * price) / totalQty;
+      res.innerHTML = `כמות חדשה: <b>${totalQty}</b> &nbsp;|&nbsp; שער ממוצע חדש: <b>${cur}${avg.toFixed(2)}</b>`;
+    } else if (mode === 'sell') {
+      const remaining = oldQty - qty;
+      res.innerHTML = remaining > 0
+        ? `כמות שתישאר: <b>${remaining}</b>`
+        : `<span style="color:var(--red)">הפוזיציה תיסגר לחלוטין</span>`;
+    } else { res.style.display = 'none'; }
+  };
+
+  document.getElementById('inv-pos-qty').oninput   = updatePreview;
+  document.getElementById('inv-pos-price').oninput = updatePreview;
+
+  const modal = document.getElementById('inv-position-modal');
+  modal.dataset.mode = 'buy';
+  modal.classList.add('open');
+  setTimeout(() => document.getElementById('inv-pos-qty')?.focus(), 80);
 }
 
-function invSetPositionMode(i, mode) {
-  const buyBtn  = document.getElementById(`inv-mode-buy-${i}`);
-  const sellBtn = document.getElementById(`inv-mode-sell-${i}`);
-  const priceWrap = document.getElementById(`inv-price-wrap-${i}`);
-  const buyRow = document.querySelector(`.inv-buy-row[data-buy-for="${i}"]`);
-  if (buyBtn)  { buyBtn.classList.toggle('buy-active', mode === 'buy');   buyBtn.classList.remove('sell-active'); }
-  if (sellBtn) { sellBtn.classList.toggle('sell-active', mode === 'sell'); sellBtn.classList.remove('buy-active'); }
-  if (priceWrap) priceWrap.style.display = mode === 'sell' ? 'none' : 'flex';
-  if (buyRow) buyRow.dataset.mode = mode;
+function invSetPosMode(mode) {
+  document.getElementById('inv-pos-buy-btn')?.classList.toggle('buy-active',  mode === 'buy');
+  document.getElementById('inv-pos-buy-btn')?.classList.toggle('sell-active', false);
+  document.getElementById('inv-pos-sell-btn')?.classList.toggle('sell-active', mode === 'sell');
+  document.getElementById('inv-pos-sell-btn')?.classList.toggle('buy-active',  false);
+  const priceGroup = document.getElementById('inv-pos-price-group');
+  if (priceGroup) priceGroup.style.display = mode === 'sell' ? 'none' : '';
+  const modal = document.getElementById('inv-position-modal');
+  if (modal) modal.dataset.mode = mode;
+  document.getElementById('inv-pos-qty')?.dispatchEvent(new Event('input'));
 }
 
-function invConfirmPositionUpdate(i) {
-  const buyRow = document.querySelector(`.inv-buy-row[data-buy-for="${i}"]`);
-  const mode  = buyRow?.dataset.mode || 'buy';
-  const qty   = +(document.getElementById(`inv-buy-qty-${i}`)?.value) || 0;
-  const price = +(document.getElementById(`inv-buy-price-${i}`)?.value) || 0;
+function invClosePositionModal() {
+  document.getElementById('inv-position-modal')?.classList.remove('open');
+  _invPosRowIdx = null;
+}
+
+function invConfirmPositionModal() {
+  const i = _invPosRowIdx;
+  if (i === null) return;
+  const mode  = document.getElementById('inv-position-modal')?.dataset.mode || 'buy';
+  const qty   = +(document.getElementById('inv-pos-qty')?.value) || 0;
+  const price = +(document.getElementById('inv-pos-price')?.value) || 0;
   if (!qty) { toast('הכנס כמות', 'error'); return; }
   if (mode === 'buy' && !price) { toast('הכנס מחיר', 'error'); return; }
 
@@ -13685,17 +13747,17 @@ function invConfirmPositionUpdate(i) {
   const oldPrice = +(inputs[3]?.value) || 0;
   const cur = invGetCurrency();
 
+  invClosePositionModal();
+
   if (mode === 'buy') {
     const totalQty = oldQty + qty;
     const avgPrice = totalQty > 0 ? (oldQty * oldPrice + qty * price) / totalQty : price;
     if (inputs[2]) inputs[2].value = totalQty;
     if (inputs[3]) inputs[3].value = avgPrice.toFixed(4);
-    buyRow?.remove();
     invRecalc(); invAutoSave();
     toast(`עודכן: ${totalQty} מניות @ ${cur}${avgPrice.toFixed(2)} ממוצע`, 'success');
   } else {
     const newQty = oldQty - qty;
-    buyRow?.remove();
     if (newQty <= 0) {
       invDeleteRow(i);
       toast('פוזיציה הוסרה', 'success');
