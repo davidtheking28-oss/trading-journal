@@ -13728,7 +13728,9 @@ function invSaveData(data) {
   _sb.from('investments').upsert(
     { user_id: _currentUser.id, holdings: data.holdings || [], deposits: data.deposits || [], currency: invGetCurrency() },
     { onConflict: 'user_id' }
-  ).then(() => {}).catch(() => {});
+  ).then(({ error }) => {
+    if (error) { console.error('[invSaveData]', error); toast('שגיאה בשמירת השקעות: ' + error.message, 'error'); }
+  }).catch(e => { console.error('[invSaveData]', e); toast('שגיאה בשמירת השקעות', 'error'); });
 }
 
 async function invInit() {
