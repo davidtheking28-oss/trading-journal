@@ -6822,7 +6822,7 @@ async function _onAuthSuccess(user) {
     };
   }
   document.getElementById('auth-overlay').style.display = 'none';
-  await Promise.all([loadDB(), loadUserSettings()]);
+  await Promise.all([loadDB(), loadUserSettings(), loadCryptoSymbolsFromCoinGecko()]);
 
   // Show admin-only UI elements
   const isAdmin = user.id === ADMIN_ID;
@@ -11663,7 +11663,6 @@ function rtAutoFill(symInputId, statusId) {
   // Always-on initializations (don't need auth)
   qaInit();
   initMediaDB().catch(e => console.warn('[Screenshots] IndexedDB init failed:', e));
-  loadCryptoSymbolsFromCoinGecko();
   ttScheduleMidnight();
 
   // Check for an existing Supabase session (persisted from last visit)
