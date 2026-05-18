@@ -13731,15 +13731,19 @@ async function invLoadFromDB() {
   return _invData;
 }
 
-function invSaveData(data) {
+async function invSaveData(data) {
   _invData = data;
   if (!_currentUser) return;
-  _sb.from('investments').upsert(
+  const { error } = await _sb.from('investments').upsert(
     { user_id: _currentUser.id, holdings: data.holdings || [], deposits: data.deposits || [], currency: invGetCurrency() },
     { onConflict: 'user_id' }
-  ).then(({ error }) => {
-    if (error) { console.error('[invSaveData]', error); toast('שגיאה בשמירת השקעות: ' + error.message, 'error'); }
-  }).catch(e => { console.error('[invSaveData]', e); toast('שגיאה בשמירת השקעות', 'error'); });
+  );
+  if (error) {
+    console.error('[invSaveData]', error);
+    toast('שגיאה בשמירת השקעות: ' + error.message, 'error');
+    return false;
+  }
+  return true;
 }
 
 async function invInit() {
@@ -13975,9 +13979,14 @@ function invEditRow(i) {
   if (data.holdings[i]) { data.holdings[i].locked = false; _invData = data; invRenderRows(data.holdings); }
 }
 
-function invLockRow(i) {
+async function invLockRow(i) {
   const data = invGetCurrentData();
-  if (data.holdings[i]) { data.holdings[i].locked = true; invSaveData(data); invRenderRows(data.holdings); invRecalc(); }
+  if (!data.holdings[i]) return;
+  data.holdings[i].locked = true;
+  const ok = await invSaveData(data);
+  if (ok) toast('נשמר ✓', 'success');
+  invRenderRows(data.holdings);
+  invRecalc();
 }
 
 function invAddRow() {
