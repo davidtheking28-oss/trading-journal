@@ -29,6 +29,11 @@ serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 
+  const ADMIN_ID = '9f9ffff4-0936-446c-b816-410b50894e8b';
+  if (user.id !== ADMIN_ID) {
+    return new Response(JSON.stringify({ error: 'Access restricted.' }), { status: 403, headers: { ...CORS, 'Content-Type': 'application/json' } });
+  }
+
   // Read body FIRST so we can extract _inv_key before rate limit check
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch {
