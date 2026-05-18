@@ -7218,6 +7218,7 @@ function resetFilter(p) {
 let ovScope = 'stock';
 
 function switchTab(name, btn) {
+  if (name === 'ai' && _currentUser?.id !== ADMIN_ID) return;
   document.querySelectorAll('.tab-btn,.tnav-btn').forEach(b=>{ b.classList.remove('active'); b.style.color=''; });
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
   btn.classList.add('active');
