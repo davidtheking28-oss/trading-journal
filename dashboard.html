@@ -13305,13 +13305,12 @@ async function invLoadFromDB() {
     ? String(_userSettings.portfolio_total)
     : (invLoad().portfolioTotal || '');
   const { data } = await _sb.from('investments')
-    .select('holdings, deposits, currency, cash')
+    .select('holdings, deposits, currency')
     .eq('user_id', _currentUser.id)
     .single();
   if (data) {
     _invData = { portfolioTotal, holdings: data.holdings || [], deposits: data.deposits || [] };
     if (data.currency) localStorage.setItem('inv_currency', data.currency);
-    if (data.cash != null) localStorage.setItem('inv_cash', data.cash);
   } else {
     const local = invLoad();
     _invData = { portfolioTotal, holdings: local.holdings || [], deposits: local.deposits || [] };
