@@ -13420,7 +13420,7 @@ function invRecalc() {
   const cur = invGetCurrency();
   const pnlMode = invGetPnlMode();
   rowData.forEach(({ i, value, cost, pnlAmt, pnlPct }) => {
-    const pct   = totalCost > 0 ? (cost / totalCost) * 100 : 0;
+    const pct   = portfolioTotal > 0 ? (cost / portfolioTotal) * 100 : 0;
     const avgEl = document.getElementById(`inv-avg-${i}`);
     const valEl = document.getElementById(`inv-val-${i}`);
     const pnlEl = document.getElementById(`inv-pnl-${i}`);
@@ -13449,19 +13449,19 @@ function invRecalc() {
   // Allocated % = totalCost / totalCurrentValue
   const allocEl = document.getElementById('inv-allocated-pct');
   if (allocEl) {
-    const allocPct = totalCurrentValue > 0 ? (totalCost / totalCurrentValue * 100) : 0;
+    const allocPct = portfolioTotal > 0 ? (totalCost / portfolioTotal * 100) : 0;
     allocEl.textContent = allocPct.toFixed(1) + '%';
-    allocEl.style.color = 'var(--accent)';
+    allocEl.style.color = allocPct > 100 ? 'var(--red)' : 'var(--accent)';
   }
 
-  // Allocation bars — based on cost vs totalCost target
+  // Allocation bars — cost deployed vs portfolioTotal (budget) target
   const c = invGetCurrency();
   Object.entries(ALLOC_TARGETS).forEach(([cat, target]) => {
-    const targetAmt  = totalCost * target;
+    const targetAmt  = portfolioTotal * target;
     const currentAmt = byCat[cat];
-    const currentPct = totalCost > 0 ? (currentAmt / totalCost * 100) : 0;
+    const currentPct = portfolioTotal > 0 ? (currentAmt / portfolioTotal * 100) : 0;
     const remaining  = Math.max(0, targetAmt - currentAmt);
-    const over       = currentAmt > targetAmt;
+    const over       = portfolioTotal > 0 && currentAmt > targetAmt;
     const barW       = targetAmt > 0 ? Math.min(currentAmt / targetAmt * 100, 100) : 0;
     const barEl = document.getElementById(`alloc-bar-${cat}`);
     const invEl = document.getElementById(`alloc-inv-${cat}`);
@@ -13471,7 +13471,7 @@ function invRecalc() {
     if (invEl) invEl.textContent = currentAmt > 0 ? `${c}${currentAmt.toLocaleString('en-US', {maximumFractionDigits:0})}` : '—';
     if (curEl) { curEl.textContent = currentPct.toFixed(1) + '%'; curEl.style.color = over ? 'var(--red)' : 'var(--text2)'; }
     if (remEl) {
-      if (totalCost === 0) { remEl.textContent = ''; return; }
+      if (portfolioTotal === 0) { remEl.textContent = ''; return; }
       remEl.textContent = over
         ? `${t('inv_overby')} ${c}${(currentAmt - targetAmt).toLocaleString('en-US', {maximumFractionDigits:0})}`
         : `${t('inv_free')}: ${c}${remaining.toLocaleString('en-US', {maximumFractionDigits:0})}`;
@@ -13481,13 +13481,13 @@ function invRecalc() {
 
   const catRemaining = {};
   Object.entries(ALLOC_TARGETS).forEach(([cat, target]) => {
-    catRemaining[cat] = Math.max(0, totalCost * target - byCat[cat]);
+    catRemaining[cat] = Math.max(0, portfolioTotal * target - byCat[cat]);
   });
   rowData.forEach(({ i, cat }) => {
     const remEl = document.getElementById(`inv-catrem-${i}`);
     if (!remEl) return;
-    if (!cat || totalCost === 0) { remEl.textContent = '—'; remEl.style.color = ''; return; }
-    const over = byCat[cat] > totalCost * ALLOC_TARGETS[cat];
+    if (!cat || portfolioTotal === 0) { remEl.textContent = '—'; remEl.style.color = ''; return; }
+    const over = byCat[cat] > portfolioTotal * ALLOC_TARGETS[cat];
     remEl.textContent = over ? t('inv_over') : `${c}${catRemaining[cat].toLocaleString('en-US',{maximumFractionDigits:0})}`;
     remEl.style.color = over ? 'var(--red)' : 'var(--green)';
   });
