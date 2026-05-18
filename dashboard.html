@@ -8703,7 +8703,7 @@ const LANG_STRINGS = {
     inv_add_holding:'+ Add Holding', inv_save:'💾 Save',
     inv_deposits:'Monthly Deposits', inv_add_deposit:'+ Add Deposit',
     inv_total_dep:'Total Deposited', inv_portfolio_now:'Portfolio Value Now',
-    inv_pnl:'P&L', inv_unrealized:'Unrealized P&L', inv_refresh_prices:'Refresh Prices', inv_dep_month:'Month', inv_dep_amount:'Deposit',
+    inv_pnl:'P&L', inv_unrealized:'Unrealized P&L', inv_refresh_prices:'Refresh Prices', inv_over:'Exceeded', inv_overby:'Exceeded by', inv_free:'Available', inv_saved:'Portfolio saved ✓', inv_dep_month:'Month', inv_dep_amount:'Deposit',
     inv_dep_cumulative:'Cumulative', inv_cash:'Cash',
     inv_legend_blue:'Blue Chips', inv_legend_green:'Growth', inv_legend_yellow:'Speculative',
     missed_title:'Missed Opportunities', missed_symbol:'Symbol',
@@ -8817,7 +8817,7 @@ const LANG_STRINGS = {
     inv_add_holding:'+ הוסף אחזקה', inv_save:'💾 שמור',
     inv_deposits:'הפקדות חודשיות', inv_add_deposit:'+ הוסף הפקדה',
     inv_total_dep:'סה"כ הופקד', inv_portfolio_now:'שווי תיק כעת',
-    inv_pnl:'רווח / הפסד', inv_unrealized:'רווח לא ממומש', inv_refresh_prices:'רענן מחירים', inv_dep_month:'חודש', inv_dep_amount:'הפקדה',
+    inv_pnl:'רווח / הפסד', inv_unrealized:'רווח לא ממומש', inv_refresh_prices:'רענן מחירים', inv_over:'חרגת', inv_overby:'חרגת ב-', inv_free:'פנוי', inv_saved:'תיק ההשקעות נשמר ✓', inv_dep_month:'חודש', inv_dep_amount:'הפקדה',
     inv_dep_cumulative:'מצטבר', inv_cash:'מזומן',
     inv_legend_blue:'כחולות', inv_legend_green:'ירוקות', inv_legend_yellow:'צהובות',
     missed_title:'הזדמנויות שפוספסו', missed_symbol:'סימבול',
@@ -13413,8 +13413,8 @@ function invRecalc() {
     if (remEl) {
       if (portfolioTotal === 0) { remEl.textContent = ''; return; }
       remEl.textContent = over
-        ? `חרגת ב-${c}${(currentAmt - targetAmt).toLocaleString('en-US', {maximumFractionDigits:0})}`
-        : `פנוי: ${c}${remaining.toLocaleString('en-US', {maximumFractionDigits:0})}`;
+        ? `${t('inv_overby')} ${c}${(currentAmt - targetAmt).toLocaleString('en-US', {maximumFractionDigits:0})}`
+        : `${t('inv_free')}: ${c}${remaining.toLocaleString('en-US', {maximumFractionDigits:0})}`;
       remEl.style.color = over ? 'var(--red)' : 'var(--text3)';
     }
   });
@@ -13430,7 +13430,7 @@ function invRecalc() {
     if (!cat || portfolioTotal === 0) { remEl.textContent = '—'; remEl.style.color = ''; return; }
     const over = byCat[cat] > portfolioTotal * ALLOC_TARGETS[cat];
     const rem  = catRemaining[cat];
-    remEl.textContent = over ? 'חרגת' : `${invGetCurrency()}${rem.toLocaleString('en-US',{maximumFractionDigits:0})}`;
+    remEl.textContent = over ? t('inv_over') : `${invGetCurrency()}${rem.toLocaleString('en-US',{maximumFractionDigits:0})}`;
     remEl.style.color = over ? 'var(--red)' : 'var(--green)';
   });
   invUpdateDonut(byCat, portfolioTotal);
@@ -13543,7 +13543,7 @@ function invAutoSave() {
 function invSave() {
   const data = invGetCurrentData();
   invSaveData(data);
-  toast('תיק ההשקעות נשמר ✓', 'success');
+  toast(t('inv_saved'), 'success');
 }
 
 const _invSectorTimers = {};
