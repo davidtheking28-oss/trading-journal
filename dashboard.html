@@ -13235,15 +13235,19 @@ function invSetCurrency(cur) {
   localStorage.setItem('inv_currency', cur);
   document.getElementById('inv-cur-usd')?.classList.toggle('active', cur === '$');
   document.getElementById('inv-cur-ils')?.classList.toggle('active', cur === '₪');
+  invSyncPnlBtn();
   invRecalc();
   invSaveData(invLoad());
 }
-function invGetPnlMode() { return localStorage.getItem('inv_pnl_mode') || '$'; }
-function invTogglePnlMode() {
-  const next = invGetPnlMode() === '$' ? '%' : '$';
-  localStorage.setItem('inv_pnl_mode', next);
+function invGetPnlMode() { return localStorage.getItem('inv_pnl_mode') || 'amount'; }
+function invSyncPnlBtn() {
   const btn = document.getElementById('inv-pnl-toggle');
-  if (btn) btn.textContent = next;
+  if (btn) btn.textContent = invGetPnlMode() === 'amount' ? invGetCurrency() : '%';
+}
+function invTogglePnlMode() {
+  const next = invGetPnlMode() === 'amount' ? '%' : 'amount';
+  localStorage.setItem('inv_pnl_mode', next);
+  invSyncPnlBtn();
   invRecalc();
 }
 
@@ -13289,8 +13293,7 @@ async function invInit() {
   const cur = invGetCurrency();
   document.getElementById('inv-cur-usd')?.classList.toggle('active', cur === '$');
   document.getElementById('inv-cur-ils')?.classList.toggle('active', cur === '₪');
-  const pnlBtn = document.getElementById('inv-pnl-toggle');
-  if (pnlBtn) pnlBtn.textContent = invGetPnlMode();
+  invSyncPnlBtn();
   const totalEl = document.getElementById('inv-portfolio-total');
   if (totalEl) totalEl.value = data.portfolioTotal || '';
   const dl = document.getElementById('inv-sym-list');
@@ -13385,10 +13388,10 @@ function invRecalc() {
     if (pnlEl) {
       if (pnlAmt !== null) {
         const sign = pnlAmt >= 0 ? '+' : '';
-        if (pnlMode === '%') {
-          pnlEl.textContent = `${sign}${pnlPct.toFixed(2)}%`;
-        } else {
+        if (pnlMode === 'amount') {
           pnlEl.textContent = `${sign}${cur}${Math.abs(pnlAmt).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+        } else {
+          pnlEl.textContent = `${sign}${pnlPct.toFixed(2)}%`;
         }
         pnlEl.style.color = pnlAmt >= 0 ? 'var(--green)' : 'var(--red)';
         pnlEl.style.fontWeight = '600';
