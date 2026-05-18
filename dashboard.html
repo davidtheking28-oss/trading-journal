@@ -13368,7 +13368,7 @@ function invRecalc() {
     const cost      = entryShares * entryPrice;
     const pnlAmt    = (currentPrice > 0 && avgPrice > 0) ? (currentPrice - avgPrice) * entryShares : null;
     const pnlPct    = (pnlAmt !== null && cost > 0) ? (pnlAmt / cost) * 100 : null;
-    const pct       = portfolioTotal > 0 ? (value / portfolioTotal) * 100 : 0;
+    const pct       = portfolioTotal > 0 ? (cost / portfolioTotal) * 100 : 0;
 
     totalAllocated += pct;
     totalCurrentValue += value;
