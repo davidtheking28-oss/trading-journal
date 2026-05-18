@@ -3520,6 +3520,16 @@
   }
   .inv-save-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(129,140,248,0.4); }
   .inv-save-btn:active { transform: translateY(0); }
+  .inv-summary-bar {
+    display: flex; gap: 0; background: linear-gradient(145deg, #091525, #0b1e38);
+    border: 1px solid rgba(255,255,255,0.07); border-radius: 12px;
+    overflow: hidden; margin-bottom: 4px;
+  }
+  .inv-sum-stat { flex: 1; display: flex; flex-direction: column; gap: 3px; padding: 12px 18px; border-right: 1px solid rgba(255,255,255,0.06); }
+  .inv-sum-stat:last-child { border-right: none; }
+  .inv-sum-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+  .inv-sum-val { font-size: 15px; font-weight: 700; color: var(--text); }
+  .inv-sum-updated .inv-sum-val { font-size: 12px; font-weight: 500; color: var(--text3); }
   .inv-empty {
     text-align: center; padding: 40px 28px; color: var(--text3); font-size: 13px;
     display: flex; flex-direction: column; align-items: center; gap: 8px;
@@ -6022,6 +6032,25 @@
           <button class="inv-save-btn" onclick="invSave()" data-i18n="inv_save">💾 Save</button>
         </div>
 
+        <div class="inv-summary-bar">
+          <div class="inv-sum-stat">
+            <span class="inv-sum-label" data-i18n="inv_sum_invested">Total Invested</span>
+            <span class="inv-sum-val" id="inv-sum-cost">—</span>
+          </div>
+          <div class="inv-sum-stat">
+            <span class="inv-sum-label" data-i18n="inv_sum_value">Current Value</span>
+            <span class="inv-sum-val" id="inv-sum-value">—</span>
+          </div>
+          <div class="inv-sum-stat">
+            <span class="inv-sum-label" data-i18n="inv_sum_pnl">Unrealized P&L</span>
+            <span class="inv-sum-val" id="inv-sum-pnl">—</span>
+          </div>
+          <div class="inv-sum-stat inv-sum-updated">
+            <span class="inv-sum-label" data-i18n="inv_sum_updated">Prices updated</span>
+            <span class="inv-sum-val" id="inv-prices-updated">—</span>
+          </div>
+        </div>
+
         <!-- MONTHLY DEPOSITS -->
         <div class="inv-deposits-card">
           <div class="inv-deposits-header">
@@ -6035,9 +6064,7 @@
           </div>
           <div class="inv-deposits-stats">
             <div class="inv-dep-stat"><span class="inv-dep-stat-label" data-i18n="inv_total_dep">Total Deposited</span><span class="inv-dep-stat-val" id="dep-total-val">$0</span></div>
-            <div class="inv-dep-stat"><span class="inv-dep-stat-label" data-i18n="inv_portfolio_now">Portfolio Value Now</span><span class="inv-dep-stat-val" id="dep-portfolio-val">—</span></div>
-            <div class="inv-dep-stat"><span class="inv-dep-stat-label" data-i18n="inv_pnl">P&L</span><span class="inv-dep-stat-val" id="dep-pnl-val">—</span></div>
-            <div class="inv-dep-stat"><span class="inv-dep-stat-label" data-i18n="inv_unrealized">רווח לא ממומש</span><span class="inv-dep-stat-val" id="dep-unrealized-val">—</span></div>
+            <div class="inv-dep-stat"><span class="inv-dep-stat-label" data-i18n="inv_pnl">P&L vs Deposits</span><span class="inv-dep-stat-val" id="dep-pnl-val">—</span></div>
           </div>
           <div id="dep-list"></div>
         </div>
@@ -8703,7 +8730,7 @@ const LANG_STRINGS = {
     inv_add_holding:'+ Add Holding', inv_save:'💾 Save',
     inv_deposits:'Monthly Deposits', inv_add_deposit:'+ Add Deposit',
     inv_total_dep:'Total Deposited', inv_portfolio_now:'Portfolio Value Now',
-    inv_pnl:'P&L', inv_unrealized:'Unrealized P&L', inv_refresh_prices:'Refresh Prices', inv_over:'Exceeded', inv_overby:'Exceeded by', inv_free:'Available', inv_saved:'Portfolio saved ✓', inv_dep_month:'Month', inv_dep_amount:'Deposit',
+    inv_pnl:'P&L vs Deposits', inv_unrealized:'Unrealized P&L', inv_refresh_prices:'Refresh Prices', inv_over:'Exceeded', inv_overby:'Exceeded by', inv_free:'Available', inv_saved:'Portfolio saved ✓', inv_sum_invested:'Total Invested', inv_sum_value:'Current Value', inv_sum_pnl:'Unrealized P&L', inv_sum_updated:'Prices updated', inv_just_now:'just now', inv_dep_month:'Month', inv_dep_amount:'Deposit',
     inv_dep_cumulative:'Cumulative', inv_cash:'Cash',
     inv_legend_blue:'Blue Chips', inv_legend_green:'Growth', inv_legend_yellow:'Speculative',
     missed_title:'Missed Opportunities', missed_symbol:'Symbol',
@@ -8817,7 +8844,7 @@ const LANG_STRINGS = {
     inv_add_holding:'+ הוסף אחזקה', inv_save:'💾 שמור',
     inv_deposits:'הפקדות חודשיות', inv_add_deposit:'+ הוסף הפקדה',
     inv_total_dep:'סה"כ הופקד', inv_portfolio_now:'שווי תיק כעת',
-    inv_pnl:'רווח / הפסד', inv_unrealized:'רווח לא ממומש', inv_refresh_prices:'רענן מחירים', inv_over:'חרגת', inv_overby:'חרגת ב-', inv_free:'פנוי', inv_saved:'תיק ההשקעות נשמר ✓', inv_dep_month:'חודש', inv_dep_amount:'הפקדה',
+    inv_pnl:'רווח/הפסד vs הפקדות', inv_unrealized:'רווח לא ממומש', inv_refresh_prices:'רענן מחירים', inv_over:'חרגת', inv_overby:'חרגת ב-', inv_free:'פנוי', inv_saved:'תיק ההשקעות נשמר ✓', inv_sum_invested:'סה"כ הושקע', inv_sum_value:'שווי נוכחי', inv_sum_pnl:'רווח לא ממומש', inv_sum_updated:'מחירים עודכנו', inv_just_now:'הרגע', inv_dep_month:'חודש', inv_dep_amount:'הפקדה',
     inv_dep_cumulative:'מצטבר', inv_cash:'מזומן',
     inv_legend_blue:'כחולות', inv_legend_green:'ירוקות', inv_legend_yellow:'צהובות',
     missed_title:'הזדמנויות שפוספסו', missed_symbol:'סימבול',
@@ -13452,7 +13479,27 @@ function invRecalc() {
     remEl.style.color = over ? 'var(--red)' : 'var(--green)';
   });
   invUpdateDonut(byCat, portfolioTotal);
-  invRenderDeposits(invLoad().deposits || [], totalCurrentValue, totalUnrealizedPnL);
+  invRenderDeposits(invLoad().deposits || [], totalCurrentValue);
+
+  let totalCost = 0;
+  rows.forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    totalCost += (+(inputs[2]?.value) || 0) * (+(inputs[3]?.value) || 0);
+  });
+  const cur2   = invGetCurrency();
+  const costEl = document.getElementById('inv-sum-cost');
+  const valEl2 = document.getElementById('inv-sum-value');
+  const pnlEl2 = document.getElementById('inv-sum-pnl');
+  if (costEl) costEl.textContent = totalCost > 0 ? cur2 + totalCost.toLocaleString('en-US',{maximumFractionDigits:0}) : '—';
+  if (valEl2) valEl2.textContent = totalCurrentValue > 0 ? cur2 + totalCurrentValue.toLocaleString('en-US',{maximumFractionDigits:0}) : '—';
+  if (pnlEl2) {
+    if (totalUnrealizedPnL !== null) {
+      const sign = totalUnrealizedPnL >= 0 ? '+' : '';
+      const pct  = totalCost > 0 ? (totalUnrealizedPnL / totalCost * 100).toFixed(1) : null;
+      pnlEl2.textContent = `${sign}${cur2}${Math.abs(totalUnrealizedPnL).toLocaleString('en-US',{maximumFractionDigits:0})}${pct !== null ? ` (${sign}${pct}%)` : ''}`;
+      pnlEl2.style.color = totalUnrealizedPnL >= 0 ? 'var(--green)' : 'var(--red)';
+    } else { pnlEl2.textContent = '—'; pnlEl2.style.color = ''; }
+  }
 }
 
 function invGetCurrentData() {
@@ -13516,7 +13563,20 @@ async function invFetchPrices() {
     } catch {}
   }));
 
-  if (updated > 0) { invRecalc(); invAutoSave(); }
+  if (updated > 0) {
+    _invPricesUpdatedAt = Date.now();
+    invRecalc();
+    invAutoSave();
+    invUpdatePricesTimestamp();
+  }
+}
+
+let _invPricesUpdatedAt = null;
+function invUpdatePricesTimestamp() {
+  const el = document.getElementById('inv-prices-updated');
+  if (!el || !_invPricesUpdatedAt) return;
+  const mins = Math.round((Date.now() - _invPricesUpdatedAt) / 60000);
+  el.textContent = mins === 0 ? t('inv_just_now') : `${mins} min ago`;
 }
 
 function invDeleteRow(i) {
@@ -13663,19 +13723,16 @@ function invDeleteDeposit(idx) {
   invRenderDeposits(data.deposits);
 }
 
-function invRenderDeposits(deposits = [], totalCurrentValue = 0, totalUnrealizedPnL = null) {
+function invRenderDeposits(deposits = [], totalCurrentValue = 0) {
   const listEl = document.getElementById('dep-list');
   if (!listEl) return;
   const totalDeposited = deposits.reduce((s, d) => s + (+d.amount || 0), 0);
 
-  const totalEl      = document.getElementById('dep-total-val');
-  const portEl       = document.getElementById('dep-portfolio-val');
-  const pnlEl        = document.getElementById('dep-pnl-val');
-  const unrealizedEl = document.getElementById('dep-unrealized-val');
+  const totalEl = document.getElementById('dep-total-val');
+  const pnlEl   = document.getElementById('dep-pnl-val');
 
   const cur = invGetCurrency();
   if (totalEl) totalEl.textContent = cur + totalDeposited.toLocaleString('en-US', { maximumFractionDigits: 0 });
-  if (portEl)  portEl.textContent  = totalCurrentValue > 0 ? cur + totalCurrentValue.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '—';
   if (pnlEl) {
     if (totalCurrentValue > 0 && totalDeposited) {
       const pnl    = totalCurrentValue - totalDeposited;
@@ -13685,29 +13742,6 @@ function invRenderDeposits(deposits = [], totalCurrentValue = 0, totalUnrealized
     } else {
       pnlEl.textContent = '—';
       pnlEl.style.color = '';
-    }
-  }
-  if (unrealizedEl) {
-    if (totalUnrealizedPnL !== null) {
-      const totalCost = (() => {
-        const tbody = document.getElementById('inv-tbody');
-        if (!tbody) return 0;
-        let cost = 0;
-        tbody.querySelectorAll('tr[data-idx]').forEach(row => {
-          const inputs = row.querySelectorAll('input');
-          cost += (+(inputs[2]?.value) || 0) * (+(inputs[3]?.value) || 0);
-        });
-        return cost;
-      })();
-      const pnlPct = totalCost > 0 ? (totalUnrealizedPnL / totalCost * 100).toFixed(1) : null;
-      const sign = totalUnrealizedPnL >= 0 ? '+' : '';
-      unrealizedEl.textContent = `${sign}${cur}${Math.abs(totalUnrealizedPnL).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0})}${pnlPct !== null ? ` (${sign}${pnlPct}%)` : ''}`;
-      unrealizedEl.style.color = totalUnrealizedPnL >= 0 ? 'var(--green)' : 'var(--red)';
-      unrealizedEl.style.fontWeight = '700';
-    } else {
-      unrealizedEl.textContent = '—';
-      unrealizedEl.style.color = '';
-      unrealizedEl.style.fontWeight = '';
     }
   }
 
