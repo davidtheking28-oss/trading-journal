@@ -6006,7 +6006,7 @@
                 <th data-i18n="inv_col_cur_price">Current Price</th>
                 <th data-i18n="inv_col_avg">Average</th>
                 <th data-i18n="inv_col_value">Value</th>
-                <th data-i18n="inv_col_pnl">P&L</th>
+                <th><span data-i18n="inv_col_pnl">P&L</span> <button id="inv-pnl-toggle" onclick="invTogglePnlMode()" style="font-size:10px;padding:1px 5px;border-radius:4px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.07);color:var(--text2);cursor:pointer;margin-right:4px;vertical-align:middle;">$</button></th>
                 <th data-i18n="inv_col_portfolio_pct">% Portfolio</th>
                 <th data-i18n="inv_col_remaining">Remaining</th>
                 <th></th>
@@ -13238,6 +13238,14 @@ function invSetCurrency(cur) {
   invRecalc();
   invSaveData(invLoad());
 }
+function invGetPnlMode() { return localStorage.getItem('inv_pnl_mode') || '$'; }
+function invTogglePnlMode() {
+  const next = invGetPnlMode() === '$' ? '%' : '$';
+  localStorage.setItem('inv_pnl_mode', next);
+  const btn = document.getElementById('inv-pnl-toggle');
+  if (btn) btn.textContent = next;
+  invRecalc();
+}
 
 function invLoad() {
   if (_invData) return _invData;
@@ -13281,6 +13289,8 @@ async function invInit() {
   const cur = invGetCurrency();
   document.getElementById('inv-cur-usd')?.classList.toggle('active', cur === '$');
   document.getElementById('inv-cur-ils')?.classList.toggle('active', cur === '₪');
+  const pnlBtn = document.getElementById('inv-pnl-toggle');
+  if (pnlBtn) pnlBtn.textContent = invGetPnlMode();
   const totalEl = document.getElementById('inv-portfolio-total');
   if (totalEl) totalEl.value = data.portfolioTotal || '';
   const dl = document.getElementById('inv-sym-list');
@@ -13369,12 +13379,17 @@ function invRecalc() {
     const pctEl = document.getElementById(`inv-pct-${i}`);
 
     const cur = invGetCurrency();
+    const pnlMode = invGetPnlMode();
     if (avgEl) avgEl.textContent = avgPrice > 0 ? cur + avgPrice.toFixed(2) : '—';
     if (valEl) valEl.textContent = value > 0 ? cur + value.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
     if (pnlEl) {
       if (pnlAmt !== null) {
         const sign = pnlAmt >= 0 ? '+' : '';
-        pnlEl.textContent = `${sign}${cur}${Math.abs(pnlAmt).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} (${sign}${pnlPct.toFixed(1)}%)`;
+        if (pnlMode === '%') {
+          pnlEl.textContent = `${sign}${pnlPct.toFixed(2)}%`;
+        } else {
+          pnlEl.textContent = `${sign}${cur}${Math.abs(pnlAmt).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+        }
         pnlEl.style.color = pnlAmt >= 0 ? 'var(--green)' : 'var(--red)';
         pnlEl.style.fontWeight = '600';
       } else {
