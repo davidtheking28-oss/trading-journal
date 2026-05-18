@@ -5675,12 +5675,17 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           <div><div class="s-section-title" data-i18n="set_grp_import">Import</div><div class="s-section-sub">Broker connection &amp; file import</div></div>
         </div>
         <div class="s-row s-expandable" id="s-ibkr-row" onclick="toggleExpand('s-ibkr-body','s-ibkr-row')">
-          <div class="s-row-left">
-            <div class="s-row-label" data-i18n="set_ibkr_sync">Broker Connection</div>
-            <div class="s-row-desc">Interactive Brokers · Flex Web Service</div>
+          <div class="s-row-left" style="display:flex;align-items:center;gap:12px;">
+            <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#003399,#0055cc);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(0,51,153,0.35);">
+              <svg width="22" height="22" viewBox="0 0 40 40" fill="none"><rect x="6" y="8" width="6" height="24" rx="2" fill="white"/><rect x="16" y="8" width="18" height="6" rx="2" fill="white"/><rect x="16" y="17" width="14" height="5" rx="2" fill="white"/><rect x="16" y="26" width="18" height="6" rx="2" fill="white"/></svg>
+            </div>
+            <div>
+              <div class="s-row-label" data-i18n="set_ibkr_sync">Interactive Brokers</div>
+              <div class="s-row-desc">Flex Web Service · Auto-sync</div>
+            </div>
           </div>
           <div class="s-row-ctrl">
-            <span id="ibkr-conn-dot" style="display:none;width:8px;height:8px;border-radius:50%;background:#3fb950;box-shadow:0 0 6px rgba(63,185,80,0.6);flex-shrink:0;"></span>
+            <span id="ibkr-conn-dot" style="display:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:rgba(63,185,80,0.15);color:#3fb950;border:1px solid rgba(63,185,80,0.3);flex-shrink:0;">Connected</span>
             <svg class="s-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
         </div>
@@ -5709,12 +5714,17 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           </div>
         </div>
         <div class="s-row s-expandable" id="s-bybit-row" onclick="toggleExpand('s-bybit-body','s-bybit-row')">
-          <div class="s-row-left">
-            <div class="s-row-label">Bybit Connection</div>
-            <div class="s-row-desc">Bybit · Derivatives API</div>
+          <div class="s-row-left" style="display:flex;align-items:center;gap:12px;">
+            <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.4);border:1px solid rgba(247,166,0,0.3);">
+              <svg width="24" height="24" viewBox="0 0 40 40" fill="none"><path d="M8 12h10c3.3 0 6 2.7 6 6s-2.7 6-6 6H8V12z" fill="#F7A600"/><path d="M8 24h12c3.3 0 6 2.7 6 6" stroke="#F7A600" stroke-width="4" stroke-linecap="round" fill="none"/><circle cx="30" cy="16" r="4" fill="#F7A600" opacity="0.6"/></svg>
+            </div>
+            <div>
+              <div class="s-row-label">Bybit</div>
+              <div class="s-row-desc">Derivatives API · Auto-sync</div>
+            </div>
           </div>
           <div class="s-row-ctrl">
-            <span id="bybit-conn-dot" style="display:none;width:8px;height:8px;border-radius:50%;background:#3fb950;box-shadow:0 0 6px rgba(63,185,80,0.6);flex-shrink:0;"></span>
+            <span id="bybit-conn-dot" style="display:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:rgba(63,185,80,0.15);color:#3fb950;border:1px solid rgba(63,185,80,0.3);flex-shrink:0;">Connected</span>
             <svg class="s-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
         </div>
