@@ -3510,15 +3510,22 @@
     font-size: 14px; padding: 4px 6px; border-radius: 5px; transition: all 0.15s;
   }
   .inv-del-btn:hover { color: var(--red); background: rgba(239,68,68,0.1); }
-  .inv-buy-btn {
-    background: rgba(79,131,255,0.15); border: 1px solid rgba(79,131,255,0.35); color: #818cf8; cursor: pointer;
-    font-size: 13px; padding: 3px 8px; border-radius: 5px; transition: all 0.15s; line-height: 1; font-weight: 600;
+  .inv-buy-btn { display:none; }
+  .inv-sym-chip {
+    display: inline-block; font-family: monospace; font-weight: 800; font-size: 13px;
+    color: var(--accent); letter-spacing: 0.5px; padding: 3px 10px;
+    background: rgba(79,131,255,0.12); border-radius: 7px; border: 1px solid rgba(79,131,255,0.28);
+    cursor: pointer; transition: background 0.15s;
   }
-  .inv-buy-btn:hover { color: var(--accent); background: rgba(79,131,255,0.12); }
+  .inv-sym-chip:hover { background: rgba(79,131,255,0.22); }
   .inv-buy-row td { background: rgba(79,131,255,0.04); border-bottom: 1px solid rgba(79,131,255,0.1); }
-  .inv-buy-form { display: flex; align-items: center; gap: 8px; padding: 6px 8px; flex-wrap: wrap; }
+  .inv-buy-form { display: flex; align-items: center; gap: 10px; padding: 10px 14px; flex-wrap: wrap; }
   .inv-buy-form label { font-size: 11px; color: var(--text3); white-space: nowrap; }
   .inv-buy-form input { width: 90px; }
+  .inv-buy-mode-toggle { display: flex; gap: 4px; }
+  .inv-buy-mode { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--text2); cursor: pointer; padding: 5px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; transition: all 0.15s; }
+  .inv-buy-mode.buy-active { background: rgba(52,211,153,0.15); border-color: rgba(52,211,153,0.4); color: #34d399; }
+  .inv-buy-mode.sell-active { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.3); color: var(--red); }
   .inv-buy-confirm { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 5px 14px; font-size: 12px; font-weight: 600; cursor: pointer; }
   .inv-buy-confirm:hover { opacity: 0.85; }
   .inv-buy-cancel { background: none; border: 1px solid rgba(255,255,255,0.1); color: var(--text3); border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
@@ -13360,7 +13367,12 @@ function invRenderRows(holdings) {
   }
   tbody.innerHTML = holdings.map((h, i) => `
     <tr data-idx="${i}">
-      <td><input class="inv-sym-input" type="text" value="${h.symbol||''}" placeholder="AAPL" list="inv-sym-list" oninput="this.value=this.value.toUpperCase();invRecalc();invAutoSector(${i});invAutoSave()"></td>
+      <td ${h.symbol ? `onclick="invToggleBuyRow(${i})" style="cursor:pointer"` : ''}>
+        ${h.symbol
+          ? `<input type="hidden" value="${h.symbol}"><span class="inv-sym-chip">${h.symbol}</span>`
+          : `<input class="inv-sym-input" type="text" value="" placeholder="AAPL" list="inv-sym-list" oninput="this.value=this.value.toUpperCase();invRecalc();invAutoSector(${i});invAutoSave()">`
+        }
+      </td>
       <td><input class="inv-sector-input" type="text" value="${h.sector||''}" placeholder="טכנולוגיה" data-sector-idx="${i}" oninput="invAutoSave()"></td>
       <td>
         <select class="inv-cat-sel" onchange="invRecalc();invAutoSave()">
@@ -13619,27 +13631,51 @@ function invToggleBuyRow(i) {
   const mainRow = tbody?.querySelector(`tr[data-idx="${i}"]`);
   if (!mainRow) return;
   const colspan = mainRow.querySelectorAll('td').length;
+  const inputs = mainRow.querySelectorAll('input');
+  const sym = inputs[0]?.value || '';
   const buyRow = document.createElement('tr');
   buyRow.className = 'inv-buy-row';
   buyRow.dataset.buyFor = i;
+  buyRow.dataset.mode = 'buy';
   buyRow.innerHTML = `<td colspan="${colspan}">
     <div class="inv-buy-form">
-      <label>New Qty</label>
+      <strong style="font-family:monospace;color:var(--accent);font-size:13px">${sym}</strong>
+      <div class="inv-buy-mode-toggle">
+        <button class="inv-buy-mode buy-active" id="inv-mode-buy-${i}" onclick="invSetPositionMode(${i},'buy')">+ קנייה</button>
+        <button class="inv-buy-mode" id="inv-mode-sell-${i}" onclick="invSetPositionMode(${i},'sell')">− מכירה</button>
+      </div>
+      <label>כמות</label>
       <input type="number" id="inv-buy-qty-${i}" placeholder="0" min="0" step="any" class="inv-input" style="width:90px;">
-      <label>Price Paid</label>
-      <input type="number" id="inv-buy-price-${i}" placeholder="0.00" min="0" step="any" class="inv-input" style="width:100px;">
-      <button class="inv-buy-confirm" onclick="invConfirmPurchase(${i})">✓ Add</button>
-      <button class="inv-buy-cancel" onclick="this.closest('.inv-buy-row').remove()">Cancel</button>
+      <span id="inv-price-wrap-${i}" style="display:flex;align-items:center;gap:8px">
+        <label>מחיר</label>
+        <input type="number" id="inv-buy-price-${i}" placeholder="0.00" min="0" step="any" class="inv-input" style="width:100px;">
+      </span>
+      <button class="inv-buy-confirm" onclick="invConfirmPositionUpdate(${i})">✓ אשר</button>
+      <button class="inv-buy-cancel" onclick="this.closest('.inv-buy-row').remove()">ביטול</button>
     </div>
   </td>`;
   mainRow.insertAdjacentElement('afterend', buyRow);
-  buyRow.querySelector('input')?.focus();
+  document.getElementById(`inv-buy-qty-${i}`)?.focus();
 }
 
-function invConfirmPurchase(i) {
-  const newQty   = +(document.getElementById(`inv-buy-qty-${i}`)?.value) || 0;
-  const newPrice = +(document.getElementById(`inv-buy-price-${i}`)?.value) || 0;
-  if (!newQty || !newPrice) { toast('הכנס כמות ומחיר', 'error'); return; }
+function invSetPositionMode(i, mode) {
+  const buyBtn  = document.getElementById(`inv-mode-buy-${i}`);
+  const sellBtn = document.getElementById(`inv-mode-sell-${i}`);
+  const priceWrap = document.getElementById(`inv-price-wrap-${i}`);
+  const buyRow = document.querySelector(`.inv-buy-row[data-buy-for="${i}"]`);
+  if (buyBtn)  { buyBtn.classList.toggle('buy-active', mode === 'buy');   buyBtn.classList.remove('sell-active'); }
+  if (sellBtn) { sellBtn.classList.toggle('sell-active', mode === 'sell'); sellBtn.classList.remove('buy-active'); }
+  if (priceWrap) priceWrap.style.display = mode === 'sell' ? 'none' : 'flex';
+  if (buyRow) buyRow.dataset.mode = mode;
+}
+
+function invConfirmPositionUpdate(i) {
+  const buyRow = document.querySelector(`.inv-buy-row[data-buy-for="${i}"]`);
+  const mode  = buyRow?.dataset.mode || 'buy';
+  const qty   = +(document.getElementById(`inv-buy-qty-${i}`)?.value) || 0;
+  const price = +(document.getElementById(`inv-buy-price-${i}`)?.value) || 0;
+  if (!qty) { toast('הכנס כמות', 'error'); return; }
+  if (mode === 'buy' && !price) { toast('הכנס מחיר', 'error'); return; }
 
   const tbody = document.getElementById('inv-tbody');
   const mainRow = tbody?.querySelector(`tr[data-idx="${i}"]`);
@@ -13647,17 +13683,28 @@ function invConfirmPurchase(i) {
   const inputs = mainRow.querySelectorAll('input');
   const oldQty   = +(inputs[2]?.value) || 0;
   const oldPrice = +(inputs[3]?.value) || 0;
+  const cur = invGetCurrency();
 
-  const totalQty   = oldQty + newQty;
-  const avgPrice   = totalQty > 0 ? ((oldQty * oldPrice) + (newQty * newPrice)) / totalQty : newPrice;
-
-  if (inputs[2]) inputs[2].value = totalQty;
-  if (inputs[3]) inputs[3].value = avgPrice.toFixed(4);
-
-  tbody.querySelector(`.inv-buy-row[data-buy-for="${i}"]`)?.remove();
-  invRecalc();
-  invAutoSave();
-  toast(`עודכן: ${totalQty} מניות @ ${invGetCurrency()}${avgPrice.toFixed(2)} ממוצע`, 'success');
+  if (mode === 'buy') {
+    const totalQty = oldQty + qty;
+    const avgPrice = totalQty > 0 ? (oldQty * oldPrice + qty * price) / totalQty : price;
+    if (inputs[2]) inputs[2].value = totalQty;
+    if (inputs[3]) inputs[3].value = avgPrice.toFixed(4);
+    buyRow?.remove();
+    invRecalc(); invAutoSave();
+    toast(`עודכן: ${totalQty} מניות @ ${cur}${avgPrice.toFixed(2)} ממוצע`, 'success');
+  } else {
+    const newQty = oldQty - qty;
+    buyRow?.remove();
+    if (newQty <= 0) {
+      invDeleteRow(i);
+      toast('פוזיציה הוסרה', 'success');
+      return;
+    }
+    if (inputs[2]) inputs[2].value = newQty;
+    invRecalc(); invAutoSave();
+    toast(`עודכן: ${newQty} מניות נותרו`, 'success');
+  }
 }
 
 function invDeleteRow(i) {
