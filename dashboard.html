@@ -8703,7 +8703,7 @@ const LANG_STRINGS = {
     inv_add_holding:'+ Add Holding', inv_save:'💾 Save',
     inv_deposits:'Monthly Deposits', inv_add_deposit:'+ Add Deposit',
     inv_total_dep:'Total Deposited', inv_portfolio_now:'Portfolio Value Now',
-    inv_pnl:'P&L', inv_unrealized:'Unrealized P&L', inv_dep_month:'Month', inv_dep_amount:'Deposit',
+    inv_pnl:'P&L', inv_unrealized:'Unrealized P&L', inv_refresh_prices:'Refresh Prices', inv_dep_month:'Month', inv_dep_amount:'Deposit',
     inv_dep_cumulative:'Cumulative', inv_cash:'Cash',
     inv_legend_blue:'Blue Chips', inv_legend_green:'Growth', inv_legend_yellow:'Speculative',
     missed_title:'Missed Opportunities', missed_symbol:'Symbol',
@@ -8817,7 +8817,7 @@ const LANG_STRINGS = {
     inv_add_holding:'+ הוסף אחזקה', inv_save:'💾 שמור',
     inv_deposits:'הפקדות חודשיות', inv_add_deposit:'+ הוסף הפקדה',
     inv_total_dep:'סה"כ הופקד', inv_portfolio_now:'שווי תיק כעת',
-    inv_pnl:'רווח / הפסד', inv_unrealized:'רווח לא ממומש', inv_dep_month:'חודש', inv_dep_amount:'הפקדה',
+    inv_pnl:'רווח / הפסד', inv_unrealized:'רווח לא ממומש', inv_refresh_prices:'רענן מחירים', inv_dep_month:'חודש', inv_dep_amount:'הפקדה',
     inv_dep_cumulative:'מצטבר', inv_cash:'מזומן',
     inv_legend_blue:'כחולות', inv_legend_green:'ירוקות', inv_legend_yellow:'צהובות',
     missed_title:'הזדמנויות שפוספסו', missed_symbol:'סימבול',
@@ -13288,6 +13288,7 @@ async function invInit() {
   invRenderRows(data.holdings || []);
   invRenderDeposits(data.deposits || []);
   invRecalc();
+  invFetchPrices();
 }
 
 function invRenderRows(holdings) {
@@ -13468,6 +13469,36 @@ function invAddRow() {
     const newRow = tbody.querySelector('tr[data-idx="' + (data.holdings.length - 1) + '"]');
     newRow?.querySelector('input')?.focus();
   }
+}
+
+async function invFetchPrices() {
+  const tbody = document.getElementById('inv-tbody');
+  if (!tbody) return;
+  const rows = [...tbody.querySelectorAll('tr[data-idx]')];
+  const symbols = [];
+  rows.forEach(row => {
+    const symInput = row.querySelector('input');
+    const sym = symInput?.value?.trim().toUpperCase();
+    if (sym) symbols.push({ row, sym });
+  });
+  if (!symbols.length) return;
+
+  const token = await _getToken();
+  let updated = 0;
+  await Promise.all(symbols.map(async ({ row, sym }) => {
+    try {
+      const r = await fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=quote&symbol=${encodeURIComponent(sym)}`,
+        { headers: { 'Authorization': `Bearer ${token}` } });
+      const data = await r.json();
+      const price = data.c;
+      if (!price) return;
+      const inputs = row.querySelectorAll('input');
+      const priceInput = inputs[4];
+      if (priceInput) { priceInput.value = price; updated++; }
+    } catch {}
+  }));
+
+  if (updated > 0) { invRecalc(); invAutoSave(); }
 }
 
 function invDeleteRow(i) {
