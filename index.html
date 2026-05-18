@@ -8,997 +8,1036 @@
 <meta name="description" content="עקוב אחרי עסקאות המסחר שלך, נתח ביצועים עם AI, וקבל תובנות שיהפכו אותך לסוחר טוב יותר.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg:     #080e1c;
-    --bg2:    #060b16;
-    --card:   #0c1628;
-    --accent: #4f83ff;
-    --accent2:#818cf8;
-    --text:   #e8edf7;
-    --text2:  #8fa3be;
-    --text3:  #4d6480;
-    --green:  #22c55e;
-    --border: rgba(255,255,255,0.06);
-    --border-accent: rgba(79,131,255,0.18);
-    --radius: 16px;
-    --nav-h:  64px;
-  }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Inter', sans-serif;
-    line-height: 1.6;
-    overflow-x: hidden;
-  }
-
-  /* Grid background */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(79,131,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(79,131,255,0.03) 1px, transparent 1px);
-    background-size: 48px 48px;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  /* ── FOCUS STATES (accessibility) ── */
-  :focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 3px;
-    border-radius: 6px;
-  }
-
-  /* ── FLOATING NAVBAR ── */
-  nav {
-    position: fixed;
-    top: 16px;
-    right: 16px;
-    left: 16px;
-    z-index: 100;
-    background: rgba(8,14,28,0.82);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 0 20px;
-    height: var(--nav-h);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 4px 24px rgba(0,0,0,.4);
-  }
-
-  .nav-logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    text-decoration: none;
-    cursor: pointer;
-  }
-
-  .nav-logo-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    background: linear-gradient(135deg,#5b6ef5,#9b7fe8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    box-shadow: 0 2px 12px rgba(91,110,245,0.4);
-  }
-
-  .nav-logo-text {
-    font-size: 16px;
-    font-weight: 800;
-    color: var(--text);
-    letter-spacing: -0.4px;
-  }
-
-  .nav-actions { display: flex; align-items: center; gap: 8px; }
-
-  .btn-ghost {
-    padding: 8px 16px;
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: 9px;
-    color: var(--text2);
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    text-decoration: none;
-    transition: border-color .2s, color .2s;
-    font-family: inherit;
-    white-space: nowrap;
-  }
-  .btn-ghost:hover { border-color: var(--border-accent); color: var(--text); }
-
-  .btn-primary {
-    padding: 9px 18px;
-    background: linear-gradient(135deg,#4f83ff,#818cf8);
-    border: none;
-    border-radius: 9px;
-    color: #fff;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    text-decoration: none;
-    transition: opacity .2s, transform .15s;
-    font-family: inherit;
-    box-shadow: 0 3px 14px rgba(79,131,255,0.35);
-    white-space: nowrap;
-  }
-  .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
-
-  /* ── SECTIONS ── */
-  section {
-    padding: 100px max(24px, 5vw);
-    position: relative;
-    z-index: 1;
-  }
-
-  .section-center { text-align: center; }
-
-  .section-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 14px;
-    background: rgba(79,131,255,0.08);
-    border: 1px solid rgba(79,131,255,0.18);
-    border-radius: 100px;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--accent);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-bottom: 18px;
-  }
-
-  .section-title {
-    font-size: clamp(26px,4vw,40px);
-    font-weight: 900;
-    letter-spacing: -1px;
-    color: var(--text);
-    line-height: 1.15;
-    margin-bottom: 14px;
-  }
-
-  .section-sub {
-    font-size: 16px;
-    color: var(--text2);
-    max-width: 500px;
-    line-height: 1.7;
-    margin: 0 auto;
-  }
-
-  /* ── HERO ── */
-  #hero {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    padding-top: calc(var(--nav-h) + 48px);
-    padding-bottom: 80px;
-  }
-
-  .hero-inner {
-    max-width: 1100px;
-    margin: 0 auto;
-    width: 100%;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 56px;
-    align-items: center;
-  }
-
-  .hero-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 5px 13px;
-    background: rgba(34,197,94,0.07);
-    border: 1px solid rgba(34,197,94,0.18);
-    border-radius: 100px;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--green);
-    margin-bottom: 22px;
-  }
-
-  .hero-tag-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--green);
-    flex-shrink: 0;
-  }
-
-  .hero-title {
-    font-size: clamp(30px, 4.5vw, 50px);
-    font-weight: 900;
-    letter-spacing: -1.5px;
-    line-height: 1.1;
-    margin-bottom: 18px;
-    color: var(--text);
-  }
-
-  .hero-title .highlight {
-    background: linear-gradient(135deg,#4f83ff,#a78bfa);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .hero-sub {
-    font-size: 16px;
-    color: var(--text2);
-    line-height: 1.75;
-    margin-bottom: 34px;
-    max-width: 440px;
-  }
-
-  .hero-actions {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-
-  .btn-hero {
-    padding: 13px 26px;
-    font-size: 15px;
-    font-weight: 700;
-    border-radius: 11px;
-    cursor: pointer;
-    text-decoration: none;
-    transition: all .2s;
-    font-family: inherit;
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-  }
-
-  .btn-hero-primary {
-    background: linear-gradient(135deg,#4f83ff,#818cf8);
-    color: #fff;
-    border: none;
-    box-shadow: 0 5px 22px rgba(79,131,255,0.42);
-  }
-  .btn-hero-primary:hover { opacity: 0.87; transform: translateY(-2px); box-shadow: 0 8px 30px rgba(79,131,255,0.52); }
-
-  .btn-hero-ghost {
-    background: rgba(255,255,255,0.04);
-    color: var(--text2);
-    border: 1px solid var(--border);
-  }
-  .btn-hero-ghost:hover { background: rgba(255,255,255,0.07); color: var(--text); border-color: var(--border-accent); }
-
-  .hero-stats {
-    display: flex;
-    gap: 26px;
-    margin-top: 36px;
-    padding-top: 28px;
-    border-top: 1px solid var(--border);
-    flex-wrap: wrap;
-  }
-
-  .hero-stat-num {
-    font-size: 22px;
-    font-weight: 900;
-    color: var(--accent);
-    letter-spacing: -0.5px;
-    font-variant-numeric: tabular-nums;
-  }
-  .hero-stat-label { font-size: 12px; color: var(--text3); margin-top: 1px; }
-
-  /* Hero visual card */
-  .hero-visual {
-    background: linear-gradient(145deg,#0a1628,#0c1e3a);
-    border: 1px solid var(--border-accent);
-    border-radius: 20px;
-    padding: 22px;
-    box-shadow: 0 32px 80px rgba(0,0,0,.65), 0 0 0 1px rgba(79,131,255,0.05);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .hero-visual::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg,transparent,rgba(79,131,255,0.6),transparent);
-  }
-
-  .visual-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 18px;
-  }
-
-  .visual-title { font-size: 13px; font-weight: 700; color: var(--text); }
-
-  .visual-badge {
-    padding: 3px 9px;
-    background: rgba(34,197,94,0.1);
-    border: 1px solid rgba(34,197,94,0.18);
-    border-radius: 100px;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--green);
-  }
-
-  .visual-metrics {
-    display: grid;
-    grid-template-columns: repeat(3,1fr);
-    gap: 10px;
-    margin-bottom: 18px;
-  }
-
-  .vm-card {
-    background: rgba(255,255,255,0.025);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px 12px;
-  }
-
-  .vm-label { font-size: 10px; color: var(--text3); margin-bottom: 3px; font-weight: 500; }
-  .vm-value { font-size: 17px; font-weight: 900; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
-  .vm-value.green { color: var(--green); }
-  .vm-value.blue  { color: var(--accent); }
-  .vm-value.white { color: var(--text); }
-
-  .visual-chart {
-    width: 100%;
-    height: 90px;
-    border-radius: 8px;
-    overflow: hidden;
-    background: rgba(255,255,255,0.015);
-    margin-bottom: 14px;
-  }
-
-  .visual-trades { display: flex; flex-direction: column; gap: 7px; }
-
-  .vt-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 10px;
-    background: rgba(255,255,255,0.018);
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    font-size: 12px;
-  }
-
-  .vt-sym { font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
-  .vt-type { color: var(--text3); }
-  .vt-pnl { font-weight: 700; font-variant-numeric: tabular-nums; }
-  .vt-pnl.pos { color: var(--green); }
-  .vt-pnl.neg { color: #ef4444; }
-
-  /* ── FEATURES ── */
-  #features { background: linear-gradient(180deg, rgba(6,11,22,0.8) 0%, transparent 100%); }
-
-  .features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px,1fr));
-    gap: 16px;
-    margin-top: 52px;
-    max-width: 1100px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  .feature-card {
-    background: linear-gradient(145deg, #0a1628, #0c1e3a);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 26px;
-    text-align: right;
-    transition: border-color .25s, box-shadow .25s, transform .25s;
-  }
-
-  .feature-card:hover {
-    border-color: var(--border-accent);
-    box-shadow: 0 8px 32px rgba(79,131,255,0.1);
-    transform: translateY(-3px);
-  }
-
-  .feature-icon-wrap {
-    width: 46px;
-    height: 46px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 16px;
-    flex-shrink: 0;
-  }
-
-  .feature-title {
-    font-size: 16px;
-    font-weight: 800;
-    color: var(--text);
-    margin-bottom: 7px;
-    letter-spacing: -0.3px;
-  }
-
-  .feature-desc {
-    font-size: 13.5px;
-    color: var(--text3);
-    line-height: 1.7;
-  }
-
-  /* ── HOW IT WORKS ── */
-  #how { text-align: center; }
-
-  .steps-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px,1fr));
-    gap: 24px;
-    margin-top: 52px;
-    max-width: 860px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  .step-card {
-    background: linear-gradient(145deg, #0a1628, #0c1e3a);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 28px 24px;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 14px;
-    transition: border-color .25s;
-  }
-
-  .step-card:hover { border-color: var(--border-accent); }
-
-  .step-num {
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
-    background: rgba(79,131,255,0.1);
-    border: 1px solid rgba(79,131,255,0.22);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    font-weight: 900;
-    color: var(--accent);
-  }
-
-  .step-title { font-size: 16px; font-weight: 800; color: var(--text); letter-spacing: -0.3px; }
-  .step-desc  { font-size: 13.5px; color: var(--text3); line-height: 1.7; }
-
-  /* ── PRICING ── */
-  #pricing { background: linear-gradient(180deg, transparent 0%, rgba(6,11,22,0.7) 100%); text-align: center; }
-
-  .pricing-card {
-    max-width: 420px;
-    margin: 52px auto 0;
-    background: linear-gradient(145deg, #0a1628, #0c1e3a);
-    border: 1px solid var(--border-accent);
-    border-radius: 22px;
-    padding: 38px 34px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .pricing-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg,transparent,rgba(79,131,255,0.6),transparent);
-  }
-
-  .pricing-label {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--accent);
-    text-transform: uppercase;
-    letter-spacing: 1.2px;
-    margin-bottom: 14px;
-  }
-
-  .pricing-price {
-    font-size: 54px;
-    font-weight: 900;
-    color: var(--text);
-    letter-spacing: -2px;
-    line-height: 1;
-    margin-bottom: 6px;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .pricing-price span { font-size: 18px; font-weight: 500; color: var(--text3); letter-spacing: 0; }
-  .pricing-note { font-size: 13px; color: var(--text3); margin-bottom: 28px; line-height: 1.6; }
-
-  .pricing-features {
-    list-style: none;
-    text-align: right;
-    display: flex;
-    flex-direction: column;
-    gap: 11px;
-    margin-bottom: 28px;
-  }
-
-  .pricing-features li {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    font-size: 14px;
-    color: var(--text2);
-  }
-
-  .check-icon { color: var(--green); flex-shrink: 0; }
-
-  /* ── FAQ ── */
-  #faq { text-align: center; }
-
-  .faq-list {
-    max-width: 660px;
-    margin: 52px auto 0;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    text-align: right;
-  }
-
-  .faq-item {
-    background: linear-gradient(145deg, #0a1628, #0c1e3a);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    transition: border-color .2s;
-  }
-
-  .faq-item.open { border-color: var(--border-accent); }
-
-  .faq-q {
-    width: 100%;
-    padding: 17px 20px;
-    background: none;
-    border: none;
-    color: var(--text);
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    text-align: right;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 14px;
-    font-family: inherit;
-    letter-spacing: -0.2px;
-    transition: color .2s;
-  }
-
-  .faq-q:hover { color: var(--accent); }
-
-  .faq-arrow {
-    flex-shrink: 0;
-    color: var(--text3);
-    transition: transform .25s;
-    display: flex;
-    align-items: center;
-  }
-
-  .faq-item.open .faq-a { display: block; }
-  .faq-item.open .faq-arrow { transform: rotate(180deg); }
-
-  .faq-a {
-    display: none;
-    padding: 0 20px 16px;
-    font-size: 13.5px;
-    color: var(--text3);
-    line-height: 1.75;
-  }
-
-  /* ── CTA SECTION ── */
-  #cta {
-    text-align: center;
-    padding: 80px max(24px,5vw);
-  }
-
-  .cta-card {
-    max-width: 700px;
-    margin: 0 auto;
-    background: linear-gradient(135deg, rgba(79,131,255,0.1), rgba(129,140,248,0.06));
-    border: 1px solid var(--border-accent);
-    border-radius: 24px;
-    padding: 56px 48px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .cta-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg,transparent,rgba(79,131,255,0.7),transparent);
-  }
-
-  .cta-glow {
-    position: absolute;
-    top: -60px;
-    right: 50%;
-    transform: translateX(50%);
-    width: 300px;
-    height: 200px;
-    background: radial-gradient(circle, rgba(79,131,255,0.18) 0%, transparent 70%);
-    pointer-events: none;
-  }
-
-  .cta-title {
-    font-size: clamp(24px,3.5vw,36px);
-    font-weight: 900;
-    letter-spacing: -1px;
-    color: var(--text);
-    margin-bottom: 12px;
-    line-height: 1.2;
-  }
-
-  .cta-sub {
-    font-size: 15px;
-    color: var(--text2);
-    margin-bottom: 32px;
-    line-height: 1.7;
-  }
-
-  /* ── FOOTER ── */
-  footer {
-    background: var(--bg2);
-    border-top: 1px solid var(--border);
-    padding: 32px max(24px,5vw);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
-    position: relative;
-    z-index: 1;
-  }
-
-  .footer-copy { font-size: 13px; color: var(--text3); }
-
-  .footer-links { display: flex; gap: 18px; }
-
-  .footer-links a {
-    font-size: 13px;
-    color: var(--text3);
-    text-decoration: none;
-    transition: color .2s;
-  }
-
-  .footer-links a:hover { color: var(--text); }
-
-  /* ── RESPONSIVE ── */
-  @media (max-width: 768px) {
-    nav { top: 10px; right: 10px; left: 10px; }
-    .hero-inner { grid-template-columns: 1fr; }
-    .hero-visual { display: none; }
-    .hero-actions { flex-direction: column; }
-    .btn-hero { justify-content: center; }
-    .cta-card { padding: 36px 24px; }
-    footer { flex-direction: column; text-align: center; }
-    .footer-links { justify-content: center; flex-wrap: wrap; }
-  }
-
-  /* ── ANIMATIONS ── */
-  .fade-up {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity .5s ease, transform .5s ease;
-  }
-  .fade-up.visible { opacity: 1; transform: translateY(0); }
-
-  @media (prefers-reduced-motion: reduce) {
-    .fade-up { opacity: 1; transform: none; transition: none; }
-    * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-  }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #030912;
+  --bg2:      #020710;
+  --surface:  #07101f;
+  --card:     #09152a;
+  --card2:    #0b1a32;
+  --accent:   #4f7fff;
+  --accent2:  #9b72ff;
+  --green:    #00e676;
+  --red:      #ff4060;
+  --amber:    #ffc43d;
+  --text:     #e4ecf8;
+  --text2:    #7a9cc4;
+  --text3:    #3d5a7a;
+  --border:   rgba(79,127,255,0.1);
+  --border2:  rgba(255,255,255,0.05);
+  --mono:     'IBM Plex Mono', monospace;
+  --display:  'Syne', sans-serif;
+  --body:     'IBM Plex Sans', sans-serif;
+  --r:        16px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Aurora mesh background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 110% 0%, rgba(79,127,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at -10% 60%, rgba(155,114,255,0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 60% at 50% 100%, rgba(79,127,255,0.06) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Subtle noise texture */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+/* ── NAVBAR ── */
+nav {
+  position: fixed;
+  top: 14px; right: 14px; left: 14px;
+  z-index: 200;
+  background: rgba(3,9,18,0.75);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  padding: 0 18px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 32px rgba(0,0,0,0.5);
+}
+
+.nav-logo {
+  display: flex; align-items: center; gap: 9px;
+  text-decoration: none; cursor: pointer;
+}
+
+.nav-logo-icon {
+  width: 32px; height: 32px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #4f7fff 0%, #9b72ff 100%);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 10px rgba(79,127,255,0.45);
+  flex-shrink: 0;
+}
+
+.nav-logo-text {
+  font-family: var(--display);
+  font-size: 15px; font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+
+.nav-right { display: flex; align-items: center; gap: 8px; }
+
+.nav-link {
+  padding: 7px 14px;
+  background: none; border: 1px solid var(--border2);
+  border-radius: 8px; color: var(--text2);
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; text-decoration: none;
+  transition: color .2s, border-color .2s;
+  font-family: var(--body);
+  white-space: nowrap;
+}
+.nav-link:hover { color: var(--text); border-color: var(--border); }
+
+.nav-cta {
+  padding: 8px 18px;
+  background: linear-gradient(135deg, #4f7fff, #9b72ff);
+  border: none; border-radius: 8px;
+  color: #fff; font-size: 13px; font-weight: 600;
+  cursor: pointer; text-decoration: none;
+  transition: opacity .2s, transform .15s, box-shadow .2s;
+  font-family: var(--body);
+  box-shadow: 0 3px 16px rgba(79,127,255,0.4);
+  white-space: nowrap;
+}
+.nav-cta:hover { opacity: .88; transform: translateY(-1px); box-shadow: 0 5px 22px rgba(79,127,255,0.55); }
+
+/* ── SECTION BASE ── */
+section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
+
+.section-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 12px;
+  background: rgba(79,127,255,0.07);
+  border: 1px solid rgba(79,127,255,0.2);
+  border-radius: 100px;
+  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  color: var(--accent); letter-spacing: 1.5px; text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.section-pill::before { content: '//'; opacity: 0.5; }
+
+.section-title {
+  font-family: var(--display);
+  font-size: clamp(28px, 3.8vw, 44px);
+  font-weight: 800; letter-spacing: -1.2px;
+  color: var(--text); line-height: 1.1;
+  margin-bottom: 14px;
+}
+
+.section-sub {
+  font-size: 16px; color: var(--text2);
+  line-height: 1.75; max-width: 500px;
+}
+.centered { text-align: center; }
+.centered .section-sub { margin: 0 auto; }
+
+/* ── HERO ── */
+#hero {
+  min-height: 100vh;
+  display: flex; align-items: center;
+  padding-top: calc(58px + 60px);
+  padding-bottom: 80px;
+}
+
+.hero-wrap {
+  max-width: 1140px; margin: 0 auto; width: 100%;
+  display: grid; grid-template-columns: 1fr 1.05fr;
+  gap: 64px; align-items: center;
+}
+
+/* Beta chip */
+.hero-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 12px 5px 9px;
+  background: rgba(0,230,118,0.06);
+  border: 1px solid rgba(0,230,118,0.18);
+  border-radius: 100px;
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  color: var(--green); margin-bottom: 26px;
+}
+
+.chip-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green); flex-shrink: 0;
+  box-shadow: 0 0 6px var(--green);
+}
+
+.hero-title {
+  font-family: var(--display);
+  font-size: clamp(34px, 4.8vw, 58px);
+  font-weight: 800; letter-spacing: -1.8px;
+  line-height: 1.06; margin-bottom: 20px;
+  color: var(--text);
+}
+
+.hero-title .grad {
+  background: linear-gradient(135deg, #6fa3ff 0%, #c084fc 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-sub {
+  font-size: 16px; color: var(--text2); line-height: 1.75;
+  margin-bottom: 36px; max-width: 440px;
+}
+
+.hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.btn-hero-primary {
+  padding: 13px 26px; font-size: 15px; font-weight: 600;
+  border-radius: 11px; cursor: pointer; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg, #4f7fff 0%, #9b72ff 100%);
+  color: #fff; border: none; font-family: var(--body);
+  box-shadow: 0 4px 24px rgba(79,127,255,0.45);
+  transition: all .2s;
+}
+.btn-hero-primary:hover { opacity: .88; transform: translateY(-2px); box-shadow: 0 8px 32px rgba(79,127,255,0.55); }
+
+.btn-hero-ghost {
+  padding: 13px 22px; font-size: 15px; font-weight: 500;
+  border-radius: 11px; cursor: pointer; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.04); color: var(--text2);
+  border: 1px solid var(--border2); font-family: var(--body);
+  transition: all .2s;
+}
+.btn-hero-ghost:hover { background: rgba(255,255,255,0.07); color: var(--text); border-color: var(--border); }
+
+/* Hero stats */
+.hero-stats {
+  display: flex; gap: 0; margin-top: 40px;
+  border: 1px solid var(--border2); border-radius: 12px;
+  overflow: hidden; width: fit-content;
+}
+
+.hero-stat {
+  padding: 12px 22px;
+  border-left: 1px solid var(--border2);
+}
+.hero-stat:first-child { border-left: none; }
+
+.stat-num {
+  font-family: var(--mono); font-size: 20px; font-weight: 600;
+  color: var(--text); letter-spacing: -0.5px;
+  line-height: 1;
+}
+.stat-num .unit { font-size: 13px; color: var(--text3); margin-right: 2px; }
+.stat-label { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+/* Hero visual */
+.hero-visual-wrap {
+  position: relative;
+}
+
+.hero-visual-glow {
+  position: absolute;
+  bottom: -40px; right: 50%; transform: translateX(50%);
+  width: 70%; height: 120px;
+  background: radial-gradient(ellipse, rgba(79,127,255,0.35) 0%, transparent 70%);
+  filter: blur(24px);
+  pointer-events: none;
+}
+
+.hero-card {
+  background: linear-gradient(160deg, #0c1830 0%, #08122a 100%);
+  border: 1px solid rgba(79,127,255,0.15);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(79,127,255,0.06);
+  position: relative; overflow: hidden;
+}
+
+.hero-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(79,127,255,0.7) 40%, rgba(155,114,255,0.5) 60%, transparent);
+}
+
+.card-topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+}
+
+.card-dots { display: flex; gap: 5px; }
+.card-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+}
+.dot-r { background: #ff5f57; }
+.dot-y { background: #febc2e; }
+.dot-g { background: #28c840; }
+
+.card-label {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--text3); letter-spacing: 1px;
+}
+
+/* Metrics row */
+.card-metrics {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 10px;
+  margin-bottom: 16px;
+}
+
+.cm {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border2);
+  border-radius: 10px; padding: 10px 12px;
+}
+.cm-label { font-size: 10px; color: var(--text3); margin-bottom: 4px; font-family: var(--mono); }
+.cm-val { font-family: var(--mono); font-size: 17px; font-weight: 600; letter-spacing: -0.5px; }
+.cm-val.g { color: var(--green); }
+.cm-val.b { color: var(--accent); }
+.cm-val.w { color: var(--text); }
+
+/* Chart */
+.card-chart {
+  height: 88px; border-radius: 8px; overflow: hidden;
+  background: rgba(79,127,255,0.03); margin-bottom: 14px;
+  border: 1px solid var(--border2);
+}
+
+/* Trade rows */
+.card-trades { display: flex; flex-direction: column; gap: 6px; }
+
+.tr {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 8px; border: 1px solid var(--border2);
+  font-size: 12px;
+}
+
+.tr-sym { font-family: var(--mono); font-weight: 600; color: var(--text); }
+.tr-meta { color: var(--text3); font-size: 11px; }
+.tr-pnl { font-family: var(--mono); font-weight: 600; font-size: 12px; }
+.tr-pnl.pos { color: var(--green); }
+.tr-pnl.neg { color: var(--red); }
+
+/* AI badge */
+.card-ai {
+  margin-top: 12px; padding: 9px 12px;
+  background: rgba(155,114,255,0.06);
+  border: 1px solid rgba(155,114,255,0.15);
+  border-radius: 8px;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; color: rgba(196,167,255,0.9);
+  font-family: var(--mono);
+}
+
+.ai-icon {
+  width: 18px; height: 18px; border-radius: 5px;
+  background: linear-gradient(135deg,#6b48ff,#c084fc);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 10px;
+}
+
+/* ── TICKER ── */
+.ticker-wrap {
+  position: relative; z-index: 1;
+  border-top: 1px solid var(--border2);
+  border-bottom: 1px solid var(--border2);
+  background: rgba(7,16,31,0.8);
+  backdrop-filter: blur(8px);
+  overflow: hidden; padding: 10px 0;
+  margin-top: -1px;
+}
+
+.ticker-track {
+  display: flex; gap: 48px;
+  width: max-content;
+  animation: ticker 28s linear infinite;
+}
+
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.ticker-item {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 12px;
+  white-space: nowrap; color: var(--text3);
+}
+.ticker-sym { color: var(--text2); font-weight: 600; }
+.ticker-val { color: var(--text); }
+.ticker-chg.pos { color: var(--green); }
+.ticker-chg.neg { color: var(--red); }
+
+/* ── FEATURES ── */
+#features { background: transparent; }
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 14px;
+  margin-top: 52px;
+  max-width: 1100px; margin-left: auto; margin-right: auto;
+}
+
+.feat {
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 24px;
+  text-align: right;
+  transition: border-color .3s, transform .3s, box-shadow .3s;
+  position: relative; overflow: hidden;
+}
+
+.feat::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  opacity: 0;
+  transition: opacity .3s;
+  border-radius: var(--r) var(--r) 0 0;
+}
+
+.feat:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+}
+.feat:hover::before { opacity: 1; }
+
+.feat.c1::before { background: linear-gradient(90deg,#4f7fff,#6b9fff); }
+.feat.c2::before { background: linear-gradient(90deg,#9b72ff,#c084fc); }
+.feat.c3::before { background: linear-gradient(90deg,#00e676,#00c853); }
+.feat.c4::before { background: linear-gradient(90deg,#ffc43d,#ff9800); }
+.feat.c5::before { background: linear-gradient(90deg,#a855f7,#7c3aed); }
+.feat.c6::before { background: linear-gradient(90deg,#ff4060,#e53935); }
+
+.feat.c1:hover { border-color: rgba(79,127,255,0.25); }
+.feat.c2:hover { border-color: rgba(155,114,255,0.25); }
+.feat.c3:hover { border-color: rgba(0,230,118,0.25); }
+.feat.c4:hover { border-color: rgba(255,196,61,0.25); }
+.feat.c5:hover { border-color: rgba(168,85,247,0.25); }
+.feat.c6:hover { border-color: rgba(255,64,96,0.25); }
+
+.feat-icon {
+  width: 42px; height: 42px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 16px;
+}
+
+.feat-title {
+  font-family: var(--display); font-size: 16px; font-weight: 700;
+  color: var(--text); margin-bottom: 8px; letter-spacing: -0.3px;
+}
+
+.feat-desc { font-size: 13px; color: var(--text3); line-height: 1.7; }
+
+/* ── STEPS ── */
+#how { text-align: center; }
+
+.steps-row {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 0; margin-top: 52px;
+  max-width: 860px; margin-left: auto; margin-right: auto;
+  position: relative;
+}
+
+.steps-row::before {
+  content: '';
+  position: absolute; top: 26px; right: 16%; left: 16%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), var(--border), transparent);
+  z-index: 0;
+}
+
+.step {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 14px; text-align: center;
+  padding: 0 16px; position: relative; z-index: 1;
+}
+
+.step-circle {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--card);
+  border: 1px solid rgba(79,127,255,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 18px; font-weight: 600;
+  color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(79,127,255,0.06);
+}
+
+.step-title {
+  font-family: var(--display); font-size: 16px; font-weight: 700;
+  color: var(--text); letter-spacing: -0.3px;
+}
+.step-desc { font-size: 13px; color: var(--text3); line-height: 1.7; }
+
+/* ── PRICING ── */
+#pricing { text-align: center; }
+
+.pricing-outer {
+  max-width: 440px; margin: 52px auto 0;
+  position: relative; border-radius: 24px;
+  padding: 2px;
+  background: linear-gradient(135deg, rgba(79,127,255,0.4), rgba(155,114,255,0.3), rgba(79,127,255,0.4));
+}
+
+.pricing-card {
+  background: linear-gradient(160deg, #0d1c36 0%, #09152a 100%);
+  border-radius: 22px; padding: 40px 36px;
+  position: relative; overflow: hidden;
+}
+
+.pricing-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg,transparent,rgba(79,127,255,0.8) 30%, rgba(155,114,255,0.6) 70%,transparent);
+}
+
+.pricing-glow {
+  position: absolute; top: -60px; right: 50%; transform: translateX(50%);
+  width: 260px; height: 160px;
+  background: radial-gradient(circle, rgba(79,127,255,0.2) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.price-label {
+  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  color: var(--accent); text-transform: uppercase; letter-spacing: 2px;
+  margin-bottom: 16px;
+}
+
+.price-amount {
+  font-family: var(--display); font-size: 60px; font-weight: 800;
+  color: var(--text); letter-spacing: -3px; line-height: 1;
+  margin-bottom: 6px;
+}
+.price-amount .per { font-size: 18px; font-weight: 500; color: var(--text3); letter-spacing: 0; }
+.price-note { font-size: 13px; color: var(--text3); margin-bottom: 30px; }
+
+.price-list {
+  list-style: none; text-align: right;
+  display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px;
+}
+
+.price-list li {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 14px; color: var(--text2);
+}
+
+.pl-check { color: var(--green); flex-shrink: 0; }
+
+/* ── FAQ ── */
+#faq { text-align: center; }
+
+.faq-list {
+  max-width: 680px; margin: 52px auto 0;
+  display: flex; flex-direction: column; gap: 8px;
+  text-align: right;
+}
+
+.faq-item {
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: 12px; overflow: hidden;
+  transition: border-color .2s;
+}
+.faq-item.open { border-color: rgba(79,127,255,0.2); }
+
+.faq-q {
+  width: 100%; padding: 16px 18px;
+  background: none; border: none; color: var(--text);
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  text-align: right; display: flex;
+  justify-content: space-between; align-items: center; gap: 14px;
+  font-family: var(--body); letter-spacing: -0.2px;
+  transition: color .2s;
+}
+.faq-q:hover { color: var(--accent); }
+
+.faq-arrow {
+  flex-shrink: 0; color: var(--text3); display: flex;
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.faq-item.open .faq-arrow { transform: rotate(180deg); }
+
+.faq-a {
+  display: none; padding: 0 18px 16px;
+  font-size: 13.5px; color: var(--text3); line-height: 1.75;
+}
+.faq-item.open .faq-a { display: block; }
+
+/* ── FINAL CTA ── */
+#cta {
+  padding: 80px max(28px,5vw);
+  position: relative; z-index: 1;
+}
+
+.cta-inner {
+  max-width: 760px; margin: 0 auto;
+  text-align: center;
+  background: linear-gradient(160deg, rgba(79,127,255,0.09) 0%, rgba(155,114,255,0.06) 100%);
+  border: 1px solid rgba(79,127,255,0.18);
+  border-radius: 28px; padding: 64px 48px;
+  position: relative; overflow: hidden;
+}
+
+.cta-inner::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg,transparent,rgba(79,127,255,0.8) 35%,rgba(155,114,255,0.6) 65%,transparent);
+}
+
+.cta-bg {
+  position: absolute; top: -80px; right: 50%; transform: translateX(50%);
+  width: 400px; height: 300px;
+  background: radial-gradient(circle, rgba(79,127,255,0.14) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.cta-title {
+  font-family: var(--display);
+  font-size: clamp(26px,3.5vw,38px);
+  font-weight: 800; letter-spacing: -1.2px;
+  color: var(--text); margin-bottom: 12px; line-height: 1.15;
+}
+
+.cta-sub {
+  font-size: 15px; color: var(--text2);
+  margin-bottom: 34px; line-height: 1.7;
+}
+
+/* ── FOOTER ── */
+footer {
+  position: relative; z-index: 1;
+  border-top: 1px solid var(--border2);
+  background: var(--bg2);
+  padding: 28px max(28px,5vw);
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 16px;
+}
+
+.footer-logo-text {
+  font-family: var(--display); font-size: 14px; font-weight: 700;
+  color: var(--text3);
+}
+
+.footer-links { display: flex; gap: 20px; }
+.footer-links a {
+  font-size: 13px; color: var(--text3);
+  text-decoration: none; transition: color .2s;
+}
+.footer-links a:hover { color: var(--text); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .features-grid { grid-template-columns: repeat(2,1fr); }
+  .steps-row { grid-template-columns: 1fr; gap: 32px; }
+  .steps-row::before { display: none; }
+}
+
+@media (max-width: 768px) {
+  nav { top: 8px; right: 8px; left: 8px; }
+  .hero-wrap { grid-template-columns: 1fr; gap: 40px; }
+  .hero-visual-wrap { display: none; }
+  .hero-actions { flex-direction: column; }
+  .btn-hero-primary, .btn-hero-ghost { justify-content: center; }
+  .hero-stats { width: 100%; }
+  .hero-stat { flex: 1; text-align: center; }
+  .features-grid { grid-template-columns: 1fr; }
+  .cta-inner { padding: 40px 24px; }
+  footer { flex-direction: column; text-align: center; }
+  .footer-links { justify-content: center; flex-wrap: wrap; }
+}
+
+/* ── ANIMATIONS ── */
+.reveal {
+  opacity: 0; transform: translateY(22px);
+  transition: opacity .6s ease, transform .6s ease;
+}
+.reveal.in { opacity: 1; transform: translateY(0); }
+
+@keyframes dot-pulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(0,230,118,0.5); }
+  50%      { box-shadow: 0 0 0 5px rgba(0,230,118,0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity:1; transform:none; transition:none; }
+  .ticker-track { animation: none; }
+  * { animation-duration:.01ms !important; transition-duration:.01ms !important; }
+}
 </style>
 </head>
 <body>
 
-<!-- SVG ICON DEFS -->
+<!-- SVG ICONS -->
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
-  <symbol id="ic-chart-bar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="18" y="3" width="4" height="18"/><rect x="10" y="8" width="4" height="13"/><rect x="2" y="13" width="4" height="8"/>
-  </symbol>
-  <symbol id="ic-sparkles" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/>
-  </symbol>
-  <symbol id="ic-trending-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
-  </symbol>
-  <symbol id="ic-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-  </symbol>
-  <symbol id="ic-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-  </symbol>
-  <symbol id="ic-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
-  </symbol>
-  <symbol id="ic-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-    <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-  </symbol>
-  <symbol id="ic-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <polyline points="6 9 12 15 18 9"/>
-  </symbol>
-  <symbol id="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-    <polyline points="20 6 9 17 4 12"/>
-  </symbol>
+  <symbol id="i-bars"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="18" y="3" width="4" height="18"/><rect x="10" y="8" width="4" height="13"/><rect x="2" y="13" width="4" height="8"/></symbol>
+  <symbol id="i-stars" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></symbol>
+  <symbol id="i-trend" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
+  <symbol id="i-link"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+  <symbol id="i-tgt"   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+  <symbol id="i-arr"   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></symbol>
+  <symbol id="i-chev"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
 </svg>
 
-<!-- FLOATING NAVBAR -->
+<!-- NAV -->
 <nav role="navigation" aria-label="ניווט ראשי">
-  <a href="#" class="nav-logo" aria-label="Trading Journal — דף הבית">
+  <a href="#" class="nav-logo" aria-label="Trading Journal">
     <div class="nav-logo-icon" aria-hidden="true">
-      <svg width="20" height="20" viewBox="0 0 200 200" aria-hidden="true">
-        <line x1="44" y1="60" x2="156" y2="60" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
-        <line x1="44" y1="90" x2="156" y2="90" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
-        <line x1="44" y1="120" x2="156" y2="120" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
-        <rect x="52" y="110" width="14" height="16" rx="3" fill="rgba(251,113,133,0.9)"/>
-        <rect x="79" y="95" width="14" height="31" rx="3" fill="rgba(96,180,255,0.9)"/>
-        <rect x="106" y="72" width="14" height="54" rx="3" fill="rgba(96,180,255,0.9)"/>
-        <rect x="133" y="58" width="14" height="68" rx="3" fill="rgba(34,211,168,0.9)"/>
-        <polyline points="59,126 86,111 113,88 140,75" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2" stroke-linecap="round"/>
+      <svg width="18" height="18" viewBox="0 0 200 200" aria-hidden="true">
+        <line x1="44" y1="60" x2="156" y2="60" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+        <line x1="44" y1="90" x2="156" y2="90" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+        <line x1="44" y1="120" x2="156" y2="120" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+        <rect x="52" y="110" width="14" height="16" rx="3" fill="#ff6b8a"/>
+        <rect x="79" y="95" width="14" height="31" rx="3" fill="#6fa3ff"/>
+        <rect x="106" y="72" width="14" height="54" rx="3" fill="#6fa3ff"/>
+        <rect x="133" y="58" width="14" height="68" rx="3" fill="#00e676"/>
+        <polyline points="59,126 86,111 113,88 140,75" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="2.5" stroke-linecap="round"/>
       </svg>
     </div>
     <span class="nav-logo-text">Trading Journal</span>
   </a>
-  <div class="nav-actions">
-    <a href="dashboard.html" class="btn-ghost">כניסה</a>
-    <a href="dashboard.html" class="btn-primary">הרשמה חינם</a>
+  <div class="nav-right">
+    <a href="dashboard.html" class="nav-link">כניסה</a>
+    <a href="dashboard.html" class="nav-cta">הרשמה חינם</a>
   </div>
 </nav>
 
 <!-- HERO -->
-<section id="hero" aria-label="כותרת ראשית">
-  <div class="hero-inner">
+<section id="hero" aria-label="כותרת">
+  <div class="hero-wrap">
     <div>
-      <div class="hero-tag" role="status">
-        <span class="hero-tag-dot" aria-hidden="true"></span>
-        בטא פתוחה — גישה חינמית
+      <div class="hero-chip" role="status">
+        <span class="chip-dot" aria-hidden="true" style="animation:dot-pulse 2s infinite;"></span>
+        BETA — גישה חינמית
       </div>
       <h1 class="hero-title">
         יומן המסחר<br>
         שיהפוך אותך<br>
-        ל<span class="highlight">סוחר טוב יותר</span>
+        ל<span class="grad">סוחר טוב יותר</span>
       </h1>
-      <p class="hero-sub">עקוב אחרי עסקאות מניות וקריפטו, נתח ביצועים לעומק, וקבל תובנות AI חכמות — הכל במקום אחד, בחינם.</p>
+      <p class="hero-sub">עקוב אחרי עסקאות מניות וקריפטו, נתח ביצועים לעומק, וקבל תובנות AI — הכל במקום אחד, בחינם.</p>
       <div class="hero-actions">
-        <a href="dashboard.html" class="btn-hero btn-hero-primary">
+        <a href="dashboard.html" class="btn-hero-primary">
           התחל בחינם
-          <svg width="15" height="15" aria-hidden="true"><use href="#ic-arrow-left"/></svg>
+          <svg width="14" height="14" aria-hidden="true"><use href="#i-arr"/></svg>
         </a>
-        <a href="#features" class="btn-hero btn-hero-ghost">ראה את הפיצ'רים</a>
+        <a href="#features" class="btn-hero-ghost">גלה את הפיצ'רים</a>
       </div>
-      <div class="hero-stats" role="list" aria-label="נתונים מרכזיים">
-        <div role="listitem">
-          <div class="hero-stat-num">11+</div>
-          <div class="hero-stat-label">מקורות נתונים</div>
+      <div class="hero-stats" role="list" aria-label="נתונים">
+        <div class="hero-stat" role="listitem">
+          <div class="stat-num"><span data-count="11" class="counter">11</span><span class="unit">+</span></div>
+          <div class="stat-label">מקורות נתונים</div>
         </div>
-        <div role="listitem">
-          <div class="hero-stat-num">AI</div>
-          <div class="hero-stat-label">ניתוח חכם</div>
+        <div class="hero-stat" role="listitem">
+          <div class="stat-num">AI</div>
+          <div class="stat-label">ניתוח חכם</div>
         </div>
-        <div role="listitem">
-          <div class="hero-stat-num">100%</div>
-          <div class="hero-stat-label">חינמי בבטא</div>
+        <div class="hero-stat" role="listitem">
+          <div class="stat-num"><span class="unit">%</span><span data-count="100" class="counter">100</span></div>
+          <div class="stat-label">חינמי בבטא</div>
         </div>
       </div>
     </div>
 
-    <!-- Visual -->
-    <div class="hero-visual" aria-hidden="true">
-      <div class="visual-header">
-        <span class="visual-title">סיכום חודשי</span>
-        <span class="visual-badge">▲ +12.4%</span>
-      </div>
-      <div class="visual-metrics">
-        <div class="vm-card"><div class="vm-label">P&amp;L כולל</div><div class="vm-value green">+$4,320</div></div>
-        <div class="vm-card"><div class="vm-label">Win Rate</div><div class="vm-value blue">68%</div></div>
-        <div class="vm-card"><div class="vm-label">עסקאות</div><div class="vm-value white">47</div></div>
-      </div>
-      <div class="visual-chart">
-        <svg width="100%" height="90" viewBox="0 0 400 90" preserveAspectRatio="none" aria-hidden="true">
-          <defs>
-            <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#4f83ff" stop-opacity="0.4"/>
-              <stop offset="100%" stop-color="#4f83ff" stop-opacity="0"/>
-            </linearGradient>
-          </defs>
-          <path d="M0,75 C40,70 60,55 100,45 C140,35 160,50 200,30 C240,12 260,26 300,16 C340,7 360,14 400,8 L400,90 L0,90 Z" fill="url(#cg)"/>
-          <path d="M0,75 C40,70 60,55 100,45 C140,35 160,50 200,30 C240,12 260,26 300,16 C340,7 360,14 400,8" fill="none" stroke="#4f83ff" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-      </div>
-      <div class="visual-trades">
-        <div class="vt-row"><span class="vt-sym">NVDA</span><span class="vt-type">מניה · Long</span><span class="vt-pnl pos">+$1,240</span></div>
-        <div class="vt-row"><span class="vt-sym">BTC</span><span class="vt-type">קריפטו · Long</span><span class="vt-pnl pos">+$890</span></div>
-        <div class="vt-row"><span class="vt-sym">TSLA</span><span class="vt-type">מניה · Short</span><span class="vt-pnl neg">-$210</span></div>
+    <!-- Dashboard mockup -->
+    <div class="hero-visual-wrap" aria-hidden="true">
+      <div class="hero-visual-glow"></div>
+      <div class="hero-card">
+        <div class="card-topbar">
+          <div class="card-dots">
+            <div class="card-dot dot-r"></div>
+            <div class="card-dot dot-y"></div>
+            <div class="card-dot dot-g"></div>
+          </div>
+          <span class="card-label">TRADING_JOURNAL / dashboard.tsx</span>
+        </div>
+
+        <div class="card-metrics">
+          <div class="cm"><div class="cm-label">P&L MTD</div><div class="cm-val g">+$4,320</div></div>
+          <div class="cm"><div class="cm-label">WIN RATE</div><div class="cm-val b">68.1%</div></div>
+          <div class="cm"><div class="cm-label">TRADES</div><div class="cm-val w">47</div></div>
+        </div>
+
+        <div class="card-chart">
+          <svg width="100%" height="88" viewBox="0 0 420 88" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#4f7fff" stop-opacity="0.45"/>
+                <stop offset="100%" stop-color="#4f7fff" stop-opacity="0"/>
+              </linearGradient>
+              <linearGradient id="lg" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#4f7fff"/>
+                <stop offset="100%" stop-color="#9b72ff"/>
+              </linearGradient>
+            </defs>
+            <path d="M0,74 C30,70 50,58 80,48 C110,38 130,52 170,34 C210,16 230,28 270,18 C310,9 340,15 380,8 L420,6 L420,88 L0,88Z" fill="url(#cg)"/>
+            <path d="M0,74 C30,70 50,58 80,48 C110,38 130,52 170,34 C210,16 230,28 270,18 C310,9 340,15 380,8 L420,6" fill="none" stroke="url(#lg)" stroke-width="2"/>
+            <!-- candles hint -->
+            <rect x="18" y="60" width="6" height="14" rx="1" fill="rgba(0,230,118,0.35)"/>
+            <rect x="56" y="52" width="6" height="18" rx="1" fill="rgba(0,230,118,0.35)"/>
+            <rect x="94" y="44" width="6" height="22" rx="1" fill="rgba(255,64,96,0.35)"/>
+            <rect x="132" y="38" width="6" height="16" rx="1" fill="rgba(0,230,118,0.35)"/>
+          </svg>
+        </div>
+
+        <div class="card-trades">
+          <div class="tr">
+            <span class="tr-sym">NVDA</span>
+            <span class="tr-meta">Long · 42d</span>
+            <span class="tr-pnl pos">+$1,240</span>
+          </div>
+          <div class="tr">
+            <span class="tr-sym">BTC</span>
+            <span class="tr-meta">Long · 7d</span>
+            <span class="tr-pnl pos">+$890</span>
+          </div>
+          <div class="tr">
+            <span class="tr-sym">TSLA</span>
+            <span class="tr-meta">Short · 3d</span>
+            <span class="tr-pnl neg">-$210</span>
+          </div>
+        </div>
+
+        <div class="card-ai">
+          <div class="ai-icon" aria-hidden="true">✦</div>
+          <span>AI: win rate השתפר ב-+8% — כניסות מוקדמות יותר</span>
+        </div>
       </div>
     </div>
   </div>
 </section>
+
+<!-- TICKER -->
+<div class="ticker-wrap" aria-hidden="true">
+  <div class="ticker-track">
+    <!-- duplicated for seamless loop -->
+    <span class="ticker-item"><span class="ticker-sym">NVDA</span><span class="ticker-val">$875.40</span><span class="ticker-chg pos">▲ +2.4%</span></span>
+    <span class="ticker-item"><span class="ticker-sym">AAPL</span><span class="ticker-val">$192.30</span><span class="ticker-chg pos">▲ +0.8%</span></span>
+    <span class="ticker-item"><span class="ticker-sym">BTC</span><span class="ticker-val">$67,420</span><span class="ticker-chg pos">▲ +3.1%</span></span>
+    <span class="ticker-item"><span class="ticker-sym">TSLA</span><span class="ticker-val">$248.60</span><span class="ticker-chg neg">▼ -1.2%</span></span>
+    <span class="ticker-item"><span class="ticker-sym">MSFT</span><span class="ticker-val">$415.80</span><span class="ticker-chg pos">▲ +1.5%</span></span>
+    <span class="ticker-item"><span class="ticker-sym">ETH</span><span class="ticker-val">$3,580</span><span class="ticker-chg pos">▲ +4.2%</span></span>
+    <span class="ticker-item"><span class="ticker-sym">AMZN</span><span class="ticker-val">$185.20</span><span class="ticker-chg neg">▼ -0.4%</span></span>
+    <span class="ticker-item"><span class="ticker-sym">SOL</span><span class="ticker-val">$148.90</span><span class="ticker-chg pos">▲ +5.7%</span></span>
+    <span class="ticker-item"><span class="ticker-sym">META</span><span class="ticker-val">$522.40</span><span class="ticker-chg pos">▲ +2.1%</span></span>
+    <span class="ticker-item"><span class="ticker-sym">SPY</span><span class="ticker-val">$521.60</span><span class="ticker-chg pos">▲ +0.6%</span></span>
+    <!-- duplicate -->
+    <span class="ticker-item"><span class="ticker-sym">NVDA</span><span class="ticker-val">$875.40</span><span class="ticker-chg pos">▲ +2.4%</span></span>
+    <span class="ticker-item"><span class="ticker-sym">AAPL</span><span class="ticker-val">$192.30</span><span class="ticker-chg pos">▲ +0.8%</span></span>
+    <span class="ticker-item"><span class="ticker-sym">BTC</span><span class="ticker-val">$67,420</span><span class="ticker-chg pos">▲ +3.1%</span></span>
+    <span class="ticker-item"><span class="ticker-sym">TSLA</span><span class="ticker-val">$248.60</span><span class="ticker-chg neg">▼ -1.2%</span></span>
+    <span class="ticker-item"><span class="ticker-sym">MSFT</span><span class="ticker-val">$415.80</span><span class="ticker-chg pos">▲ +1.5%</span></span>
+    <span class="ticker-item"><span class="ticker-sym">ETH</span><span class="ticker-val">$3,580</span><span class="ticker-chg pos">▲ +4.2%</span></span>
+    <span class="ticker-item"><span class="ticker-sym">AMZN</span><span class="ticker-val">$185.20</span><span class="ticker-chg neg">▼ -0.4%</span></span>
+    <span class="ticker-item"><span class="ticker-sym">SOL</span><span class="ticker-val">$148.90</span><span class="ticker-chg pos">▲ +5.7%</span></span>
+    <span class="ticker-item"><span class="ticker-sym">META</span><span class="ticker-val">$522.40</span><span class="ticker-chg pos">▲ +2.1%</span></span>
+    <span class="ticker-item"><span class="ticker-sym">SPY</span><span class="ticker-val">$521.60</span><span class="ticker-chg pos">▲ +0.6%</span></span>
+  </div>
+</div>
 
 <!-- FEATURES -->
-<section id="features" class="section-center">
-  <div class="section-badge" aria-hidden="true">פיצ'רים</div>
-  <h2 class="section-title">כלים שסוחרים רציניים צריכים</h2>
-  <p class="section-sub">כל מה שצריך כדי לעקוב, לנתח ולשפר את ביצועי המסחר שלך.</p>
+<section id="features">
+  <div class="centered reveal">
+    <div class="section-pill">features</div>
+    <h2 class="section-title">כלים שסוחרים רציניים צריכים</h2>
+    <p class="section-sub">כל מה שצריך כדי לעקוב, לנתח ולשפר את ביצועי המסחר שלך.</p>
+  </div>
 
   <div class="features-grid">
-    <div class="feature-card fade-up">
-      <div class="feature-icon-wrap" style="background:rgba(79,131,255,0.1);">
-        <svg width="22" height="22" style="color:#4f83ff" aria-hidden="true"><use href="#ic-chart-bar"/></svg>
+    <div class="feat c1 reveal">
+      <div class="feat-icon" style="background:rgba(79,127,255,0.1);">
+        <svg width="20" height="20" style="color:#6fa3ff" aria-hidden="true"><use href="#i-bars"/></svg>
       </div>
-      <div class="feature-title">מעקב עסקאות</div>
-      <div class="feature-desc">רשום עסקאות מניות וקריפטו — כניסה, יציאה, גודל פוזיציה, P&L אוטומטי ודמי עמלה.</div>
+      <div class="feat-title">מעקב עסקאות</div>
+      <div class="feat-desc">רשום מניות וקריפטו — כניסה, יציאה, גודל פוזיציה. P&L מחושב אוטומטי בכל שמירה.</div>
     </div>
-    <div class="feature-card fade-up">
-      <div class="feature-icon-wrap" style="background:rgba(129,140,248,0.1);">
-        <svg width="22" height="22" style="color:#818cf8" aria-hidden="true"><use href="#ic-sparkles"/></svg>
+    <div class="feat c2 reveal">
+      <div class="feat-icon" style="background:rgba(155,114,255,0.1);">
+        <svg width="20" height="20" style="color:#c084fc" aria-hidden="true"><use href="#i-stars"/></svg>
       </div>
-      <div class="feature-title">ניתוח AI חכם</div>
-      <div class="feature-desc">Groq AI מנתח את דפוסי המסחר שלך, מזהה חולשות ומציע שיפורים מבוססי נתונים.</div>
+      <div class="feat-title">ניתוח AI חכם</div>
+      <div class="feat-desc">Groq AI מנתח דפוסים, מזהה חולשות ומציע שיפורים — לפי שיטת מינרביני.</div>
     </div>
-    <div class="feature-card fade-up">
-      <div class="feature-icon-wrap" style="background:rgba(34,197,94,0.1);">
-        <svg width="22" height="22" style="color:#22c55e" aria-hidden="true"><use href="#ic-trending-up"/></svg>
+    <div class="feat c3 reveal">
+      <div class="feat-icon" style="background:rgba(0,230,118,0.08);">
+        <svg width="20" height="20" style="color:#00e676" aria-hidden="true"><use href="#i-trend"/></svg>
       </div>
-      <div class="feature-title">סטטיסטיקות מעמיקות</div>
-      <div class="feature-desc">Win rate, profit factor, ביצועים לפי ימי שבוע, שעות וסקטורים — תמונה מלאה.</div>
+      <div class="feat-title">סטטיסטיקות מעמיקות</div>
+      <div class="feat-desc">Win rate, profit factor, ביצועים לפי ימים ושעות — תמונה מדויקת של ה-edge שלך.</div>
     </div>
-    <div class="feature-card fade-up">
-      <div class="feature-icon-wrap" style="background:rgba(251,191,36,0.1);">
-        <svg width="22" height="22" style="color:#fbbf24" aria-hidden="true"><use href="#ic-globe"/></svg>
+    <div class="feat c4 reveal">
+      <div class="feat-icon" style="background:rgba(255,196,61,0.08);">
+        <svg width="20" height="20" style="color:#ffc43d" aria-hidden="true"><use href="#i-globe"/></svg>
       </div>
-      <div class="feature-title">Market Pulse</div>
-      <div class="feature-desc">עקוב אחרי תמות שוק חמות, Fear &amp; Greed Index, ומדדי סנטימנט — קריפטו ומניות.</div>
+      <div class="feat-title">Market Pulse</div>
+      <div class="feat-desc">תמות שוק, Fear &amp; Greed Index, ומדדי סנטימנט — קריפטו ומניות בזמן אמת.</div>
     </div>
-    <div class="feature-card fade-up">
-      <div class="feature-icon-wrap" style="background:rgba(168,85,247,0.1);">
-        <svg width="22" height="22" style="color:#a855f7" aria-hidden="true"><use href="#ic-link"/></svg>
+    <div class="feat c5 reveal">
+      <div class="feat-icon" style="background:rgba(168,85,247,0.1);">
+        <svg width="20" height="20" style="color:#a855f7" aria-hidden="true"><use href="#i-link"/></svg>
       </div>
-      <div class="feature-title">חיבור ל-IBKR</div>
-      <div class="feature-desc">ייבוא אוטומטי של עסקאות מ-Interactive Brokers דרך Flex Query — בלי הזנה ידנית.</div>
+      <div class="feat-title">חיבור ל-IBKR</div>
+      <div class="feat-desc">ייבוא אוטומטי מ-Interactive Brokers דרך Flex Query — ללא הזנה ידנית.</div>
     </div>
-    <div class="feature-card fade-up">
-      <div class="feature-icon-wrap" style="background:rgba(239,68,68,0.1);">
-        <svg width="22" height="22" style="color:#ef4444" aria-hidden="true"><use href="#ic-target"/></svg>
+    <div class="feat c6 reveal">
+      <div class="feat-icon" style="background:rgba(255,64,96,0.08);">
+        <svg width="20" height="20" style="color:#ff6080" aria-hidden="true"><use href="#i-tgt"/></svg>
       </div>
-      <div class="feature-title">עסקאות שפספסת</div>
-      <div class="feature-desc">תעד הזדמנויות שפיספסת, נתח למה, ולמד מהן — כלי קריטי לשיפור ה-watchlist שלך.</div>
+      <div class="feat-title">עסקאות שפספסת</div>
+      <div class="feat-desc">תעד הזדמנויות שפיספסת ונתח למה — כלי קריטי לשיפור ה-watchlist שלך.</div>
     </div>
   </div>
 </section>
 
-<!-- HOW IT WORKS -->
-<section id="how" class="section-center">
-  <div class="section-badge" aria-hidden="true">איך זה עובד</div>
-  <h2 class="section-title">שלושה צעדים להתחלה</h2>
-
-  <div class="steps-grid">
-    <div class="step-card fade-up">
-      <div class="step-num" aria-hidden="true">1</div>
+<!-- HOW -->
+<section id="how">
+  <div class="centered reveal">
+    <div class="section-pill">flow</div>
+    <h2 class="section-title">שלושה צעדים להתחלה</h2>
+  </div>
+  <div class="steps-row">
+    <div class="step reveal">
+      <div class="step-circle">01</div>
       <div class="step-title">הירשם בחינם</div>
-      <div class="step-desc">יצירת חשבון לוקחת פחות מדקה — עם אימייל או Google. אין כרטיס אשראי.</div>
+      <div class="step-desc">יצירת חשבון עם אימייל או Google. פחות מדקה, ללא כרטיס אשראי.</div>
     </div>
-    <div class="step-card fade-up">
-      <div class="step-num" aria-hidden="true">2</div>
+    <div class="step reveal">
+      <div class="step-circle">02</div>
       <div class="step-title">הוסף עסקאות</div>
-      <div class="step-desc">הכנס עסקאות ידנית או ייבא אוטומטית מ-IBKR. מניות, קריפטו, ETFs — הכל נתמך.</div>
+      <div class="step-desc">הכנס ידנית או ייבא מ-IBKR. מניות, קריפטו, ETFs — הכל נתמך.</div>
     </div>
-    <div class="step-card fade-up">
-      <div class="step-num" aria-hidden="true">3</div>
-      <div class="step-title">קבל תובנות ושפר</div>
-      <div class="step-desc">ה-AI מנתח את הדפוסים שלך ומציג תובנות ברורות שיעזרו לך להיות סוחר טוב יותר.</div>
+    <div class="step reveal">
+      <div class="step-circle">03</div>
+      <div class="step-title">קבל תובנות</div>
+      <div class="step-desc">ה-AI מנתח ומציג תובנות ברורות שיעזרו לך להשתפר כל שבוע.</div>
     </div>
   </div>
 </section>
 
 <!-- PRICING -->
-<section id="pricing" class="section-center">
-  <div class="section-badge" aria-hidden="true">מחירים</div>
-  <h2 class="section-title">חינמי לחלוטין בשלב הבטא</h2>
-  <p class="section-sub">גישה מלאה לכל הפיצ'רים — ללא תשלום, ללא הגבלת זמן בשלב הבטא.</p>
+<section id="pricing" class="centered">
+  <div class="reveal">
+    <div class="section-pill">pricing</div>
+    <h2 class="section-title">חינמי לחלוטין בשלב הבטא</h2>
+    <p class="section-sub">גישה מלאה לכל הפיצ'רים — ללא תשלום, ללא הגבלה.</p>
+  </div>
 
-  <div class="pricing-card fade-up">
-    <div class="pricing-label">בטא</div>
-    <div class="pricing-price">₪0 <span>/ לחודש</span></div>
-    <div class="pricing-note">כל הפיצ'רים פתוחים. תמיד ייודיע לפני שינוי.</div>
-    <ul class="pricing-features" aria-label="מה כלול">
-      <li><svg width="16" height="16" class="check-icon" aria-hidden="true"><use href="#ic-check"/></svg>מעקב עסקאות בלתי מוגבל</li>
-      <li><svg width="16" height="16" class="check-icon" aria-hidden="true"><use href="#ic-check"/></svg>ניתוח AI (Groq — אפשר להביא מפתח אישי)</li>
-      <li><svg width="16" height="16" class="check-icon" aria-hidden="true"><use href="#ic-check"/></svg>סטטיסטיקות מלאות</li>
-      <li><svg width="16" height="16" class="check-icon" aria-hidden="true"><use href="#ic-check"/></svg>Market Pulse + Fear &amp; Greed</li>
-      <li><svg width="16" height="16" class="check-icon" aria-hidden="true"><use href="#ic-check"/></svg>חיבור ל-Interactive Brokers</li>
-      <li><svg width="16" height="16" class="check-icon" aria-hidden="true"><use href="#ic-check"/></svg>גיבוי ענן מאובטח (Supabase)</li>
-    </ul>
-    <a href="dashboard.html" class="btn-hero btn-hero-primary" style="width:100%;justify-content:center;display:flex;">
-      הירשם עכשיו — בחינם
-    </a>
+  <div class="pricing-outer reveal">
+    <div class="pricing-card">
+      <div class="pricing-glow" aria-hidden="true"></div>
+      <div class="price-label">BETA PLAN</div>
+      <div class="price-amount">₪0 <span class="per">/ חודש</span></div>
+      <div class="price-note">כל הפיצ'רים פתוחים. תמיד ייודיע לפני שינוי.</div>
+      <ul class="price-list" aria-label="מה כלול">
+        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>מעקב עסקאות בלתי מוגבל</li>
+        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>ניתוח AI (Groq)</li>
+        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>סטטיסטיקות מלאות</li>
+        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>Market Pulse + Fear &amp; Greed</li>
+        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>חיבור Interactive Brokers</li>
+        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>גיבוי ענן מאובטח</li>
+      </ul>
+      <a href="dashboard.html" class="btn-hero-primary" style="width:100%;justify-content:center;">
+        פתח חשבון חינם
+      </a>
+    </div>
   </div>
 </section>
 
 <!-- FAQ -->
-<section id="faq" class="section-center">
-  <div class="section-badge" aria-hidden="true">שאלות נפוצות</div>
-  <h2 class="section-title">יש שאלות? יש תשובות</h2>
-
+<section id="faq" class="centered">
+  <div class="reveal">
+    <div class="section-pill">faq</div>
+    <h2 class="section-title">שאלות נפוצות</h2>
+  </div>
   <div class="faq-list" role="list">
-    <div class="faq-item" role="listitem">
+    <div class="faq-item reveal" role="listitem">
       <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
         האם השירות באמת חינמי?
-        <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#ic-chevron-down"/></svg></span>
+        <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
       </button>
-      <div class="faq-a">כן, בשלב הבטא הגישה מלאה וחינמית לחלוטין. לפני כל שינוי במדיניות המחירים יישלח עדכון מראש.</div>
+      <div class="faq-a">כן, בשלב הבטא הגישה מלאה וחינמית לחלוטין. לפני כל שינוי במדיניות יישלח עדכון מראש.</div>
     </div>
-    <div class="faq-item" role="listitem">
+    <div class="faq-item reveal" role="listitem">
       <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
         האם הנתונים שלי מאובטחים?
-        <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#ic-chevron-down"/></svg></span>
+        <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
       </button>
-      <div class="faq-a">הנתונים מאוחסנים ב-Supabase עם Row-Level Security — רק אתה יכול לגשת לנתונים שלך. חיבור HTTPS מוצפן בכל מקום.</div>
+      <div class="faq-a">הנתונים מאוחסנים ב-Supabase עם Row-Level Security — רק אתה יכול לגשת לנתונים שלך. HTTPS מוצפן בכל מקום.</div>
     </div>
-    <div class="faq-item" role="listitem">
+    <div class="faq-item reveal" role="listitem">
       <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
         האם אפשר לייבא עסקאות אוטומטית?
-        <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#ic-chevron-down"/></svg></span>
+        <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
       </button>
-      <div class="faq-a">כן. אם יש לך חשבון Interactive Brokers, אפשר לחבר דרך Flex Query ולייבא עסקאות אוטומטית. הזנה ידנית גם נתמכת מלא.</div>
+      <div class="faq-a">כן, אם יש לך חשבון Interactive Brokers אפשר לחבר דרך Flex Query. הזנה ידנית גם נתמכת מלא.</div>
     </div>
-    <div class="faq-item" role="listitem">
-      <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
-        מה הוא מצב Minervini AI?
-        <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#ic-chevron-down"/></svg></span>
-      </button>
-      <div class="faq-a">ניתוח AI מעמיק של עסקאות לפי שיטת מארק מינרביני — מזהה דפוסים, מנתח כניסות ויציאות, ומציע שיפורים ספציפיים.</div>
-    </div>
-    <div class="faq-item" role="listitem">
+    <div class="faq-item reveal" role="listitem">
       <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
         האם עובד בנייד?
-        <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#ic-chevron-down"/></svg></span>
+        <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
       </button>
-      <div class="faq-a">כן, האפליקציה רספונסיבית ועובדת בדפדפן בנייד. אפשר גם להתקין כ-PWA ישירות מהדפדפן.</div>
+      <div class="faq-a">כן, האפליקציה רספונסיבית ועובדת בדפדפן בנייד. אפשר להתקין כ-PWA ישירות מהדפדפן.</div>
+    </div>
+    <div class="faq-item reveal" role="listitem">
+      <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+        מה הוא מצב Minervini AI?
+        <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
+      </button>
+      <div class="faq-a">ניתוח AI מעמיק של עסקאות לפי שיטת מארק מינרביני — מזהה דפוסים, מנתח כניסות ויציאות, ומציע שיפורים ספציפיים.</div>
     </div>
   </div>
 </section>
 
 <!-- CTA -->
 <section id="cta">
-  <div class="cta-card fade-up">
-    <div class="cta-glow" aria-hidden="true"></div>
+  <div class="cta-inner reveal">
+    <div class="cta-bg" aria-hidden="true"></div>
     <h2 class="cta-title">מוכן להתחיל לסחור בחוכמה?</h2>
-    <p class="cta-sub">הצטרף עכשיו בחינם ותתחיל לעקוב אחרי העסקאות שלך כמו מקצוען.</p>
-    <a href="dashboard.html" class="btn-hero btn-hero-primary" style="display:inline-flex;">
+    <p class="cta-sub">הצטרף עכשיו בחינם ותתחיל לעקוב כמו מקצוען.</p>
+    <a href="dashboard.html" class="btn-hero-primary" style="display:inline-flex;">
       פתח חשבון חינם
-      <svg width="15" height="15" aria-hidden="true"><use href="#ic-arrow-left"/></svg>
+      <svg width="14" height="14" aria-hidden="true"><use href="#i-arr"/></svg>
     </a>
   </div>
 </section>
 
 <!-- FOOTER -->
 <footer>
-  <div class="footer-copy">© 2025 Trading Journal · כל הזכויות שמורות</div>
+  <span class="footer-logo-text">Trading Journal &copy; 2025</span>
   <nav class="footer-links" aria-label="קישורי תחתית">
     <a href="dashboard.html">כניסה לאפליקציה</a>
     <a href="mailto:davidtheking27@gmail.com">צור קשר</a>
@@ -1007,6 +1046,7 @@
 </footer>
 
 <script>
+  // FAQ
   function toggleFaq(btn) {
     const item = btn.closest('.faq-item');
     const isOpen = item.classList.contains('open');
@@ -1014,30 +1054,43 @@
       el.classList.remove('open');
       el.querySelector('.faq-q').setAttribute('aria-expanded', 'false');
     });
-    if (!isOpen) {
-      item.classList.add('open');
-      btn.setAttribute('aria-expanded', 'true');
-    }
+    if (!isOpen) { item.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); }
   }
 
-  // Scroll animations (respects prefers-reduced-motion via CSS)
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
-  }, { threshold: 0.1 });
+  // Scroll reveals
+  const revealObs = new IntersectionObserver(entries => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        e.target.style.transitionDelay = (i * 60) + 'ms';
+        e.target.classList.add('in');
+        revealObs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
 
-  document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
-
-  // Pulse animation on hero dot
-  const dot = document.querySelector('.hero-tag-dot');
-  if (dot && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    dot.style.animation = 'pulse-dot 2s infinite';
+  // Count-up for stats
+  function countUp(el, target, duration) {
+    const start = performance.now();
+    const update = now => {
+      const p = Math.min((now - start) / duration, 1);
+      el.textContent = Math.round(p * target);
+      if (p < 1) requestAnimationFrame(update);
+    };
+    requestAnimationFrame(update);
   }
+
+  const statsObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.querySelectorAll('[data-count]').forEach(el => {
+          countUp(el, parseInt(el.dataset.count), 1200);
+        });
+        statsObs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('.hero-stats').forEach(el => statsObs.observe(el));
 </script>
-<style>
-  @keyframes pulse-dot {
-    0%,100% { opacity:1; box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
-    50%      { opacity:0.7; box-shadow: 0 0 0 4px rgba(34,197,94,0); }
-  }
-</style>
 </body>
 </html>
