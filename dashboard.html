@@ -5708,6 +5708,40 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             <div id="flex-preview" class="ibkr-trades-list"></div>
           </div>
         </div>
+        <div class="s-row s-expandable" id="s-bybit-row" onclick="toggleExpand('s-bybit-body','s-bybit-row')">
+          <div class="s-row-left">
+            <div class="s-row-label">Bybit Connection</div>
+            <div class="s-row-desc">Bybit · Derivatives API</div>
+          </div>
+          <div class="s-row-ctrl">
+            <span id="bybit-conn-dot" style="display:none;width:8px;height:8px;border-radius:50%;background:#3fb950;box-shadow:0 0 6px rgba(63,185,80,0.6);flex-shrink:0;"></span>
+            <svg class="s-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+        <div class="s-expand-body" id="s-bybit-body">
+          <div class="s-expand-inner">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6;">
+              <strong style="color:var(--text2);">How to configure:</strong>
+              Bybit → My Profile → API → Create New Key → Copy API Key and Secret
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;margin-bottom:12px;">
+              <div>
+                <div class="ibkr-field-label">API Key</div>
+                <input id="bybit-api-key" class="form-control" type="password" placeholder="••••••••" autocomplete="off" style="font-size:12px;padding:6px 10px;">
+              </div>
+              <div>
+                <div class="ibkr-field-label">API Secret</div>
+                <input id="bybit-api-secret" class="form-control" type="password" placeholder="••••••••" autocomplete="off" style="font-size:12px;padding:6px 10px;">
+              </div>
+              <div class="ibkr-actions" style="margin-bottom:0;">
+                <button class="btn btn-secondary btn-sm" onclick="bybitSave()">Save</button>
+                <button class="btn btn-primary btn-sm" onclick="bybitSync()" id="bybit-sync-btn">Sync</button>
+              </div>
+            </div>
+            <span class="ibkr-sync-status" id="bybit-status"></span>
+            <div id="bybit-preview" class="ibkr-trades-list"></div>
+          </div>
+        </div>
         <div class="s-row s-expandable" id="s-tlg-row" onclick="toggleExpand('s-tlg-body','s-tlg-row')">
           <div class="s-row-left">
             <div class="s-row-label" data-i18n="set_file_import">File Import</div>
@@ -7238,6 +7272,7 @@ function switchTab(name, btn) {
   if (name==='themes') { ttLoad(true); ttStartTimer(); } else { ttStopTimer(); }
   if (name==='ibkr') {
     flexInit();
+    bybitInit();
     renderSecurityStatus();
     profileLoad();
   }
@@ -8295,7 +8330,7 @@ let _userSettings = {};
 async function loadUserSettings() {
   if (!_currentUser) return;
   const { data } = await _sb.from('user_settings')
-    .select('groq_api_key, groq_inv_key, finnhub_key, fmp_key, av_key, flex_token, flex_query_id, portfolio_total')
+    .select('groq_api_key, groq_inv_key, finnhub_key, fmp_key, av_key, flex_token, flex_query_id, portfolio_total, bybit_api_key')
     .eq('user_id', _currentUser.id)
     .single();
   _userSettings = data || {};
@@ -12006,6 +12041,123 @@ function flexConfirmAll() {
 
 // Init on tab open — pre-fill saved credentials
 document.addEventListener('DOMContentLoaded', flexInit);
+
+// ══════════════════════════════════════════════
+// BYBIT SYNC
+// ══════════════════════════════════════════════
+
+function bybitInit() {
+  const hasKey = !!_userSettings.bybit_api_key;
+  if (hasKey) bybitSetStatus('Bybit API מחובר ✓', 'var(--green)');
+  const dot = document.getElementById('bybit-conn-dot');
+  if (dot) dot.style.display = hasKey ? 'inline-block' : 'none';
+}
+
+function bybitSetStatus(msg, color) {
+  const el = document.getElementById('bybit-status');
+  if (el) { el.textContent = msg; el.style.color = color || 'var(--text3)'; }
+}
+
+async function bybitSave() {
+  const k = document.getElementById('bybit-api-key')?.value.trim();
+  const s = document.getElementById('bybit-api-secret')?.value.trim();
+  if (!k || !s) { toast('נא להזין API Key ו-Secret', 'error'); return; }
+  await _saveUserSettings({ bybit_api_key: k, bybit_api_secret: s });
+  document.getElementById('bybit-api-key').value = '';
+  document.getElementById('bybit-api-secret').value = '';
+  toast('פרטי Bybit נשמרו 🔐', 'success');
+  bybitSetStatus('Bybit API מחובר ✓', 'var(--green)');
+  const dot = document.getElementById('bybit-conn-dot');
+  if (dot) dot.style.display = 'inline-block';
+}
+
+async function bybitSync() {
+  const jwt = await _getToken();
+  if (!jwt) { toast('נא להתחבר תחילה', 'error'); return; }
+  const btn = document.getElementById('bybit-sync-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ מסנכרן...'; }
+  bybitSetStatus('שולח בקשה ל-Bybit...', 'var(--text2)');
+  document.getElementById('bybit-preview').innerHTML = '';
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/bybit`, {
+      headers: { Authorization: `Bearer ${jwt}` }
+    });
+    const json = await res.json();
+    if (!res.ok || json.error) throw new Error(json.error || 'שגיאה');
+    const trades = json.trades || [];
+    bybitSetStatus(`נמצאו ${trades.length} עסקאות`, 'var(--green)');
+    bybitRenderPreview(trades);
+  } catch(e) {
+    bybitSetStatus('שגיאה: ' + e.message, 'var(--red)');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Sync'; }
+  }
+}
+
+function bybitRenderPreview(trades) {
+  const container = document.getElementById('bybit-preview');
+  if (!trades.length) {
+    container.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:10px 0;">לא נמצאו עסקאות סגורות</div>';
+    return;
+  }
+  const rows = trades.map((t, i) => {
+    const pnl = t.pnl >= 0 ? `+$${t.pnl.toFixed(2)}` : `-$${Math.abs(t.pnl).toFixed(2)}`;
+    const pnlColor = t.pnl >= 0 ? 'var(--green)' : 'var(--red)';
+    return `
+      <div class="ibkr-trade-preview">
+        <div>
+          <div class="sym">${t.symbol}</div>
+          <div class="det">${t.ls} · ${t.entryDate} → ${t.closeDate}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:12px;color:var(--text2);">${t.shares} @ ${t.entryPrice} → ${t.exitPrice}</div>
+          <div style="font-weight:700;color:${pnlColor}">${pnl}</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="bybit-btn-${i}" onclick="bybitImportOne(${i})" style="font-size:11px;padding:4px 10px;">Import</button>
+      </div>`;
+  }).join('');
+  container.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;margin-top:8px;">
+      <span style="font-size:12px;color:var(--text2);">${trades.length} עסקאות נמצאו</span>
+      <button class="btn btn-primary btn-sm" onclick="bybitImportAll()">Import All</button>
+    </div>` + rows;
+  window._bybitPendingTrades = trades;
+}
+
+async function bybitImportOne(idx) {
+  const t = window._bybitPendingTrades?.[idx];
+  if (!t) return;
+  const btn = document.getElementById(`bybit-btn-${idx}`);
+  if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
+  const { data: inserted, error } = await _sb.from('trades').insert(_tradeToRow({ ...t, deleted: false })).select().single();
+  if (error) {
+    toast('שגיאה בשמירה: ' + error.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Import'; }
+    return;
+  }
+  db.crypto.unshift(_rowToTrade(inserted));
+  renderTable('crypto');
+  if (btn) { btn.textContent = '✓ Imported'; }
+  toast(`${t.symbol} יובא בהצלחה`, 'success');
+}
+
+async function bybitImportAll() {
+  const trades = window._bybitPendingTrades || [];
+  if (!trades.length) return;
+  let imported = 0, dupes = 0;
+  for (const t of trades) {
+    const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
+    if (db._deletedFingerprints?.has(fp)) { dupes++; continue; }
+    const existing = db.crypto.find(e =>
+      `${e.symbol}||${e.entryDate}||${Math.round((e.entryPrice||0)*1000)}||${Math.round((e.shares||0)*1000)}` === fp
+    );
+    if (existing) { dupes++; continue; }
+    const { data, error } = await _sb.from('trades').insert(_tradeToRow({ ...t, deleted: false })).select().single();
+    if (!error) { db.crypto.unshift(_rowToTrade(data)); imported++; }
+  }
+  renderTable('crypto');
+  toast(`יובאו ${imported} עסקאות${dupes ? ` (${dupes} כפולות דולגו)` : ''}`, 'success');
+}
 
 // ══════════════════════════════════════════════
 // TOTP 2FA — RFC 6238 — גורם שני לאימות
