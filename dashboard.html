@@ -6833,6 +6833,8 @@ async function _onAuthSuccess(user) {
   document.querySelectorAll('.ai-tab-btn, .tnav-btn').forEach(btn => {
     if (btn.getAttribute('onclick')?.includes("'ai'")) btn.style.display = isAdmin ? '' : 'none';
   });
+  const syncBtn = document.getElementById('flex-sync-btn');
+  if (syncBtn) syncBtn.style.display = isAdmin ? '' : 'none';
   // Post-load UI setup
   initFilters();
   applyPrivacy();
@@ -10326,11 +10328,16 @@ async function _flexFetch(jwt, { debug } = {}) {
 
 async function _autoFlexSync() {
   if (!_currentUser) return;
+  const COOLDOWN_MS = 6 * 60 * 60 * 1000;
+  const lastKey = 'flex_sync_ts_' + _currentUser.id;
+  const last = parseInt(localStorage.getItem(lastKey) || '0', 10);
+  if (Date.now() - last < COOLDOWN_MS) return;
   const jwt = await _getToken();
   if (!jwt) return;
   flexSetStatus('מסנכרן אוטומטי...', 'var(--text2)');
   try {
     const trades = await _flexFetch(jwt);
+    localStorage.setItem(lastKey, String(Date.now()));
 
     let imported = 0, updated = 0;
     const newlyImported = [];
