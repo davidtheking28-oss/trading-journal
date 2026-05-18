@@ -8,7 +8,7 @@
 <meta name="description" content="עקוב אחרי עסקאות המסחר שלך, נתח ביצועים עם AI, וקבל תובנות שיהפכו אותך לסוחר טוב יותר.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Heebo:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -29,7 +29,7 @@
   --border:   rgba(79,127,255,0.1);
   --border2:  rgba(255,255,255,0.05);
   --mono:     'IBM Plex Mono', monospace;
-  --display:  'Syne', 'Heebo', sans-serif;
+  --display:  'Heebo', sans-serif;
   --body:     'Heebo', sans-serif;
   --r:        16px;
 }
@@ -51,9 +51,10 @@ body::before {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(ellipse 80% 50% at 110% 0%, rgba(79,127,255,0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at -10% 60%, rgba(155,114,255,0.08) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 60% at 50% 100%, rgba(79,127,255,0.06) 0%, transparent 50%);
+    radial-gradient(ellipse 90% 60% at 110% -10%, rgba(79,127,255,0.18) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at -10% 70%, rgba(155,114,255,0.13) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 70% at 50% 110%, rgba(79,127,255,0.09) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 30% at 80% 50%, rgba(0,230,118,0.04) 0%, transparent 60%);
   pointer-events: none;
   z-index: 0;
 }
@@ -249,9 +250,9 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 
 .hero-stat {
   padding: 12px 22px;
-  border-left: 1px solid var(--border2);
+  border-right: 1px solid var(--border2);
 }
-.hero-stat:first-child { border-left: none; }
+.hero-stat:first-child { border-right: none; }
 
 .stat-num {
   font-family: var(--mono); font-size: 20px; font-weight: 600;
@@ -260,6 +261,18 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 }
 .stat-num .unit { font-size: 13px; color: var(--text3); margin-right: 2px; }
 .stat-label { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+/* Hero trust bar */
+.hero-trust {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 20px; flex-wrap: wrap;
+}
+.trust-item {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12px; color: var(--text3);
+}
+.trust-item svg { color: var(--green); flex-shrink: 0; }
+.trust-sep { color: var(--text3); opacity: 0.4; }
 
 /* Hero visual */
 .hero-visual-wrap {
@@ -418,6 +431,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   text-align: right;
   transition: border-color .3s, transform .3s, box-shadow .3s;
   position: relative; overflow: hidden;
+  cursor: pointer;
 }
 
 .feat::before {
@@ -429,10 +443,11 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 }
 
 .feat:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+  transform: translateY(-5px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
 }
 .feat:hover::before { opacity: 1; }
+.feat:hover .feat-title { color: #fff; }
 
 .feat.c1::before { background: linear-gradient(90deg,#4f7fff,#6b9fff); }
 .feat.c2::before { background: linear-gradient(90deg,#9b72ff,#c084fc); }
@@ -457,9 +472,10 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 .feat-title {
   font-family: var(--body); font-size: 16px; font-weight: 700;
   color: var(--text); margin-bottom: 8px; letter-spacing: -0.3px;
+  transition: color .3s;
 }
 
-.feat-desc { font-size: 13px; color: var(--text3); line-height: 1.7; }
+.feat-desc { font-size: 13px; color: var(--text2); line-height: 1.7; }
 
 /* ── STEPS ── */
 #how { text-align: center; }
@@ -499,7 +515,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   font-family: var(--display); font-size: 16px; font-weight: 700;
   color: var(--text); letter-spacing: -0.3px;
 }
-.step-desc { font-size: 13px; color: var(--text3); line-height: 1.7; }
+.step-desc { font-size: 13px; color: var(--text2); line-height: 1.7; }
 
 /* ── PRICING ── */
 #pricing { text-align: center; }
@@ -748,10 +764,17 @@ footer {
       <p class="hero-sub">ייבא עסקאות אוטומטית מהברוקר, עקוב אחרי ביצועים עם נתוני שוק בזמן אמת, וגלה את הדפוסים שמפרידים בין עסקאות רווחיות להפסדיות.</p>
       <div class="hero-actions">
         <a href="dashboard.html" class="btn-hero-primary">
-          התחל בחינם
+          פתח חשבון חינם
           <svg width="14" height="14" aria-hidden="true"><use href="#i-arr"/></svg>
         </a>
-        <a href="#features" class="btn-hero-ghost">גלה את הפיצ'רים</a>
+        <a href="#features" class="btn-hero-ghost">ראה איך זה עובד</a>
+      </div>
+      <div class="hero-trust">
+        <span class="trust-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>ללא כרטיס אשראי</span>
+        <span class="trust-sep">·</span>
+        <span class="trust-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>הרשמה בפחות מדקה</span>
+        <span class="trust-sep">·</span>
+        <span class="trust-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>נתונים מוצפנים ומאובטחים</span>
       </div>
       <div class="hero-stats" role="list" aria-label="נתונים">
         <div class="hero-stat" role="listitem">
@@ -829,7 +852,7 @@ footer {
         </div>
 
         <div class="card-ai">
-          <div class="ai-icon" aria-hidden="true">✦</div>
+          <div class="ai-icon" aria-hidden="true"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-stars"/></svg></div>
           <span>AI: win rate השתפר ב-+8% — כניסות מוקדמות יותר</span>
         </div>
       </div>
@@ -869,8 +892,8 @@ footer {
 <section id="features">
   <div class="centered reveal">
     <div class="section-pill">features</div>
-    <h2 class="section-title">כלים שסוחרים רציניים צריכים</h2>
-    <p class="section-sub">כל מה שצריך כדי לעקוב, לנתח ולשפר את ביצועי המסחר שלך.</p>
+    <h2 class="section-title">כל מה שסוחר רציני צריך</h2>
+    <p class="section-sub">מעקב, ניתוח, נתוני שוק, וחיבור ישיר לברוקר — במקום אחד, בלי לשלם.</p>
   </div>
 
   <div class="features-grid">
@@ -1016,11 +1039,12 @@ footer {
   <div class="cta-inner reveal">
     <div class="cta-bg" aria-hidden="true"></div>
     <h2 class="cta-title">מוכן לדעת מה באמת עובד לך?</h2>
-    <p class="cta-sub">חבר את הברוקר, ייבא את העסקאות, וקבל תובנות שלא ידעת שחיכו לך.</p>
-    <a href="dashboard.html" class="btn-hero-primary" style="display:inline-flex;">
+    <p class="cta-sub">חבר את הברוקר, ייבא את העסקאות, וקבל תובנות שלא ידעת שחיכו לך — בחינם, עכשיו.</p>
+    <a href="dashboard.html" class="btn-hero-primary" style="display:inline-flex;font-size:16px;padding:15px 32px;">
       פתח חשבון חינם
-      <svg width="14" height="14" aria-hidden="true"><use href="#i-arr"/></svg>
+      <svg width="15" height="15" aria-hidden="true"><use href="#i-arr"/></svg>
     </a>
+    <p style="margin-top:16px;font-size:12px;color:var(--text3);">ללא כרטיס אשראי · הרשמה בפחות מדקה</p>
   </div>
 </section>
 
