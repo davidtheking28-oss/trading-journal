@@ -8389,7 +8389,6 @@ async function loadUserSettings() {
     if (el) { el.value = ''; el.placeholder = 'מפתח שמור ✓'; }
   }
   renderFmpKeyStatus();
-  renderAvKeyStatus();
   if (_userSettings.portfolio_total != null) {
     const ptEl = document.getElementById('inv-portfolio-total');
     if (ptEl) { ptEl.value = _userSettings.portfolio_total; invRecalc(); }
