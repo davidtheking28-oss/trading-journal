@@ -5152,7 +5152,7 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
 
     <!-- Center Nav Tabs -->
     <div id="top-nav" style="display:flex;align-items:stretch;flex:1;justify-content:center;overflow-x:auto;scrollbar-width:none;">
-      <button class="tnav-btn active" onclick="switchTab('overview',this)">Dashboard</button>
+      <button class="tnav-btn active" onclick="switchTab('overview',this)" data-i18n="nav_overview">Home</button>
       <button class="tnav-btn" onclick="switchTab('stocks',this)">Stocks</button>
       <button class="tnav-btn" onclick="switchTab('crypto',this)">Crypto</button>
       <button class="tnav-btn" onclick="switchTab('statistics',this)">Statistics</button>
@@ -8927,7 +8927,7 @@ function t(k) { return (LANG_STRINGS[_lang] || LANG_STRINGS.en)[k] || k; }
 
 const LANG_STRINGS = {
   en: {
-    nav_overview:'Dashboard', nav_stocks:'Stocks', nav_crypto:'Crypto',
+    nav_overview:'Home', nav_stocks:'Stocks', nav_crypto:'Crypto',
     nav_statistics:'Statistics', nav_settings:'Settings', nav_themes:'Market Pulse',
     nav_ai:'Minervini', nav_missed:'Missed', nav_investments:'Investments',
     nav_section:'Navigation', add_trade:'Add Trade',
@@ -9041,7 +9041,7 @@ const LANG_STRINGS = {
     comp_stocks:'📈 Stocks', comp_crypto:'₿ Crypto',
   },
   he: {
-    nav_overview:'לוח בקרה', nav_stocks:'מניות', nav_crypto:'קריפטו',
+    nav_overview:'ראשי', nav_stocks:'מניות', nav_crypto:'קריפטו',
     nav_statistics:'סטטיסטיקות', nav_settings:'הגדרות', nav_themes:'Market Pulse',
     nav_ai:'Minervini', nav_missed:'פוספסו', nav_investments:'השקעות',
     nav_section:'ניווט', add_trade:'הוסף עסקה',
