@@ -5587,9 +5587,10 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
         </div>
         <div class="s-row">
           <div class="s-row-left"><div class="s-row-label">PIN</div></div>
-          <div class="s-row-ctrl" style="gap:6px;font-size:12px;color:var(--text3);">
+          <div class="s-row-ctrl" style="gap:8px;font-size:12px;color:var(--text3);">
             <span class="sec-dot" id="sec-pin-dot"></span>
             <span id="sec-pin-lbl"></span>
+            <button class="btn btn-secondary btn-sm" onclick="toggleLock()" id="pin-setup-btn">Set PIN</button>
           </div>
         </div>
         <div class="s-row">
@@ -10278,6 +10279,8 @@ function pinUpdateDots(color = null) {
 }
 
 function pinMsg(msg) { document.getElementById('pin-msg').textContent = msg; }
+function pinClear()     { pinBuffer = ''; pinUpdateDots(); pinMsg(''); }
+function pinBackspace() { if (pinBuffer.length > 0) { pinBuffer = pinBuffer.slice(0,-1); pinUpdateDots(); } }
 
 function pinPress(digit) {
   if (isLockedOut()) { showLockoutMsg(); return; }
@@ -12445,6 +12448,8 @@ function renderSecurityStatus() {
   const pinLbl = document.getElementById('sec-pin-lbl');
   const he = _lang === 'he';
   if (pinLbl) pinLbl.textContent = hasPIN() ? (he?'PIN — פעיל':'PIN — Active') : (he?'PIN — לא מוגדר':'PIN — Not set');
+  const pinBtn = document.getElementById('pin-setup-btn');
+  if (pinBtn) pinBtn.textContent = hasPIN() ? (he?'שנה / מחק':'Change / Remove') : (he?'הגדר PIN':'Set PIN');
   const lbl2 = document.getElementById('sec-2fa-lbl');
   if (lbl2) lbl2.textContent = totpEnabled() ? (he?'TOTP — פעיל':'TOTP — Active') : (he?'TOTP — לא פעיל':'TOTP — Inactive');
   const tBtn = document.getElementById('totp-toggle-btn');
@@ -15472,6 +15477,36 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
 </script>
+
+<!-- PIN Overlay -->
+<div id="pin-overlay" class="pin-overlay">
+  <div class="pin-box">
+    <div class="pin-title">🔒 Trading Journal</div>
+    <div id="pin-sub-text" style="font-size:13px;color:var(--text2);margin-bottom:20px;min-height:20px;">Enter your PIN</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div id="pin-msg"></div>
+    <div class="pin-grid">
+      <button class="pin-key" onclick="pinPress('1')">1</button>
+      <button class="pin-key" onclick="pinPress('2')">2</button>
+      <button class="pin-key" onclick="pinPress('3')">3</button>
+      <button class="pin-key" onclick="pinPress('4')">4</button>
+      <button class="pin-key" onclick="pinPress('5')">5</button>
+      <button class="pin-key" onclick="pinPress('6')">6</button>
+      <button class="pin-key" onclick="pinPress('7')">7</button>
+      <button class="pin-key" onclick="pinPress('8')">8</button>
+      <button class="pin-key" onclick="pinPress('9')">9</button>
+      <button class="pin-key pin-clear" onclick="pinClear()">✕</button>
+      <button class="pin-key" onclick="pinPress('0')">0</button>
+      <button class="pin-key pin-clear" onclick="pinBackspace()">⌫</button>
+    </div>
+    <div class="pin-toggle" id="pin-toggle-link" onclick="pinToggleSetup()"></div>
+  </div>
+</div>
 
 </body>
 </html>
