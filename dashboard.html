@@ -5560,6 +5560,25 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
         </div>
       </div>
 
+      <!-- Preferences -->
+      <div class="s-section">
+        <div class="s-section-header">
+          <div class="s-section-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="9" cy="6" r="2" fill="currentColor" opacity="0.5"/><circle cx="15" cy="12" r="2" fill="currentColor" opacity="0.5"/><circle cx="9" cy="18" r="2" fill="currentColor" opacity="0.5"/></svg></div>
+          <div><div class="s-section-title" data-i18n="set_grp_prefs">Preferences</div><div class="s-section-sub">Language and display</div></div>
+        </div>
+        <div class="s-row">
+          <div class="s-row-left">
+            <div class="s-row-label" data-i18n="settings_lang">Language</div>
+          </div>
+          <div class="s-row-ctrl">
+            <div class="lang-seg">
+              <button class="lang-opt" id="lang-en" onclick="setLang('en')">English</button>
+              <button class="lang-opt" id="lang-he" onclick="setLang('he')">עברית</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Security -->
       <div class="s-section">
         <div class="s-section-header">
@@ -9022,7 +9041,7 @@ const LANG_STRINGS = {
     comp_stocks:'📈 Stocks', comp_crypto:'₿ Crypto',
   },
   he: {
-    nav_overview:'Dashboard', nav_stocks:'מניות', nav_crypto:'קריפטו',
+    nav_overview:'דשבורד', nav_stocks:'מניות', nav_crypto:'קריפטו',
     nav_statistics:'סטטיסטיקות', nav_settings:'הגדרות', nav_themes:'Market Pulse',
     nav_ai:'Minervini', nav_missed:'פוספסו', nav_investments:'השקעות',
     nav_section:'ניווט', add_trade:'הוסף עסקה',
