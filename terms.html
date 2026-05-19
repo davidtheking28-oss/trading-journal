@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>תנאי שימוש — Trading Journal</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0a;--card:#111;--border:rgba(255,255,255,0.07);
+  --text:#f1f5f9;--text2:#a8b8cc;--text3:#6b7f96;
+  --accent:#818cf8;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;line-height:1.6;min-height:100vh}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+
+nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-logo-icon{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center}
+.nav-logo-text{font-size:15px;font-weight:700;color:var(--text)}
+.nav-back{font-size:13px;color:var(--text2);text-decoration:none;display:flex;align-items:center;gap:5px;transition:color .2s}
+.nav-back:hover{color:var(--text)}
+
+.container{max-width:760px;margin:0 auto;padding:48px 24px 80px}
+
+.page-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:rgba(129,140,248,0.1);border:1px solid rgba(129,140,248,0.25);border-radius:100px;font-size:11px;font-weight:600;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px}
+.page-title{font-size:clamp(26px,4vw,38px);font-weight:800;letter-spacing:-1px;line-height:1.1;margin-bottom:8px}
+.page-date{font-size:13px;color:var(--text3);margin-bottom:40px}
+
+.disclaimer-box{background:rgba(255,107,107,0.07);border:1px solid rgba(255,107,107,0.25);border-radius:14px;padding:20px 24px;margin-bottom:40px;display:flex;gap:14px;align-items:flex-start}
+.disclaimer-box svg{flex-shrink:0;margin-top:2px;color:#ff6b8a}
+.disclaimer-text{font-size:14px;line-height:1.7;color:var(--text2)}
+.disclaimer-text strong{color:var(--text);display:block;margin-bottom:4px;font-size:15px}
+
+h2{font-size:18px;font-weight:700;margin:36px 0 12px;color:var(--text);letter-spacing:-0.3px}
+h2:first-of-type{margin-top:0}
+p{font-size:14px;color:var(--text2);line-height:1.75;margin-bottom:12px}
+ul{padding-right:20px;margin-bottom:12px;display:flex;flex-direction:column;gap:6px}
+li{font-size:14px;color:var(--text2);line-height:1.7}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+hr{border:none;border-top:1px solid var(--border);margin:36px 0}
+
+@media(max-width:600px){.container{padding:32px 16px 60px}}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-icon">
+      <svg width="18" height="18" viewBox="0 0 200 200" aria-hidden="true">
+        <line x1="44" y1="60" x2="156" y2="60" stroke="rgba(255,255,255,0.3)" stroke-width="6"/>
+        <line x1="44" y1="100" x2="156" y2="100" stroke="rgba(255,255,255,0.3)" stroke-width="6"/>
+        <rect x="52" y="115" width="18" height="25" rx="4" fill="#ff6b8a"/>
+        <rect x="83" y="95" width="18" height="45" rx="4" fill="#818cf8"/>
+        <rect x="114" y="72" width="18" height="68" rx="4" fill="#818cf8"/>
+        <rect x="145" y="58" width="18" height="82" rx="4" fill="#2dd4a0"/>
+        <polyline points="61,128 92,113 123,81 154,67" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="6" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <span class="nav-logo-text">Trading Journal</span>
+  </a>
+  <a href="/" class="nav-back">
+    חזרה לדף הבית
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+  </a>
+</nav>
+
+<main>
+<div class="container">
+
+  <div class="page-badge">תנאי שימוש</div>
+  <h1 class="page-title">תנאי שימוש</h1>
+  <p class="page-date">עדכון אחרון: מאי 2025</p>
+
+  <div class="disclaimer-box" role="note" aria-label="הצהרת אחריות חשובה">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <div class="disclaimer-text">
+      <strong>לא ייעוץ פיננסי — חובה לקרוא</strong>
+      Trading Journal הוא כלי תיעוד ואנליזה אישי בלבד. אין בתוכן האפליקציה, בניתוחי ה-AI, ובשום פלט אחר שלה משום ייעוץ השקעות, ייעוץ מס, ייעוץ פיננסי או המלצת מסחר. כל החלטת מסחר היא באחריות המשתמש בלבד.
+    </div>
+  </div>
+
+  <h2>1. קבלת התנאים</h2>
+  <p>השימוש ב-Trading Journal ("השירות") כפוף לתנאים אלו. כניסה לאפליקציה או שימוש בה מהווה הסכמה מלאה לתנאים. אם אינך מסכים — אל תשתמש בשירות.</p>
+
+  <h2>2. תיאור השירות</h2>
+  <p>Trading Journal הוא יומן מסחר דיגיטלי המאפשר תיעוד עסקאות, ניתוח ביצועים, וחיבור לברוקרים לצורך ייבוא אוטומטי של נתוני עסקאות. השירות מוצע כפי שהוא (as-is) ללא אחריות לזמינות רציפה.</p>
+
+  <h2>3. הצהרת אי-ייעוץ פיננסי</h2>
+  <p>השירות אינו מהווה ואינו מיועד להוות:</p>
+  <ul>
+    <li>ייעוץ השקעות כמשמעותו בחוק הסדרת העיסוק בייעוץ השקעות, בשיווק השקעות ובניהול תיקי השקעות, תשנ"ה-1995</li>
+    <li>המלצה לרכישה או מכירה של ניירות ערך, מטבעות, נגזרים או כל מכשיר פיננסי</li>
+    <li>תחזית לגבי ביצועי השוק בעתיד</li>
+    <li>ייעוץ מס או חשבונאי</li>
+  </ul>
+  <p>ביצועי עסקאות בעבר אינם ערובה לתוצאות עתידיות. המסחר בשוק ההון כרוך בסיכון הפסד הון.</p>
+
+  <h2>4. אחריות המשתמש</h2>
+  <p>המשתמש מתחייב:</p>
+  <ul>
+    <li>לא להעלות תוכן בלתי חוקי או פוגעני</li>
+    <li>לא לנסות לפרוץ, להעמיס או לשבש את השירות</li>
+    <li>לשמור בסודיות את פרטי הגישה לחשבון</li>
+    <li>לא לשתף מפתחות API של ברוקרים עם צדדים שלישיים</li>
+    <li>לעשות שימוש בשירות בהתאם לדין הישראלי החל</li>
+  </ul>
+
+  <h2>5. הגבלת אחריות</h2>
+  <p>השירות ניתן "כפי שהוא" (AS IS). לא תחול על מפעיל השירות כל אחריות לנזקים ישירים, עקיפים, מקריים או תוצאתיים הנובעים מ:</p>
+  <ul>
+    <li>שגיאות בנתונים המיובאים מהברוקר</li>
+    <li>החלטות מסחר שנעשו על בסיס מידע מהאפליקציה</li>
+    <li>אובדן גישה לחשבון או לנתונים</li>
+    <li>הפסקת שירות או תקלות טכניות</li>
+  </ul>
+  <p>האחריות המקסימלית של מפעיל השירות לא תעלה בשום מקרה על הסכום ששילם המשתמש עבור השירות (0 ₪ עבור תוכנית חינמית).</p>
+
+  <h2>6. קניין רוחני</h2>
+  <p>כל הקוד, העיצוב, הלוגו והתוכן של האפליקציה הם רכוש מפעיל השירות. חל איסור על שכפול, הפצה או שימוש מסחרי ללא אישור בכתב.</p>
+
+  <h2>7. שינויים בתנאים</h2>
+  <p>מפעיל השירות רשאי לעדכן תנאים אלו בכל עת. עדכון מהותי יועבר בהתראה מוקדמת של 14 יום. המשך שימוש לאחר ההתראה מהווה הסכמה לתנאים החדשים.</p>
+
+  <h2>8. סיום שירות</h2>
+  <p>מפעיל השירות רשאי להפסיק את פעילות השירות בכל עת, עם הודעה מוקדמת של 30 יום. במקרה כזה תינתן אפשרות לייצוא נתונים.</p>
+
+  <h2>9. דין חל וסמכות שיפוט</h2>
+  <p>תנאים אלו כפופים לדין הישראלי. כל מחלוקת תידון בבתי המשפט המוסמכים במחוז תל-אביב.</p>
+
+  <h2>10. יצירת קשר</h2>
+  <p>לשאלות בנוגע לתנאים אלו: <a href="mailto:davidtheking27@gmail.com">davidtheking27@gmail.com</a></p>
+
+</div>
+</main>
+
+</body>
+</html>
