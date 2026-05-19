@@ -5632,6 +5632,7 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
         <div class="s-row">
           <div class="s-row-left">
             <div class="s-row-label" data-i18n="set_stocks">Stocks</div>
+            <div class="s-row-desc">Finnhub · Real-time quotes</div>
           </div>
           <div class="s-row-ctrl" style="font-size:12px;">
             <div id="stock-sym-status"><span class="sym-dot loading"></span></div>
@@ -5646,18 +5647,15 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
             <div id="crypto-sym-status"><span class="sym-dot loading"></span></div>
           </div>
         </div>
-        <div style="padding:0 16px 16px;border-top:1px solid var(--border);">
-          <div style="font-size:11px;color:var(--text3);margin-top:12px;margin-bottom:4px;display:flex;align-items:center;gap:6px;">
-            <span>Finnhub API Key</span>
-            <a href="https://finnhub.io/register" target="_blank" rel="noopener" style="color:var(--accent);font-size:11px;">← Get free key</a>
+        <div class="s-row" style="flex-direction:column;align-items:stretch;min-height:0;padding:16px;gap:10px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-size:12px;font-weight:600;color:var(--text2);">Finnhub API Key</div>
+            <a href="https://finnhub.io/register" target="_blank" rel="noopener" style="font-size:11px;font-weight:600;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px;">Get free key <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></a>
           </div>
-          <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5;">
-            נדרש לנתוני מחיר מניות בזמן אמת. הרשמה חינמית ב-finnhub.io — הכנס את המפתח ולחץ Save.
-          </div>
-          <div style="display:flex;gap:8px;">
-            <input id="finnhub-key-input" class="form-control" type="password" placeholder="Finnhub API Key" autocomplete="off" style="font-size:12px;padding:6px 10px;flex:1;">
-            <button class="btn btn-secondary btn-sm" onclick="saveFinnhubKey()" data-i18n="m_save_short">Save</button>
-            <span id="finnhub-key-status" style="font-size:11px;align-self:center;color:var(--text3);white-space:nowrap;"></span>
+          <div style="font-size:11px;color:var(--text3);line-height:1.5;">נדרש לנתוני מחיר מניות בזמן אמת — הרשם חינם ב-finnhub.io, הכנס את המפתח ולחץ Save.</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input id="finnhub-key-input" class="profile-input" type="password" placeholder="sk_••••••••••••••••••••••••" autocomplete="off" style="font-size:12px;flex:1;">
+            <button class="btn btn-primary btn-sm" onclick="saveFinnhubKey()" data-i18n="m_save_short">Save</button>
           </div>
         </div>
         <div id="finnhub-key-section" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border);">
@@ -5667,7 +5665,6 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
           <div style="display:flex;gap:8px;">
             <input id="av-key-input" class="form-control" type="password" placeholder="Alpha Vantage API Key" autocomplete="off" style="font-size:12px;padding:6px 10px;flex:1;">
             <button class="btn btn-secondary btn-sm" onclick="saveAvKey()" data-i18n="m_save_short">Save</button>
-            <span id="av-key-status" style="font-size:11px;align-self:center;color:var(--text3);white-space:nowrap;"></span>
           </div>
         </div>
       </div>
@@ -8385,9 +8382,12 @@ async function loadUserSettings() {
   }
   if (_userSettings.finnhub_key) {
     const el = document.getElementById('finnhub-key-input');
-    if (el) el.value = '';
+    if (el) { el.value = ''; el.placeholder = 'מפתח שמור ✓'; }
   }
-  renderFinnhubKeyStatus();
+  if (_userSettings.av_key) {
+    const el = document.getElementById('av-key-input');
+    if (el) { el.value = ''; el.placeholder = 'מפתח שמור ✓'; }
+  }
   renderFmpKeyStatus();
   renderAvKeyStatus();
   if (_userSettings.portfolio_total != null) {
@@ -8411,19 +8411,11 @@ async function saveFinnhubKey() {
   const val = (document.getElementById('finnhub-key-input')?.value || '').trim();
   await _saveUserSettings({ finnhub_key: val || null });
   localStorage.removeItem(FINNHUB_CACHE_KEY);
-  document.getElementById('finnhub-key-input').value = '';
+  const inp = document.getElementById('finnhub-key-input');
+  if (inp) { inp.value = ''; inp.placeholder = val ? 'מפתח שמור ✓' : 'Finnhub API Key'; }
   toast(val ? 'מפתח Finnhub נשמר 🔐' : 'מפתח הוסר — משתמש ב-SEC EDGAR', 'success');
   STOCK_SYMBOLS = new Set();
   loadStockSymbols();
-  renderFinnhubKeyStatus();
-}
-
-function renderFinnhubKeyStatus() {
-  const el = document.getElementById('finnhub-key-status');
-  if (!el) return;
-  const key = getFinnhubKey();
-  el.textContent = key ? '✓ מפתח שמור' : '';
-  el.style.color = key ? 'var(--green)' : 'var(--text3)';
 }
 
 function getFmpKey() { return _userSettings.fmp_key || ''; }
@@ -8448,17 +8440,9 @@ function renderFmpKeyStatus() {
 async function saveAvKey() {
   const val = (document.getElementById('av-key-input')?.value || '').trim();
   await _saveUserSettings({ av_key: val || null });
-  document.getElementById('av-key-input').value = '';
+  const inp = document.getElementById('av-key-input');
+  if (inp) { inp.value = ''; inp.placeholder = val ? 'מפתח שמור ✓' : 'Alpha Vantage API Key'; }
   toast(val ? 'מפתח Alpha Vantage נשמר 🔐' : 'מפתח Alpha Vantage הוסר', 'success');
-  renderAvKeyStatus();
-}
-
-function renderAvKeyStatus() {
-  const el = document.getElementById('av-key-status');
-  if (!el) return;
-  const key = getAvKey();
-  el.textContent = key ? '✓ מפתח שמור' : '';
-  el.style.color = key ? 'var(--green)' : 'var(--text3)';
 }
 
 async function loadStockSymbols() {
