@@ -15,7 +15,6 @@ __pycache__/
 .env.local
 
 # Vercel / old hosting artifacts
-api/
 package.json
 package-lock.json
 node_modules/

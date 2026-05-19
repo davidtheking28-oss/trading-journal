@@ -61,10 +61,11 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.3/dist/umd/supabase.min.js"
         integrity="sha384-iWpUQPQzWsFiosLgsS8o+e6E8y3Gm+EW2m/vAAo7A2H3fuc4KOKEx+5CAord2H2z"
         crossorigin="anonymous"></script>
-<!-- Supabase credentials — injected by GitHub Actions, never hardcoded here -->
+<!-- Supabase credentials — loaded at runtime via /api/config -->
+<script src="/api/config"></script>
 <script>
-const SUPABASE_URL = 'https://fnklrqxwyeibfptaxewf.supabase.co';
-const SUPABASE_ANON = '__SUPABASE_ANON__';
+const SUPABASE_URL = window.__SB_URL || 'https://fnklrqxwyeibfptaxewf.supabase.co';
+const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
 </script>
 <!-- SRI — chart.js 4.4.4 מוצמד לגרסה עם hash מאומת -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"
