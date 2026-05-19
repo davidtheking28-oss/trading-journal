@@ -1555,9 +1555,9 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
   .profile-input:disabled { opacity:0.45; cursor:not-allowed; }
   .profile-email { font-size:12px; color:var(--text3); margin-top:2px; }
   .lang-seg { display:flex; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:8px; padding:3px; gap:3px; width:fit-content; }
-  .lang-opt { background:none; border:none; color:var(--text3); font-size:13px; font-weight:600; padding:6px 20px; border-radius:6px; cursor:pointer; transition:all 0.15s; }
-  .lang-opt:hover { color:var(--text); }
-  .lang-opt.active { background:var(--accent); color:#fff; }
+  .lang-opt { background:none; border:none; color:var(--text3); font-size:20px; padding:5px 12px; border-radius:6px; cursor:pointer; transition:all 0.15s; opacity:0.5; }
+  .lang-opt:hover { opacity:0.85; }
+  .lang-opt.active { background:var(--accent); opacity:1; }
   .lang-desc { font-size:11px; color:var(--text3); margin-top:8px; }
 
   /* TLG drop zone */
@@ -5572,8 +5572,8 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
           </div>
           <div class="s-row-ctrl">
             <div class="lang-seg">
-              <button class="lang-opt" id="lang-en" onclick="setLang('en')">English</button>
-              <button class="lang-opt" id="lang-he" onclick="setLang('he')">עברית</button>
+              <button class="lang-opt" id="lang-en" onclick="setLang('en')" title="English">🇺🇸</button>
+              <button class="lang-opt" id="lang-he" onclick="setLang('he')" title="עברית">🇮🇱</button>
             </div>
           </div>
         </div>
