@@ -27,6 +27,8 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
 .nav-logo-text{font-size:15px;font-weight:700;color:var(--text)}
 .nav-back{font-size:13px;color:var(--text2);text-decoration:none;display:flex;align-items:center;gap:5px;transition:color .2s}
 .nav-back:hover{color:var(--text)}
+/* SCROLL OFFSET for sticky nav */
+.guide-section{scroll-margin-top:72px}
 
 /* LAYOUT */
 .container{max-width:780px;margin:0 auto;padding:48px 24px 80px}
@@ -58,7 +60,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
 .steps{display:flex;flex-direction:column;gap:0}
 .step{display:flex;gap:16px;padding-bottom:28px;position:relative}
 .step:not(:last-child)::before{content:'';position:absolute;right:15px;top:36px;bottom:0;width:2px;background:var(--border)}
-.step-dot{width:32px;height:32px;border-radius:50%;background:var(--card);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);flex-shrink:0;z-index:1}
+.step-dot{width:36px;height:36px;border-radius:50%;background:var(--card);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);flex-shrink:0;z-index:1}
 .step-body{flex:1;padding-top:4px}
 .step-title{font-size:15px;font-weight:700;margin-bottom:6px}
 .step-desc{font-size:14px;color:var(--text2);line-height:1.7}
@@ -69,7 +71,10 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
 .callout-tip{background:rgba(45,212,160,0.07);border:1px solid rgba(45,212,160,0.18)}
 .callout-warn{background:rgba(251,191,36,0.07);border:1px solid rgba(251,191,36,0.18)}
 .callout-info{background:rgba(129,140,248,0.07);border:1px solid rgba(129,140,248,0.18)}
-.callout-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.callout-icon{flex-shrink:0;margin-top:2px;width:18px;height:18px}
+.callout-tip .callout-icon{color:var(--green)}
+.callout-warn .callout-icon{color:var(--yellow)}
+.callout-info .callout-icon{color:var(--accent)}
 .callout-text{color:var(--text2)}
 .callout-text strong{color:var(--text)}
 
@@ -83,8 +88,10 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
 
 /* TROUBLESHOOT */
 .trouble-list{display:flex;flex-direction:column;gap:10px}
-.trouble-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px}
+.trouble-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:border-color .2s,background .2s}
+.trouble-item:hover{border-color:rgba(129,140,248,0.35);background:#161616}
 .trouble-q{font-size:14px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.trouble-q svg{flex-shrink:0;color:var(--red)}
 .trouble-a{font-size:13px;color:var(--text2);line-height:1.65}
 .trouble-a code{font-family:'IBM Plex Mono',monospace;font-size:12px;background:rgba(255,255,255,0.07);padding:1px 6px;border-radius:4px;color:var(--accent)}
 
@@ -119,8 +126,8 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
     <span class="nav-logo-text">Trading Journal</span>
   </a>
   <a href="dashboard.html" class="nav-back">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     חזרה לאפליקציה
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
   </a>
 </nav>
 
@@ -155,7 +162,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
     </div>
 
     <div class="callout callout-info">
-      <div class="callout-icon">ℹ️</div>
+      <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <div class="callout-text"><strong>מה זה Flex Query?</strong> שירות של IBKR שמאפשר להוריד היסטוריית עסקאות בפורמט XML. אנחנו משתמשים בו כדי לייבא את העסקאות שלך אוטומטית.</div>
     </div>
 
@@ -182,7 +189,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
           <div class="step-title">צור Flex Query חדש לעסקאות</div>
           <div class="step-desc">לחץ על <code>Create</code> ← <code>Trade Confirmation Flex Query</code>. תן לו שם כלשהו (למשל "Trading Journal").</div>
           <div class="callout callout-tip" style="margin-top:10px">
-            <div class="callout-icon">✅</div>
+            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             <div class="callout-text"><strong>שדות חובה שצריך לסמן:</strong> Symbol, Buy/Sell, Quantity, Price, Commission, TradeDate, OrderType, AssetCategory, Open/CloseIndicator</div>
           </div>
         </div>
@@ -214,7 +221,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
           <div class="step-title">קבל Flex Web Service Token</div>
           <div class="step-desc">לך ל-<code>Manage Account</code> → <code>Settings</code> → <code>Flex Web Service</code>. הפעל את השירות ולחץ <code>Generate Token</code>. שמור את ה-Token — הוא מוצג פעם אחת בלבד.</div>
           <div class="callout callout-warn" style="margin-top:10px">
-            <div class="callout-icon">⚠️</div>
+            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <div class="callout-text"><strong>שמור את ה-Token!</strong> IBKR מציג אותו פעם אחת. אם שכחת, תצטרך לייצר חדש.</div>
           </div>
           <div class="field-row">
@@ -245,7 +252,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
     </div>
 
     <div class="callout callout-info">
-      <div class="callout-icon">ℹ️</div>
+      <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <div class="callout-text"><strong>הרשאות נדרשות:</strong> צריך API Key עם הרשאת <strong>Read Only</strong> בלבד — אנחנו לא שולחים פקודות, רק קוראים היסטוריית עסקאות.</div>
     </div>
 
@@ -286,7 +293,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
             </ul>
           </div>
           <div class="callout callout-warn" style="margin-top:10px">
-            <div class="callout-icon">⚠️</div>
+            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <div class="callout-text"><strong>אל תסמן Withdraw!</strong> לשם הקרא בלבד אין צורך בהרשאת משיכה.</div>
           </div>
         </div>
@@ -348,7 +355,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
           <div class="step-title">בדוק בטבלת העסקאות</div>
           <div class="step-desc">עבור ללשונית Stocks או Crypto ווידא שהעסקאות מופיעות עם הנתונים הנכונים.</div>
           <div class="callout callout-tip" style="margin-top:10px">
-            <div class="callout-icon">💡</div>
+            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             <div class="callout-text">הסנכרון הוא <strong>חד-כיווני</strong> — רק קריאה מהברוקר. לא ניתן לבצע פקודות מסחר דרך האפליקציה.</div>
           </div>
         </div>
@@ -367,27 +374,27 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
 
     <div class="trouble-list">
       <div class="trouble-item">
-        <div class="trouble-q">❌ "Token לא תקין" או "Unauthorized"</div>
+        <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>"Token לא תקין" או "Unauthorized"</div>
         <div class="trouble-a">בדוק שהפעלת את Flex Web Service ב-IBKR (Manage Account → Settings → Flex Web Service). ייצר Token חדש אם צריך.</div>
       </div>
       <div class="trouble-item">
-        <div class="trouble-q">❌ "Query ID לא נמצא"</div>
+        <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>"Query ID לא נמצא"</div>
         <div class="trouble-a">ודא שה-Query ID הוא מספרי בלבד (לדוגמה <code>1462900</code>) ושה-Query נשמר כ-<code>Trade Confirmation Flex Query</code>.</div>
       </div>
       <div class="trouble-item">
-        <div class="trouble-q">❌ "0 עסקאות נמצאו" למרות שיש עסקאות</div>
+        <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>"0 עסקאות נמצאו" למרות שיש עסקאות</div>
         <div class="trouble-a">בדוק את טווח התאריכים שהגדרת ב-Flex Query. ב-IBKR, הגדר <code>Last 30 Calendar Days</code> או טווח מותאם שמכסה את תקופת המסחר שלך.</div>
       </div>
       <div class="trouble-item">
-        <div class="trouble-q">❌ עסקאות מופיעות ב-Stocks אבל ללא Stop Loss</div>
+        <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>עסקאות מופיעות ב-Stocks אבל ללא Stop Loss</div>
         <div class="trouble-a">ה-Stop Loss לא מגיע מ-IBKR — צריך להזין ידנית לאחר הייבוא. ה-Flex Query לא מכיל פקודות עתידיות, רק ביצועים.</div>
       </div>
       <div class="trouble-item">
-        <div class="trouble-q">❌ Bybit — "Invalid API Key"</div>
+        <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Bybit — "Invalid API Key"</div>
         <div class="trouble-a">ודא שה-API Key לא פג תוקף וש-IP שלך לא חסום. ב-Bybit ניתן לראות מצב ה-Key תחת My Profile → API.</div>
       </div>
       <div class="trouble-item">
-        <div class="trouble-q">❌ עסקאות כפולות לאחר Sync</div>
+        <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>עסקאות כפולות לאחר Sync</div>
         <div class="trouble-a">האפליקציה בודקת כפילויות לפי ID. אם קרה — עדכן את הדף ובצע Sync מחדש. אם הבעיה חוזרת, צור קשר.</div>
       </div>
     </div>
