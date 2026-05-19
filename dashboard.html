@@ -5641,7 +5641,7 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
         <div class="s-row">
           <div class="s-row-left">
             <div class="s-row-label" data-i18n="set_crypto">Crypto</div>
-            <div class="s-row-desc">CoinGecko · ללא מפתח, עובד אוטומטית</div>
+            <div class="s-row-desc" data-i18n="set_crypto_desc">CoinGecko · No key required, works automatically</div>
           </div>
           <div class="s-row-ctrl" style="font-size:12px;">
             <div id="crypto-sym-status"><span class="sym-dot loading"></span></div>
@@ -5652,18 +5652,20 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
             <div style="font-size:12px;font-weight:600;color:var(--text2);">Finnhub API Key</div>
             <a href="https://finnhub.io/register" target="_blank" rel="noopener" style="font-size:11px;font-weight:600;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px;">Get free key <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></a>
           </div>
-          <div style="font-size:11px;color:var(--text3);line-height:1.5;">נדרש לנתוני מחיר מניות בזמן אמת — הרשם חינם ב-finnhub.io, הכנס את המפתח ולחץ Save.</div>
+          <div style="font-size:11px;color:var(--text3);line-height:1.5;" data-i18n="set_finnhub_desc">Required for real-time stock prices. Register free at finnhub.io — enter your key and click Save.</div>
           <div style="display:flex;gap:8px;align-items:center;">
             <input id="finnhub-key-input" class="profile-input" type="password" placeholder="sk_••••••••••••••••••••••••" autocomplete="off" style="font-size:12px;flex:1;">
             <button class="btn btn-primary btn-sm" onclick="saveFinnhubKey()" data-i18n="m_save_short">Save</button>
           </div>
         </div>
-        <div id="finnhub-key-section" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border);">
-          <div style="font-size:11px;color:var(--text3);margin-top:12px;margin-bottom:6px;">
-            <span data-i18n="set_av_key">Alpha Vantage Key</span> (<a href="https://www.alphavantage.co/support/#api-key" target="_blank" rel="noopener" style="color:var(--accent);" data-i18n="set_get_free_key">Get free key</a>)
+        <div id="finnhub-key-section" style="display:none;padding:16px;border-top:1px solid var(--border);gap:10px;display:none;flex-direction:column;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-size:12px;font-weight:600;color:var(--text2);" data-i18n="set_av_key">Alpha Vantage Key</div>
+            <a href="https://www.alphavantage.co/support/#api-key" target="_blank" rel="noopener" style="font-size:11px;font-weight:600;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px;" data-i18n="set_get_free_key">Get free key <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></a>
           </div>
-          <div style="display:flex;gap:8px;">
-            <input id="av-key-input" class="form-control" type="password" placeholder="Alpha Vantage API Key" autocomplete="off" style="font-size:12px;padding:6px 10px;flex:1;">
+          <div style="font-size:11px;color:var(--text3);line-height:1.5;margin-top:6px;" data-i18n="set_av_desc">Financial data for all stocks including small caps.</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+            <input id="av-key-input" class="profile-input" type="password" placeholder="Alpha Vantage API Key" autocomplete="off" style="font-size:12px;flex:1;">
             <button class="btn btn-secondary btn-sm" onclick="saveAvKey()" data-i18n="m_save_short">Save</button>
           </div>
         </div>
@@ -8331,16 +8333,17 @@ function updateCryptoStatus(state, count, ts) {
   const el = document.getElementById('crypto-sym-status');
   if (!el) return;
   const age = ts ? Math.round((Date.now() - ts) / 3600000) : 0;
-  const ageStr = ts ? (age < 1 ? 'עכשיו' : `לפני ${age}ש׳`) : '';
+  const he = _lang === 'he';
+  const ageStr = ts ? (age < 1 ? (he ? 'עכשיו' : 'just now') : (he ? `לפני ${age}ש׳` : `${age}h ago`)) : '';
   const map = {
-    loading: { icon: '🔄', text: count ? `${count.toLocaleString()} מטבעות (מרענן ברקע...)` : 'טוען מ-CoinGecko...', cls: '' },
-    live:    { icon: '🟢', text: `${count.toLocaleString()} מטבעות (עודכן עכשיו)`, cls: 'live' },
-    cache:   { icon: '🔵', text: `${count.toLocaleString()} מטבעות (${ageStr})`, cls: 'cache' },
-    error:   { icon: '🔴', text: 'טעינה נכשלה — משתמש ברשימה מקומית', cls: 'error' },
+    loading: { icon: '🔄', text: count ? `${count.toLocaleString()} ${he?'מטבעות':'coins'} (${he?'מרענן ברקע...':'refreshing...'})` : (he?'טוען מ-CoinGecko...':'Loading from CoinGecko...'), cls: '' },
+    live:    { icon: '🟢', text: `${count.toLocaleString()} ${he?'מטבעות':'coins'} (${he?'עודכן עכשיו':'updated now'})`, cls: 'live' },
+    cache:   { icon: '🔵', text: `${count.toLocaleString()} ${he?'מטבעות':'coins'} (${ageStr})`, cls: 'cache' },
+    error:   { icon: '🔴', text: he?'טעינה נכשלה — משתמש ברשימה מקומית':'Load failed — using local list', cls: 'error' },
   };
   const m = map[state] || map.error;
   el.innerHTML = `<span class="cg-status-icon">${m.icon}</span> ${m.text}
-    ${state !== 'loading' ? `<button class="cg-refresh-btn" onclick="cgRefresh()" title="רענן רשימה">↺</button>` : ''}`;
+    ${state !== 'loading' ? `<button class="cg-refresh-btn" onclick="cgRefresh()" title="${he?'רענן רשימה':'Refresh'}">↺</button>` : ''}`;
   el.className = `cg-status ${m.cls}`;
 }
 
@@ -8546,17 +8549,18 @@ function updateStockStatus(state, count, ts, source) {
   const el = document.getElementById('stock-sym-status');
   if (!el) return;
   const age = ts ? Math.round((Date.now() - ts) / 3600000) : 0;
-  const ageStr = ts ? (age < 1 ? 'עכשיו' : age < 24 ? `לפני ${age}ש׳` : `לפני ${Math.round(age/24)}י׳`) : '';
+  const he = _lang === 'he';
+  const ageStr = ts ? (age < 1 ? (he?'עכשיו':'just now') : age < 24 ? (he?`לפני ${age}ש׳`:`${age}h ago`) : (he?`לפני ${Math.round(age/24)}י׳`:`${Math.round(age/24)}d ago`)) : '';
   const src = source ? ` <span style="opacity:.6;font-size:10px;">(${source})</span>` : '';
   const map = {
-    loading: { icon: '🔄', text: count ? `${count.toLocaleString()} מניות (מרענן ברקע...)${src}` : `טוען מ-${source||''}...`, cls: '' },
-    live:    { icon: '🟢', text: `${count.toLocaleString()} מניות — עודכן עכשיו${src}`, cls: 'live' },
-    cache:   { icon: '🔵', text: `${count.toLocaleString()} מניות — ${ageStr}${src}`, cls: 'cache' },
-    error:   { icon: '🔴', text: `שגיאה ב-${source} — עובר ל-SEC EDGAR`, cls: 'error' },
+    loading: { icon: '🔄', text: count ? `${count.toLocaleString()} ${he?'מניות':'stocks'} (${he?'מרענן ברקע...':'refreshing...'})${src}` : `${he?'טוען מ-':'Loading from '}${source||''}...`, cls: '' },
+    live:    { icon: '🟢', text: `${count.toLocaleString()} ${he?'מניות':'stocks'} — ${he?'עודכן עכשיו':'updated now'}${src}`, cls: 'live' },
+    cache:   { icon: '🔵', text: `${count.toLocaleString()} ${he?'מניות':'stocks'} — ${ageStr}${src}`, cls: 'cache' },
+    error:   { icon: '🔴', text: he?`שגיאה ב-${source} — עובר ל-SEC EDGAR`:`Error in ${source} — switching to SEC EDGAR`, cls: 'error' },
   };
   const m = map[state] || map.error;
   el.innerHTML = `<span class="cg-status-icon">${m.icon}</span> ${m.text}
-    ${state !== 'loading' ? `<button class="cg-refresh-btn" onclick="secRefresh()" title="רענן רשימה">↺</button>` : ''}`;
+    ${state !== 'loading' ? `<button class="cg-refresh-btn" onclick="secRefresh()" title="${he?'רענן רשימה':'Refresh'}">↺</button>` : ''}`;
   el.className = `cg-status ${m.cls}`;
 }
 
@@ -9042,6 +9046,9 @@ const LANG_STRINGS = {
   },
   he: {
     nav_overview:'ראשי', nav_stocks:'מניות', nav_crypto:'קריפטו',
+    set_crypto_desc:'CoinGecko · ללא מפתח, עובד אוטומטית',
+    set_finnhub_desc:'נדרש לנתוני מחיר מניות בזמן אמת. הרשם חינם ב-finnhub.io — הכנס את המפתח ולחץ Save.',
+    set_av_desc:'נתוני פיננסים לכל המניות כולל Small Cap.',
     nav_statistics:'סטטיסטיקות', nav_settings:'הגדרות', nav_themes:'Market Pulse',
     nav_ai:'Minervini', nav_missed:'פוספסו', nav_investments:'השקעות',
     nav_section:'ניווט', add_trade:'הוסף עסקה',
@@ -12319,7 +12326,7 @@ function totpSetupCancel() {
 }
 async function totpToggle() {
   if(totpEnabled()){
-    if(!confirm('לבטל אימות דו-שלבי?'))return;
+    if(!confirm(_lang==='he'?'לבטל אימות דו-שלבי?':'Disable two-factor authentication?'))return;
     localStorage.removeItem(TOTP_ENABLED_KEY);
     localStorage.removeItem(TOTP_KEY);
     document.getElementById('totp-status-text').textContent='🔴 כבוי';
@@ -12436,19 +12443,20 @@ function renderSecurityStatus() {
   setDot('sec-pin-dot', hasPIN());
   setDot('sec-2fa-dot', totpEnabled());
   const pinLbl = document.getElementById('sec-pin-lbl');
-  if (pinLbl) pinLbl.textContent = hasPIN() ? 'PIN — פעיל' : 'PIN — לא מוגדר';
+  const he = _lang === 'he';
+  if (pinLbl) pinLbl.textContent = hasPIN() ? (he?'PIN — פעיל':'PIN — Active') : (he?'PIN — לא מוגדר':'PIN — Not set');
   const lbl2 = document.getElementById('sec-2fa-lbl');
-  if (lbl2) lbl2.textContent = totpEnabled() ? 'TOTP — פעיל' : 'TOTP — לא פעיל';
+  if (lbl2) lbl2.textContent = totpEnabled() ? (he?'TOTP — פעיל':'TOTP — Active') : (he?'TOTP — לא פעיל':'TOTP — Inactive');
   const tBtn = document.getElementById('totp-toggle-btn');
   const tTxt = document.getElementById('totp-status-text');
   if (tBtn && tTxt) {
     if (totpEnabled()) {
-      tTxt.textContent = 'פעיל';
-      tBtn.textContent = 'בטל 2FA';
+      tTxt.textContent = he?'פעיל':'Active';
+      tBtn.textContent = he?'בטל 2FA':'Disable 2FA';
       tBtn.className = 'btn btn-danger btn-sm';
     } else {
-      tTxt.textContent = 'לא פעיל';
-      tBtn.textContent = 'הפעל 2FA';
+      tTxt.textContent = he?'לא פעיל':'Inactive';
+      tBtn.textContent = he?'הפעל 2FA':'Enable 2FA';
       tBtn.className = 'btn btn-primary btn-sm';
     }
   }
