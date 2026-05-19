@@ -1893,13 +1893,14 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
      SEARCH INPUT
   ══════════════════════════════════════════════ */
   .search-input-wrap { position: relative; display: inline-flex; align-items: center; }
-  .search-input-wrap::before { content: '🔍'; position: absolute; right: 9px; font-size: 12px; pointer-events: none; }
+  .search-input-wrap::before { content: '🔍'; position: absolute; inset-inline-end: 9px; font-size: 12px; pointer-events: none; }
   .search-input {
     background: var(--bg);
     border: 1px solid var(--border2);
     border-radius: var(--radius);
     color: var(--text);
-    padding: 7px 30px 7px 10px;
+    padding: 7px 10px;
+    padding-inline-end: 30px;
     font-size: 12px;
     width: 180px;
     outline: none;
@@ -2330,7 +2331,7 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
     width: 220px;
     flex-shrink: 0;
     background: var(--sidebar-bg);
-    border-left: 1px solid var(--sidebar-border);
+    border-inline-end: 1px solid var(--sidebar-border);
     display: flex;
     flex-direction: column;
     overflow-y: auto;
@@ -2601,7 +2602,7 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
 
   /* ── Sidebar ── */
   .sidebar {
-    border-left: 1px solid rgba(148,163,184,0.12) !important;
+    border-inline-end: 1px solid rgba(148,163,184,0.12) !important;
     width: 224px !important;
   }
   .sidebar-brand {
@@ -2992,7 +2993,7 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
   /* Sidebar — light mode */
   html[data-theme="light"] .sidebar {
     background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%) !important;
-    border-left: 1px solid #dde3ed !important;
+    border-inline-end: 1px solid #dde3ed !important;
   }
   html[data-theme="light"] .sidebar-brand {
     border-bottom-color: #e2e8f0 !important;
@@ -3890,7 +3891,7 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
 
   /* ── Sidebar: Deep premium ── */
   .sidebar {
-    border-left: 1px solid rgba(148,163,184,0.12) !important;
+    border-inline-end: 1px solid rgba(148,163,184,0.12) !important;
     width: 228px;
   }
   .sidebar-brand {
@@ -4511,7 +4512,7 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
   }
   html[data-theme="light"] .sidebar {
     background: var(--sidebar-bg) !important;
-    border-left-color: var(--sidebar-border) !important;
+    border-inline-end-color: var(--sidebar-border) !important;
   }
   html[data-theme="light"] .sidebar-brand-name {
     color: #4f46e5 !important;
@@ -12534,7 +12535,7 @@ function _buildLightCSS() {
     .inactivity-badge { background:#f1f5f9 !important; border-color:#cbd5e1 !important; color:var(--text3) !important; }
 
     /* Sidebar — high specificity to override base dark rule */
-    html[data-theme="light"] .sidebar { background:linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%) !important; border-left:1px solid #e2e8f0 !important; }
+    html[data-theme="light"] .sidebar { background:linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%) !important; border-inline-end:1px solid #e2e8f0 !important; }
     html[data-theme="light"] #main-sidebar > * { background:transparent !important; }
     html[data-theme="light"] #main-sidebar .tab-btn { background:transparent !important; color:#475569 !important; }
     html[data-theme="light"] #main-sidebar .tab-btn:hover { background:rgba(14,165,233,0.08) !important; color:#0284c7 !important; }
