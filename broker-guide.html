@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מדריך חיבור ברוקר — Trading Journal</title>
+<meta name="description" content="מדריך שלב-אחר-שלב לחיבור Interactive Brokers ו-Bybit ליומן המסחר.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0a;--card:#111;--border:rgba(255,255,255,0.07);
+  --text:#f1f5f9;--text2:#a8b8cc;--text3:#6b7f96;
+  --accent:#818cf8;--green:#2dd4a0;--yellow:#fbbf24;--red:#ff6b8a;
+  --blue:#60a5fa;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;line-height:1.6;min-height:100vh}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-logo-icon{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center}
+.nav-logo-text{font-size:15px;font-weight:700;color:var(--text)}
+.nav-back{font-size:13px;color:var(--text2);text-decoration:none;display:flex;align-items:center;gap:5px;transition:color .2s}
+.nav-back:hover{color:var(--text)}
+
+/* LAYOUT */
+.container{max-width:780px;margin:0 auto;padding:48px 24px 80px}
+
+/* HERO */
+.guide-hero{margin-bottom:48px}
+.guide-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:rgba(129,140,248,0.1);border:1px solid rgba(129,140,248,0.25);border-radius:100px;font-size:11px;font-weight:600;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px}
+.guide-title{font-size:clamp(28px,4vw,42px);font-weight:800;letter-spacing:-1px;line-height:1.1;margin-bottom:12px}
+.guide-sub{font-size:16px;color:var(--text2);line-height:1.75;max-width:560px}
+
+/* TOC */
+.toc{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:40px}
+.toc-title{font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.toc-list{list-style:none;display:flex;flex-direction:column;gap:6px}
+.toc-list a{font-size:14px;color:var(--text2);text-decoration:none;display:flex;align-items:center;gap:8px;transition:color .2s}
+.toc-list a:hover{color:var(--accent)}
+.toc-num{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);min-width:20px}
+
+/* SECTIONS */
+.guide-section{margin-bottom:56px}
+.section-header{display:flex;align-items:center;gap:14px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.section-num{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;color:#fff;flex-shrink:0}
+.section-title{font-size:22px;font-weight:700;letter-spacing:-0.4px}
+.section-broker-badge{font-size:11px;font-weight:600;padding:2px 10px;border-radius:20px;margin-right:8px}
+.badge-ibkr{background:rgba(96,165,250,0.12);color:#60a5fa;border:1px solid rgba(96,165,250,0.2)}
+.badge-bybit{background:rgba(251,191,36,0.1);color:#fbbf24;border:1px solid rgba(251,191,36,0.2)}
+
+/* STEPS */
+.steps{display:flex;flex-direction:column;gap:0}
+.step{display:flex;gap:16px;padding-bottom:28px;position:relative}
+.step:not(:last-child)::before{content:'';position:absolute;right:15px;top:36px;bottom:0;width:2px;background:var(--border)}
+.step-dot{width:32px;height:32px;border-radius:50%;background:var(--card);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);flex-shrink:0;z-index:1}
+.step-body{flex:1;padding-top:4px}
+.step-title{font-size:15px;font-weight:700;margin-bottom:6px}
+.step-desc{font-size:14px;color:var(--text2);line-height:1.7}
+.step-desc code{font-family:'IBM Plex Mono',monospace;font-size:13px;background:rgba(255,255,255,0.07);padding:1px 6px;border-radius:4px;color:var(--accent)}
+
+/* CALLOUTS */
+.callout{border-radius:10px;padding:14px 16px;margin:14px 0;display:flex;gap:12px;align-items:flex-start;font-size:14px;line-height:1.65}
+.callout-tip{background:rgba(45,212,160,0.07);border:1px solid rgba(45,212,160,0.18)}
+.callout-warn{background:rgba(251,191,36,0.07);border:1px solid rgba(251,191,36,0.18)}
+.callout-info{background:rgba(129,140,248,0.07);border:1px solid rgba(129,140,248,0.18)}
+.callout-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.callout-text{color:var(--text2)}
+.callout-text strong{color:var(--text)}
+
+/* FIELD DISPLAY */
+.field-row{display:flex;flex-direction:column;gap:6px;margin:12px 0}
+.field-label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px}
+.field-mock{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--text2)}
+
+/* SCREENSHOT PLACEHOLDER */
+.screenshot{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:32px;text-align:center;margin:16px 0;color:var(--text3);font-size:13px}
+
+/* TROUBLESHOOT */
+.trouble-list{display:flex;flex-direction:column;gap:10px}
+.trouble-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px}
+.trouble-q{font-size:14px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.trouble-a{font-size:13px;color:var(--text2);line-height:1.65}
+.trouble-a code{font-family:'IBM Plex Mono',monospace;font-size:12px;background:rgba(255,255,255,0.07);padding:1px 6px;border-radius:4px;color:var(--accent)}
+
+/* CTA */
+.guide-cta{background:linear-gradient(135deg,rgba(129,140,248,0.08),rgba(99,102,241,0.05));border:1px solid rgba(129,140,248,0.2);border-radius:16px;padding:32px;text-align:center;margin-top:48px}
+.cta-title{font-size:22px;font-weight:800;margin-bottom:8px;letter-spacing:-0.4px}
+.cta-sub{font-size:15px;color:var(--text2);margin-bottom:24px}
+.btn-cta{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;background:linear-gradient(135deg,#818cf8,#6366f1);color:#fff;font-size:15px;font-weight:600;border-radius:10px;text-decoration:none;border:none;cursor:pointer;font-family:inherit;transition:opacity .2s,transform .15s}
+.btn-cta:hover{opacity:.88;transform:translateY(-1px)}
+
+@media(max-width:600px){
+  .container{padding:32px 16px 60px}
+  .section-header{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-icon">
+      <svg width="18" height="18" viewBox="0 0 200 200" aria-hidden="true">
+        <line x1="44" y1="60" x2="156" y2="60" stroke="rgba(255,255,255,0.3)" stroke-width="6"/>
+        <line x1="44" y1="100" x2="156" y2="100" stroke="rgba(255,255,255,0.3)" stroke-width="6"/>
+        <rect x="52" y="115" width="18" height="25" rx="4" fill="#ff6b8a"/>
+        <rect x="83" y="95" width="18" height="45" rx="4" fill="#818cf8"/>
+        <rect x="114" y="72" width="18" height="68" rx="4" fill="#818cf8"/>
+        <rect x="145" y="58" width="18" height="82" rx="4" fill="#2dd4a0"/>
+        <polyline points="61,128 92,113 123,81 154,67" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="6" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <span class="nav-logo-text">Trading Journal</span>
+  </a>
+  <a href="dashboard.html" class="nav-back">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    חזרה לאפליקציה
+  </a>
+</nav>
+
+<div class="container">
+
+  <!-- HERO -->
+  <div class="guide-hero">
+    <div class="guide-badge">מדריך חיבור ברוקר</div>
+    <h1 class="guide-title">חבר את הברוקר שלך<br>וייבא עסקאות אוטומטית</h1>
+    <p class="guide-sub">מדריך שלב-אחר-שלב לחיבור Interactive Brokers ו-Bybit — בלי הזנה ידנית, הכל מסתנכרן אוטומטית.</p>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="toc-title">תוכן עניינים</div>
+    <ul class="toc-list">
+      <li><a href="#ibkr"><span class="toc-num">01</span>Interactive Brokers — Flex Query</a></li>
+      <li><a href="#bybit"><span class="toc-num">02</span>Bybit — API Key</a></li>
+      <li><a href="#sync"><span class="toc-num">03</span>סנכרון ובדיקה</a></li>
+      <li><a href="#trouble"><span class="toc-num">04</span>פתרון בעיות נפוצות</a></li>
+    </ul>
+  </div>
+
+  <!-- IBKR -->
+  <section class="guide-section" id="ibkr">
+    <div class="section-header">
+      <div class="section-num">01</div>
+      <div>
+        <span class="section-broker-badge badge-ibkr">Interactive Brokers</span>
+        <h2 class="section-title">הגדרת Flex Query</h2>
+      </div>
+    </div>
+
+    <div class="callout callout-info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-text"><strong>מה זה Flex Query?</strong> שירות של IBKR שמאפשר להוריד היסטוריית עסקאות בפורמט XML. אנחנו משתמשים בו כדי לייבא את העסקאות שלך אוטומטית.</div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-dot">1</div>
+        <div class="step-body">
+          <div class="step-title">כנס לחשבון IBKR</div>
+          <div class="step-desc">עבור ל-<code>client.ibkr.com</code> ובצע התחברות עם שם המשתמש והסיסמה שלך.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">2</div>
+        <div class="step-body">
+          <div class="step-title">כנס ל-Reports → Flex Queries</div>
+          <div class="step-desc">בתפריט העליון לחץ על <code>Reports</code> ← <code>Flex Queries</code>. זה בדרך כלל נמצא תחת לשונית "Performance & Reports".</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">3</div>
+        <div class="step-body">
+          <div class="step-title">צור Flex Query חדש לעסקאות</div>
+          <div class="step-desc">לחץ על <code>Create</code> ← <code>Trade Confirmation Flex Query</code>. תן לו שם כלשהו (למשל "Trading Journal").</div>
+          <div class="callout callout-tip" style="margin-top:10px">
+            <div class="callout-icon">✅</div>
+            <div class="callout-text"><strong>שדות חובה שצריך לסמן:</strong> Symbol, Buy/Sell, Quantity, Price, Commission, TradeDate, OrderType, AssetCategory, Open/CloseIndicator</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">4</div>
+        <div class="step-body">
+          <div class="step-title">הגדר טווח תאריכים</div>
+          <div class="step-desc">בחר <code>Date Range</code> → <code>Last 365 Days</code> (או מה שמתאים לך). פורמט: <code>XML</code>. לחץ <code>Save</code>.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">5</div>
+        <div class="step-body">
+          <div class="step-title">העתק את Query ID</div>
+          <div class="step-desc">לאחר השמירה, תראה את ה-Query ברשימה עם מספר ID. העתק אותו.</div>
+          <div class="field-row">
+            <div class="field-label">Query ID — דוגמה</div>
+            <div class="field-mock">1462900</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">6</div>
+        <div class="step-body">
+          <div class="step-title">קבל Flex Web Service Token</div>
+          <div class="step-desc">לך ל-<code>Manage Account</code> → <code>Settings</code> → <code>Flex Web Service</code>. הפעל את השירות ולחץ <code>Generate Token</code>. שמור את ה-Token — הוא מוצג פעם אחת בלבד.</div>
+          <div class="callout callout-warn" style="margin-top:10px">
+            <div class="callout-icon">⚠️</div>
+            <div class="callout-text"><strong>שמור את ה-Token!</strong> IBKR מציג אותו פעם אחת. אם שכחת, תצטרך לייצר חדש.</div>
+          </div>
+          <div class="field-row">
+            <div class="field-label">Token — נראה כך</div>
+            <div class="field-mock">1234567890abcdef1234567890abcdef</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">7</div>
+        <div class="step-body">
+          <div class="step-title">הזן ב-Trading Journal</div>
+          <div class="step-desc">חזור לאפליקציה → Settings → Interactive Brokers. הדבק את ה-Token ואת ה-Query ID ולחץ <code>Save</code>.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BYBIT -->
+  <section class="guide-section" id="bybit">
+    <div class="section-header">
+      <div class="section-num">02</div>
+      <div>
+        <span class="section-broker-badge badge-bybit">Bybit</span>
+        <h2 class="section-title">יצירת API Key</h2>
+      </div>
+    </div>
+
+    <div class="callout callout-info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-text"><strong>הרשאות נדרשות:</strong> צריך API Key עם הרשאת <strong>Read Only</strong> בלבד — אנחנו לא שולחים פקודות, רק קוראים היסטוריית עסקאות.</div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-dot">1</div>
+        <div class="step-body">
+          <div class="step-title">כנס לחשבון Bybit</div>
+          <div class="step-desc">עבור ל-<code>bybit.com</code> והתחבר לחשבון שלך.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">2</div>
+        <div class="step-body">
+          <div class="step-title">כנס ל-API Management</div>
+          <div class="step-desc">לחץ על תמונת הפרופיל → <code>My Profile</code> → <code>API</code>. לחלופין: Settings → API Management.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">3</div>
+        <div class="step-body">
+          <div class="step-title">צור API Key חדש</div>
+          <div class="step-desc">לחץ <code>Create New Key</code>. בחר <code>System-generated API Keys</code>.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">4</div>
+        <div class="step-body">
+          <div class="step-title">הגדר הרשאות Read Only</div>
+          <div class="step-desc">בשדה Permissions, סמן <strong>רק</strong>:
+            <ul style="margin-top:8px;padding-right:20px;color:var(--text2);font-size:14px;display:flex;flex-direction:column;gap:4px">
+              <li>Trade History — Read</li>
+              <li>Order — Read</li>
+              <li>Position — Read</li>
+            </ul>
+          </div>
+          <div class="callout callout-warn" style="margin-top:10px">
+            <div class="callout-icon">⚠️</div>
+            <div class="callout-text"><strong>אל תסמן Withdraw!</strong> לשם הקרא בלבד אין צורך בהרשאת משיכה.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">5</div>
+        <div class="step-body">
+          <div class="step-title">שמור API Key ו-Secret</div>
+          <div class="step-desc">לאחר הלחיצה על <code>Submit</code>, Bybit יציג את ה-API Key וה-Secret פעם אחת. שמור אותם.</div>
+          <div class="field-row">
+            <div class="field-label">API Key</div>
+            <div class="field-mock">abc123XYZ...</div>
+          </div>
+          <div class="field-row">
+            <div class="field-label">API Secret</div>
+            <div class="field-mock">••••••••••••••••</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">6</div>
+        <div class="step-body">
+          <div class="step-title">הזן ב-Trading Journal</div>
+          <div class="step-desc">חזור לאפליקציה → Settings → Bybit. הדבק את ה-API Key וה-Secret ולחץ <code>Save</code>.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SYNC -->
+  <section class="guide-section" id="sync">
+    <div class="section-header">
+      <div class="section-num">03</div>
+      <div>
+        <h2 class="section-title">סנכרון ובדיקה</h2>
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-dot">1</div>
+        <div class="step-body">
+          <div class="step-title">לחץ Sync</div>
+          <div class="step-desc">לאחר שמירת ה-Token/API Key, לחץ על כפתור <code>Sync</code>. הייבוא יכול לקחת 10–30 שניות.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-dot">2</div>
+        <div class="step-body">
+          <div class="step-title">בדוק את הלוג</div>
+          <div class="step-desc">תראה הודעות כמו "נמצאו 47 עסקאות" ו-"יובאו 23 עסקאות חדשות". אם יש שגיאה — ראה פתרון בעיות למטה.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-dot">3</div>
+        <div class="step-body">
+          <div class="step-title">בדוק בטבלת העסקאות</div>
+          <div class="step-desc">עבור ללשונית Stocks או Crypto ווידא שהעסקאות מופיעות עם הנתונים הנכונים.</div>
+          <div class="callout callout-tip" style="margin-top:10px">
+            <div class="callout-icon">💡</div>
+            <div class="callout-text">הסנכרון הוא <strong>חד-כיווני</strong> — רק קריאה מהברוקר. לא ניתן לבצע פקודות מסחר דרך האפליקציה.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TROUBLESHOOT -->
+  <section class="guide-section" id="trouble">
+    <div class="section-header">
+      <div class="section-num">04</div>
+      <div>
+        <h2 class="section-title">פתרון בעיות נפוצות</h2>
+      </div>
+    </div>
+
+    <div class="trouble-list">
+      <div class="trouble-item">
+        <div class="trouble-q">❌ "Token לא תקין" או "Unauthorized"</div>
+        <div class="trouble-a">בדוק שהפעלת את Flex Web Service ב-IBKR (Manage Account → Settings → Flex Web Service). ייצר Token חדש אם צריך.</div>
+      </div>
+      <div class="trouble-item">
+        <div class="trouble-q">❌ "Query ID לא נמצא"</div>
+        <div class="trouble-a">ודא שה-Query ID הוא מספרי בלבד (לדוגמה <code>1462900</code>) ושה-Query נשמר כ-<code>Trade Confirmation Flex Query</code>.</div>
+      </div>
+      <div class="trouble-item">
+        <div class="trouble-q">❌ "0 עסקאות נמצאו" למרות שיש עסקאות</div>
+        <div class="trouble-a">בדוק את טווח התאריכים שהגדרת ב-Flex Query. ב-IBKR, הגדר <code>Last 365 Days</code> או טווח מותאם שמכסה את תקופת המסחר שלך.</div>
+      </div>
+      <div class="trouble-item">
+        <div class="trouble-q">❌ עסקאות מופיעות ב-Stocks אבל ללא Stop Loss</div>
+        <div class="trouble-a">ה-Stop Loss לא מגיע מ-IBKR — צריך להזין ידנית לאחר הייבוא. ה-Flex Query לא מכיל פקודות עתידיות, רק ביצועים.</div>
+      </div>
+      <div class="trouble-item">
+        <div class="trouble-q">❌ Bybit — "Invalid API Key"</div>
+        <div class="trouble-a">ודא שה-API Key לא פג תוקף וש-IP שלך לא חסום. ב-Bybit ניתן לראות מצב ה-Key תחת My Profile → API.</div>
+      </div>
+      <div class="trouble-item">
+        <div class="trouble-q">❌ עסקאות כפולות לאחר Sync</div>
+        <div class="trouble-a">האפליקציה בודקת כפילויות לפי ID. אם קרה — עדכן את הדף ובצע Sync מחדש. אם הבעיה חוזרת, צור קשר.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <div class="guide-cta">
+    <div class="cta-title">מוכן? בוא נחבר את הברוקר</div>
+    <p class="cta-sub">כנס לאפליקציה → Settings → בחר את הברוקר שלך ועקוב אחרי המדריך.</p>
+    <a href="dashboard.html" class="btn-cta">
+      פתח את האפליקציה
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+  </div>
+
+</div>
+</body>
+</html>
