@@ -85,6 +85,16 @@ body::after {
 
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
 
+/* Skip link */
+.skip-link {
+  position: absolute; top: -100%; right: 0;
+  background: var(--accent); color: #fff;
+  padding: 10px 20px; border-radius: 0 0 8px 8px;
+  font-size: 14px; font-weight: 600; text-decoration: none;
+  z-index: 9999; transition: top .2s;
+}
+.skip-link:focus { top: 0; }
+
 /* ── NAVBAR ── */
 nav {
   position: fixed;
@@ -444,7 +454,6 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   text-align: right;
   transition: border-color .3s, transform .3s, box-shadow .3s;
   position: relative; overflow: hidden;
-  cursor: pointer;
 }
 
 .feat::before {
@@ -729,6 +738,8 @@ footer {
 </head>
 <body>
 
+<a href="#main-content" class="skip-link">דלג לתוכן הראשי</a>
+
 <!-- SVG ICONS -->
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
   <symbol id="i-bars"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="18" y="3" width="4" height="18"/><rect x="10" y="8" width="4" height="13"/><rect x="2" y="13" width="4" height="8"/></symbol>
@@ -743,6 +754,7 @@ footer {
 </svg>
 
 <!-- NAV -->
+<header>
 <nav role="navigation" aria-label="ניווט ראשי">
   <a href="#" class="nav-logo" aria-label="Trading Journal">
     <div class="nav-logo-icon" aria-hidden="true">
@@ -765,11 +777,16 @@ footer {
   </div>
 </nav>
 
+</nav>
+</header>
+
+<main id="main-content">
+
 <!-- HERO -->
-<section id="hero" aria-label="כותרת">
+<section id="hero" aria-labelledby="hero-heading">
   <div class="hero-wrap">
     <div>
-      <h1 class="hero-title">
+      <h1 class="hero-title" id="hero-heading">
         הפסק להזין ידנית.<br>
         תתחיל<br>
         <span class="grad">לנתח ולהשתפר</span>
@@ -902,10 +919,10 @@ footer {
 </div>
 
 <!-- FEATURES -->
-<section id="features">
+<section id="features" aria-labelledby="features-heading">
   <div class="centered reveal">
     <div class="section-pill">features</div>
-    <h2 class="section-title">כל מה שסוחר רציני צריך</h2>
+    <h2 class="section-title" id="features-heading">כל מה שסוחר רציני צריך</h2>
     <p class="section-sub">מעקב, ניתוח, נתוני שוק, וחיבור ישיר לברוקר — במקום אחד, בלי לשלם.</p>
   </div>
 
@@ -949,10 +966,10 @@ footer {
 </section>
 
 <!-- HOW -->
-<section id="how">
+<section id="how" aria-labelledby="how-heading">
   <div class="centered reveal">
     <div class="section-pill">flow</div>
-    <h2 class="section-title">שלושה צעדים להתחלה</h2>
+    <h2 class="section-title" id="how-heading">שלושה צעדים להתחלה</h2>
   </div>
   <div class="steps-row">
     <div class="step reveal">
@@ -974,10 +991,10 @@ footer {
 </section>
 
 <!-- PRICING -->
-<section id="pricing" class="centered">
+<section id="pricing" class="centered" aria-labelledby="pricing-heading">
   <div class="reveal">
     <div class="section-pill">pricing</div>
-    <h2 class="section-title">חינמי לחלוטין</h2>
+    <h2 class="section-title" id="pricing-heading">חינמי לחלוטין</h2>
     <p class="section-sub">גישה מלאה לכל הפיצ'רים — ללא תשלום, ללא הגבלה.</p>
   </div>
 
@@ -1002,46 +1019,46 @@ footer {
 </section>
 
 <!-- FAQ -->
-<section id="faq" class="centered">
+<section id="faq" class="centered" aria-labelledby="faq-heading">
   <div class="reveal">
     <div class="section-pill">faq</div>
-    <h2 class="section-title">שאלות נפוצות</h2>
+    <h2 class="section-title" id="faq-heading">שאלות נפוצות</h2>
   </div>
   <div class="faq-list" role="list">
     <div class="faq-item reveal" role="listitem">
-      <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+      <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a1">
         האם השירות באמת חינמי?
         <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
       </button>
-      <div class="faq-a">כן, הגישה מלאה וחינמית לחלוטין. לפני כל שינוי במדיניות יישלח עדכון מראש.</div>
+      <div class="faq-a" id="faq-a1" aria-hidden="true">כן, הגישה מלאה וחינמית לחלוטין. לפני כל שינוי במדיניות יישלח עדכון מראש.</div>
     </div>
     <div class="faq-item reveal" role="listitem">
-      <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+      <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a2">
         האם הנתונים שלי מאובטחים?
         <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
       </button>
-      <div class="faq-a">הנתונים מאוחסנים ב-Supabase עם Row-Level Security — רק אתה יכול לגשת לנתונים שלך. HTTPS מוצפן בכל מקום.</div>
+      <div class="faq-a" id="faq-a2" aria-hidden="true">הנתונים מאוחסנים ב-Supabase עם Row-Level Security — רק אתה יכול לגשת לנתונים שלך. HTTPS מוצפן בכל מקום.</div>
     </div>
     <div class="faq-item reveal" role="listitem">
-      <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+      <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a3">
         האם אפשר לייבא עסקאות אוטומטית?
         <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
       </button>
-      <div class="faq-a">כן, תומך ב-Interactive Brokers (דרך Flex Query) ו-Bybit (דרך API Key). הזנה ידנית גם נתמכת מלאה. <a href="broker-guide.html" style="color:inherit;text-decoration:underline;">ראה מדריך חיבור ←</a></div>
+      <div class="faq-a" id="faq-a3" aria-hidden="true">כן, תומך ב-Interactive Brokers (דרך Flex Query) ו-Bybit (דרך API Key). הזנה ידנית גם נתמכת מלאה. <a href="broker-guide.html" style="color:inherit;text-decoration:underline;">ראה מדריך חיבור ←</a></div>
     </div>
     <div class="faq-item reveal" role="listitem">
-      <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+      <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a4">
         האם עובד בנייד?
         <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
       </button>
-      <div class="faq-a">כן, האפליקציה רספונסיבית ועובדת בדפדפן בנייד. אפשר להתקין כ-PWA ישירות מהדפדפן.</div>
+      <div class="faq-a" id="faq-a4" aria-hidden="true">כן, האפליקציה רספונסיבית ועובדת בדפדפן בנייד. אפשר להתקין כ-PWA ישירות מהדפדפן.</div>
     </div>
     <div class="faq-item reveal" role="listitem">
-      <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+      <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a5">
         מה הוא מצב Minervini AI?
         <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
       </button>
-      <div class="faq-a">ניתוח AI מעמיק של עסקאות לפי שיטת מארק מינרביני — מזהה דפוסים, מנתח כניסות ויציאות, ומציע שיפורים ספציפיים.</div>
+      <div class="faq-a" id="faq-a5" aria-hidden="true">ניתוח AI מעמיק של עסקאות לפי שיטת מארק מינרביני — מזהה דפוסים, מנתח כניסות ויציאות, ומציע שיפורים ספציפיים.</div>
     </div>
   </div>
 </section>
@@ -1059,6 +1076,8 @@ footer {
     <p style="margin-top:16px;font-size:12px;color:var(--text3);">ללא כרטיס אשראי · הרשמה בפחות מדקה</p>
   </div>
 </section>
+
+</main>
 
 <!-- FOOTER -->
 <footer>
@@ -1078,8 +1097,13 @@ footer {
     document.querySelectorAll('.faq-item.open').forEach(el => {
       el.classList.remove('open');
       el.querySelector('.faq-q').setAttribute('aria-expanded', 'false');
+      el.querySelector('.faq-a').setAttribute('aria-hidden', 'true');
     });
-    if (!isOpen) { item.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); }
+    if (!isOpen) {
+      item.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
+      item.querySelector('.faq-a').setAttribute('aria-hidden', 'false');
+    }
   }
 
   // Scroll reveals
