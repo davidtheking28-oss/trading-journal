@@ -859,13 +859,7 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
   .nav-avatar img { width:100%; height:100%; object-fit:cover; display:none; }
   .nav-avatar svg { width:14px; height:14px; stroke:var(--accent); }
   .tab-btn.active .nav-avatar { border-color:var(--accent); box-shadow:0 0 0 2px rgba(129,140,248,0.2); }
-  .avatar-upload-wrap { display:flex; align-items:center; gap:14px; padding:16px 18px; }
-  .avatar-preview { width:64px; height:64px; border-radius:50%; background:rgba(129,140,248,0.1); border:2px solid var(--border); display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; cursor:pointer; transition:border-color 0.15s; }
-  .avatar-preview:hover { border-color:var(--accent); }
-  .avatar-preview img { width:100%; height:100%; object-fit:cover; display:none; }
-  .avatar-preview svg { width:28px; height:28px; stroke:var(--text3); }
-  .avatar-upload-info { display:flex; flex-direction:column; gap:6px; }
-  .avatar-upload-info p { font-size:11px; color:var(--text3); margin:0; }
+
   .expanded-row td            { animation: expand-row 0.22s var(--ease-out) both; }
   .tab-content.tab-entering   { animation: slide-up-fade 0.32s var(--ease-out) both; }
 
@@ -5540,17 +5534,6 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
         <div class="s-section-header">
           <div class="s-section-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
           <div><div class="s-section-title" data-i18n="set_grp_account">Account</div><div class="s-section-sub">Name, display name, email</div></div>
-        </div>
-        <input type="file" id="avatar-file-input" accept="image/*" style="display:none" onchange="avatarHandleFile(this)">
-        <div class="avatar-upload-wrap">
-          <div class="avatar-preview" onclick="document.getElementById('avatar-file-input').click()" title="Change photo">
-            <img id="avatar-preview-img" alt="avatar">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" id="avatar-preview-placeholder"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-          </div>
-          <div class="avatar-upload-info">
-            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('avatar-file-input').click()">Change Photo</button>
-            <p>JPG, PNG or GIF · max 2MB</p>
-          </div>
         </div>
         <div class="s-row" style="flex-direction:column;align-items:stretch;min-height:0;padding:16px;">
           <div class="s-profile-grid">
@@ -11855,30 +11838,6 @@ function _setAvatar(url) {
   if (hav) hav.style.borderColor = url ? 'rgba(129,140,248,0.5)' : 'rgba(129,140,248,0.25)';
 }
 
-function avatarHandleFile(input) {
-  const file = input.files[0];
-  if (!file) return;
-  if (file.size > 2 * 1024 * 1024) { toast('Image must be under 2MB', true); return; }
-  const reader = new FileReader();
-  reader.onload = e => {
-    const img = new Image();
-    img.onload = async () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = canvas.height = 128;
-      const ctx = canvas.getContext('2d');
-      const s = Math.min(img.width, img.height);
-      ctx.drawImage(img, (img.width-s)/2, (img.height-s)/2, s, s, 0, 0, 128, 128);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-      const { error } = await _sb.auth.updateUser({ data: { avatar: dataUrl } });
-      if (error) { toast('Failed to save photo', true); return; }
-      _setAvatar(dataUrl);
-      toast('Profile photo updated ✓');
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-  input.value = '';
-}
 
 function switchSettingsPanel(id) {
   document.querySelectorAll('.s-panel').forEach(p => p.classList.remove('active'));
