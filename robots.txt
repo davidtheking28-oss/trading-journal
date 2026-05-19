@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /dashboard.html
 
-Sitemap: https://davidtheking28-oss.github.io/trading-journal/sitemap.xml
+Sitemap: https://trading-journal-ashy-eta.vercel.app/sitemap.xml
