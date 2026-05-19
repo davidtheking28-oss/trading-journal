@@ -4697,6 +4697,7 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
   .cal-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px 12px; }
   .cal-nav-btn { background: none; border: none; color: var(--text3); width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 6px; transition: color 0.15s, background 0.15s; }
   .cal-nav-btn:hover { color: var(--text); background: rgba(255,255,255,0.07); }
+  html[dir="rtl"] .cal-nav-btn svg { transform: scaleX(-1); }
   .cal-title { display: flex; align-items: center; gap: 10px; }
   .cal-title-month { font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: -0.2px; }
   .cal-summary { font-size: 14px; font-weight: 700; }
@@ -14026,7 +14027,7 @@ async function invFetchPrices() {
       const r = await fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=quote&symbol=${encodeURIComponent(sym)}`,
         { headers: { 'Authorization': `Bearer ${token}` } });
       const data = await r.json();
-      const price = data.c;
+      const price = data.c || data.pc;
       if (!price) return;
       const inputs = row.querySelectorAll('input');
       const priceInput = inputs[4];
