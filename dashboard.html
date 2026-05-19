@@ -5657,22 +5657,29 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
         <div class="s-row">
           <div class="s-row-left">
             <div class="s-row-label" data-i18n="set_crypto">Crypto</div>
+            <div class="s-row-desc">CoinGecko · ללא מפתח, עובד אוטומטית</div>
           </div>
           <div class="s-row-ctrl" style="font-size:12px;">
             <div id="crypto-sym-status"><span class="sym-dot loading"></span></div>
           </div>
         </div>
-        <div id="finnhub-key-section" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border);">
-          <div style="font-size:11px;color:var(--text3);margin-top:12px;margin-bottom:6px;">
-            <span data-i18n="set_finnhub_key">Finnhub Key (Admin only)</span>
+        <div style="padding:0 16px 16px;border-top:1px solid var(--border);">
+          <div style="font-size:11px;color:var(--text3);margin-top:12px;margin-bottom:4px;display:flex;align-items:center;gap:6px;">
+            <span>Finnhub API Key</span>
+            <a href="https://finnhub.io/register" target="_blank" rel="noopener" style="color:var(--accent);font-size:11px;">← Get free key</a>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5;">
+            נדרש לנתוני מחיר מניות בזמן אמת. הרשמה חינמית ב-finnhub.io — הכנס את המפתח ולחץ Save.
           </div>
           <div style="display:flex;gap:8px;">
             <input id="finnhub-key-input" class="form-control" type="password" placeholder="Finnhub API Key" autocomplete="off" style="font-size:12px;padding:6px 10px;flex:1;">
             <button class="btn btn-secondary btn-sm" onclick="saveFinnhubKey()" data-i18n="m_save_short">Save</button>
             <span id="finnhub-key-status" style="font-size:11px;align-self:center;color:var(--text3);white-space:nowrap;"></span>
           </div>
+        </div>
+        <div id="finnhub-key-section" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border);">
           <div style="font-size:11px;color:var(--text3);margin-top:12px;margin-bottom:6px;">
-            <span data-i18n="set_av_key">Alpha Vantage Key</span> (<a href="https://www.alphavantage.co/support/#api-key" target="_blank" style="color:var(--accent);" data-i18n="set_get_free_key">Get free key</a>)
+            <span data-i18n="set_av_key">Alpha Vantage Key</span> (<a href="https://www.alphavantage.co/support/#api-key" target="_blank" rel="noopener" style="color:var(--accent);" data-i18n="set_get_free_key">Get free key</a>)
           </div>
           <div style="display:flex;gap:8px;">
             <input id="av-key-input" class="form-control" type="password" placeholder="Alpha Vantage API Key" autocomplete="off" style="font-size:12px;padding:6px 10px;flex:1;">
