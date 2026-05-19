@@ -6398,7 +6398,7 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
           <div class="form-group">
             <label class="form-label">מחיר נוכחי</label>
-            <input type="number" id="inv-pos-current-price" class="form-control" placeholder="0.00" min="0" step="any">
+            <input type="number" id="inv-pos-current-price" class="form-control" placeholder="נשלף אוטומטית" readonly tabindex="-1" style="cursor:default;opacity:0.7;" title="מחיר נשלף אוטומטית מהשוק">
           </div>
           <div class="form-group">
             <label class="form-label">תאריך הוספה</label>
@@ -13793,7 +13793,7 @@ function invRenderRows(holdings) {
       </td>
       <td><input type="number" value="${h.entryShares||''}" placeholder="0" min="0" step="any" ${ro} ${locked?'':'oninput="invRecalc();invAutoSave()"'}></td>
       <td><input type="number" value="${h.entryPrice||''}" placeholder="0.00" min="0" step="any" ${ro} ${locked?'':'oninput="invRecalc();invAutoSave()"'}></td>
-      <td><input type="number" value="${h.currentPrice||''}" placeholder="0.00" min="0" step="any" ${ro} ${locked?'':'oninput="invRecalc();invAutoSave()"'}></td>
+      <td><input type="number" value="${h.currentPrice||''}" placeholder="0.00" min="0" step="any" readonly tabindex="-1" style="cursor:default;opacity:0.7;" title="מחיר נשלף אוטומטית"></td>
       <td><span class="inv-avg-label" id="inv-avg-${i}">—</span></td>
       <td><span class="inv-value-label" id="inv-val-${i}">—</span></td>
       <td><span class="inv-pnl-label" id="inv-pnl-${i}">—</span></td>
