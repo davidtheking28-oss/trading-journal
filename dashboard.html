@@ -6887,8 +6887,9 @@ async function _onAuthSuccess(user) {
   const fhKey = document.getElementById('finnhub-key-section');
   if (aiKey) aiKey.style.display = isAdmin ? '' : 'none';
   if (fhKey) fhKey.style.display = isAdmin ? '' : 'none';
-  document.querySelectorAll('.ai-tab-btn, .tnav-btn').forEach(btn => {
-    if (btn.getAttribute('onclick')?.includes("'ai'")) btn.style.display = isAdmin ? '' : 'none';
+  document.querySelectorAll('.ai-tab-btn, .tnav-btn, .tab-btn').forEach(btn => {
+    const oc = btn.getAttribute('onclick') || '';
+    if (oc.includes("'ai'") || oc.includes("'investments'")) btn.style.display = isAdmin ? '' : 'none';
   });
   const syncBtn = document.getElementById('flex-sync-btn');
   if (syncBtn) syncBtn.style.display = isAdmin ? '' : 'none';
