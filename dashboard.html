@@ -9311,7 +9311,7 @@ async function loadCryptoFearGreed() {
   const el = document.getElementById('crypto-fear-greed-widget');
   if (!el) return;
   const R = 33, C = 40, FULL = 2 * Math.PI * R;
-  el.innerHTML = `<div class="fg-gauge-wrap"><svg width="80" height="80" viewBox="0 0 80 80"><circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/></svg><div class="fg-gauge-text"><span class="fg-score" style="color:var(--text3)">…</span></div></div><div class="fg-info"><div class="fg-label">Crypto Fear & Greed</div><div class="fg-rating" style="color:var(--text3)">Loading</div></div>`;
+  el.innerHTML = `<div class="fg-gauge-wrap"><svg width="80" height="80" viewBox="0 0 80 80"><circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/></svg><div class="fg-gauge-text"><span class="fg-score" style="color:var(--text2)">…</span></div></div><div class="fg-info"><div class="fg-label">Crypto Fear & Greed</div><div class="fg-rating" style="color:var(--text2);font-size:13px;">Loading</div></div>`;
   try {
     const jwt = await _getToken();
     const res = await fetch(`${SUPABASE_URL}/functions/v1/crypto-fear-greed`,
@@ -9344,7 +9344,7 @@ async function loadCryptoFearGreed() {
         <div class="fg-source">CoinMarketCap · ${now}</div>
       </div>`;
   } catch {
-    el.innerHTML = `<div class="fg-gauge-wrap"><svg width="80" height="80" viewBox="0 0 80 80"><circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/></svg><div class="fg-gauge-text"><span class="fg-score" style="color:var(--text3)">—</span></div></div><div class="fg-info"><div class="fg-label">Crypto Fear & Greed</div><div class="fg-rating" style="color:var(--text3)">Unavailable</div></div>`;
+    el.innerHTML = `<div class="fg-gauge-wrap"><svg width="80" height="80" viewBox="0 0 80 80"><circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/></svg><div class="fg-gauge-text"><span class="fg-score" style="color:var(--text2)">—</span></div></div><div class="fg-info"><div class="fg-label">Crypto Fear & Greed</div><div class="fg-rating" style="color:var(--text2);font-size:13px;">Unavailable</div></div>`;
   }
   clearTimeout(_cfgTimer);
   _cfgTimer = setTimeout(loadCryptoFearGreed, 24 * 60 * 60 * 1000);
