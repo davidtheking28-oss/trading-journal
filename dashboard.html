@@ -53,10 +53,10 @@
 <!-- Permissions Policy: חסימת גישה לחומרה ומיקום -->
 <meta http-equiv="Permissions-Policy"
   content="camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=(), serial=(), nfc=(), accelerometer=(), gyroscope=(), magnetometer=(), ambient-light-sensor=(), battery=()">
-<!-- Google Fonts — Plus Jakarta Sans + Inter -->
+<!-- Google Fonts — Heebo (Hebrew+Latin), Plus Jakarta Sans, Inter -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <!-- Supabase JS client — pinned to 2.105.3 with SRI -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.3/dist/umd/supabase.min.js"
         integrity="sha384-iWpUQPQzWsFiosLgsS8o+e6E8y3Gm+EW2m/vAAo7A2H3fuc4KOKEx+5CAord2H2z"
@@ -116,7 +116,7 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
     --t-slow: 400ms cubic-bezier(0.16,1,0.3,1);
   }
 
-  html, body { height: 100%; font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+  html, body { height: 100%; font-family: 'Heebo', 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
   body { background-attachment: fixed; }
   /* Ambient glow blobs (design skill: Modern Dark Cinema) */
   .ambient-blob { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; }
@@ -1939,7 +1939,7 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
 
   html, body {
     background: var(--bg);
-    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Heebo', 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
   }
   body {
     background-image:
@@ -2569,7 +2569,7 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
     --t-slow: 380ms cubic-bezier(0.16,1,0.3,1);
   }
 
-  html, body { font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif; }
+  html, body { font-family: 'Heebo', 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif; }
 
   body {
     background: #0b0b0e;
@@ -2953,7 +2953,7 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
     --shadow-lg:   0 8px 32px rgba(0,0,0,0.13);
   }
   html[data-theme="light"] body {
-    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Heebo', 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
   }
 
   /* Body */
@@ -3859,7 +3859,7 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
 
   /* ── Body: Rich ambient background ── */
   body {
-    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+    font-family: 'Heebo', 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
     background: var(--bg);
     background-image:
       radial-gradient(ellipse 140% 65% at 65% -10%, rgba(129,140,248,0.10) 0%, transparent 55%),
@@ -4225,7 +4225,7 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
     white-space: nowrap;
     background: transparent;
     cursor: pointer;
-    font-family: 'Inter', 'Plus Jakarta Sans', inherit;
+    font-family: 'Heebo', 'Plus Jakarta Sans', inherit;
     transition: color 0.18s, border-color 0.18s, background 0.18s;
     position: relative;
   }
@@ -5036,7 +5036,7 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
   tbody tr.data-row:hover td { background: rgba(129,140,248,0.06) !important; }
 
   /* Font consistency — override lone Inter blocks */
-  html, body { font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif !important; }
+  html, body { font-family: 'Heebo', 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif !important; }
 
   /* Force text contrast — override any cached/competing rules */
   html[data-theme="dark"] .kpi-label,
@@ -9560,7 +9560,7 @@ function getGridColor() { return document.documentElement.getAttribute('data-the
 function getTickColor() { return document.documentElement.getAttribute('data-theme')==='light' ? '#64748b' : '#4b6080'; }
 const GRID_COLOR  = 'rgba(148,163,184,0.09)';
 const TICK_COLOR  = '#8faac8';
-const CHART_FONT  = { family: "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif", size: 12, weight: '500' };
+const CHART_FONT  = { family: "'Heebo', 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif", size: 12, weight: '500' };
 
 function showChart(skelId, canvasId) {
   const skel = document.getElementById(skelId);
