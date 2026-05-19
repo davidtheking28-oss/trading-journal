@@ -1905,7 +1905,7 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
     outline: none;
     font-family: inherit;
     transition: border-color 0.2s, box-shadow 0.2s;
-    direction: rtl;
+    direction: inherit;
   }
   .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(129,140,248,0.12); }
   .search-input::placeholder { color: var(--text3); }
@@ -2320,7 +2320,7 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
     display: flex;
     flex: 1;
     min-height: 0;
-    direction: rtl;
+    direction: inherit;
   }
   /* Hide old horizontal nav */
   nav:not(.sidebar-nav):not(.top-nav) { display: none !important; }
@@ -2532,7 +2532,7 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
     flex: 1;
     overflow-y: auto;
     min-height: 0;
-    direction: rtl;
+    direction: inherit;
     max-width: none;
     padding: 24px 28px;
   }
@@ -4212,7 +4212,7 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
     height: 48px !important;
     overflow-x: auto !important;
     scrollbar-width: none !important;
-    direction: rtl !important;
+    direction: inherit !important;
   }
   .top-nav::-webkit-scrollbar { display: none !important; }
   .tnav-btn {
@@ -9166,6 +9166,8 @@ const LANG_STRINGS = {
 function setLang(lang) {
   _lang = lang;
   localStorage.setItem('tj_lang', lang);
+  document.documentElement.setAttribute('lang', lang);
+  document.documentElement.setAttribute('dir', lang === 'he' ? 'rtl' : 'ltr');
   const s = LANG_STRINGS[lang] || LANG_STRINGS.en;
 
   // Top nav
