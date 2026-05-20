@@ -9487,12 +9487,12 @@ function renderOverview() {
     <div class="kpi-card c-blue">
       <div class="kpi-label">${t('kpi_trades')}</div>
       <div class="kpi-value">${st.n}</div>
-      <div class="kpi-sub">${stTrades.length} L / ${crTrades.length} S</div>
+      <div class="kpi-sub"><span style="color:#22c55e;font-weight:600">${stTrades.length} L</span> / <span style="color:#ef4444;font-weight:600">${crTrades.length} S</span></div>
     </div>
     <div class="kpi-card ${avgR!==null&&avgR>=0?'c-green':'c-yellow'}">
       <div class="kpi-label">${t('kpi_rr')}</div>
       <div class="kpi-value ${avgR!==null?(avgR>=0?'green':'red'):''} sensitive">${avgR!==null?avgR.toFixed(2)+'R':'—'}</div>
-      <div class="kpi-sub">${withR.length ? withR.length+' '+t('kpi_with_stop') : t('kpi_add_stop')}</div>
+      <div class="kpi-sub">${withR.length ? withR.length+' '+t('kpi_with_stop') : ''}</div>
     </div>
     <div class="kpi-card c-yellow" id="kpi-live-card">
       <div class="kpi-label">${t('kpi_live')}</div>
