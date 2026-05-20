@@ -6139,7 +6139,11 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
           </div>
           <div class="inv-deposits-form">
             <input type="month" id="inv-dep-month">
-            <input type="number" id="inv-dep-amount" placeholder="סכום ($)" style="width:130px;" min="0" step="any">
+            <input type="number" id="inv-dep-amount" placeholder="Amount" style="width:130px;" min="0" step="any">
+            <select id="inv-dep-currency" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;color:var(--text);cursor:pointer;">
+              <option value="$">$ USD</option>
+              <option value="₪">₪ ILS</option>
+            </select>
             <button class="inv-deposits-add-btn" onclick="invAddDeposit()" data-i18n="inv_add_deposit">+ Add Deposit</button>
           </div>
           <div class="inv-deposits-stats">
@@ -14260,18 +14264,20 @@ function invUpdateDonut(byCat, portfolioTotal, cash = 0) {
 }
 
 function invAddDeposit() {
-  const month  = document.getElementById('inv-dep-month')?.value;
-  const amount = +(document.getElementById('inv-dep-amount')?.value) || 0;
-  if (!month || !amount) { toast('הכנס חודש וסכום', 'error'); return; }
+  const month    = document.getElementById('inv-dep-month')?.value;
+  const amount   = +(document.getElementById('inv-dep-amount')?.value) || 0;
+  const currency = document.getElementById('inv-dep-currency')?.value || '$';
+  if (!month || !amount) { toast('Enter month and amount', 'error'); return; }
   const data = invLoad();
   if (!data.deposits) data.deposits = [];
-  data.deposits.push({ month, amount });
+  data.deposits.push({ month, amount, currency });
   data.deposits.sort((a, b) => b.month.localeCompare(a.month));
   const totalEl = document.getElementById('inv-portfolio-total');
   const newTotal = (+(totalEl?.value) || 0) + amount;
   if (totalEl) totalEl.value = newTotal;
   data.portfolioTotal = String(newTotal);
   invSaveData(data);
+  _saveUserSettings({ portfolio_total: newTotal });
   invRenderDeposits(data.deposits);
   invRecalc();
   document.getElementById('inv-dep-amount').value = '';
@@ -14315,7 +14321,8 @@ function invRenderDeposits(deposits = [], totalCurrentValue = 0) {
   let cumul = totalDeposited;
   listEl.innerHTML = `<table class="inv-dep-table"><thead><tr><th>${t('inv_dep_month')}</th><th>${t('inv_dep_amount')}</th><th>${t('inv_dep_cumulative')}</th><th></th></tr></thead><tbody>${
     deposits.map((d, i) => {
-      const row = `<tr><td>${heMonth(d.month)}</td><td>${cur}${(+d.amount).toLocaleString('en-US',{maximumFractionDigits:0})}</td><td>${cur}${cumul.toLocaleString('en-US',{maximumFractionDigits:0})}</td><td><button class="inv-dep-del" onclick="invDeleteDeposit(${i})">×</button></td></tr>`;
+      const dCur = d.currency || cur;
+      const row = `<tr><td>${heMonth(d.month)}</td><td>${dCur}${(+d.amount).toLocaleString('en-US',{maximumFractionDigits:0})}</td><td>${cur}${cumul.toLocaleString('en-US',{maximumFractionDigits:0})}</td><td><button class="inv-dep-del" onclick="invDeleteDeposit(${i})">×</button></td></tr>`;
       cumul -= +d.amount;
       return row;
     }).join('')
