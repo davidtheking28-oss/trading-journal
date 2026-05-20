@@ -8561,25 +8561,25 @@ async function loadFromSEC() {
     }
   } catch(e) {}
 
-  // 2. Always fetch fresh (SEC updates ~weekly but we check every session)
+  // 2. Always fetch fresh via Edge Function (avoids browser CORS on SEC.gov)
   updateStockStatus('loading', cachedCount, cachedTs);
   try {
     const controller = new AbortController();
     const tid = setTimeout(() => controller.abort(), 20000);
-    const res = await fetch('https://www.sec.gov/files/company_tickers.json', { signal: controller.signal });
+    const token = await _getToken();
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/edgar?tickers=1`,
+      { signal: controller.signal, headers: { 'Authorization': `Bearer ${token}` } });
     clearTimeout(tid);
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
-    const symbols = Object.values(data)
-      .map(c => (c.ticker || '').toUpperCase().trim())
-      .filter(s => s && /^[A-Z]{1,5}$/.test(s));
-    const unique = [...new Set(symbols)];
+    const unique = await res.json();
+    if (!Array.isArray(unique)) throw new Error('Bad response');
     unique.forEach(s => STOCK_SYMBOLS.add(s));
     try { localStorage.setItem(SEC_CACHE_KEY, JSON.stringify({ ts: Date.now(), symbols: unique })); } catch(e) { console.warn('[SEC] cache save failed:', e); }
     updateStockStatus('live', unique.length, Date.now());
   } catch(e) {
     console.warn('[SEC] failed:', e.message);
-    updateStockStatus('error', 0, 0, 'SEC');
+    if (cachedCount) updateStockStatus('cache', cachedCount, cachedTs);
+    else updateStockStatus('error', 0, 0, 'SEC');
   }
 }
 

@@ -25,6 +25,18 @@ serve(async (req: Request) => {
   if (error || !user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: JSON_HDRS });
 
   const url    = new URL(req.url);
+
+  // Ticker-list endpoint: ?tickers=1 — returns flat array of all SEC stock tickers
+  if (url.searchParams.get('tickers') === '1') {
+    const tickersRes = await fetch('https://www.sec.gov/files/company_tickers.json', { headers: UA });
+    if (!tickersRes.ok) return new Response(JSON.stringify({ error: 'SEC unavailable' }), { status: 502, headers: JSON_HDRS });
+    const tickersData = await tickersRes.json() as Record<string, { ticker: string }>;
+    const symbols = Object.values(tickersData)
+      .map(c => (c.ticker || '').toUpperCase().trim())
+      .filter(s => s && /^[A-Z]{1,5}$/.test(s));
+    return new Response(JSON.stringify([...new Set(symbols)]), { status: 200, headers: JSON_HDRS });
+  }
+
   const symbol = (url.searchParams.get('symbol') ?? '').toUpperCase().trim();
   if (!symbol || !/^[A-Z]{1,10}$/.test(symbol)) {
     return new Response(JSON.stringify({ error: 'Invalid symbol' }), { status: 400, headers: JSON_HDRS });
