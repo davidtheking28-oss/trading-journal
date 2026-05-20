@@ -5300,23 +5300,22 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
       <!-- KPI row — 5 cards -->
       <div class="kpi-grid" id="kpi-grid" style="margin-bottom:20px;"></div>
 
-      <!-- Main: P&L Chart (right) + Calendar (left) -->
-      <div class="ov-main-grid">
-        <div class="chart-card" style="display:flex;flex-direction:column;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:6px;flex-wrap:wrap;">
-            <div class="chart-title" style="margin-bottom:0" data-i18n="chart_cum">Cumulative P&L</div>
-            <div style="display:flex;align-items:center;gap:5px;">
-              <div style="display:flex;background:rgba(255,255,255,0.05);border-radius:6px;overflow:hidden;border:1px solid var(--border);">
-                <button id="cum-mode-pct" onclick="setCumMode('pct')" style="padding:2px 8px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:var(--accent);color:#fff;transition:all 0.15s;">%</button>
-                <button id="cum-mode-usd" onclick="setCumMode('usd')" style="padding:2px 8px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all 0.15s;">$</button>
-              </div>
+      <!-- P&L Chart — full width -->
+      <div class="chart-card" style="display:flex;flex-direction:column;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:6px;flex-wrap:wrap;">
+          <div class="chart-title" style="margin-bottom:0" data-i18n="chart_cum">Cumulative P&L</div>
+          <div style="display:flex;align-items:center;gap:5px;">
+            <div style="display:flex;background:rgba(255,255,255,0.05);border-radius:6px;overflow:hidden;border:1px solid var(--border);">
+              <button id="cum-mode-pct" onclick="setCumMode('pct')" style="padding:2px 8px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:var(--accent);color:#fff;transition:all 0.15s;">%</button>
+              <button id="cum-mode-usd" onclick="setCumMode('usd')" style="padding:2px 8px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all 0.15s;">$</button>
             </div>
           </div>
-          <div class="chart-skeleton" id="skel-cum" style="height:180px;"></div>
-          <div style="min-height:200px;flex:1;position:relative;width:100%;"><canvas id="chart-cum" style="display:none"></canvas></div>
         </div>
-        <div id="ov-calendar" class="ov-cal-panel"></div>
+        <div class="chart-skeleton" id="skel-cum" style="height:180px;"></div>
+        <div style="min-height:200px;flex:1;position:relative;width:100%;"><canvas id="chart-cum" style="display:none"></canvas></div>
       </div>
+      <!-- Calendar — full width below chart -->
+      <div id="ov-calendar" class="ov-cal-panel"></div>
 
     </div>
 
