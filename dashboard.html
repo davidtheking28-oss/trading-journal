@@ -4700,12 +4700,12 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr) 110px; gap: 1px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius2); overflow: hidden; min-width: 620px; }
   .cal-day-hdr { background: #111111 !important; color: var(--text3); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; padding: 9px 8px; text-align: center; }
   .cal-day-hdr.hdr-week { font-size: 11px; letter-spacing: 0.4px; }
-  .cal-cell { background: #111111 !important; min-height: 96px; padding: 8px 9px; display: flex; flex-direction: column; gap: 4px; transition: background 0.15s; }
+  .cal-cell { background: #111111 !important; height: 96px; min-height: 96px; padding: 8px 9px; display: flex; flex-direction: column; gap: 4px; transition: background 0.15s; overflow: hidden; }
   .cal-cell.weekend { background: #111111 !important; }
   .cal-cell.has-trades { background: #111111 !important; }
   .cal-cell.has-trades.weekend { background: #111111 !important; }
   .cal-cell.today { box-shadow: inset 0 0 0 1.5px var(--accent); }
-  .cal-empty { background: #111111 !important; min-height: 96px; }
+  .cal-empty { background: #111111 !important; height: 96px; min-height: 96px; }
   .cal-empty.weekend { background: #111111 !important; }
   .cal-date { font-size: 13px; font-weight: 700; color: rgba(148,163,184,0.5); line-height: 1; margin-bottom: 2px; }
   .cal-cell.has-trades .cal-date { color: var(--text2); }
@@ -4723,6 +4723,10 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
   .cal-week-pl { font-size: 12px; font-weight: 700; }
   .cal-week-count { font-size: 11px; color: var(--text3); font-weight: 500; margin-top: 1px; }
   .cal-week-empty { font-size: 18px; color: rgba(148,163,184,0.15); }
+  .cal-multi-badge { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:7px; padding:6px 4px; flex:1; cursor:pointer; transition:background 0.15s; }
+  .cal-multi-badge:hover { background:rgba(255,255,255,0.08); }
+  .cal-multi-count { font-size:18px; font-weight:800; color:var(--text); line-height:1; }
+  .cal-multi-pl { font-size:10px; font-weight:700; }
   .view-toggle-btn { padding: 5px 9px !important; display: inline-flex !important; align-items: center !important; gap: 5px !important; font-size: 11px !important; }
   .view-toggle-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
   html[data-theme="light"] .cal-nav-btn { background: #f1f5f9 !important; border-color: #e2e8f0 !important; color: #64748b !important; }
@@ -5300,22 +5304,23 @@ const SUPABASE_ANON = window.__SB_ANON || '__SUPABASE_ANON__';
       <!-- KPI row — 5 cards -->
       <div class="kpi-grid" id="kpi-grid" style="margin-bottom:20px;"></div>
 
-      <!-- P&L Chart — full width -->
-      <div class="chart-card" style="display:flex;flex-direction:column;margin-bottom:16px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:6px;flex-wrap:wrap;">
-          <div class="chart-title" style="margin-bottom:0" data-i18n="chart_cum">Cumulative P&L</div>
-          <div style="display:flex;align-items:center;gap:5px;">
-            <div style="display:flex;background:rgba(255,255,255,0.05);border-radius:6px;overflow:hidden;border:1px solid var(--border);">
-              <button id="cum-mode-pct" onclick="setCumMode('pct')" style="padding:2px 8px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:var(--accent);color:#fff;transition:all 0.15s;">%</button>
-              <button id="cum-mode-usd" onclick="setCumMode('usd')" style="padding:2px 8px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all 0.15s;">$</button>
+      <!-- Main: P&L Chart (right) + Calendar (left) -->
+      <div class="ov-main-grid">
+        <div class="chart-card" style="display:flex;flex-direction:column;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:6px;flex-wrap:wrap;">
+            <div class="chart-title" style="margin-bottom:0" data-i18n="chart_cum">Cumulative P&L</div>
+            <div style="display:flex;align-items:center;gap:5px;">
+              <div style="display:flex;background:rgba(255,255,255,0.05);border-radius:6px;overflow:hidden;border:1px solid var(--border);">
+                <button id="cum-mode-pct" onclick="setCumMode('pct')" style="padding:2px 8px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:var(--accent);color:#fff;transition:all 0.15s;">%</button>
+                <button id="cum-mode-usd" onclick="setCumMode('usd')" style="padding:2px 8px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all 0.15s;">$</button>
+              </div>
             </div>
           </div>
+          <div class="chart-skeleton" id="skel-cum" style="height:180px;"></div>
+          <div style="min-height:200px;flex:1;position:relative;width:100%;"><canvas id="chart-cum" style="display:none"></canvas></div>
         </div>
-        <div class="chart-skeleton" id="skel-cum" style="height:180px;"></div>
-        <div style="min-height:200px;flex:1;position:relative;width:100%;"><canvas id="chart-cum" style="display:none"></canvas></div>
+        <div id="ov-calendar" class="ov-cal-panel"></div>
       </div>
-      <!-- Calendar — full width below chart -->
-      <div id="ov-calendar" class="ov-cal-panel"></div>
 
     </div>
 
@@ -7532,17 +7537,17 @@ function renderCalendar(type) {
           isToday     ? 'today'      : ''
         ].filter(Boolean).join(' ');
         const dtStyle = dayTotal >= 0 ? 'color:var(--green)' : 'color:var(--red)';
-        html += `<div class="${cls}">
+        const plStr1 = dt.length === 1 ? ((calcTotal(dt[0]) >= 0 ? '+' : '') + fmtUSD(calcTotal(dt[0]))) : '';
+        html += `<div class="${cls}" ${dt.length > 1 ? `onclick="showCalDayModal('${ds}')" style="cursor:pointer"` : ''}>
           <div class="cal-date">${day}</div>
-          ${dt.map(t => {
-            const pl = calcTotal(t);
-            const plStr = (pl >= 0 ? '+' : '') + fmtUSD(pl);
-            return `<div class="cal-chip ${calcPL(t)>=0?'win':'loss'}" onclick="showCalTradeModal('${t.type}','${t.id}')">
-              <span class="cal-chip-sym">${t.symbol}</span>
-              <span class="cal-chip-pl sensitive">${plStr}</span>
-            </div>`;
-          }).join('')}
-          ${dt.length > 1 ? `<div class="cal-day-pl sensitive" style="${dtStyle}">${dt.length} ${t('trades')} · ${fmtUSD(dayTotal)}</div>` : ''}
+          ${dt.length === 1 ? `<div class="cal-chip ${calcPL(dt[0])>=0?'win':'loss'}" onclick="event.stopPropagation();showCalTradeModal('${dt[0].type}','${dt[0].id}')">
+              <span class="cal-chip-sym">${dt[0].symbol}</span>
+              <span class="cal-chip-pl sensitive">${plStr1}</span>
+            </div>` : ''}
+          ${dt.length > 1 ? `<div class="cal-multi-badge sensitive" style="${dtStyle}">
+              <span class="cal-multi-count">${dt.length}</span>
+              <span class="cal-multi-pl">${fmtUSD(dayTotal)}</span>
+            </div>` : ''}
         </div>`;
       }
     });
@@ -7850,6 +7855,32 @@ function toggleExpand(type, id) {
   const key = type+'-'+id;
   expanded[key] = !expanded[key];
   renderTable(type);
+}
+
+function showCalDayModal(ds) {
+  const all = [...db.stocks, ...db.crypto].filter(t => !t.deleted && t.entryDate?.slice(0,10) === ds);
+  if (!all.length) return;
+  const dayTotal = all.reduce((s,t) => s+calcTotal(t), 0);
+  const dtStyle = dayTotal >= 0 ? 'color:var(--green)' : 'color:var(--red)';
+  const [y,mo,d] = ds.split('-');
+  const title = `${+d}/${+mo}/${y}`;
+  document.getElementById('cal-trade-modal-title').textContent = `${title} · ${all.length} ${t('trades')} · <span style="${dtStyle}">${fmtUSD(dayTotal)}</span>`;
+  document.getElementById('cal-trade-modal-title').innerHTML = `${title} &nbsp;·&nbsp; ${all.length} ${t('trades')} &nbsp;·&nbsp; <span style="${dtStyle}">${fmtUSD(dayTotal)}</span>`;
+  document.getElementById('cal-trade-modal-body').innerHTML = all.map(tr => {
+    const pl = calcTotal(tr); const pct = calcPct(tr);
+    const plStyle = pl >= 0 ? 'color:var(--green)' : 'color:var(--red)';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;" onclick="closeCalTradeModal();setTimeout(()=>showCalTradeModal('${tr.type}','${tr.id}'),120)">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:14px;font-weight:700;color:var(--text)">${tr.symbol}</span>
+        <span style="font-size:11px;color:var(--text3)">${tr.ls === 'L' ? 'Long' : 'Short'}</span>
+      </div>
+      <div style="text-align:left;">
+        <div class="sensitive" style="font-size:14px;font-weight:700;${plStyle}">${(pl>=0?'+':'')+fmtUSD(pl)}</div>
+        ${pct !== null ? `<div class="sensitive" style="font-size:11px;color:var(--text3)">${(pct>=0?'+':'')+pct.toFixed(2)}%</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('cal-trade-modal').classList.add('open');
 }
 
 function showCalTradeModal(type, id) {
