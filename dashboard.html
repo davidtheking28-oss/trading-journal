@@ -9450,8 +9450,6 @@ function renderOverview() {
 
   trades = [...trades].sort((a,b) => new Date(a.entryDate)-new Date(b.entryDate));
   const st    = stats(trades);
-  const stSt  = stats(stTrades);
-  const crSt  = stats(crTrades);
   const adv = advancedStats(trades);
 
   // Trend
@@ -9489,7 +9487,6 @@ function renderOverview() {
     <div class="kpi-card c-blue">
       <div class="kpi-label">${t('kpi_trades')}</div>
       <div class="kpi-value">${st.n}</div>
-      <div class="kpi-sub"><span style="color:${stSt.total>=0?'#22c55e':'#ef4444'}">${stTrades.length} L</span> / <span style="color:${crSt.total>=0?'#22c55e':'#ef4444'}">${crTrades.length} S</span></div>
     </div>
     <div class="kpi-card ${avgR!==null&&avgR>=0?'c-green':'c-yellow'}">
       <div class="kpi-label">${t('kpi_rr')}</div>
