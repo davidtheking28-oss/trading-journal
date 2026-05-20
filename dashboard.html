@@ -5531,8 +5531,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
     <div id="tab-ibkr" class="tab-content">
     <div class="s-page-header">
-      <h2>Settings</h2>
-      <p>Manage your account, security, and data preferences.</p>
+      <h2 data-i18n="set_page_title">Settings</h2>
+      <p data-i18n="set_page_sub">Manage your account, security, and data preferences.</p>
     </div>
     <div class="s-grid">
     <div class="s-col" style="display:contents">
@@ -5541,9 +5541,26 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <div class="s-section">
         <div class="s-section-header">
           <div class="s-section-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
-          <div><div class="s-section-title" data-i18n="set_grp_account">Account</div><div class="s-section-sub">Name, display name, email</div></div>
+          <div><div class="s-section-title" data-i18n="set_grp_account">Account</div><div class="s-section-sub" data-i18n="set_grp_account_sub">Name, display name, email</div></div>
         </div>
         <div class="s-row" style="flex-direction:column;align-items:stretch;min-height:0;padding:16px;">
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+            <div style="position:relative;width:64px;height:64px;flex-shrink:0;">
+              <div style="width:64px;height:64px;border-radius:50%;background:rgba(129,140,248,0.12);border:2px solid rgba(129,140,248,0.25);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;" onclick="document.getElementById('avatar-file-input').click()" title="שנה תמונה">
+                <img id="avatar-preview-img" alt="avatar" style="width:100%;height:100%;object-fit:cover;display:none;">
+                <svg id="avatar-preview-placeholder" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+              </div>
+              <div style="position:absolute;bottom:0;left:0;width:20px;height:20px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:none;">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;" data-i18n="set_avatar_label">Profile Picture</div>
+              <div style="font-size:12px;color:var(--text3);margin-bottom:8px;" data-i18n="set_avatar_sub">JPG or PNG, max 2MB</div>
+              <button class="btn btn-export btn-sm" onclick="document.getElementById('avatar-file-input').click()" data-i18n="set_avatar_btn">Change Photo</button>
+            </div>
+            <input type="file" id="avatar-file-input" accept="image/*" style="display:none" onchange="avatarUpload(this)">
+          </div>
           <div class="s-profile-grid">
             <div class="profile-field">
               <label class="profile-label" data-i18n="settings_first">First Name</label>
@@ -5572,7 +5589,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <div class="s-section">
         <div class="s-section-header">
           <div class="s-section-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="9" cy="6" r="2" fill="currentColor" opacity="0.5"/><circle cx="15" cy="12" r="2" fill="currentColor" opacity="0.5"/><circle cx="9" cy="18" r="2" fill="currentColor" opacity="0.5"/></svg></div>
-          <div><div class="s-section-title" data-i18n="set_grp_prefs">Preferences</div><div class="s-section-sub">Language and display</div></div>
+          <div><div class="s-section-title" data-i18n="set_grp_prefs">Preferences</div><div class="s-section-sub" data-i18n="set_grp_prefs_sub">Language and display</div></div>
         </div>
         <div class="s-row">
           <div class="s-row-left">
@@ -5591,7 +5608,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <div class="s-section">
         <div class="s-section-header">
           <div class="s-section-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-          <div><div class="s-section-title" data-i18n="set_security">Security</div><div class="s-section-sub">PIN, 2FA, password</div></div>
+          <div><div class="s-section-title" data-i18n="set_security">Security</div><div class="s-section-sub" data-i18n="set_security_sub">PIN, 2FA, password</div></div>
         </div>
         <div class="s-row">
           <div class="s-row-left"><div class="s-row-label">PIN</div></div>
@@ -8959,6 +8976,18 @@ async function profileSave() {
   }
 }
 
+async function avatarUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { toast('תמונה גדולה מדי — מקסימום 2MB', 'error'); return; }
+  const dataURL = await compressImage(file);
+  if (!dataURL) { toast('שגיאה בטעינת התמונה', 'error'); return; }
+  const { error } = await _sb.auth.updateUser({ data: { avatar: dataURL } });
+  if (error) { toast('שגיאה בשמירה: ' + error.message, 'error'); return; }
+  _setAvatar(dataURL);
+  toast('תמונת פרופיל עודכנה ✓', 'success');
+}
+
 // ─────────────────────────────────────────────
 // LANGUAGE
 // ─────────────────────────────────────────────
@@ -9061,7 +9090,12 @@ const LANG_STRINGS = {
     set_finnhub_key:'Finnhub Key (Admin only)',
     set_av_key:'Alpha Vantage Key — financial data for all stocks including small caps',
     set_get_free_key:'Get free key',
-    set_grp_account:'Account', set_grp_data:'Data Sources & Security', set_grp_import:'Broker Connection',
+    set_page_title:'Settings', set_page_sub:'Manage your account, security, and data preferences.',
+    set_grp_account:'Account', set_grp_account_sub:'Name, display name, email',
+    set_grp_prefs:'Preferences', set_grp_prefs_sub:'Language and display',
+    set_security_sub:'PIN, 2FA, password',
+    set_avatar_label:'Profile Picture', set_avatar_sub:'JPG or PNG, max 2MB', set_avatar_btn:'Change Photo',
+    set_grp_data:'Data Sources & Security', set_grp_import:'Broker Connection',
     st_best:'Best Trade', st_worst:'Worst Trade', st_avg_trade:'Avg per Trade',
     st_avg_win:'Avg Win', st_avg_loss:'Avg Loss', st_expectancy:'Expectancy',
     st_wl_ratio:'W/L Ratio', st_max_win_streak:'Max Win Streak', st_max_loss_streak:'Max Loss Streak',
@@ -9178,7 +9212,12 @@ const LANG_STRINGS = {
     set_finnhub_key:'מפתח Finnhub (Admin בלבד)',
     set_av_key:'מפתח Alpha Vantage — נתונים פיננסיים לכל מניה כולל סמולקאפ',
     set_get_free_key:'קבל מפתח חינמי',
-    set_grp_account:'חשבון', set_grp_data:'מקורות נתונים ואבטחה', set_grp_import:'חיבור ברוקר',
+    set_page_title:'הגדרות', set_page_sub:'נהל את החשבון, האבטחה והעדפות הנתונים שלך.',
+    set_grp_account:'חשבון', set_grp_account_sub:'שם, שם תצוגה, אימייל',
+    set_grp_prefs:'העדפות', set_grp_prefs_sub:'שפה ותצוגה',
+    set_security_sub:'PIN, 2FA, סיסמה',
+    set_avatar_label:'תמונת פרופיל', set_avatar_sub:'JPG או PNG, עד 2MB', set_avatar_btn:'שנה תמונה',
+    set_grp_data:'מקורות נתונים ואבטחה', set_grp_import:'חיבור ברוקר',
     st_best:'עסקה הטובה ביותר', st_worst:'עסקה הגרועה ביותר', st_avg_trade:'ממוצע לעסקה',
     st_avg_win:'ממוצע רווח', st_avg_loss:'ממוצע הפסד', st_expectancy:'ציפיה (Expectancy)',
     st_wl_ratio:'יחס W/L', st_max_win_streak:'רצף ניצחון מקסימלי', st_max_loss_streak:'רצף הפסד מקסימלי',
