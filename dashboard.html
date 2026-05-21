@@ -7710,7 +7710,7 @@ function renderTable(type) {
 
     const trYear = tr.entryDate ? tr.entryDate.slice(0,4) : '—';
     const trNum = yearTradeNum[trYear]?.[tr.id] ?? '—';
-    h += `<tr class="data-row ${rowCls}" onclick="toggleExpand('${type}',${tr.id})">
+    h += `<tr class="data-row ${rowCls}" onclick="toggleTradeRow('${type}',${tr.id})">
       <td style="color:var(--text);font-size:12px;font-weight:600;">${trNum}</td>
       <td>${fmtDate(tr.entryDate)}</td>
       <td><span class="badge badge-${tr.ls}">${tr.ls}</span></td>
@@ -7872,7 +7872,7 @@ async function _fillMissingSectors(type) {
   }
 }
 
-function toggleExpand(type, id) {
+function toggleTradeRow(type, id) {
   const key = type+'-'+id;
   expanded[key] = !expanded[key];
   renderTable(type);
@@ -10356,7 +10356,6 @@ function pinUpdateDots(color = null) {
 
 function pinMsg(msg) { document.getElementById('pin-msg').textContent = msg; }
 function pinClear()     { pinBuffer = ''; pinUpdateDots(); pinMsg(''); }
-function pinBackspace() { if (pinBuffer.length > 0) { pinBuffer = pinBuffer.slice(0,-1); pinUpdateDots(); } }
 
 function pinPress(digit) {
   if (isLockedOut()) { showLockoutMsg(); return; }
