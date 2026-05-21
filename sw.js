@@ -2,7 +2,7 @@ const CACHE = 'tj-v19';
 const PRECACHE = [
   './dashboard.html',
   './manifest.json',
-  './icon.svg'
+  './assets/icon.svg'
 ];
 
 self.addEventListener('install', e => {
