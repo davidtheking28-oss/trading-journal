@@ -202,21 +202,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     box-shadow: none;
   }
   .month-filter label { color: var(--text3); font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; }
-  .month-filter select {
-    appearance: none; -webkit-appearance: none;
-    background: rgba(255,255,255,0.06) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%238faac8' stroke-width='1.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E") no-repeat left 10px center;
-    border: 1px solid var(--border2);
-    border-radius: var(--radius);
-    color: var(--text2);
-    padding: 5px 10px 5px 28px;
-    font-size: 12px; font-weight: 500;
-    cursor: pointer;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    font-family: inherit;
-    font-weight: 500;
-  }
-  .month-filter select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(129,140,248,0.12); }
   .filter-stats { margin-right: auto; color: var(--text3); font-size: 11px; font-weight: 500; }
 
   /* BUTTONS */
@@ -672,7 +657,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     border-radius: 4px;
   }
   /* ── Cursor pointer on all interactive elements ── */
-  button, [onclick], .tab-btn, .mini-tab, .er-pill,
+  button, [onclick], .tab-btn, .er-pill,
   .ps-stars, .sortable, .kpi-card, .data-row, .recycle-header,
   .pin-key, .pin-toggle, .ss-thumb-wrap { cursor: pointer; }
 
@@ -857,29 +842,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
   .expanded-row td            { animation: expand-row 0.22s var(--ease-out) both; }
   .tab-content.tab-entering   { animation: slide-up-fade 0.32s var(--ease-out) both; }
-
-  /* MINI TABS — pill toggle (used in other contexts) */
-  .mini-tabs {
-    display: inline-flex; gap: 2px; margin-bottom: 20px;
-    background: rgba(7,12,24,0.85);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 10px; padding: 3px; width: fit-content;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
-  }
-  .mini-tab {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 6px 14px; border-radius: 7px; border: none;
-    background: transparent; color: var(--text2);
-    cursor: pointer; font-size: 12px; font-weight: 600; letter-spacing: 0.01em;
-    transition: background 0.16s, color 0.16s, box-shadow 0.16s;
-    font-family: inherit; white-space: nowrap;
-  }
-  .mini-tab.active {
-    background: linear-gradient(135deg, #5b6ef5, #818cf8);
-    color: #fff;
-    box-shadow: 0 2px 10px rgba(99,102,241,0.4), 0 1px 2px rgba(0,0,0,0.3);
-  }
-  .mini-tab:hover:not(.active) { color: var(--text); background: rgba(129,140,248,0.1); }
 
   /* SCOPE DROPDOWN */
   .scope-dd { position: relative; display: inline-block; }
@@ -2100,18 +2062,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     letter-spacing: 0.8px;
     color: var(--text3);
   }
-  .month-filter select {
-    appearance: none; -webkit-appearance: none;
-    background: rgba(255,255,255,0.06) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%238faac8' stroke-width='1.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E") no-repeat left 10px center;
-    border: 1px solid var(--border2);
-    border-radius: var(--radius);
-    color: var(--text2);
-    padding: 5px 10px 5px 28px;
-    font-size: 12px;
-    font-weight: 500;
-  }
-  .month-filter select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(129,140,248,0.15); }
-
   /* ── KPI Cards ── */
   .kpi-grid {
     display: grid;
@@ -2918,22 +2868,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     border-bottom: 1px solid rgba(129,140,248,0.1) !important;
   }
 
-  /* ── Mini tabs ── */
-  .mini-tab {
-    background: rgba(255,255,255,0.03) !important;
-    border: 1px solid rgba(120,140,170,0.1) !important;
-    color: var(--text3) !important;
-    border-radius: 8px !important;
-    cursor: pointer !important;
-    transition: all 140ms !important;
-  }
-  .mini-tab:hover:not(.active) { background: rgba(255,255,255,0.06) !important; color: var(--text2) !important; }
-  .mini-tab.active {
-    background: rgba(129,140,248,0.16) !important;
-    border-color: rgba(129,140,248,0.32) !important;
-    color: #818cf8 !important;
-    font-weight: 700 !important;
-  }
 
   /* ── Buttons ── */
   .btn-primary {
@@ -3162,9 +3096,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   html[data-theme="light"] .search-input::placeholder { color: #94a3b8; }
 
   /* Mini tabs */
-  html[data-theme="light"] .mini-tab { background: #f1f5f9; border: 1px solid #e2e8f0; color: #64748b; }
-  html[data-theme="light"] .mini-tab:hover { background: #e2e8f0; color: #334155; }
-  html[data-theme="light"] .mini-tab.active { background: #4f46e5; color: #fff; border-color: #4f46e5; }
 
   /* Quick Add */
   html[data-theme="light"] .quick-add {
@@ -4185,22 +4116,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     border-bottom: 1px solid rgba(129,140,248,0.1);
   }
 
-  /* ── Mini tabs ── */
-  .mini-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
-  .mini-tab {
-    padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
-    border: 1px solid rgba(148,163,184,0.1);
-    color: var(--text2); background: rgba(255,255,255,0.025);
-    cursor: pointer; transition: all 150ms;
-  }
-  .mini-tab.active {
-    background: rgba(129,140,248,0.15);
-    border-color: rgba(129,140,248,0.3);
-    color: #5fb3ff;
-    font-weight: 700;
-  }
-  .mini-tab:hover:not(.active) { background: rgba(255,255,255,0.05); color: #8fa8c4; }
-
   /* ── Selects & inputs ── */
   select, select.form-control,
   input[type="text"], input[type="number"], input[type="email"], input[type="password"], input[type="date"],
@@ -4594,12 +4509,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   }
   html[data-theme="light"] .ov-section { color: #94a3b8; border-bottom-color: rgba(14,14,18,0.07); }
   html[data-theme="light"] .ov-section svg { color: #4f46e5; }
-  html[data-theme="light"] .mini-tab {
-    background: rgba(255,255,255,0.7); border-color: rgba(14,14,18,0.1); color: #64748b;
-  }
-  html[data-theme="light"] .mini-tab.active {
-    background: rgba(37,99,235,0.1); border-color: rgba(37,99,235,0.25); color: #4f46e5;
-  }
   html[data-theme="light"] .modal {
     background: rgba(255,255,255,0.97) !important;
     border-color: rgba(14,14,18,0.1) !important;
@@ -12921,8 +12830,6 @@ function _buildLightCSS() {
     .search-input { background:#ffffff !important; border-color:#cbd5e1 !important; color:#0f172a !important; }
 
     /* Buttons & Pills */
-    .mini-tab { background:#f1f5f9 !important; border:1px solid #e2e8f0 !important; color:#64748b !important; }
-    .mini-tab.active { background:#0ea5e9 !important; color:#fff !important; border-color:#0ea5e9 !important; }
     .er-pill { background:#f1f5f9 !important; border-color:#cbd5e1 !important; color:#475569 !important; }
     .er-pill.active-bo     { background:rgba(5,150,105,0.1) !important; border-color:#059669 !important; color:#059669 !important; }
     .er-pill.active-handle { background:rgba(234,88,12,0.1) !important; border-color:#ea580c !important; color:#ea580c !important; }
