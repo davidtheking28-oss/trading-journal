@@ -7443,9 +7443,21 @@ function _closeAllDDs() {
 function _openMenu(triggerBtn, menu) {
   _closeAllDDs();
   const rect = triggerBtn.getBoundingClientRect();
-  menu.style.top  = (rect.bottom + 5) + 'px';
-  menu.style.left = rect.left + 'px';
+  // Render off-screen first to measure dimensions
+  menu.style.left = '-9999px';
+  menu.style.top  = '-9999px';
   menu.classList.add('dd-open');
+  const mw = menu.offsetWidth;
+  const mh = menu.offsetHeight;
+  // Align right edge of menu to right edge of button (RTL-natural)
+  let left = rect.right - mw;
+  if (left < 8) left = 8;
+  if (left + mw > window.innerWidth - 8) left = window.innerWidth - mw - 8;
+  // Open downward, flip upward if not enough space
+  let top = rect.bottom + 5;
+  if (top + mh > window.innerHeight - 8) top = rect.top - mh - 5;
+  menu.style.left = left + 'px';
+  menu.style.top  = top  + 'px';
   triggerBtn.closest('.scope-dd').classList.add('open');
 }
 document.addEventListener('click', function(e) {
