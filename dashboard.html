@@ -9906,7 +9906,23 @@ function renderCumChart(trades) {
       ...chartDefaults('line'),
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: c => isPct ? ` ${(+c.raw).toFixed(2)}%` : ` $${(+c.raw).toFixed(2)}` } }
+        tooltip: {
+          backgroundColor: 'rgba(10,18,36,0.95)',
+          titleColor: '#94a3b8',
+          bodyColor: '#f1f5f9',
+          borderColor: 'rgba(255,255,255,0.12)',
+          borderWidth: 1,
+          padding: 10,
+          cornerRadius: 8,
+          callbacks: {
+            title: c => c[0]?.label || '',
+            label: c => {
+              const v = +c.raw;
+              const sign = v >= 0 ? '+' : '';
+              return isPct ? ` ${sign}${v.toFixed(2)}%` : ` ${sign}$${v.toFixed(2)}`;
+            }
+          }
+        }
       },
       scales: {
         x: { ticks: { color: TICK_COLOR, font: CHART_FONT, maxTicksLimit: 8 }, grid: { color: GRID_COLOR, drawBorder: false } },
