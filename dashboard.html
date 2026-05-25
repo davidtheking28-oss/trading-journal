@@ -9914,6 +9914,7 @@ function renderCumChart(trades) {
           borderWidth: 1,
           padding: 10,
           cornerRadius: 8,
+          displayColors: false,
           callbacks: {
             title: c => c[0]?.label || '',
             label: c => {
@@ -9924,6 +9925,7 @@ function renderCumChart(trades) {
           }
         }
       },
+      layout: { padding: { top: 8, right: 70, bottom: 0, left: 0 } },
       scales: {
         x: { ticks: { color: TICK_COLOR, font: CHART_FONT, maxTicksLimit: 8 }, grid: { color: GRID_COLOR, drawBorder: false } },
         y: { ticks: { color: TICK_COLOR, font: CHART_FONT, callback: v => isPct ? (+v).toFixed(1) + '%' : '$' + (+v).toFixed(2) }, grid: { color: GRID_COLOR, drawBorder: false } }
