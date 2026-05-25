@@ -4699,8 +4699,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .cal-chip:hover { opacity: 0.75; }
   .cal-chip.win { background: rgba(0,209,122,0.12); border: 1px solid rgba(0,209,122,0.2); }
   .cal-chip.loss { background: rgba(255,71,87,0.1); border: 1px solid rgba(255,71,87,0.18); }
-  .cal-chip-sym { color: var(--text); font-weight: 700; }
-  .cal-chip-pl { font-size: 11px; font-weight: 700; }
+  .cal-chip-sym { color: var(--text); font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cal-chip-pl { font-size: 11px; font-weight: 700; flex-shrink: 0; white-space: nowrap; }
   .cal-chip.win .cal-chip-pl { color: var(--green); }
   .cal-chip.loss .cal-chip-pl { color: var(--red); }
   .cal-day-pl { font-size: 10px; font-weight: 700; margin-top: auto; padding-top: 3px; border-top: 1px solid rgba(255,255,255,0.05); }
@@ -5283,6 +5283,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <select id="ov-month" onchange="renderOverview()"></select>
         <select id="ov-year" onchange="renderOverview()"></select>
         <button class="btn btn-secondary btn-sm" onclick="resetFilter('ov')" data-i18n="all_time">All Time</button>
+        <div id="ov-scope-tabs" style="display:inline-flex;gap:4px;margin-right:4px;">
+          <button class="mini-tab active" onclick="setOvScope('stock',this)">מניות</button>
+          <button class="mini-tab" onclick="setOvScope('crypto',this)">קריפטו</button>
+          <button class="mini-tab" onclick="setOvScope('all',this)">הכל</button>
+        </div>
         <div class="filter-stats" id="ov-filter-info"></div>
       </div>
 
@@ -5366,6 +5371,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <select id="stats-month" onchange="renderStatistics()"></select>
         <select id="stats-year" onchange="renderStatistics()"></select>
         <button class="btn btn-secondary btn-sm" onclick="resetFilter('stats')" data-i18n="all_time">All Time</button>
+        <div id="stats-scope-tabs" style="display:inline-flex;gap:4px;margin-right:4px;">
+          <button class="mini-tab active" onclick="setStatsScope('all',this)">הכל</button>
+          <button class="mini-tab" onclick="setStatsScope('stock',this)">מניות</button>
+          <button class="mini-tab" onclick="setStatsScope('crypto',this)">קריפטו</button>
+        </div>
         <div class="filter-stats" id="stats-filter-info"></div>
       </div>
       <div class="kpi-grid" id="stats-kpi-grid" style="margin-bottom:24px;"></div>
@@ -7329,11 +7339,19 @@ function switchTab(name, btn) {
   if (name==='investments') invInit();
 }
 
-function setScope(s, btn) {
+function setOvScope(s, btn) {
   ovScope = s;
-  document.querySelectorAll('.mini-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#ov-scope-tabs .mini-tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   renderOverview();
+}
+
+let statsScope = 'all';
+function setStatsScope(s, btn) {
+  statsScope = s;
+  document.querySelectorAll('#stats-scope-tabs .mini-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderStatistics();
 }
 
 // ─────────────────────────────────────────────
@@ -9538,12 +9556,18 @@ async function _updateLivePL() {
 
 function renderStatistics() {
   const { month, year } = getFilter('stats');
-  let trades = [...db.stocks, ...db.crypto].filter(t => !t.deleted && t.entryDate);
-  if (month) trades = trades.filter(t => +t.entryDate.slice(5, 7) === +month);
-  if (year)  trades = trades.filter(t => +t.entryDate.slice(0, 4) === +year);
+  let allTrades = [...db.stocks, ...db.crypto].filter(t => !t.deleted && t.entryDate);
+  if (month) allTrades = allTrades.filter(t => +t.entryDate.slice(5, 7) === +month);
+  if (year)  allTrades = allTrades.filter(t => +t.entryDate.slice(0, 4) === +year);
 
-  const stTrades = trades.filter(t => t.type === 'stock' || !t.type);
-  const crTrades = trades.filter(t => t.type === 'crypto');
+  const stTrades = allTrades.filter(t => t.type === 'stock' || !t.type);
+  const crTrades = allTrades.filter(t => t.type === 'crypto');
+
+  let trades;
+  if (statsScope === 'stock') trades = stTrades;
+  else if (statsScope === 'crypto') trades = crTrades;
+  else trades = allTrades;
+
   const st  = stats(trades);
   const adv = advancedStats(trades);
 
