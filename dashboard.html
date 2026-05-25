@@ -897,16 +897,47 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     border-color: rgba(99,102,241,0.45); color: #818cf8; background: rgba(99,102,241,0.1);
   }
   .scope-dd.open .scope-dd-btn svg { transform: rotate(180deg); }
-  .scope-dd-menu {
-    position: fixed; top: 0; left: 0;
+  .scope-dd-menu, .period-dd-menu {
+    display: none; position: fixed; top: 0; left: 0;
     background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 4px; min-width: 130px; z-index: 9999;
+    padding: 4px; min-width: 140px; z-index: 9999;
     box-shadow: 0 8px 28px rgba(0,0,0,0.6);
-    opacity: 0; pointer-events: none;
-    transform: translateY(-4px);
-    transition: opacity 0.15s, transform 0.15s;
   }
-  .scope-dd.open .scope-dd-menu { opacity: 1; pointer-events: auto; transform: translateY(0); }
+  .scope-dd-menu.dd-open, .period-dd-menu.dd-open { display: block; }
+
+  /* Period picker menu */
+  .period-dd-menu { min-width: 200px; padding: 6px; }
+  .pd-all-btn {
+    display: block; width: 100%; padding: 6px 10px; border: none; border-radius: 5px;
+    background: transparent; color: var(--text2); text-align: right;
+    cursor: pointer; font-size: 12px; font-weight: 600; font-family: inherit;
+    transition: background 0.12s;
+    margin-bottom: 4px;
+  }
+  .pd-all-btn:hover, .pd-all-btn.active { background: rgba(99,102,241,0.14); color: #818cf8; }
+  .pd-year-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 4px 4px 6px; border-top: 1px solid var(--border);
+  }
+  .pd-year-nav span { font-size: 13px; font-weight: 700; color: var(--text); }
+  .pd-year-nav button {
+    border: none; background: transparent; color: var(--text2);
+    cursor: pointer; font-size: 16px; font-weight: 700; padding: 2px 6px;
+    border-radius: 4px; transition: background 0.12s; font-family: inherit;
+  }
+  .pd-year-nav button:hover { background: rgba(255,255,255,0.08); }
+  .pd-year-nav button:disabled { opacity: 0.25; cursor: default; }
+  .pd-months {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px;
+  }
+  .pd-month-btn {
+    padding: 5px 2px; border: none; border-radius: 5px;
+    background: transparent; color: var(--text2); text-align: center;
+    cursor: pointer; font-size: 11px; font-weight: 600; font-family: inherit;
+    transition: background 0.12s, color 0.12s;
+  }
+  .pd-month-btn:hover { background: rgba(255,255,255,0.07); color: var(--text); }
+  .pd-month-btn.active { background: rgba(99,102,241,0.18); color: #818cf8; font-weight: 700; }
   .scope-dd-menu button {
     display: block; width: 100%; padding: 7px 12px; border: none; border-radius: 6px;
     background: transparent; color: var(--text2); text-align: right;
@@ -5319,10 +5350,15 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
       <!-- Period filter -->
       <div class="month-filter" style="margin-bottom:16px;">
-        <label data-i18n="filter_label">Filter:</label>
-        <select id="ov-month" onchange="renderOverview()"></select>
-        <select id="ov-year" onchange="renderOverview()"></select>
-        <button class="btn btn-secondary btn-sm" onclick="resetFilter('ov')" data-i18n="all_time">All Time</button>
+        <label data-i18n="filter_label">סינון:</label>
+        <select id="ov-month" onchange="renderOverview()" style="display:none"></select>
+        <select id="ov-year" onchange="renderOverview()" style="display:none"></select>
+        <div id="ov-period-dd" class="scope-dd">
+          <button class="scope-dd-btn" onclick="togglePeriodDD('ov')">
+            <span id="ov-period-lbl">—</span>
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
+          </button>
+        </div>
         <div id="ov-scope-dd" class="scope-dd">
           <button class="scope-dd-btn" onclick="toggleScopeDD('ov-scope-dd')">
             <span id="ov-scope-lbl">📈 מניות</span>
@@ -5413,10 +5449,15 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     <!-- ===== STATISTICS ===== -->
     <div id="tab-statistics" class="tab-content">
       <div class="month-filter" style="margin-bottom:16px;">
-        <label data-i18n="filter_label">Filter:</label>
-        <select id="stats-month" onchange="renderStatistics()"></select>
-        <select id="stats-year" onchange="renderStatistics()"></select>
-        <button class="btn btn-secondary btn-sm" onclick="resetFilter('stats')" data-i18n="all_time">All Time</button>
+        <label>סינון:</label>
+        <select id="stats-month" onchange="renderStatistics()" style="display:none"></select>
+        <select id="stats-year" onchange="renderStatistics()" style="display:none"></select>
+        <div id="stats-period-dd" class="scope-dd">
+          <button class="scope-dd-btn" onclick="togglePeriodDD('stats')">
+            <span id="stats-period-lbl">כל הזמן</span>
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
+          </button>
+        </div>
         <div id="stats-scope-dd" class="scope-dd">
           <button class="scope-dd-btn" onclick="toggleScopeDD('stats-scope-dd')">
             <span id="stats-scope-lbl">הכל</span>
@@ -7332,6 +7373,9 @@ function initFilters() {
     if (p === 'ov') {
       ms.value = new Date().getMonth() + 1;
       ys.value = new Date().getFullYear();
+      updatePeriodLabel('ov');
+    } else if (p === 'stats') {
+      updatePeriodLabel('stats');
     } else if ((p==='st' || p==='cr') && !ys.value) {
       if (yrs.includes(curYear)) ys.value = curYear;
     }
@@ -7391,33 +7435,49 @@ function switchTab(name, btn) {
   if (name==='investments') invInit();
 }
 
-function toggleScopeDD(id) {
-  const dd = document.getElementById(id);
-  const wasOpen = dd.classList.contains('open');
+// ─── Shared dropdown helpers ─────────────────────
+function _closeAllDDs() {
   document.querySelectorAll('.scope-dd.open').forEach(d => d.classList.remove('open'));
-  if (!wasOpen) {
-    const btn = dd.querySelector('.scope-dd-btn');
-    const menu = dd.querySelector('.scope-dd-menu');
-    const rect = btn.getBoundingClientRect();
-    menu.style.top  = (rect.bottom + 5) + 'px';
-    menu.style.left = rect.left + 'px';
-    dd.classList.add('open');
-  }
+  document.querySelectorAll('.dd-open').forEach(m => m.classList.remove('dd-open'));
+}
+function _openMenu(triggerBtn, menu) {
+  _closeAllDDs();
+  const rect = triggerBtn.getBoundingClientRect();
+  menu.style.top  = (rect.bottom + 5) + 'px';
+  menu.style.left = rect.left + 'px';
+  menu.classList.add('dd-open');
+  triggerBtn.closest('.scope-dd').classList.add('open');
 }
 document.addEventListener('click', function(e) {
-  if (!e.target.closest('.scope-dd')) {
-    document.querySelectorAll('.scope-dd.open').forEach(d => d.classList.remove('open'));
-  }
+  if (!e.target.closest('.scope-dd') && !e.target.closest('.scope-dd-menu') && !e.target.closest('.period-dd-menu'))
+    _closeAllDDs();
+});
+// Move menus to body so they escape any parent overflow/stacking context
+document.addEventListener('DOMContentLoaded', function() {
+  ['ov-scope-menu','stats-scope-menu'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) document.body.appendChild(el);
+  });
 });
 
+// ─── Scope dropdown ──────────────────────────────
 const _scopeLabels = { stock: '📈 מניות', crypto: '₿ קריפטו', all: 'הכל' };
+
+function toggleScopeDD(id) {
+  const dd = document.getElementById(id);
+  const btn = dd.querySelector('.scope-dd-btn');
+  const menuId = id.replace('-dd', '-menu');
+  const menu = document.getElementById(menuId);
+  if (menu.classList.contains('dd-open')) { _closeAllDDs(); return; }
+  _openMenu(btn, menu);
+}
 
 function setOvScope(s, btn, ddId) {
   ovScope = s;
   document.getElementById('ov-scope-lbl').textContent = _scopeLabels[s];
   document.querySelectorAll('#ov-scope-menu button').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
-  if (ddId) document.getElementById(ddId).classList.remove('open');
+  _closeAllDDs();
   renderOverview();
 }
 
@@ -7427,8 +7487,96 @@ function setStatsScope(s, btn, ddId) {
   document.getElementById('stats-scope-lbl').textContent = _scopeLabels[s];
   document.querySelectorAll('#stats-scope-menu button').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
-  if (ddId) document.getElementById(ddId).classList.remove('open');
+  _closeAllDDs();
   renderStatistics();
+}
+
+// ─── Period dropdown ──────────────────────────────
+const _pdYear = {};
+let _pdMenuEl = null;
+
+function _getPdMenu() {
+  if (!_pdMenuEl) {
+    _pdMenuEl = document.createElement('div');
+    _pdMenuEl.className = 'period-dd-menu';
+    _pdMenuEl.id = '_pd_menu';
+    document.body.appendChild(_pdMenuEl);
+  }
+  return _pdMenuEl;
+}
+
+function _buildPeriodHTML(prefix) {
+  const ms = document.getElementById(prefix+'-month');
+  const ys = document.getElementById(prefix+'-year');
+  const selMonth = ms ? +ms.value : 0;
+  const yr = _pdYear[prefix] || new Date().getFullYear();
+  const yOpts = ys ? [...ys.options].map(o=>+o.value).filter(v=>v) : [];
+  const minY = yOpts.length ? Math.min(...yOpts) : yr-3;
+  const maxY = yOpts.length ? Math.max(...yOpts) : yr;
+  const isAll = !ms?.value && !ys?.value;
+
+  const monthBtns = MONTHS_SHORT_HE.map((m,i) => {
+    const mn = i+1;
+    const active = mn===selMonth && yr===(+(ys?.value)||yr) ? ' active':'';
+    return `<button class="pd-month-btn${active}" onclick="_setPeriod('${prefix}',${mn},${yr})">${m}</button>`;
+  }).join('');
+
+  return `
+    <button class="pd-all-btn${isAll?' active':''}" onclick="_resetPeriod('${prefix}')">כל הזמן</button>
+    <div class="pd-year-nav">
+      <button onclick="_pdNav('${prefix}',1,${maxY})"${yr>=maxY?' disabled':''}>›</button>
+      <span>${yr}</span>
+      <button onclick="_pdNav('${prefix}',-1,${minY})"${yr<=minY?' disabled':''}>‹</button>
+    </div>
+    <div class="pd-months">${monthBtns}</div>`;
+}
+
+function togglePeriodDD(prefix) {
+  const dd = document.getElementById(prefix+'-period-dd');
+  const btn = dd.querySelector('.scope-dd-btn');
+  const menu = _getPdMenu();
+  menu._prefix = prefix;
+  if (menu.classList.contains('dd-open') && menu._prefix === prefix) { _closeAllDDs(); return; }
+  if (!_pdYear[prefix]) _pdYear[prefix] = +(document.getElementById(prefix+'-year')?.value) || new Date().getFullYear();
+  menu.innerHTML = _buildPeriodHTML(prefix);
+  _openMenu(btn, menu);
+}
+
+function _pdNav(prefix, dir, limit) {
+  const nyr = (_pdYear[prefix]||new Date().getFullYear()) + dir;
+  if ((dir<0&&nyr<limit)||(dir>0&&nyr>limit)) return;
+  _pdYear[prefix] = nyr;
+  _getPdMenu().innerHTML = _buildPeriodHTML(prefix);
+}
+
+function _setPeriod(prefix, month, year) {
+  const ms = document.getElementById(prefix+'-month');
+  const ys = document.getElementById(prefix+'-year');
+  if (ms) ms.value = month;
+  if (ys) ys.value = year;
+  _pdYear[prefix] = year;
+  document.getElementById(prefix+'-period-lbl').textContent = MONTHS_SHORT_HE[month-1]+' '+year;
+  _closeAllDDs();
+  if (prefix==='ov') renderOverview(); else renderStatistics();
+}
+
+function _resetPeriod(prefix) {
+  const ms = document.getElementById(prefix+'-month');
+  const ys = document.getElementById(prefix+'-year');
+  if (ms) ms.value = '';
+  if (ys) ys.value = '';
+  document.getElementById(prefix+'-period-lbl').textContent = 'כל הזמן';
+  _closeAllDDs();
+  if (prefix==='ov') renderOverview(); else renderStatistics();
+}
+
+function updatePeriodLabel(prefix) {
+  const ms = document.getElementById(prefix+'-month');
+  const ys = document.getElementById(prefix+'-year');
+  const lbl = document.getElementById(prefix+'-period-lbl');
+  if (!lbl) return;
+  const m = ms?.value, y = ys?.value;
+  lbl.textContent = (m||y) ? (m?MONTHS_SHORT_HE[+m-1]:'')+(y?' '+y:'') : 'כל הזמן';
 }
 
 // ─────────────────────────────────────────────
