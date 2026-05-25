@@ -857,7 +857,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .expanded-row td            { animation: expand-row 0.22s var(--ease-out) both; }
   .tab-content.tab-entering   { animation: slide-up-fade 0.32s var(--ease-out) both; }
 
-  /* MINI TABS — segmented control */
+  /* MINI TABS — pill toggle (used in other contexts) */
   .mini-tabs {
     display: inline-flex; gap: 2px; margin-bottom: 20px;
     background: rgba(7,12,24,0.85);
@@ -873,14 +873,29 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     transition: background 0.16s, color 0.16s, box-shadow 0.16s;
     font-family: inherit; white-space: nowrap;
   }
-  .mt-icon { font-size: 11px; line-height: 1; opacity: 0.75; }
-  .mini-tab.active .mt-icon { opacity: 1; }
   .mini-tab.active {
     background: linear-gradient(135deg, #5b6ef5, #818cf8);
     color: #fff;
     box-shadow: 0 2px 10px rgba(99,102,241,0.4), 0 1px 2px rgba(0,0,0,0.3);
   }
   .mini-tab:hover:not(.active) { color: var(--text); background: rgba(129,140,248,0.1); }
+
+  /* SCOPE TAB GROUP — filter chips, no container */
+  .scope-tab-group { display: inline-flex; gap: 3px; }
+  .scope-tab {
+    padding: 5px 11px; border: 1px solid var(--border2); border-radius: 6px;
+    background: transparent; color: var(--text3);
+    cursor: pointer; font-size: 12px; font-weight: 600;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    font-family: inherit; white-space: nowrap;
+  }
+  .scope-tab.active {
+    background: rgba(99,102,241,0.14);
+    border-color: rgba(99,102,241,0.4);
+    color: #818cf8;
+    font-weight: 700;
+  }
+  .scope-tab:hover:not(.active) { background: rgba(255,255,255,0.05); color: var(--text2); }
 
   /* DONUT STATS PANEL */
   .donut-stats {
@@ -5288,10 +5303,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <select id="ov-month" onchange="renderOverview()"></select>
         <select id="ov-year" onchange="renderOverview()"></select>
         <button class="btn btn-secondary btn-sm" onclick="resetFilter('ov')" data-i18n="all_time">All Time</button>
-        <div id="ov-scope-tabs" class="mini-tabs" style="margin-bottom:0;margin-right:2px;">
-          <button class="mini-tab active" onclick="setOvScope('stock',this)"><span class="mt-icon">📈</span>מניות</button>
-          <button class="mini-tab" onclick="setOvScope('crypto',this)"><span class="mt-icon">₿</span>קריפטו</button>
-          <button class="mini-tab" onclick="setOvScope('all',this)"><span class="mt-icon">◎</span>הכל</button>
+        <div id="ov-scope-tabs" class="scope-tab-group">
+          <button class="scope-tab active" onclick="setOvScope('stock',this)">📈 מניות</button>
+          <button class="scope-tab" onclick="setOvScope('crypto',this)">₿ קריפטו</button>
+          <button class="scope-tab" onclick="setOvScope('all',this)">הכל</button>
         </div>
         <div class="filter-stats" id="ov-filter-info"></div>
       </div>
@@ -5376,10 +5391,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <select id="stats-month" onchange="renderStatistics()"></select>
         <select id="stats-year" onchange="renderStatistics()"></select>
         <button class="btn btn-secondary btn-sm" onclick="resetFilter('stats')" data-i18n="all_time">All Time</button>
-        <div id="stats-scope-tabs" class="mini-tabs" style="margin-bottom:0;margin-right:2px;">
-          <button class="mini-tab active" onclick="setStatsScope('all',this)"><span class="mt-icon">◎</span>הכל</button>
-          <button class="mini-tab" onclick="setStatsScope('stock',this)"><span class="mt-icon">📈</span>מניות</button>
-          <button class="mini-tab" onclick="setStatsScope('crypto',this)"><span class="mt-icon">₿</span>קריפטו</button>
+        <div id="stats-scope-tabs" class="scope-tab-group">
+          <button class="scope-tab active" onclick="setStatsScope('all',this)">הכל</button>
+          <button class="scope-tab" onclick="setStatsScope('stock',this)">📈 מניות</button>
+          <button class="scope-tab" onclick="setStatsScope('crypto',this)">₿ קריפטו</button>
         </div>
         <div class="filter-stats" id="stats-filter-info"></div>
       </div>
@@ -7346,7 +7361,7 @@ function switchTab(name, btn) {
 
 function setOvScope(s, btn) {
   ovScope = s;
-  document.querySelectorAll('#ov-scope-tabs .mini-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#ov-scope-tabs .scope-tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   renderOverview();
 }
@@ -7354,7 +7369,7 @@ function setOvScope(s, btn) {
 let statsScope = 'all';
 function setStatsScope(s, btn) {
   statsScope = s;
-  document.querySelectorAll('#stats-scope-tabs .mini-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#stats-scope-tabs .scope-tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   renderStatistics();
 }
