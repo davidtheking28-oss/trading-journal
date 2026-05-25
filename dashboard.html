@@ -7468,7 +7468,7 @@ function renderCalendar(type) {
   }
   const { year, month } = calendarNav[navType];
   const arr = isAll
-    ? [...db.stocks, ...db.crypto].filter(t => !t.deleted)
+    ? (ovScope === 'stock' ? db.stocks : ovScope === 'crypto' ? db.crypto : [...db.stocks, ...db.crypto]).filter(t => !t.deleted)
     : (type === 'stock' ? db.stocks : db.crypto).filter(t => !t.deleted);
 
   // Group trades by day
