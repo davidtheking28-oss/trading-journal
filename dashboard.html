@@ -884,27 +884,30 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .scope-dd { position: relative; display: inline-block; }
   .scope-dd-btn {
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 5px 10px; border: 1px solid var(--border2); border-radius: 6px;
-    background: transparent; color: var(--text2);
-    cursor: pointer; font-size: 12px; font-weight: 600;
+    padding: 5px 10px; border: 1px solid var(--border2); border-radius: var(--radius);
+    background: rgba(255,255,255,0.06); color: var(--text2);
+    cursor: pointer; font-size: 12px; font-weight: 500;
     font-family: inherit; white-space: nowrap;
     transition: background 0.15s, border-color 0.15s, color 0.15s;
   }
-  .scope-dd-btn svg { opacity: 0.5; transition: transform 0.18s, opacity 0.15s; }
-  .scope-dd-btn:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+  .scope-dd-btn svg { opacity: 0.45; transition: transform 0.18s; flex-shrink: 0; }
+  .scope-dd-btn:hover { background: rgba(255,255,255,0.09); color: var(--text); }
   .scope-dd.open .scope-dd-btn {
     border-color: rgba(99,102,241,0.45); color: #818cf8; background: rgba(99,102,241,0.1);
   }
-  .scope-dd.open .scope-dd-btn svg { transform: rotate(180deg); opacity: 0.9; }
+  .scope-dd.open .scope-dd-btn svg { transform: rotate(180deg); }
   .scope-dd-menu {
-    display: none; position: absolute; top: calc(100% + 6px); right: 0;
-    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
-    padding: 4px; min-width: 130px; z-index: 300;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    position: absolute; top: calc(100% + 5px); left: 0;
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 4px; min-width: 130px; z-index: 500;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.45);
+    opacity: 0; pointer-events: none;
+    transform: translateY(-4px);
+    transition: opacity 0.15s, transform 0.15s;
   }
-  .scope-dd.open .scope-dd-menu { display: block; }
+  .scope-dd.open .scope-dd-menu { opacity: 1; pointer-events: auto; transform: translateY(0); }
   .scope-dd-menu button {
-    display: block; width: 100%; padding: 7px 12px; border: none; border-radius: 5px;
+    display: block; width: 100%; padding: 7px 12px; border: none; border-radius: 6px;
     background: transparent; color: var(--text2); text-align: right;
     cursor: pointer; font-size: 12px; font-weight: 600; font-family: inherit;
     transition: background 0.12s, color 0.12s;
