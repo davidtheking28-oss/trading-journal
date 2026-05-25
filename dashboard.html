@@ -9807,7 +9807,7 @@ function chartDefaults(type) {
     animation: { duration: 300 },
     plugins: {
       legend: { labels: { color: tc, font: CHART_FONT } },
-      tooltip: { callbacks: {} }
+      tooltip: { callbacks: {}, backgroundColor: 'rgba(10,18,36,0.92)', titleColor: '#e2e8f0', bodyColor: '#e2e8f0', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, padding: 10, cornerRadius: 8 }
     },
     scales: type === 'bar' || type === 'line' ? {
       x: { ticks: { color: tc, font: CHART_FONT }, grid: { color: gc, drawBorder: false } },
