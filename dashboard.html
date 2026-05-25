@@ -7436,11 +7436,11 @@ function _buildPeriodHTML(prefix, showYears) {
 
   if (showYears) {
     const yearBtns = yOpts.map(y =>
-      `<button class="pd-month-btn${y===selYear?' active':''}" onclick="_pdPickYear('${prefix}',${y})">${y}</button>`
+      `<button class="pd-month-btn${y===selYear?' active':''}" onclick="event.stopPropagation();_pdPickYear('${prefix}',${y})">${y}</button>`
     ).join('');
     return `
       <button class="pd-all-btn${isAll?' active':''}" onclick="_resetPeriod('${prefix}')">כל הזמן</button>
-      <button class="pd-year-btn active" onclick="_pdToggleYears('${prefix}',false)">${yr}</button>
+      <button class="pd-year-btn active" onclick="event.stopPropagation();_pdToggleYears('${prefix}',false)">${yr}</button>
       <div class="pd-years">${yearBtns}</div>`;
   }
 
@@ -7452,7 +7452,7 @@ function _buildPeriodHTML(prefix, showYears) {
 
   return `
     <button class="pd-all-btn${isAll?' active':''}" onclick="_resetPeriod('${prefix}')">כל הזמן</button>
-    <button class="pd-year-btn" onclick="_pdToggleYears('${prefix}',true)">${yr}</button>
+    <button class="pd-year-btn" onclick="event.stopPropagation();_pdToggleYears('${prefix}',true)">${yr}</button>
     <div class="pd-months">${monthBtns}</div>`;
 }
 
