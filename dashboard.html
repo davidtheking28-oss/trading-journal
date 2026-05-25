@@ -880,22 +880,37 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   }
   .mini-tab:hover:not(.active) { color: var(--text); background: rgba(129,140,248,0.1); }
 
-  /* SCOPE TAB GROUP — filter chips, no container */
-  .scope-tab-group { display: inline-flex; gap: 3px; }
-  .scope-tab {
-    padding: 5px 11px; border: 1px solid var(--border2); border-radius: 6px;
-    background: transparent; color: var(--text3);
+  /* SCOPE DROPDOWN */
+  .scope-dd { position: relative; display: inline-block; }
+  .scope-dd-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 10px; border: 1px solid var(--border2); border-radius: 6px;
+    background: transparent; color: var(--text2);
     cursor: pointer; font-size: 12px; font-weight: 600;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
     font-family: inherit; white-space: nowrap;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
   }
-  .scope-tab.active {
-    background: rgba(99,102,241,0.14);
-    border-color: rgba(99,102,241,0.4);
-    color: #818cf8;
-    font-weight: 700;
+  .scope-dd-btn svg { opacity: 0.5; transition: transform 0.18s, opacity 0.15s; }
+  .scope-dd-btn:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+  .scope-dd.open .scope-dd-btn {
+    border-color: rgba(99,102,241,0.45); color: #818cf8; background: rgba(99,102,241,0.1);
   }
-  .scope-tab:hover:not(.active) { background: rgba(255,255,255,0.05); color: var(--text2); }
+  .scope-dd.open .scope-dd-btn svg { transform: rotate(180deg); opacity: 0.9; }
+  .scope-dd-menu {
+    display: none; position: absolute; top: calc(100% + 6px); right: 0;
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 4px; min-width: 130px; z-index: 300;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .scope-dd.open .scope-dd-menu { display: block; }
+  .scope-dd-menu button {
+    display: block; width: 100%; padding: 7px 12px; border: none; border-radius: 5px;
+    background: transparent; color: var(--text2); text-align: right;
+    cursor: pointer; font-size: 12px; font-weight: 600; font-family: inherit;
+    transition: background 0.12s, color 0.12s;
+  }
+  .scope-dd-menu button:hover { background: rgba(99,102,241,0.1); color: var(--text); }
+  .scope-dd-menu button.active { background: rgba(99,102,241,0.14); color: #818cf8; }
 
   /* DONUT STATS PANEL */
   .donut-stats {
@@ -5303,10 +5318,16 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <select id="ov-month" onchange="renderOverview()"></select>
         <select id="ov-year" onchange="renderOverview()"></select>
         <button class="btn btn-secondary btn-sm" onclick="resetFilter('ov')" data-i18n="all_time">All Time</button>
-        <div id="ov-scope-tabs" class="scope-tab-group">
-          <button class="scope-tab active" onclick="setOvScope('stock',this)">📈 מניות</button>
-          <button class="scope-tab" onclick="setOvScope('crypto',this)">₿ קריפטו</button>
-          <button class="scope-tab" onclick="setOvScope('all',this)">הכל</button>
+        <div id="ov-scope-dd" class="scope-dd">
+          <button class="scope-dd-btn" onclick="toggleScopeDD('ov-scope-dd')">
+            <span id="ov-scope-lbl">📈 מניות</span>
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
+          </button>
+          <div class="scope-dd-menu" id="ov-scope-menu">
+            <button class="active" onclick="setOvScope('stock',this,'ov-scope-dd')">📈 מניות</button>
+            <button onclick="setOvScope('crypto',this,'ov-scope-dd')">₿ קריפטו</button>
+            <button onclick="setOvScope('all',this,'ov-scope-dd')">הכל</button>
+          </div>
         </div>
         <div class="filter-stats" id="ov-filter-info"></div>
       </div>
@@ -5391,10 +5412,16 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <select id="stats-month" onchange="renderStatistics()"></select>
         <select id="stats-year" onchange="renderStatistics()"></select>
         <button class="btn btn-secondary btn-sm" onclick="resetFilter('stats')" data-i18n="all_time">All Time</button>
-        <div id="stats-scope-tabs" class="scope-tab-group">
-          <button class="scope-tab active" onclick="setStatsScope('all',this)">הכל</button>
-          <button class="scope-tab" onclick="setStatsScope('stock',this)">📈 מניות</button>
-          <button class="scope-tab" onclick="setStatsScope('crypto',this)">₿ קריפטו</button>
+        <div id="stats-scope-dd" class="scope-dd">
+          <button class="scope-dd-btn" onclick="toggleScopeDD('stats-scope-dd')">
+            <span id="stats-scope-lbl">הכל</span>
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
+          </button>
+          <div class="scope-dd-menu" id="stats-scope-menu">
+            <button class="active" onclick="setStatsScope('all',this,'stats-scope-dd')">הכל</button>
+            <button onclick="setStatsScope('stock',this,'stats-scope-dd')">📈 מניות</button>
+            <button onclick="setStatsScope('crypto',this,'stats-scope-dd')">₿ קריפטו</button>
+          </div>
         </div>
         <div class="filter-stats" id="stats-filter-info"></div>
       </div>
@@ -7359,18 +7386,36 @@ function switchTab(name, btn) {
   if (name==='investments') invInit();
 }
 
-function setOvScope(s, btn) {
+function toggleScopeDD(id) {
+  const dd = document.getElementById(id);
+  const wasOpen = dd.classList.contains('open');
+  document.querySelectorAll('.scope-dd.open').forEach(d => d.classList.remove('open'));
+  if (!wasOpen) dd.classList.add('open');
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.scope-dd')) {
+    document.querySelectorAll('.scope-dd.open').forEach(d => d.classList.remove('open'));
+  }
+});
+
+const _scopeLabels = { stock: '📈 מניות', crypto: '₿ קריפטו', all: 'הכל' };
+
+function setOvScope(s, btn, ddId) {
   ovScope = s;
-  document.querySelectorAll('#ov-scope-tabs .scope-tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
+  document.getElementById('ov-scope-lbl').textContent = _scopeLabels[s];
+  document.querySelectorAll('#ov-scope-menu button').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (ddId) document.getElementById(ddId).classList.remove('open');
   renderOverview();
 }
 
 let statsScope = 'all';
-function setStatsScope(s, btn) {
+function setStatsScope(s, btn, ddId) {
   statsScope = s;
-  document.querySelectorAll('#stats-scope-tabs .scope-tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
+  document.getElementById('stats-scope-lbl').textContent = _scopeLabels[s];
+  document.querySelectorAll('#stats-scope-menu button').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (ddId) document.getElementById(ddId).classList.remove('open');
   renderStatistics();
 }
 
