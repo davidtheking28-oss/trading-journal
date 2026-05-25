@@ -857,25 +857,30 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .expanded-row td            { animation: expand-row 0.22s var(--ease-out) both; }
   .tab-content.tab-entering   { animation: slide-up-fade 0.32s var(--ease-out) both; }
 
-  /* MINI TABS — pill toggle */
+  /* MINI TABS — segmented control */
   .mini-tabs {
-    display: flex; gap: 2px; margin-bottom: 20px;
-    background: rgba(10,10,14,0.9);
-    border: 1px solid #18181c;
-    border-radius: 9px; padding: 3px; width: fit-content;
+    display: inline-flex; gap: 2px; margin-bottom: 20px;
+    background: rgba(7,12,24,0.85);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px; padding: 3px; width: fit-content;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
   }
   .mini-tab {
-    padding: 7px 22px; border-radius: 7px; border: none;
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 14px; border-radius: 7px; border: none;
     background: transparent; color: var(--text2);
-    cursor: pointer; font-size: 12px; font-weight: 600;
-    transition: all 0.18s; font-family: inherit; white-space: nowrap;
+    cursor: pointer; font-size: 12px; font-weight: 600; letter-spacing: 0.01em;
+    transition: background 0.16s, color 0.16s, box-shadow 0.16s;
+    font-family: inherit; white-space: nowrap;
   }
+  .mt-icon { font-size: 11px; line-height: 1; opacity: 0.75; }
+  .mini-tab.active .mt-icon { opacity: 1; }
   .mini-tab.active {
-    background: linear-gradient(135deg, #6366f1, #818cf8);
+    background: linear-gradient(135deg, #5b6ef5, #818cf8);
     color: #fff;
-    box-shadow: 0 2px 12px rgba(129,140,248,0.35);
+    box-shadow: 0 2px 10px rgba(99,102,241,0.4), 0 1px 2px rgba(0,0,0,0.3);
   }
-  .mini-tab:hover:not(.active) { color: var(--text); background: rgba(129,140,248,0.08); }
+  .mini-tab:hover:not(.active) { color: var(--text); background: rgba(129,140,248,0.1); }
 
   /* DONUT STATS PANEL */
   .donut-stats {
@@ -5283,10 +5288,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <select id="ov-month" onchange="renderOverview()"></select>
         <select id="ov-year" onchange="renderOverview()"></select>
         <button class="btn btn-secondary btn-sm" onclick="resetFilter('ov')" data-i18n="all_time">All Time</button>
-        <div id="ov-scope-tabs" style="display:inline-flex;gap:4px;margin-right:4px;">
-          <button class="mini-tab active" onclick="setOvScope('stock',this)">מניות</button>
-          <button class="mini-tab" onclick="setOvScope('crypto',this)">קריפטו</button>
-          <button class="mini-tab" onclick="setOvScope('all',this)">הכל</button>
+        <div id="ov-scope-tabs" class="mini-tabs" style="margin-bottom:0;margin-right:2px;">
+          <button class="mini-tab active" onclick="setOvScope('stock',this)"><span class="mt-icon">📈</span>מניות</button>
+          <button class="mini-tab" onclick="setOvScope('crypto',this)"><span class="mt-icon">₿</span>קריפטו</button>
+          <button class="mini-tab" onclick="setOvScope('all',this)"><span class="mt-icon">◎</span>הכל</button>
         </div>
         <div class="filter-stats" id="ov-filter-info"></div>
       </div>
@@ -5371,10 +5376,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <select id="stats-month" onchange="renderStatistics()"></select>
         <select id="stats-year" onchange="renderStatistics()"></select>
         <button class="btn btn-secondary btn-sm" onclick="resetFilter('stats')" data-i18n="all_time">All Time</button>
-        <div id="stats-scope-tabs" style="display:inline-flex;gap:4px;margin-right:4px;">
-          <button class="mini-tab active" onclick="setStatsScope('all',this)">הכל</button>
-          <button class="mini-tab" onclick="setStatsScope('stock',this)">מניות</button>
-          <button class="mini-tab" onclick="setStatsScope('crypto',this)">קריפטו</button>
+        <div id="stats-scope-tabs" class="mini-tabs" style="margin-bottom:0;margin-right:2px;">
+          <button class="mini-tab active" onclick="setStatsScope('all',this)"><span class="mt-icon">◎</span>הכל</button>
+          <button class="mini-tab" onclick="setStatsScope('stock',this)"><span class="mt-icon">📈</span>מניות</button>
+          <button class="mini-tab" onclick="setStatsScope('crypto',this)"><span class="mt-icon">₿</span>קריפטו</button>
         </div>
         <div class="filter-stats" id="stats-filter-info"></div>
       </div>
