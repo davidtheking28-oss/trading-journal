@@ -915,18 +915,16 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     margin-bottom: 4px;
   }
   .pd-all-btn:hover, .pd-all-btn.active { background: rgba(99,102,241,0.14); color: #818cf8; }
-  .pd-year-nav {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 4px 4px 6px; border-top: 1px solid var(--border);
+  .pd-year-btn {
+    display: block; width: 100%; padding: 5px 8px; border: none; border-radius: 5px;
+    background: transparent; color: var(--text); text-align: center;
+    cursor: pointer; font-size: 13px; font-weight: 700; font-family: inherit;
+    border-top: 1px solid var(--border); margin-bottom: 4px;
+    transition: background 0.12s, color 0.12s;
   }
-  .pd-year-nav span { font-size: 13px; font-weight: 700; color: var(--text); }
-  .pd-year-nav button {
-    border: none; background: transparent; color: var(--text2);
-    cursor: pointer; font-size: 16px; font-weight: 700; padding: 2px 6px;
-    border-radius: 4px; transition: background 0.12s; font-family: inherit;
-  }
-  .pd-year-nav button:hover { background: rgba(255,255,255,0.08); }
-  .pd-year-nav button:disabled { opacity: 0.25; cursor: default; }
+  .pd-year-btn:hover { background: rgba(255,255,255,0.07); color: #818cf8; }
+  .pd-year-btn.active { color: #818cf8; }
+  .pd-years { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
   .pd-months {
     display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px;
   }
@@ -7517,29 +7515,34 @@ function _getPdMenu() {
   return _pdMenuEl;
 }
 
-function _buildPeriodHTML(prefix) {
+function _buildPeriodHTML(prefix, showYears) {
   const ms = document.getElementById(prefix+'-month');
   const ys = document.getElementById(prefix+'-year');
   const selMonth = ms ? +ms.value : 0;
+  const selYear  = ys ? +ys.value  : 0;
   const yr = _pdYear[prefix] || new Date().getFullYear();
-  const yOpts = ys ? [...ys.options].map(o=>+o.value).filter(v=>v) : [];
-  const minY = yOpts.length ? Math.min(...yOpts) : yr-3;
-  const maxY = yOpts.length ? Math.max(...yOpts) : yr;
+  const yOpts = ys ? [...ys.options].map(o=>+o.value).filter(v=>v) : [new Date().getFullYear()];
   const isAll = !ms?.value && !ys?.value;
+
+  if (showYears) {
+    const yearBtns = yOpts.map(y =>
+      `<button class="pd-month-btn${y===selYear?' active':''}" onclick="_pdPickYear('${prefix}',${y})">${y}</button>`
+    ).join('');
+    return `
+      <button class="pd-all-btn${isAll?' active':''}" onclick="_resetPeriod('${prefix}')">כל הזמן</button>
+      <button class="pd-year-btn active" onclick="_pdToggleYears('${prefix}',false)">${yr}</button>
+      <div class="pd-years">${yearBtns}</div>`;
+  }
 
   const monthBtns = MONTHS_SHORT_HE.map((m,i) => {
     const mn = i+1;
-    const active = mn===selMonth && yr===(+(ys?.value)||yr) ? ' active':'';
+    const active = mn===selMonth && yr===selYear ? ' active':'';
     return `<button class="pd-month-btn${active}" onclick="_setPeriod('${prefix}',${mn},${yr})">${m}</button>`;
   }).join('');
 
   return `
     <button class="pd-all-btn${isAll?' active':''}" onclick="_resetPeriod('${prefix}')">כל הזמן</button>
-    <div class="pd-year-nav">
-      <button onclick="_pdNav('${prefix}',1,${maxY})"${yr>=maxY?' disabled':''}>›</button>
-      <span>${yr}</span>
-      <button onclick="_pdNav('${prefix}',-1,${minY})"${yr<=minY?' disabled':''}>‹</button>
-    </div>
+    <button class="pd-year-btn" onclick="_pdToggleYears('${prefix}',true)">${yr}</button>
     <div class="pd-months">${monthBtns}</div>`;
 }
 
@@ -7550,15 +7553,17 @@ function togglePeriodDD(prefix) {
   menu._prefix = prefix;
   if (menu.classList.contains('dd-open') && menu._prefix === prefix) { _closeAllDDs(); return; }
   if (!_pdYear[prefix]) _pdYear[prefix] = +(document.getElementById(prefix+'-year')?.value) || new Date().getFullYear();
-  menu.innerHTML = _buildPeriodHTML(prefix);
+  menu.innerHTML = _buildPeriodHTML(prefix, false);
   _openMenu(btn, menu);
 }
 
-function _pdNav(prefix, dir, limit) {
-  const nyr = (_pdYear[prefix]||new Date().getFullYear()) + dir;
-  if ((dir<0&&nyr<limit)||(dir>0&&nyr>limit)) return;
-  _pdYear[prefix] = nyr;
-  _getPdMenu().innerHTML = _buildPeriodHTML(prefix);
+function _pdToggleYears(prefix, show) {
+  _getPdMenu().innerHTML = _buildPeriodHTML(prefix, show);
+}
+
+function _pdPickYear(prefix, year) {
+  _pdYear[prefix] = year;
+  _getPdMenu().innerHTML = _buildPeriodHTML(prefix, false);
 }
 
 function _setPeriod(prefix, month, year) {
