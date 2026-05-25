@@ -203,12 +203,13 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   }
   .month-filter label { color: var(--text3); font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; }
   .month-filter select {
-    background: var(--bg);
+    appearance: none; -webkit-appearance: none;
+    background: rgba(255,255,255,0.06) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%238faac8' stroke-width='1.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E") no-repeat left 10px center;
     border: 1px solid var(--border2);
     border-radius: var(--radius);
-    color: var(--text);
-    padding: 6px 12px;
-    font-size: 12px;
+    color: var(--text2);
+    padding: 5px 10px 5px 28px;
+    font-size: 12px; font-weight: 500;
     cursor: pointer;
     outline: none;
     transition: border-color 0.2s, box-shadow 0.2s;
@@ -899,8 +900,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .scope-dd-menu {
     position: absolute; top: calc(100% + 5px); left: 0;
     background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 4px; min-width: 130px; z-index: 500;
-    box-shadow: 0 8px 28px rgba(0,0,0,0.45);
+    padding: 4px; min-width: 130px; z-index: 9999;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.6);
     opacity: 0; pointer-events: none;
     transform: translateY(-4px);
     transition: opacity 0.15s, transform 0.15s;
@@ -2071,11 +2072,12 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     color: var(--text3);
   }
   .month-filter select {
-    background: rgba(255,255,255,0.05);
+    appearance: none; -webkit-appearance: none;
+    background: rgba(255,255,255,0.06) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%238faac8' stroke-width='1.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E") no-repeat left 10px center;
     border: 1px solid var(--border2);
-    border-radius: 6px;
-    color: var(--text);
-    padding: 5px 10px;
+    border-radius: var(--radius);
+    color: var(--text2);
+    padding: 5px 10px 5px 28px;
     font-size: 12px;
     font-weight: 500;
   }
