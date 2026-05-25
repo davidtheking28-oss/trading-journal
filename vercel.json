@@ -1,0 +1,7 @@
+{
+  "framework": null,
+  "buildCommand": "sed -i 's|__SUPABASE_URL__|'\"$SUPABASE_URL\"'|g' dashboard.html && sed -i 's|__SUPABASE_ANON__|'\"$SUPABASE_ANON_KEY\"'|g' dashboard.html",
+  "outputDirectory": ".",
+  "cleanUrls": true,
+  "trailingSlash": false
+}
