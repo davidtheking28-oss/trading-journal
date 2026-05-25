@@ -898,7 +898,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   }
   .scope-dd.open .scope-dd-btn svg { transform: rotate(180deg); }
   .scope-dd-menu {
-    position: absolute; top: calc(100% + 5px); left: 0;
+    position: fixed; top: 0; left: 0;
     background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
     padding: 4px; min-width: 130px; z-index: 9999;
     box-shadow: 0 8px 28px rgba(0,0,0,0.6);
@@ -7395,7 +7395,14 @@ function toggleScopeDD(id) {
   const dd = document.getElementById(id);
   const wasOpen = dd.classList.contains('open');
   document.querySelectorAll('.scope-dd.open').forEach(d => d.classList.remove('open'));
-  if (!wasOpen) dd.classList.add('open');
+  if (!wasOpen) {
+    const btn = dd.querySelector('.scope-dd-btn');
+    const menu = dd.querySelector('.scope-dd-menu');
+    const rect = btn.getBoundingClientRect();
+    menu.style.top  = (rect.bottom + 5) + 'px';
+    menu.style.left = rect.left + 'px';
+    dd.classList.add('open');
+  }
 }
 document.addEventListener('click', function(e) {
   if (!e.target.closest('.scope-dd')) {
