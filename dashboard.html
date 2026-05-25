@@ -2567,10 +2567,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
   body {
     background: #0b0b0e;
-    background-image:
-      radial-gradient(ellipse 110% 60% at 60% -10%, rgba(129,140,248,0.10) 0%, transparent 55%),
-      radial-gradient(ellipse 75% 50% at 100% 80%, rgba(167,139,250,0.07) 0%, transparent 55%),
-      radial-gradient(ellipse 60% 40% at 0% 100%, rgba(52,211,153,0.05) 0%, transparent 55%);
     background-attachment: fixed;
   }
 
@@ -2689,11 +2685,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
   /* ── KPI Cards ── */
   .kpi-card {
-    background: rgba(18,18,24,0.82) !important;
+    background: var(--card) !important;
     border: 1px solid rgba(148,163,184,0.12) !important;
     border-radius: 14px !important;
-    backdrop-filter: blur(14px) !important;
-    -webkit-backdrop-filter: blur(14px) !important;
     box-shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 20px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.07) !important;
     padding: 20px 22px !important;
     transition: transform var(--t-base), box-shadow var(--t-base), border-color var(--t-base) !important;
@@ -2751,11 +2745,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
   /* ── Table ── */
   .table-wrap {
-    background: rgba(16,16,22,0.82) !important;
+    background: var(--card) !important;
     border: 1px solid rgba(148,163,184,0.10) !important;
     border-radius: 14px !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
     box-shadow: 0 1px 3px rgba(0,0,0,0.4), 0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.05) !important;
   }
   thead tr { background: rgba(12,12,16,0.6) !important; border-bottom: 1px solid rgba(148,163,184,0.08) !important; }
