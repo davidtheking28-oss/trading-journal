@@ -686,9 +686,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
   .kpi-label { font-size: 9.5px; color: var(--text3); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
   .kpi-value { font-size: 26px; font-weight: 800; color: var(--text); letter-spacing: -0.6px; font-variant-numeric: tabular-nums; }
-  .kpi-value.green  { color: var(--green); text-shadow: 0 0 20px rgba(52,211,153,0.25); }
-  .kpi-value.red    { color: var(--red);   text-shadow: 0 0 20px rgba(248,113,113,0.25); }
-  .kpi-value.yellow { color: var(--yellow);text-shadow: 0 0 20px rgba(251,191,36,0.25); }
+  .kpi-value.green  { color: var(--green); }
+  .kpi-value.red    { color: var(--red); }
+  .kpi-value.yellow { color: var(--yellow); }
   .kpi-sub { font-size: 11px; color: var(--text3); margin-top: 6px; line-height: 1.4; }
   /* KPI progress bar (Win Rate target) */
   .kpi-progress-track { height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; margin-top: 10px; overflow: hidden; }
@@ -731,16 +731,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     margin-bottom: 16px;
     display: flex; align-items: center; gap: 8px;
   }
-  .chart-title::before {
-    content: '';
-    display: inline-block;
-    width: 3px; height: 13px;
-    background: linear-gradient(180deg, #818cf8, #a78bfa);
-    border-radius: 2px;
-    box-shadow: 0 0 8px rgba(129,140,248,0.5);
-    flex-shrink: 0;
-  }
-
   /* SECTION */
   .section-divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 
@@ -855,7 +845,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .btn:active, .btn-sm:active { transform: scale(0.94) !important; transition: transform 0.08s !important; }
   .btn-icon:active            { transform: scale(0.90) !important; transition: transform 0.08s !important; }
   .kpi-card:active            { transform: translateY(0) scale(0.975) !important; }
-  .tab-btn .nav-icon          { transition: transform 0.35s var(--spring); display:flex; align-items:center; justify-content:center; }
+  .tab-btn .nav-icon          { transition: transform 0.25s var(--ease-out); display:flex; align-items:center; justify-content:center; }
   .tab-btn:hover .nav-icon    { transform: scale(1.2); }
   .tab-btn.active .nav-icon   { transform: scale(1.1); }
   #header-avatar:hover { border-color: var(--accent) !important; box-shadow: 0 0 0 3px rgba(129,140,248,0.15); }
@@ -2746,9 +2736,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     color: #e8eaf8 !important;
     opacity: 1 !important;
   }
-  .kpi-value.green  { color: var(--green) !important; text-shadow: 0 0 24px rgba(0,229,160,0.28) !important; }
-  .kpi-value.red    { color: var(--red) !important; text-shadow: 0 0 24px rgba(255,107,138,0.28) !important; }
-  .kpi-value.yellow { color: #fbbf24 !important; text-shadow: 0 0 20px rgba(251,191,36,0.2) !important; }
+  .kpi-value.green  { color: var(--green) !important; }
+  .kpi-value.red    { color: var(--red) !important; }
+  .kpi-value.yellow { color: #fbbf24 !important; }
   .kpi-grid .kpi-card:first-child .kpi-value { font-size: 38px !important; }
   .kpi-sub {
     font-size: 11.5px !important;
@@ -3991,9 +3981,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     font-feature-settings: "tnum";
     color: #e8eaf8;
   }
-  .kpi-value.green { color: #22d3a8; text-shadow: 0 0 20px rgba(34,211,168,0.3); }
-  .kpi-value.red   { color: #fb7185; text-shadow: 0 0 20px rgba(251,113,133,0.3); }
-  .kpi-value.yellow { color: #fbbf24; text-shadow: 0 0 20px rgba(251,191,36,0.25); }
+  .kpi-value.green { color: #22d3a8; }
+  .kpi-value.red   { color: #fb7185; }
+  .kpi-value.yellow { color: #fbbf24; }
   .kpi-grid .kpi-card:first-child .kpi-value { font-size: 38px; }
   .kpi-sub { font-size: 11.5px; color: var(--text3); margin-top: 7px; line-height: 1.5; }
   .kpi-progress-track { height: 2px; background: rgba(255,255,255,0.06); border-radius: 2px; margin-top: 12px; }
@@ -4276,7 +4266,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     color: var(--accent) !important;
     border-bottom-color: var(--accent) !important;
     background: rgba(129,140,248,0.05) !important;
-    text-shadow: 0 0 18px rgba(129,140,248,0.35) !important;
   }
   .tnav-btn:hover { color: rgba(237,242,249,0.85) !important; }
 
