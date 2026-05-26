@@ -3450,10 +3450,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   /* Table */
   .inv-table-wrap {
     background: var(--card); border: 1px solid var(--border);
-    border-radius: 14px; overflow-x: auto; overflow-y: hidden;
+    border-radius: 14px; overflow: hidden;
     box-shadow: 0 4px 24px rgba(0,0,0,0.25);
   }
-  .inv-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+  .inv-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; min-width: 0; }
   .inv-table th {
     padding: 10px 8px; text-align: right; color: var(--text3); font-weight: 700;
     font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px;
@@ -3497,12 +3497,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px;
   }
   .inv-add-row:hover { background: rgba(129,140,248,0.06); color: var(--accent); }
-  .inv-table th:last-child, .inv-table td:last-child {
-    position: sticky; left: 0; z-index: 1;
-    background: #091525;
-    border-right: 1px solid var(--border);
-  }
-  .inv-table tbody tr:hover td:last-child { background: rgba(129,140,248,0.07) !important; }
   .inv-del-btn {
     background: none; border: none; color: rgba(239,68,68,0.5); cursor: pointer;
     font-size: 14px; padding: 4px 6px; border-radius: 5px; transition: all 0.15s;
@@ -6081,33 +6075,19 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
         <div class="inv-table-wrap">
           <table class="inv-table">
-            <colgroup>
-              <col style="width:6%">  <!-- סימבול -->
-              <col style="width:9%">  <!-- סקטור -->
-              <col style="width:7%">  <!-- קטגוריה -->
-              <col style="width:7%">  <!-- כמות מניות -->
-              <col style="width:8%">  <!-- מחיר כניסה -->
-              <col style="width:8%">  <!-- מחיר נוכחי -->
-              <col style="width:7%">  <!-- ממוצע -->
-              <col style="width:8%">  <!-- שווי -->
-              <col style="width:10%"> <!-- רווח/הפסד -->
-              <col style="width:8%">  <!-- % תיק -->
-              <col style="width:10%"> <!-- נותר -->
-              <col style="width:6%">  <!-- פעולות -->
-            </colgroup>
             <thead>
               <tr>
-                <th data-i18n="inv_col_symbol">Symbol</th>
-                <th data-i18n="inv_col_sector">Sector</th>
-                <th data-i18n="inv_col_category">Category</th>
-                <th>Qty</th>
-                <th>Entry Price</th>
-                <th data-i18n="inv_col_cur_price">Current Price</th>
-                <th data-i18n="inv_col_avg">Average</th>
-                <th data-i18n="inv_col_value">Value</th>
-                <th><span data-i18n="inv_col_pnl">P&L</span> <button id="inv-pnl-toggle" onclick="invTogglePnlMode()" style="font-size:11px;padding:4px 8px;border-radius:5px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.07);color:var(--text2);cursor:pointer;margin-right:4px;vertical-align:middle;transition:all 0.15s;">$</button></th>
-                <th data-i18n="inv_col_portfolio_pct">% Portfolio</th>
-                <th data-i18n="inv_col_remaining">Remaining</th>
+                <th style="width:70px"  data-i18n="inv_col_symbol">Symbol</th>
+                <th style="width:85px"  data-i18n="inv_col_sector">Sector</th>
+                <th style="width:100px" data-i18n="inv_col_category">Category</th>
+                <th style="width:55px">Qty</th>
+                <th style="width:80px">Entry Price</th>
+                <th style="width:85px" data-i18n="inv_col_cur_price">Current Price</th>
+                <th style="width:70px" data-i18n="inv_col_avg">Average</th>
+                <th style="width:75px" data-i18n="inv_col_value">Value</th>
+                <th style="width:100px"><span data-i18n="inv_col_pnl">P&L</span> <button id="inv-pnl-toggle" onclick="invTogglePnlMode()" style="font-size:11px;padding:4px 8px;border-radius:5px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.07);color:var(--text2);cursor:pointer;margin-right:4px;vertical-align:middle;transition:all 0.15s;">$</button></th>
+                <th style="width:75px" data-i18n="inv_col_portfolio_pct">% Portfolio</th>
+                <th style="width:75px" data-i18n="inv_col_remaining">Remaining</th>
                 <th style="width:52px"></th>
               </tr>
             </thead>
