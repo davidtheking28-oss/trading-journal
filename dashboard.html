@@ -5128,8 +5128,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     <!-- Center Nav Tabs -->
     <div id="top-nav" style="display:flex;align-items:stretch;flex:1;justify-content:center;overflow-x:auto;scrollbar-width:none;">
       <button class="tnav-btn active" onclick="switchTab('overview',this)" data-i18n="nav_overview">Home</button>
-      <button class="tnav-btn" onclick="switchTab('stocks',this)">Stocks</button>
-      <button class="tnav-btn" onclick="switchTab('crypto',this)">Crypto</button>
+      <button class="tnav-btn" onclick="switchTab('stocks',this)" data-i18n="nav_stocks">Stocks</button>
       <button class="tnav-btn" onclick="switchTab('statistics',this)">Statistics</button>
       <button class="tnav-btn" onclick="switchTab('themes',this)">Market Pulse</button>
       <button class="tnav-btn" onclick="switchTab('ai',this)">Minervini</button>
@@ -5195,10 +5194,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <button class="tab-btn" onclick="switchTab('stocks',this)" aria-label="Stocks">
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></span>
         <span class="nav-label">Stocks</span>
-      </button>
-      <button class="tab-btn" onclick="switchTab('crypto',this)" aria-label="Crypto">
-        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 8.5h4a2 2 0 0 1 0 4h-4zm0 4h4.5a2 2 0 0 1 0 4h-4.5z"/><line x1="10.5" y1="8.5" x2="10.5" y2="7"/><line x1="13.5" y1="8.5" x2="13.5" y2="7"/><line x1="10.5" y1="16.5" x2="10.5" y2="18"/><line x1="13.5" y1="16.5" x2="13.5" y2="18"/></svg></span>
-        <span class="nav-label">Crypto</span>
       </button>
       <button class="tab-btn" onclick="switchTab('statistics',this)" aria-label="Statistics">
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></span>
@@ -5337,30 +5332,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <div id="st-archive-wrap" style="display:none;margin-top:16px;border-top:1px solid var(--border);padding-top:16px;" data-open="0"></div>
     </div>
 
-    <!-- ===== CRYPTO ===== -->
-    <div id="tab-crypto" class="tab-content">
-      <div class="month-filter">
-        <label data-i18n="filter_label">Filter:</label>
-        <select id="cr-month" onchange="renderTable('crypto')"></select>
-        <select id="cr-year" onchange="renderTable('crypto')"></select>
-        <button class="btn btn-secondary btn-sm" onclick="resetFilter('cr')" data-i18n="all_time">All Time</button>
-        <div class="filter-stats" id="cr-filter-info"></div>
-      </div>
-      <div class="table-toolbar">
-        <button class="btn btn-primary" onclick="openModal('crypto')" data-i18n="add_new_trade">+ Add New Trade</button>
-        <button class="btn btn-export btn-sm view-toggle-btn" id="cr-view-toggle" onclick="toggleTableView('crypto')" title="החלף תצוגה"></button>
-        <button class="btn btn-danger btn-sm" onclick="deduplicateDB('crypto')" title="מחק עסקאות כפולות (זהות בסימבול + תאריך + מחיר)" data-i18n="clean_dupes">🧹 Clean Duplicates</button>
-        <button class="btn btn-secondary btn-sm" id="cr-archive-btn" onclick="toggleInlineArchive('crypto')" data-i18n="archive">📅 Archive</button>
-        <span id="cr-stats" style="color:var(--text2);font-size:12px;flex:1;text-align:center;direction:ltr;"></span>
-        <div class="search-input-wrap">
-          <input class="search-input" id="cr-search" placeholder="Search symbol..."
-            data-i18n-ph="search"
-            oninput="searchQuery.crypto=this.value; renderTable('crypto')" autocomplete="off">
-        </div>
-      </div>
-      <div class="table-wrap" id="crypto-wrap"></div>
-      <div id="cr-archive-wrap" style="display:none;margin-top:16px;border-top:1px solid var(--border);padding-top:16px;" data-open="0"></div>
-    </div>
 
     <!-- ===== STATISTICS ===== -->
     <div id="tab-statistics" class="tab-content">
@@ -7331,7 +7302,7 @@ function resetFilter(p) {
 // TAB SWITCHING
 // ─────────────────────────────────────────────
 let ovScope = 'stock';
-let _tradesScope = 'all';
+let _tradesScope = 'stock';
 function _setTradesScope(s) { _tradesScope = s; renderTable('stock'); }
 
 function switchTab(name, btn) {
@@ -7771,9 +7742,8 @@ function renderTable(type) {
     const pillsEl = document.getElementById('trades-scope-pills');
     if (pillsEl) {
       const opts = [
-        { key:'all',    label: t('scope_all') || 'הכל' },
-        { key:'stock',  label: t('nav_stocks') || 'מניות' },
-        { key:'crypto', label: t('nav_crypto') || 'קריפטו' },
+        { key:'stock',  label: t('comp_stocks')?.replace(/^[^\s]+\s/,'') || 'מניות' },
+        { key:'crypto', label: t('comp_crypto')?.replace(/^[^\s]+\s/,'') || 'קריפטו' },
       ];
       pillsEl.innerHTML = opts.map(o =>
         `<button class="comp-scope-pill${o.key===_tradesScope?' active':''}" onclick="_setTradesScope('${o.key}')">${o.label}</button>`
@@ -9181,7 +9151,7 @@ function t(k) { return (LANG_STRINGS[_lang] || LANG_STRINGS.en)[k] || k; }
 
 const LANG_STRINGS = {
   en: {
-    nav_overview:'Home', nav_stocks:'Stocks', nav_crypto:'Crypto',
+    nav_overview:'Home', nav_stocks:'Stocks / Crypto', nav_crypto:'Crypto',
     nav_statistics:'Statistics', nav_settings:'Settings', nav_themes:'Market Pulse',
     nav_ai:'Minervini', nav_missed:'Missed', nav_investments:'Investments',
     nav_section:'Navigation', add_trade:'Add Trade',
@@ -9300,7 +9270,7 @@ const LANG_STRINGS = {
     comp_stocks:'📈 Stocks', comp_crypto:'₿ Crypto',
   },
   he: {
-    nav_overview:'ראשי', nav_stocks:'מניות', nav_crypto:'קריפטו',
+    nav_overview:'ראשי', nav_stocks:'מניות / קריפטו', nav_crypto:'קריפטו',
     set_crypto_desc:'CoinGecko · ללא מפתח, עובד אוטומטית',
     set_finnhub_desc:'נדרש לנתוני מחיר מניות בזמן אמת. הרשם חינם ב-finnhub.io — הכנס את המפתח ולחץ Save.',
     set_av_desc:'נתוני פיננסים לכל המניות כולל Small Cap.',
@@ -9432,7 +9402,7 @@ function setLang(lang) {
 
   // Top nav
   const tnav = document.querySelectorAll('#top-nav .tnav-btn');
-  const tnavKeys = ['nav_overview','nav_stocks','nav_crypto','nav_statistics','nav_themes','nav_ai','nav_missed','nav_investments','nav_settings'];
+  const tnavKeys = ['nav_overview','nav_stocks','nav_statistics','nav_themes','nav_ai','nav_missed','nav_investments','nav_settings'];
   tnav.forEach((btn, i) => { if (tnavKeys[i]) btn.textContent = s[tnavKeys[i]]; });
 
   // Sidebar nav-labels
