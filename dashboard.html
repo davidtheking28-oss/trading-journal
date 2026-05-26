@@ -3498,10 +3498,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   }
   .inv-add-row:hover { background: rgba(129,140,248,0.06); color: var(--accent); }
   .inv-del-btn {
-    background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer;
+    background: none; border: none; color: rgba(239,68,68,0.5); cursor: pointer;
     font-size: 14px; padding: 4px 6px; border-radius: 5px; transition: all 0.15s;
   }
-  .inv-del-btn:hover { color: var(--red); background: rgba(239,68,68,0.1); }
+  .inv-del-btn:hover { color: var(--red); background: rgba(239,68,68,0.12); }
   .inv-buy-btn { display:none; }
   .inv-edit-btn {
     background: none; border: none; color: rgba(255,255,255,0.25); cursor: pointer;
@@ -14083,6 +14083,7 @@ function invRecalc() {
   // Pass 1: accumulate totals
   let totalCost = 0, totalCurrentValue = 0, totalUnrealizedPnL = null;
   const byCat = { blue: 0, green: 0, yellow: 0 };
+  const byCatValue = { blue: 0, green: 0, yellow: 0 };
   const rowData = [];
   rows.forEach(row => {
     const inputs = row.querySelectorAll('input');
@@ -14098,6 +14099,7 @@ function invRecalc() {
     totalCurrentValue += value;
     if (pnlAmt !== null) totalUnrealizedPnL = (totalUnrealizedPnL || 0) + pnlAmt;
     if (cat && byCat[cat] !== undefined) byCat[cat] += cost;
+    if (cat && byCatValue[cat] !== undefined) byCatValue[cat] += value;
     rowData.push({ i: +row.dataset.idx, cat, value, cost, pnlAmt, pnlPct });
   });
 
@@ -14212,7 +14214,7 @@ function invRecalc() {
     remEl.style.color = over ? 'var(--red)' : 'var(--green)';
   });
 
-  invUpdateDonut(byCat, portfolioTotal, cash);
+  invUpdateDonut(byCatValue, effectiveTotal, cash);
   invRenderDeposits(invLoad().deposits || [], totalCurrentValue);
 
   // Summary bar
