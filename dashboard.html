@@ -14444,6 +14444,7 @@ function invDeleteRow(i) {
   const data = invGetCurrentData();
   data.holdings.splice(i, 1);
   invRenderRows(data.holdings);
+  invSaveData(data);
 }
 
 function invMergeDuplicates(holdings) {
