@@ -3497,6 +3497,12 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px;
   }
   .inv-add-row:hover { background: rgba(129,140,248,0.06); color: var(--accent); }
+  .inv-table th:last-child, .inv-table td:last-child {
+    position: sticky; left: 0; z-index: 1;
+    background: #091525;
+    border-right: 1px solid var(--border);
+  }
+  .inv-table tbody tr:hover td:last-child { background: rgba(129,140,248,0.07) !important; }
   .inv-del-btn {
     background: none; border: none; color: rgba(239,68,68,0.5); cursor: pointer;
     font-size: 14px; padding: 4px 6px; border-radius: 5px; transition: all 0.15s;
