@@ -9146,7 +9146,7 @@ async function avatarUpload(input) {
 // ─────────────────────────────────────────────
 // LANGUAGE
 // ─────────────────────────────────────────────
-let _lang = localStorage.getItem('tj_lang') || 'en';
+let _lang = localStorage.getItem('tj_lang') || 'he';
 function t(k) { return (LANG_STRINGS[_lang] || LANG_STRINGS.en)[k] || k; }
 
 const LANG_STRINGS = {
@@ -9406,7 +9406,7 @@ function setLang(lang) {
   tnav.forEach((btn, i) => { if (tnavKeys[i]) btn.textContent = s[tnavKeys[i]]; });
 
   // Sidebar nav-labels
-  const sideKeys = ['nav_overview','nav_stocks','nav_crypto','nav_statistics','nav_settings','nav_themes','nav_ai','nav_missed','nav_investments'];
+  const sideKeys = ['nav_overview','nav_stocks','nav_statistics','nav_settings','nav_themes','nav_ai','nav_missed','nav_investments'];
   document.querySelectorAll('.sidebar-nav .nav-label').forEach((el, i) => { if (sideKeys[i]) el.textContent = s[sideKeys[i]]; });
 
   // Sidebar section label
@@ -9477,7 +9477,7 @@ function _applyModalLang(s) {
 }
 
 function langInit() {
-  const saved = localStorage.getItem('tj_lang') || 'en';
+  const saved = localStorage.getItem('tj_lang') || 'he';
   _lang = saved;
   setLang(saved);
 }
