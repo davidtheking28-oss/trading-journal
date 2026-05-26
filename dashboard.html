@@ -954,7 +954,14 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .ts-table td:first-child { color: var(--text2); font-size: 12px; }
   .ts-table td:last-child { font-weight: 700; text-align: right; min-width: 80px; }
   .ts-table tr:last-child td { border-bottom: none; }
-  .comparison-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
+  .comp-scope-pills { display: flex; gap: 6px; margin-bottom: 14px; }
+  .comp-scope-pill {
+    padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    border: 1px solid var(--border2); background: transparent; color: var(--text2);
+    cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .comp-scope-pill:hover { background: rgba(255,255,255,0.07); color: var(--text); }
+  .comp-scope-pill.active { background: rgba(99,102,241,0.15); color: #818cf8; border-color: rgba(99,102,241,0.4); }
   .comp-card {
     background: linear-gradient(145deg, #0f0f12, #131316);
     border: 1px solid #18181c;
@@ -10015,36 +10022,56 @@ function renderDonut(st, adv, trades) {
   applyPrivacy();
 }
 
+let _compScopeData = { st: [], cr: [] };
+let _compScope = 'all';
+
+function _renderCompBody(scope) {
+  const tr = scope === 'stock' ? _compScopeData.st
+           : scope === 'crypto' ? _compScopeData.cr
+           : [..._compScopeData.st, ..._compScopeData.cr];
+  const accentColor = scope === 'stock' ? '#818cf8' : scope === 'crypto' ? '#f59e0b' : '#4f83ff';
+  const st = stats(tr);
+  const adv = advancedStats(tr);
+  const winSum  = tr.reduce((s,x)=>{ const v=calcPL(x); return v>0?s+v:s; },0);
+  const lossSum = Math.abs(tr.reduce((s,x)=>{ const v=calcPL(x); return v<0?s+v:s; },0));
+  const pf    = lossSum>0 ? (winSum/lossSum).toFixed(2) : '—';
+  const pfCls = lossSum>0 ? (winSum/lossSum>=1?'num-green':'num-red') : '';
+  const wl    = adv.avgLoss!==0 ? Math.abs(adv.avgWin/adv.avgLoss).toFixed(2)+'x' : '—';
+  const pills = [
+    { key:'all',    label: t('scope_all')    || 'הכל' },
+    { key:'stock',  label: t('comp_stocks')?.replace(/^.*\s/,'') || 'מניות' },
+    { key:'crypto', label: t('comp_crypto')?.replace(/^.*\s/,'') || 'קריפטו' },
+  ].map(p => `<button class="comp-scope-pill${p.key===scope?' active':''}" onclick="_switchCompScope('${p.key}')">${p.label}</button>`).join('');
+  document.getElementById('comp-card-inner').innerHTML = `
+    <div class="comp-scope-pills">${pills}</div>
+    <div class="comp-stat"><span class="comp-stat-label">${t('comp_total_pl')}</span><span class="comp-stat-val ${clr(st.total)} sensitive">${st.n?fmtUSD(st.total):'—'}</span></div>
+    <div class="comp-stat"><span class="comp-stat-label">Win Rate</span>
+      <span class="comp-stat-val"><span class="${st.wr>=50?'num-green':'num-red'}">${fmt(st.wr,1)}%</span>
+      <span style="color:var(--text3);font-size:11px;margin-right:5px;">${st.wins}W / ${st.losses}L</span></span>
+    </div>
+    <div class="comp-stat"><span class="comp-stat-label">Profit Factor</span><span class="comp-stat-val ${pfCls} sensitive">${pf}</span></div>
+    <div class="comp-stat"><span class="comp-stat-label">W/L Ratio</span><span class="comp-stat-val sensitive">${wl}</span></div>
+    <div class="comp-stat"><span class="comp-stat-label">${t('comp_avg_win')}</span><span class="comp-stat-val num-green sensitive">${st.wins?fmtUSD(adv.avgWin):'—'}</span></div>
+    <div class="comp-stat"><span class="comp-stat-label">${t('comp_avg_loss')}</span><span class="comp-stat-val num-red sensitive">${st.losses?fmtUSD(adv.avgLoss):'—'}</span></div>
+    <div class="comp-stat"><span class="comp-stat-label">${t('comp_best')}</span><span class="comp-stat-val num-green sensitive">${st.n?fmtUSD(st.best):'—'}</span></div>
+    <div class="comp-stat"><span class="comp-stat-label">${t('comp_worst')}</span><span class="comp-stat-val num-red sensitive">${st.n?fmtUSD(st.worst):'—'}</span></div>
+    <div class="comp-stat"><span class="comp-stat-label">${t('comp_avg_trade')}</span><span class="comp-stat-val ${clr(st.avg)} sensitive">${st.n?fmtUSD(st.avg):'—'}</span></div>
+    <div class="comp-stat"><span class="comp-stat-label">${t('comp_trades')}</span><span class="comp-stat-val">${st.n}</span></div>
+  `;
+  document.getElementById('comp-card-wrap').style.borderTopColor = accentColor;
+  applyPrivacy();
+}
+
+function _switchCompScope(scope) {
+  _compScope = scope;
+  _renderCompBody(scope);
+}
+
 function renderComparison(stTrades, crTrades) {
-  function card(title, tr, accentColor) {
-    const st = stats(tr);
-    const adv = advancedStats(tr);
-    const winSum  = tr.reduce((s,t)=>{ const v=calcPL(t); return v>0?s+v:s; },0);
-    const lossSum = Math.abs(tr.reduce((s,t)=>{ const v=calcPL(t); return v<0?s+v:s; },0));
-    const pf    = lossSum>0 ? (winSum/lossSum).toFixed(2) : '—';
-    const pfCls = lossSum>0 ? (winSum/lossSum>=1?'num-green':'num-red') : '';
-    const wl    = adv.avgLoss!==0 ? Math.abs(adv.avgWin/adv.avgLoss).toFixed(2)+'x' : '—';
-    return `<div class="comp-card" style="border-top:2px solid ${accentColor};">
-      <h4 style="color:${accentColor}">${title}
-        <span style="font-size:11px;font-weight:500;color:var(--text2);margin-right:8px;">${st.n} ${t('comp_trades')}</span>
-      </h4>
-      <div class="comp-stat"><span class="comp-stat-label">${t('comp_total_pl')}</span><span class="comp-stat-val ${clr(st.total)} sensitive">${st.n?fmtUSD(st.total):'—'}</span></div>
-      <div class="comp-stat"><span class="comp-stat-label">Win Rate</span>
-        <span class="comp-stat-val"><span class="${st.wr>=50?'num-green':'num-red'}">${fmt(st.wr,1)}%</span>
-        <span style="color:var(--text3);font-size:11px;margin-right:5px;">${st.wins}W / ${st.losses}L</span></span>
-      </div>
-      <div class="comp-stat"><span class="comp-stat-label">Profit Factor</span><span class="comp-stat-val ${pfCls} sensitive">${pf}</span></div>
-      <div class="comp-stat"><span class="comp-stat-label">W/L Ratio</span><span class="comp-stat-val sensitive">${wl}</span></div>
-      <div class="comp-stat"><span class="comp-stat-label">${t('comp_avg_win')}</span><span class="comp-stat-val num-green sensitive">${st.wins?fmtUSD(adv.avgWin):'—'}</span></div>
-      <div class="comp-stat"><span class="comp-stat-label">${t('comp_avg_loss')}</span><span class="comp-stat-val num-red sensitive">${st.losses?fmtUSD(adv.avgLoss):'—'}</span></div>
-      <div class="comp-stat"><span class="comp-stat-label">${t('comp_best')}</span><span class="comp-stat-val num-green sensitive">${st.n?fmtUSD(st.best):'—'}</span></div>
-      <div class="comp-stat"><span class="comp-stat-label">${t('comp_worst')}</span><span class="comp-stat-val num-red sensitive">${st.n?fmtUSD(st.worst):'—'}</span></div>
-      <div class="comp-stat"><span class="comp-stat-label">${t('comp_avg_trade')}</span><span class="comp-stat-val ${clr(st.avg)} sensitive">${st.n?fmtUSD(st.avg):'—'}</span></div>
-    </div>`;
-  }
+  _compScopeData = { st: stTrades, cr: crTrades };
   document.getElementById('comparison-wrap').innerHTML =
-    card(t('comp_stocks'), stTrades, '#818cf8') +
-    card(t('comp_crypto'), crTrades, '#f59e0b');
+    `<div class="comp-card" id="comp-card-wrap" style="border-top:2px solid #4f83ff;"><div id="comp-card-inner"></div></div>`;
+  _renderCompBody(_compScope);
 }
 
 // ─────────────────────────────────────────────
