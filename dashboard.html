@@ -15346,7 +15346,7 @@ function ttRender(themes, indices) {
 
   // ── Sentiment Score (overview widget only) ──
   {
-    const green = sorted.filter(t => t[pKey] > 0).length;
+    const green = sorted.filter(t => t[pKey] >= 0).length;
     const total = sorted.length;
     const breadthScore = (green / total) * 100;
     const avgPct = sorted.reduce((s, t) => s + t[pKey], 0) / total;
@@ -15365,13 +15365,11 @@ function ttRender(themes, indices) {
   if (metaEl) {
     const top3 = sorted.slice(0, 5);
     const bot3 = sorted.slice(-5).reverse();
-    const green = sorted.filter(t => t[pKey] > 0).length;
-    const red   = sorted.filter(t => t[pKey] < 0).length;
+    const green = sorted.filter(t => t[pKey] >= 0).length;
+    const red   = sorted.filter(t => t[pKey] <  0).length;
     const total = sorted.length;
-    const neutral   = total - green - red;
-    const greenPct  = Math.round((green   / total) * 100);
-    const redPct    = Math.round((red     / total) * 100);
-    const neutralPct = 100 - greenPct - redPct;
+    const greenPct = Math.round((green / total) * 100);
+    const redPct   = 100 - greenPct;
 
     const podiumRow = t => {
       const pct = t[pKey];
@@ -15392,10 +15390,10 @@ function ttRender(themes, indices) {
       </div>
       <div class="tt-meta-card">
         <div class="tt-meta-title">Market Breadth</div>
-        <div class="tt-breadth-bar-wrap" style="background:linear-gradient(to right,rgba(34,197,94,0.45) ${greenPct}%,rgba(148,163,184,0.25) ${greenPct}% ${greenPct+neutralPct}%,rgba(239,68,68,0.4) ${greenPct+neutralPct}%)"></div>
+        <div class="tt-breadth-bar-wrap" style="background:linear-gradient(to right,rgba(34,197,94,0.45) ${greenPct}%,rgba(239,68,68,0.4) ${greenPct}%)"></div>
         <div class="tt-breadth-labels">
           <span class="tt-breadth-red">▼ ${red} <span style="opacity:0.7">(${redPct}%)</span></span>
-          <span class="tt-breadth-neutral">${neutral?neutral+' ↔ · ':''} ${total} themes</span>
+          <span class="tt-breadth-neutral">${total} themes</span>
           <span class="tt-breadth-green">▲ ${green} <span style="opacity:0.7">(${greenPct}%)</span></span>
         </div>
         <div class="tt-breadth-chips" id="tt-breadth-chips-inner"></div>
