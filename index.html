@@ -271,11 +271,11 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   background: rgba(79,127,255,0.07);
   border: 1px solid rgba(79,127,255,0.2);
   border-radius: 100px;
-  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  font-family: var(--body); font-size: 10px; font-weight: 700;
   color: var(--accent); letter-spacing: 1.5px; text-transform: uppercase;
   margin-bottom: 20px;
 }
-.section-pill::before { content: '//'; opacity: 0.5; }
+.section-pill::before { content: '//'; opacity: 0.4; }
 
 .section-title {
   font-family: var(--display);
@@ -331,10 +331,13 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   color: var(--text);
 }
 
-.hero-title .grad {
-  background: linear-gradient(135deg, #6fa3ff 0%, #c084fc 100%);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text;
+.hero-title .hl {
+  display: block;
+  font-size: 0.65em;
+  font-weight: 500;
+  color: var(--text2);
+  margin-top: 0.2em;
+  letter-spacing: -0.3px;
 }
 
 .hero-sub {
@@ -799,9 +802,12 @@ footer {
 
 /* ── RESPONSIVE ── */
 @media (max-width: 900px) {
-  .features-grid { grid-template-columns: repeat(2,1fr); }
   .steps-row { grid-template-columns: 1fr; gap: 32px; }
   .steps-row::before { display: none; }
+}
+
+@media (max-width: 720px) {
+  .feat-row { grid-template-columns: 1fr; gap: 10px; }
 }
 
 @media (max-width: 768px) {
@@ -816,6 +822,45 @@ footer {
   .cta-inner { padding: 40px 24px; }
   footer { flex-direction: column; text-align: center; }
   .footer-links { justify-content: center; flex-wrap: wrap; }
+}
+
+/* ── FEAT ROWS ── */
+.feat-list {
+  max-width: 900px; margin: 52px auto 0;
+  display: flex; flex-direction: column;
+}
+
+.feat-row {
+  display: grid; grid-template-columns: 1fr 1.65fr;
+  gap: 52px; padding: 32px 0;
+  border-bottom: 1px solid var(--border2);
+  align-items: start;
+  transition: border-color .25s;
+}
+.feat-row:first-child { border-top: 1px solid var(--border2); }
+.feat-row:hover { border-bottom-color: rgba(79,127,255,0.22); }
+
+.feat-row-num {
+  display: block;
+  font-size: 10px; font-weight: 700;
+  color: var(--text3); letter-spacing: 1.5px;
+  margin-bottom: 10px;
+}
+
+.feat-row-title h3 {
+  font-family: var(--display); font-size: 17px; font-weight: 700;
+  color: var(--text); letter-spacing: -0.4px; line-height: 1.3;
+}
+
+.feat-row-desc p {
+  font-size: 14px; color: var(--text2); line-height: 1.75;
+}
+
+.feat-row-badge {
+  display: inline-block; margin-top: 12px;
+  padding: 3px 10px; border-radius: 4px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
+  background: rgba(79,127,255,0.08); color: var(--accent);
 }
 
 /* ── ANIMATIONS ── */
@@ -886,15 +931,19 @@ footer {
 <section id="hero" aria-labelledby="hero-heading">
   <div class="hero-wrap">
     <div>
+      <div class="hero-chip">
+        <div class="chip-dot"></div>
+        פעיל · חינמי לחלוטין
+      </div>
       <h1 class="hero-title" id="hero-heading">
-        יומן מסחר שמפסיק<br>
-        לבזבז לך זמן. תתחיל<br>
-        <span class="grad">לנתח ולהשתפר</span>
+        כל הפסד<br>
+        יש לו דפוס.<br>
+        <span class="hl">הגיע הזמן לגלות שלך.</span>
       </h1>
-      <p class="hero-sub">ייבא עסקאות אוטומטית מהברוקר, עקוב אחרי ביצועים עם נתוני שוק בזמן אמת, וגלה את הדפוסים שמפרידים בין עסקאות רווחיות להפסדיות.</p>
+      <p class="hero-sub">Trading Journal מייבא עסקאות אוטומטית מ-Interactive Brokers ו-Bybit, מנתח ביצועים לפי שעה, יום וסקטור, ומראה לך בדיוק מה עובד — ומה אתה חוזר עליו שוב ושוב.</p>
       <div class="hero-actions">
         <a href="dashboard.html" class="btn-hero-primary">
-          פתח חשבון חינם
+          גלה את הדפוסים שלך — חינם
           <svg width="14" height="14" aria-hidden="true"><use href="#i-arr"/></svg>
         </a>
         <a href="#features" class="btn-hero-ghost">ראה איך זה עובד</a>
@@ -909,16 +958,16 @@ footer {
       </div>
       <div class="hero-stats" role="list" aria-label="נתונים">
         <div class="hero-stat" role="listitem">
-          <div class="stat-num"><span data-count="11" class="counter">11</span><span class="unit">+</span></div>
-          <div class="stat-label">מקורות נתונים</div>
+          <div class="stat-num">אוטו׳</div>
+          <div class="stat-label">ייבוא מ-IBKR ו-Bybit</div>
         </div>
         <div class="hero-stat" role="listitem">
-          <div class="stat-num">אוטו׳</div>
-          <div class="stat-label">ייבוא מהברוקר</div>
+          <div class="stat-num">AI</div>
+          <div class="stat-label">ניתוח מינרביני</div>
         </div>
         <div class="hero-stat" role="listitem">
           <div class="stat-num"><span class="unit">₪</span>0</div>
-          <div class="stat-label">חינמי לחלוטין</div>
+          <div class="stat-label">ללא תשלום לעולם</div>
         </div>
       </div>
     </div>
@@ -1022,46 +1071,61 @@ footer {
 <!-- FEATURES -->
 <section id="features" aria-labelledby="features-heading">
   <div class="centered reveal">
-    <div class="section-pill">features</div>
-    <h2 class="section-title" id="features-heading">כל מה שסוחר רציני צריך</h2>
-    <p class="section-sub">מעקב, ניתוח, נתוני שוק, וחיבור ישיר לברוקר — במקום אחד, בלי לשלם.</p>
+    <div class="section-pill">למה זה עובד</div>
+    <h2 class="section-title" id="features-heading">הכלים שמפרידים בין ניחושים לנתונים</h2>
+    <p class="section-sub">כל פיצ'ר נבנה סביב שאלה אחת: מה גרם לעסקה הזו לעבוד — ומה גרם לזו להיכשל.</p>
   </div>
 
-  <div class="features-grid">
-    <div class="feat c1 reveal">
-      <div class="feat-icon" style="background:rgba(79,127,255,0.1);">
-        <svg width="20" height="20" style="color:#6fa3ff" aria-hidden="true"><use href="#i-bars"/></svg>
+  <div class="feat-list">
+    <div class="feat-row reveal">
+      <div class="feat-row-title">
+        <span class="feat-row-num">01</span>
+        <h3>ייבוא אוטומטי מהברוקר</h3>
       </div>
-      <h3 class="feat-title">מעקב עסקאות</h3>
-      <p class="feat-desc">רשום מניות וקריפטו — כניסה, יציאה, גודל פוזיציה, סטופ. P&L, R-multiple ורווח אחוזי מחושבים אוטומטית.</p>
+      <div class="feat-row-desc">
+        <p>חבר את Interactive Brokers או Bybit וייבא את כל ההיסטוריה תוך דקה. אין CSV, אין הזנה ידנית — העסקאות שלך כבר בפנים.</p>
+        <span class="feat-row-badge">IBKR · Bybit</span>
+      </div>
     </div>
-    <div class="feat c3 reveal">
-      <div class="feat-icon" style="background:rgba(0,230,118,0.08);">
-        <svg width="20" height="20" style="color:#00e676" aria-hidden="true"><use href="#i-trend"/></svg>
+    <div class="feat-row reveal">
+      <div class="feat-row-title">
+        <span class="feat-row-num">02</span>
+        <h3>ניתוח ביצועים מעמיק</h3>
       </div>
-      <h3 class="feat-title">סטטיסטיקות מעמיקות</h3>
-      <p class="feat-desc">Win rate, profit factor, ביצועים לפי יום בשבוע ושעה ביום — גלה מתי ה-edge שלך עובד ומתי לא.</p>
+      <div class="feat-row-desc">
+        <p>Win rate, profit factor ו-R-multiple — לפי שעה, יום בשבוע וסקטור. גלה בדיוק מתי ה-edge שלך עובד, ומתי אתה סוחר נגד עצמך.</p>
+        <span class="feat-row-badge">סטטיסטיקות</span>
+      </div>
     </div>
-    <div class="feat c4 reveal">
-      <div class="feat-icon" style="background:rgba(255,196,61,0.08);">
-        <svg width="20" height="20" style="color:#ffc43d" aria-hidden="true"><use href="#i-globe"/></svg>
+    <div class="feat-row reveal">
+      <div class="feat-row-title">
+        <span class="feat-row-num">03</span>
+        <h3>Market Pulse בזמן אמת</h3>
       </div>
-      <h3 class="feat-title">Market Pulse</h3>
-      <p class="feat-desc">Fear &amp; Greed Index, תמות שוק מובילות, ומדדי סנטימנט לקריפטו ומניות — הקשר שוקי בזמן אמת.</p>
+      <div class="feat-row-desc">
+        <p>Fear &amp; Greed Index, תמות שוק מובילות וסנטימנט קריפטו — הקשר השוקי המלא תמיד מול העיניים. תפסיק לסחור בוואקום.</p>
+        <span class="feat-row-badge">נתוני שוק</span>
+      </div>
     </div>
-    <div class="feat c5 reveal">
-      <div class="feat-icon" style="background:rgba(168,85,247,0.1);">
-        <svg width="20" height="20" style="color:#a855f7" aria-hidden="true"><use href="#i-link"/></svg>
+    <div class="feat-row reveal">
+      <div class="feat-row-title">
+        <span class="feat-row-num">04</span>
+        <h3>עסקאות שפספסת</h3>
       </div>
-      <h3 class="feat-title">חיבור לברוקרים</h3>
-      <p class="feat-desc">חבר את הברוקר שלך וייבא עסקאות אוטומטית — ללא הזנה ידנית. תומך ב-Interactive Brokers ו-Bybit.</p>
+      <div class="feat-row-desc">
+        <p>ראית הזדמנות, לא נכנסת, המניה עלתה. תעד ותנתח. זה הכלי הכי חשוב לשיפור ה-watchlist שלך לאורך זמן.</p>
+        <span class="feat-row-badge">Watchlist</span>
+      </div>
     </div>
-    <div class="feat c6 reveal">
-      <div class="feat-icon" style="background:rgba(255,64,96,0.08);">
-        <svg width="20" height="20" style="color:#ff6080" aria-hidden="true"><use href="#i-tgt"/></svg>
+    <div class="feat-row reveal">
+      <div class="feat-row-title">
+        <span class="feat-row-num">05</span>
+        <h3>ניתוח AI מינרביני</h3>
       </div>
-      <h3 class="feat-title">עסקאות שפספסת</h3>
-      <p class="feat-desc">תעד הזדמנויות שראית אבל לא נכנסת, נתח למה פספסת — כלי קריטי לשיפור מתמיד של ה-watchlist.</p>
+      <div class="feat-row-desc">
+        <p>כניסות, יציאות, ניהול סיכון — המכונה מנתחת לפי שיטת מינרביני ומצביעה בדיוק על הדפוסים שאתה מפספס שוב ושוב.</p>
+        <span class="feat-row-badge">AI</span>
+      </div>
     </div>
   </div>
 </section>
@@ -1070,23 +1134,23 @@ footer {
 <section id="how" aria-labelledby="how-heading">
   <div class="centered reveal">
     <div class="section-pill">flow</div>
-    <h2 class="section-title" id="how-heading">שלושה צעדים להתחלה</h2>
+    <h2 class="section-title" id="how-heading">שלושה צעדים ל-edge שלך</h2>
   </div>
   <div class="steps-row">
     <div class="step reveal">
       <div class="step-circle">01</div>
       <h3 class="step-title">הירשם בחינם</h3>
-      <p class="step-desc">יצירת חשבון עם אימייל או Google. פחות מדקה, ללא כרטיס אשראי.</p>
+      <p class="step-desc">פחות מדקה, ללא כרטיס אשראי. אימייל או Google Sign-In — וכבר בפנים.</p>
     </div>
     <div class="step reveal">
       <div class="step-circle">02</div>
-      <h3 class="step-title">ייבא עסקאות</h3>
-      <p class="step-desc">חבר את הברוקר וייבא אוטומטית, או הכנס ידנית. מניות, קריפטו, ETFs — הכל נתמך.</p>
+      <h3 class="step-title">חבר את הברוקר</h3>
+      <p class="step-desc">Interactive Brokers דרך Flex Query, Bybit דרך API Key. ייבוא אוטומטי מהרגע הראשון — מניות, קריפטו, ETFs.</p>
     </div>
     <div class="step reveal">
       <div class="step-circle">03</div>
-      <h3 class="step-title">קבל תובנות</h3>
-      <p class="step-desc">ה-AI מנתח ומציג תובנות ברורות שיעזרו לך להשתפר כל שבוע.</p>
+      <h3 class="step-title">גלה את הדפוסים שלך</h3>
+      <p class="step-desc">ה-AI עובר על ההיסטוריה שלך ומציג תובנות ברורות — שבוע ראשון, תמצא משהו שלא ידעת.</p>
     </div>
   </div>
 </section>
@@ -1095,25 +1159,25 @@ footer {
 <section id="pricing" class="centered" aria-labelledby="pricing-heading">
   <div class="reveal">
     <div class="section-pill">pricing</div>
-    <h2 class="section-title" id="pricing-heading">חינמי לחלוטין</h2>
-    <p class="section-sub">גישה מלאה לכל הפיצ'רים — ללא תשלום, ללא הגבלה.</p>
+    <h2 class="section-title" id="pricing-heading">חינמי לחלוטין. לא בינתיים — תמיד.</h2>
+    <p class="section-sub">גישה מלאה לכל הפיצ'רים, ללא הגבלת עסקאות. ללא כרטיס אשראי, ללא תוכנית "בסיס".</p>
   </div>
 
   <div class="pricing-outer reveal">
     <div class="pricing-card">
       <div class="pricing-glow" aria-hidden="true"></div>
-      <div class="price-label">FREE PLAN</div>
+      <div class="price-label">FOREVER FREE</div>
       <div class="price-amount">₪0 <span class="per">/ חודש</span></div>
-      <div class="price-note">כל הפיצ'רים פתוחים. ללא כרטיס אשראי.</div>
+      <div class="price-note">כל הפיצ'רים פתוחים. אין מה לשדרג.</div>
       <ul class="price-list" aria-label="מה כלול">
-        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>מעקב עסקאות בלתי מוגבל</li>
-        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>סטטיסטיקות מלאות</li>
-        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>Market Pulse + Fear &amp; Greed</li>
-        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>חיבור Interactive Brokers ו-Bybit</li>
-        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>גיבוי ענן מאובטח</li>
+        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>ייבוא אוטומטי מ-Interactive Brokers ו-Bybit</li>
+        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>סטטיסטיקות מלאות — win rate, P&amp;L, profit factor</li>
+        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>Market Pulse + Fear &amp; Greed Index</li>
+        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>ניתוח AI מינרביני ללא הגבלה</li>
+        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>גיבוי ענן מאובטח — RLS, HTTPS מוצפן</li>
       </ul>
       <a href="dashboard.html" class="btn-hero-primary" style="width:100%;justify-content:center;">
-        פתח חשבון חינם
+        גלה את הדפוסים שלך — חינם
       </a>
     </div>
   </div>
@@ -1149,10 +1213,10 @@ footer {
     </div>
     <div class="faq-item reveal" role="listitem">
       <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a4">
-        האם עובד בנייד?
+        כמה זמן לוקח להגדיר?
         <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
       </button>
-      <div class="faq-a" id="faq-a4" aria-hidden="true">כן, האפליקציה רספונסיבית ועובדת בדפדפן בנייד. אפשר להתקין כ-PWA ישירות מהדפדפן.</div>
+      <div class="faq-a" id="faq-a4" aria-hidden="true">הרשמה — פחות מדקה. חיבור Interactive Brokers — כ-10 דקות בפעם הראשונה (יש מדריך מצורף). ברגע שהחיבור מוגדר, כל עסקה עתידית מיובאת אוטומטית.</div>
     </div>
     <div class="faq-item reveal" role="listitem">
       <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a5">
@@ -1168,10 +1232,10 @@ footer {
 <section id="cta">
   <div class="cta-inner reveal">
     <div class="cta-bg" aria-hidden="true"></div>
-    <h2 class="cta-title">מוכן לדעת מה באמת עובד לך?</h2>
-    <p class="cta-sub">חבר את הברוקר, ייבא את העסקאות, וקבל תובנות שלא ידעת שחיכו לך — בחינם, עכשיו.</p>
+    <h2 class="cta-title">הסוחרים שמשתפרים — יש להם יומן.</h2>
+    <p class="cta-sub">כל שבוע בלי מעקב הוא שבוע של טעויות שחוזרות על עצמן. תפסיק לנחש, תתחיל לעקוב.</p>
     <a href="dashboard.html" class="btn-hero-primary" style="display:inline-flex;font-size:16px;padding:15px 32px;">
-      פתח חשבון חינם
+      גלה את הדפוסים שלך — חינם
       <svg width="15" height="15" aria-hidden="true"><use href="#i-arr"/></svg>
     </a>
     <p style="margin-top:16px;font-size:12px;color:var(--text3);">ללא כרטיס אשראי · הרשמה בפחות מדקה</p>
