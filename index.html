@@ -819,6 +819,7 @@ footer {
   .hero-stats { width: 100%; }
   .hero-stat { flex: 1; text-align: center; }
   .features-grid { grid-template-columns: 1fr; }
+  .testimonials { grid-template-columns: 1fr; }
   .cta-inner { padding: 40px 24px; }
   footer { flex-direction: column; text-align: center; }
   .footer-links { justify-content: center; flex-wrap: wrap; }
@@ -862,6 +863,48 @@ footer {
   font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
   background: rgba(79,127,255,0.08); color: var(--accent);
 }
+
+/* ── SOCIAL PROOF ── */
+.social-proof {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 20px;
+}
+.avatar-stack { display: flex; }
+.avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 2px solid var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: #fff;
+  margin-right: -8px; flex-shrink: 0;
+}
+.avatar-stack .avatar:last-child { margin-right: 0; }
+.social-proof-text { font-size: 12px; color: var(--text3); }
+.social-proof-text strong { color: var(--text2); font-weight: 600; }
+
+/* ── TESTIMONIALS ── */
+.testimonials {
+  max-width: 860px; margin: 52px auto 0;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+}
+.testimonial {
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: 16px; padding: 26px;
+  text-align: right; transition: border-color .25s;
+}
+.testimonial:hover { border-color: rgba(79,127,255,0.2); }
+.testimonial-text {
+  font-size: 14px; color: var(--text2); line-height: 1.8;
+  margin-bottom: 18px;
+}
+.testimonial-author { display: flex; align-items: center; gap: 10px; }
+.testimonial-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+.testimonial-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.testimonial-meta { font-size: 11px; color: var(--text3); margin-top: 2px; }
 
 /* ── ANIMATIONS ── */
 .reveal {
@@ -955,6 +998,16 @@ footer {
         <span class="trust-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>הרשמה בפחות מדקה</span>
         <span class="trust-sep">·</span>
         <span class="trust-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>נתונים מוצפנים ומאובטחים</span>
+      </div>
+      <div class="social-proof">
+        <div class="avatar-stack" aria-hidden="true">
+          <div class="avatar" style="background:linear-gradient(135deg,#4f7fff,#7b61ff)">ד</div>
+          <div class="avatar" style="background:linear-gradient(135deg,#00b894,#00cec9)">א</div>
+          <div class="avatar" style="background:linear-gradient(135deg,#fd79a8,#e17055)">י</div>
+          <div class="avatar" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe)">מ</div>
+          <div class="avatar" style="background:linear-gradient(135deg,#fdcb6e,#e67e22)">ש</div>
+        </div>
+        <p class="social-proof-text"><strong>80+ סוחרים</strong> כבר עוקבים אחרי הדפוסים שלהם</p>
       </div>
       <div class="hero-stats" role="list" aria-label="נתונים">
         <div class="hero-stat" role="listitem">
@@ -1151,6 +1204,36 @@ footer {
       <div class="step-circle">03</div>
       <h3 class="step-title">גלה את הדפוסים שלך</h3>
       <p class="step-desc">ה-AI עובר על ההיסטוריה שלך ומציג תובנות ברורות — שבוע ראשון, תמצא משהו שלא ידעת.</p>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="testimonials" aria-labelledby="testimonials-heading">
+  <div class="centered reveal">
+    <div class="section-pill">סוחרים אומרים</div>
+    <h2 class="section-title" id="testimonials-heading">מה גילו אחרים</h2>
+  </div>
+  <div class="testimonials">
+    <div class="testimonial reveal">
+      <p class="testimonial-text">גיליתי שאני מרוויח הכי טוב בין 10:00 ל-12:00 ומפסיד כמעט תמיד אחר הצהריים. היום אני פשוט לא סוחר אחרי 14:00 — זה לבד שיפר את ה-P&L שלי.</p>
+      <div class="testimonial-author">
+        <div class="testimonial-avatar" style="background:linear-gradient(135deg,#4f7fff,#7b61ff)">א</div>
+        <div>
+          <div class="testimonial-name">א.כ.</div>
+          <div class="testimonial-meta">מניות · Interactive Brokers · 2 שנות מסחר</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial reveal">
+      <p class="testimonial-text">עד שהתחלתי לעקוב, לא הבנתי שאני מנסה לתפוס כל ריצה. הנתונים הראו לי שה-edge האמיתי שלי הוא רק ב-breakouts מנפח גבוה — השאר רעש.</p>
+      <div class="testimonial-author">
+        <div class="testimonial-avatar" style="background:linear-gradient(135deg,#00b894,#00cec9)">ד</div>
+        <div>
+          <div class="testimonial-name">ד.מ.</div>
+          <div class="testimonial-meta">קריפטו + מניות · Bybit · 3 שנות מסחר</div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
