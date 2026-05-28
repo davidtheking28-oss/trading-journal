@@ -1544,7 +1544,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .tt-sent-sub { font-size:11px; color:var(--text3); }
   .tt-sent-bar-wrap { flex:1; height:6px; border-radius:3px; background:rgba(255,255,255,0.07); overflow:hidden; }
   .tt-sent-bar-fill { height:100%; border-radius:3px; transition:width 0.5s ease; }
-  .tt-breadth-bar-wrap { height:8px; border-radius:4px; overflow:hidden; background:rgba(239,68,68,0.3); margin:10px 0 8px; }
+  .tt-breadth-bar-wrap { height:8px; border-radius:4px; overflow:hidden; background:rgba(239,68,68,0.3); margin:10px 0 8px; direction:ltr; }
   .tt-breadth-bar-fill { height:100%; background:var(--green); border-radius:4px; transition:width 0.4s ease; }
   .tt-breadth-labels { display:flex; justify-content:space-between; font-size:11px; }
   .tt-breadth-chips { display:grid; grid-template-columns:1fr 1fr; gap:6px 10px; margin-top:10px; }
@@ -15369,6 +15369,7 @@ function ttRender(themes, indices) {
     const red   = sorted.filter(t => t[pKey] < 0).length;
     const total = sorted.length;
     const greenPct = Math.round((green / total) * 100);
+    const redPct   = Math.round((red   / total) * 100);
 
     const podiumRow = t => {
       const pct = t[pKey];
@@ -15393,9 +15394,9 @@ function ttRender(themes, indices) {
           <div class="tt-breadth-bar-fill" style="width:${greenPct}%"></div>
         </div>
         <div class="tt-breadth-labels">
-          <span class="tt-breadth-green">▲ ${green} <span style="opacity:0.7">(${greenPct}%)</span></span>
+          <span class="tt-breadth-red">▼ ${red} <span style="opacity:0.7">(${redPct}%)</span></span>
           <span class="tt-breadth-neutral">${total} themes</span>
-          <span class="tt-breadth-red">${100 - greenPct}% <span style="opacity:0.7">(${red})</span> ▼</span>
+          <span class="tt-breadth-green">▲ ${green} <span style="opacity:0.7">(${greenPct}%)</span></span>
         </div>
         <div class="tt-breadth-chips" id="tt-breadth-chips-inner"></div>
       </div>`;
