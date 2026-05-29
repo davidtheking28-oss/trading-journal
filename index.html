@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="google-site-verification" content="FSusm5X2VDUsrsnZfnk_L_4V8STvBITiGc044BZ2eC0">
 <title>יומן מסחר חינמי עם AI | ייבוא אוטומטי מ-IBKR ו-Bybit | Trading Journal</title>
-<meta name="description" content="יומן מסחר חינמי לסוחרים ישראלים. ייבוא אוטומטי מ-Interactive Brokers ו-Bybit, ניתוח win rate לפי שעה ויום, Market Pulse בזמן אמת, וAI מינרביני. גלה את הדפוסים שחוזרים בהפסדים שלך.">
-<meta name="keywords" content="יומן מסחר, trading journal, יומן מסחר חינמי, ניתוח עסקאות, מסחר במניות, מסחר בקריפטו, ניהול סיכונים, AI מסחר, interactive brokers ייבוא, bybit יומן, win rate מסחר, profit factor, מינרביני, minervini, market pulse, fear greed index, סוחר יומי ישראל, swing trading יומן">
+<meta name="description" content="יומן מסחר חינמי לסוחרים ישראלים. ייבוא אוטומטי מ-Interactive Brokers ו-Bybit, ניתוח win rate לפי שעה ויום, Market Pulse בזמן אמת. גלה את הדפוסים שחוזרים בהפסדים שלך.">
+<meta name="keywords" content="יומן מסחר, trading journal, יומן מסחר חינמי, ניתוח עסקאות, מסחר במניות, מסחר בקריפטו, ניהול סיכונים, interactive brokers ייבוא, bybit יומן, win rate מסחר, profit factor, market pulse, fear greed index, סוחר יומי ישראל, swing trading יומן">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://davidtheking28-oss.github.io/trading-journal/">
 <meta property="og:type" content="website">
@@ -106,14 +106,6 @@
         "text": "כן, האפליקציה רספונסיבית ועובדת בדפדפן בנייד. אפשר להתקין כ-PWA ישירות מהדפדפן."
       }
     },
-    {
-      "@type": "Question",
-      "name": "מה הוא מצב Minervini AI?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "ניתוח AI מעמיק של עסקאות לפי שיטת מארק מינרביני — מזהה דפוסים, מנתח כניסות ויציאות, ומציע שיפורים ספציפיים."
-      }
-    }
   ]
 }
 </script>
@@ -1152,10 +1144,6 @@ footer {
           <div class="stat-label">ייבוא מ-IBKR ו-Bybit</div>
         </div>
         <div class="hero-stat" role="listitem">
-          <div class="stat-num">AI</div>
-          <div class="stat-label">ניתוח מינרביני</div>
-        </div>
-        <div class="hero-stat" role="listitem">
           <div class="stat-num"><span class="unit">₪</span>0</div>
           <div class="stat-label">ללא תשלום לעולם</div>
         </div>
@@ -1179,7 +1167,6 @@ footer {
           <div class="demo-nav">
             <button class="demo-tab active">סקירה</button>
             <button class="demo-tab">שעות</button>
-            <button class="demo-tab">AI</button>
             <button class="demo-tab">שוק</button>
           </div>
           <div class="demo-progress"><div class="demo-progress-fill" id="demoFill"></div></div>
@@ -1254,26 +1241,7 @@ footer {
             <div class="d-insight">💡 <strong>תובנה:</strong> 82% מהרווח שלך מגיע בין 10:00–12:00. אחרי 13:00 — win rate צונח ל-31%.</div>
           </div>
 
-          <!-- Screen 3: AI Minervini -->
-          <div class="demo-body demo-screen" id="ds2">
-            <div class="d-ai-card">
-              <div class="d-ai-hdr">
-                <div class="d-ai-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></svg></div>
-                <div><div class="d-ai-name">Minervini AI</div><div class="d-ai-trade">NVDA · Long · כניסה $148.20</div></div>
-              </div>
-              <div class="d-score-row">
-                <div class="d-score-num">74</div>
-                <div class="d-score-of">/ 100</div>
-                <div class="d-score-lbl">ציון מינרביני</div>
-              </div>
-              <div class="d-pt ok"><span>✓</span><span>פריצה עם נפח גבוה פי 2.3 מהממוצע</span></div>
-              <div class="d-pt ok"><span>✓</span><span>חוזק יחסי — RS Rating 94</span></div>
-              <div class="d-pt warn"><span>⚠</span><span>יציאה ב-+8.4% — המניה המשיכה ל-+31%</span></div>
-            </div>
-            <div class="d-pattern">🔁 <strong style="color:#f1f5f9">דפוס חוזר:</strong> יצאת מוקדם ב-7 מתוך 9 עסקאות מנצחות — $4,200 פוטנציאל שנשאר על השולחן החודש.</div>
-          </div>
-
-          <!-- Screen 4: Market Pulse -->
+          <!-- Screen 3: Market Pulse -->
           <div class="demo-body demo-screen" id="ds3">
             <div class="d-fg">
               <div class="d-fg-num">68</div>
@@ -1373,16 +1341,6 @@ footer {
         <span class="feat-row-badge">Watchlist</span>
       </div>
     </div>
-    <div class="feat-row reveal">
-      <div class="feat-row-title">
-        <span class="feat-row-num">05</span>
-        <h3>ניתוח AI מינרביני</h3>
-      </div>
-      <div class="feat-row-desc">
-        <p>כניסות, יציאות, ניהול סיכון — המכונה מנתחת לפי שיטת מינרביני ומצביעה בדיוק על הדפוסים שאתה מפספס שוב ושוב.</p>
-        <span class="feat-row-badge">AI</span>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -1438,11 +1396,6 @@ footer {
       <div class="comp-label">ניתוח לפי שעה / יום / סקטור</div>
       <div class="comp-cell bad">נוסחאות מורכבות</div>
       <div class="comp-cell good">מובנה ואוטומטי</div>
-    </div>
-    <div class="comp-row">
-      <div class="comp-label">AI insights מינרביני</div>
-      <div class="comp-cell bad">—</div>
-      <div class="comp-cell good">כלול</div>
     </div>
     <div class="comp-row">
       <div class="comp-label">Market Pulse + Fear &amp; Greed</div>
@@ -1510,7 +1463,6 @@ footer {
         <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>ייבוא אוטומטי מ-Interactive Brokers ו-Bybit</li>
         <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>סטטיסטיקות מלאות — win rate, P&amp;L, profit factor</li>
         <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>Market Pulse + Fear &amp; Greed Index</li>
-        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>ניתוח AI מינרביני ללא הגבלה</li>
         <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>גיבוי ענן מאובטח — RLS, HTTPS מוצפן</li>
       </ul>
       <a href="dashboard.html" class="btn-hero-primary" style="width:100%;justify-content:center;">
@@ -1554,13 +1506,6 @@ footer {
         <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
       </button>
       <div class="faq-a" id="faq-a4" aria-hidden="true">הרשמה — פחות מדקה. חיבור Interactive Brokers — כ-10 דקות בפעם הראשונה (יש מדריך מצורף). ברגע שהחיבור מוגדר, כל עסקה עתידית מיובאת אוטומטית.</div>
-    </div>
-    <div class="faq-item reveal" role="listitem">
-      <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a5">
-        מה הוא מצב Minervini AI?
-        <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
-      </button>
-      <div class="faq-a" id="faq-a5" aria-hidden="true">ניתוח AI מעמיק של עסקאות לפי שיטת מארק מינרביני — מזהה דפוסים, מנתח כניסות ויציאות, ומציע שיפורים ספציפיים.</div>
     </div>
   </div>
 </section>
