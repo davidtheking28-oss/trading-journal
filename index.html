@@ -507,6 +507,68 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   flex-shrink: 0; font-size: 10px;
 }
 
+/* ── DEMO CARD ── */
+.demo-tabs {
+  display: flex; gap: 3px; margin-bottom: 10px;
+  background: rgba(255,255,255,0.03); border-radius: 7px; padding: 3px;
+}
+.demo-tab {
+  flex: 1; padding: 5px 6px; border-radius: 5px;
+  font-size: 10px; font-weight: 600; color: var(--text3);
+  text-align: center; cursor: pointer; transition: all .2s;
+  font-family: var(--body);
+}
+.demo-tab.active { background: rgba(79,127,255,0.18); color: var(--accent); }
+.demo-progress {
+  height: 2px; background: rgba(255,255,255,0.06);
+  border-radius: 1px; margin-bottom: 12px; overflow: hidden;
+}
+.demo-progress-fill {
+  height: 100%; width: 25%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 1px; transition: width .4s ease;
+}
+.demo-screen { display: none; animation: scrIn .3s ease; }
+.demo-screen.active { display: block; }
+@keyframes scrIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+
+/* screen 1 */
+.s1-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.s1-pnl { font-family:var(--mono); font-size:20px; font-weight:700; color:var(--green); }
+.s1-sub { font-size:10px; color:var(--text3); }
+.s1-badge { font-size:9px; padding:2px 7px; background:rgba(0,230,118,0.1); color:var(--green); border-radius:4px; font-weight:700; }
+
+/* screen 2 */
+.s2-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-bottom:10px; }
+.s2-box { background:rgba(255,255,255,0.03); border:1px solid var(--border2); border-radius:8px; padding:8px 10px; }
+.s2-lbl { font-size:9px; color:var(--text3); margin-bottom:3px; font-family:var(--mono); }
+.s2-val { font-family:var(--mono); font-size:15px; font-weight:700; }
+.s2-bars { display:flex; gap:3px; align-items:flex-end; height:44px; padding-bottom:0; }
+.s2-bc { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; }
+.s2-b { width:100%; border-radius:2px 2px 0 0; }
+.s2-bl { font-size:7px; color:var(--text3); }
+
+/* screen 3 */
+.s3-fg { display:flex; align-items:center; gap:10px; padding:9px 12px; background:rgba(255,255,255,0.03); border:1px solid var(--border2); border-radius:9px; margin-bottom:10px; }
+.s3-num { font-family:var(--mono); font-size:26px; font-weight:700; color:var(--amber); line-height:1; }
+.s3-label { font-size:11px; font-weight:700; color:var(--amber); }
+.s3-sublabel { font-size:10px; color:var(--text3); margin-top:1px; }
+.s3-row { display:flex; align-items:center; gap:7px; margin-bottom:5px; }
+.s3-name { font-size:11px; color:var(--text2); width:48px; flex-shrink:0; text-align:right; }
+.s3-bw { flex:1; height:5px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden; }
+.s3-bf { height:100%; border-radius:3px; }
+.s3-pct { font-family:var(--mono); font-size:10px; width:36px; }
+
+/* screen 4 */
+.s4-head { font-size:10px; color:var(--text3); margin-bottom:8px; font-family:var(--mono); }
+.s4-score { display:flex; align-items:baseline; gap:6px; margin-bottom:10px; }
+.s4-num { font-family:var(--mono); font-size:30px; font-weight:700; color:var(--accent); line-height:1; }
+.s4-of { font-size:12px; color:var(--text3); }
+.s4-pt { font-size:11px; margin-bottom:6px; display:flex; gap:6px; line-height:1.45; }
+.s4-pt.ok { color:var(--green); }
+.s4-pt.warn { color:var(--amber); }
+.s4-pattern { margin-top:8px; padding:8px 10px; background:rgba(155,114,255,0.07); border:1px solid rgba(155,114,255,0.15); border-radius:7px; font-size:10px; color:rgba(196,167,255,0.9); line-height:1.55; font-family:var(--mono); }
+
 /* ── TICKER ── */
 .ticker-wrap {
   position: relative; z-index: 1;
@@ -1054,7 +1116,7 @@ footer {
       </div>
     </div>
 
-    <!-- Dashboard mockup -->
+    <!-- Demo slideshow -->
     <div class="hero-visual-wrap" aria-hidden="true">
       <div class="hero-visual-glow"></div>
       <div class="hero-card">
@@ -1064,58 +1126,97 @@ footer {
             <div class="card-dot dot-y"></div>
             <div class="card-dot dot-g"></div>
           </div>
-          <span class="card-label">TRADING_JOURNAL / dashboard.tsx</span>
+          <span class="card-label">Trading Journal</span>
         </div>
 
-        <div class="card-metrics">
-          <div class="cm"><div class="cm-label">P&L MTD</div><div class="cm-val g">+$4,320</div></div>
-          <div class="cm"><div class="cm-label">WIN RATE</div><div class="cm-val b">68.1%</div></div>
-          <div class="cm"><div class="cm-label">TRADES</div><div class="cm-val w">47</div></div>
+        <div class="demo-tabs">
+          <div class="demo-tab active">P&amp;L</div>
+          <div class="demo-tab">שעות</div>
+          <div class="demo-tab">AI</div>
+          <div class="demo-tab">שוק</div>
         </div>
+        <div class="demo-progress"><div class="demo-progress-fill" id="demoFill"></div></div>
 
-        <div class="card-chart">
-          <svg width="100%" height="88" viewBox="0 0 420 88" preserveAspectRatio="none">
+        <!-- Screen 1: P&L + trades -->
+        <div class="demo-screen active" id="ds0">
+          <div class="s1-header">
+            <div>
+              <div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-family:var(--mono)">P&amp;L — מאי 2025</div>
+              <div class="s1-pnl">+$6,840</div>
+            </div>
+            <div class="s1-badge">WIN 71%</div>
+          </div>
+          <svg width="100%" height="56" viewBox="0 0 300 56" preserveAspectRatio="none" style="margin-bottom:10px;border-radius:6px;overflow:hidden">
             <defs>
-              <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#4f7fff" stop-opacity="0.45"/>
-                <stop offset="100%" stop-color="#4f7fff" stop-opacity="0"/>
-              </linearGradient>
-              <linearGradient id="lg" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stop-color="#4f7fff"/>
-                <stop offset="100%" stop-color="#9b72ff"/>
-              </linearGradient>
+              <linearGradient id="dg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00e676" stop-opacity="0.35"/><stop offset="100%" stop-color="#00e676" stop-opacity="0"/></linearGradient>
+              <linearGradient id="dl1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#4f7fff"/><stop offset="100%" stop-color="#00e676"/></linearGradient>
             </defs>
-            <path d="M0,74 C30,70 50,58 80,48 C110,38 130,52 170,34 C210,16 230,28 270,18 C310,9 340,15 380,8 L420,6 L420,88 L0,88Z" fill="url(#cg)"/>
-            <path d="M0,74 C30,70 50,58 80,48 C110,38 130,52 170,34 C210,16 230,28 270,18 C310,9 340,15 380,8 L420,6" fill="none" stroke="url(#lg)" stroke-width="2"/>
-            <!-- candles hint -->
-            <rect x="18" y="60" width="6" height="14" rx="1" fill="rgba(0,230,118,0.35)"/>
-            <rect x="56" y="52" width="6" height="18" rx="1" fill="rgba(0,230,118,0.35)"/>
-            <rect x="94" y="44" width="6" height="22" rx="1" fill="rgba(255,64,96,0.35)"/>
-            <rect x="132" y="38" width="6" height="16" rx="1" fill="rgba(0,230,118,0.35)"/>
+            <path d="M0,48 C20,44 40,36 70,28 C90,22 110,30 140,18 C165,9 190,14 220,8 C250,3 275,5 300,2 L300,56 L0,56Z" fill="url(#dg1)"/>
+            <path d="M0,48 C20,44 40,36 70,28 C90,22 110,30 140,18 C165,9 190,14 220,8 C250,3 275,5 300,2" fill="none" stroke="url(#dl1)" stroke-width="1.5"/>
           </svg>
-        </div>
-
-        <div class="card-trades">
-          <div class="tr">
-            <span class="tr-sym">NVDA</span>
-            <span class="tr-meta">Long · 42d</span>
-            <span class="tr-pnl pos">+$1,240</span>
-          </div>
-          <div class="tr">
-            <span class="tr-sym">BTC</span>
-            <span class="tr-meta">Long · 7d</span>
-            <span class="tr-pnl pos">+$890</span>
-          </div>
-          <div class="tr">
-            <span class="tr-sym">TSLA</span>
-            <span class="tr-meta">Short · 3d</span>
-            <span class="tr-pnl neg">-$210</span>
+          <div class="card-trades">
+            <div class="tr"><span class="tr-sym">NVDA</span><span class="tr-meta">Long · 18d</span><span class="tr-pnl pos">+$2,140</span></div>
+            <div class="tr"><span class="tr-sym">MSFT</span><span class="tr-meta">Long · 9d</span><span class="tr-pnl pos">+$980</span></div>
+            <div class="tr"><span class="tr-sym">BTC</span><span class="tr-meta">Long · 4d</span><span class="tr-pnl pos">+$1,620</span></div>
+            <div class="tr"><span class="tr-sym">TSLA</span><span class="tr-meta">Short · 2d</span><span class="tr-pnl neg">-$310</span></div>
           </div>
         </div>
 
-        <div class="card-ai">
-          <div class="ai-icon" aria-hidden="true"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-stars"/></svg></div>
-          <span>AI: win rate השתפר ב-+8% — כניסות מוקדמות יותר</span>
+        <!-- Screen 2: hours analysis -->
+        <div class="demo-screen" id="ds1">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:8px;font-family:var(--mono)">ביצועים לפי שעה — 3 חודשים</div>
+          <div class="s2-stats">
+            <div class="s2-box"><div class="s2-lbl">WIN RATE</div><div class="s2-val" style="color:var(--green)">71.4%</div></div>
+            <div class="s2-box"><div class="s2-lbl">BEST HOUR</div><div class="s2-val" style="color:var(--accent)">10:00</div></div>
+            <div class="s2-box"><div class="s2-lbl">WORST</div><div class="s2-val" style="color:var(--red)">14:00</div></div>
+          </div>
+          <div class="s2-bars">
+            <div class="s2-bc"><div class="s2-b" style="height:14px;background:rgba(0,230,118,0.25)"></div><div class="s2-bl">9</div></div>
+            <div class="s2-bc"><div class="s2-b" style="height:40px;background:var(--green)"></div><div class="s2-bl">10</div></div>
+            <div class="s2-bc"><div class="s2-b" style="height:36px;background:var(--green)"></div><div class="s2-bl">11</div></div>
+            <div class="s2-bc"><div class="s2-b" style="height:22px;background:rgba(0,230,118,0.5)"></div><div class="s2-bl">12</div></div>
+            <div class="s2-bc"><div class="s2-b" style="height:10px;background:rgba(255,64,96,0.4)"></div><div class="s2-bl">13</div></div>
+            <div class="s2-bc"><div class="s2-b" style="height:30px;background:var(--red)"></div><div class="s2-bl">14</div></div>
+            <div class="s2-bc"><div class="s2-b" style="height:18px;background:rgba(255,64,96,0.5)"></div><div class="s2-bl">15</div></div>
+            <div class="s2-bc"><div class="s2-b" style="height:8px;background:rgba(255,64,96,0.3)"></div><div class="s2-bl">16</div></div>
+          </div>
+          <div style="margin-top:10px;padding:8px 10px;background:rgba(79,127,255,0.07);border:1px solid rgba(79,127,255,0.15);border-radius:7px;font-size:10px;color:var(--text2);line-height:1.5">
+            💡 <strong style="color:var(--text)">תובנה:</strong> 82% מהרווח שלך מגיע בין 10:00–12:00. אחרי 13:00 win rate צונח ל-38%.
+          </div>
+        </div>
+
+        <!-- Screen 3: AI Minervini -->
+        <div class="demo-screen" id="ds2">
+          <div class="s4-head">ניתוח AI — NVDA · Long · כניסה $148.20</div>
+          <div class="s4-score">
+            <div class="s4-num">74</div>
+            <div class="s4-of">/ 100</div>
+            <div style="font-size:11px;color:var(--text3);margin-right:4px">ציון מינרביני</div>
+          </div>
+          <div class="s4-pt ok"><span>✓</span><span>כניסה על פריצה עם נפח גבוה פי 2.3 מהממוצע</span></div>
+          <div class="s4-pt ok"><span>✓</span><span>חוזק יחסי גבוה — RS Rating 94</span></div>
+          <div class="s4-pt warn"><span>⚠</span><span>יציאה ב-+8.4% — המניה המשיכה ל-+31%</span></div>
+          <div class="s4-pattern">🔁 דפוס חוזר: יצאת מוקדם ב-7 מתוך 9 עסקאות מנצחות — הפסדת $4,200 פוטנציאלי החודש</div>
+        </div>
+
+        <!-- Screen 4: Market Pulse -->
+        <div class="demo-screen" id="ds3">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:8px;font-family:var(--mono)">Market Pulse — עכשיו</div>
+          <div class="s3-fg">
+            <div>
+              <div class="s3-num">68</div>
+            </div>
+            <div>
+              <div class="s3-label">GREED</div>
+              <div class="s3-sublabel">Fear &amp; Greed Index</div>
+              <div style="font-size:9px;color:var(--text3);margin-top:2px">STEM: 🟢 שוק אגרסיבי</div>
+            </div>
+          </div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:6px">סקטורים מובילים</div>
+          <div class="s3-row"><div class="s3-name">Tech</div><div class="s3-bw"><div class="s3-bf" style="width:82%;background:var(--green)"></div></div><div class="s3-pct" style="color:var(--green)">+2.4%</div></div>
+          <div class="s3-row"><div class="s3-name">Energy</div><div class="s3-bw"><div class="s3-bf" style="width:54%;background:var(--green)"></div></div><div class="s3-pct" style="color:var(--green)">+1.1%</div></div>
+          <div class="s3-row"><div class="s3-name">Health</div><div class="s3-bw"><div class="s3-bf" style="width:28%;background:var(--red)"></div></div><div class="s3-pct" style="color:var(--red)">-0.7%</div></div>
+          <div class="s3-row"><div class="s3-name">Finance</div><div class="s3-bw"><div class="s3-bf" style="width:44%;background:rgba(0,230,118,0.5)"></div></div><div class="s3-pct" style="color:var(--green)">+0.9%</div></div>
         </div>
       </div>
     </div>
@@ -1447,6 +1548,29 @@ footer {
     });
   }, { threshold: 0.08 });
   document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+  // Demo slideshow
+  (function() {
+    const screens = document.querySelectorAll('.demo-screen');
+    const tabs = document.querySelectorAll('.demo-tab');
+    const fill = document.getElementById('demoFill');
+    const total = screens.length;
+    let cur = 0, timer;
+    function go(idx) {
+      screens[cur].classList.remove('active');
+      tabs[cur].classList.remove('active');
+      cur = idx;
+      screens[cur].classList.add('active');
+      tabs[cur].classList.add('active');
+      fill.style.width = ((cur + 1) / total * 100) + '%';
+    }
+    tabs.forEach((tab, i) => tab.addEventListener('click', () => {
+      clearInterval(timer);
+      go(i);
+      timer = setInterval(() => go((cur + 1) % total), 5000);
+    }));
+    timer = setInterval(() => go((cur + 1) % total), 5000);
+  })();
 
   // Count-up for stats
   function countUp(el, target, duration) {
