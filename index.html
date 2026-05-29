@@ -293,9 +293,9 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 }
 
 .hero-wrap {
-  max-width: 1140px; margin: 0 auto; width: 100%;
-  display: grid; grid-template-columns: 1fr 1.05fr;
-  gap: 64px; align-items: center;
+  max-width: 1200px; margin: 0 auto; width: 100%;
+  display: grid; grid-template-columns: 1fr 1.4fr;
+  gap: 48px; align-items: center;
 }
 
 /* Beta chip */
@@ -1166,7 +1166,8 @@ footer {
         <div class="demo-app">
           <div class="demo-nav">
             <button class="demo-tab active">סקירה</button>
-            <button class="demo-tab">שעות</button>
+            <button class="demo-tab">מניות/קריפטו</button>
+            <button class="demo-tab">השקעות</button>
             <button class="demo-tab">שוק</button>
           </div>
           <div class="demo-progress"><div class="demo-progress-fill" id="demoFill"></div></div>
@@ -1206,39 +1207,87 @@ footer {
             </div>
           </div>
 
-          <!-- Screen 2: Hour analysis -->
+          <!-- Screen 2: Stocks vs Crypto -->
           <div class="demo-body demo-screen" id="ds1">
-            <div class="d-kpi-row">
-              <div class="d-kpi green">
-                <div class="d-kpi-lbl">Best Hour</div>
-                <div class="d-kpi-val green">10:00</div>
-                <div class="d-kpi-sub">Win 84%</div>
+            <div class="d-kpi-row" style="grid-template-columns:1fr 1fr;margin-bottom:8px">
+              <div class="d-kpi blue">
+                <div class="d-kpi-lbl">מניות · P&amp;L</div>
+                <div class="d-kpi-val blue">+$4,420</div>
+                <div class="d-kpi-sub">Win 73% · 31 עסקאות</div>
               </div>
-              <div class="d-kpi red">
-                <div class="d-kpi-lbl">Worst Hour</div>
-                <div class="d-kpi-val red">14:00</div>
-                <div class="d-kpi-sub">Win 31%</div>
+              <div class="d-kpi yel">
+                <div class="d-kpi-lbl">קריפטו · P&amp;L</div>
+                <div class="d-kpi-val yel">+$2,420</div>
+                <div class="d-kpi-sub">Win 66% · 16 עסקאות</div>
+              </div>
+            </div>
+            <div style="background:#111;border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:9px;margin-bottom:8px">
+              <div style="font-size:8.5px;font-weight:700;color:#8896a8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">הקצאת הון</div>
+              <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:5px">
+                <div style="width:65%;background:#818cf8"></div>
+                <div style="width:35%;background:#fbbf24"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:9px">
+                <span style="color:#818cf8">■ מניות 65%</span>
+                <span style="color:#fbbf24">■ קריפטו 35%</span>
+              </div>
+            </div>
+            <div class="d-trades-wrap">
+              <div class="d-trade"><span class="d-trade-sym" style="color:#818cf8">NVDA</span><span class="d-badge L">Long</span><span class="d-trade-meta">מניה</span><span class="d-trade-pnl pos">+$2,140</span></div>
+              <div class="d-trade"><span class="d-trade-sym" style="color:#818cf8">MSFT</span><span class="d-badge L">Long</span><span class="d-trade-meta">מניה</span><span class="d-trade-pnl pos">+$980</span></div>
+              <div class="d-trade"><span class="d-trade-sym" style="color:#fbbf24">BTC</span><span class="d-badge L">Long</span><span class="d-trade-meta">קריפטו</span><span class="d-trade-pnl pos">+$1,620</span></div>
+              <div class="d-trade"><span class="d-trade-sym" style="color:#fbbf24">ETH</span><span class="d-badge L">Long</span><span class="d-trade-meta">קריפטו</span><span class="d-trade-pnl pos">+$800</span></div>
+            </div>
+          </div>
+
+          <!-- Screen 3: Holdings / Investments -->
+          <div class="demo-body demo-screen" id="ds2">
+            <div class="d-kpi-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:8px">
+              <div class="d-kpi green">
+                <div class="d-kpi-lbl">שווי תיק</div>
+                <div class="d-kpi-val green" style="font-size:13px">$42,800</div>
+                <div class="d-kpi-sub">7 פוזיציות</div>
               </div>
               <div class="d-kpi blue">
-                <div class="d-kpi-lbl">Edge Window</div>
-                <div class="d-kpi-val blue">2h</div>
-                <div class="d-kpi-sub">10:00–12:00</div>
+                <div class="d-kpi-lbl">רווח חודש</div>
+                <div class="d-kpi-val blue">+$6,840</div>
+                <div class="d-kpi-sub">↑ שיא אישי</div>
+              </div>
+              <div class="d-kpi yel">
+                <div class="d-kpi-lbl">תשואה</div>
+                <div class="d-kpi-val yel">+18.9%</div>
+                <div class="d-kpi-sub">YTD</div>
               </div>
             </div>
-            <div class="d-chart">
-              <div class="d-chart-lbl">P&amp;L לפי שעת יום</div>
-              <div class="d-bars">
-                <div class="d-bc"><div class="d-b" style="height:16px;background:rgba(45,212,160,0.3)"></div><div class="d-bl">9</div></div>
-                <div class="d-bc"><div class="d-b" style="height:38px;background:#2dd4a0"></div><div class="d-bl">10</div></div>
-                <div class="d-bc"><div class="d-b" style="height:34px;background:#2dd4a0"></div><div class="d-bl">11</div></div>
-                <div class="d-bc"><div class="d-b" style="height:20px;background:rgba(45,212,160,0.55)"></div><div class="d-bl">12</div></div>
-                <div class="d-bc"><div class="d-b" style="height:9px;background:rgba(255,107,138,0.45)"></div><div class="d-bl">13</div></div>
-                <div class="d-bc"><div class="d-b" style="height:32px;background:#ff6b8a"></div><div class="d-bl">14</div></div>
-                <div class="d-bc"><div class="d-b" style="height:20px;background:rgba(255,107,138,0.55)"></div><div class="d-bl">15</div></div>
-                <div class="d-bc"><div class="d-b" style="height:8px;background:rgba(255,107,138,0.3)"></div><div class="d-bl">16</div></div>
+            <div style="background:#111;border:1px solid rgba(255,255,255,0.06);border-radius:8px;overflow:hidden">
+              <div style="padding:7px 9px;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;justify-content:space-between;font-size:8px;font-weight:700;color:#8896a8;text-transform:uppercase;letter-spacing:1px">
+                <span>נייר</span><span>שווי</span><span>שינוי</span>
+              </div>
+              <div style="padding:7px 9px;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;gap:7px">
+                <span style="font-size:12px;font-weight:700;color:#f1f5f9;font-family:monospace;min-width:38px">NVDA</span>
+                <div style="flex:1;height:3px;background:rgba(255,255,255,0.05);border-radius:2px"><div style="width:78%;height:100%;background:#2dd4a0;border-radius:2px"></div></div>
+                <span style="font-size:11px;font-weight:700;color:#f1f5f9;min-width:42px">$8,400</span>
+                <span style="font-size:11px;font-weight:700;color:#2dd4a0;min-width:40px">+24.5%</span>
+              </div>
+              <div style="padding:7px 9px;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;gap:7px">
+                <span style="font-size:12px;font-weight:700;color:#fbbf24;font-family:monospace;min-width:38px">BTC</span>
+                <div style="flex:1;height:3px;background:rgba(255,255,255,0.05);border-radius:2px"><div style="width:58%;height:100%;background:#2dd4a0;border-radius:2px"></div></div>
+                <span style="font-size:11px;font-weight:700;color:#f1f5f9;min-width:42px">$6,200</span>
+                <span style="font-size:11px;font-weight:700;color:#2dd4a0;min-width:40px">+18.2%</span>
+              </div>
+              <div style="padding:7px 9px;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;gap:7px">
+                <span style="font-size:12px;font-weight:700;color:#f1f5f9;font-family:monospace;min-width:38px">AAPL</span>
+                <div style="flex:1;height:3px;background:rgba(255,255,255,0.05);border-radius:2px"><div style="width:38%;height:100%;background:#2dd4a0;border-radius:2px"></div></div>
+                <span style="font-size:11px;font-weight:700;color:#f1f5f9;min-width:42px">$4,100</span>
+                <span style="font-size:11px;font-weight:700;color:#2dd4a0;min-width:40px">+8.7%</span>
+              </div>
+              <div style="padding:7px 9px;display:flex;align-items:center;gap:7px">
+                <span style="font-size:12px;font-weight:700;color:#fbbf24;font-family:monospace;min-width:38px">ETH</span>
+                <div style="flex:1;height:3px;background:rgba(255,255,255,0.05);border-radius:2px"><div style="width:28%;height:100%;background:#2dd4a0;border-radius:2px"></div></div>
+                <span style="font-size:11px;font-weight:700;color:#f1f5f9;min-width:42px">$2,800</span>
+                <span style="font-size:11px;font-weight:700;color:#2dd4a0;min-width:40px">+9.1%</span>
               </div>
             </div>
-            <div class="d-insight">💡 <strong>תובנה:</strong> 82% מהרווח שלך מגיע בין 10:00–12:00. אחרי 13:00 — win rate צונח ל-31%.</div>
           </div>
 
           <!-- Screen 3: Market Pulse -->
