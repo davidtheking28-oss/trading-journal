@@ -525,7 +525,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   background: linear-gradient(90deg, #6366f1, #818cf8);
   transition: width .4s ease;
 }
-.demo-body { padding: 14px; }
+.demo-body { padding: 14px; min-height: 310px; box-sizing: border-box; }
 .demo-screen { display: none; animation: scrIn .28s ease; }
 .demo-screen.active { display: block; }
 @keyframes scrIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
