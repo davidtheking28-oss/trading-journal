@@ -293,9 +293,9 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 }
 
 .hero-wrap {
-  max-width: 1200px; margin: 0 auto; width: 100%;
-  display: grid; grid-template-columns: 1fr 1.4fr;
-  gap: 48px; align-items: center;
+  max-width: 1260px; margin: 0 auto; width: 100%;
+  display: grid; grid-template-columns: 0.85fr 1.6fr;
+  gap: 44px; align-items: center;
 }
 
 /* Beta chip */
@@ -525,47 +525,53 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   background: linear-gradient(90deg, #6366f1, #818cf8);
   transition: width .4s ease;
 }
-.demo-body { padding: 11px; }
+.demo-body { padding: 14px; }
 .demo-screen { display: none; animation: scrIn .28s ease; }
 .demo-screen.active { display: block; }
 @keyframes scrIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
 
 /* KPI row */
-.d-kpi-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 9px; }
+.d-kpi-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 12px; }
 .d-kpi {
-  background: #111111; border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 8px; padding: 8px 10px;
+  background: #111111; border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px; padding: 14px 16px;
   position: relative; overflow: hidden;
 }
-.d-kpi::before {
-  content: ''; position: absolute; top: 0; right: 0; left: 0; height: 1.5px;
+.d-kpi::after {
+  content: ''; position: absolute; top: 0; right: 0; left: 0; height: 2px;
+  border-radius: 10px 10px 0 0;
 }
-.d-kpi.blue::before  { background: linear-gradient(90deg, transparent, rgba(129,140,248,0.65), transparent); }
-.d-kpi.green::before { background: linear-gradient(90deg, transparent, rgba(45,212,160,0.65), transparent); }
-.d-kpi.red::before   { background: linear-gradient(90deg, transparent, rgba(255,107,138,0.65), transparent); }
-.d-kpi.yel::before   { background: linear-gradient(90deg, transparent, rgba(251,191,36,0.65), transparent); }
-.d-kpi-lbl { font-size: 8px; color: #8896a8; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-.d-kpi-val { font-size: 15px; font-weight: 800; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
+.d-kpi.blue::after  { background: linear-gradient(90deg, transparent, rgba(129,140,248,0.6), transparent); }
+.d-kpi.green::after { background: linear-gradient(90deg, transparent, rgba(45,212,160,0.6), transparent); }
+.d-kpi.red::after   { background: linear-gradient(90deg, transparent, rgba(255,107,138,0.6), transparent); }
+.d-kpi.yel::after   { background: linear-gradient(90deg, transparent, rgba(251,191,36,0.6), transparent); }
+.d-kpi-lbl { font-size: 9px; color: #8896a8; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.d-kpi-val { font-size: 22px; font-weight: 800; letter-spacing: -0.6px; font-variant-numeric: tabular-nums; }
 .d-kpi-val.blue  { color: #818cf8; }
 .d-kpi-val.green { color: #2dd4a0; }
 .d-kpi-val.red   { color: #ff6b8a; }
 .d-kpi-val.yel   { color: #fbbf24; }
 .d-kpi-val.white { color: #f1f5f9; }
-.d-kpi-sub { font-size: 9px; color: #8896a8; margin-top: 3px; }
+.d-kpi-sub { font-size: 10px; color: #8896a8; margin-top: 5px; line-height: 1.4; }
 
-/* Trade rows */
-.d-trades-wrap { background: #111111; border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; overflow: hidden; }
+/* Trade table */
+.d-trades-wrap { background: #111111; border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; overflow: hidden; }
+.d-trade-hdr {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 12px; border-bottom: 1px solid rgba(255,255,255,0.06);
+  font-size: 9px; font-weight: 700; color: #8896a8; text-transform: uppercase; letter-spacing: 0.8px;
+}
 .d-trade {
-  display: flex; align-items: center; gap: 7px;
-  padding: 7px 9px; border-bottom: 1px solid rgba(255,255,255,0.04);
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 12px; border-bottom: 1px solid rgba(255,255,255,0.04);
 }
 .d-trade:last-child { border-bottom: none; }
-.d-trade-sym { font-size: 12px; font-weight: 700; color: #f1f5f9; font-family: monospace; min-width: 38px; }
-.d-badge { display: inline-flex; padding: 1px 5px; border-radius: 3px; font-size: 9px; font-weight: 700; }
-.d-badge.L { background: rgba(45,212,160,0.12); color: #2dd4a0; }
-.d-badge.S { background: rgba(255,107,138,0.12); color: #ff6b8a; }
-.d-trade-meta { font-size: 10px; color: #8896a8; flex: 1; }
-.d-trade-pnl { font-size: 11.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.d-trade-sym { font-size: 13px; font-weight: 700; color: #f1f5f9; font-family: monospace; min-width: 44px; }
+.d-badge { display: inline-flex; padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+.d-badge.L { background: rgba(45,212,160,0.12); color: #2dd4a0; border: 1px solid rgba(45,212,160,0.2); }
+.d-badge.S { background: rgba(255,107,138,0.12); color: #ff6b8a; border: 1px solid rgba(255,107,138,0.2); }
+.d-trade-meta { font-size: 11px; color: #8896a8; flex: 1; }
+.d-trade-pnl { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .d-trade-pnl.pos { color: #2dd4a0; }
 .d-trade-pnl.neg { color: #ff6b8a; }
 
@@ -1200,39 +1206,49 @@ footer {
               <path d="M0,46 C25,42 45,34 75,24 C95,17 115,28 145,16 C168,7 192,12 222,6 C252,1 275,4 300,2" fill="none" stroke="url(#dl1)" stroke-width="1.5"/>
             </svg>
             <div class="d-trades-wrap">
-              <div class="d-trade"><span class="d-trade-sym">NVDA</span><span class="d-badge L">Long</span><span class="d-trade-meta">18d · BO</span><span class="d-trade-pnl pos">+$2,140</span></div>
-              <div class="d-trade"><span class="d-trade-sym">MSFT</span><span class="d-badge L">Long</span><span class="d-trade-meta">9d · LPS</span><span class="d-trade-pnl pos">+$980</span></div>
-              <div class="d-trade"><span class="d-trade-sym">BTC</span><span class="d-badge L">Long</span><span class="d-trade-meta">4d · Handle</span><span class="d-trade-pnl pos">+$1,620</span></div>
-              <div class="d-trade"><span class="d-trade-sym">TSLA</span><span class="d-badge S">Short</span><span class="d-trade-meta">2d · חדש</span><span class="d-trade-pnl neg">-$310</span></div>
+              <div class="d-trade-hdr"><span style="min-width:44px">נייר</span><span style="min-width:46px">כיוון</span><span style="flex:1">פטרן</span><span>P&amp;L</span></div>
+              <div class="d-trade"><span class="d-trade-sym">NVDA</span><span class="d-badge L">Long</span><span class="d-trade-meta">Breakout</span><span class="d-trade-pnl pos">+$2,140</span></div>
+              <div class="d-trade"><span class="d-trade-sym">MSFT</span><span class="d-badge L">Long</span><span class="d-trade-meta">LPS</span><span class="d-trade-pnl pos">+$980</span></div>
+              <div class="d-trade"><span class="d-trade-sym">BTC</span><span class="d-badge L">Long</span><span class="d-trade-meta">Handle</span><span class="d-trade-pnl pos">+$1,620</span></div>
+              <div class="d-trade"><span class="d-trade-sym">TSLA</span><span class="d-badge S">Short</span><span class="d-trade-meta">חדש</span><span class="d-trade-pnl neg">-$310</span></div>
             </div>
           </div>
 
           <!-- Screen 2: Stocks vs Crypto -->
           <div class="demo-body demo-screen" id="ds1">
-            <div class="d-kpi-row" style="grid-template-columns:1fr 1fr;margin-bottom:8px">
+            <div class="d-kpi-row" style="grid-template-columns:1fr 1fr 1fr">
               <div class="d-kpi blue">
-                <div class="d-kpi-lbl">מניות · P&amp;L</div>
+                <div class="d-kpi-lbl">מניות P&amp;L</div>
                 <div class="d-kpi-val blue">+$4,420</div>
-                <div class="d-kpi-sub">Win 73% · 31 עסקאות</div>
+                <div class="d-kpi-sub">Win Rate 73%</div>
               </div>
               <div class="d-kpi yel">
-                <div class="d-kpi-lbl">קריפטו · P&amp;L</div>
+                <div class="d-kpi-lbl">קריפטו P&amp;L</div>
                 <div class="d-kpi-val yel">+$2,420</div>
-                <div class="d-kpi-sub">Win 66% · 16 עסקאות</div>
+                <div class="d-kpi-sub">Win Rate 66%</div>
+              </div>
+              <div class="d-kpi green">
+                <div class="d-kpi-lbl">סה"כ עסקאות</div>
+                <div class="d-kpi-val green">47</div>
+                <div class="d-kpi-sub">31 מניות · 16 קריפטו</div>
               </div>
             </div>
-            <div style="background:#111;border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:9px;margin-bottom:8px">
-              <div style="font-size:8.5px;font-weight:700;color:#8896a8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">הקצאת הון</div>
-              <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:5px">
-                <div style="width:65%;background:#818cf8"></div>
-                <div style="width:35%;background:#fbbf24"></div>
+            <div style="background:#111;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px 14px;margin-bottom:12px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <span style="font-size:9px;font-weight:700;color:#8896a8;text-transform:uppercase;letter-spacing:1px">הקצאת הון</span>
+                <span style="font-size:10px;color:#8896a8">$28,400 מנוהל</span>
               </div>
-              <div style="display:flex;justify-content:space-between;font-size:9px">
-                <span style="color:#818cf8">■ מניות 65%</span>
-                <span style="color:#fbbf24">■ קריפטו 35%</span>
+              <div style="display:flex;height:7px;border-radius:4px;overflow:hidden;margin-bottom:6px;gap:2px">
+                <div style="width:65%;background:linear-gradient(90deg,#6366f1,#818cf8);border-radius:4px 0 0 4px"></div>
+                <div style="width:35%;background:linear-gradient(90deg,#d97706,#fbbf24);border-radius:0 4px 4px 0"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:10px">
+                <span style="color:#818cf8;font-weight:600">■ מניות — 65% · $18,460</span>
+                <span style="color:#fbbf24;font-weight:600">■ קריפטו — 35% · $9,940</span>
               </div>
             </div>
             <div class="d-trades-wrap">
+              <div class="d-trade-hdr"><span style="min-width:44px">נייר</span><span style="min-width:50px">כיוון</span><span style="flex:1">סוג</span><span>P&amp;L</span></div>
               <div class="d-trade"><span class="d-trade-sym" style="color:#818cf8">NVDA</span><span class="d-badge L">Long</span><span class="d-trade-meta">מניה</span><span class="d-trade-pnl pos">+$2,140</span></div>
               <div class="d-trade"><span class="d-trade-sym" style="color:#818cf8">MSFT</span><span class="d-badge L">Long</span><span class="d-trade-meta">מניה</span><span class="d-trade-pnl pos">+$980</span></div>
               <div class="d-trade"><span class="d-trade-sym" style="color:#fbbf24">BTC</span><span class="d-badge L">Long</span><span class="d-trade-meta">קריפטו</span><span class="d-trade-pnl pos">+$1,620</span></div>
@@ -1242,50 +1258,56 @@ footer {
 
           <!-- Screen 3: Holdings / Investments -->
           <div class="demo-body demo-screen" id="ds2">
-            <div class="d-kpi-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:8px">
+            <div class="d-kpi-row">
               <div class="d-kpi green">
                 <div class="d-kpi-lbl">שווי תיק</div>
-                <div class="d-kpi-val green" style="font-size:13px">$42,800</div>
-                <div class="d-kpi-sub">7 פוזיציות</div>
+                <div class="d-kpi-val green">$42,800</div>
+                <div class="d-kpi-sub">7 פוזיציות פתוחות</div>
               </div>
               <div class="d-kpi blue">
                 <div class="d-kpi-lbl">רווח חודש</div>
                 <div class="d-kpi-val blue">+$6,840</div>
-                <div class="d-kpi-sub">↑ שיא אישי</div>
+                <div class="d-kpi-sub">↑ שיא אישי החודש</div>
               </div>
               <div class="d-kpi yel">
-                <div class="d-kpi-lbl">תשואה</div>
+                <div class="d-kpi-lbl">תשואה YTD</div>
                 <div class="d-kpi-val yel">+18.9%</div>
-                <div class="d-kpi-sub">YTD</div>
+                <div class="d-kpi-sub">Profit Factor 2.18</div>
               </div>
             </div>
-            <div style="background:#111;border:1px solid rgba(255,255,255,0.06);border-radius:8px;overflow:hidden">
-              <div style="padding:7px 9px;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;justify-content:space-between;font-size:8px;font-weight:700;color:#8896a8;text-transform:uppercase;letter-spacing:1px">
-                <span>נייר</span><span>שווי</span><span>שינוי</span>
+            <div style="background:#111;border:1px solid rgba(255,255,255,0.07);border-radius:10px;overflow:hidden">
+              <div style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:8px;font-size:9px;font-weight:700;color:#8896a8;text-transform:uppercase;letter-spacing:0.8px">
+                <span style="min-width:44px">נייר</span><span style="flex:1">הקצאה</span><span style="min-width:50px;text-align:left">שווי</span><span style="min-width:48px;text-align:left">שינוי</span>
               </div>
-              <div style="padding:7px 9px;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;gap:7px">
-                <span style="font-size:12px;font-weight:700;color:#f1f5f9;font-family:monospace;min-width:38px">NVDA</span>
-                <div style="flex:1;height:3px;background:rgba(255,255,255,0.05);border-radius:2px"><div style="width:78%;height:100%;background:#2dd4a0;border-radius:2px"></div></div>
-                <span style="font-size:11px;font-weight:700;color:#f1f5f9;min-width:42px">$8,400</span>
-                <span style="font-size:11px;font-weight:700;color:#2dd4a0;min-width:40px">+24.5%</span>
+              <div style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;gap:8px">
+                <span style="font-size:13px;font-weight:700;color:#f1f5f9;font-family:monospace;min-width:44px">NVDA</span>
+                <div style="flex:1;height:4px;background:rgba(255,255,255,0.05);border-radius:2px"><div style="width:78%;height:100%;background:linear-gradient(90deg,#6366f1,#818cf8);border-radius:2px"></div></div>
+                <span style="font-size:12px;font-weight:700;color:#f1f5f9;min-width:50px">$8,400</span>
+                <span style="font-size:12px;font-weight:700;color:#2dd4a0;min-width:48px">+24.5%</span>
               </div>
-              <div style="padding:7px 9px;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;gap:7px">
-                <span style="font-size:12px;font-weight:700;color:#fbbf24;font-family:monospace;min-width:38px">BTC</span>
-                <div style="flex:1;height:3px;background:rgba(255,255,255,0.05);border-radius:2px"><div style="width:58%;height:100%;background:#2dd4a0;border-radius:2px"></div></div>
-                <span style="font-size:11px;font-weight:700;color:#f1f5f9;min-width:42px">$6,200</span>
-                <span style="font-size:11px;font-weight:700;color:#2dd4a0;min-width:40px">+18.2%</span>
+              <div style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;gap:8px">
+                <span style="font-size:13px;font-weight:700;color:#fbbf24;font-family:monospace;min-width:44px">BTC</span>
+                <div style="flex:1;height:4px;background:rgba(255,255,255,0.05);border-radius:2px"><div style="width:58%;height:100%;background:linear-gradient(90deg,#d97706,#fbbf24);border-radius:2px"></div></div>
+                <span style="font-size:12px;font-weight:700;color:#f1f5f9;min-width:50px">$6,200</span>
+                <span style="font-size:12px;font-weight:700;color:#2dd4a0;min-width:48px">+18.2%</span>
               </div>
-              <div style="padding:7px 9px;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;gap:7px">
-                <span style="font-size:12px;font-weight:700;color:#f1f5f9;font-family:monospace;min-width:38px">AAPL</span>
-                <div style="flex:1;height:3px;background:rgba(255,255,255,0.05);border-radius:2px"><div style="width:38%;height:100%;background:#2dd4a0;border-radius:2px"></div></div>
-                <span style="font-size:11px;font-weight:700;color:#f1f5f9;min-width:42px">$4,100</span>
-                <span style="font-size:11px;font-weight:700;color:#2dd4a0;min-width:40px">+8.7%</span>
+              <div style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;gap:8px">
+                <span style="font-size:13px;font-weight:700;color:#f1f5f9;font-family:monospace;min-width:44px">AAPL</span>
+                <div style="flex:1;height:4px;background:rgba(255,255,255,0.05);border-radius:2px"><div style="width:38%;height:100%;background:linear-gradient(90deg,#6366f1,#818cf8);border-radius:2px"></div></div>
+                <span style="font-size:12px;font-weight:700;color:#f1f5f9;min-width:50px">$4,100</span>
+                <span style="font-size:12px;font-weight:700;color:#2dd4a0;min-width:48px">+8.7%</span>
               </div>
-              <div style="padding:7px 9px;display:flex;align-items:center;gap:7px">
-                <span style="font-size:12px;font-weight:700;color:#fbbf24;font-family:monospace;min-width:38px">ETH</span>
-                <div style="flex:1;height:3px;background:rgba(255,255,255,0.05);border-radius:2px"><div style="width:28%;height:100%;background:#2dd4a0;border-radius:2px"></div></div>
-                <span style="font-size:11px;font-weight:700;color:#f1f5f9;min-width:42px">$2,800</span>
-                <span style="font-size:11px;font-weight:700;color:#2dd4a0;min-width:40px">+9.1%</span>
+              <div style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;gap:8px">
+                <span style="font-size:13px;font-weight:700;color:#fbbf24;font-family:monospace;min-width:44px">ETH</span>
+                <div style="flex:1;height:4px;background:rgba(255,255,255,0.05);border-radius:2px"><div style="width:26%;height:100%;background:linear-gradient(90deg,#d97706,#fbbf24);border-radius:2px"></div></div>
+                <span style="font-size:12px;font-weight:700;color:#f1f5f9;min-width:50px">$2,800</span>
+                <span style="font-size:12px;font-weight:700;color:#2dd4a0;min-width:48px">+9.1%</span>
+              </div>
+              <div style="padding:10px 12px;display:flex;align-items:center;gap:8px">
+                <span style="font-size:13px;font-weight:700;color:#f1f5f9;font-family:monospace;min-width:44px">MSFT</span>
+                <div style="flex:1;height:4px;background:rgba(255,255,255,0.05);border-radius:2px"><div style="width:32%;height:100%;background:linear-gradient(90deg,#6366f1,#818cf8);border-radius:2px"></div></div>
+                <span style="font-size:12px;font-weight:700;color:#f1f5f9;min-width:50px">$3,900</span>
+                <span style="font-size:12px;font-weight:700;color:#2dd4a0;min-width:48px">+11.3%</span>
               </div>
             </div>
           </div>
