@@ -427,13 +427,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   margin-bottom: 16px;
 }
 
-.card-dots { display: flex; gap: 5px; }
-.card-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-}
-.dot-r { background: #ff5f57; }
-.dot-y { background: #febc2e; }
-.dot-g { background: #28c840; }
+.card-dots { display: none; }
 
 .card-label {
   font-family: var(--mono); font-size: 10px;
@@ -519,13 +513,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   font-family: inherit;
 }
 .demo-tab.active { color: #818cf8; border-bottom-color: #818cf8; font-weight: 600; }
-.demo-progress { height: 2px; background: rgba(255,255,255,0.04); }
-.demo-progress-fill {
-  height: 100%; width: 25%;
-  background: linear-gradient(90deg, #6366f1, #818cf8);
-  transition: width .4s ease;
-}
-.demo-body { padding: 14px; min-height: 310px; box-sizing: border-box; }
+.demo-body { padding: 14px; height: 340px; overflow: hidden; box-sizing: border-box; }
 .demo-screen { display: none; animation: scrIn .28s ease; }
 .demo-screen.active { display: block; }
 @keyframes scrIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
@@ -1176,7 +1164,6 @@ footer {
             <button class="demo-tab">השקעות</button>
             <button class="demo-tab">שוק</button>
           </div>
-          <div class="demo-progress"><div class="demo-progress-fill" id="demoFill"></div></div>
 
           <!-- Screen 1: Overview / P&L -->
           <div class="demo-body demo-screen active" id="ds0">
@@ -1653,7 +1640,6 @@ footer {
   (function() {
     const screens = document.querySelectorAll('.demo-screen');
     const tabs = document.querySelectorAll('.demo-tab');
-    const fill = document.getElementById('demoFill');
     const total = screens.length;
     let cur = 0, timer;
     function go(idx) {
@@ -1662,7 +1648,6 @@ footer {
       cur = idx;
       screens[cur].classList.add('active');
       tabs[cur].classList.add('active');
-      fill.style.width = ((cur + 1) / total * 100) + '%';
     }
     tabs.forEach((tab, i) => tab.addEventListener('click', () => {
       clearInterval(timer);
