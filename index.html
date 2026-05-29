@@ -496,7 +496,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 /* ── DEMO CARD (mirrors real dashboard palette) ── */
 .demo-app {
   background: #0b0b0e; border-radius: 12px; overflow: hidden;
-  font-family: 'Heebo', sans-serif;
+  font-family: var(--body);
 }
 .demo-nav {
   display: flex; gap: 0;
@@ -554,7 +554,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   padding: 9px 12px; border-bottom: 1px solid rgba(255,255,255,0.04);
 }
 .d-trade:last-child { border-bottom: none; }
-.d-trade-sym { font-size: 13px; font-weight: 700; color: #f1f5f9; font-family: monospace; min-width: 44px; }
+.d-trade-sym { font-size: 13px; font-weight: 700; color: #f1f5f9; font-family: 'IBM Plex Mono', monospace; min-width: 44px; }
 .d-badge { display: inline-flex; padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; }
 .d-badge.L { background: rgba(45,212,160,0.12); color: #2dd4a0; border: 1px solid rgba(45,212,160,0.2); }
 .d-badge.S { background: rgba(255,107,138,0.12); color: #ff6b8a; border: 1px solid rgba(255,107,138,0.2); }
@@ -591,7 +591,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 
 /* Market Pulse screen */
 .d-fg { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.15); border-radius: 8px; margin-bottom: 8px; }
-.d-fg-num   { font-size: 28px; font-weight: 800; color: #fbbf24; line-height: 1; font-variant-numeric: tabular-nums; }
+.d-fg-num   { font-size: 28px; font-weight: 800; color: #fbbf24; line-height: 1; font-variant-numeric: tabular-nums; font-family: 'IBM Plex Mono', monospace; }
 .d-fg-label { font-size: 11px; font-weight: 700; color: #fbbf24; }
 .d-fg-sub   { font-size: 9.5px; color: #8896a8; margin-top: 2px; }
 .d-stem     { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; padding: 2px 7px; background: rgba(45,212,160,0.1); border-radius: 10px; font-size: 9.5px; color: #2dd4a0; font-weight: 700; }
@@ -1268,31 +1268,31 @@ footer {
                 <span style="min-width:44px">נייר</span><span style="flex:1">הקצאה</span><span style="min-width:50px;text-align:left">שווי</span><span style="min-width:48px;text-align:left">שינוי</span>
               </div>
               <div style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;gap:8px">
-                <span style="font-size:13px;font-weight:700;color:#f1f5f9;font-family:monospace;min-width:44px">NVDA</span>
+                <span style="font-size:13px;font-weight:700;color:#f1f5f9;font-family:'IBM Plex Mono',monospace;min-width:44px">NVDA</span>
                 <div style="flex:1;height:4px;background:rgba(255,255,255,0.05);border-radius:2px"><div style="width:78%;height:100%;background:linear-gradient(90deg,#6366f1,#818cf8);border-radius:2px"></div></div>
                 <span style="font-size:12px;font-weight:700;color:#f1f5f9;min-width:50px">$8,400</span>
                 <span style="font-size:12px;font-weight:700;color:#2dd4a0;min-width:48px">+24.5%</span>
               </div>
               <div style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;gap:8px">
-                <span style="font-size:13px;font-weight:700;color:#fbbf24;font-family:monospace;min-width:44px">BTC</span>
+                <span style="font-size:13px;font-weight:700;color:#fbbf24;font-family:'IBM Plex Mono',monospace;min-width:44px">BTC</span>
                 <div style="flex:1;height:4px;background:rgba(255,255,255,0.05);border-radius:2px"><div style="width:58%;height:100%;background:linear-gradient(90deg,#d97706,#fbbf24);border-radius:2px"></div></div>
                 <span style="font-size:12px;font-weight:700;color:#f1f5f9;min-width:50px">$6,200</span>
                 <span style="font-size:12px;font-weight:700;color:#2dd4a0;min-width:48px">+18.2%</span>
               </div>
               <div style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;gap:8px">
-                <span style="font-size:13px;font-weight:700;color:#f1f5f9;font-family:monospace;min-width:44px">AAPL</span>
+                <span style="font-size:13px;font-weight:700;color:#f1f5f9;font-family:'IBM Plex Mono',monospace;min-width:44px">AAPL</span>
                 <div style="flex:1;height:4px;background:rgba(255,255,255,0.05);border-radius:2px"><div style="width:38%;height:100%;background:linear-gradient(90deg,#6366f1,#818cf8);border-radius:2px"></div></div>
                 <span style="font-size:12px;font-weight:700;color:#f1f5f9;min-width:50px">$4,100</span>
                 <span style="font-size:12px;font-weight:700;color:#2dd4a0;min-width:48px">+8.7%</span>
               </div>
               <div style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;gap:8px">
-                <span style="font-size:13px;font-weight:700;color:#fbbf24;font-family:monospace;min-width:44px">ETH</span>
+                <span style="font-size:13px;font-weight:700;color:#fbbf24;font-family:'IBM Plex Mono',monospace;min-width:44px">ETH</span>
                 <div style="flex:1;height:4px;background:rgba(255,255,255,0.05);border-radius:2px"><div style="width:26%;height:100%;background:linear-gradient(90deg,#d97706,#fbbf24);border-radius:2px"></div></div>
                 <span style="font-size:12px;font-weight:700;color:#f1f5f9;min-width:50px">$2,800</span>
                 <span style="font-size:12px;font-weight:700;color:#2dd4a0;min-width:48px">+9.1%</span>
               </div>
               <div style="padding:10px 12px;display:flex;align-items:center;gap:8px">
-                <span style="font-size:13px;font-weight:700;color:#f1f5f9;font-family:monospace;min-width:44px">MSFT</span>
+                <span style="font-size:13px;font-weight:700;color:#f1f5f9;font-family:'IBM Plex Mono',monospace;min-width:44px">MSFT</span>
                 <div style="flex:1;height:4px;background:rgba(255,255,255,0.05);border-radius:2px"><div style="width:32%;height:100%;background:linear-gradient(90deg,#6366f1,#818cf8);border-radius:2px"></div></div>
                 <span style="font-size:12px;font-weight:700;color:#f1f5f9;min-width:50px">$3,900</span>
                 <span style="font-size:12px;font-weight:700;color:#2dd4a0;min-width:48px">+11.3%</span>
