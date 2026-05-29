@@ -271,15 +271,15 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 
 .section-title {
   font-family: var(--display);
-  font-size: clamp(28px, 3.8vw, 44px);
-  font-weight: 800; letter-spacing: -1.2px;
-  color: var(--text); line-height: 1.1;
+  font-size: clamp(30px, 4vw, 48px);
+  font-weight: 800; letter-spacing: -1.5px;
+  color: var(--text); line-height: 1.08;
   margin-bottom: 14px;
 }
 
 .section-sub {
-  font-size: 16px; color: var(--text2);
-  line-height: 1.75; max-width: 500px;
+  font-size: 17px; color: var(--text2);
+  line-height: 1.8; max-width: 540px;
 }
 .centered { text-align: center; }
 .centered .section-sub { margin: 0 auto; }
@@ -317,24 +317,24 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 
 .hero-title {
   font-family: var(--display);
-  font-size: clamp(34px, 4.8vw, 58px);
-  font-weight: 800; letter-spacing: -1.8px;
-  line-height: 1.06; margin-bottom: 20px;
+  font-size: clamp(36px, 5vw, 62px);
+  font-weight: 900; letter-spacing: -2.2px;
+  line-height: 1.04; margin-bottom: 22px;
   color: var(--text);
 }
 
 .hero-title .hl {
   display: block;
-  font-size: 0.65em;
-  font-weight: 500;
+  font-size: 0.62em;
+  font-weight: 400;
   color: var(--text2);
-  margin-top: 0.2em;
-  letter-spacing: -0.3px;
+  margin-top: 0.25em;
+  letter-spacing: -0.2px;
 }
 
 .hero-sub {
-  font-size: 16px; color: var(--text2); line-height: 1.75;
-  margin-bottom: 36px; max-width: 440px;
+  font-size: 17px; color: var(--text2); line-height: 1.8;
+  margin-bottom: 36px; max-width: 460px;
 }
 
 .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -388,7 +388,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 }
 .trust-item {
   display: flex; align-items: center; gap: 5px;
-  font-size: 12px; color: var(--text3);
+  font-size: 13px; color: var(--text3);
 }
 .trust-item svg { color: var(--green); flex-shrink: 0; }
 .trust-sep { color: var(--text3); opacity: 0.4; }
@@ -690,12 +690,12 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 }
 
 .feat-title {
-  font-family: var(--body); font-size: 16px; font-weight: 700;
-  color: var(--text); margin-bottom: 8px; letter-spacing: -0.3px;
+  font-family: var(--body); font-size: 17px; font-weight: 700;
+  color: var(--text); margin-bottom: 8px; letter-spacing: -0.4px;
   transition: color .3s;
 }
 
-.feat-desc { font-size: 13px; color: var(--text2); line-height: 1.7; }
+.feat-desc { font-size: 14px; color: var(--text2); line-height: 1.75; }
 
 /* ── STEPS ── */
 #how { text-align: center; }
@@ -732,10 +732,10 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 }
 
 .step-title {
-  font-family: var(--display); font-size: 16px; font-weight: 700;
-  color: var(--text); letter-spacing: -0.3px;
+  font-family: var(--display); font-size: 18px; font-weight: 700;
+  color: var(--text); letter-spacing: -0.5px;
 }
-.step-desc { font-size: 13px; color: var(--text2); line-height: 1.7; }
+.step-desc { font-size: 14px; color: var(--text2); line-height: 1.75; }
 
 /* ── PRICING ── */
 #pricing { text-align: center; }
@@ -961,6 +961,11 @@ footer {
   background: rgba(79,127,255,0.08); color: var(--accent);
 }
 
+.kw {
+  font-family: var(--mono); font-size: 0.93em;
+  color: var(--text); font-weight: 500;
+}
+
 /* ── SOCIAL PROOF ── */
 .social-proof {
   display: flex; align-items: center; gap: 10px;
@@ -975,8 +980,8 @@ footer {
   margin-right: -8px; flex-shrink: 0;
 }
 .avatar-stack .avatar:last-child { margin-right: 0; }
-.social-proof-text { font-size: 12px; color: var(--text3); }
-.social-proof-text strong { color: var(--text2); font-weight: 600; }
+.social-proof-text { font-size: 13px; color: var(--text3); }
+.social-proof-text strong { color: var(--text); font-weight: 700; }
 
 /* ── COMPARISON ── */
 .comp-wrap {
@@ -1017,7 +1022,7 @@ footer {
 }
 .testimonial:hover { border-color: rgba(79,127,255,0.2); }
 .testimonial-text {
-  font-size: 14px; color: var(--text2); line-height: 1.8;
+  font-size: 15px; color: var(--text2); line-height: 1.8;
   margin-bottom: 18px;
 }
 .testimonial-author { display: flex; align-items: center; gap: 10px; }
@@ -1099,10 +1104,10 @@ footer {
     <div>
       <h1 class="hero-title" id="hero-heading">
         כל הפסד<br>
-        יש לו דפוס.<br>
+        יש לו <span style="color:var(--accent)">דפוס</span>.<br>
         <span class="hl">הגיע הזמן לגלות שלך.</span>
       </h1>
-      <p class="hero-sub">Trading Journal מייבא עסקאות אוטומטית מ-Interactive Brokers ו-Bybit, מנתח ביצועים לפי שעה, יום וסקטור, ומראה לך בדיוק מה עובד — ומה אתה חוזר עליו שוב ושוב.</p>
+      <p class="hero-sub">Trading Journal מייבא עסקאות אוטומטית מ-<span class="kw">Interactive Brokers</span> ו-<span class="kw">Bybit</span>, מנתח ביצועים לפי שעה, יום וסקטור, ומראה לך בדיוק מה עובד — ומה אתה חוזר עליו שוב ושוב.</p>
       <div class="hero-actions">
         <a href="dashboard.html" class="btn-hero-primary">
           גלה את הדפוסים שלך — חינם
@@ -1372,7 +1377,7 @@ footer {
         <h3>ייבוא אוטומטי מהברוקר</h3>
       </div>
       <div class="feat-row-desc">
-        <p>חבר את Interactive Brokers או Bybit וייבא את כל ההיסטוריה תוך דקה. אין CSV, אין הזנה ידנית — העסקאות שלך כבר בפנים.</p>
+        <p>חבר את <span class="kw">Interactive Brokers</span> או <span class="kw">Bybit</span> וייבא את כל ההיסטוריה תוך דקה. אין CSV, אין הזנה ידנית — העסקאות שלך כבר בפנים.</p>
         <span class="feat-row-badge">IBKR · Bybit</span>
       </div>
     </div>
@@ -1382,7 +1387,7 @@ footer {
         <h3>ניתוח ביצועים מעמיק</h3>
       </div>
       <div class="feat-row-desc">
-        <p>Win rate, profit factor ו-R-multiple — לפי שעה, יום בשבוע וסקטור. גלה בדיוק מתי ה-edge שלך עובד, ומתי אתה סוחר נגד עצמך.</p>
+        <p><span class="kw">Win rate</span>, <span class="kw">profit factor</span> ו-<span class="kw">R-multiple</span> — לפי שעה, יום בשבוע וסקטור. גלה בדיוק מתי ה-edge שלך עובד, ומתי אתה סוחר נגד עצמך.</p>
         <span class="feat-row-badge">סטטיסטיקות</span>
       </div>
     </div>
@@ -1392,7 +1397,7 @@ footer {
         <h3>Market Pulse בזמן אמת</h3>
       </div>
       <div class="feat-row-desc">
-        <p>Fear &amp; Greed Index, תמות שוק מובילות וסנטימנט קריפטו — הקשר השוקי המלא תמיד מול העיניים. תפסיק לסחור בוואקום.</p>
+        <p><span class="kw">Fear &amp; Greed Index</span>, תמות שוק מובילות וסנטימנט קריפטו — הקשר השוקי המלא תמיד מול העיניים. תפסיק לסחור בוואקום.</p>
         <span class="feat-row-badge">נתוני שוק</span>
       </div>
     </div>
