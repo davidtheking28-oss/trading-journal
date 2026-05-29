@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="google-site-verification" content="FSusm5X2VDUsrsnZfnk_L_4V8STvBITiGc044BZ2eC0">
-<title>יומן מסחר מקצועי — עקוב, נתח ושפר עם AI | Trading Journal</title>
-<meta name="description" content="ייבא עסקאות אוטומטית מהברוקר, עקוב אחרי ביצועים עם נתוני שוק בזמן אמת, וגלה את הדפוסים שמפרידים בין עסקאות רווחיות להפסדיות. חינמי לחלוטין.">
-<meta name="keywords" content="יומן מסחר, trading journal, ניתוח עסקאות, מסחר במניות, מסחר בקריפטו, ניהול סיכונים, AI מסחר">
+<title>יומן מסחר חינמי עם AI | ייבוא אוטומטי מ-IBKR ו-Bybit | Trading Journal</title>
+<meta name="description" content="יומן מסחר חינמי לסוחרים ישראלים. ייבוא אוטומטי מ-Interactive Brokers ו-Bybit, ניתוח win rate לפי שעה ויום, Market Pulse בזמן אמת, וAI מינרביני. גלה את הדפוסים שחוזרים בהפסדים שלך.">
+<meta name="keywords" content="יומן מסחר, trading journal, יומן מסחר חינמי, ניתוח עסקאות, מסחר במניות, מסחר בקריפטו, ניהול סיכונים, AI מסחר, interactive brokers ייבוא, bybit יומן, win rate מסחר, profit factor, מינרביני, minervini, market pulse, fear greed index, סוחר יומי ישראל, swing trading יומן">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://davidtheking28-oss.github.io/trading-journal/">
 <meta property="og:type" content="website">
@@ -820,6 +820,9 @@ footer {
   .hero-stat { flex: 1; text-align: center; }
   .features-grid { grid-template-columns: 1fr; }
   .testimonials { grid-template-columns: 1fr; }
+  .comp-header, .comp-row { grid-template-columns: 1fr 120px 120px; }
+  .comp-label { padding: 11px 14px; font-size: 12px; }
+  .comp-cell { padding: 11px 8px; font-size: 11px; }
   .cta-inner { padding: 40px 24px; }
   footer { flex-direction: column; text-align: center; }
   .footer-links { justify-content: center; flex-wrap: wrap; }
@@ -880,6 +883,32 @@ footer {
 .avatar-stack .avatar:last-child { margin-right: 0; }
 .social-proof-text { font-size: 12px; color: var(--text3); }
 .social-proof-text strong { color: var(--text2); font-weight: 600; }
+
+/* ── COMPARISON ── */
+.comp-wrap {
+  max-width: 680px; margin: 52px auto 0;
+  border: 1px solid var(--border2);
+  border-radius: 18px; overflow: hidden;
+}
+.comp-header {
+  display: grid; grid-template-columns: 1fr 160px 160px;
+  border-bottom: 1px solid var(--border2);
+}
+.comp-header > div { padding: 14px 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; }
+.ch-label { color: var(--text3); }
+.ch-bad { text-align: center; color: var(--text3); background: rgba(255,255,255,0.02); }
+.ch-good { text-align: center; color: var(--accent); background: rgba(79,127,255,0.08); }
+.comp-row {
+  display: grid; grid-template-columns: 1fr 160px 160px;
+  border-top: 1px solid var(--border2); align-items: center;
+  transition: background .15s;
+}
+.comp-row:first-of-type { border-top: none; }
+.comp-row:hover { background: rgba(255,255,255,0.015); }
+.comp-label { padding: 13px 20px; font-size: 13px; color: var(--text2); }
+.comp-cell { padding: 13px 16px; text-align: center; font-size: 12px; }
+.comp-cell.bad { color: var(--text3); }
+.comp-cell.good { color: var(--green); font-weight: 600; background: rgba(79,127,255,0.04); }
 
 /* ── TESTIMONIALS ── */
 .testimonials {
@@ -1204,6 +1233,57 @@ footer {
       <div class="step-circle">03</div>
       <h3 class="step-title">גלה את הדפוסים שלך</h3>
       <p class="step-desc">ה-AI עובר על ההיסטוריה שלך ומציג תובנות ברורות — שבוע ראשון, תמצא משהו שלא ידעת.</p>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON -->
+<section id="vs" aria-labelledby="vs-heading">
+  <div class="centered reveal">
+    <div class="section-pill">vs. ספרדשיט</div>
+    <h2 class="section-title" id="vs-heading">למה Excel לא מספיק</h2>
+    <p class="section-sub" style="margin:0 auto;">רוב הסוחרים מנהלים יומן ב-Excel. זה עובד — עד שמבינים מה מפספסים.</p>
+  </div>
+  <div class="comp-wrap reveal">
+    <div class="comp-header">
+      <div class="ch-label"></div>
+      <div class="ch-bad">Excel / ספרדשיט</div>
+      <div class="ch-good">Trading Journal</div>
+    </div>
+    <div class="comp-row">
+      <div class="comp-label">ייבוא עסקאות</div>
+      <div class="comp-cell bad">הזנה ידנית</div>
+      <div class="comp-cell good">אוטומטי מהברוקר</div>
+    </div>
+    <div class="comp-row">
+      <div class="comp-label">זמן עדכון לאחר עסקה</div>
+      <div class="comp-cell bad">10–30 דקות</div>
+      <div class="comp-cell good">0 דקות</div>
+    </div>
+    <div class="comp-row">
+      <div class="comp-label">ניתוח לפי שעה / יום / סקטור</div>
+      <div class="comp-cell bad">נוסחאות מורכבות</div>
+      <div class="comp-cell good">מובנה ואוטומטי</div>
+    </div>
+    <div class="comp-row">
+      <div class="comp-label">AI insights מינרביני</div>
+      <div class="comp-cell bad">—</div>
+      <div class="comp-cell good">כלול</div>
+    </div>
+    <div class="comp-row">
+      <div class="comp-label">Market Pulse + Fear &amp; Greed</div>
+      <div class="comp-cell bad">—</div>
+      <div class="comp-cell good">כלול</div>
+    </div>
+    <div class="comp-row">
+      <div class="comp-label">גיבוי</div>
+      <div class="comp-cell bad">קובץ מקומי</div>
+      <div class="comp-cell good">ענן מאובטח</div>
+    </div>
+    <div class="comp-row">
+      <div class="comp-label">מחיר</div>
+      <div class="comp-cell bad">זמן יקר</div>
+      <div class="comp-cell good">חינמי לחלוטין</div>
     </div>
   </div>
 </section>
