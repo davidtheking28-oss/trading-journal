@@ -14230,7 +14230,7 @@ function invRecalc() {
   const c = invGetCurrency();
   Object.entries(ALLOC_TARGETS).forEach(([cat, target]) => {
     const targetAmt  = effectiveTotal * target;
-    const currentAmt = byCat[cat];
+    const currentAmt = byCatValue[cat];
     const currentPct = effectiveTotal > 0 ? (currentAmt / effectiveTotal * 100) : 0;
     const remaining  = Math.max(0, targetAmt - currentAmt);
     const over       = effectiveTotal > 0 && currentAmt > targetAmt;
@@ -14269,13 +14269,13 @@ function invRecalc() {
 
   const catRemaining = {};
   Object.entries(ALLOC_TARGETS).forEach(([cat, target]) => {
-    catRemaining[cat] = Math.max(0, portfolioTotal * target - byCat[cat]);
+    catRemaining[cat] = Math.max(0, portfolioTotal * target - byCatValue[cat]);
   });
   rowData.forEach(({ i, cat }) => {
     const remEl = document.getElementById(`inv-catrem-${i}`);
     if (!remEl) return;
     if (!cat || portfolioTotal === 0) { remEl.textContent = '—'; remEl.style.color = ''; return; }
-    const over = byCat[cat] > portfolioTotal * ALLOC_TARGETS[cat];
+    const over = byCatValue[cat] > portfolioTotal * ALLOC_TARGETS[cat];
     remEl.textContent = over ? t('inv_over') : `${c}${catRemaining[cat].toLocaleString('en-US',{maximumFractionDigits:0})}`;
     remEl.style.color = over ? 'var(--red)' : 'var(--green)';
   });
