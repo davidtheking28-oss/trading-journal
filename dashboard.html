@@ -175,7 +175,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     cursor: pointer;
     font-size: 13px;
     font-weight: 500;
-    transition: all 0.2s;
+    transition: color 0.2s, background 0.2s, border-color 0.2s;
     white-space: nowrap;
     font-family: inherit;
     letter-spacing: 0.1px;
@@ -215,7 +215,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    transition: all 0.18s;
+    transition: transform 0.18s var(--ease-out), box-shadow 0.18s, background 0.18s, color 0.18s, border-color 0.18s;
     white-space: nowrap;
     font-family: inherit;
     letter-spacing: 0.1px;
@@ -238,7 +238,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     color: var(--text2);
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.18s;
+    transition: border-color 0.18s, color 0.18s, background 0.18s;
     display: inline-flex;
     align-items: center;
     font-size: 13px;
@@ -478,14 +478,13 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     display: inline-flex; align-items: center; gap: 4px;
     padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
     cursor: pointer; user-select: none;
-    transition: all var(--t-fast);
+    transition: opacity var(--t-fast), background var(--t-fast), border-color var(--t-fast);
     border: 1px solid;
   }
   .qa-type-badge.stock  { background: rgba(45,212,160,0.12);  border-color: rgba(45,212,160,0.35);  color: #2dd4a0; }
   .qa-type-badge.crypto { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.35); color: #f59e0b; }
   .qa-type-badge:hover { opacity: 0.8; }
   .qa-collapse-btn { display: none; }
-  .quick-add-body { transition: all 0.2s; }
   .quick-add-body.collapsed { display: none; }
 
   /* ── QA Modal ── */
@@ -865,7 +864,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     padding: 4px; min-width: 140px; z-index: 9999;
     box-shadow: 0 8px 28px rgba(0,0,0,0.6);
   }
-  .scope-dd-menu.dd-open, .period-dd-menu.dd-open { display: block; }
+  @keyframes ddSlide { from { opacity: 0; transform: translateY(-5px) scale(0.98); } to { opacity: 1; transform: none; } }
+  .scope-dd-menu.dd-open, .period-dd-menu.dd-open { display: block; animation: ddSlide 0.16s var(--ease-out) both; }
 
   /* Period picker menu */
   .period-dd-menu { min-width: 200px; padding: 6px; }
@@ -1062,13 +1062,17 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     background: rgba(3,7,20,0.9);
     backdrop-filter: blur(8px);
     z-index: 1000;
-    display: none;
+    display: flex;
     align-items: flex-start;
     justify-content: center;
     padding: 24px 16px;
     overflow-y: auto;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.22s var(--ease-out), visibility 0.22s;
   }
-  .modal-overlay.open { display: flex; }
+  .modal-overlay.open { opacity: 1; visibility: visible; pointer-events: auto; }
   .modal {
     background: linear-gradient(145deg, #0b0b0e 0%, #131316 100%);
     border: 1px solid rgba(129,140,248,0.2);
@@ -1654,13 +1658,17 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     background: rgba(0,0,0,0.8);
     backdrop-filter: blur(4px);
     z-index: 1100;
-    display: none;
+    display: flex;
     align-items: flex-start;
     justify-content: center;
     padding: 24px 16px;
     overflow-y: auto;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.22s var(--ease-out), visibility 0.22s;
   }
-  .ss-modal-overlay.open { display: flex; }
+  .ss-modal-overlay.open { opacity: 1; visibility: visible; pointer-events: auto; }
   .ss-modal {
     background: var(--card);
     border: 1px solid var(--border2);
@@ -6059,7 +6067,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
                 <span class="inv-alloc-dot" style="background:#94a3b8"></span>
                 <span class="inv-alloc-label" data-i18n="inv_cash_row">💵 מזומן — יעד 5%</span>
                 <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-cash" style="width:0%;background:#94a3b8;"></div></div>
-                <input type="number" id="inv-cash-balance" class="inv-cash-input" placeholder="—" min="0" step="any" oninput="invRecalc();invAutoSaveCash()">
+                <span class="inv-alloc-invested" id="alloc-inv-cash">—</span>
                 <span class="inv-alloc-cur" id="alloc-cur-cash">0%</span>
                 <span class="inv-alloc-remaining" id="alloc-rem-cash">—</span>
               </div>
@@ -10486,7 +10494,7 @@ function toast(msg, type='success') {
   el.appendChild(icon);
   el.appendChild(document.createTextNode(' ' + String(msg).slice(0, 100)));
   c.appendChild(el);
-  setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateX(-16px)'; el.style.transition='all 0.3s'; setTimeout(()=>el.remove(),300); }, 3000);
+  setTimeout(()=>{ el.style.transition='opacity 0.3s, transform 0.3s'; el.style.opacity='0'; el.style.transform='translateX(-16px)'; setTimeout(()=>el.remove(),300); }, 3000);
 }
 
 // ─────────────────────────────────────────────
@@ -14161,8 +14169,7 @@ function invRecalc() {
   });
 
   const portfolioTotal = +(document.getElementById('inv-portfolio-total')?.value) || 0;
-  const manualCash = document.getElementById('inv-cash-balance')?.value;
-  const cash = manualCash !== '' && manualCash != null ? +manualCash : Math.max(0, portfolioTotal - totalCost);
+  const cash = Math.max(0, portfolioTotal - totalCost);
   const effectiveTotal = portfolioTotal + (totalUnrealizedPnL || 0);
 
   const cvWrap = document.getElementById('inv-current-value-wrap');
@@ -14240,6 +14247,8 @@ function invRecalc() {
   const cashCurEl = document.getElementById('alloc-cur-cash');
   const cashRemEl = document.getElementById('alloc-rem-cash');
   if (cashBarEl) { cashBarEl.style.width = cashBarW + '%'; cashBarEl.style.background = '#94a3b8'; }
+  const cashInvEl = document.getElementById('alloc-inv-cash');
+  if (cashInvEl) cashInvEl.textContent = cash > 0 ? c + cash.toLocaleString('en-US', {maximumFractionDigits:0}) : '—';
   if (cashCurEl) { cashCurEl.textContent = cashPct.toFixed(1) + '%'; cashCurEl.style.color = 'var(--text2)'; }
   if (cashRemEl) {
     cashRemEl.textContent = '';
@@ -14295,7 +14304,6 @@ function invGetCurrentData() {
   });
   return {
     portfolioTotal: (document.getElementById('inv-portfolio-total')?.value || ''),
-    cashBalance: (document.getElementById('inv-cash-balance')?.value || ''),
     holdings: holdings.filter(h => h.symbol || h.entryShares || h.entryPrice),
     deposits: invLoad().deposits || []
   };
@@ -14569,12 +14577,6 @@ function invAutoSaveTotal() {
   _saveUserSettings({ portfolio_total: val ? +val : null });
 }
 
-function invAutoSaveCash() {
-  const data = invLoad();
-  const val = document.getElementById('inv-cash-balance')?.value || '';
-  data.cashBalance = val;
-  invSaveData(data);
-}
 
 
 function invUpdateDonut(byCat, portfolioTotal, cash = 0) {
