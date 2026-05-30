@@ -5555,7 +5555,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           <div class="s-profile-grid">
             <div class="profile-field">
               <label class="profile-label" data-i18n="settings_display">Display Name</label>
-              <input class="profile-input" id="profile-display" type="text" placeholder="How it appears in the header" oninput="profileMarkDirty()">
+              <input class="profile-input" id="profile-display" type="text" placeholder="השם שיופיע בכותרת" oninput="profileMarkDirty()">
             </div>
             <div class="profile-field">
               <label class="profile-label" data-i18n="settings_email">Email</label>
@@ -7125,7 +7125,7 @@ async function loadDB() {
   const { data, error } = await _sb.from('trades').select('*')
     .eq('user_id', _currentUser.id)
     .order('entry_date', { ascending: false });
-  if (error) { toast('שגיאה בטעינת נתונים', 'error'); console.error('[loadDB]', error); return; }
+  if (error) { toast('שגיאה בטעינת נתונים — נסה לרענן', 'error'); console.error('[loadDB]', error); return; }
   const all = (data || []).map(_rowToTrade).filter(validateTradeSchema);
   db.stocks  = all.filter(t => t.type === 'stock'  && !t.deleted);
   db.crypto  = all.filter(t => t.type === 'crypto' && !t.deleted);
@@ -8291,7 +8291,7 @@ function toggleInlineArchive(type) {
   const btnId  = type === 'stock' ? 'st-archive-btn'  : 'cr-archive-btn';
   const wrap = document.getElementById(wrapId);
   const btn  = document.getElementById(btnId);
-  if (!wrap) { toast('שגיאה: לא נמצא אזור ארכיון', true); return; }
+  if (!wrap) { toast('שגיאת מערכת — נסה לרענן את הדף', 'error'); return; }
   const isOpen = wrap.dataset.open === '1';
   if (isOpen) {
     wrap.style.display = 'none';
@@ -9142,9 +9142,9 @@ async function profileSave() {
     if (el) el.textContent = display;
     document.getElementById('profile-display').value = display;
     btn.style.display = 'none';
-    toast('Profile saved ✓', 'success');
+    toast('פרופיל נשמר ✓', 'success');
   } catch {
-    toast('Error saving profile', true);
+    toast('שגיאה בשמירת הפרופיל', 'error');
   } finally {
     btn.textContent = 'Save Changes';
     btn.disabled = false;
@@ -10307,7 +10307,7 @@ function editTrade(type, id) {
 }
 
 async function deleteTrade(type, id) {
-  if (!confirm('למחוק את העסקה?')) return;
+  if (!confirm('למחוק עסקה זו? היא תועבר לאשפה')) return;
   const arr = type==='stock' ? db.stocks : db.crypto;
   const tr = arr.find(t => String(t.id) === String(id));
   if (!tr) return;
@@ -11175,7 +11175,7 @@ async function deduplicateDB(type) {
   });
   const removed = toRemove.length;
   if (removed === 0) { toast('לא נמצאו כפילויות', 'success'); return; }
-  if (!confirm(`נמצאו ${removed} עסקאות כפולות ב${type==='stock'?'מניות':'קריפטו'}. למחוק?`)) return;
+  if (!confirm(`נמצאו ${removed} עסקאות כפולות ב${type==='stock'?'מניות':'קריפטו'}. למחוק לצמיתות?`)) return;
   const keepIds = new Set(toRemove);
   if (type === 'stock') db.stocks = db.stocks.filter(t => !keepIds.has(t.id));
   else db.crypto = db.crypto.filter(t => !keepIds.has(t.id));
@@ -11854,7 +11854,7 @@ function renderAuditLog() {
 }
 
 function clearAuditLog() {
-  if (!confirm('למחוק את יומן הביקורת?')) return;
+  if (!confirm('למחוק את יומן הביקורת? הפעולה אינה הפיכה')) return;
   localStorage.removeItem(AUDIT_KEY);
   renderAuditLog();
   toast('יומן נוקה', 'success');
@@ -12660,7 +12660,7 @@ function totpSetupCancel() {
 }
 async function totpToggle() {
   if(totpEnabled()){
-    if(!confirm(_lang==='he'?'לבטל אימות דו-שלבי?':'Disable two-factor authentication?'))return;
+    if(!confirm(_lang==='he'?'לבטל אימות דו-שלבי? הגנת החשבון תפחת':'Disable two-factor authentication? This reduces account security.'))return;
     localStorage.removeItem(TOTP_ENABLED_KEY);
     localStorage.removeItem(TOTP_KEY);
     document.getElementById('totp-status-text').textContent='🔴 כבוי';
@@ -13323,7 +13323,7 @@ async function missedAdd() {
 }
 
 async function missedDelete(id) {
-  if (!confirm('למחוק?')) return;
+  if (!confirm('למחוק הזדמנות זו? הפעולה אינה הפיכה')) return;
   const { error } = await _sb.from('missed_opportunities').delete().eq('id', id).eq('user_id', _currentUser.id);
   if (error) { toast('שגיאה במחיקה','error'); return; }
   await missedRender();
