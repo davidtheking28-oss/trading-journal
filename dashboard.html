@@ -6935,7 +6935,7 @@ async function _onAuthSuccess(user) {
     if (oc.includes("'ai'") || oc.includes("'investments'")) btn.style.display = isAdmin ? '' : 'none';
   });
   const syncBtn = document.getElementById('flex-sync-btn');
-  if (syncBtn) syncBtn.style.display = isAdmin ? '' : 'none';
+  if (syncBtn) syncBtn.style.display = '';
   // Post-load UI setup
   initFilters();
   applyPrivacy();
