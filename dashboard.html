@@ -14039,12 +14039,12 @@ async function invLoadFromDB() {
     .select('holdings, deposits, currency')
     .eq('user_id', _currentUser.id)
     .single();
+  const local = invLoad();
   if (data) {
     const holdings = (data.holdings || []).map(h => ({ ...h, locked: h.locked !== false ? true : false }));
     _invData = { portfolioTotal, cashBalance: local.cashBalance || '', holdings, deposits: data.deposits || [] };
     if (data.currency) localStorage.setItem('inv_currency', data.currency);
   } else {
-    const local = invLoad();
     _invData = { portfolioTotal, cashBalance: local.cashBalance || '', holdings: local.holdings || [], deposits: local.deposits || [] };
     if (_invData.holdings.length || _invData.deposits.length) invSaveData(_invData);
   }
