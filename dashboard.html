@@ -6036,9 +6036,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         </div>
 
         <div class="inv-portfolio-bar">
-          <label data-i18n="inv_cash_label">מזומן</label>
-          <input type="number" id="inv-cash-balance" placeholder="0" min="0" step="any" oninput="invRecalc();invAutoSaveTotal()">
-          <div style="font-size:12px;color:var(--text3);margin-right:8px;">סך תיק: <span id="inv-portfolio-total-display" style="font-weight:700;font-size:13px;color:var(--text);">—</span></div>
+          <label data-i18n="inv_portfolio_total">סך התיק</label>
+          <input type="number" id="inv-portfolio-total" placeholder="100000" min="0" step="any" oninput="invRecalc();invAutoSaveTotal()">
           <div class="inv-total-allocated"><span data-i18n="inv_allocated">Allocated:</span> <span id="inv-allocated-pct">0%</span></div>
         </div>
 
@@ -8648,8 +8647,8 @@ async function loadUserSettings() {
   }
   renderFmpKeyStatus();
   if (_userSettings.portfolio_total != null) {
-    const cashElS = document.getElementById('inv-cash-balance');
-    if (cashElS) { cashElS.value = _userSettings.portfolio_total; invRecalc(); }
+    const ptEl = document.getElementById('inv-portfolio-total');
+    if (ptEl) { ptEl.value = _userSettings.portfolio_total; invRecalc(); }
   }
 }
 
@@ -12844,7 +12843,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const saved = localStorage.getItem('inv_data_v1');
       if (saved) {
         const d = JSON.parse(saved);
-        if (d.cashBalance) totalEl.value = d.cashBalance;
+        if (d.portfolioTotal) totalEl.value = d.portfolioTotal;
       }
     } catch {}
   }
@@ -14098,8 +14097,8 @@ async function invInit() {
   document.getElementById('inv-cur-usd')?.classList.toggle('active', cur === '$');
   document.getElementById('inv-cur-ils')?.classList.toggle('active', cur === '₪');
   invSyncPnlBtn();
-  const cashEl = document.getElementById('inv-cash-balance');
-  if (cashEl) cashEl.value = data.cashBalance || '';
+  const totalEl = document.getElementById('inv-portfolio-total');
+  if (totalEl) totalEl.value = data.portfolioTotal || '';
   const dl = document.getElementById('inv-sym-list');
   if (dl) dl.innerHTML = Object.keys(SECTOR_MAP).filter(s => !symIsCrypto(s)).map(s => `<option value="${s}">`).join('');
   invRenderRows(data.holdings || []);
@@ -14185,9 +14184,8 @@ function invRecalc() {
     rowData.push({ i: +row.dataset.idx, cat, value, cost, pnlAmt, pnlPct });
   });
 
-  const cashInput = +(document.getElementById('inv-cash-balance')?.value) || 0;
-  const portfolioTotal = totalCurrentValue + cashInput;
-  const cash = cashInput;
+  const portfolioTotal = +(document.getElementById('inv-portfolio-total')?.value) || 0;
+  const cash = Math.max(0, portfolioTotal - totalCurrentValue);
   const effectiveTotal = portfolioTotal;
 
   // Pass 2: render per-row display (pct now uses totalCost as denominator)
@@ -14586,8 +14584,8 @@ function invAutoSector(idx) {
 
 function invAutoSaveTotal() {
   const data = invLoad();
-  const val = document.getElementById('inv-cash-balance')?.value || '';
-  data.cashBalance = val;
+  const val = document.getElementById('inv-portfolio-total')?.value || '';
+  data.portfolioTotal = val;
   invSaveData(data);
   _saveUserSettings({ portfolio_total: val ? +val : null });
 }
@@ -14632,12 +14630,12 @@ function invAddDeposit() {
   if (!data.deposits) data.deposits = [];
   data.deposits.push({ month, amount, currency });
   data.deposits.sort((a, b) => b.month.localeCompare(a.month));
-  const cashElD = document.getElementById('inv-cash-balance');
-  const newCash = (+(cashElD?.value) || 0) + amount;
-  if (cashElD) cashElD.value = newCash;
-  data.cashBalance = String(newCash);
+  const totalElD = document.getElementById('inv-portfolio-total');
+  const newTotal = (+(totalElD?.value) || 0) + amount;
+  if (totalElD) totalElD.value = newTotal;
+  data.portfolioTotal = String(newTotal);
   invSaveData(data);
-  _saveUserSettings({ portfolio_total: newCash });
+  _saveUserSettings({ portfolio_total: newTotal });
   invRenderDeposits(data.deposits);
   invRecalc();
   document.getElementById('inv-dep-amount').value = '';
