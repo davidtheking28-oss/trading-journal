@@ -11,6 +11,15 @@ const CORS = {
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
+  const url = new URL(req.url);
+
+  // Diagnostic: test IBKR reachability from Supabase servers (no auth needed)
+  if (url.searchParams.get('action') === 'ping') {
+    const pingRes = await fetch(`${IBKR_BASE}.SendRequest?t=pingtest12345678901234567890&q=1234567&v=3`, { headers: { 'User-Agent': 'trading-journal/2.0' } });
+    const pingXml = await pingRes.text();
+    return new Response(JSON.stringify({ status: pingRes.status, xml: pingXml }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
+  }
+
   const authHeader = req.headers.get('Authorization') ?? '';
   const jwt = authHeader.replace('Bearer ', '').trim();
   const supabase = createClient(
@@ -36,15 +45,6 @@ serve(async (req: Request) => {
 
   if (!flexToken || !/^[a-zA-Z0-9]{6,64}$/.test(flexToken)) {
     return new Response(JSON.stringify({ error: 'Missing or invalid IBKR token' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
-  }
-
-  const url    = new URL(req.url);
-
-  // Diagnostic: test IBKR reachability from this server
-  if (url.searchParams.get('action') === 'ping') {
-    const pingRes = await fetch(`${IBKR_BASE}.SendRequest?t=pingtest12345678901234567890&q=1234567&v=3`, { headers: { 'User-Agent': 'trading-journal/2.0' } });
-    const pingXml = await pingRes.text();
-    return new Response(JSON.stringify({ status: pingRes.status, xml: pingXml }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 
   const action = url.searchParams.get('action') ?? 'send';
