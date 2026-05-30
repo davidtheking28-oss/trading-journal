@@ -14195,7 +14195,7 @@ function invRecalc() {
   });
 
   const portfolioTotal = +(document.getElementById('inv-portfolio-total')?.value) || 0;
-  const cash = Math.max(0, portfolioTotal - totalCurrentValue);
+  const cash = Math.max(0, portfolioTotal - totalCost);
   const effectiveTotal = portfolioTotal + (totalUnrealizedPnL || 0);
 
   const cvWrap = document.getElementById('inv-current-value-wrap');
