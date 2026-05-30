@@ -34,7 +34,7 @@ serve(async (req: Request) => {
   const flexToken = settings?.flex_token ?? '';
   const qid       = settings?.flex_query_id ?? '';
 
-  if (!flexToken || !/^\d{10,35}$/.test(flexToken)) {
+  if (!flexToken || !/^[a-zA-Z0-9]{6,64}$/.test(flexToken)) {
     return new Response(JSON.stringify({ error: 'Missing or invalid IBKR token' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 

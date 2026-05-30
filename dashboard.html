@@ -12203,8 +12203,8 @@ async function flexSave() {
   const t = document.getElementById('flex-token')?.value.trim();
   const q = document.getElementById('flex-query-id')?.value.trim();
   if (!t || !q) { toast('נא להזין Token ו-Query ID', 'error'); return; }
-  if (!/^\d{10,35}$/.test(t)) { toast('Token לא תקין — בדוק שהועתק נכון', 'error'); return; }
-  if (!/^\d{4,15}$/.test(q)) { toast('Query ID לא תקין — בדוק שהועתק נכון', 'error'); return; }
+  if (!/^[a-zA-Z0-9]{6,64}$/.test(t)) { toast('Token לא תקין — מספרים ואותיות בלבד, לפחות 6 תווים', 'error'); return; }
+  if (!/^\d{4,15}$/.test(q)) { toast('Query ID לא תקין — מספרים בלבד (לדוגמה: 1462900)', 'error'); return; }
   await _saveUserSettings({ flex_token: t, flex_query_id: q });
   document.getElementById('flex-token').value = '';
   document.getElementById('flex-query-id').value = '';
