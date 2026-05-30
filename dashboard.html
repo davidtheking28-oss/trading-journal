@@ -1592,7 +1592,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .profile-field { display:flex; flex-direction:column; gap:5px; }
   .profile-label { font-size:11px; color:var(--text3); font-weight:600; }
   .profile-input { background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:7px; padding:8px 10px; color:var(--text); font-size:13px; outline:none; transition:border-color 0.15s; }
-  .profile-input:focus { border-color:var(--accent); }
+  .profile-input:focus { border-color:var(--accent); box-shadow: 0 0 0 3px rgba(129,140,248,0.12); }
   .profile-input:disabled { opacity:0.45; cursor:not-allowed; }
   .profile-email { font-size:12px; color:var(--text3); margin-top:2px; }
   .lang-seg { display:flex; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:8px; padding:3px; gap:3px; width:fit-content; }
@@ -3579,7 +3579,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-settings-label { font-size: 11px; color: var(--text3); white-space: nowrap; }
   .inv-search-row { display: flex; align-items: center; gap: 10px; padding: 16px 22px; }
   .inv-sym-input { font-size: 18px; font-weight: 800; font-family: monospace; text-transform: uppercase; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; color: var(--text); width: 160px; transition: border-color 0.2s; outline: none; }
-  .inv-sym-input:focus { border-color: var(--accent); }
+  .inv-sym-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(129,140,248,0.12); }
   .inv-analyze-btn { background: linear-gradient(135deg, #a855f7, #818cf8); color: #fff; border: none; border-radius: 10px; padding: 11px 26px; font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; white-space: nowrap; }
   .inv-analyze-btn:hover { opacity: 0.88; }
   .inv-analyze-btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -3785,7 +3785,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .ai-chat-msg.user .ai-chat-who { color: var(--accent); }
   .ai-chat-input-row { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); background: var(--card2); }
   .ai-chat-input { flex: 1; background: var(--bg2); border: 1px solid var(--border2); border-radius: 8px; padding: 8px 12px; font-size: 13px; color: var(--text1); outline: none; transition: border-color 0.15s; font-family: inherit; }
-  .ai-chat-input:focus { border-color: var(--accent); }
+  .ai-chat-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(129,140,248,0.12); }
   .ai-chat-send { background: var(--accent); border: none; border-radius: 8px; padding: 8px 14px; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; transition: opacity 0.15s; white-space: nowrap; }
   .ai-chat-send:hover { opacity: 0.85; }
   .ai-chat-send:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -5545,11 +5545,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           <div class="s-profile-grid">
             <div class="profile-field">
               <label class="profile-label" data-i18n="settings_first">First Name</label>
-              <input class="profile-input" id="profile-first" type="text" placeholder="First name" oninput="profileMarkDirty()">
+              <input class="profile-input" id="profile-first" type="text" placeholder="שם פרטי" oninput="profileMarkDirty()">
             </div>
             <div class="profile-field">
               <label class="profile-label" data-i18n="settings_last">Last Name</label>
-              <input class="profile-input" id="profile-last" type="text" placeholder="Last name" oninput="profileMarkDirty()">
+              <input class="profile-input" id="profile-last" type="text" placeholder="שם משפחה" oninput="profileMarkDirty()">
             </div>
           </div>
           <div class="s-profile-grid">
@@ -5616,11 +5616,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           <div class="s-profile-grid">
             <div class="profile-field">
               <label class="profile-label">New Password</label>
-              <input class="profile-input" id="pw-new" type="password" placeholder="New password" autocomplete="new-password">
+              <input class="profile-input" id="pw-new" type="password" placeholder="סיסמה חדשה" autocomplete="new-password">
             </div>
             <div class="profile-field">
               <label class="profile-label">Confirm Password</label>
-              <input class="profile-input" id="pw-confirm" type="password" placeholder="Confirm password" autocomplete="new-password">
+              <input class="profile-input" id="pw-confirm" type="password" placeholder="אישור סיסמה" autocomplete="new-password">
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;">
@@ -6137,7 +6137,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           </div>
           <div class="inv-deposits-form">
             <input type="month" id="inv-dep-month">
-            <input type="number" id="inv-dep-amount" placeholder="Amount" style="width:130px;" min="0" step="any">
+            <input type="number" id="inv-dep-amount" placeholder="סכום" style="width:130px;" min="0" step="any">
             <select id="inv-dep-currency" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;color:var(--text);cursor:pointer;">
               <option value="$">$ USD</option>
               <option value="₪">₪ ILS</option>
@@ -14785,7 +14785,6 @@ async function invAnalyze() {
     let extDataSource = '';
     if (!isIsraeli && fmpKey) {
       out.textContent = 'מושך דוחות כספיים מ-FMP...';
-      console.log(`[FMP] fetching financials for ${sym}`);
       const [fmpQuoteRes, fmpProfileRes, fmpIncomeRes, fmpMetricsRes] = await Promise.all([
         fetch(`${fmpBase}?path=quote&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
         fetch(`${fmpBase}?path=profile&symbol=${encodeURIComponent(sym)}`, { headers: hdr }),
@@ -14803,7 +14802,6 @@ async function invAnalyze() {
         if (fmpData.quote.price) quoteData = { c: fmpData.quote.price, dp: fmpData.quote.changesPercentage };
         if (fmpData.quote.yearHigh) m = { ...m, '52WeekHigh': fmpData.quote.yearHigh, '52WeekLow': fmpData.quote.yearLow };
         if (fmpData.quote.pe) m = { ...m, peTTM: fmpData.quote.pe };
-        console.log(`[FMP] got ${fmpIncome.length} income statements for ${sym}, latest: ${fmpIncome[0]?.date}`);
       }
     }
 
@@ -14811,7 +14809,6 @@ async function invAnalyze() {
     const avKey = getAvKey();
     if (!fmpData && !isIsraeli && avKey) {
       out.textContent = 'מושך דוחות כספיים מ-Alpha Vantage...';
-      console.log(`[AV] fetching financials for ${sym}`);
       const avBase = `${SUPABASE_URL}/functions/v1/alphavantage`;
       const avDelay = ms => new Promise(r => setTimeout(r, ms));
       const avQuoteRes    = await fetch(`${avBase}?function=GLOBAL_QUOTE&symbol=${encodeURIComponent(sym)}`, { headers: hdr });
@@ -14846,7 +14843,6 @@ async function invAnalyze() {
         if (avOverview.PERatio && avOverview.PERatio !== 'None') {
           m = { ...m, peBasicExclExtraTTM: +avOverview.PERatio, peTTM: +avOverview.PERatio };
         }
-        console.log(`[AV] got ${avIncome.length} income statements for ${sym}, latest: ${avIncome[0]?.date}`);
       }
     }
 
