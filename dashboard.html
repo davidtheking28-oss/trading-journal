@@ -10398,6 +10398,11 @@ function exportCSV(type) {
   if (!all.length) { toast('אין נתונים לייצוא','error'); return; }
 
   const hdrs = ['ID','סוג','תאריך כניסה','L/S','סיבת כניסה','סימבול','שער כניסה','מניות','סטופ','יעדים','תאריך סגירה','מניות סגירה','מחיר יציאה','סקטור','עמלה','P/L','סה"כ','$ בעסקה','% תשואה','מה לשמר','מה לשפר'];
+  const csvSafe = s => {
+    const str = String(s == null ? '' : s);
+    const escaped = str.replace(/"/g, '""');
+    return /^[=+\-@\t]/.test(escaped) ? `"\t${escaped}"` : `"${escaped}"`;
+  };
   const rows = all.map(t => {
     const pl  = calcPL(t);
     const tot = calcTotal(t);
@@ -10405,13 +10410,13 @@ function exportCSV(type) {
     const pct = risk ? tot/risk*100 : 0;
     const tgts= (t.t||[]).map((tg,i)=>`T${i+1}:${tg.shares}@${tg.price}`).join(';');
     return [
-      t.id, t.assetType, t.entryDate, t.ls, t.entry_reason||'', t.symbol,
+      t.id, t.assetType, t.entryDate, t.ls, csvSafe(t.entry_reason||''), csvSafe(t.symbol),
       t.entryPrice, t.shares, t.stop, tgts,
       t.closeDate, t.closedShares, t.exitPrice,
-      SECTOR_MAP[(t.symbol||'').toUpperCase().replace(/USDT\.P|USDT|\.P$/,'')] || '', t.commission,
+      csvSafe(SECTOR_MAP[(t.symbol||'').toUpperCase().replace(/USDT\.P|USDT|\.P$/,'')] || ''), t.commission,
       pl.toFixed(2), tot.toFixed(2), risk.toFixed(2), pct.toFixed(2),
-      `"${(t.notes_keep||'').replace(/"/g,'""')}"`,
-      `"${(t.notes_improve||'').replace(/"/g,'""')}"`
+      csvSafe(t.notes_keep||''),
+      csvSafe(t.notes_improve||'')
     ];
   });
 
@@ -12522,8 +12527,20 @@ async function totpStep() {
   document.getElementById('pin-totp-row').style.display = 'flex';
   document.getElementById('totp-input').focus();
 }
+const TOTP_ATTEMPTS_KEY = 'tj-totp-attempts';
+const TOTP_LOCKOUT_KEY  = 'tj-totp-lockout';
+const TOTP_MAX_ATTEMPTS = 5;
+
+function getTotpAttempts() { return parseInt(localStorage.getItem(TOTP_ATTEMPTS_KEY)||'0'); }
+function setTotpAttempts(n) { localStorage.setItem(TOTP_ATTEMPTS_KEY, String(n)); }
+function isTotpLockedOut() {
+  const until = parseInt(localStorage.getItem(TOTP_LOCKOUT_KEY)||'0');
+  return Date.now() < until;
+}
+
 async function totpSubmit() {
   if (!_totpPendingUnlock) return;
+  if (isTotpLockedOut()) { pinMsg('2FA נעול — נסה שוב עוד מספר דקות'); return; }
   const code  = (document.getElementById('totp-input')?.value||'').trim();
   const secret= await secLoad(TOTP_KEY);
   if (!secret||code.length!==6) { pinMsg('קוד לא תקין'); return; }
@@ -12532,22 +12549,29 @@ async function totpSubmit() {
     document.getElementById('pin-totp-row').style.display='none';
     document.getElementById('totp-input').value='';
     setPinAttempts(0);
+    setTotpAttempts(0);
+    localStorage.removeItem(TOTP_LOCKOUT_KEY);
     auditLog('2fa_unlocked');
     pinUnlock();
   } else {
     pinMsg('קוד שגוי — נסה שוב');
     document.getElementById('totp-input').value='';
-    const a=getPinAttempts()+1; setPinAttempts(a);
+    const a = getTotpAttempts() + 1; setTotpAttempts(a);
     auditLog('2fa_failed');
-    if(a>=MAX_ATTEMPTS){const ms=getLockoutDuration(a);localStorage.setItem(PIN_LOCKOUT_KEY,String(Date.now()+ms));showLockoutMsg();}
+    if (a >= TOTP_MAX_ATTEMPTS) {
+      const ms = getLockoutDuration(a);
+      localStorage.setItem(TOTP_LOCKOUT_KEY, String(Date.now() + ms));
+      showLockoutMsg();
+    }
   }
 }
 
-// TOTP setup
+// TOTP setup — secret lives only in this closure, not on window
+let _totpSetupSecret = null;
 async function totpSetupInit() {
   const bytes = crypto.getRandomValues(new Uint8Array(20));
   const secret = b32Encode(bytes);
-  window._totpSetupSecret = secret;
+  _totpSetupSecret = secret;
   const uri = `otpauth://totp/Trading%20Journal%202.0?secret=${secret}&issuer=TradingJournal&algorithm=SHA1&digits=6&period=30`;
   const div = document.getElementById('totp-setup-area');
   if (!div) return;
@@ -12572,12 +12596,12 @@ async function totpSetupInit() {
 }
 async function totpSetupConfirm() {
   const code   = (document.getElementById('totp-verify-input')?.value||'').trim();
-  const secret = window._totpSetupSecret;
+  const secret = _totpSetupSecret;
   if (!secret) return;
   if (await totpVerify(secret,code)) {
     await secStore(TOTP_KEY,secret);
     localStorage.setItem(TOTP_ENABLED_KEY,'1');
-    window._totpSetupSecret=null;
+    _totpSetupSecret=null;
     document.getElementById('totp-setup-area').style.display='none';
     document.getElementById('totp-status-text').textContent='🟢 פעיל';
     document.getElementById('totp-toggle-btn').textContent='🔴 בטל 2FA';
@@ -12588,7 +12612,7 @@ async function totpSetupConfirm() {
   }
 }
 function totpSetupCancel() {
-  window._totpSetupSecret=null;
+  _totpSetupSecret=null;
   const d=document.getElementById('totp-setup-area'); if(d) d.style.display='none';
 }
 async function totpToggle() {
@@ -12601,6 +12625,10 @@ async function totpToggle() {
     auditLog('2fa_disabled');
     toast('2FA בוטל','warning');
   } else {
+    if (!hasPIN()) {
+      toast('יש להגדיר קוד PIN לפני הפעלת 2FA — האבטחה תלויה ב-PIN', 'error');
+      return;
+    }
     await totpSetupInit();
   }
 }
