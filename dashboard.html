@@ -14164,20 +14164,8 @@ function invRecalc() {
   const cash = Math.max(0, portfolioTotal - totalCost);
   const effectiveTotal = portfolioTotal + (totalUnrealizedPnL || 0);
 
-  // Show current portfolio value (base + unrealized P&L)
   const cvWrap = document.getElementById('inv-current-value-wrap');
-  const cvEl   = document.getElementById('inv-current-value');
-  const cpEl   = document.getElementById('inv-current-pnl');
-  if (cvWrap && cvEl && cpEl && portfolioTotal > 0 && totalUnrealizedPnL !== null) {
-    const cur2 = invGetCurrency();
-    cvEl.textContent = cur2 + effectiveTotal.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
-    const sign = totalUnrealizedPnL >= 0 ? '+' : '';
-    cpEl.textContent = `(${sign}${cur2}${Math.abs(totalUnrealizedPnL).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})})`;
-    cpEl.style.color = totalUnrealizedPnL >= 0 ? 'var(--green)' : 'var(--red)';
-    cvWrap.style.display = '';
-  } else if (cvWrap) {
-    cvWrap.style.display = 'none';
-  }
+  if (cvWrap) cvWrap.style.display = 'none';
 
   // Pass 2: render per-row display (pct now uses totalCost as denominator)
   const cur = invGetCurrency();
