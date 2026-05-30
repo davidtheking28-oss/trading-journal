@@ -1062,17 +1062,16 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     background: rgba(3,7,20,0.9);
     backdrop-filter: blur(8px);
     z-index: 1000;
-    display: flex;
+    display: none;
     align-items: flex-start;
     justify-content: center;
     padding: 24px 16px;
     overflow-y: auto;
     opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transition: opacity 0.22s var(--ease-out), visibility 0.22s;
+    transition: opacity 0.22s var(--ease-out), display 0.22s allow-discrete;
   }
-  .modal-overlay.open { opacity: 1; visibility: visible; pointer-events: auto; }
+  .modal-overlay.open { display: flex; opacity: 1; }
+  @starting-style { .modal-overlay.open { opacity: 0; } }
   .modal {
     background: linear-gradient(145deg, #0b0b0e 0%, #131316 100%);
     border: 1px solid rgba(129,140,248,0.2);
@@ -1658,17 +1657,16 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     background: rgba(0,0,0,0.8);
     backdrop-filter: blur(4px);
     z-index: 1100;
-    display: flex;
+    display: none;
     align-items: flex-start;
     justify-content: center;
     padding: 24px 16px;
     overflow-y: auto;
     opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transition: opacity 0.22s var(--ease-out), visibility 0.22s;
+    transition: opacity 0.22s var(--ease-out), display 0.22s allow-discrete;
   }
-  .ss-modal-overlay.open { opacity: 1; visibility: visible; pointer-events: auto; }
+  .ss-modal-overlay.open { display: flex; opacity: 1; }
+  @starting-style { .ss-modal-overlay.open { opacity: 0; } }
   .ss-modal {
     background: var(--card);
     border: 1px solid var(--border2);
