@@ -1214,8 +1214,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   @media (max-width: 640px) {
     /* Header */
     header { padding: 0 14px; height: 52px; }
-    .header-title { font-size: 14px; gap: 6px; }
-    .header-actions { gap: 6px; }
+    .header-title { font-size: 14px; gap: 6px; flex-basis: 130px !important; }
+    .header-actions { gap: 6px; flex-basis: 130px !important; }
     .btn { padding: 7px 12px; font-size: 12px; }
     .btn-sm { padding: 4px 8px; font-size: 11px; }
 
@@ -1298,11 +1298,21 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   }
 
   /* ══════════════════════════════════════════
+     RESPONSIVE — Compact phone (≤ 480px)
+  ══════════════════════════════════════════ */
+  @media (max-width: 480px) {
+    .header-title .accent { display: none; }
+    .header-title::after { content: 'TJ'; color: var(--accent); font-weight: 800; }
+    .header-title { flex-basis: auto !important; }
+    .header-actions { flex-basis: auto !important; gap: 4px !important; }
+    .ob-replay-btn { min-width: 44px !important; min-height: 44px !important; width: 44px !important; height: 44px !important; }
+  }
+
+  /* ══════════════════════════════════════════
      RESPONSIVE — Small phone (≤ 400px)
   ══════════════════════════════════════════ */
   @media (max-width: 400px) {
-    .header-title .accent { display: none; }
-    .header-title::after { content: 'TJ 2.0'; color: var(--accent); font-weight: 800; }
+    .header-title::after { content: 'TJ'; }
     .kpi-value { font-size: 17px; }
     main { padding: 10px; }
   }
@@ -5147,7 +5157,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <button class="btn btn-export btn-sm" onclick="togglePrivacy()" id="privacy-btn" title="מצב פרטיות">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
       </button>
-      <button class="btn btn-secondary btn-sm" onclick="onboardingReplay()" title="סיור מוצר" style="font-size:13px;font-weight:700;width:28px;height:28px;padding:0;display:flex;align-items:center;justify-content:center;">?</button>
+      <button class="btn btn-secondary btn-sm ob-replay-btn" onclick="onboardingReplay()" title="סיור מוצר" style="font-size:13px;font-weight:700;width:28px;height:28px;padding:0;display:flex;align-items:center;justify-content:center;">?</button>
       <button class="btn btn-secondary btn-sm" onclick="authSignOut()" id="signout-btn" title="יציאה">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       </button>
