@@ -10754,11 +10754,33 @@ async function _flexFetch(jwt, { debug } = {}) {
   if (!sendRes.ok) throw new Error(`שגיאת רשת: ${sendRes.status}`);
   const sendXml = await sendRes.text();
   const refCode = flexExtractTag(sendXml, 'ReferenceCode');
-  if (!refCode || flexExtractTag(sendXml, 'Status') === 'Fail') throw new Error(flexExtractTag(sendXml, 'ErrorMessage') || 'fail');
-  await new Promise(r => setTimeout(r, 2000));
-  const getRes = await fetch(`${SUPABASE_URL}/functions/v1/ibkr?action=get&ref=${encodeURIComponent(refCode)}`, { headers: { 'Authorization': `Bearer ${jwt}` } });
-  if (!getRes.ok) throw new Error(`שגיאת רשת: ${getRes.status}`);
-  const xml = await getRes.text();
+  if (!refCode || flexExtractTag(sendXml, 'Status') === 'Fail') {
+    const errCode = flexExtractTag(sendXml, 'ErrorCode');
+    const errMsg  = flexExtractTag(sendXml, 'ErrorMessage') || 'שגיאה לא ידועה';
+    throw new Error(`${errMsg}${errCode ? ` [IBKR קוד: ${errCode}]` : ''}`);
+  }
+
+  // IBKR needs 5–30s to prepare the statement — poll with retries
+  const DELAYS = [5000, 10000, 15000, 20000];
+  let xml = '';
+  let lastErr = 'IBKR לא הצליח ליצור את הדוח';
+  for (let i = 0; i < DELAYS.length; i++) {
+    flexSetStatus(`מכין נתונים ב-IBKR... (${i + 1}/${DELAYS.length})`, 'var(--text2)');
+    await new Promise(r => setTimeout(r, DELAYS[i]));
+    const getRes = await fetch(
+      `${SUPABASE_URL}/functions/v1/ibkr?action=get&ref=${encodeURIComponent(refCode)}`,
+      { headers: { 'Authorization': `Bearer ${jwt}` } }
+    );
+    if (!getRes.ok) throw new Error(`שגיאת רשת: ${getRes.status}`);
+    xml = await getRes.text();
+    const status  = flexExtractTag(xml, 'Status');
+    const errCode = flexExtractTag(xml, 'ErrorCode');
+    if (status !== 'Fail') break;
+    lastErr = `${flexExtractTag(xml, 'ErrorMessage') || 'שגיאה לא ידועה'} [IBKR קוד: ${errCode}]`;
+    if (errCode !== '1019') throw new Error(lastErr);
+    // errCode 1019 = "not ready yet" — retry
+  }
+  if (flexExtractTag(xml, 'Status') === 'Fail') throw new Error(lastErr);
   if (debug) return { xml, trades: flexParseXML(xml) };
   return flexParseXML(xml);
 }
