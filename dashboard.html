@@ -5732,11 +5732,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             <div style="display:grid;grid-template-columns:1fr 180px auto;gap:10px;align-items:end;margin-bottom:12px;">
               <div>
                 <div class="ibkr-field-label">Token</div>
-                <input id="flex-token" class="form-control" type="password" placeholder="••••••••" autocomplete="off" style="font-size:12px;padding:6px 10px;">
+                <input id="flex-token" class="form-control" type="password" placeholder="••••••••" autocomplete="off" style="font-size:12px;padding:6px 10px;" onkeydown="if(event.key==='Enter')flexSave()">
               </div>
               <div>
                 <div class="ibkr-field-label">Query ID</div>
-                <input id="flex-query-id" class="form-control" type="text" placeholder="1462900" autocomplete="off" style="font-size:12px;padding:6px 10px;">
+                <input id="flex-query-id" class="form-control" type="text" placeholder="1462900" autocomplete="off" style="font-size:12px;padding:6px 10px;" onkeydown="if(event.key==='Enter')flexSave()" onblur="if(document.getElementById('flex-token').value&&this.value)flexSave()">
               </div>
               <div class="ibkr-actions" style="margin-bottom:0;">
                 <button class="btn btn-secondary btn-sm" onclick="flexSave()" data-i18n="m_save_short">Save</button>
@@ -5776,11 +5776,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;margin-bottom:12px;">
               <div>
                 <div class="ibkr-field-label">API Key</div>
-                <input id="bybit-api-key" class="form-control" type="password" placeholder="••••••••" autocomplete="off" style="font-size:12px;padding:6px 10px;">
+                <input id="bybit-api-key" class="form-control" type="password" placeholder="••••••••" autocomplete="off" style="font-size:12px;padding:6px 10px;" onkeydown="if(event.key==='Enter')bybitSave()">
               </div>
               <div>
                 <div class="ibkr-field-label">API Secret</div>
-                <input id="bybit-api-secret" class="form-control" type="password" placeholder="••••••••" autocomplete="off" style="font-size:12px;padding:6px 10px;">
+                <input id="bybit-api-secret" class="form-control" type="password" placeholder="••••••••" autocomplete="off" style="font-size:12px;padding:6px 10px;" onkeydown="if(event.key==='Enter')bybitSave()" onblur="if(document.getElementById('bybit-api-key').value&&this.value)bybitSave()">
               </div>
               <div class="ibkr-actions" style="margin-bottom:0;">
                 <button class="btn btn-secondary btn-sm" onclick="bybitSave()">Save</button>
