@@ -6036,16 +6036,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         </div>
 
         <div class="inv-portfolio-bar">
-          <label data-i18n="inv_portfolio_total">Portfolio Total</label>
-          <div class="inv-currency-seg">
-            <button id="inv-cur-usd" class="inv-cur-opt active" onclick="invSetCurrency('$')">$</button>
-            <button id="inv-cur-ils" class="inv-cur-opt" onclick="invSetCurrency('₪')">₪</button>
-          </div>
-          <input type="number" id="inv-portfolio-total" placeholder="100000" min="0" step="any" oninput="invRecalc();invAutoSaveTotal()">
-          <div id="inv-current-value-wrap" style="display:none;font-size:12px;color:var(--text3);margin-right:4px;">
-            ערך נוכחי: <span id="inv-current-value" style="font-weight:700;font-size:13px;"></span>
-            <span id="inv-current-pnl" style="font-size:11px;margin-right:4px;"></span>
-          </div>
+          <label data-i18n="inv_cash_label">מזומן</label>
+          <input type="number" id="inv-cash-balance" placeholder="0" min="0" step="any" oninput="invRecalc();invAutoSaveTotal()">
+          <div style="font-size:12px;color:var(--text3);margin-right:8px;">סך תיק: <span id="inv-portfolio-total-display" style="font-weight:700;font-size:13px;color:var(--text);">—</span></div>
           <div class="inv-total-allocated"><span data-i18n="inv_allocated">Allocated:</span> <span id="inv-allocated-pct">0%</span></div>
         </div>
 
@@ -8655,8 +8648,8 @@ async function loadUserSettings() {
   }
   renderFmpKeyStatus();
   if (_userSettings.portfolio_total != null) {
-    const ptEl = document.getElementById('inv-portfolio-total');
-    if (ptEl) { ptEl.value = _userSettings.portfolio_total; invRecalc(); }
+    const cashElS = document.getElementById('inv-cash-balance');
+    if (cashElS) { cashElS.value = _userSettings.portfolio_total; invRecalc(); }
   }
 }
 
@@ -12851,7 +12844,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const saved = localStorage.getItem('inv_data_v1');
       if (saved) {
         const d = JSON.parse(saved);
-        if (d.portfolioTotal) totalEl.value = d.portfolioTotal;
+        if (d.cashBalance) totalEl.value = d.cashBalance;
       }
     } catch {}
   }
@@ -14105,8 +14098,6 @@ async function invInit() {
   document.getElementById('inv-cur-usd')?.classList.toggle('active', cur === '$');
   document.getElementById('inv-cur-ils')?.classList.toggle('active', cur === '₪');
   invSyncPnlBtn();
-  const totalEl = document.getElementById('inv-portfolio-total');
-  if (totalEl) totalEl.value = data.portfolioTotal || '';
   const cashEl = document.getElementById('inv-cash-balance');
   if (cashEl) cashEl.value = data.cashBalance || '';
   const dl = document.getElementById('inv-sym-list');
@@ -14194,12 +14185,10 @@ function invRecalc() {
     rowData.push({ i: +row.dataset.idx, cat, value, cost, pnlAmt, pnlPct });
   });
 
-  const portfolioTotal = +(document.getElementById('inv-portfolio-total')?.value) || 0;
-  const cash = Math.max(0, portfolioTotal - totalCost);
-  const effectiveTotal = portfolioTotal + (totalUnrealizedPnL || 0);
-
-  const cvWrap = document.getElementById('inv-current-value-wrap');
-  if (cvWrap) cvWrap.style.display = 'none';
+  const cashInput = +(document.getElementById('inv-cash-balance')?.value) || 0;
+  const portfolioTotal = totalCurrentValue + cashInput;
+  const cash = cashInput;
+  const effectiveTotal = portfolioTotal;
 
   // Pass 2: render per-row display (pct now uses totalCost as denominator)
   const cur = invGetCurrency();
@@ -14329,7 +14318,7 @@ function invGetCurrentData() {
     });
   });
   return {
-    portfolioTotal: (document.getElementById('inv-portfolio-total')?.value || ''),
+
     holdings: holdings.filter(h => h.symbol || h.entryShares || h.entryPrice),
     deposits: invLoad().deposits || []
   };
@@ -14597,8 +14586,8 @@ function invAutoSector(idx) {
 
 function invAutoSaveTotal() {
   const data = invLoad();
-  const val = document.getElementById('inv-portfolio-total')?.value || '';
-  data.portfolioTotal = val;
+  const val = document.getElementById('inv-cash-balance')?.value || '';
+  data.cashBalance = val;
   invSaveData(data);
   _saveUserSettings({ portfolio_total: val ? +val : null });
 }
@@ -14643,12 +14632,12 @@ function invAddDeposit() {
   if (!data.deposits) data.deposits = [];
   data.deposits.push({ month, amount, currency });
   data.deposits.sort((a, b) => b.month.localeCompare(a.month));
-  const totalEl = document.getElementById('inv-portfolio-total');
-  const newTotal = (+(totalEl?.value) || 0) + amount;
-  if (totalEl) totalEl.value = newTotal;
-  data.portfolioTotal = String(newTotal);
+  const cashElD = document.getElementById('inv-cash-balance');
+  const newCash = (+(cashElD?.value) || 0) + amount;
+  if (cashElD) cashElD.value = newCash;
+  data.cashBalance = String(newCash);
   invSaveData(data);
-  _saveUserSettings({ portfolio_total: newTotal });
+  _saveUserSettings({ portfolio_total: newCash });
   invRenderDeposits(data.deposits);
   invRecalc();
   document.getElementById('inv-dep-amount').value = '';
