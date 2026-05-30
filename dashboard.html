@@ -3611,6 +3611,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-alloc-invested { min-width: 80px; text-align: right; color: var(--text); font-weight: 600; font-size: 11px; white-space: nowrap; }
   .inv-alloc-cur { min-width: 44px; text-align: right; color: var(--text2); font-size: 11px; }
   .inv-alloc-remaining { color: var(--text3); white-space: nowrap; font-size: 11px; min-width: 110px; text-align: right; }
+  .inv-cash-input { min-width: 80px; width: 80px; text-align: right; background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.18); color: var(--text); font-weight: 600; font-size: 11px; outline: none; padding: 1px 2px; }
   .inv-alloc-donut-row { display: flex; gap: 20px; align-items: flex-start; }
   .inv-alloc-bars { flex: 1; display: flex; flex-direction: column; gap: 10px; }
   .inv-donut-wrap { display: flex; flex-direction: row; align-items: center; gap: 16px; flex-shrink: 0; }
@@ -6023,8 +6024,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             ערך נוכחי: <span id="inv-current-value" style="font-weight:700;font-size:13px;"></span>
             <span id="inv-current-pnl" style="font-size:11px;margin-right:4px;"></span>
           </div>
-          <label style="font-size:12px;color:var(--text3);margin-right:12px;white-space:nowrap;" data-i18n="inv_cash_label">מזומן</label>
-          <input type="number" id="inv-cash-balance" placeholder="0" min="0" step="any" style="width:110px;" oninput="invRecalc();invAutoSaveCash()">
           <div class="inv-total-allocated"><span data-i18n="inv_allocated">Allocated:</span> <span id="inv-allocated-pct">0%</span></div>
         </div>
 
@@ -6058,9 +6057,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
               </div>
               <div class="inv-alloc-row">
                 <span class="inv-alloc-dot" style="background:#94a3b8"></span>
-                <span class="inv-alloc-label">💵 Cash — Target 5%</span>
+                <span class="inv-alloc-label" data-i18n="inv_cash_row">💵 מזומן — יעד 5%</span>
                 <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-cash" style="width:0%;background:#94a3b8;"></div></div>
-                <span class="inv-alloc-invested" id="alloc-inv-cash">—</span>
+                <input type="number" id="inv-cash-balance" class="inv-cash-input" placeholder="—" min="0" step="any" oninput="invRecalc();invAutoSaveCash()">
                 <span class="inv-alloc-cur" id="alloc-cur-cash">0%</span>
                 <span class="inv-alloc-remaining" id="alloc-rem-cash">—</span>
               </div>
@@ -14238,11 +14237,9 @@ function invRecalc() {
   const cashBarW = cashTarget > 0 ? Math.min(cash / cashTarget * 100, 100) : 0;
   const cashOver = portfolioTotal > 0 && cash > cashTarget;
   const cashBarEl = document.getElementById('alloc-bar-cash');
-  const cashInvEl = document.getElementById('alloc-inv-cash');
   const cashCurEl = document.getElementById('alloc-cur-cash');
   const cashRemEl = document.getElementById('alloc-rem-cash');
   if (cashBarEl) { cashBarEl.style.width = cashBarW + '%'; cashBarEl.style.background = '#94a3b8'; }
-  if (cashInvEl) cashInvEl.textContent = cash > 0 ? `${c}${cash.toLocaleString('en-US', {maximumFractionDigits:0})}` : '—';
   if (cashCurEl) { cashCurEl.textContent = cashPct.toFixed(1) + '%'; cashCurEl.style.color = 'var(--text2)'; }
   if (cashRemEl) {
     cashRemEl.textContent = '';
