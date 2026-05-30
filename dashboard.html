@@ -5147,6 +5147,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <button class="btn btn-export btn-sm" onclick="togglePrivacy()" id="privacy-btn" title="מצב פרטיות">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
       </button>
+      <button class="btn btn-secondary btn-sm" onclick="onboardingReplay()" title="סיור מוצר" style="font-size:13px;font-weight:700;width:28px;height:28px;padding:0;display:flex;align-items:center;justify-content:center;">?</button>
       <button class="btn btn-secondary btn-sm" onclick="authSignOut()" id="signout-btn" title="יציאה">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       </button>
@@ -6849,6 +6850,13 @@ function onboardingDone() {
   document.getElementById('ob-overlay').style.display = 'none';
 }
 
+function onboardingReplay() {
+  localStorage.removeItem('ob_done_' + _currentUser?.id);
+  const el = document.getElementById('ob-overlay');
+  el.style.display = 'flex';
+  onboardingStep(1);
+}
+
 function onboardingOpenTrade() {
   onboardingDone();
   openModal('stock');
@@ -7774,7 +7782,16 @@ function renderTable(type) {
     const _emptyIcon = type==='stock'
       ? `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`
       : `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.5 9a3 3 0 0 1 5 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>`;
-    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">${_emptyIcon}</div><p>${t('no_trades')}</p></div>`;
+    const dbArr = type === 'stock' ? db.stocks : db.crypto;
+    const isFirstUse = dbArr.filter(tr => !tr.deleted).length === 0;
+    wrap.innerHTML = isFirstUse
+      ? `<div class="empty-state">
+           <div class="empty-icon">${_emptyIcon}</div>
+           <p style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:0">${type === 'stock' ? 'עדיין אין עסקאות מניות' : 'עדיין אין עסקאות קריפטו'}</p>
+           <p style="font-size:13px;margin-top:8px;max-width:260px">תעד את הפוזיציה הראשונה שלך ותתחיל לעקוב אחרי הביצועים</p>
+           <button onclick="openModal('${type}')" style="margin-top:20px;padding:9px 22px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s;" onmouseenter="this.style.opacity='.85'" onmouseleave="this.style.opacity='1'">+ הוסף עסקה ראשונה</button>
+         </div>`
+      : `<div class="empty-state"><div class="empty-icon">${_emptyIcon}</div><p>${t('no_trades')}</p></div>`;
     return;
   }
 
@@ -9619,7 +9636,19 @@ function renderOverview() {
   const openTrades = [...db.stocks, ...db.crypto].filter(tr2 => !tr2.deleted && !tr2.exitPrice);
 
   // 5 KPI cards
-  document.getElementById('kpi-grid').innerHTML = `
+  const _noTrades = db.stocks.filter(tr=>!tr.deleted).length + db.crypto.filter(tr=>!tr.deleted).length === 0;
+  if (_noTrades) {
+    document.getElementById('kpi-grid').innerHTML = `
+      <div style="grid-column:1/-1;padding:28px 24px;text-align:center;border:1px dashed rgba(129,140,248,0.2);border-radius:14px;background:rgba(129,140,248,0.03);">
+        <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px;">הוסף את הפוזיציה הראשונה שלך</div>
+        <div style="font-size:13px;color:var(--text3);line-height:1.6;margin-bottom:18px;">לאחר רישום עסקאות תוכל לצפות כאן בנתוני הביצועים שלך</div>
+        <div style="display:flex;justify-content:center;gap:10px;">
+          <button onclick="openModal('stock')" style="padding:9px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s;" onmouseenter="this.style.opacity='.85'" onmouseleave="this.style.opacity='1'">+ מניה</button>
+          <button onclick="openModal('crypto')" style="padding:9px 20px;background:rgba(255,255,255,0.07);color:var(--text);border:1px solid rgba(255,255,255,0.1);border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s;" onmouseenter="this.style.opacity='.85'" onmouseleave="this.style.opacity='1'">+ קריפטו</button>
+        </div>
+      </div>`;
+  } else {
+    document.getElementById('kpi-grid').innerHTML = `
     <div class="kpi-card ${st.total>=0?'c-green':'c-red'}">
       <div class="kpi-label">${t('kpi_pnl')}</div>
       <div class="kpi-value ${st.total>=0?'green':'red'} sensitive">${fmtUSD(st.total)}</div>
@@ -9647,10 +9676,11 @@ function renderOverview() {
       <div class="kpi-sub" id="kpi-live-sub">${openTrades.length} ${t('kpi_open_pos')}</div>
     </div>
   `;
-  document.querySelectorAll('#kpi-grid .kpi-card').forEach((el, i) => {
-    el.style.setProperty('--i', i);
-    el.classList.add('animate-in');
-  });
+    document.querySelectorAll('#kpi-grid .kpi-card').forEach((el, i) => {
+      el.style.setProperty('--i', i);
+      el.classList.add('animate-in');
+    });
+  }
 
   // Calendar
   calendarNav.overview = { year: year ? +year : now.getFullYear(), month: month ? +month : now.getMonth()+1 };
