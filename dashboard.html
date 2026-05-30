@@ -4981,6 +4981,22 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   /* Top nav pills */
   .tnav-btn { font-size: 12.5px !important; font-weight: 500 !important; letter-spacing: 0.2px !important; }
   .tnav-btn.active { font-weight: 650 !important; }
+  /* Tab indicator: animated scaleX (replaces static border-bottom-color) */
+  .tnav-btn.active,
+  html[data-theme="light"] .tnav-btn.active { border-bottom-color: transparent !important; }
+  .tnav-btn::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 1px;
+    transform: scaleX(0);
+    transition: transform 0.25s var(--ease-out), opacity 0.18s;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .tnav-btn.active::after { transform: scaleX(1); opacity: 1; }
 
   /* Header: clean brand */
   .header-title { font-size: 15px !important; font-weight: 700 !important; letter-spacing: -0.3px !important; }
@@ -5164,7 +5180,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <button class="btn btn-export btn-sm" onclick="togglePrivacy()" id="privacy-btn" title="מצב פרטיות">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
       </button>
-      <button class="btn btn-secondary btn-sm ob-replay-btn" onclick="onboardingReplay()" title="סיור מוצר" style="font-size:13px;font-weight:700;width:28px;height:28px;padding:0;display:flex;align-items:center;justify-content:center;">?</button>
       <button class="btn btn-secondary btn-sm" onclick="authSignOut()" id="signout-btn" title="יציאה">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       </button>
@@ -5199,6 +5214,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         </svg>
       </span>
       <span class="sidebar-brand-name" id="header-user-name">Trading Journal</span>
+      <span id="time-greeting" style="display:block;font-size:10.5px;color:var(--text3);font-weight:400;line-height:1;margin-top:3px;letter-spacing:0.2px;opacity:0;transition:opacity 0.5s;"></span>
     </div>
 
     <div class="sidebar-section-label">Navigation</div>
@@ -6887,12 +6903,22 @@ function onboardingGoSettings() {
 
 const ADMIN_ID = '9f9ffff4-0936-446c-b816-410b50894e8b';
 
+function _timeGreeting() {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return 'בוקר טוב';
+  if (h >= 12 && h < 17) return 'אחה"צ טוב';
+  if (h >= 17 && h < 22) return 'ערב טוב';
+  return 'לילה טוב';
+}
+
 async function _onAuthSuccess(user) {
   _currentUser = user;
   const _displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Trading Journal';
   const _nameEl = document.getElementById('header-user-name');
   if (_nameEl) {
     _nameEl.textContent = _displayName;
+    const greetEl = document.getElementById('time-greeting');
+    if (greetEl) { greetEl.textContent = _timeGreeting(); setTimeout(() => { greetEl.style.opacity = '1'; }, 600); }
     _nameEl.title = 'לחץ לשינוי שם';
     _nameEl.style.cursor = 'pointer';
     _nameEl.onclick = async () => {
@@ -6935,6 +6961,8 @@ async function _onAuthSuccess(user) {
   // Offer localStorage migration on first login
   await offerMigration();
   onboardingCheck(user.id);
+  console.log('%c Trading Journal 2.0 ','background:#818cf8;color:#fff;font-weight:700;font-size:13px;border-radius:3px;padding:2px 6px');
+  console.log('%cRunning in the browser — treat other users\' data with respect.','color:#8896a8;font-size:11px');
 }
 
 // ─────────────────────────────────────────────
