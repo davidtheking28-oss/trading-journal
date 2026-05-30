@@ -10750,17 +10750,29 @@ function pinUnlock() {
 }
 
 async function _flexFetch(jwt, { debug } = {}) {
-  const sendRes = await fetch(`${SUPABASE_URL}/functions/v1/ibkr?action=send`, { headers: { 'Authorization': `Bearer ${jwt}` } });
-  if (!sendRes.ok) throw new Error(`שגיאת רשת: ${sendRes.status}`);
-  const sendXml = await sendRes.text();
-  const refCode = flexExtractTag(sendXml, 'ReferenceCode');
-  if (!refCode || flexExtractTag(sendXml, 'Status') === 'Fail') {
-    const errCode = flexExtractTag(sendXml, 'ErrorCode');
-    const errMsg  = flexExtractTag(sendXml, 'ErrorMessage') || 'שגיאה לא ידועה';
-    throw new Error(`${errMsg}${errCode ? ` [IBKR קוד: ${errCode}]` : ''}`);
+  // Step 1: Send request — retry on 1001 (temporary IBKR busy)
+  const SEND_DELAYS = [0, 8000, 15000];
+  let refCode = '';
+  let sendErrCode = '';
+  let sendErrMsg = 'שגיאה לא ידועה';
+  for (let i = 0; i < SEND_DELAYS.length; i++) {
+    if (SEND_DELAYS[i] > 0) {
+      flexSetStatus(`מנסה שוב... (${i}/${SEND_DELAYS.length - 1})`, 'var(--text2)');
+      await new Promise(r => setTimeout(r, SEND_DELAYS[i]));
+    }
+    const sendRes = await fetch(`${SUPABASE_URL}/functions/v1/ibkr?action=send`, { headers: { 'Authorization': `Bearer ${jwt}` } });
+    if (!sendRes.ok) throw new Error(`שגיאת רשת: ${sendRes.status}`);
+    const sendXml = await sendRes.text();
+    refCode     = flexExtractTag(sendXml, 'ReferenceCode');
+    sendErrCode = flexExtractTag(sendXml, 'ErrorCode');
+    sendErrMsg  = flexExtractTag(sendXml, 'ErrorMessage') || 'שגיאה לא ידועה';
+    if (refCode && flexExtractTag(sendXml, 'Status') !== 'Fail') break;
+    if (sendErrCode !== '1001') throw new Error(`${sendErrMsg} [IBKR קוד: ${sendErrCode}]`);
+    // 1001 = temporary — retry send
   }
+  if (!refCode) throw new Error(`${sendErrMsg} [IBKR קוד: ${sendErrCode}]`);
 
-  // IBKR needs 5–30s to prepare the statement — poll with retries
+  // Step 2: Poll GetStatement — retry on 1001 and 1019 (not ready yet)
   const DELAYS = [5000, 10000, 15000, 20000];
   let xml = '';
   let lastErr = 'IBKR לא הצליח ליצור את הדוח';
@@ -10777,8 +10789,8 @@ async function _flexFetch(jwt, { debug } = {}) {
     const errCode = flexExtractTag(xml, 'ErrorCode');
     if (status !== 'Fail') break;
     lastErr = `${flexExtractTag(xml, 'ErrorMessage') || 'שגיאה לא ידועה'} [IBKR קוד: ${errCode}]`;
-    if (errCode !== '1019') throw new Error(lastErr);
-    // errCode 1019 = "not ready yet" — retry
+    if (errCode !== '1019' && errCode !== '1001') throw new Error(lastErr);
+    // 1019 / 1001 = not ready yet — retry
   }
   if (flexExtractTag(xml, 'Status') === 'Fail') throw new Error(lastErr);
   if (debug) return { xml, trades: flexParseXML(xml) };
