@@ -8645,6 +8645,24 @@ async function loadUserSettings() {
     const el = document.getElementById('av-key-input');
     if (el) { el.value = ''; el.placeholder = 'מפתח שמור ✓'; }
   }
+  if (_userSettings.flex_token) {
+    const el = document.getElementById('flex-token');
+    if (el) { el.value = ''; el.placeholder = 'Token שמור ✓'; }
+    const dot = document.getElementById('ibkr-conn-dot');
+    if (dot) dot.style.display = 'inline-block';
+  }
+  if (_userSettings.flex_query_id) {
+    const el = document.getElementById('flex-query-id');
+    if (el) { el.value = ''; el.placeholder = 'Query ID שמור ✓'; }
+  }
+  if (_userSettings.bybit_api_key) {
+    const el = document.getElementById('bybit-api-key');
+    if (el) { el.value = ''; el.placeholder = 'API Key שמור ✓'; }
+    const el2 = document.getElementById('bybit-api-secret');
+    if (el2) { el2.value = ''; el2.placeholder = 'Secret שמור ✓'; }
+    const dot = document.getElementById('bybit-conn-dot');
+    if (dot) dot.style.display = 'inline-block';
+  }
   renderFmpKeyStatus();
   if (_userSettings.portfolio_total != null) {
     const ptEl = document.getElementById('inv-portfolio-total');
@@ -12206,10 +12224,12 @@ async function flexSave() {
   if (!/^[a-zA-Z0-9]{6,64}$/.test(t)) { toast('Token לא תקין — מספרים ואותיות בלבד, לפחות 6 תווים', 'error'); return; }
   if (!/^\d{4,15}$/.test(q)) { toast('Query ID לא תקין — מספרים בלבד (לדוגמה: 1462900)', 'error'); return; }
   await _saveUserSettings({ flex_token: t, flex_query_id: q });
-  document.getElementById('flex-token').value = '';
-  document.getElementById('flex-query-id').value = '';
-  toast('פרטי Flex נשמרו 🔐', 'success');
-  flexSetStatus('פרטי IBKR שמורים ✓', 'var(--green)');
+  const tEl = document.getElementById('flex-token');
+  const qEl = document.getElementById('flex-query-id');
+  if (tEl) { tEl.value = ''; tEl.placeholder = 'Token שמור ✓'; }
+  if (qEl) { qEl.value = ''; qEl.placeholder = 'Query ID שמור ✓'; }
+  toast('פרטי IBKR נשמרו ✓', 'success');
+  flexSetStatus('מחובר ✓', 'var(--green)');
   const dot = document.getElementById('ibkr-conn-dot');
   if (dot) dot.style.display = 'inline-block';
 }
@@ -12453,10 +12473,12 @@ async function bybitSave() {
   const s = document.getElementById('bybit-api-secret')?.value.trim();
   if (!k || !s) { toast('נא להזין API Key ו-Secret', 'error'); return; }
   await _saveUserSettings({ bybit_api_key: k, bybit_api_secret: s });
-  document.getElementById('bybit-api-key').value = '';
-  document.getElementById('bybit-api-secret').value = '';
-  toast('פרטי Bybit נשמרו 🔐', 'success');
-  bybitSetStatus('Bybit API מחובר ✓', 'var(--green)');
+  const kEl = document.getElementById('bybit-api-key');
+  const sEl = document.getElementById('bybit-api-secret');
+  if (kEl) { kEl.value = ''; kEl.placeholder = 'API Key שמור ✓'; }
+  if (sEl) { sEl.value = ''; sEl.placeholder = 'Secret שמור ✓'; }
+  toast('פרטי Bybit נשמרו ✓', 'success');
+  bybitSetStatus('מחובר ✓', 'var(--green)');
   const dot = document.getElementById('bybit-conn-dot');
   if (dot) dot.style.display = 'inline-block';
 }
