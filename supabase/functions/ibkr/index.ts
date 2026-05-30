@@ -13,13 +13,6 @@ serve(async (req: Request) => {
 
   const url = new URL(req.url);
 
-  // Diagnostic: test IBKR reachability from Supabase servers (no auth needed)
-  if (url.searchParams.get('action') === 'ping') {
-    const pingRes = await fetch(`${IBKR_BASE}.SendRequest?t=pingtest12345678901234567890&q=1234567&v=3`, { headers: { 'User-Agent': 'trading-journal/2.0' } });
-    const pingXml = await pingRes.text();
-    return new Response(JSON.stringify({ status: pingRes.status, xml: pingXml }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
-  }
-
   const authHeader = req.headers.get('Authorization') ?? '';
   const jwt = authHeader.replace('Bearer ', '').trim();
   const supabase = createClient(

@@ -10750,32 +10750,36 @@ function pinUnlock() {
 }
 
 async function _flexFetch(jwt, { debug } = {}) {
-  // Step 1: Send request — retry on 1001 (temporary IBKR busy)
-  const SEND_DELAYS = [0, 8000, 15000];
+  // IBKR temporary error codes — safe to retry (busy / generating / throttled)
+  const RETRYABLE = new Set(['1001','1004','1005','1006','1007','1008','1009','1018','1019','1021']);
+
+  // Step 1: SendRequest — usually succeeds first try; retry only on temporary errors
+  const SEND_DELAYS = [0, 10000];
   let refCode = '';
-  let sendErrCode = '';
-  let sendErrMsg = 'שגיאה לא ידועה';
+  let sendErr = 'שגיאה לא ידועה';
+  let sendCode = '';
   for (let i = 0; i < SEND_DELAYS.length; i++) {
     if (SEND_DELAYS[i] > 0) {
-      flexSetStatus(`מנסה שוב... (${i}/${SEND_DELAYS.length - 1})`, 'var(--text2)');
+      flexSetStatus(`שולח בקשה ל-IBKR... ניסיון ${i + 1}/${SEND_DELAYS.length}`, 'var(--text2)');
       await new Promise(r => setTimeout(r, SEND_DELAYS[i]));
     }
     const sendRes = await fetch(`${SUPABASE_URL}/functions/v1/ibkr?action=send`, { headers: { 'Authorization': `Bearer ${jwt}` } });
-    if (!sendRes.ok) throw new Error(`שגיאת רשת: ${sendRes.status}`);
+    if (!sendRes.ok) throw new Error(`שגיאת רשת בשליחה: ${sendRes.status}`);
     const sendXml = await sendRes.text();
-    refCode     = flexExtractTag(sendXml, 'ReferenceCode');
-    sendErrCode = flexExtractTag(sendXml, 'ErrorCode');
-    sendErrMsg  = flexExtractTag(sendXml, 'ErrorMessage') || 'שגיאה לא ידועה';
+    refCode = flexExtractTag(sendXml, 'ReferenceCode');
     if (refCode && flexExtractTag(sendXml, 'Status') !== 'Fail') break;
-    if (sendErrCode !== '1001') throw new Error(`${sendErrMsg} [IBKR קוד: ${sendErrCode}]`);
-    // 1001 = temporary — retry send
+    refCode  = '';
+    sendCode = flexExtractTag(sendXml, 'ErrorCode');
+    sendErr  = flexExtractTag(sendXml, 'ErrorMessage') || 'שגיאה לא ידועה';
+    if (!RETRYABLE.has(sendCode)) throw new Error(`שליחה נכשלה: ${sendErr} [IBKR ${sendCode}]`);
   }
-  if (!refCode) throw new Error(`${sendErrMsg} [IBKR קוד: ${sendErrCode}]`);
+  if (!refCode) throw new Error(`שליחה נכשלה אחרי ${SEND_DELAYS.length} ניסיונות: ${sendErr} [IBKR ${sendCode}] — נסה שוב בעוד דקה`);
 
-  // Step 2: Poll GetStatement — retry on 1001 and 1019 (not ready yet)
-  const DELAYS = [5000, 10000, 15000, 20000];
+  // Step 2: Poll GetStatement — IBKR may take up to ~2 minutes under load
+  const DELAYS = [3000,5000,5000,8000,8000,10000,12000,15000,15000,17000,20000];
   let xml = '';
-  let lastErr = 'IBKR לא הצליח ליצור את הדוח';
+  let getErr = 'IBKR לא הצליח ליצור את הדוח';
+  let getCode = '';
   for (let i = 0; i < DELAYS.length; i++) {
     flexSetStatus(`מכין נתונים ב-IBKR... (${i + 1}/${DELAYS.length})`, 'var(--text2)');
     await new Promise(r => setTimeout(r, DELAYS[i]));
@@ -10783,16 +10787,14 @@ async function _flexFetch(jwt, { debug } = {}) {
       `${SUPABASE_URL}/functions/v1/ibkr?action=get&ref=${encodeURIComponent(refCode)}`,
       { headers: { 'Authorization': `Bearer ${jwt}` } }
     );
-    if (!getRes.ok) throw new Error(`שגיאת רשת: ${getRes.status}`);
+    if (!getRes.ok) throw new Error(`שגיאת רשת בקבלה: ${getRes.status}`);
     xml = await getRes.text();
-    const status  = flexExtractTag(xml, 'Status');
-    const errCode = flexExtractTag(xml, 'ErrorCode');
-    if (status !== 'Fail') break;
-    lastErr = `${flexExtractTag(xml, 'ErrorMessage') || 'שגיאה לא ידועה'} [IBKR קוד: ${errCode}]`;
-    if (errCode !== '1019' && errCode !== '1001') throw new Error(lastErr);
-    // 1019 / 1001 = not ready yet — retry
+    if (flexExtractTag(xml, 'Status') !== 'Fail') break;
+    getCode = flexExtractTag(xml, 'ErrorCode');
+    getErr  = flexExtractTag(xml, 'ErrorMessage') || 'שגיאה לא ידועה';
+    if (!RETRYABLE.has(getCode)) throw new Error(`קבלת הדוח נכשלה: ${getErr} [IBKR ${getCode}]`);
   }
-  if (flexExtractTag(xml, 'Status') === 'Fail') throw new Error(lastErr);
+  if (flexExtractTag(xml, 'Status') === 'Fail') throw new Error(`הדוח לא היה מוכן בזמן: ${getErr} [IBKR ${getCode}] — נסה שוב בעוד דקה`);
   if (debug) return { xml, trades: flexParseXML(xml) };
   return flexParseXML(xml);
 }
