@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <!-- v2 -->
 <html lang="he" dir="rtl" data-theme="dark">
 <head>
@@ -6023,6 +6023,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             ערך נוכחי: <span id="inv-current-value" style="font-weight:700;font-size:13px;"></span>
             <span id="inv-current-pnl" style="font-size:11px;margin-right:4px;"></span>
           </div>
+          <label style="font-size:12px;color:var(--text3);margin-right:12px;white-space:nowrap;" data-i18n="inv_cash_label">מזומן</label>
+          <input type="number" id="inv-cash-balance" placeholder="0" min="0" step="any" style="width:110px;" oninput="invRecalc();invAutoSaveCash()">
           <div class="inv-total-allocated"><span data-i18n="inv_allocated">Allocated:</span> <span id="inv-allocated-pct">0%</span></div>
         </div>
 
@@ -8524,7 +8526,6 @@ async function loadCryptoSymbolsFromCoinGecko() {
         cachedCount = symbols.length;
         cachedTs = ts;
         updateCryptoStatus('cache', cachedCount, cachedTs);
-        console.log(`[CoinGecko] loaded ${cachedCount} from cache, refreshing in background...`);
       }
     }
   } catch(e) {}
@@ -8693,7 +8694,6 @@ async function loadFromFinnhub() {
         cachedCount = symbols.length;
         cachedTs = ts;
         updateStockStatus('cache', cachedCount, cachedTs, 'Finnhub');
-        console.log(`[Finnhub] loaded ${cachedCount} from cache, refreshing in background...`);
       }
     }
   } catch(e) {}
@@ -8746,7 +8746,6 @@ async function loadFromSEC() {
         cachedCount = symbols.length;
         cachedTs = ts;
         updateStockStatus('cache', cachedCount, cachedTs);
-        console.log(`[SEC] loaded ${cachedCount} from cache, refreshing in background...`);
       }
     }
   } catch(e) {}
@@ -9217,7 +9216,7 @@ const LANG_STRINGS = {
     qa_mood:'Emotional State', qa_note:'Note', qa_save:'💾 Save Trade',
     qa_pos_size:'Position', qa_risk_pct:'Risk %', qa_stop_from:'Stop from Entry',
     qa_select:'— Select —', qa_mood_ph:'How did you feel...', qa_note_ph:'Trade description...',
-    inv_title:'Investment Portfolio', inv_portfolio_total:'Portfolio Total',
+    inv_title:'Investment Portfolio', inv_portfolio_total:'Portfolio Total', inv_cash_label:'Cash',
     inv_allocated:'Allocated:', inv_alloc_title:'Portfolio Allocation — Target',
     inv_available:'Available:', inv_donut_allocated:'Allocated',
     inv_blue:'🔵 Blue Chips — Target 60%', inv_green:'🟢 Growth — Target 35%',
@@ -9339,7 +9338,7 @@ const LANG_STRINGS = {
     qa_mood:'מצב רגשי', qa_note:'הערה', qa_save:'💾 שמור עסקה',
     qa_pos_size:"גודל פוז'", qa_risk_pct:'סיכון %', qa_stop_from:'סטופ מ-כניסה',
     qa_select:'— בחר —', qa_mood_ph:'איך הרגשת...', qa_note_ph:'תיאור הכניסה...',
-    inv_title:'תיק השקעות', inv_portfolio_total:'סך התיק',
+    inv_title:'תיק השקעות', inv_portfolio_total:'סך התיק', inv_cash_label:'מזומן',
     inv_allocated:'מוקצה:', inv_alloc_title:'הקצאת תיק — יעד',
     inv_available:'זמין:', inv_donut_allocated:'מוקצה',
     inv_blue:'🔵 כחולות — יעד 60%', inv_green:'🟢 ירוקות — יעד 35%',
@@ -14027,7 +14026,7 @@ function invLoad() {
   if (_invData) return _invData;
   try {
     const raw = localStorage.getItem(INV_KEY);
-    return raw ? JSON.parse(raw) : { portfolioTotal: '', holdings: [], deposits: [] };
+    return raw ? JSON.parse(raw) : { portfolioTotal: '', cashBalance: '', holdings: [], deposits: [] };
   } catch { return { portfolioTotal: '', holdings: [], deposits: [] }; }
 }
 
@@ -14042,11 +14041,11 @@ async function invLoadFromDB() {
     .single();
   if (data) {
     const holdings = (data.holdings || []).map(h => ({ ...h, locked: h.locked !== false ? true : false }));
-    _invData = { portfolioTotal, holdings, deposits: data.deposits || [] };
+    _invData = { portfolioTotal, cashBalance: local.cashBalance || '', holdings, deposits: data.deposits || [] };
     if (data.currency) localStorage.setItem('inv_currency', data.currency);
   } else {
     const local = invLoad();
-    _invData = { portfolioTotal, holdings: local.holdings || [], deposits: local.deposits || [] };
+    _invData = { portfolioTotal, cashBalance: local.cashBalance || '', holdings: local.holdings || [], deposits: local.deposits || [] };
     if (_invData.holdings.length || _invData.deposits.length) invSaveData(_invData);
   }
   return _invData;
@@ -14075,6 +14074,8 @@ async function invInit() {
   invSyncPnlBtn();
   const totalEl = document.getElementById('inv-portfolio-total');
   if (totalEl) totalEl.value = data.portfolioTotal || '';
+  const cashEl = document.getElementById('inv-cash-balance');
+  if (cashEl) cashEl.value = data.cashBalance || '';
   const dl = document.getElementById('inv-sym-list');
   if (dl) dl.innerHTML = Object.keys(SECTOR_MAP).filter(s => !symIsCrypto(s)).map(s => `<option value="${s}">`).join('');
   invRenderRows(data.holdings || []);
@@ -14161,7 +14162,8 @@ function invRecalc() {
   });
 
   const portfolioTotal = +(document.getElementById('inv-portfolio-total')?.value) || 0;
-  const cash = Math.max(0, portfolioTotal - totalCost);
+  const manualCash = document.getElementById('inv-cash-balance')?.value;
+  const cash = manualCash !== '' && manualCash != null ? +manualCash : Math.max(0, portfolioTotal - totalCost);
   const effectiveTotal = portfolioTotal + (totalUnrealizedPnL || 0);
 
   const cvWrap = document.getElementById('inv-current-value-wrap');
@@ -14296,6 +14298,7 @@ function invGetCurrentData() {
   });
   return {
     portfolioTotal: (document.getElementById('inv-portfolio-total')?.value || ''),
+    cashBalance: (document.getElementById('inv-cash-balance')?.value || ''),
     holdings: holdings.filter(h => h.symbol || h.entryShares || h.entryPrice),
     deposits: invLoad().deposits || []
   };
@@ -14567,6 +14570,13 @@ function invAutoSaveTotal() {
   data.portfolioTotal = val;
   invSaveData(data);
   _saveUserSettings({ portfolio_total: val ? +val : null });
+}
+
+function invAutoSaveCash() {
+  const data = invLoad();
+  const val = document.getElementById('inv-cash-balance')?.value || '';
+  data.cashBalance = val;
+  invSaveData(data);
 }
 
 
