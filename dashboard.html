@@ -10807,6 +10807,90 @@ async function _flexFetch(jwt, { debug } = {}) {
   return flexParseXML(xml);
 }
 
+// Import synced trades into the journal: dedup, persist to Supabase, then
+// refresh every view (tables, dashboard, statistics) so data appears with no
+// extra clicks. Shared by the automatic sync and the manual Sync button.
+async function _flexImport(trades) {
+  let imported = 0, updated = 0;
+  const newlyImported = [];
+  const toInsert = [];
+  const toUpdate = [];
+
+  trades.forEach(t => {
+    const arr = t.type === 'crypto' ? db.crypto : db.stocks;
+
+    // Orphan close — sell with no matching buy in the window; close any open
+    // position with the same symbol.
+    if (t._orphanClose) {
+      const open = arr.find(x => !x.deleted && x.symbol === t.symbol && !x.exitPrice);
+      if (open) {
+        open.exitPrice    = t.exitPrice;
+        open.closeDate    = t.closeDate;
+        open.closedShares = t.closedShares;
+        toUpdate.push(open);
+        updated++;
+      }
+      return;
+    }
+
+    // Existing open position that now has an exit — update it by exact entry.
+    if (t.exitPrice) {
+      const open = arr.find(x =>
+        !x.deleted &&
+        x.symbol === t.symbol &&
+        x.entryDate === t.entryDate &&
+        Math.abs(x.entryPrice - t.entryPrice) < 0.001 &&
+        !x.exitPrice
+      );
+      if (open) {
+        open.exitPrice    = t.exitPrice;
+        open.closeDate    = t.closeDate;
+        open.closedShares = t.closedShares;
+        if (t.t?.length) open.t = t.t;
+        toUpdate.push(open);
+        updated++;
+        return;
+      }
+    }
+
+    if (flexIsDuplicate(t)) return;
+    toInsert.push(t);
+  });
+
+  for (const trade of toUpdate) {
+    const row = _tradeToRow(trade);
+    await _sb.from('trades').update(row).eq('id', trade.id).eq('user_id', _currentUser.id);
+  }
+
+  for (const t of toInsert) {
+    const row = _tradeToRow({ ...t, deleted: false });
+    const { data: inserted, error: insErr } = await _sb.from('trades').insert(row).select().single();
+    if (insErr) { continue; }
+    const newTrade = _rowToTrade(inserted);
+    const arr = t.type === 'crypto' ? db.crypto : db.stocks;
+    arr.push(newTrade);
+    imported++;
+    if (!t.exitPrice) newlyImported.push(newTrade);
+  }
+
+  if (imported > 0 || updated > 0) {
+    initFilters();
+    // New data just arrived — clear the stocks/crypto period filters so imported
+    // trades (including older years) show immediately instead of being hidden.
+    if (imported > 0) {
+      ['st', 'cr'].forEach(p => {
+        const ys = document.getElementById(p + '-year');  if (ys) ys.value = '';
+        const ms = document.getElementById(p + '-month'); if (ms) ms.value = '';
+      });
+    }
+    renderTable('stock');
+    renderTable('crypto');
+    renderOverview();
+    renderStatistics();
+  }
+  return { imported, updated, newlyImported };
+}
+
 async function _autoFlexSync() {
   if (!_currentUser) return;
   const COOLDOWN_MS = 6 * 60 * 60 * 1000;
@@ -10815,97 +10899,16 @@ async function _autoFlexSync() {
   if (Date.now() - last < COOLDOWN_MS) return;
   const jwt = await _getToken();
   if (!jwt) return;
-  flexSetStatus('מסנכרן אוטומטי...', 'var(--text2)');
+  flexSetStatus('מסנכרן עם IBKR...', 'var(--text2)');
   try {
     const trades = await _flexFetch(jwt);
     localStorage.setItem(lastKey, String(Date.now()));
-
-    let imported = 0, updated = 0;
-    const newlyImported = [];
-    const toInsert = [];
-    const toUpdate = []; // {trade: existingTradeObj, exitData}
-
-    trades.forEach(t => {
-      const arr = t.type === 'crypto' ? db.crypto : db.stocks;
-
-      // 1א. Orphan close — sell without a matching buy in the XML.
-      //     Position was opened before the Flex Query date range.
-      //     Match against any open position with the same symbol in the journal.
-      if (t._orphanClose) {
-        const open = arr.find(x =>
-          !x.deleted &&
-          x.symbol === t.symbol &&
-          !x.exitPrice
-        );
-        if (open) {
-          open.exitPrice    = t.exitPrice;
-          open.closeDate    = t.closeDate;
-          open.closedShares = t.closedShares;
-          toUpdate.push(open);
-          updated++;
-        }
-        return;
-      }
-
-      // 1ב. עסקה פתוחה קיימת שעכשיו יש לה יציאה — עדכן לפי כניסה מדויקת
-      if (t.exitPrice) {
-        const open = arr.find(x =>
-          !x.deleted &&
-          x.symbol === t.symbol &&
-          x.entryDate === t.entryDate &&
-          Math.abs(x.entryPrice - t.entryPrice) < 0.001 &&
-          !x.exitPrice
-        );
-        if (open) {
-          open.exitPrice    = t.exitPrice;
-          open.closeDate    = t.closeDate;
-          open.closedShares = t.closedShares;
-          if (t.t?.length) open.t = t.t;
-          toUpdate.push(open);
-          updated++;
-          return;
-        }
-      }
-
-      // 2. כפילות מלאה — דלג
-      if (flexIsDuplicate(t)) return;
-
-      // 3. עסקה חדשה — שמור ל-Supabase וקבל ID אמיתי
-      toInsert.push(t);
-    });
-
-    // שמור עסקאות שעודכנו ב-Supabase
-    for (const trade of toUpdate) {
-      const row = _tradeToRow(trade);
-      await _sb.from('trades').update(row).eq('id', trade.id).eq('user_id', _currentUser.id);
-    }
-
-    // שמור כל עסקה חדשה ל-Supabase
-    for (const t of toInsert) {
-      const row = _tradeToRow({ ...t, deleted: false });
-      const { data: inserted, error: insErr } = await _sb.from('trades').insert(row).select().single();
-      if (insErr) { continue; }
-      const newTrade = _rowToTrade(inserted);
-      const arr = t.type === 'crypto' ? db.crypto : db.stocks;
-      arr.push(newTrade);
-      imported++;
-      if (!t.exitPrice) newlyImported.push(newTrade);
-    }
-
+    const { imported, updated, newlyImported } = await _flexImport(trades);
     if (imported > 0 || updated > 0) {
-      initFilters();
-      renderTable('stock');
-      renderTable('crypto');
-      renderOverview();
-      const msg = [
-        imported ? `${imported} חדשות` : '',
-        updated  ? `${updated} עודכנו` : ''
-      ].filter(Boolean).join(' | ');
+      const msg = [imported ? `${imported} חדשות` : '', updated ? `${updated} עודכנו` : ''].filter(Boolean).join(' | ');
       flexSetStatus(`✓ ${msg}`, 'var(--green)');
       toast(`✓ IBKR: ${msg}`, 'success');
       auditLog('flex_auto_import', `imported:${imported} updated:${updated}`);
-
-      // הצג פופאפ stop loss רק לעסקות שיובאו עכשיו לראשונה
       const openNeedStop = newlyImported
         .filter(tr => !tr.stop)
         .map(tr => ({ type: tr.type, id: tr.id, symbol: tr.symbol, entryPrice: tr.entryPrice, entryDate: tr.entryDate }));
@@ -12310,35 +12313,17 @@ async function flexSync() {
 
   const btn = document.getElementById('flex-sync-btn');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ מסנכרן...'; }
-  flexSetStatus('שולח בקשה ל-IBKR...', 'var(--text2)');
-  document.getElementById('flex-preview').innerHTML = '';
+  flexSetStatus('מסנכרן עם IBKR...', 'var(--text2)');
 
   try {
-    const { xml, trades } = await _flexFetch(jwt, { debug: true });
-
-    // Debug: count raw Trade elements and show symbol breakdown
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(xml, 'text/xml');
-    const rawTrades = [...doc.querySelectorAll('Trade')];
-    const buys  = rawTrades.filter(e => (e.getAttribute('buySell')||'').toUpperCase() === 'BUY');
-    const sells = rawTrades.filter(e => (e.getAttribute('buySell')||'').toUpperCase() === 'SELL');
-    const symbols = [...new Set(rawTrades.map(e => e.getAttribute('symbol')).filter(Boolean))];
-
-    const preview = document.getElementById('flex-preview');
-    preview.innerHTML = `
-      <div class="flex-debug-box" style="font-size:12px;color:var(--text2);margin-bottom:10px;padding:10px;background:rgba(255,255,255,0.04);border-radius:8px;line-height:1.8;">
-        <strong style="color:var(--text);">🔍 XML Debug:</strong><br>
-        סה"כ executions ב-XML: <strong>${rawTrades.length}</strong> (${buys.length} BUY, ${sells.length} SELL)<br>
-        סימבולים: <strong>${symbols.join(', ') || 'אין'}</strong><br>
-        עסקאות שנפענחו: <strong>${trades.length}</strong>
-        ${trades.filter(t=>t._orphanClose).length ? `<br>orphan closes (ללא BUY בXML): <strong style="color:var(--accent);">${trades.filter(t=>t._orphanClose).length}</strong>` : ''}
-      </div>`;
-
-    if (!trades.filter(t => !t._orphanClose).length && !trades.filter(t => t._orphanClose).length) {
-      flexSetStatus('לא נמצאו עסקאות בתקופה', 'var(--text3)');
+    const trades = await _flexFetch(jwt);
+    const { imported, updated } = await _flexImport(trades);
+    if (imported > 0 || updated > 0) {
+      const msg = [imported ? `${imported} נוספו` : '', updated ? `${updated} עודכנו` : ''].filter(Boolean).join(' | ');
+      flexSetStatus(`✓ ${msg}`, 'var(--green)');
+      toast(`✓ IBKR: ${msg}`, 'success');
     } else {
-      flexSetStatus(`נמצאו ${trades.length} עסקאות (${rawTrades.length} executions)`, 'var(--green)');
-      flexRenderPreview(trades.filter(t => !t._orphanClose));
+      flexSetStatus('✓ סונכרן — אין עסקאות חדשות', 'var(--text3)');
     }
   } catch(e) {
     flexSetStatus('שגיאה: ' + e.message, 'var(--red)');
@@ -12438,42 +12423,6 @@ function flexParseXML(xml) {
   return trades;
 }
 
-function flexRenderPreview(trades) {
-  // Sort by entry date descending (most recent first)
-  trades.sort((a, b) => b.entryDate.localeCompare(a.entryDate));
-  window._flexPending = trades;
-  const preview = document.getElementById('flex-preview');
-  if (!preview) return;
-
-  const existingDebug = preview.querySelector('.flex-debug-box')?.outerHTML || '';
-  let h = existingDebug + `<div style="margin-bottom:8px;font-size:12px;color:var(--text2);">${trades.length} עסקאות נמצאו — בדוק ואשר ייבוא:</div>`;
-
-  trades.forEach((t, i) => {
-    const isDup = flexIsDuplicate(t);
-    const type  = t.type === 'crypto' ? '₿' : '📋';
-    const exitStr = t.exitPrice ? ` → יציאה $${fmtPrice(t.exitPrice)}` : ' (פתוחה)';
-    h += `<div class="ibkr-trade-item" style="${isDup ? 'opacity:.5' : ''}">
-      <div style="flex:1;font-size:13px;">
-        ${type} <strong>${esc(t.symbol)}</strong> &nbsp;
-        ${fmtDate(t.entryDate)} כניסה $${fmtPrice(t.entryPrice)} × ${t.shares}${exitStr}
-        ${isDup ? '<span style="color:var(--red);font-size:11px;"> ⚠ כפילות</span>' : ''}
-      </div>
-      <button class="btn btn-primary btn-sm" onclick="flexConfirm(${i})" id="flex-btn-${i}" ${isDup ? 'disabled' : ''}>
-        ${isDup ? '⚠ קיים' : '+ ייבא'}
-      </button>
-    </div>`;
-  });
-
-  const newTrades = trades.filter(t => !flexIsDuplicate(t));
-  if (newTrades.length > 0) {
-    h += `<button class="btn btn-primary" style="margin-top:10px;width:100%;" onclick="flexConfirmAll()">
-      📥 ייבא הכל (${newTrades.length} חדשות)
-    </button>`;
-  }
-
-  preview.innerHTML = h;
-}
-
 function flexIsDuplicate(t) {
   const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
   if (db._deletedFingerprints?.has(fp)) return true;
@@ -12484,34 +12433,6 @@ function flexIsDuplicate(t) {
     Math.abs(x.entryPrice - t.entryPrice) < 0.01 &&
     Math.abs((x.shares || 0) - (t.shares || 0)) < 0.01
   );
-}
-
-async function flexConfirm(idx) {
-  const t = window._flexPending?.[idx];
-  if (!t) return;
-  if (flexIsDuplicate(t)) { toast('כבר קיים ביומן', 'error'); return; }
-
-  const btn = document.getElementById(`flex-btn-${idx}`);
-  if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
-
-  const row = _tradeToRow({ ...t, deleted: false });
-  const { data: inserted, error } = await _sb.from('trades').insert(row).select().single();
-  if (error) {
-    toast('שגיאה בשמירה: ' + error.message, 'error');
-    if (btn) { btn.disabled = false; btn.textContent = '+ ייבא'; }
-    return;
-  }
-
-  const arr = t.type === 'crypto' ? db.crypto : db.stocks;
-  arr.push(_rowToTrade(inserted));
-  initFilters();
-  renderTable(t.type === 'crypto' ? 'crypto' : 'stock');
-  if (btn) { btn.textContent = '✓ נוסף'; }
-  toast(`${t.symbol} נוסף`, 'success');
-}
-
-function flexConfirmAll() {
-  (window._flexPending || []).forEach((_, i) => flexConfirm(i));
 }
 
 // Init on tab open — pre-fill saved credentials
