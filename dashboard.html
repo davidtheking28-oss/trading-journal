@@ -10946,15 +10946,64 @@ function _flexSyncCooldownLeft() {
   return Math.max(0, wait - (Date.now() - last));
 }
 
+// Import the statement that the scheduled server job pre-fetched at a good time
+// (flex_statement_cache). Reuses the existing parse + import path, so there is
+// no live IBKR call and no 1001. Returns true if a fresh cache was used.
+async function _flexImportFromCache() {
+  if (!_currentUser) return false;
+  let row;
+  try {
+    const { data } = await _sb.from('flex_statement_cache')
+      .select('xml, fetched_at, imported_at').eq('user_id', _currentUser.id).maybeSingle();
+    row = data;
+  } catch (e) { return false; }
+  if (!row?.xml) return false;
+  // Stale cache (cron gap > 30h) → let the live fallback try instead.
+  if (Date.now() - new Date(row.fetched_at).getTime() > 30 * 60 * 60 * 1000) return false;
+
+  const alreadyImported = row.imported_at && new Date(row.imported_at) >= new Date(row.fetched_at);
+  if (alreadyImported) { _flexMarkSync(true); _setBrokerBadge('ibkr', 'ok'); flexSetStatus('✓ עדכני', 'var(--text3)'); return true; }
+
+  try {
+    const trades = flexParseXML(row.xml);
+    const { imported, updated } = await _flexImport(trades);
+    await _sb.from('flex_statement_cache').update({ imported_at: new Date().toISOString() }).eq('user_id', _currentUser.id);
+    _flexMarkSync(true);
+    _setBrokerBadge('ibkr', 'ok');
+    if (imported > 0 || updated > 0) {
+      const msg = [imported ? `${imported} חדשות` : '', updated ? `${updated} עודכנו` : ''].filter(Boolean).join(' | ');
+      flexSetStatus(`✓ ${msg}`, 'var(--green)');
+      toast(`✓ IBKR: ${msg}`, 'success');
+      auditLog('flex_cache_import', `imported:${imported} updated:${updated}`);
+    } else {
+      flexSetStatus('✓ סונכרן — אין עסקאות חדשות', 'var(--text3)');
+    }
+    return true;
+  } catch (e) { return false; }
+}
+
+// Live Flex generation is only reliable after IBKR's once-daily EOD batch.
+// Restrict live attempts to weekday US business hours (the scheduled cron+cache
+// covers everything else) so we stop hitting 1001 at bad times.
+function _flexLiveWindowOpen() {
+  const et = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  const day = et.getDay();
+  if (day === 0 || day === 6) return false;       // weekend
+  return et.getHours() >= 10 && et.getHours() < 23; // after EOD processing
+}
+
 async function _autoFlexSync() {
   if (!_currentUser) return;
   if (!_userSettings.flex_token) return;
+  // 1) Prefer the server pre-fetched statement — instant, no IBKR call, no 1001.
+  if (await _flexImportFromCache()) return;
+  // 2) No usable cache → live fallback, throttled and only in a good window.
   if (_flexSyncCooldownLeft() > 0) {
-    // Skipped by cooldown — keep the badge honest about the last real outcome
-    // instead of leaving it stuck on "pending".
     if (localStorage.getItem('flex_sync_ok_' + _currentUser.id) === '1') _setBrokerBadge('ibkr', 'ok');
+    else _brokerBadgeFromStore('ibkr', true);
     return;
   }
+  if (!_flexLiveWindowOpen()) { _brokerBadgeFromStore('ibkr', true); return; }
   const jwt = await _getToken();
   if (!jwt) return;
   _setBrokerBadge('ibkr', 'syncing');
@@ -12418,6 +12467,8 @@ async function flexSync() {
   flexSetStatus('מסנכרן עם IBKR...', 'var(--text2)');
 
   try {
+    // Prefer the server pre-fetched statement — instant, no 1001.
+    if (await _flexImportFromCache()) return;
     const trades = await _flexFetch(jwt);
     _flexMarkSync(true);
     _setBrokerBadge('ibkr', 'ok');

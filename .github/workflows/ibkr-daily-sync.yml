@@ -1,0 +1,30 @@
+name: IBKR daily sync
+
+# Pre-fetch each user's IBKR Flex statement at a time when IBKR's reporting
+# backend is available (after the once-daily EOD batch), and cache it so the app
+# can import it instantly on login without hitting error 1001.
+on:
+  schedule:
+    - cron: '0 15 * * 1-5'   # 15:00 UTC (~11:00 ET), Mon-Fri — after EOD processing
+  workflow_dispatch: {}        # allow manual runs
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install @supabase/supabase-js@2
+
+      - name: Run IBKR sync
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/ibkr-sync.mjs
