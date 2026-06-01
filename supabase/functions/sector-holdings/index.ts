@@ -127,6 +127,26 @@ serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 
+  const url    = new URL(req.url);
+  const ticker = url.searchParams.get('ticker')?.toUpperCase();
+  if (!ticker || !/^[A-Z0-9]{1,10}$/.test(ticker)) {
+    return new Response(JSON.stringify({ error: 'Invalid ticker' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
+  }
+
+  // Shared cache: serve rows younger than the TTL instantly — no Yahoo fetch,
+  // no rate-limit cost. Degrades gracefully if the table doesn't exist yet.
+  const CACHE_TTL_MS = 3 * 60 * 1000;
+  try {
+    const { data: cached } = await supabase
+      .from('sector_cache').select('data, updated_at').eq('ticker', ticker).maybeSingle();
+    if (cached && Date.now() - new Date(cached.updated_at).getTime() < CACHE_TTL_MS) {
+      return new Response(JSON.stringify({ ticker, holdings: cached.data, cached: true }), {
+        headers: { ...CORS, 'Content-Type': 'application/json' },
+      });
+    }
+  } catch (_e) { /* no cache table yet — fall through to a live fetch */ }
+
+  // Cache miss → rate-limit the live fetch (Yahoo is the shared resource)
   const windowStart = new Date(Date.now() - 60_000).toISOString();
   const { count: recentCount } = await supabase
     .from('ai_requests')
@@ -143,19 +163,17 @@ serve(async (req: Request) => {
   supabase.from('ai_requests').insert({ user_id: user.id }).then(() => {});
 
   try {
-    const url    = new URL(req.url);
-    const ticker = url.searchParams.get('ticker')?.toUpperCase();
-
-    if (!ticker || !/^[A-Z0-9]{1,10}$/.test(ticker)) {
-      return new Response(JSON.stringify({ error: 'Invalid ticker' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
-    }
-
     let symbols = await fetchETFHoldings(ticker);
     if (!symbols.length) symbols = HOLDINGS[ticker] ?? [];
     symbols = [...new Set(symbols)];
     if (!symbols.length) return new Response(JSON.stringify({ holdings: [] }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
 
     const results = await Promise.all(symbols.map(s => fetchStockAll(s)));
+
+    // Refresh the shared cache (fire-and-forget)
+    supabase.from('sector_cache')
+      .upsert({ ticker, data: results, updated_at: new Date().toISOString() })
+      .then(() => {});
 
     return new Response(JSON.stringify({ ticker, holdings: results }), {
       headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
