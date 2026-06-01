@@ -8570,32 +8570,39 @@ async function loadCryptoSymbolsFromCoinGecko() {
     }
   } catch(e) {}
 
-  // 2. Always fetch fresh on every session (background)
+  // 2. Always fetch fresh on every session (background). CoinGecko's free API
+  //    throttles server IPs intermittently, so retry a few times with backoff.
   updateCryptoStatus('loading', cachedCount, cachedTs);
-  try {
-    const controller = new AbortController();
-    const tid = setTimeout(() => controller.abort(), 30000);
-    const _cgToken = await _getToken();
-    const res = await fetch(
-      `${SUPABASE_URL}/functions/v1/coingecko`,
-      { signal: controller.signal, headers: { 'Authorization': `Bearer ${_cgToken}` } }
-    );
-    clearTimeout(tid);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const coins = await res.json();
-    const symbols = coins
-      .map(c => (c.symbol || '').toUpperCase().trim())
-      .filter(s => s && s.length <= 10 && /^[A-Z0-9]+$/.test(s));
-    const unique = [...new Set(symbols)];
-    unique.forEach(s => CRYPTO_SYMBOLS.add(s));
-    // Save to cache
-    try { localStorage.setItem(CGECKO_CACHE_KEY, JSON.stringify({ ts: Date.now(), symbols: unique })); } catch(e) { console.warn('[CoinGecko] cache save failed:', e); }
-    console.log(`[CoinGecko] fetched ${unique.length} symbols`);
-    updateCryptoStatus('live', unique.length, Date.now());
-  } catch(e) {
-    console.warn('[CoinGecko] failed to fetch symbols:', e.message);
-    updateCryptoStatus('error', 0, 0);
+  const DELAYS = [0, 2000, 5000];
+  for (let i = 0; i < DELAYS.length; i++) {
+    if (DELAYS[i]) await new Promise(r => setTimeout(r, DELAYS[i]));
+    try {
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 30000);
+      const _cgToken = await _getToken();
+      const res = await fetch(
+        `${SUPABASE_URL}/functions/v1/coingecko`,
+        { signal: controller.signal, headers: { 'Authorization': `Bearer ${_cgToken}` } }
+      );
+      clearTimeout(tid);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const coins = await res.json();
+      const symbols = coins
+        .map(c => (c.symbol || '').toUpperCase().trim())
+        .filter(s => s && s.length <= 10 && /^[A-Z0-9]+$/.test(s));
+      const unique = [...new Set(symbols)];
+      unique.forEach(s => CRYPTO_SYMBOLS.add(s));
+      // Save to cache
+      try { localStorage.setItem(CGECKO_CACHE_KEY, JSON.stringify({ ts: Date.now(), symbols: unique })); } catch(e) { console.warn('[CoinGecko] cache save failed:', e); }
+      console.log(`[CoinGecko] fetched ${unique.length} symbols`);
+      updateCryptoStatus('live', unique.length, Date.now());
+      return;
+    } catch(e) {
+      console.warn(`[CoinGecko] attempt ${i + 1}/${DELAYS.length} failed:`, e.message);
+    }
   }
+  // All attempts failed — keep the cached list if we have one (calmer status).
+  updateCryptoStatus(cachedCount ? 'cache' : 'error', cachedCount, cachedTs);
 }
 
 function updateCryptoStatus(state, count, ts) {
