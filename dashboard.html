@@ -6937,7 +6937,8 @@ async function _onAuthSuccess(user) {
     };
   }
   document.getElementById('auth-overlay').style.display = 'none';
-  await Promise.all([loadDB(), loadUserSettings(), loadCryptoSymbolsFromCoinGecko()]);
+  await Promise.all([loadDB(), loadUserSettings()]);
+  loadCryptoSymbolsFromCoinGecko(); // background — don't delay startup or broker sync
 
   // Show admin-only UI elements
   const isAdmin = user.id === ADMIN_ID;
@@ -10931,6 +10932,7 @@ function _flexSyncCooldownLeft() {
 
 async function _autoFlexSync() {
   if (!_currentUser) return;
+  if (!_userSettings.flex_token) return;
   if (_flexSyncCooldownLeft() > 0) return;
   const jwt = await _getToken();
   if (!jwt) return;
