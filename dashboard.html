@@ -612,6 +612,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .sym-status.invalid { color: var(--red); }
   .sym-status.loading { color: var(--text2); animation: symPulse 1s infinite; }
   @keyframes symPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .broker-badge-syncing { animation: symPulse 1.2s ease-in-out infinite; }
   @keyframes dotGlow { 0%,100%{box-shadow:0 0 8px #818cf8, 0 0 16px rgba(129,140,248,0.4)} 50%{box-shadow:0 0 4px #818cf8, 0 0 8px rgba(129,140,248,0.2)} }
   .sym-fill-btn { font-size: 10px; padding: 1px 7px; border-radius: 10px; border: 1px solid var(--green); color: var(--green); background: transparent; cursor: pointer; margin-right: 5px; transition: all 0.15s; }
   .sym-fill-btn:hover { background: rgba(63,185,80,0.15); }
@@ -10936,6 +10937,7 @@ async function _autoFlexSync() {
   if (_flexSyncCooldownLeft() > 0) return;
   const jwt = await _getToken();
   if (!jwt) return;
+  _setBrokerBadge('ibkr', 'syncing');
   flexSetStatus('מסנכרן עם IBKR...', 'var(--text2)');
   try {
     const trades = await _flexFetch(jwt);
@@ -10958,7 +10960,9 @@ async function _autoFlexSync() {
     // Background sync — record the failure (extends the backoff), fail silently,
     // and retry later. The manual "סנכרן" button shows full detail on demand.
     _flexMarkSync(false);
-    if (!e.busy) _setBrokerBadge('ibkr', 'error'); // busy = still connected, just busy
+    // busy = still connected, just busy → restore last real state; else error.
+    if (e.busy) _brokerBadgeFromStore('ibkr', true);
+    else _setBrokerBadge('ibkr', 'error');
     flexSetStatus('', 'var(--text3)');
   }
 }
@@ -10972,7 +10976,8 @@ async function _autoBybitSync() {
   if (Date.now() - last < COOLDOWN_MS) return;
   const jwt = await _getToken();
   if (!jwt) return;
-  bybitSetStatus('מסנכרן אוטומטי...', 'var(--text2)');
+  _setBrokerBadge('bybit', 'syncing');
+  bybitSetStatus('מסנכרן עם Bybit...', 'var(--text2)');
   try {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/bybit`, {
       headers: { Authorization: `Bearer ${jwt}` }
@@ -12280,19 +12285,22 @@ function toggleReveal(id, btn) {
 function _setBrokerBadge(broker, state) {
   const el = document.getElementById(broker + '-conn-dot');
   if (!el) return;
-  if (_currentUser && state !== 'none') localStorage.setItem(broker + '_conn_' + _currentUser.id, state);
+  // 'syncing' is a transient live state — never persist it.
+  if (_currentUser && state !== 'none' && state !== 'syncing') localStorage.setItem(broker + '_conn_' + _currentUser.id, state);
   const map = {
     ok:      { t: 'מחובר',        bg: 'rgba(63,185,80,0.15)',  fg: '#3fb950', bd: 'rgba(63,185,80,0.3)' },
+    syncing: { t: 'מסנכרן…',      bg: 'rgba(79,131,255,0.15)', fg: '#4f83ff', bd: 'rgba(79,131,255,0.35)' },
     pending: { t: 'ממתין לסנכרון', bg: 'rgba(210,153,34,0.15)', fg: '#d29922', bd: 'rgba(210,153,34,0.3)' },
     error:   { t: 'בעיית חיבור',   bg: 'rgba(248,81,73,0.15)',  fg: '#f85149', bd: 'rgba(248,81,73,0.3)' },
   };
   const m = map[state];
-  if (!m) { el.style.display = 'none'; return; }
+  if (!m) { el.style.display = 'none'; el.classList.remove('broker-badge-syncing'); return; }
   el.textContent = m.t;
   el.style.background = m.bg;
   el.style.color = m.fg;
   el.style.borderColor = m.bd;
   el.style.display = 'inline-block';
+  el.classList.toggle('broker-badge-syncing', state === 'syncing');
 }
 
 function _brokerBadgeFromStore(broker, hasCreds) {
@@ -12382,6 +12390,7 @@ async function flexSync() {
 
   const btn = document.getElementById('flex-sync-btn');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ מסנכרן...'; }
+  _setBrokerBadge('ibkr', 'syncing');
   flexSetStatus('מסנכרן עם IBKR...', 'var(--text2)');
 
   try {
@@ -12400,7 +12409,8 @@ async function flexSync() {
     // Record the failure so the background backoff extends too.
     _flexMarkSync(false);
     if (e.busy) {
-      // IBKR temporarily busy — calm note, still connected.
+      // IBKR temporarily busy — calm note, still connected; restore last state.
+      _brokerBadgeFromStore('ibkr', true);
       flexSetStatus('IBKR עמוס כרגע — ננסה אוטומטית בקרוב 🕐', 'var(--text2)');
     } else {
       _setBrokerBadge('ibkr', 'error');
@@ -12547,7 +12557,8 @@ async function bybitSync() {
   if (!jwt) { toast('נא להתחבר תחילה', 'error'); return; }
   const btn = document.getElementById('bybit-sync-btn');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ מסנכרן...'; }
-  bybitSetStatus('שולח בקשה ל-Bybit...', 'var(--text2)');
+  _setBrokerBadge('bybit', 'syncing');
+  bybitSetStatus('מסנכרן עם Bybit...', 'var(--text2)');
   document.getElementById('bybit-preview').innerHTML = '';
   try {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/bybit`, {
