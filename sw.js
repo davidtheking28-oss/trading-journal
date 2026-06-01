@@ -1,4 +1,4 @@
-const CACHE = 'tj-v19';
+const CACHE = 'tj-v20';
 const PRECACHE = [
   './dashboard.html',
   './manifest.json',
@@ -25,10 +25,15 @@ self.addEventListener('fetch', e => {
   if (e.request.url.startsWith('chrome-extension://')) return;
   if (e.request.url.includes('supabase.co/functions/')) return;
 
-  // Never cache dashboard.html or sw.js — always fetch fresh
+  // Always fetch the app fresh. Match every page navigation (covers /dashboard
+  // on Vercel, / on GitHub Pages, and /dashboard.html) plus sw.js — never serve
+  // these from cache while online, so deploys ship instantly without a hard refresh.
   const url = new URL(e.request.url);
-  if (url.pathname.endsWith('/dashboard.html') || url.pathname.endsWith('/sw.js') || url.pathname.endsWith('/')) {
-    e.respondWith(fetch(e.request, { cache: 'no-cache' }).catch(() => caches.match(e.request)));
+  if (e.request.mode === 'navigate' || url.pathname.endsWith('/dashboard.html') || url.pathname.endsWith('/sw.js') || url.pathname.endsWith('/')) {
+    e.respondWith(
+      fetch(e.request, { cache: 'no-cache' })
+        .catch(() => caches.match(e.request).then(r => r || caches.match('./dashboard.html')))
+    );
     return;
   }
 
