@@ -10805,8 +10805,9 @@ async function _flexFetch(jwt, { debug } = {}) {
     throw err;
   }
 
-  // Step 2: Poll GetStatement — IBKR may take up to ~2 minutes under load
-  const DELAYS = [3000,5000,5000,8000,8000,10000,12000,15000,15000,17000,20000];
+  // Step 2: Poll GetStatement — a full 365-day statement can take a few minutes
+  // to generate for an active account, so give IBKR up to ~4 minutes.
+  const DELAYS = [3000,5000,5000,8000,8000,10000,12000,15000,15000,20000,20000,25000,25000,30000,30000];
   let xml = '';
   let getErr = 'IBKR לא הצליח ליצור את הדוח';
   let getCode = '';
