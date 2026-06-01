@@ -10924,7 +10924,9 @@ async function _autoFlexSync() {
       flexSetStatus('✓ סונכרן — אין עסקאות חדשות', 'var(--text3)');
     }
   } catch(e) {
-    flexSetStatus('סנכרון אוטומטי נכשל — לחץ "סנכרן" לפרטים', 'var(--text3)');
+    // Background sync — fail silently and retry on the next tick/login.
+    // The manual "סנכרן" button surfaces full error detail on demand.
+    flexSetStatus('', 'var(--text3)');
   }
 }
 
