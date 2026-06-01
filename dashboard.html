@@ -10776,7 +10776,12 @@ async function _flexFetch(jwt, { debug } = {}) {
     sendTs   = (sendXml.match(/timestamp='([^']*)'/) || [])[1] || '';
     if (!RETRYABLE.has(sendCode)) throw new Error(`שליחה נכשלה: ${sendErr} [IBKR ${sendCode}] [שעת IBKR: ${sendTs}]`);
   }
-  if (!refCode) throw new Error(`שליחה נכשלה אחרי ${SEND_DELAYS.length} ניסיונות: ${sendErr} [IBKR ${sendCode}] [שעת IBKR: ${sendTs}] — נסה שוב בעוד דקה`);
+  if (!refCode) {
+    const busy = ['1001', '1009', '1018', '1021'].includes(sendCode);
+    throw new Error(busy
+      ? 'IBKR עמוס כרגע ולא הצליח להפיק את הדוח. זה זמני — נסה שוב בעוד כמה דקות (או שהסנכרון האוטומטי ינסה לבד).'
+      : `שליחה נכשלה: ${sendErr} [IBKR ${sendCode}]`);
+  }
 
   // Step 2: Poll GetStatement — IBKR may take up to ~2 minutes under load
   const DELAYS = [3000,5000,5000,8000,8000,10000,12000,15000,15000,17000,20000];
