@@ -10762,7 +10762,7 @@ async function _flexFetch(jwt, { debug } = {}) {
   let sendTs = '';
   for (let i = 0; i < SEND_DELAYS.length; i++) {
     if (SEND_DELAYS[i] > 0) {
-      flexSetStatus(`שולח בקשה ל-IBKR... ניסיון ${i + 1}/${SEND_DELAYS.length}`, 'var(--text2)');
+      flexSetStatus('מסנכרן עם IBKR...', 'var(--text2)');
       await new Promise(r => setTimeout(r, SEND_DELAYS[i]));
     }
     const sendRes = await fetch(`${SUPABASE_URL}/functions/v1/ibkr?action=send`, { headers: { 'Authorization': `Bearer ${jwt}` } });
@@ -10784,7 +10784,7 @@ async function _flexFetch(jwt, { debug } = {}) {
   let getErr = 'IBKR לא הצליח ליצור את הדוח';
   let getCode = '';
   for (let i = 0; i < DELAYS.length; i++) {
-    flexSetStatus(`מכין נתונים ב-IBKR... (${i + 1}/${DELAYS.length})`, 'var(--text2)');
+    flexSetStatus('מכין נתונים ב-IBKR...', 'var(--text2)');
     await new Promise(r => setTimeout(r, DELAYS[i]));
     const getRes = await fetch(
       `${SUPABASE_URL}/functions/v1/ibkr?action=get&ref=${encodeURIComponent(refCode)}`,
