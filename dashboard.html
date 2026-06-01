@@ -10753,8 +10753,9 @@ async function _flexFetch(jwt, { debug } = {}) {
   // IBKR temporary error codes — safe to retry (busy / generating / throttled)
   const RETRYABLE = new Set(['1001','1004','1005','1006','1007','1008','1009','1018','1019','1021']);
 
-  // Step 1: SendRequest — usually succeeds first try; retry only on temporary errors
-  const SEND_DELAYS = [0, 10000];
+  // Step 1: SendRequest — usually succeeds first try; retry temporary errors
+  // (1001 etc.) with backoff so a brief IBKR "busy" state self-heals.
+  const SEND_DELAYS = [0, 6000, 12000, 20000];
   let refCode = '';
   let sendErr = 'שגיאה לא ידועה';
   let sendCode = '';
