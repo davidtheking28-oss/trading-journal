@@ -10900,16 +10900,23 @@ async function _flexImport(trades) {
 
 async function _autoFlexSync() {
   if (!_currentUser) return;
-  const COOLDOWN_MS = 6 * 60 * 60 * 1000;
+  // Throttle so the token never overheats: after a successful sync wait 6h
+  // (IBKR activity data updates ~once daily); after a failure (e.g. IBKR busy)
+  // wait 20min before retrying instead of hammering on every page load.
+  const COOLDOWN_OK   = 6 * 60 * 60 * 1000;
+  const COOLDOWN_FAIL = 20 * 60 * 1000;
   const lastKey = 'flex_sync_ts_' + _currentUser.id;
+  const okKey   = 'flex_sync_ok_' + _currentUser.id;
   const last = parseInt(localStorage.getItem(lastKey) || '0', 10);
-  if (Date.now() - last < COOLDOWN_MS) return;
+  const cooldown = localStorage.getItem(okKey) === '0' ? COOLDOWN_FAIL : COOLDOWN_OK;
+  if (Date.now() - last < cooldown) return;
   const jwt = await _getToken();
   if (!jwt) return;
   flexSetStatus('מסנכרן עם IBKR...', 'var(--text2)');
   try {
     const trades = await _flexFetch(jwt);
     localStorage.setItem(lastKey, String(Date.now()));
+    localStorage.setItem(okKey, '1');
     const { imported, updated, newlyImported } = await _flexImport(trades);
     if (imported > 0 || updated > 0) {
       const msg = [imported ? `${imported} חדשות` : '', updated ? `${updated} עודכנו` : ''].filter(Boolean).join(' | ');
@@ -10924,8 +10931,10 @@ async function _autoFlexSync() {
       flexSetStatus('✓ סונכרן — אין עסקאות חדשות', 'var(--text3)');
     }
   } catch(e) {
-    // Background sync — fail silently and retry on the next tick/login.
-    // The manual "סנכרן" button surfaces full error detail on demand.
+    // Background sync — record the failure (starts the 20min cooldown), fail
+    // silently, and retry later. The manual "סנכרן" button shows full detail.
+    localStorage.setItem(lastKey, String(Date.now()));
+    localStorage.setItem(okKey, '0');
     flexSetStatus('', 'var(--text3)');
   }
 }
@@ -12324,8 +12333,12 @@ async function flexSync() {
   if (btn) { btn.disabled = true; btn.textContent = '⏳ מסנכרן...'; }
   flexSetStatus('מסנכרן עם IBKR...', 'var(--text2)');
 
+  const lastKey = 'flex_sync_ts_' + _currentUser.id;
+  const okKey   = 'flex_sync_ok_' + _currentUser.id;
   try {
     const trades = await _flexFetch(jwt);
+    localStorage.setItem(lastKey, String(Date.now()));
+    localStorage.setItem(okKey, '1');
     const { imported, updated } = await _flexImport(trades);
     if (imported > 0 || updated > 0) {
       const msg = [imported ? `${imported} נוספו` : '', updated ? `${updated} עודכנו` : ''].filter(Boolean).join(' | ');
@@ -12335,6 +12348,9 @@ async function flexSync() {
       flexSetStatus('✓ סונכרן — אין עסקאות חדשות', 'var(--text3)');
     }
   } catch(e) {
+    // Record the failure so the background sync waits before retrying too.
+    localStorage.setItem(lastKey, String(Date.now()));
+    localStorage.setItem(okKey, '0');
     flexSetStatus('שגיאה: ' + e.message, 'var(--red)');
     toast('סנכרון נכשל: ' + e.message, 'error');
   } finally {
