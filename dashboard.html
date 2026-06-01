@@ -8063,6 +8063,19 @@ function renderTable(type) {
 }
 
 const _sectorCache = {};
+// Persist sector holdings across reloads so re-opening a sector is instant
+// (stale-while-revalidate): show the saved data immediately, refresh in the bg.
+const _SECTOR_LS = 'sector_cache_v1';
+function _sectorLoadLS() {
+  try { return JSON.parse(localStorage.getItem(_SECTOR_LS) || '{}'); } catch { return {}; }
+}
+function _sectorSaveLS(ticker, holdings) {
+  try {
+    const all = _sectorLoadLS();
+    all[ticker] = { ts: Date.now(), holdings };
+    localStorage.setItem(_SECTOR_LS, JSON.stringify(all));
+  } catch (e) {}
+}
 async function _fillMissingSectors(type) {
   const tabEl = document.getElementById('tab-'+(type==='stock'?'stocks':'crypto'));
   if (!tabEl) return;
@@ -15675,6 +15688,7 @@ async function _fetchAndRender(ticker, showLoading) {
     if (json.error) { body.innerHTML = `<div class="sector-modal-loading">${json.error}</div>`; return; }
     if (!json.holdings?.length) { body.innerHTML = '<div class="sector-modal-loading">No holdings data</div>'; return; }
     _sectorCache[ticker] = json.holdings;
+    _sectorSaveLS(ticker, json.holdings);
     _renderHoldingsForPeriod(json.holdings, _ttPeriod);
     const sub = document.getElementById('sector-modal-sub');
     if (sub) sub.textContent = ticker + ' — updated ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -15695,8 +15709,14 @@ async function sectorModalOpen(ticker, name) {
   modal.style.display   = 'block';
 
   clearInterval(_sectorTimer);
+  // Stale-while-revalidate: show any cached data (memory → localStorage)
+  // instantly, then refresh in the background. Only show a spinner on a true
+  // first open with nothing cached.
+  const lsHit = !_sectorCache[ticker] && _sectorLoadLS()[ticker];
+  if (lsHit?.holdings?.length) _sectorCache[ticker] = lsHit.holdings;
   if (_sectorCache[ticker]) {
     _renderHoldingsForPeriod(_sectorCache[ticker], _ttPeriod);
+    _fetchAndRender(ticker, false); // refresh in background, no spinner
   } else {
     await _fetchAndRender(ticker, true);
   }
