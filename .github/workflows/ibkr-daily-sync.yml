@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'   # 22 has native WebSocket (supabase-js realtime needs it)
 
       - name: Install dependencies
         run: npm install @supabase/supabase-js@2
