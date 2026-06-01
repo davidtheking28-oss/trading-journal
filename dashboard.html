@@ -5746,7 +5746,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
               <div class="ibkr-actions" style="margin-bottom:0;">
                 <button class="btn btn-secondary btn-sm" onclick="flexSave()" data-i18n="m_save_short">Save</button>
                 <button class="btn btn-primary btn-sm" onclick="flexSync()" id="flex-sync-btn" data-i18n="set_sync">Sync</button>
-                <button class="btn btn-secondary btn-sm" onclick="flexDebug()" type="button" style="opacity:.7;">🔧 אבחון</button>
               </div>
             </div>
             <span class="ibkr-sync-status" id="flex-status"></span>
@@ -9311,7 +9310,7 @@ const LANG_STRINGS = {
     set_2fa:'Two-Factor Authentication',
     set_ibkr_desc:'Enables automatic trade import from Interactive Brokers.',
     set_ibkr_how:'How to configure:',
-    set_ibkr_steps:'Create a new Flex Query → Copy the Token and Query ID',
+    set_ibkr_steps:'Create an Activity Flex Query, Period: Last 365 Calendar Days, Format: XML → Copy the Token and Query ID',
     set_sync:'Sync', m_save_short:'Save',
     set_tlg_drop:'Drag .tlg file or click to select',
     set_export_desc:'Export all trades to a CSV file for external analysis.',
@@ -9433,7 +9432,7 @@ const LANG_STRINGS = {
     set_2fa:'אימות דו-שלבי',
     set_ibkr_desc:'מאפשר ייבוא עסקאות אוטומטי מ-Interactive Brokers.',
     set_ibkr_how:'איך להגדיר:',
-    set_ibkr_steps:'צור Flex Query חדש → העתק את Token ו-Query ID',
+    set_ibkr_steps:'צור Activity Flex Query, Period: Last 365 Calendar Days, Format: XML → העתק את Token ו-Query ID',
     set_sync:'סנכרן', m_save_short:'שמור',
     set_tlg_drop:'גרור קובץ .tlg או לחץ לבחירה',
     set_export_desc:'ייצוא כל העסקאות לקובץ CSV לניתוח חיצוני.',
@@ -12340,21 +12339,6 @@ async function flexSync() {
     toast('סנכרון נכשל: ' + e.message, 'error');
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = 'סנכרן'; }
-  }
-}
-
-async function flexDebug() {
-  const jwt = await _getToken();
-  if (!jwt) { toast('נא להתחבר תחילה', 'error'); return; }
-  flexSetStatus('מריץ אבחון...', 'var(--text2)');
-  try {
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/ibkr?action=debug`, { headers: { 'Authorization': `Bearer ${jwt}` } });
-    const txt = await res.text();
-    const box = document.getElementById('flex-preview');
-    box.innerHTML = `<textarea readonly style="width:100%;height:220px;font-size:11px;font-family:monospace;direction:ltr;background:#0a1424;color:#cfe;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px;">${txt.replace(/</g,'&lt;')}</textarea>`;
-    flexSetStatus('אבחון מוכן — העתק את הטקסט ושלח', 'var(--green)');
-  } catch(e) {
-    flexSetStatus('אבחון נכשל: ' + e.message, 'var(--red)');
   }
 }
 
