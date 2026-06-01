@@ -10913,7 +10913,9 @@ async function _flexImport(trades) {
     renderTable('stock');
     renderTable('crypto');
     renderOverview();
-    renderStatistics();
+    // Statistics renders its charts when its tab is opened; calling it here
+    // (off-tab) hits null chart containers. The stats tab re-reads db on open.
+    if (document.getElementById('tab-statistics')?.classList.contains('active')) renderStatistics();
   }
   return { imported, updated, newlyImported };
 }
