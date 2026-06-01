@@ -10908,7 +10908,7 @@ async function _autoFlexSync() {
       flexSetStatus('✓ סונכרן — אין עסקאות חדשות', 'var(--text3)');
     }
   } catch(e) {
-    flexSetStatus('סנכרון אוטומטי נכשל — לחץ סנכרן ידנית', 'var(--text3)');
+    flexSetStatus('סנכרון אוטומטי נכשל — ' + e.message, 'var(--red)');
   }
 }
 
