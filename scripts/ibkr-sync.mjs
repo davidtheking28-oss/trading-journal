@@ -10,11 +10,14 @@
 // Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 import { createClient } from '@supabase/supabase-js';
 
+// console.log('::error::...') surfaces the message in the run's Annotations.
+const fail = msg => { console.log('::error::' + msg); process.exit(1); };
+
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY;
+console.log(`env: SUPABASE_URL=${SUPABASE_URL ? 'set' : 'MISSING'} SERVICE_KEY=${SERVICE_KEY ? 'set(' + SERVICE_KEY.length + ' chars)' : 'MISSING'}`);
 if (!SUPABASE_URL || !SERVICE_KEY) {
-  console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
-  process.exit(1);
+  fail('Missing GitHub secret: ' + (!SUPABASE_URL ? 'SUPABASE_URL ' : '') + (!SERVICE_KEY ? 'SUPABASE_SERVICE_ROLE_KEY' : ''));
 }
 
 const IBKR_BASE = 'https://gdcdyn.interactivebrokers.com/Universal/servlet/FlexStatementService';
@@ -62,7 +65,7 @@ async function main() {
     .from('user_settings')
     .select('user_id, flex_token, flex_query_id')
     .not('flex_token', 'is', null);
-  if (error) { console.error('user_settings query failed:', error.message); process.exit(1); }
+  if (error) fail('user_settings query failed: ' + error.message + ' (check the SERVICE_ROLE key is correct)');
 
   const targets = (rows || []).filter(u =>
     /^[a-zA-Z0-9]{6,64}$/.test(u.flex_token || '') && /^\d{1,15}$/.test(u.flex_query_id || ''));
@@ -91,4 +94,4 @@ async function main() {
   console.log(`Done: ${ok} ok, ${fail} failed`);
 }
 
-main().catch(e => { console.error(e); process.exit(1); });
+main().catch(e => { console.log('::error::' + (e?.message || e)); process.exit(1); });
