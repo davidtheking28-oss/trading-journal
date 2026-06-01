@@ -8670,8 +8670,7 @@ async function loadUserSettings() {
   if (_userSettings.flex_token) {
     const el = document.getElementById('flex-token');
     if (el) { el.value = _userSettings.flex_token; el.placeholder = ''; }
-    const dot = document.getElementById('ibkr-conn-dot');
-    if (dot) dot.style.display = 'inline-block';
+    _brokerBadgeFromStore('ibkr', true);
   }
   if (_userSettings.flex_query_id) {
     const el = document.getElementById('flex-query-id');
@@ -8682,8 +8681,7 @@ async function loadUserSettings() {
     if (el) { el.value = _userSettings.bybit_api_key; el.placeholder = ''; }
     const el2 = document.getElementById('bybit-api-secret');
     if (el2 && _userSettings.bybit_api_secret) { el2.value = _userSettings.bybit_api_secret; el2.placeholder = ''; }
-    const dot = document.getElementById('bybit-conn-dot');
-    if (dot) dot.style.display = 'inline-block';
+    _brokerBadgeFromStore('bybit', true);
   }
   renderFmpKeyStatus();
   if (_userSettings.portfolio_total != null) {
@@ -10940,6 +10938,7 @@ async function _autoFlexSync() {
   try {
     const trades = await _flexFetch(jwt);
     _flexMarkSync(true);
+    _setBrokerBadge('ibkr', 'ok');
     const { imported, updated, newlyImported } = await _flexImport(trades);
     if (imported > 0 || updated > 0) {
       const msg = [imported ? `${imported} חדשות` : '', updated ? `${updated} עודכנו` : ''].filter(Boolean).join(' | ');
@@ -10957,6 +10956,7 @@ async function _autoFlexSync() {
     // Background sync — record the failure (extends the backoff), fail silently,
     // and retry later. The manual "סנכרן" button shows full detail on demand.
     _flexMarkSync(false);
+    if (!e.busy) _setBrokerBadge('ibkr', 'error'); // busy = still connected, just busy
     flexSetStatus('', 'var(--text3)');
   }
 }
@@ -10978,6 +10978,7 @@ async function _autoBybitSync() {
     const json = await res.json();
     if (!res.ok || json.error) throw new Error(json.error || 'שגיאה');
     localStorage.setItem(lastKey, String(Date.now()));
+    _setBrokerBadge('bybit', 'ok');
 
     const trades = json.trades || [];
     let imported = 0;
@@ -11002,7 +11003,8 @@ async function _autoBybitSync() {
       bybitSetStatus('✓ סונכרן — אין עסקאות חדשות', 'var(--text3)');
     }
   } catch(e) {
-    bybitSetStatus('סנכרון אוטומטי נכשל — לחץ סנכרן ידנית', 'var(--text3)');
+    _setBrokerBadge('bybit', 'error');
+    bybitSetStatus('', 'var(--text3)');
   }
 }
 
@@ -12270,12 +12272,38 @@ function toggleReveal(id, btn) {
     : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
 }
 
+// Broker connection badge — reflects the REAL last-sync outcome, not just
+// "credentials saved". States: ok (verified), pending (saved, not yet synced),
+// error (a real connection/auth failure), none (no credentials → hidden).
+function _setBrokerBadge(broker, state) {
+  const el = document.getElementById(broker + '-conn-dot');
+  if (!el) return;
+  if (_currentUser && state !== 'none') localStorage.setItem(broker + '_conn_' + _currentUser.id, state);
+  const map = {
+    ok:      { t: 'מחובר',        bg: 'rgba(63,185,80,0.15)',  fg: '#3fb950', bd: 'rgba(63,185,80,0.3)' },
+    pending: { t: 'ממתין לסנכרון', bg: 'rgba(210,153,34,0.15)', fg: '#d29922', bd: 'rgba(210,153,34,0.3)' },
+    error:   { t: 'בעיית חיבור',   bg: 'rgba(248,81,73,0.15)',  fg: '#f85149', bd: 'rgba(248,81,73,0.3)' },
+  };
+  const m = map[state];
+  if (!m) { el.style.display = 'none'; return; }
+  el.textContent = m.t;
+  el.style.background = m.bg;
+  el.style.color = m.fg;
+  el.style.borderColor = m.bd;
+  el.style.display = 'inline-block';
+}
+
+function _brokerBadgeFromStore(broker, hasCreds) {
+  if (!hasCreds) { _setBrokerBadge(broker, 'none'); return; }
+  const stored = _currentUser ? localStorage.getItem(broker + '_conn_' + _currentUser.id) : null;
+  _setBrokerBadge(broker, stored || 'pending');
+}
+
 function flexInit() {
   const hasToken = !!_userSettings.flex_token;
   const statusEl = document.getElementById('flex-status');
   if (statusEl && hasToken) flexSetStatus('פרטי IBKR שמורים ✓', 'var(--green)');
-  const dot = document.getElementById('ibkr-conn-dot');
-  if (dot) dot.style.display = hasToken ? 'inline-block' : 'none';
+  _brokerBadgeFromStore('ibkr', hasToken);
 }
 
 function toggleIbkrCard() {
@@ -12337,9 +12365,8 @@ async function flexSave() {
   if (!/^\d{4,15}$/.test(q)) { toast('Query ID לא תקין — מספרים בלבד (לדוגמה: 1462900)', 'error'); return; }
   await _saveUserSettings({ flex_token: t, flex_query_id: q });
   toast('פרטי IBKR נשמרו ✓', 'success');
-  flexSetStatus('מחובר ✓', 'var(--green)');
-  const dot = document.getElementById('ibkr-conn-dot');
-  if (dot) dot.style.display = 'inline-block';
+  flexSetStatus('פרטים נשמרו — יסונכרן אוטומטית', 'var(--text2)');
+  _setBrokerBadge('ibkr', 'pending');
 }
 
 function flexSetStatus(msg, color) {
@@ -12358,6 +12385,7 @@ async function flexSync() {
   try {
     const trades = await _flexFetch(jwt);
     _flexMarkSync(true);
+    _setBrokerBadge('ibkr', 'ok');
     const { imported, updated } = await _flexImport(trades);
     if (imported > 0 || updated > 0) {
       const msg = [imported ? `${imported} נוספו` : '', updated ? `${updated} עודכנו` : ''].filter(Boolean).join(' | ');
@@ -12370,9 +12398,10 @@ async function flexSync() {
     // Record the failure so the background backoff extends too.
     _flexMarkSync(false);
     if (e.busy) {
-      // IBKR temporarily busy — calm note, not a red error.
+      // IBKR temporarily busy — calm note, still connected.
       flexSetStatus('IBKR עמוס כרגע — ננסה אוטומטית בקרוב 🕐', 'var(--text2)');
     } else {
+      _setBrokerBadge('ibkr', 'error');
       flexSetStatus('שגיאה: ' + e.message, 'var(--red)');
       toast('סנכרון נכשל: ' + e.message, 'error');
     }
@@ -12492,9 +12521,8 @@ document.addEventListener('DOMContentLoaded', flexInit);
 
 function bybitInit() {
   const hasKey = !!_userSettings.bybit_api_key;
-  if (hasKey) bybitSetStatus('Bybit API מחובר ✓', 'var(--green)');
-  const dot = document.getElementById('bybit-conn-dot');
-  if (dot) dot.style.display = hasKey ? 'inline-block' : 'none';
+  if (hasKey) bybitSetStatus('פרטי Bybit שמורים ✓', 'var(--green)');
+  _brokerBadgeFromStore('bybit', hasKey);
 }
 
 function bybitSetStatus(msg, color) {
@@ -12508,9 +12536,8 @@ async function bybitSave() {
   if (!k || !s) { toast('נא להזין API Key ו-Secret', 'error'); return; }
   await _saveUserSettings({ bybit_api_key: k, bybit_api_secret: s });
   toast('פרטי Bybit נשמרו ✓', 'success');
-  bybitSetStatus('מחובר ✓', 'var(--green)');
-  const dot = document.getElementById('bybit-conn-dot');
-  if (dot) dot.style.display = 'inline-block';
+  bybitSetStatus('פרטים נשמרו — יסונכרן אוטומטית', 'var(--text2)');
+  _setBrokerBadge('bybit', 'pending');
 }
 
 async function bybitSync() {
@@ -12526,10 +12553,12 @@ async function bybitSync() {
     });
     const json = await res.json();
     if (!res.ok || json.error) throw new Error(json.error || 'שגיאה');
+    _setBrokerBadge('bybit', 'ok');
     const trades = json.trades || [];
     bybitSetStatus(`נמצאו ${trades.length} עסקאות`, 'var(--green)');
     bybitRenderPreview(trades);
   } catch(e) {
+    _setBrokerBadge('bybit', 'error');
     bybitSetStatus('שגיאה: ' + e.message, 'var(--red)');
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = 'Sync'; }
