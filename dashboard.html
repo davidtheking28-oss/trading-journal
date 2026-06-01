@@ -5746,6 +5746,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
               <div class="ibkr-actions" style="margin-bottom:0;">
                 <button class="btn btn-secondary btn-sm" onclick="flexSave()" data-i18n="m_save_short">Save</button>
                 <button class="btn btn-primary btn-sm" onclick="flexSync()" id="flex-sync-btn" data-i18n="set_sync">Sync</button>
+                <button class="btn btn-secondary btn-sm" onclick="flexDebug()" type="button" style="opacity:.7;">🔧 אבחון</button>
               </div>
             </div>
             <span class="ibkr-sync-status" id="flex-status"></span>
@@ -12339,6 +12340,21 @@ async function flexSync() {
     toast('סנכרון נכשל: ' + e.message, 'error');
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = 'סנכרן'; }
+  }
+}
+
+async function flexDebug() {
+  const jwt = await _getToken();
+  if (!jwt) { toast('נא להתחבר תחילה', 'error'); return; }
+  flexSetStatus('מריץ אבחון...', 'var(--text2)');
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/ibkr?action=debug`, { headers: { 'Authorization': `Bearer ${jwt}` } });
+    const txt = await res.text();
+    const box = document.getElementById('flex-preview');
+    box.innerHTML = `<textarea readonly style="width:100%;height:220px;font-size:11px;font-family:monospace;direction:ltr;background:#0a1424;color:#cfe;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px;">${txt.replace(/</g,'&lt;')}</textarea>`;
+    flexSetStatus('אבחון מוכן — העתק את הטקסט ושלח', 'var(--green)');
+  } catch(e) {
+    flexSetStatus('אבחון נכשל: ' + e.message, 'var(--red)');
   }
 }
 

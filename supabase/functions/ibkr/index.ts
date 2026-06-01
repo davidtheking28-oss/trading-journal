@@ -36,6 +36,21 @@ serve(async (req: Request) => {
   const flexToken = settings?.flex_token ?? '';
   const qid       = settings?.flex_query_id ?? '';
 
+  // Diagnostic: show exactly what we send to IBKR + the raw response (own data only)
+  if (url.searchParams.get('action') === 'debug') {
+    const tokenLen   = flexToken.length;
+    const tokenMask  = flexToken ? `${flexToken.slice(0, 3)}…${flexToken.slice(-2)}` : '(empty)';
+    const tokenValid = /^[a-zA-Z0-9]{6,64}$/.test(flexToken);
+    const qidValid   = /^\d{1,15}$/.test(qid);
+    let sendStatus = 0, sendXml = '(not attempted)';
+    if (tokenValid && qidValid) {
+      const r = await fetch(`${IBKR_BASE}.SendRequest?t=${flexToken}&q=${qid}&v=3`, { headers: { 'User-Agent': 'trading-journal/2.0' } });
+      sendStatus = r.status;
+      sendXml = await r.text();
+    }
+    return new Response(JSON.stringify({ tokenLen, tokenMask, tokenValid, qid, qidValid, sendStatus, sendXml }, null, 2), { headers: { ...CORS, 'Content-Type': 'application/json' } });
+  }
+
   if (!flexToken || !/^[a-zA-Z0-9]{6,64}$/.test(flexToken)) {
     return new Response(JSON.stringify({ error: 'Missing or invalid IBKR token' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
