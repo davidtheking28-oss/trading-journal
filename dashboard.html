@@ -10758,6 +10758,7 @@ async function _flexFetch(jwt, { debug } = {}) {
   let refCode = '';
   let sendErr = 'שגיאה לא ידועה';
   let sendCode = '';
+  let sendTs = '';
   for (let i = 0; i < SEND_DELAYS.length; i++) {
     if (SEND_DELAYS[i] > 0) {
       flexSetStatus(`שולח בקשה ל-IBKR... ניסיון ${i + 1}/${SEND_DELAYS.length}`, 'var(--text2)');
@@ -10771,9 +10772,10 @@ async function _flexFetch(jwt, { debug } = {}) {
     refCode  = '';
     sendCode = flexExtractTag(sendXml, 'ErrorCode');
     sendErr  = flexExtractTag(sendXml, 'ErrorMessage') || 'שגיאה לא ידועה';
-    if (!RETRYABLE.has(sendCode)) throw new Error(`שליחה נכשלה: ${sendErr} [IBKR ${sendCode}]`);
+    sendTs   = (sendXml.match(/timestamp='([^']*)'/) || [])[1] || '';
+    if (!RETRYABLE.has(sendCode)) throw new Error(`שליחה נכשלה: ${sendErr} [IBKR ${sendCode}] [שעת IBKR: ${sendTs}]`);
   }
-  if (!refCode) throw new Error(`שליחה נכשלה אחרי ${SEND_DELAYS.length} ניסיונות: ${sendErr} [IBKR ${sendCode}] — נסה שוב בעוד דקה`);
+  if (!refCode) throw new Error(`שליחה נכשלה אחרי ${SEND_DELAYS.length} ניסיונות: ${sendErr} [IBKR ${sendCode}] [שעת IBKR: ${sendTs}] — נסה שוב בעוד דקה`);
 
   // Step 2: Poll GetStatement — IBKR may take up to ~2 minutes under load
   const DELAYS = [3000,5000,5000,8000,8000,10000,12000,15000,15000,17000,20000];
