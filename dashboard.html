@@ -4698,12 +4698,12 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .cal-date { font-size: 13px; font-weight: 700; color: rgba(148,163,184,0.5); line-height: 1; margin-bottom: 2px; }
   .cal-cell.has-trades .cal-date { color: var(--text2); }
   .cal-cell.today .cal-date { color: var(--accent); }
-  .cal-chip { font-size: 10px; font-weight: 600; padding: 3px 6px; border-radius: 5px; display: flex; align-items: center; justify-content: space-between; gap: 5px; cursor: pointer; transition: opacity 0.15s; direction: ltr; overflow: hidden; }
+  .cal-chip { font-weight: 600; padding: 5px 5px; border-radius: 7px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; flex: 1; cursor: pointer; transition: opacity 0.15s; direction: ltr; overflow: hidden; }
   .cal-chip:hover { opacity: 0.75; }
   .cal-chip.win { background: rgba(0,209,122,0.18); border: 1px solid rgba(0,209,122,0.35); }
   .cal-chip.loss { background: rgba(255,107,138,0.22); border: 1px solid rgba(255,107,138,0.4); }
-  .cal-chip-sym { color: rgba(255,255,255,0.75); font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .cal-chip-pl { font-size: 11px; font-weight: 700; flex-shrink: 0; white-space: nowrap; }
+  .cal-chip-sym { font-size: 10px; color: rgba(255,255,255,0.7); font-weight: 700; letter-spacing: 0.3px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cal-chip-pl { font-size: 13px; font-weight: 800; line-height: 1.1; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
   .cal-chip.win .cal-chip-pl { color: #6ee7b7; }
   .cal-chip.loss .cal-chip-pl { color: #fca5a5; }
   .cal-day-pl { font-size: 10px; font-weight: 700; margin-top: auto; padding-top: 3px; border-top: 1px solid rgba(255,255,255,0.05); }
@@ -7752,7 +7752,7 @@ function renderCalendar(type) {
           isToday     ? 'today'      : ''
         ].filter(Boolean).join(' ');
         const dtStyle = dayTotal >= 0 ? 'color:var(--green)' : 'color:var(--red)';
-        const plStr1 = dt.length === 1 ? ((calcTotal(dt[0]) >= 0 ? '+' : '') + fmtUSD(calcTotal(dt[0]))) : '';
+        const plStr1 = dt.length === 1 ? fmtUSD(calcTotal(dt[0])) : '';
         html += `<div class="${cls}" ${dt.length > 1 ? `onclick="showCalDayModal('${ds}')" style="cursor:pointer"` : ''}>
           <div class="cal-date">${day}</div>
           ${dt.length === 1 ? `<div class="cal-chip ${calcPL(dt[0])>=0?'win':'loss'}" onclick="event.stopPropagation();showCalTradeModal('${dt[0].type}','${dt[0].id}')">
