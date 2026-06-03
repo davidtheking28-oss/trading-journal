@@ -10837,7 +10837,19 @@ async function _flexFetch(jwt, { debug } = {}) {
 // Import synced trades into the journal: dedup, persist to Supabase, then
 // refresh every view (tables, dashboard, statistics) so data appears with no
 // extra clicks. Shared by the automatic sync and the manual Sync button.
+let _flexImporting = false;
 async function _flexImport(trades) {
+  // Re-entrancy guard: if a manual and an automatic import overlap, both could
+  // pass the in-memory dedup before either inserts → duplicates. Run one at a time.
+  if (_flexImporting) return { imported: 0, updated: 0, newlyImported: [] };
+  _flexImporting = true;
+  try {
+    return await _flexImportInner(trades);
+  } finally {
+    _flexImporting = false;
+  }
+}
+async function _flexImportInner(trades) {
   let imported = 0, updated = 0;
   const newlyImported = [];
   const toInsert = [];
