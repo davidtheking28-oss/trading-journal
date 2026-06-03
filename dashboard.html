@@ -7132,6 +7132,7 @@ function _rowToTrade(row) {
     marketCond:   row.market_cond   || '',
     processScore: row.process_score,
     mood:         row.mood          || '',
+    ibkr_id:      row.ibkr_id       || null,
     deleted:      row.deleted       || false,
     deletedAt:    row.deleted_at,
   };
@@ -7161,6 +7162,9 @@ function _tradeToRow(trade) {
     mood:          trade.mood        || '',
     deleted:       trade.deleted     || false,
     deleted_at:    trade.deletedAt   || null,
+    // Only set when present so manual-trade inserts work even before the
+    // ibkr_id column migration has been applied.
+    ...(trade.ibkr_id ? { ibkr_id: trade.ibkr_id } : {}),
   };
 }
 
@@ -10855,6 +10859,11 @@ async function _flexImportInner(trades) {
   const toInsert = [];
   const toUpdate = [];
 
+  const sameEntry = (x, t) =>
+    x.symbol === t.symbol && x.entryDate === t.entryDate &&
+    Math.abs((x.entryPrice || 0) - (t.entryPrice || 0)) < 0.01 &&
+    Math.abs((x.shares || 0) - (t.shares || 0)) < 0.01;
+
   trades.forEach(t => {
     const arr = t.type === 'crypto' ? db.crypto : db.stocks;
 
@@ -10872,27 +10881,39 @@ async function _flexImportInner(trades) {
       return;
     }
 
-    // Existing open position that now has an exit — update it by exact entry.
-    if (t.exitPrice) {
-      const open = arr.find(x =>
-        !x.deleted &&
-        x.symbol === t.symbol &&
-        x.entryDate === t.entryDate &&
-        Math.abs(x.entryPrice - t.entryPrice) < 0.001 &&
-        !x.exitPrice
-      );
-      if (open) {
-        open.exitPrice    = t.exitPrice;
-        open.closeDate    = t.closeDate;
-        open.closedShares = t.closedShares;
-        if (t.t?.length) open.t = t.t;
-        toUpdate.push(open);
-        updated++;
-        return;
-      }
+    // Find an already-imported copy of this trade. By IBKR's unique execution id
+    // first (idempotent — re-syncs never duplicate, and scale-in lots stay
+    // separate because each has its own id); else by entry (manual trades, or
+    // trades imported before tagging — those get the id backfilled).
+    let existing = null;
+    if (t.ibkr_id) {
+      existing = arr.find(x => !x.deleted && x.ibkr_id === t.ibkr_id)
+              || arr.find(x => !x.deleted && !x.ibkr_id && sameEntry(x, t));
+    } else {
+      existing = arr.find(x => !x.deleted && sameEntry(x, t));
     }
 
-    if (flexIsDuplicate(t)) return;
+    if (existing) {
+      // Same trade already in the journal → update it in place (corrects the
+      // exit on re-sync, backfills the id), never insert a second copy.
+      let changed = false;
+      if (t.ibkr_id && existing.ibkr_id !== t.ibkr_id) { existing.ibkr_id = t.ibkr_id; changed = true; }
+      if (t.exitPrice && (Math.abs((existing.exitPrice || 0) - t.exitPrice) > 1e-9
+          || Math.abs((existing.closedShares || 0) - (t.closedShares || 0)) > 1e-9)) {
+        existing.exitPrice    = t.exitPrice;
+        existing.closeDate    = t.closeDate;
+        existing.closedShares = t.closedShares;
+        existing.t            = t.t || [];
+        existing.commission   = t.commission;
+        changed = true;
+      }
+      if (changed) { toUpdate.push(existing); updated++; }
+      return;
+    }
+
+    // New trade — honor user deletions (don't re-import something deleted).
+    const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
+    if (db._deletedFingerprints?.has(fp)) return;
     toInsert.push(t);
   });
 
@@ -12528,6 +12549,7 @@ function flexParseXML(xml) {
     const qty   = Math.abs(+el.getAttribute('quantity') || 0);
     const price = +el.getAttribute('tradePrice') || 0;
     const comm  = Math.abs(+el.getAttribute('ibCommission') || 0);
+    const tid   = el.getAttribute('tradeID') || el.getAttribute('ibExecID') || ''; // IBKR's unique execution id
     if (!sym || !dt || !side || !qty || !price) return;
 
     // Parse date: yyyyMMdd;HHmmss
@@ -12538,7 +12560,7 @@ function flexParseXML(xml) {
     if (!date) return;
 
     if (!bySymbol[sym]) bySymbol[sym] = { buys: [], sells: [] };
-    const entry = { date, price, qty, comm, dt };
+    const entry = { date, price, qty, comm, dt, tid };
     if (side === 'BUY')  bySymbol[sym].buys.push(entry);
     if (side === 'SELL') bySymbol[sym].sells.push(entry);
   });
@@ -12569,6 +12591,7 @@ function flexParseXML(xml) {
         entry_reason: '', market_cond: '', process_score: 0,
         notes_keep: '', notes_improve: '',
       };
+      if (lot.tid) trade.ibkr_id = lot.tid; // IBKR's unique entry-execution id
       if (lot.exits.length) {
         const last = lot.exits[lot.exits.length - 1];
         trade.exitPrice    = last.price;
@@ -12581,7 +12604,7 @@ function flexParseXML(xml) {
 
     for (const ex of execs) {
       if (ex.side === 'BUY') {
-        lots.push({ qty: ex.qty, remaining: ex.qty, price: ex.price, comm: ex.comm, date: ex.date, dt: ex.dt, exits: [] });
+        lots.push({ qty: ex.qty, remaining: ex.qty, price: ex.price, comm: ex.comm, date: ex.date, dt: ex.dt, tid: ex.tid, exits: [] });
         continue;
       }
       // SELL — close open long lots FIFO, splitting across lots as needed.
@@ -12603,6 +12626,7 @@ function flexParseXML(xml) {
           closedShares: q,
           commission:   r6(ex.comm * (q / ex.qty)),
           _exitDt:      ex.dt,
+          ...(ex.tid ? { ibkr_id: ex.tid } : {}),
         });
       }
     }
