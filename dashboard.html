@@ -12532,56 +12532,69 @@ function flexParseXML(xml) {
   });
 
   const trades = [];
+  const r6 = n => Math.round(n * 1e6) / 1e6;
   Object.entries(bySymbol).forEach(([symbol, { buys, sells }]) => {
-    buys.sort((a,b)  => a.dt.localeCompare(b.dt));
-    sells.sort((a,b) => a.dt.localeCompare(b.dt));
     const type = symIsCrypto(symbol) ? 'crypto' : 'stock';
 
-    buys.forEach(buy => {
-      // Find sells that came after this buy
-      const exits = sells.filter(s => s.dt > buy.dt);
-      const totalComm = buy.comm + exits.reduce((s,x) => s + x.comm, 0);
+    // Single chronological execution stream so closes are matched to the right
+    // opening lot, FIFO. Each BUY opens/adds a long lot; each SELL consumes open
+    // long lots (consuming shares so the same sell is never reused). A SELL with
+    // no open lot left is an orphan close (position opened before the window).
+    const execs = [
+      ...buys.map(b  => ({ ...b, side: 'BUY' })),
+      ...sells.map(s => ({ ...s, side: 'SELL' })),
+    ].sort((a, b) => a.dt.localeCompare(b.dt));
 
+    let lots = []; // open long lots: { qty, remaining, price, comm, date, dt, exits:[] }
+    const finalize = lot => {
       const trade = {
-        symbol, type,
-        entryDate:   buy.date,
-        entryPrice:  buy.price,
-        shares:      buy.qty,
-        commission:  totalComm,
-        ls: 'L',
+        symbol, type, ls: 'L',
+        entryDate:  lot.date,
+        entryPrice: lot.price,
+        shares:     lot.qty,
+        commission: r6(lot.comm + lot.exits.reduce((s, e) => s + e.comm, 0)),
         stop: 0, ecn: 0,
         entry_reason: '', market_cond: '', process_score: 0,
         notes_keep: '', notes_improve: '',
       };
-
-      if (exits.length > 0) {
-        trade.exitPrice    = exits[0].price;
-        trade.closeDate    = exits[0].date;
-        trade.closedShares = exits[0].qty;
+      if (lot.exits.length) {
+        const last = lot.exits[lot.exits.length - 1];
+        trade.exitPrice    = last.price;
+        trade.closeDate    = last.date;
+        trade.closedShares = lot.exits.reduce((s, e) => s + e.qty, 0); // total closed
+        if (lot.exits.length > 1) trade.t = lot.exits.slice(0, -1).map(e => ({ price: e.price, shares: e.qty }));
       }
-      if (exits.length > 1) {
-        trade.t = exits.slice(1).map(x => ({ price: x.price, shares: x.qty }));
-      }
-
       trades.push(trade);
-    });
+    };
 
-    // Orphan sells — position opened before the Flex Query date range,
-    // so BUY execution is missing from the XML. Mark them for matching
-    // against existing open positions in the journal.
-    if (buys.length === 0 && sells.length > 0) {
-      sells.forEach(sell => {
+    for (const ex of execs) {
+      if (ex.side === 'BUY') {
+        lots.push({ qty: ex.qty, remaining: ex.qty, price: ex.price, comm: ex.comm, date: ex.date, dt: ex.dt, exits: [] });
+        continue;
+      }
+      // SELL — close open long lots FIFO, splitting across lots as needed.
+      let q = ex.qty;
+      while (q > 1e-9 && lots.length) {
+        const lot = lots[0];
+        const take = Math.min(lot.remaining, q);
+        lot.exits.push({ price: ex.price, qty: take, date: ex.date, dt: ex.dt, comm: ex.comm * (take / ex.qty) });
+        lot.remaining -= take;
+        q -= take;
+        if (lot.remaining <= 1e-9) { lots.shift(); finalize(lot); }
+      }
+      if (q > 1e-9) {
+        // No open lot to close — position was opened before the Flex window.
         trades.push({
-          symbol, type,
-          _orphanClose: true,
-          exitPrice:    sell.price,
-          closeDate:    sell.date,
-          closedShares: sell.qty,
-          commission:   sell.comm,
-          _exitDt:      sell.dt,
+          symbol, type, _orphanClose: true,
+          exitPrice:    ex.price,
+          closeDate:    ex.date,
+          closedShares: q,
+          commission:   r6(ex.comm * (q / ex.qty)),
+          _exitDt:      ex.dt,
         });
-      });
+      }
     }
+    lots.forEach(finalize); // leftover open / partially-closed positions
   });
 
   return trades;
