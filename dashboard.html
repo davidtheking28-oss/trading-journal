@@ -6751,6 +6751,39 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   </div>
 </div>
 
+<!-- COMMAND PALETTE (⌘/Ctrl-K) -->
+<style>
+  #cmdk { position: fixed; inset: 0; z-index: 4000; display: none; align-items: flex-start; justify-content: center;
+          background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); padding-top: 14vh; }
+  #cmdk.open { display: flex; }
+  .cmdk-panel { width: min(560px, 92vw); background: linear-gradient(155deg,#15151a,#0e0e12); border: 1px solid var(--border2);
+                border-radius: 14px; box-shadow: 0 24px 80px rgba(0,0,0,0.7); overflow: hidden;
+                animation: cmdkIn 0.16s cubic-bezier(0.16,1,0.3,1); }
+  @keyframes cmdkIn { from { opacity: 0; transform: translateY(-8px) scale(0.98); } to { opacity: 1; transform: none; } }
+  .cmdk-input { width: 100%; box-sizing: border-box; background: transparent; border: none; outline: none;
+                color: var(--text); font-size: 16px; font-family: inherit; padding: 16px 18px;
+                border-bottom: 1px solid var(--border); }
+  .cmdk-input::placeholder { color: var(--text3); }
+  .cmdk-list { max-height: 50vh; overflow-y: auto; padding: 6px; }
+  .cmdk-item { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: 9px;
+               color: var(--text2); font-size: 14px; cursor: pointer; }
+  .cmdk-item.sel { background: rgba(129,140,248,0.14); color: var(--text); }
+  .cmdk-ic { width: 20px; text-align: center; flex-shrink: 0; font-size: 15px; }
+  .cmdk-empty { padding: 22px; text-align: center; color: var(--text3); font-size: 13px; }
+  .cmdk-hint { display: flex; gap: 12px; padding: 8px 14px; border-top: 1px solid var(--border);
+               color: var(--text3); font-size: 11px; }
+  .cmdk-hint kbd { background: rgba(255,255,255,0.06); border: 1px solid var(--border2); border-radius: 4px;
+                   padding: 1px 5px; font-family: inherit; font-size: 10px; }
+</style>
+<div id="cmdk" onclick="if(event.target===this)cmdkClose()">
+  <div class="cmdk-panel" role="dialog" aria-label="Command palette">
+    <input id="cmdk-input" class="cmdk-input" type="text" placeholder="הקלד פעולה או דף…" autocomplete="off"
+           oninput="cmdkFilter(this.value)" onkeydown="_cmdkKey(event)" aria-label="חיפוש פעולות">
+    <div id="cmdk-list" class="cmdk-list"></div>
+    <div class="cmdk-hint"><span><kbd>↑</kbd><kbd>↓</kbd> ניווט</span><span><kbd>↵</kbd> בחר</span><span><kbd>esc</kbd> סגור</span></div>
+  </div>
+</div>
+
 <div class="toast-container" id="toasts"></div>
 
 <script>
@@ -7453,6 +7486,77 @@ function _restoreLastTab() {
     (b.getAttribute('onclick') || '').includes(`switchTab('${name}'`) && b.offsetParent !== null);
   if (btn) switchTab(name, btn);
 }
+
+// ─── Command palette (⌘/Ctrl-K) ──────────────────
+function _navTo(name) {
+  const btn = Array.from(document.querySelectorAll('.tnav-btn,.tab-btn')).find(b =>
+    (b.getAttribute('onclick') || '').includes(`switchTab('${name}'`) && b.offsetParent !== null)
+    || document.querySelector('.tnav-btn:last-child');
+  if (btn) switchTab(name, btn);
+}
+function _cmdkActions() {
+  const admin = _currentUser?.id === ADMIN_ID;
+  const a = [
+    { ic:'🏠', label:'מעבר: סקירה', kw:'home overview סקירה דשבורד בית', run:()=>_navTo('overview') },
+    { ic:'📈', label:'מעבר: עסקאות', kw:'stocks trades מניות עסקאות טבלה יומן', run:()=>_navTo('stocks') },
+    { ic:'📊', label:'מעבר: סטטיסטיקה', kw:'statistics stats סטטיסטיקה ביצועים', run:()=>_navTo('statistics') },
+    { ic:'🌡️', label:'מעבר: Market Pulse', kw:'market pulse themes שוק מגמות', run:()=>_navTo('themes') },
+    { ic:'🎯', label:'מעבר: Missed', kw:'missed החמצות פספוס', run:()=>_navTo('missed') },
+    { ic:'⚙️', label:'הגדרות / חיבור ברוקר', kw:'settings broker ibkr הגדרות ברוקר חיבור', run:()=>_navTo('ibkr') },
+    { ic:'➕', label:'עסקה חדשה — מניה', kw:'add new trade stock עסקה חדשה מניה', run:()=>openModal('stock') },
+    { ic:'➕', label:'עסקה חדשה — קריפטו', kw:'add new trade crypto עסקה חדשה קריפטו', run:()=>openModal('crypto') },
+    { ic:'🔄', label:'סנכרן ברוקר עכשיו', kw:'sync broker ibkr סנכרן עדכן', run:()=>{ _navTo('ibkr'); setTimeout(()=>document.getElementById('flex-sync-btn')?.click(), 250); } },
+    { ic:'🔒', label:'מצב פרטיות', kw:'privacy hide פרטיות הסתר מספרים', run:()=>togglePrivacy() },
+    { ic:'🎨', label:'החלף ערכת נושא', kw:'theme dark light ערכת נושא צבע', run:()=>toggleTheme() },
+  ];
+  if (admin) {
+    a.splice(5, 0, { ic:'🧠', label:'מעבר: Minervini', kw:'minervini ai מינרביני', run:()=>_navTo('ai') });
+    a.push({ ic:'💼', label:'מעבר: Investments', kw:'investments תיק השקעות', run:()=>_navTo('investments') });
+  }
+  return a;
+}
+let _cmdkIdx = 0, _cmdkList = [];
+function cmdkToggle() {
+  const o = document.getElementById('cmdk');
+  if (o.classList.contains('open')) cmdkClose(); else cmdkOpen();
+}
+function cmdkOpen() {
+  document.getElementById('cmdk').classList.add('open');
+  const inp = document.getElementById('cmdk-input');
+  inp.value = ''; cmdkFilter('');
+  setTimeout(() => inp.focus(), 20);
+}
+function cmdkClose() { document.getElementById('cmdk').classList.remove('open'); }
+function cmdkFilter(q) {
+  q = (q || '').trim().toLowerCase();
+  const all = _cmdkActions();
+  _cmdkList = q ? all.filter(a => (a.label + ' ' + a.kw).toLowerCase().includes(q)) : all;
+  _cmdkIdx = 0; cmdkRender();
+}
+function cmdkRender() {
+  const ul = document.getElementById('cmdk-list');
+  ul.innerHTML = _cmdkList.length
+    ? _cmdkList.map((a, i) => `<div class="cmdk-item${i === _cmdkIdx ? ' sel' : ''}" onmousemove="_cmdkHover(${i})" onclick="_cmdkRun(${i})"><span class="cmdk-ic">${a.ic}</span><span>${esc(a.label)}</span></div>`).join('')
+    : `<div class="cmdk-empty">אין תוצאות</div>`;
+}
+function _cmdkHover(i) { if (i !== _cmdkIdx) { _cmdkIdx = i; cmdkRender(); } }
+function _cmdkRun(i) { const a = _cmdkList[i]; if (!a) return; cmdkClose(); a.run(); }
+function _cmdkScroll() { document.querySelector('#cmdk-list .cmdk-item.sel')?.scrollIntoView({ block: 'nearest' }); }
+function _cmdkKey(e) {
+  if (e.key === 'ArrowDown') { e.preventDefault(); _cmdkIdx = Math.min(_cmdkIdx + 1, _cmdkList.length - 1); cmdkRender(); _cmdkScroll(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); _cmdkIdx = Math.max(_cmdkIdx - 1, 0); cmdkRender(); _cmdkScroll(); }
+  else if (e.key === 'Enter') { e.preventDefault(); _cmdkRun(_cmdkIdx); }
+  else if (e.key === 'Escape') { e.preventDefault(); cmdkClose(); }
+}
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); cmdkToggle(); return; }
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const ae = document.activeElement, tag = ae?.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || ae?.isContentEditable) return;
+  if (_topOpenModal() || document.getElementById('cmdk')?.classList.contains('open')) return;
+  if (e.key === '/') { const s = document.getElementById('st-search'); if (s && s.offsetParent) { e.preventDefault(); s.focus(); } }
+  else if (e.key === 'n' || e.key === 'N') { e.preventDefault(); openModal('stock'); }
+});
 
 // ─── Shared dropdown helpers ─────────────────────
 function _closeAllDDs() {
