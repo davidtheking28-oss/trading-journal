@@ -7810,7 +7810,7 @@ function renderCalendar(type) {
         html += `<div class="${cls}" ${dt.length > 1 ? `onclick="showCalDayModal('${ds}')" style="cursor:pointer"` : ''}>
           <div class="cal-date">${day}</div>
           ${dt.length === 1 ? `<div class="cal-chip ${calcPL(dt[0])>=0?'win':'loss'}" onclick="event.stopPropagation();showCalTradeModal('${dt[0].type}','${dt[0].id}')">
-              <span class="cal-chip-sym">${dt[0].symbol}</span>
+              <span class="cal-chip-sym">${esc(dt[0].symbol)}</span>
               <span class="cal-chip-pl sensitive">${plStr1}</span>
             </div>` : ''}
           ${dt.length > 1 ? `<div class="cal-multi-badge sensitive" style="${dtStyle}">
@@ -8183,7 +8183,7 @@ function showCalDayModal(ds) {
     const plStyle = pl >= 0 ? 'color:var(--green)' : 'color:var(--red)';
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;" onclick="closeCalTradeModal();setTimeout(()=>showCalTradeModal('${tr.type}','${tr.id}'),120)">
       <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:14px;font-weight:700;color:var(--text)">${tr.symbol}</span>
+        <span style="font-size:14px;font-weight:700;color:var(--text)">${esc(tr.symbol)}</span>
         <span style="font-size:11px;color:var(--text3)">${tr.ls === 'L' ? 'Long' : 'Short'}</span>
       </div>
       <div style="text-align:left;">
@@ -12778,7 +12778,7 @@ function bybitRenderPreview(trades) {
     return `
       <div class="ibkr-trade-preview">
         <div>
-          <div class="sym">${t.symbol}</div>
+          <div class="sym">${esc(t.symbol)}</div>
           <div class="det">${t.ls} · ${t.entryDate} → ${t.closeDate}</div>
         </div>
         <div style="text-align:right;">
@@ -14400,12 +14400,12 @@ function invRenderRows(holdings) {
     const locked = h.locked !== false;
     const ro = locked ? 'disabled' : '';
     const symCell = locked
-      ? `<input type="hidden" value="${h.symbol||''}"><span class="inv-sym-chip">${h.symbol||'—'}</span>`
-      : `<input class="inv-sym-input" type="text" value="${h.symbol||''}" placeholder="AAPL" list="inv-sym-list" oninput="this.value=this.value.toUpperCase();invRecalc();invAutoSector(${i});">`;
+      ? `<input type="hidden" value="${esc(h.symbol||'')}"><span class="inv-sym-chip">${esc(h.symbol||'—')}</span>`
+      : `<input class="inv-sym-input" type="text" value="${esc(h.symbol||'')}" placeholder="AAPL" list="inv-sym-list" oninput="this.value=this.value.toUpperCase();invRecalc();invAutoSector(${i});">`;
     return `
     <tr data-idx="${i}" class="${locked?'inv-row-locked':'inv-row-edit'}">
       <td ${locked&&h.symbol?`onclick="invToggleBuyRow(${i})" style="cursor:pointer"`:''}>${symCell}</td>
-      <td><input class="inv-sector-input" type="text" value="${h.sector||''}" placeholder="טכנולוגיה" data-sector-idx="${i}" ${ro} ${locked?'':'oninput="invAutoSave()"'}></td>
+      <td><input class="inv-sector-input" type="text" value="${esc(h.sector||'')}" placeholder="טכנולוגיה" data-sector-idx="${i}" ${ro} ${locked?'':'oninput="invAutoSave()"'}></td>
       <td>
         <select class="inv-cat-sel" ${ro} onchange="invRecalc();${locked?'':'invAutoSave()'}">
           <option value="">—</option>
