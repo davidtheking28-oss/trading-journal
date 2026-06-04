@@ -7423,7 +7423,9 @@ function initFilters() {
     } else if (p === 'stats') {
       updatePeriodLabel('stats');
     } else if (p === 'st') {
-      updatePeriodLabel('st');
+      if (ys) ys.value = curYear;
+      _pdYear[p] = curYear;
+      updatePeriodLabel(p);
     }
   });
 }
