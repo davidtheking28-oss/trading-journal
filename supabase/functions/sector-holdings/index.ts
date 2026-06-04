@@ -133,11 +133,16 @@ serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: 'Invalid ticker' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 
-  // Shared cache: serve rows younger than the TTL instantly — no Yahoo fetch,
-  // no rate-limit cost. Degrades gracefully if the table doesn't exist yet.
+  // Shared cache uses a service-role client so the sector_cache table needs no
+  // permissive RLS write policy for authenticated users (it is shared market
+  // data, not user-owned). Serve rows younger than the TTL instantly.
+  const admin = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+  );
   const CACHE_TTL_MS = 3 * 60 * 1000;
   try {
-    const { data: cached } = await supabase
+    const { data: cached } = await admin
       .from('sector_cache').select('data, updated_at').eq('ticker', ticker).maybeSingle();
     if (cached && Date.now() - new Date(cached.updated_at).getTime() < CACHE_TTL_MS) {
       return new Response(JSON.stringify({ ticker, holdings: cached.data, cached: true }), {
@@ -170,8 +175,8 @@ serve(async (req: Request) => {
 
     const results = await Promise.all(symbols.map(s => fetchStockAll(s)));
 
-    // Refresh the shared cache (fire-and-forget)
-    supabase.from('sector_cache')
+    // Refresh the shared cache via service role (fire-and-forget)
+    admin.from('sector_cache')
       .upsert({ ticker, data: results, updated_at: new Date().toISOString() })
       .then(() => {});
 
