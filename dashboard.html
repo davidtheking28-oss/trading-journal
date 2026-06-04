@@ -11095,13 +11095,16 @@ async function _autoFlexSync() {
       flexSetStatus('✓ סונכרן — אין עסקאות חדשות', 'var(--text3)');
     }
   } catch(e) {
-    // Background sync — record the failure (extends the backoff), fail silently,
-    // and retry later. The manual "סנכרן" button shows full detail on demand.
+    // Background sync — record the failure (extends the backoff) and retry later.
     _flexMarkSync(false);
-    // busy = still connected, just busy → restore last real state; else error.
-    if (e.busy) _brokerBadgeFromStore('ibkr', true);
+    if (e.busy) _brokerBadgeFromStore('ibkr', true); // busy = still connected
     else _setBrokerBadge('ibkr', 'error');
-    flexSetStatus('', 'var(--text3)');
+    // Stay quiet for the odd transient failure, but after several in a row the
+    // cause is almost always a mis-set query period — guide the user to fix it.
+    const fails = parseInt(localStorage.getItem('flex_sync_fails_' + _currentUser.id) || '0', 10);
+    flexSetStatus(
+      fails >= 3 ? 'הסנכרון נכשל שוב ושוב — ודא שה‑Flex Query מוגדר על "Last 365 Calendar Days" (לא 30)' : '',
+      fails >= 3 ? 'var(--text2)' : 'var(--text3)');
   }
 }
 
