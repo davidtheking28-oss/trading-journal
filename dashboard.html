@@ -5363,9 +5363,15 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     <div id="tab-stocks" class="tab-content">
       <div id="trades-scope-pills" style="display:flex;gap:6px;margin-bottom:12px;"></div>
       <div class="month-filter">
-        <label data-i18n="filter_label">Filter:</label>
-        <select id="st-month" onchange="renderTable('stock')"></select>
-        <button class="btn btn-secondary btn-sm" onclick="resetFilter('st')" data-i18n="all_time">All Time</button>
+        <label data-i18n="filter_label">סינון:</label>
+        <select id="st-month" style="display:none"></select>
+        <select id="st-year" style="display:none"></select>
+        <div id="st-period-dd" class="scope-dd">
+          <button class="scope-dd-btn" onclick="togglePeriodDD('st')">
+            <span id="st-period-lbl">כל הזמן</span>
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
+          </button>
+        </div>
         <div class="filter-stats" id="st-filter-info"></div>
       </div>
       <div class="table-toolbar">
@@ -7415,6 +7421,8 @@ function initFilters() {
       updatePeriodLabel('ov');
     } else if (p === 'stats') {
       updatePeriodLabel('stats');
+    } else if (p === 'st') {
+      updatePeriodLabel('st');
     }
   });
 }
@@ -7431,6 +7439,7 @@ function resetFilter(p) {
   const ys = document.getElementById(p+'-year');
   if (ms) ms.value = '';
   if (ys) ys.value = '';
+  updatePeriodLabel(p);
   if (p==='st') renderTable('stock');
   else if (p==='cr') renderTable('crypto');
   else if (p==='stats') renderStatistics();
@@ -7699,7 +7708,9 @@ function _setPeriod(prefix, month, year) {
   _pdYear[prefix] = year;
   document.getElementById(prefix+'-period-lbl').textContent = MONTHS_SHORT_HE[month-1]+' '+year;
   _closeAllDDs();
-  if (prefix==='ov') renderOverview(); else renderStatistics();
+  if (prefix==='ov') renderOverview();
+  else if (prefix==='st') renderTable('stock');
+  else renderStatistics();
 }
 
 function _resetPeriod(prefix) {
@@ -7709,7 +7720,9 @@ function _resetPeriod(prefix) {
   if (ys) ys.value = '';
   document.getElementById(prefix+'-period-lbl').textContent = 'כל הזמן';
   _closeAllDDs();
-  if (prefix==='ov') renderOverview(); else renderStatistics();
+  if (prefix==='ov') renderOverview();
+  else if (prefix==='st') renderTable('stock');
+  else renderStatistics();
 }
 
 function updatePeriodLabel(prefix) {
