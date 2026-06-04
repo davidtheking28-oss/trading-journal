@@ -7883,7 +7883,9 @@ function renderTable(type) {
            <p style="font-size:13px;margin-top:8px;max-width:260px">תעד את הפוזיציה הראשונה שלך ותתחיל לעקוב אחרי הביצועים</p>
            <button onclick="openModal('${type}')" style="margin-top:20px;padding:9px 22px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s;" onmouseenter="this.style.opacity='.85'" onmouseleave="this.style.opacity='1'">+ הוסף עסקה ראשונה</button>
          </div>`
-      : `<div class="empty-state"><div class="empty-icon">${_emptyIcon}</div><p>${t('no_trades')}</p></div>`;
+      : `<div class="empty-state"><div class="empty-icon">${_emptyIcon}</div><p>${t('no_trades')}</p>
+           <button onclick="resetFilter('${p}')" style="margin-top:16px;padding:8px 18px;background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;" onmouseenter="this.style.background='var(--accent)';this.style.color='#fff'" onmouseleave="this.style.background='transparent';this.style.color='var(--accent)'">${_lang==='he'?'נקה סינון':'Clear filter'}</button>
+         </div>`;
     return;
   }
 
