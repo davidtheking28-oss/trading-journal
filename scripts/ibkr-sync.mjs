@@ -45,8 +45,11 @@ async function fetchStatement(token, qid) {
   }
   if (!refCode) throw new Error(`send failed after retries: ${sendErr} [${sendCode}]`);
 
-  // Step 2: poll GetStatement up to ~4 minutes
-  const DELAYS = [3000, 5000, 5000, 8000, 8000, 10000, 12000, 15000, 15000, 20000, 20000, 25000, 25000, 30000, 30000];
+  // Step 2: poll GetStatement. This runs server-side in the background where no
+  // user is waiting, so give a generous ~12-minute budget — a heavy full-year
+  // (365-day) statement for an active account can take several minutes to build.
+  const DELAYS = [3000, 5000, 5000, 8000, 8000, 10000, 12000, 15000, 15000, 20000, 20000, 25000, 25000,
+                  30000, 30000, 30000, 40000, 40000, 40000, 40000, 45000, 45000, 45000, 45000];
   let getCode = '', getErr = 'unknown';
   for (let i = 0; i < DELAYS.length; i++) {
     await sleep(DELAYS[i]);
