@@ -4426,7 +4426,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     border: 1px solid rgba(255,255,255,0.1) !important;
     color: rgba(237,242,249,0.85) !important;
     border-radius: 9px !important;
-    width: 34px; height: 34px;
     display: inline-flex; align-items: center; justify-content: center;
     transition: background 180ms, border-color 180ms, color 180ms !important;
   }
@@ -7674,9 +7673,11 @@ function _buildPeriodHTML(prefix, showYears) {
     return `<button class="pd-month-btn${active}" onclick="_setPeriod('${prefix}',${mn},${yr})">${m}</button>`;
   }).join('');
 
+  const wholeYearActive = !selMonth && selYear===yr ? ' active':'';
   return `
     <button class="pd-all-btn${isAll?' active':''}" onclick="_resetPeriod('${prefix}')">כל הזמן</button>
     <button class="pd-year-btn" onclick="event.stopPropagation();_pdToggleYears('${prefix}',true)">${yr}</button>
+    <button class="pd-all-btn${wholeYearActive}" onclick="_setYearOnly('${prefix}',${yr})">כל ${yr}</button>
     <div class="pd-months">${monthBtns}</div>`;
 }
 
@@ -7713,6 +7714,20 @@ function _setPeriod(prefix, month, year) {
   else renderStatistics();
 }
 
+// Filter by a whole year (no specific month).
+function _setYearOnly(prefix, year) {
+  const ms = document.getElementById(prefix+'-month');
+  const ys = document.getElementById(prefix+'-year');
+  if (ms) ms.value = '';
+  if (ys) ys.value = year;
+  _pdYear[prefix] = year;
+  document.getElementById(prefix+'-period-lbl').textContent = String(year);
+  _closeAllDDs();
+  if (prefix==='ov') renderOverview();
+  else if (prefix==='st') renderTable('stock');
+  else renderStatistics();
+}
+
 function _resetPeriod(prefix) {
   const ms = document.getElementById(prefix+'-month');
   const ys = document.getElementById(prefix+'-year');
@@ -7731,7 +7746,7 @@ function updatePeriodLabel(prefix) {
   const lbl = document.getElementById(prefix+'-period-lbl');
   if (!lbl) return;
   const m = ms?.value, y = ys?.value;
-  lbl.textContent = (m||y) ? (m?MONTHS_SHORT_HE[+m-1]:'')+(y?' '+y:'') : 'כל הזמן';
+  lbl.textContent = (m||y) ? ((m?MONTHS_SHORT_HE[+m-1]:'')+(y?' '+y:'')).trim() : 'כל הזמן';
 }
 
 // ─────────────────────────────────────────────
