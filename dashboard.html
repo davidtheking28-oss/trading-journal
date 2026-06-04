@@ -3580,7 +3580,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-adv-icon { font-size: 20px; }
   .inv-adv-title { font-size: 15px; font-weight: 700; color: var(--text); }
   .inv-adv-sources { font-size: 10px; font-weight: 600; padding: 2px 9px; border-radius: 20px; background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.25); color: #a855f7; white-space: nowrap; }
-  .inv-settings-btn { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 5px 10px; color: var(--text3); cursor: pointer; font-size: 14px; transition: all 0.2s; }
+  .inv-settings-btn { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px 9px; color: var(--text3); cursor: pointer; font-size: 14px; transition: all 0.2s; display: inline-flex; align-items: center; }
   .inv-settings-btn:hover { border-color: var(--accent); color: var(--accent); }
   .inv-settings-panel { padding: 14px 22px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); display: flex; align-items: center; gap: 8px; }
   .inv-settings-label { font-size: 11px; color: var(--text3); white-space: nowrap; }
@@ -5602,8 +5602,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           </div>
           <div class="s-row-ctrl">
             <div class="lang-seg">
-              <button class="lang-opt" id="lang-en" onclick="setLang('en')" title="English"><svg width="36" height="26" viewBox="0 0 28 20" style="border-radius:2px;display:block;" xmlns="http://www.w3.org/2000/svg"><rect width="28" height="20" fill="#B22234"/><rect y="1.54" width="28" height="1.54" fill="#fff"/><rect y="3.08" width="28" height="1.54" fill="#B22234"/><rect y="4.62" width="28" height="1.54" fill="#fff"/><rect y="6.15" width="28" height="1.54" fill="#B22234"/><rect y="7.69" width="28" height="1.54" fill="#fff"/><rect y="9.23" width="28" height="1.54" fill="#B22234"/><rect y="10.77" width="28" height="1.54" fill="#fff"/><rect y="12.31" width="28" height="1.54" fill="#B22234"/><rect y="13.85" width="28" height="1.54" fill="#fff"/><rect y="15.38" width="28" height="1.54" fill="#B22234"/><rect y="16.92" width="28" height="1.54" fill="#fff"/><rect y="18.46" width="28" height="1.54" fill="#B22234"/><rect width="11" height="10.77" fill="#3C3B6E"/><text x="5.5" y="8" text-anchor="middle" font-size="7" fill="white">★</text></svg></button>
-              <button class="lang-opt" id="lang-he" onclick="setLang('he')" title="עברית"><svg width="36" height="26" viewBox="0 0 28 20" style="border-radius:2px;display:block;" xmlns="http://www.w3.org/2000/svg"><rect width="28" height="20" fill="#fff"/><rect y="3" width="28" height="3" fill="#0038b8"/><rect y="14" width="28" height="3" fill="#0038b8"/><polygon points="14,7 16.3,11 11.7,11" fill="none" stroke="#0038b8" stroke-width="1"/><polygon points="14,13 16.3,9 11.7,9" fill="none" stroke="#0038b8" stroke-width="1"/></svg></button>
+              <button class="lang-opt" id="lang-en" onclick="setLang('en')" title="English" aria-label="English"><svg width="36" height="26" viewBox="0 0 28 20" style="border-radius:2px;display:block;" xmlns="http://www.w3.org/2000/svg"><rect width="28" height="20" fill="#B22234"/><rect y="1.54" width="28" height="1.54" fill="#fff"/><rect y="3.08" width="28" height="1.54" fill="#B22234"/><rect y="4.62" width="28" height="1.54" fill="#fff"/><rect y="6.15" width="28" height="1.54" fill="#B22234"/><rect y="7.69" width="28" height="1.54" fill="#fff"/><rect y="9.23" width="28" height="1.54" fill="#B22234"/><rect y="10.77" width="28" height="1.54" fill="#fff"/><rect y="12.31" width="28" height="1.54" fill="#B22234"/><rect y="13.85" width="28" height="1.54" fill="#fff"/><rect y="15.38" width="28" height="1.54" fill="#B22234"/><rect y="16.92" width="28" height="1.54" fill="#fff"/><rect y="18.46" width="28" height="1.54" fill="#B22234"/><rect width="11" height="10.77" fill="#3C3B6E"/><text x="5.5" y="8" text-anchor="middle" font-size="7" fill="white">★</text></svg></button>
+              <button class="lang-opt" id="lang-he" onclick="setLang('he')" title="עברית" aria-label="עברית"><svg width="36" height="26" viewBox="0 0 28 20" style="border-radius:2px;display:block;" xmlns="http://www.w3.org/2000/svg"><rect width="28" height="20" fill="#fff"/><rect y="3" width="28" height="3" fill="#0038b8"/><rect y="14" width="28" height="3" fill="#0038b8"/><polygon points="14,7 16.3,11 11.7,11" fill="none" stroke="#0038b8" stroke-width="1"/><polygon points="14,13 16.3,9 11.7,9" fill="none" stroke="#0038b8" stroke-width="1"/></svg></button>
             </div>
           </div>
         </div>
@@ -5933,7 +5933,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           <div class="sector-modal-title" id="sector-modal-title"></div>
           <div class="sector-modal-sub" id="sector-modal-sub"></div>
         </div>
-        <button class="sector-modal-close" onclick="sectorModalClose()">✕</button>
+        <button class="sector-modal-close" onclick="sectorModalClose()" aria-label="סגור">✕</button>
       </div>
       <div class="sector-modal-periods">
         <button class="tt-period active" data-p="today" onclick="ttSetPeriod('today',this)">Today</button>
@@ -6184,7 +6184,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
               <span class="inv-adv-title">יועץ השקעות AI</span>
               <span class="inv-adv-sources">SEC EDGAR · Finnhub</span>
             </div>
-            <button class="inv-settings-btn" onclick="invToggleSettings()" title="מפתח Groq">⚙️</button>
+            <button class="inv-settings-btn" onclick="invToggleSettings()" title="מפתח Groq" aria-label="מפתח Groq"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
           </div>
           <div class="inv-settings-panel" id="inv-settings-panel" style="display:none;">
             <span class="inv-settings-label">Groq API Key ייעודי:</span>
@@ -6251,7 +6251,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   <div class="ss-modal" onclick="event.stopPropagation()">
     <div class="modal-header">
       <div class="modal-title" id="ss-modal-title">צילומי מסך</div>
-      <button class="modal-close" onclick="closeSSModal()">✕</button>
+      <button class="modal-close" onclick="closeSSModal()" aria-label="סגור">✕</button>
     </div>
     <div class="modal-body">
       <div class="ss-grid" id="ss-grid"></div>
@@ -6273,7 +6273,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
 <!-- LIGHTBOX -->
 <div class="ss-lightbox" id="ss-lightbox" onclick="closeLightbox()">
-  <button class="ss-lightbox-close" onclick="closeLightbox()">✕</button>
+  <button class="ss-lightbox-close" onclick="closeLightbox()" aria-label="סגור">✕</button>
   <img id="ss-lightbox-img" src="" alt="Screenshot">
 </div>
 
@@ -6284,7 +6284,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <div class="modal-title" id="cal-trade-modal-title"></div>
       <div style="display:flex;align-items:center;gap:8px;">
         <button class="btn-icon" id="cal-trade-edit-btn" title="ערוך"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-        <button class="modal-close" onclick="closeCalTradeModal()">✕</button>
+        <button class="modal-close" onclick="closeCalTradeModal()" aria-label="סגור">✕</button>
       </div>
     </div>
     <div class="modal-body" id="cal-trade-modal-body" style="padding:20px 24px 24px;"></div>
@@ -6296,7 +6296,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   <div class="modal" onclick="event.stopPropagation()" style="max-width:680px;">
     <div class="modal-header">
       <div class="modal-title">⚡ הוספת עסקה מהירה</div>
-      <button class="btn btn-secondary btn-sm" onclick="fabToggle()" style="padding:4px 10px;font-size:18px;line-height:1;">×</button>
+      <button class="btn btn-secondary btn-sm" onclick="fabToggle()" style="padding:4px 10px;font-size:18px;line-height:1;" aria-label="סגור">×</button>
     </div>
     <div class="modal-body" style="padding:20px 24px 0;">
       <div class="qa-modal-grid">
@@ -6392,7 +6392,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   <div class="modal" onclick="event.stopPropagation()" style="max-width:480px;">
     <div class="modal-header">
       <div class="modal-title" id="inv-pos-modal-title">עדכון פוזיציה</div>
-      <button class="modal-close" onclick="invClosePositionModal()">✕</button>
+      <button class="modal-close" onclick="invClosePositionModal()" aria-label="סגור">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-section">
@@ -6439,7 +6439,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header">
       <div class="modal-title" id="modal-title">Add Trade</div>
-      <button class="modal-close" onclick="closeModal()">✕</button>
+      <button class="modal-close" onclick="closeModal()" aria-label="סגור">✕</button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="m-id">
@@ -10611,6 +10611,9 @@ function toast(msg, type='success') {
 // ─────────────────────────────────────────────
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
+  if (document.getElementById('ss-lightbox')?.classList.contains('open')) { closeLightbox(); return; }
+  if (document.getElementById('sector-modal')?.style.display === 'block') { sectorModalClose(); return; }
+  if (document.getElementById('inv-position-modal')?.classList.contains('open')) { invClosePositionModal(); return; }
   if (document.getElementById('cal-trade-modal')?.classList.contains('open')) { closeCalTradeModal(); return; }
   if (document.getElementById('ss-modal')?.classList.contains('open')) { closeSSModal(); return; }
   if (document.getElementById('qa-modal')?.classList.contains('open')) { fabToggle(); return; }
@@ -16124,7 +16127,7 @@ if ('serviceWorker' in navigator) {
       <button class="pin-key" onclick="pinPress('7')">7</button>
       <button class="pin-key" onclick="pinPress('8')">8</button>
       <button class="pin-key" onclick="pinPress('9')">9</button>
-      <button class="pin-key pin-clear" onclick="pinClear()">✕</button>
+      <button class="pin-key pin-clear" onclick="pinClear()" aria-label="נקה">✕</button>
       <button class="pin-key" onclick="pinPress('0')">0</button>
       <button class="pin-key pin-clear" onclick="pinBackspace()">⌫</button>
     </div>
