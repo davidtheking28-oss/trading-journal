@@ -7472,6 +7472,7 @@ function switchTab(name, btn) {
   tabEl.classList.add('tab-entering');
   if (name==='overview') renderOverview();
   else if (_ovLiveTimer) { clearInterval(_ovLiveTimer); _ovLiveTimer = null; }
+  if (name !== 'investments' && _invPriceTimer) { clearInterval(_invPriceTimer); _invPriceTimer = null; }
   if (name==='stocks') renderTable('stock');
   if (name==='crypto') renderTable('crypto');
   if (name==='archive') renderArchive();
@@ -14596,7 +14597,12 @@ async function invInit() {
   invRenderDeposits(data.deposits || []);
   invRecalc();
   invFetchPrices();
+  // Keep holdings P&L live: refresh quotes every 60s while on this tab
+  // (cleared in switchTab when leaving). No DB write on these ticks.
+  if (_invPriceTimer) clearInterval(_invPriceTimer);
+  _invPriceTimer = setInterval(() => invFetchPrices(false), 60000);
 }
+let _invPriceTimer = null;
 
 function invRenderRows(holdings) {
   const tbody = document.getElementById('inv-tbody');
@@ -14847,7 +14853,7 @@ function invAddRow() {
   }
 }
 
-async function invFetchPrices() {
+async function invFetchPrices(save = true) {
   const tbody = document.getElementById('inv-tbody');
   if (!tbody) return;
   const rows = [...tbody.querySelectorAll('tr[data-idx]')];
@@ -14877,7 +14883,7 @@ async function invFetchPrices() {
   if (updated > 0) {
     _invPricesUpdatedAt = Date.now();
     invRecalc();
-    invAutoSave();
+    if (save) invAutoSave();
     invUpdatePricesTimestamp();
   }
 }
