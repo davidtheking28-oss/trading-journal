@@ -8690,7 +8690,6 @@ async function loadCryptoSymbolsFromCoinGecko() {
       unique.forEach(s => CRYPTO_SYMBOLS.add(s));
       // Save to cache
       try { localStorage.setItem(CGECKO_CACHE_KEY, JSON.stringify({ ts: Date.now(), symbols: unique })); } catch(e) { console.warn('[CoinGecko] cache save failed:', e); }
-      console.log(`[CoinGecko] fetched ${unique.length} symbols`);
       updateCryptoStatus('live', unique.length, Date.now());
       return;
     } catch(e) {
@@ -10661,6 +10660,29 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('ss-modal')?.classList.contains('open')) { closeSSModal(); return; }
   if (document.getElementById('qa-modal')?.classList.contains('open')) { fabToggle(); return; }
   closeModal();
+});
+
+// Focus trap (WCAG 2.4.3) — keep keyboard focus inside the open modal.
+function _topOpenModal() {
+  for (const id of ['trade-modal','qa-modal','cal-trade-modal','ss-modal','inv-position-modal']) {
+    const el = document.getElementById(id);
+    if (el && el.classList.contains('open')) return el;
+  }
+  const sm = document.getElementById('sector-modal');
+  return (sm && sm.style.display === 'block') ? sm : null;
+}
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Tab') return;
+  const modal = _topOpenModal();
+  if (!modal) return;
+  const list = Array.from(modal.querySelectorAll(
+    'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
+  )).filter(el => el.offsetParent !== null);
+  if (!list.length) return;
+  const first = list[0], last = list[list.length - 1];
+  if (!modal.contains(document.activeElement)) { e.preventDefault(); first.focus(); return; }
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
 });
 
 // ══════════════════════════════════════════════
