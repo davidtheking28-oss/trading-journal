@@ -15007,7 +15007,7 @@ function invGetCurrentData() {
     });
   });
   return {
-
+    portfolioTotal: document.getElementById('inv-portfolio-total')?.value || '',
     holdings: holdings.filter(h => h.symbol || h.entryShares || h.entryPrice),
     deposits: invLoad().deposits || []
   };
@@ -15274,10 +15274,11 @@ function invAutoSector(idx) {
 }
 
 function invAutoSaveTotal() {
-  const data = invLoad();
   const val = document.getElementById('inv-portfolio-total')?.value || '';
-  data.portfolioTotal = val;
-  invSaveData(data);
+  // The portfolio total lives in user_settings — persist only that. Never rewrite
+  // the holdings here: invLoad() may return stale localStorage and would clobber
+  // the precise holdings stored in the DB.
+  if (_invData) _invData.portfolioTotal = val;
   _saveUserSettings({ portfolio_total: val ? +val : null });
 }
 
@@ -15317,7 +15318,8 @@ function invAddDeposit() {
   const amount   = +(document.getElementById('inv-dep-amount')?.value) || 0;
   const currency = document.getElementById('inv-dep-currency')?.value || '$';
   if (!month || !amount) { toast('Enter month and amount', 'error'); return; }
-  const data = invLoad();
+  // Read holdings from the DOM (precise) — never from stale localStorage.
+  const data = invGetCurrentData();
   if (!data.deposits) data.deposits = [];
   data.deposits.push({ month, amount, currency });
   data.deposits.sort((a, b) => b.month.localeCompare(a.month));
@@ -15333,11 +15335,14 @@ function invAddDeposit() {
 }
 
 function invDeleteDeposit(idx) {
-  const data = invLoad();
-  if (!data.deposits) return;
-  data.deposits.splice(idx, 1);
+  const deposits = invLoad().deposits || [];
+  if (!deposits.length) return;
+  deposits.splice(idx, 1);
+  // Holdings from the DOM (precise) — avoid clobbering DB with stale localStorage.
+  const data = invGetCurrentData();
+  data.deposits = deposits;
   invSaveData(data);
-  invRenderDeposits(data.deposits);
+  invRenderDeposits(deposits);
 }
 
 function invRenderDeposits(deposits = [], totalCurrentValue = 0) {
