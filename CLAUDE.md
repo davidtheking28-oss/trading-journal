@@ -23,5 +23,9 @@ Personal trading journal web app — multi-user SaaS built on Supabase.
 
 ---
 
+## Supabase SQL — Use MCP
+When SQL needs to run against the Supabase project (migrations, schema changes, data queries), use the `supabase` MCP server directly — **do not tell the user to paste SQL into the SQL Editor manually**.
+Use the MCP tool to execute the SQL automatically.
+
 ## Knowledge Base
 Personal prompts, frameworks, and lessons: `C:\Users\david\.claude\knowledge-base.md`
