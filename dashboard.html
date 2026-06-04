@@ -4183,6 +4183,28 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   /* ── Sidebar footer ── */
   .sidebar-footer { padding: 14px 18px; border-top: 1px solid rgba(255,255,255,0.04); }
   .sidebar-footer-text { font-size: 10px; color: #1e3048; font-weight: 500; }
+  .sidebar-footer-links { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 6px; }
+  .sidebar-footer-links a { font-size: 10px; color: var(--text3); cursor: pointer; text-decoration: none; transition: color 0.15s; }
+  .sidebar-footer-links a:hover { color: var(--accent); text-decoration: underline; }
+
+  /* ── Legal / policy modal body ── */
+  .legal-body { max-height: 70vh; overflow-y: auto; line-height: 1.75; font-size: 13.5px; color: var(--text2); }
+  .legal-body h3 { font-size: 14px; font-weight: 700; color: var(--text); margin: 18px 0 6px; }
+  .legal-body h3:first-child { margin-top: 0; }
+  .legal-body p { margin: 0 0 8px; }
+  .legal-body ul { margin: 0 0 8px; padding-right: 20px; }
+  .legal-body li { margin-bottom: 4px; }
+  .legal-body a { color: var(--accent); text-decoration: none; }
+  .legal-body a:hover { text-decoration: underline; }
+  .legal-updated { font-size: 11px; color: var(--text3); margin-bottom: 14px; }
+
+  /* ── Skip-to-content link (accessibility) ── */
+  .skip-link {
+    position: absolute; top: -60px; right: 12px; z-index: 10001;
+    background: var(--accent); color: #fff; padding: 10px 18px; border-radius: 8px;
+    font-size: 13px; font-weight: 700; text-decoration: none; transition: top 0.18s;
+  }
+  .skip-link:focus { top: 12px; outline: 2px solid #fff; outline-offset: 2px; }
 
   /* ── Scrollbar ── */
   ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -5127,6 +5149,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 </head>
 <body>
 
+<a href="#main-content" class="skip-link">דלג לתוכן הראשי</a>
+
 <div class="ambient-blob ambient-blob-1"></div>
 <div class="ambient-blob ambient-blob-2"></div>
 
@@ -5289,6 +5313,12 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
     <div class="sidebar-footer">
       <div class="sidebar-footer-text">v2.0 · מאובטח</div>
+      <div class="sidebar-footer-links">
+        <a onclick="openLegal('privacy')" tabindex="0" role="button">פרטיות</a>
+        <a onclick="openLegal('terms')" tabindex="0" role="button">תנאי שימוש</a>
+        <a onclick="openLegal('accessibility')" tabindex="0" role="button">נגישות</a>
+      </div>
+      <div class="sidebar-footer-text" style="margin-top:6px;">© 2026 Trading Journal</div>
     </div>
 
     <button class="sidebar-collapse-btn" onclick="toggleSidebar()" aria-label="כווץ סרגל צד" title="כווץ / הרחב">
@@ -5298,7 +5328,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     </button>
   </aside>
 
-  <main>
+  <main id="main-content">
 
     <!-- ===== OVERVIEW ===== -->
     <div id="tab-overview" class="tab-content active">
@@ -6663,6 +6693,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <input id="auth-pass2" class="form-control" type="password" placeholder="אימות סיסמה"
         style="display:none;background:rgba(10,10,10,0.95);border:1px solid rgba(148,163,184,0.12);border-radius:10px;padding:12px 14px;font-size:14px;color:#f1f5f9;" autocomplete="new-password"
         onkeydown="if(event.key==='Enter')authSubmit()">
+      <label id="auth-consent-row" style="display:none;align-items:flex-start;gap:8px;margin-top:4px;font-size:12px;color:var(--text3);line-height:1.5;cursor:pointer;">
+        <input id="auth-consent" type="checkbox" style="margin-top:2px;flex-shrink:0;cursor:pointer;accent-color:var(--accent);">
+        <span>קראתי ואני מסכים/ה ל<a onclick="event.preventDefault();openLegal('terms')" style="color:var(--accent);text-decoration:underline;cursor:pointer;">תנאי השימוש</a> ול<a onclick="event.preventDefault();openLegal('privacy')" style="color:var(--accent);text-decoration:underline;cursor:pointer;">מדיניות הפרטיות</a></span>
+      </label>
     </div>
 
     <div id="auth-msg" style="display:none;margin-top:12px;padding:10px 12px;border-radius:10px;font-size:13px;text-align:center;"></div>
@@ -6695,6 +6729,26 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     <div id="auth-migrate-banner" style="display:none;margin-top:16px;padding:12px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);border-radius:10px;font-size:12px;color:#7a8fa8;text-align:center;line-height:1.5;">
       נמצאו נתונים מקומיים — לאחר הכניסה תוכל להעביר אותם לענן
     </div>
+
+    <!-- Legal links -->
+    <div style="text-align:center;margin-top:18px;font-size:11px;color:var(--text3);line-height:1.6;">
+      <a onclick="openLegal('terms')" style="color:var(--text3);cursor:pointer;text-decoration:underline;">תנאי שימוש</a>
+      &nbsp;·&nbsp;
+      <a onclick="openLegal('privacy')" style="color:var(--text3);cursor:pointer;text-decoration:underline;">מדיניות פרטיות</a>
+      &nbsp;·&nbsp;
+      <a onclick="openLegal('accessibility')" style="color:var(--text3);cursor:pointer;text-decoration:underline;">הצהרת נגישות</a>
+    </div>
+  </div>
+</div>
+
+<!-- LEGAL / POLICY MODAL -->
+<div class="modal-overlay" id="legal-modal" onclick="if(event.target===this)closeLegal()" style="z-index:10000;">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:680px;" role="dialog" aria-modal="true" aria-labelledby="legal-title">
+    <div class="modal-header">
+      <div class="modal-title" id="legal-title">—</div>
+      <button class="modal-close" onclick="closeLegal()" aria-label="סגור">✕</button>
+    </div>
+    <div class="modal-body legal-body" id="legal-body"></div>
   </div>
 </div>
 
@@ -6816,10 +6870,140 @@ async function _getToken() {
 // ─────────────────────────────────────────────
 let _authMode = 'login';
 
+// ─────────────────────────────────────────────
+// LEGAL / POLICY DOCUMENTS
+// ─────────────────────────────────────────────
+const _LEGAL_CONTACT = 'davidtheking27@gmail.com';
+const _LEGAL_UPDATED = 'עודכן לאחרונה: יוני 2026';
+
+const LEGAL_DOCS = {
+  privacy: {
+    title: 'מדיניות פרטיות',
+    html: `
+      <div class="legal-updated">${_LEGAL_UPDATED}</div>
+      <p>אנו מכבדים את פרטיותך. מסמך זה מסביר איזה מידע נאסף בעת השימוש ב-Trading Journal ("השירות"), כיצד הוא נשמר ומה זכויותיך לפיו, בהתאם לחוק הגנת הפרטיות, התשמ"א-1981.</p>
+
+      <h3>איזה מידע אנו אוספים</h3>
+      <ul>
+        <li><strong>פרטי חשבון:</strong> כתובת אימייל וסיסמה (מאוחסנת מוצפנת — איננו רואים אותה).</li>
+        <li><strong>נתוני מסחר:</strong> עסקאות, סמלים, מחירים, תאריכים, הערות וצילומי מסך שאתה מזין.</li>
+        <li><strong>הגדרות אישיות:</strong> העדפות תצוגה, מפתחות API שתבחר להזין, ונתוני השקעות.</li>
+        <li><strong>נתונים טכניים:</strong> מידע בסיסי הנדרש לתפעול תקין (אחסון מקומי בדפדפן).</li>
+      </ul>
+
+      <h3>כיצד המידע נשמר ומאובטח</h3>
+      <p>הנתונים נשמרים בשרתי Supabase. כל משתמש רואה אך ורק את הנתונים שלו באמצעות מנגנון אבטחה ברמת השורה (Row Level Security). מפתחות API וסיסמאות אינם נחשפים לצד שלישי.</p>
+
+      <h3>שירותי צד שלישי</h3>
+      <p>השירות עושה שימוש בספקים הבאים, שלכל אחד מהם מדיניות פרטיות משלו:</p>
+      <ul>
+        <li><strong>Supabase</strong> — אימות ואחסון נתונים.</li>
+        <li><strong>Google</strong> — התחברות אופציונלית דרך חשבון Google.</li>
+        <li><strong>ספקי נתוני שוק</strong> (Finnhub, FMP, CoinGecko ועוד) — לשליפת מחירים ונתונים פיננסיים.</li>
+        <li><strong>ברוקרים מחוברים</strong> (כגון IBKR) — אם תבחר לחבר חשבון לצורך סנכרון עסקאות.</li>
+      </ul>
+
+      <h3>שימוש במידע</h3>
+      <p>המידע משמש אך ורק לצורך הפעלת השירות עבורך: הצגת העסקאות, חישוב סטטיסטיקות וניתוחים. איננו מוכרים את המידע שלך ואיננו משתפים אותו לצרכי פרסום.</p>
+
+      <h3>זכויותיך</h3>
+      <ul>
+        <li>זכות לעיין במידע שנאסף עליך.</li>
+        <li>זכות לתקן מידע שגוי.</li>
+        <li>זכות למחוק את חשבונך ואת כל הנתונים המשויכים אליו.</li>
+      </ul>
+
+      <h3>אחסון מקומי (Cookies / localStorage)</h3>
+      <p>השירות משתמש באחסון מקומי בדפדפן לשמירת העדפות ומצב התחברות. אין שימוש בעוגיות מעקב לצרכי פרסום.</p>
+
+      <h3>יצירת קשר</h3>
+      <p>בכל שאלה או בקשה למימוש זכויות: <a href="mailto:${_LEGAL_CONTACT}">${_LEGAL_CONTACT}</a></p>
+    `
+  },
+  terms: {
+    title: 'תנאי שימוש',
+    html: `
+      <div class="legal-updated">${_LEGAL_UPDATED}</div>
+      <p>השימוש ב-Trading Journal ("השירות") כפוף לתנאים אלה. עצם השימוש מהווה הסכמה לתנאים במלואם.</p>
+
+      <h3>1. תיאור השירות</h3>
+      <p>השירות הוא יומן מסחר אישי לתיעוד, מעקב וניתוח של פעילות מסחר והשקעות. השירות מסופק כפי שהוא ("AS IS").</p>
+
+      <h3>2. אינו ייעוץ השקעות</h3>
+      <p><strong>השירות אינו מהווה ייעוץ השקעות, שיווק השקעות או המלצה לביצוע פעולה כלשהי בניירות ערך או בנכסים פיננסיים.</strong> כל הנתונים, הניתוחים והתובנות מסופקים למטרות מידע ותיעוד אישי בלבד. כל החלטת מסחר היא באחריותך הבלעדית. מסחר בשוק ההון כרוך בסיכון להפסד כספי.</p>
+
+      <h3>3. אחריות המשתמש</h3>
+      <ul>
+        <li>שמירה על סודיות פרטי ההתחברות שלך.</li>
+        <li>הזנת מידע נכון ושימוש חוקי בשירות.</li>
+        <li>אחריות לגיבוי הנתונים החשובים לך.</li>
+      </ul>
+
+      <h3>4. הגבלת אחריות</h3>
+      <p>השירות אינו אחראי לדיוק נתוני השוק המסופקים על ידי צדדים שלישיים, לזמינות רציפה של השירות, או לכל נזק ישיר או עקיף הנובע מהשימוש או מאי-יכולת לעשות שימוש בשירות.</p>
+
+      <h3>5. קניין רוחני</h3>
+      <p>זכויות הקניין הרוחני בשירות, בעיצובו ובקוד שלו שמורות לבעליו. הנתונים שאתה מזין נותרים בבעלותך.</p>
+
+      <h3>6. סיום שימוש</h3>
+      <p>באפשרותך להפסיק את השימוש ולמחוק את חשבונך בכל עת. אנו רשאים להשעות גישה במקרה של שימוש לרעה בשירות.</p>
+
+      <h3>7. שינויים בתנאים</h3>
+      <p>אנו רשאים לעדכן תנאים אלה מעת לעת. המשך השימוש לאחר עדכון מהווה הסכמה לתנאים המעודכנים.</p>
+
+      <h3>8. דין חל</h3>
+      <p>על תנאים אלה יחולו דיני מדינת ישראל, וסמכות השיפוט הבלעדית נתונה לבתי המשפט המוסמכים בישראל.</p>
+
+      <h3>יצירת קשר</h3>
+      <p>לשאלות בנוגע לתנאים: <a href="mailto:${_LEGAL_CONTACT}">${_LEGAL_CONTACT}</a></p>
+    `
+  },
+  accessibility: {
+    title: 'הצהרת נגישות',
+    html: `
+      <div class="legal-updated">${_LEGAL_UPDATED}</div>
+      <p>אנו רואים חשיבות רבה במתן שירות נגיש לכלל המשתמשים, לרבות אנשים עם מוגבלות, ופועלים להנגשת השירות בהתאם לתקנות שוויון זכויות לאנשים עם מוגבלות (התאמות נגישות לשירות), התשע"ג-2013.</p>
+
+      <h3>תקן הנגישות</h3>
+      <p>השירות הונגש בהתאם להמלצות התקן הישראלי ת"י 5568 לנגישות תכנים באינטרנט, המבוסס על הנחיות <strong>WCAG 2.0 ברמת AA</strong>.</p>
+
+      <h3>מה הונגש באתר</h3>
+      <ul>
+        <li>תמיכה בניווט באמצעות מקלדת וקישור "דלג לתוכן הראשי".</li>
+        <li>תוויות (ARIA) לכפתורים ולרכיבים אינטראקטיביים.</li>
+        <li>מצב תצוגה כהה ובהיר לשיפור הניגודיות והנוחות.</li>
+        <li>מבנה סמנטי ותמיכה בכיווניות עברית (RTL).</li>
+        <li>טקסט הניתן להגדלה באמצעות הדפדפן.</li>
+      </ul>
+
+      <h3>מגבלות ידועות</h3>
+      <p>למרות מאמצינו, ייתכן שחלקים מסוימים בשירות טרם הונגשו במלואם. אנו ממשיכים לשפר את הנגישות באופן שוטף.</p>
+
+      <h3>פניות בנושא נגישות</h3>
+      <p>נתקלת בבעיית נגישות או יש לך הצעה לשיפור? נשמח לקבל פנייה. רכז הנגישות זמין בכתובת: <a href="mailto:${_LEGAL_CONTACT}">${_LEGAL_CONTACT}</a></p>
+      <p>נעשה כל מאמץ לטפל בפנייתך בהקדם.</p>
+    `
+  }
+};
+
+function openLegal(type) {
+  const doc = LEGAL_DOCS[type];
+  if (!doc) return;
+  document.getElementById('legal-title').textContent = doc.title;
+  document.getElementById('legal-body').innerHTML = doc.html;
+  document.getElementById('legal-modal').classList.add('open');
+}
+
+function closeLegal() {
+  document.getElementById('legal-modal').classList.remove('open');
+}
+
 function authSetMode(mode) {
   _authMode = mode;
   const isReg = mode === 'register';
   document.getElementById('auth-pass2').style.display     = isReg ? '' : 'none';
+  document.getElementById('auth-consent-row').style.display = isReg ? 'flex' : 'none';
+  if (!isReg) document.getElementById('auth-consent').checked = false;
   document.getElementById('auth-pass').autocomplete       = isReg ? 'new-password' : 'current-password';
   document.getElementById('auth-submit-btn').textContent  = isReg ? 'הרשמה' : 'כניסה';
   document.getElementById('auth-forgot-btn').style.display= isReg ? 'none' : '';
@@ -6876,6 +7060,7 @@ async function authSubmit() {
       const pass2 = document.getElementById('auth-pass2').value || '';
       if (pass !== pass2) { _authMsg('הסיסמאות אינן תואמות', 'error'); return; }
       if (pass.length < 8) { _authMsg('סיסמה חייבת להכיל לפחות 8 תווים', 'error'); return; }
+      if (!document.getElementById('auth-consent').checked) { _authMsg('יש לאשר את תנאי השימוש ומדיניות הפרטיות', 'error'); return; }
       const { error } = await _sb.auth.signUp({ email, password: pass });
       if (error) throw error;
       _authMsg('נשלח אימייל אישור — בדוק את תיבת הדואר שלך', 'success');
@@ -10812,6 +10997,7 @@ function toast(msg, type='success') {
 // ─────────────────────────────────────────────
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
+  if (document.getElementById('legal-modal')?.classList.contains('open')) { closeLegal(); return; }
   if (document.getElementById('ss-lightbox')?.classList.contains('open')) { closeLightbox(); return; }
   if (document.getElementById('sector-modal')?.style.display === 'block') { sectorModalClose(); return; }
   if (document.getElementById('inv-position-modal')?.classList.contains('open')) { invClosePositionModal(); return; }
