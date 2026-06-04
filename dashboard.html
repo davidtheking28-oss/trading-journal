@@ -5359,7 +5359,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <div class="month-filter">
         <label data-i18n="filter_label">Filter:</label>
         <select id="st-month" onchange="renderTable('stock')"></select>
-        <select id="st-year" onchange="renderTable('stock')"></select>
         <button class="btn btn-secondary btn-sm" onclick="resetFilter('st')" data-i18n="all_time">All Time</button>
         <div class="filter-stats" id="st-filter-info"></div>
       </div>
@@ -7367,17 +7366,15 @@ function initFilters() {
   ['ov','st','cr','stats'].forEach(p => {
     const ms = document.getElementById(p+'-month');
     const ys = document.getElementById(p+'-year');
-    if (!ms||!ys) return;
+    if (!ms) return;
     ms.innerHTML = `<option value="">${t('filter_all_months')}</option>` + months().map((m,i)=>`<option value="${i+1}">${m}</option>`).join('');
-    ys.innerHTML = `<option value="">${t('filter_all_years')}</option>` + yrs.map(y=>`<option value="${y}">${y}</option>`).join('');
+    if (ys) ys.innerHTML = `<option value="">${t('filter_all_years')}</option>` + yrs.map(y=>`<option value="${y}">${y}</option>`).join('');
     if (p === 'ov') {
       ms.value = new Date().getMonth() + 1;
-      ys.value = new Date().getFullYear();
+      if (ys) ys.value = new Date().getFullYear();
       updatePeriodLabel('ov');
     } else if (p === 'stats') {
       updatePeriodLabel('stats');
-    } else if ((p==='st' || p==='cr') && !ys.value) {
-      if (yrs.includes(curYear)) ys.value = curYear;
     }
   });
 }
