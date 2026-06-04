@@ -6129,9 +6129,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
                 <span class="inv-alloc-remaining" id="alloc-rem-yellow">—</span>
               </div>
               <div class="inv-alloc-row">
-                <span class="inv-alloc-dot" style="background:#94a3b8"></span>
+                <span class="inv-alloc-dot" style="background:#2dd4bf"></span>
                 <span class="inv-alloc-label" data-i18n="inv_cash_row">💵 מזומן — יעד 5%</span>
-                <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-cash" style="width:0%;background:#94a3b8;"></div></div>
+                <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-cash" style="width:0%;background:#2dd4bf;"></div></div>
                 <span class="inv-alloc-invested" id="alloc-inv-cash">—</span>
                 <span class="inv-alloc-cur" id="alloc-cur-cash">0%</span>
                 <span class="inv-alloc-remaining" id="alloc-rem-cash">—</span>
@@ -6140,7 +6140,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             <div class="inv-donut-wrap">
               <svg width="180" height="180" viewBox="0 0 130 130">
                 <circle cx="65" cy="65" r="50" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="18"/>
-                <circle id="donut-cash"   cx="65" cy="65" r="50" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="18" stroke-dasharray="314 314" stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
+                <circle id="donut-cash"   cx="65" cy="65" r="50" fill="none" stroke="#2dd4bf"                stroke-width="18" stroke-dasharray="314 314" stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
                 <circle id="donut-yellow" cx="65" cy="65" r="50" fill="none" stroke="#fbbf24"                stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
                 <circle id="donut-green"  cx="65" cy="65" r="50" fill="none" stroke="#34d399"                stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
                 <circle id="donut-blue"   cx="65" cy="65" r="50" fill="none" stroke="#818cf8"                stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
@@ -6151,7 +6151,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
                 <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:#818cf8"></span><span class="inv-leg-label" data-i18n="inv_legend_blue">Blue Chips</span><b id="leg-blue">0%</b></div>
                 <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:#34d399"></span><span class="inv-leg-label" data-i18n="inv_legend_green">Growth</span><b id="leg-green">0%</b></div>
                 <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:#fbbf24"></span><span class="inv-leg-label" data-i18n="inv_legend_yellow">Speculative</span><b id="leg-yellow">0%</b></div>
-                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:rgba(255,255,255,0.25)"></span><span class="inv-leg-label" data-i18n="inv_cash">Cash</span><b id="leg-cash">100%</b></div>
+                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:#2dd4bf"></span><span class="inv-leg-label" data-i18n="inv_cash">Cash</span><b id="leg-cash">100%</b></div>
               </div>
             </div>
           </div>
@@ -14809,7 +14809,7 @@ function invRecalc() {
   const cashBarEl = document.getElementById('alloc-bar-cash');
   const cashCurEl = document.getElementById('alloc-cur-cash');
   const cashRemEl = document.getElementById('alloc-rem-cash');
-  if (cashBarEl) { cashBarEl.style.width = cashBarW + '%'; cashBarEl.style.background = '#94a3b8'; }
+  if (cashBarEl) { cashBarEl.style.width = cashBarW + '%'; cashBarEl.style.background = '#2dd4bf'; }
   const cashInvEl = document.getElementById('alloc-inv-cash');
   if (cashInvEl) cashInvEl.textContent = cash > 0 ? c + cash.toLocaleString('en-US', {maximumFractionDigits:0}) : '—';
   if (cashCurEl) { cashCurEl.textContent = cashPct.toFixed(1) + '%'; cashCurEl.style.color = 'var(--text2)'; }
