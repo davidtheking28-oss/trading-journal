@@ -6978,6 +6978,7 @@ async function _onAuthSuccess(user) {
   // Offer localStorage migration on first login
   await offerMigration();
   onboardingCheck(user.id);
+  _restoreLastTab();
   console.log('%c Trading Journal 2.0 ','background:#818cf8;color:#fff;font-weight:700;font-size:13px;border-radius:3px;padding:2px 6px');
   console.log('%cRunning in the browser — treat other users\' data with respect.','color:#8896a8;font-size:11px');
 }
@@ -7406,6 +7407,7 @@ function _setTradesScope(s) { _tradesScope = s; renderTable('stock'); }
 
 function switchTab(name, btn) {
   if (name === 'ai' && _currentUser?.id !== ADMIN_ID) return;
+  try { localStorage.setItem('tj_active_tab', name); } catch {}
   document.querySelectorAll('.tab-btn,.tnav-btn').forEach(b=>{ b.classList.remove('active'); b.style.color=''; });
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
   btn.classList.add('active');
@@ -7432,6 +7434,18 @@ function switchTab(name, btn) {
   }
   if (name==='missed') missedRender();
   if (name==='investments') invInit();
+}
+
+// Restore the tab the user last viewed (set in switchTab). Falls back to the
+// default overview when nothing is saved or the target isn't navigable here.
+function _restoreLastTab() {
+  let name; try { name = localStorage.getItem('tj_active_tab'); } catch {}
+  if (!name || name === 'overview') return;
+  const tabEl = document.getElementById('tab-' + name);
+  if (!tabEl) return;
+  const btn = Array.from(document.querySelectorAll('.tnav-btn,.tab-btn')).find(b =>
+    (b.getAttribute('onclick') || '').includes(`switchTab('${name}'`) && b.offsetParent !== null);
+  if (btn) switchTab(name, btn);
 }
 
 // ─── Shared dropdown helpers ─────────────────────
