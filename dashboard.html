@@ -7183,7 +7183,45 @@ async function loadDB() {
       `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`
     )
   );
+  await _dedupeTrades(); // always keep the journal free of duplicates
   initFilters(); renderOverview(); renderTable('stock');
+}
+
+// Remove duplicate trades — runs on every load and after every sync. Only
+// removes provably-duplicate rows, never a legitimate unique trade or scale-in:
+//   • two trades sharing IBKR's unique tradeID (same execution)
+//   • an untagged trade that exactly matches (entry AND exit) a tagged IBKR trade
+//     (a leftover from the old buggy import; the tagged one is canonical)
+async function _dedupeTrades() {
+  if (!_currentUser) return 0;
+  const fp = t => [t.symbol, t.entryDate, Math.round((t.entryPrice||0)*1000), Math.round((t.shares||0)*1000),
+                   Math.round((t.exitPrice||0)*1000), Math.round((t.closedShares||0)*1000)].join('|');
+  const toRemove = [];
+  for (const type of ['stock', 'crypto']) {
+    const live = (type === 'stock' ? db.stocks : db.crypto).filter(x => !x.deleted);
+    const seenId = new Set();      // ibkr_ids already kept
+    const taggedFp = new Set();    // full fingerprints of kept tagged trades
+    // Process tagged (canonical) trades first so untagged duplicates are the ones removed.
+    const ordered = [...live].sort((a, b) => (a.ibkr_id ? 0 : 1) - (b.ibkr_id ? 0 : 1) || ((+a.id || 0) - (+b.id || 0)));
+    for (const t of ordered) {
+      if (t.ibkr_id) {
+        if (seenId.has(t.ibkr_id)) toRemove.push(t);
+        else { seenId.add(t.ibkr_id); taggedFp.add(fp(t)); }
+      } else if (taggedFp.has(fp(t))) {
+        toRemove.push(t); // exact duplicate of a tagged trade
+      }
+    }
+  }
+  for (const t of toRemove) {
+    t.deleted = true;
+    await _sb.from('trades').update({ deleted: true, deleted_at: new Date().toISOString() })
+      .eq('id', t.id).eq('user_id', _currentUser.id);
+  }
+  if (toRemove.length) {
+    db.stocks = db.stocks.filter(x => !x.deleted);
+    db.crypto = db.crypto.filter(x => !x.deleted);
+  }
+  return toRemove.length;
 }
 // ─────────────────────────────────────────────
 // CALCULATIONS
@@ -10932,6 +10970,8 @@ async function _flexImportInner(trades) {
     imported++;
     if (!t.exitPrice) newlyImported.push(newTrade);
   }
+
+  await _dedupeTrades(); // sweep any leftover duplicates right after importing
 
   if (imported > 0 || updated > 0) {
     initFilters();
