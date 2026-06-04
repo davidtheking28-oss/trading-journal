@@ -9833,25 +9833,25 @@ function renderOverview() {
       <div class="kpi-sub">${st.n} ${t('trades')}</div>
       ${monKeys.length>=2 ? `<div class="kpi-trend ${trendCls} sensitive">${trendLbl}</div>` : ''}
     </div>
+    <div class="kpi-card c-yellow" id="kpi-live-card">
+      <div class="kpi-label">${t('kpi_live')}</div>
+      <div class="kpi-value" id="kpi-live-pl">${t('kpi_calculating')}</div>
+      <div class="kpi-sub" id="kpi-live-sub">${openTrades.length} ${t('kpi_open_pos')}</div>
+    </div>
     <div class="kpi-card c-blue">
       <div class="kpi-label">${t('kpi_winrate')}</div>
       <div class="kpi-value ${st.wr>=50?'green':'red'} sensitive">${fmt(st.wr,1)}%</div>
       <div class="kpi-sub">${st.wins}W / ${st.losses}L</div>
       <div class="kpi-progress-track"><div class="kpi-progress-bar" style="width:${Math.min(st.wr,100)}%;background:${st.wr>=50?'#2dd4a0':'#ff6b8a'}"></div></div>
     </div>
-    <div class="kpi-card c-blue">
-      <div class="kpi-label">${t('kpi_trades')}</div>
-      <div class="kpi-value">${st.n}</div>
-    </div>
     <div class="kpi-card ${avgR!==null&&avgR>=0?'c-green':'c-yellow'}">
       <div class="kpi-label">${t('kpi_rr')}</div>
       <div class="kpi-value ${avgR!==null?(avgR>=0?'green':'red'):''} sensitive">${avgR!==null?avgR.toFixed(2)+'R':'—'}</div>
       <div class="kpi-sub">${withR.length ? withR.length+' '+t('kpi_with_stop') : ''}</div>
     </div>
-    <div class="kpi-card c-yellow" id="kpi-live-card">
-      <div class="kpi-label">${t('kpi_live')}</div>
-      <div class="kpi-value" id="kpi-live-pl">${t('kpi_calculating')}</div>
-      <div class="kpi-sub" id="kpi-live-sub">${openTrades.length} ${t('kpi_open_pos')}</div>
+    <div class="kpi-card c-blue">
+      <div class="kpi-label">${t('kpi_trades')}</div>
+      <div class="kpi-value">${st.n}</div>
     </div>
   `;
     document.querySelectorAll('#kpi-grid .kpi-card').forEach((el, i) => {
