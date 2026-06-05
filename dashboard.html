@@ -1622,6 +1622,18 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .sector-holding-pct.neg { color:var(--red); }
   .sector-modal-loading { text-align:center; padding:30px 0; color:var(--text3); font-size:13px; }
   .tt-row { cursor:pointer; }
+  /* The sector modal keeps a dark bg (#111) in both themes — force its text light
+     in light mode so symbols/names don't turn dark-on-dark. */
+  html[data-theme="light"] .sector-modal-title       { color:#f8fafc; }
+  html[data-theme="light"] .sector-modal-sub         { color:#9aa7b8; }
+  html[data-theme="light"] .sector-modal-close       { color:#9aa7b8; }
+  html[data-theme="light"] .sector-modal-close:hover { color:#f8fafc; }
+  html[data-theme="light"] .sector-holding-sym       { color:#f8fafc; }
+  html[data-theme="light"] .sector-holding-name      { color:#cbd5e1; }
+  html[data-theme="light"] .sector-holding-weight    { color:#9aa7b8; }
+  html[data-theme="light"] .sector-modal-loading     { color:#9aa7b8; }
+  html[data-theme="light"] .sector-modal-periods .tt-period       { color:#9aa7b8; }
+  html[data-theme="light"] .sector-modal-periods .tt-period:hover { color:#f8fafc; }
 
   /* Profile & Language cards */
   .profile-field-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
