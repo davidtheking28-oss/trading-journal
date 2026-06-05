@@ -1382,7 +1382,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   #tab-ibkr { display: none; }
   #tab-ibkr.active { display: block; }
 
-  .s-page-header { margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .s-page-header { margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
   .s-page-header h2 { font-size: 23px; font-weight: 750; color: var(--text); margin: 0 0 5px; letter-spacing: -0.4px; }
   .s-page-header p  { font-size: 12.5px; color: var(--text3); margin: 0; }
 
@@ -1631,8 +1631,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .profile-input:focus { border-color:var(--accent); box-shadow: 0 0 0 3px rgba(129,140,248,0.12); }
   .profile-input:disabled { opacity:0.45; cursor:not-allowed; }
   .profile-email { font-size:12px; color:var(--text3); margin-top:2px; }
-  .lang-seg { display:flex; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:8px; padding:3px; gap:3px; width:fit-content; }
-  .lang-opt { background:none; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; transition:all 0.15s; opacity:0.45; display:flex; align-items:center; }
+  .lang-seg { display:flex; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:8px; padding:2px; gap:2px; width:fit-content; flex-shrink:0; }
+  .lang-opt { background:none; border:none; padding:4px 7px; border-radius:6px; cursor:pointer; transition:all 0.15s; opacity:0.45; display:flex; align-items:center; }
   .lang-opt:hover { opacity:0.85; }
   .lang-opt.active { background:var(--accent); opacity:1; }
   .lang-desc { font-size:11px; color:var(--text3); margin-top:8px; }
@@ -5617,8 +5617,14 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
     <div id="tab-ibkr" class="tab-content">
     <div class="s-page-header">
-      <h2 data-i18n="set_page_title">Settings</h2>
-      <p data-i18n="set_page_sub">Manage your account, security, and data preferences.</p>
+      <div>
+        <h2 data-i18n="set_page_title">Settings</h2>
+        <p data-i18n="set_page_sub">Manage your account, security, and data preferences.</p>
+      </div>
+      <div class="lang-seg" title="שפה / Language">
+        <button class="lang-opt" id="lang-en" onclick="setLang('en')" title="English" aria-label="English"><svg width="24" height="17" viewBox="0 0 28 20" style="border-radius:2px;display:block;" xmlns="http://www.w3.org/2000/svg"><rect width="28" height="20" fill="#B22234"/><rect y="1.54" width="28" height="1.54" fill="#fff"/><rect y="3.08" width="28" height="1.54" fill="#B22234"/><rect y="4.62" width="28" height="1.54" fill="#fff"/><rect y="6.15" width="28" height="1.54" fill="#B22234"/><rect y="7.69" width="28" height="1.54" fill="#fff"/><rect y="9.23" width="28" height="1.54" fill="#B22234"/><rect y="10.77" width="28" height="1.54" fill="#fff"/><rect y="12.31" width="28" height="1.54" fill="#B22234"/><rect y="13.85" width="28" height="1.54" fill="#fff"/><rect y="15.38" width="28" height="1.54" fill="#B22234"/><rect y="16.92" width="28" height="1.54" fill="#fff"/><rect y="18.46" width="28" height="1.54" fill="#B22234"/><rect width="11" height="10.77" fill="#3C3B6E"/><text x="5.5" y="8" text-anchor="middle" font-size="7" fill="white">★</text></svg></button>
+        <button class="lang-opt" id="lang-he" onclick="setLang('he')" title="עברית" aria-label="עברית"><svg width="24" height="17" viewBox="0 0 28 20" style="border-radius:2px;display:block;" xmlns="http://www.w3.org/2000/svg"><rect width="28" height="20" fill="#fff"/><rect y="3" width="28" height="3" fill="#0038b8"/><rect y="14" width="28" height="3" fill="#0038b8"/><polygon points="14,7 16.3,11 11.7,11" fill="none" stroke="#0038b8" stroke-width="1"/><polygon points="14,13 16.3,9 11.7,9" fill="none" stroke="#0038b8" stroke-width="1"/></svg></button>
+      </div>
     </div>
     <div class="s-grid">
     <div class="s-col" style="display:contents">
@@ -5671,24 +5677,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         </div>
       </div>
 
-      <!-- Preferences -->
-      <div class="s-section" style="order:3">
-        <div class="s-section-header">
-          <div class="s-section-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="9" cy="6" r="2" fill="currentColor" opacity="0.5"/><circle cx="15" cy="12" r="2" fill="currentColor" opacity="0.5"/><circle cx="9" cy="18" r="2" fill="currentColor" opacity="0.5"/></svg></div>
-          <div><div class="s-section-title" data-i18n="set_grp_prefs">Preferences</div><div class="s-section-sub" data-i18n="set_grp_prefs_sub">Language and display</div></div>
-        </div>
-        <div class="s-row">
-          <div class="s-row-left">
-            <div class="s-row-label" data-i18n="settings_lang">Language</div>
-          </div>
-          <div class="s-row-ctrl">
-            <div class="lang-seg">
-              <button class="lang-opt" id="lang-en" onclick="setLang('en')" title="English" aria-label="English"><svg width="36" height="26" viewBox="0 0 28 20" style="border-radius:2px;display:block;" xmlns="http://www.w3.org/2000/svg"><rect width="28" height="20" fill="#B22234"/><rect y="1.54" width="28" height="1.54" fill="#fff"/><rect y="3.08" width="28" height="1.54" fill="#B22234"/><rect y="4.62" width="28" height="1.54" fill="#fff"/><rect y="6.15" width="28" height="1.54" fill="#B22234"/><rect y="7.69" width="28" height="1.54" fill="#fff"/><rect y="9.23" width="28" height="1.54" fill="#B22234"/><rect y="10.77" width="28" height="1.54" fill="#fff"/><rect y="12.31" width="28" height="1.54" fill="#B22234"/><rect y="13.85" width="28" height="1.54" fill="#fff"/><rect y="15.38" width="28" height="1.54" fill="#B22234"/><rect y="16.92" width="28" height="1.54" fill="#fff"/><rect y="18.46" width="28" height="1.54" fill="#B22234"/><rect width="11" height="10.77" fill="#3C3B6E"/><text x="5.5" y="8" text-anchor="middle" font-size="7" fill="white">★</text></svg></button>
-              <button class="lang-opt" id="lang-he" onclick="setLang('he')" title="עברית" aria-label="עברית"><svg width="36" height="26" viewBox="0 0 28 20" style="border-radius:2px;display:block;" xmlns="http://www.w3.org/2000/svg"><rect width="28" height="20" fill="#fff"/><rect y="3" width="28" height="3" fill="#0038b8"/><rect y="14" width="28" height="3" fill="#0038b8"/><polygon points="14,7 16.3,11 11.7,11" fill="none" stroke="#0038b8" stroke-width="1"/><polygon points="14,13 16.3,9 11.7,9" fill="none" stroke="#0038b8" stroke-width="1"/></svg></button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- Security -->
       <div class="s-section" style="order:2">
