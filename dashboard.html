@@ -7485,12 +7485,12 @@ function fmtPct(n) {
 function clr(v) { return v > 0 ? 'num-green' : v < 0 ? 'num-red' : ''; }
 // calcStopRisk — סיכון אמיתי: (מחיר כניסה - סטופ) × מניות
 function calcStopRisk(tr) {
-  // R-multiple needs a real stop. Broker-imported trades have no stop (stop=0),
-  // so risk is undefined → return 0 (fmtR then shows "—") instead of measuring
-  // against the full position value, which would yield a meaningless tiny R.
-  const stop = +tr.stop;
-  if (!stop) return 0;
-  const diff = Math.abs((+tr.entryPrice||0) - stop);
+  // Risk reference for the R-multiple = the stop. When no stop is set (e.g. broker
+  // imports) fall back to the exit price — same formula, exit instead of stop.
+  // If neither exists (open position, no stop) R is undefined → return 0 → "—".
+  const ref = (+tr.stop) || (+tr.exitPrice) || 0;
+  if (!ref) return 0;
+  const diff = Math.abs((+tr.entryPrice||0) - ref);
   return diff * (+tr.shares||0);
 }
 // fmtR — מחשב R-Multiple: כמה כפולות סיכון הרווחנו/הפסדנו
