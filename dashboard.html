@@ -5751,7 +5751,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             <div id="crypto-sym-status"><span class="sym-dot loading"></span></div>
           </div>
         </div>
-        <div class="s-row" style="flex-direction:column;align-items:stretch;min-height:0;padding:16px;gap:10px;">
+        <div class="s-row" id="finnhub-key-row" style="flex-direction:column;align-items:stretch;min-height:0;padding:16px;gap:10px;">
           <div style="display:flex;align-items:center;justify-content:space-between;">
             <div style="font-size:12px;font-weight:600;color:var(--text2);">Finnhub API Key</div>
             <a href="https://finnhub.io/register" target="_blank" rel="noopener" style="font-size:11px;font-weight:600;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px;">Get free key <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></a>
@@ -7072,8 +7072,12 @@ async function _onAuthSuccess(user) {
   const isAdmin = user.id === ADMIN_ID;
   const aiKey = document.getElementById('ai-key-section');
   const fhKey = document.getElementById('finnhub-key-section');
+  const fhRow = document.getElementById('finnhub-key-row');
   if (aiKey) aiKey.style.display = isAdmin ? '' : 'none';
   if (fhKey) fhKey.style.display = isAdmin ? '' : 'none';
+  // Regular users rely on the shared Finnhub key (edge-function secret) — hide the
+  // personal-key field from them; data still flows via the fallback shared key.
+  if (fhRow) fhRow.style.display = isAdmin ? '' : 'none';
   document.querySelectorAll('.ai-tab-btn, .tnav-btn, .tab-btn').forEach(btn => {
     const oc = btn.getAttribute('onclick') || '';
     if (oc.includes("'ai'") || oc.includes("'investments'")) btn.style.display = isAdmin ? '' : 'none';
