@@ -7146,7 +7146,6 @@ async function _onAuthSuccess(user) {
   // Offer localStorage migration on first login
   await offerMigration();
   onboardingCheck(user.id);
-  _restoreLastTab();
   const _activeTabEl = document.querySelector('.tab-content.active');
   if (_activeTabEl) _maybeShowTabIntro(_activeTabEl.id.replace('tab-', ''), _activeTabEl);
   console.log('%c Trading Journal 2.0 ','background:#818cf8;color:#fff;font-weight:700;font-size:13px;border-radius:3px;padding:2px 6px');
