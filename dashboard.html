@@ -1360,15 +1360,15 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
      COINGECKO STATUS
   ══════════════════════════════════════ */
   .cg-status {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 13px; color: var(--text2);
-    padding: 8px 12px; border-radius: 8px;
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 12px; color: var(--text2);
+    padding: 6px 10px; border-radius: 8px; max-width: 100%;
     background: rgba(129,140,248,0.05); border: 1px solid var(--border);
   }
   .cg-status.live   { color: #2dd4a0; border-color: rgba(45,212,160,0.25); background: rgba(45,212,160,0.06); }
   .cg-status.cache  { color: var(--accent); border-color: rgba(129,140,248,0.25); }
   .cg-status.error  { color: #ff6b8a; border-color: rgba(255,107,138,0.25); background: rgba(255,107,138,0.06); }
-  .cg-status-icon   { font-size: 14px; }
+  .cg-status-icon   { font-size: 14px; flex-shrink: 0; }
   .cg-refresh-btn {
     margin-right: auto; background: none; border: 1px solid var(--border);
     color: var(--text2); border-radius: 6px; padding: 2px 8px;
