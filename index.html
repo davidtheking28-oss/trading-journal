@@ -3,6 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+/* Already signed in? Skip the marketing page and go straight into the journal.
+   Reads the persisted Supabase session from localStorage — no client needed. */
+(function () {
+  try {
+    // OAuth callback that landed here → hand the token to the app.
+    if (location.hash && location.hash.indexOf('access_token') !== -1) {
+      location.replace('dashboard.html' + location.hash); return;
+    }
+    var key = Object.keys(localStorage).find(function (k) { return /^sb-.*-auth-token$/.test(k); });
+    if (!key) return;
+    var s = JSON.parse(localStorage.getItem(key) || 'null');
+    var sess = s && (s.currentSession || s);
+    if (sess && sess.expires_at && sess.expires_at * 1000 > Date.now()) location.replace('dashboard.html');
+  } catch (e) {}
+})();
+</script>
 <meta name="google-site-verification" content="FSusm5X2VDUsrsnZfnk_L_4V8STvBITiGc044BZ2eC0">
 <title>יומן מסחר חינמי עם AI | ייבוא אוטומטי מ-IBKR ו-Bybit | Trading Journal</title>
 <meta name="description" content="יומן מסחר חינמי לסוחרים ישראלים. ייבוא אוטומטי מ-Interactive Brokers ו-Bybit, ניתוח win rate לפי שעה ויום, Market Pulse בזמן אמת. גלה את הדפוסים שחוזרים בהפסדים שלך.">
