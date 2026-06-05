@@ -5729,7 +5729,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       </div>
 
       <!-- Data Sources -->
-      <div class="s-section" style="order:4">
+      <div class="s-section" style="order:4" id="s-data-sources">
         <div class="s-section-header">
           <div class="s-section-icon yellow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></div>
           <div><div class="s-section-title" data-i18n="set_grp_data">Data Sources</div><div class="s-section-sub">Stocks &amp; crypto market data</div></div>
@@ -7079,6 +7079,10 @@ async function _onAuthSuccess(user) {
   // Regular users rely on the shared Finnhub key (edge-function secret) — hide the
   // personal-key field from them; data still flows via the fallback shared key.
   if (fhRow) fhRow.style.display = isAdmin ? '' : 'none';
+  // The whole Data Sources section is config/status only — nothing for regular
+  // users to do (keys are centralized, data loads in the background). Hide it.
+  const dataSec = document.getElementById('s-data-sources');
+  if (dataSec) dataSec.style.display = isAdmin ? '' : 'none';
   document.querySelectorAll('.ai-tab-btn, .tnav-btn, .tab-btn').forEach(btn => {
     const oc = btn.getAttribute('onclick') || '';
     if (oc.includes("'ai'") || oc.includes("'investments'")) btn.style.display = isAdmin ? '' : 'none';
