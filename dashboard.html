@@ -3608,7 +3608,14 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-sum-stat:last-child { border-right: none; }
   .inv-sum-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
   .inv-sum-val { font-size: 15px; font-weight: 700; color: var(--text); }
+  .inv-sum-val.pnl-pos { color: var(--green); }
+  .inv-sum-val.pnl-neg { color: var(--red); }
   .inv-sum-updated .inv-sum-val { font-size: 12px; font-weight: 500; color: var(--text3); }
+  html[data-theme="light"] .inv-summary-bar { background: linear-gradient(145deg, #eef2f8, #f3f6fb); border: 1px solid #e2e8f0; }
+  html[data-theme="light"] .inv-sum-stat { border-right-color: #e2e8f0; }
+  html[data-theme="light"] .inv-sum-label { color: #586475; }
+  html[data-theme="light"] .inv-sum-val.pnl-pos { color: #047857; }
+  html[data-theme="light"] .inv-sum-val.pnl-neg { color: #be123c; }
   .inv-empty {
     text-align: center; padding: 40px 28px; color: var(--text3); font-size: 13px;
   }
@@ -5643,11 +5650,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           <div class="s-profile-grid">
             <div class="profile-field">
               <label class="profile-label" data-i18n="settings_first">First Name</label>
-              <input class="profile-input" id="profile-first" type="text" placeholder="שם פרטי" oninput="profileMarkDirty()">
+              <input class="profile-input" id="profile-first" type="text" placeholder="First name" data-i18n-ph="settings_first_ph" oninput="profileMarkDirty()">
             </div>
             <div class="profile-field">
               <label class="profile-label" data-i18n="settings_last">Last Name</label>
-              <input class="profile-input" id="profile-last" type="text" placeholder="שם משפחה" oninput="profileMarkDirty()">
+              <input class="profile-input" id="profile-last" type="text" placeholder="Last name" data-i18n-ph="settings_last_ph" oninput="profileMarkDirty()">
             </div>
           </div>
           <div class="s-profile-grid">
@@ -5713,12 +5720,12 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           <div style="font-size:10px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:var(--text3);padding-bottom:8px;">Password</div>
           <div class="s-profile-grid">
             <div class="profile-field">
-              <label class="profile-label">New Password</label>
-              <input class="profile-input" id="pw-new" type="password" placeholder="סיסמה חדשה" autocomplete="new-password">
+              <label class="profile-label" data-i18n="set_pw_new">New Password</label>
+              <input class="profile-input" id="pw-new" type="password" placeholder="New password" data-i18n-ph="settings_pw_new_ph" autocomplete="new-password">
             </div>
             <div class="profile-field">
-              <label class="profile-label">Confirm Password</label>
-              <input class="profile-input" id="pw-confirm" type="password" placeholder="אישור סיסמה" autocomplete="new-password">
+              <label class="profile-label" data-i18n="set_pw_confirm">Confirm Password</label>
+              <input class="profile-input" id="pw-confirm" type="password" placeholder="Confirm password" data-i18n-ph="settings_pw_confirm_ph" autocomplete="new-password">
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;">
@@ -9633,6 +9640,9 @@ const LANG_STRINGS = {
     chart_cum:'Cumulative P&L',
     settings_profile:'Profile', settings_first:'First Name',
     settings_last:'Last Name', settings_display:'Display Name',
+    settings_first_ph:'First name', settings_last_ph:'Last name',
+    settings_pw_new_ph:'New password', settings_pw_confirm_ph:'Confirm password',
+    set_pw_new:'New Password', set_pw_confirm:'Confirm Password',
     settings_email:'Email', settings_save_profile:'Save Profile',
     settings_lang:'Language', settings_export:'Export Data',
     export_stocks:'Export Stocks', export_crypto:'Export Crypto', export_all:'Export All',
@@ -9756,6 +9766,8 @@ const LANG_STRINGS = {
     chart_cum:'P&L מצטבר',
     settings_profile:'פרופיל', settings_first:'שם פרטי',
     settings_last:'שם משפחה', settings_display:'שם תצוגה',
+    settings_first_ph:'שם פרטי', settings_last_ph:'שם משפחה',
+    settings_pw_new_ph:'סיסמה חדשה', settings_pw_confirm_ph:'אישור סיסמה',
     settings_email:'אימייל', settings_save_profile:'שמור פרופיל',
     settings_lang:'שפה', settings_export:'ייצוא נתונים',
     export_stocks:'ייצא מניות', export_crypto:'ייצא קריפטו', export_all:'ייצא הכל',
@@ -14883,8 +14895,9 @@ function invRecalc() {
       const sign = totalUnrealizedPnL >= 0 ? '+' : '';
       const pct  = totalCost > 0 ? (totalUnrealizedPnL / totalCost * 100).toFixed(1) : null;
       pnlEl2.textContent = `${sign}${cur}${Math.abs(totalUnrealizedPnL).toLocaleString('en-US',{maximumFractionDigits:0})}${pct !== null ? ` (${sign}${pct}%)` : ''}`;
-      pnlEl2.style.color = totalUnrealizedPnL >= 0 ? 'var(--green)' : 'var(--red)';
-    } else { pnlEl2.textContent = '—'; pnlEl2.style.color = ''; }
+      pnlEl2.classList.remove('pnl-pos', 'pnl-neg');
+      pnlEl2.classList.add(totalUnrealizedPnL >= 0 ? 'pnl-pos' : 'pnl-neg');
+    } else { pnlEl2.textContent = '—'; pnlEl2.classList.remove('pnl-pos', 'pnl-neg'); }
   }
 }
 
