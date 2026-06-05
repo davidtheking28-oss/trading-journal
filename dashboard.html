@@ -6246,7 +6246,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         </div>
 
         <!-- INVESTMENT ADVISOR -->
-        <div class="inv-advisor-card">
+        <div class="inv-advisor-card" id="inv-advisor-card">
           <div class="inv-adv-top">
             <div class="inv-adv-title-wrap">
               <span class="inv-adv-icon">🤖</span>
@@ -7080,8 +7080,11 @@ async function _onAuthSuccess(user) {
   if (dataSec) dataSec.style.display = isAdmin ? '' : 'none';
   document.querySelectorAll('.ai-tab-btn, .tnav-btn, .tab-btn').forEach(btn => {
     const oc = btn.getAttribute('onclick') || '';
-    if (oc.includes("'ai'") || oc.includes("'investments'")) btn.style.display = isAdmin ? '' : 'none';
+    if (oc.includes("'ai'")) btn.style.display = isAdmin ? '' : 'none';
   });
+  // Investments tab is open to all users, but the AI advisor card inside it stays admin-only
+  const advCard = document.getElementById('inv-advisor-card');
+  if (advCard) advCard.style.display = isAdmin ? '' : 'none';
   const syncBtn = document.getElementById('flex-sync-btn');
   if (syncBtn) syncBtn.style.display = '';
   // Post-load UI setup
@@ -7599,9 +7602,9 @@ function _cmdkActions() {
     { ic:'🔒', label:'מצב פרטיות', kw:'privacy hide פרטיות הסתר מספרים', run:()=>togglePrivacy() },
     { ic:'🎨', label:'החלף ערכת נושא', kw:'theme dark light ערכת נושא צבע', run:()=>toggleTheme() },
   ];
+  a.push({ ic:'💼', label:'מעבר: Investments', kw:'investments תיק השקעות', run:()=>_navTo('investments') });
   if (admin) {
     a.splice(5, 0, { ic:'🧠', label:'מעבר: Minervini', kw:'minervini ai מינרביני', run:()=>_navTo('ai') });
-    a.push({ ic:'💼', label:'מעבר: Investments', kw:'investments תיק השקעות', run:()=>_navTo('investments') });
   }
   return a;
 }
