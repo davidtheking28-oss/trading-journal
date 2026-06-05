@@ -4537,7 +4537,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     box-shadow: 0 1px 0 rgba(37,99,235,0.06), 0 2px 16px rgba(0,0,0,0.05);
   }
   html[data-theme="light"] .kpi-card {
-    background: rgba(255,255,255,0.9) !important;
+    background: #f3f6fb !important;
     border: 1px solid rgba(14,14,18,0.07) !important;
     box-shadow: 0 1px 4px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.8) !important;
     backdrop-filter: blur(8px);
@@ -4554,7 +4554,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   html[data-theme="light"] .kpi-value.red     { color: #c0405c; text-shadow: none; }
   html[data-theme="light"] .kpi-value.yellow  { color: #b45309; text-shadow: none; }
   html[data-theme="light"] .table-wrap {
-    background: rgba(255,255,255,0.9) !important;
+    background: #f3f6fb !important;
     border-color: rgba(14,14,18,0.07) !important;
     box-shadow: 0 2px 16px rgba(0,0,0,0.05) !important;
   }
@@ -4584,7 +4584,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   html[data-theme="light"] .chart-card,
   html[data-theme="light"] .overview-section,
   html[data-theme="light"] .ibkr-card {
-    background: rgba(255,255,255,0.9) !important;
+    background: #f3f6fb !important;
     border-color: rgba(14,14,18,0.07) !important;
     box-shadow: 0 2px 12px rgba(0,0,0,0.05) !important;
   }
@@ -4660,7 +4660,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
   /* Fear & Greed widget */
   html[data-theme="light"] .fg-widget {
-    background: rgba(255,255,255,0.9) !important;
+    background: #f3f6fb !important;
     border-color: rgba(14,14,18,0.07) !important;
     backdrop-filter: none !important;
   }
@@ -13417,7 +13417,7 @@ function _buildLightCSS() {
   return `
     :root {
       color-scheme: light;
-      --bg:#f0f4f8; --bg2:#e2e8f0; --card:#fff; --card2:#f8fafc;
+      --bg:#dde4ee; --bg2:#cdd6e2; --card:#f3f6fb; --card2:#eef2f8;
       --border:rgba(14,14,18,0.08); --border2:rgba(14,14,18,0.13);
       --text:#0f172a; --text2:#334155; --text3:#64748b;
       --accent:#0ea5e9; --accent2:#0284c7; --accent-glow:rgba(14,165,233,0.12);
@@ -13427,9 +13427,9 @@ function _buildLightCSS() {
       --sidebar-bg: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
       --sidebar-border: #dde3ed;
     }
-    body { background:#f0f4f8 !important; color:#0f172a !important;
-      background-image: radial-gradient(ellipse 100% 50% at 50% -5%, rgba(14,165,233,0.07) 0%, transparent 60%) !important; }
-    header { background:#ffffff !important; border-bottom:1px solid #e2e8f0 !important;
+    body { background:#dde4ee !important; color:#0f172a !important;
+      background-image: radial-gradient(ellipse 100% 50% at 50% -5%, rgba(14,165,233,0.05) 0%, transparent 60%) !important; }
+    header { background:#eef2f8 !important; border-bottom:1px solid #e2e8f0 !important;
       box-shadow:0 1px 0 rgba(14,165,233,0.07),0 2px 12px rgba(0,0,0,0.06) !important; }
     .header-title { color:#0f172a !important; }
     .btn-secondary { background:#f1f5f9 !important; border:1px solid #cbd5e1 !important; color:#475569 !important; }
@@ -13456,7 +13456,7 @@ function _buildLightCSS() {
     html[data-theme="light"] .tab-btn.active .nav-icon svg { stroke:#0284c7 !important; }
 
     /* Cards */
-    .kpi-card { background:#ffffff !important; border:1px solid #e2e8f0 !important; box-shadow:0 1px 6px rgba(0,0,0,0.06) !important; }
+    .kpi-card { background:#f3f6fb !important; border:1px solid #e2e8f0 !important; box-shadow:0 1px 6px rgba(0,0,0,0.06) !important; }
     .kpi-card::before,.kpi-card::after { display:none !important; }
     .kpi-card.c-green  { border-top:2px solid #059669 !important; }
     .kpi-card.c-red    { border-top:2px solid #e11d48 !important; }
@@ -13472,26 +13472,28 @@ function _buildLightCSS() {
     .kpi-trend.down { color:#e11d48 !important; background:rgba(225,29,72,0.08) !important; }
     .kpi-trend.flat { color:#64748b !important; background:rgba(0,0,0,0.05) !important; }
 
-    .chart-card { background:#ffffff !important; border:1px solid #e2e8f0 !important; box-shadow:0 2px 12px rgba(0,0,0,0.05) !important; }
+    .chart-card { background:#f3f6fb !important; border:1px solid #e2e8f0 !important; box-shadow:0 2px 12px rgba(0,0,0,0.05) !important; }
     .chart-card::before { display:none !important; }
     .chart-title { color:#64748b !important; }
-    .comp-card  { background:#ffffff !important; border:1px solid #e2e8f0 !important; box-shadow:0 2px 12px rgba(0,0,0,0.05) !important; }
+    .comp-card  { background:#f3f6fb !important; border:1px solid #e2e8f0 !important; box-shadow:0 2px 12px rgba(0,0,0,0.05) !important; }
     .comp-card::before { display:none !important; }
     .comp-card h4 { color:#0f172a !important; }
     .comp-stat  { border-bottom-color:#f1f5f9 !important; }
     .comp-stat-label { color:#64748b !important; }
     .comp-stat-val { color:#0f172a !important; }
-    .calc-card  { background:#ffffff !important; border:1px solid #e2e8f0 !important; box-shadow:0 2px 12px rgba(0,0,0,0.05) !important; }
+    .calc-card  { background:#f3f6fb !important; border:1px solid #e2e8f0 !important; box-shadow:0 2px 12px rgba(0,0,0,0.05) !important; }
     .calc-card h3 { color:#0ea5e9 !important; }
     .calc-divider { border-top-color:#e2e8f0 !important; }
-    .overview-section { background:#ffffff !important; border:1px solid #e2e8f0 !important; }
+    .overview-section { background:#f3f6fb !important; border:1px solid #e2e8f0 !important; }
     .ov-section-title { color:#64748b !important; }
-    .ibkr-card  { background:#ffffff !important; border:1px solid #e2e8f0 !important; }
+    .ibkr-card  { background:#f3f6fb !important; border:1px solid #e2e8f0 !important; }
     .ibkr-card-header { border-bottom-color:#e2e8f0 !important; }
     .ibkr-card-title  { color:#0f172a !important; }
+    /* Secondary labels darkened slightly to keep AA contrast on off-white cards */
+    .kpi-label, .kpi-sub, .chart-title, .comp-stat-label, .ov-section-title { color:#586475 !important; }
 
     /* Table — use html[data-theme] prefix to beat specificity of static dark rules */
-    html[data-theme="light"] .table-wrap { background:#ffffff !important; border:1px solid #e2e8f0 !important; box-shadow:0 2px 12px rgba(0,0,0,0.05) !important; }
+    html[data-theme="light"] .table-wrap { background:#f3f6fb !important; border:1px solid #e2e8f0 !important; box-shadow:0 2px 12px rgba(0,0,0,0.05) !important; }
     html[data-theme="light"] thead tr { background:#f8fafc !important; border-bottom:1px solid #e2e8f0 !important; }
     html[data-theme="light"] thead th { background:#f8fafc !important; }
     html[data-theme="light"] th { color:#64748b !important; }
@@ -13655,7 +13657,7 @@ function _applyTheme(theme) {
   // Force table-wrap, cal-panel, cal-header backgrounds via JS
   document.querySelectorAll('.table-wrap, .ov-cal-panel').forEach(el => {
     if (theme === 'light') {
-      el.style.setProperty('background', '#ffffff', 'important');
+      el.style.setProperty('background', '#f3f6fb', 'important');
       el.style.setProperty('border-color', '#e2e8f0', 'important');
     } else {
       el.style.removeProperty('background');
@@ -13664,7 +13666,7 @@ function _applyTheme(theme) {
   });
   document.querySelectorAll('.cal-header, .cal-wrap').forEach(el => {
     if (theme === 'light') {
-      el.style.setProperty('background', '#ffffff', 'important');
+      el.style.setProperty('background', '#f3f6fb', 'important');
     } else {
       el.style.removeProperty('background');
     }
