@@ -8004,7 +8004,7 @@ function renderCalendar(type) {
       ${allMonthTrades.length ? `<span class="cal-divider"></span>
       <span class="cal-summary sensitive" style="${totalStyle}">${fmtUSD(monthTotal)}</span>
       <span class="cal-divider"></span>
-      <span class="cal-trade-count">${allMonthTrades.length} ${t('trades')} · ${winsCount}W / ${lossCount}L</span>` : `<span class="cal-trade-count" style="opacity:0.5">${t('cal_no_trades')}</span>`}
+      <span class="cal-trade-count">${allMonthTrades.length} ${t('trades')} · ${winsCount}W / ${lossCount}L</span>` : `<span class="cal-trade-count cal-no-trades">${t('cal_no_trades')}</span>`}
     </div>
     <button class="cal-nav-btn" onclick="calNavNext('${navType}')" title="חודש הבא"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
   </div>
@@ -13512,8 +13512,8 @@ function _buildLightCSS() {
     html[data-theme="light"] tbody tr.loss:hover td { background:rgba(225,29,72,0.07) !important; }
     html[data-theme="light"] .year-group-row td { background:#f8fafc !important; border-color:#e2e8f0 !important; }
     html[data-theme="light"] .year-group-label { color:#64748b !important; }
-    html[data-theme="light"] .num-green  { color:#059669 !important; }
-    html[data-theme="light"] .num-red    { color:#e11d48 !important; }
+    html[data-theme="light"] .num-green  { color:#047857 !important; }
+    html[data-theme="light"] .num-red    { color:#be123c !important; }
     html[data-theme="light"] .num-yellow { color:#b45309 !important; }
     html[data-theme="light"] .badge-L { background:rgba(5,150,105,0.12) !important; color:#059669 !important; border-color:rgba(5,150,105,0.28) !important; }
     html[data-theme="light"] .badge-S { background:rgba(225,29,72,0.1) !important; color:#e11d48 !important; border-color:rgba(225,29,72,0.25) !important; }
@@ -13626,7 +13626,7 @@ function _buildLightCSS() {
 
     /* Status badges — light-mode contrast */
     .status-badge.open    { background:rgba(14,165,233,0.12) !important; color:#0284c7 !important; border-color:rgba(14,165,233,0.3) !important; }
-    .status-badge.closed  { background:rgba(5,150,105,0.1)   !important; color:#059669 !important; }
+    .status-badge.closed  { background:rgba(5,150,105,0.12)  !important; color:#065f46 !important; }
     .status-badge.partial { background:rgba(180,83,9,0.1)    !important; color:#b45309 !important; }
 
     /* Action buttons */
