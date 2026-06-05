@@ -1386,10 +1386,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .s-page-header h2 { font-size: 23px; font-weight: 750; color: var(--text); margin: 0 0 5px; letter-spacing: -0.4px; }
   .s-page-header p  { font-size: 12.5px; color: var(--text3); margin: 0; }
 
-  .s-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+  .s-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 100%; align-items: start; }
   .s-col { display: contents; }
   .s-section-full { grid-column: 1 / -1; }
-  @media (max-width: 700px) { .s-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 700px) { .s-grid { grid-template-columns: 1fr; gap: 14px; } }
 
   .s-section {
     position: relative;
@@ -3090,7 +3090,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   html[data-theme="light"] .kpi-value         { color: #0f172a !important; opacity: 1 !important; }
   html[data-theme="light"] .kpi-value.green   { color: #059669 !important; text-shadow: none !important; }
   html[data-theme="light"] .kpi-value.red     { color: #c0405c !important; text-shadow: none !important; }
-  html[data-theme="light"] .kpi-sub           { color: rgba(71,85,105,0.6) !important; opacity: 1 !important; }
+  html[data-theme="light"] .kpi-sub           { color: #586475 !important; opacity: 1 !important; }
   html[data-theme="light"] .kpi-progress-track { background: rgba(0,0,0,0.07); }
 
   /* P&L colors */
@@ -3269,7 +3269,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     border-color: rgba(14,165,233,0.3) !important;
     box-shadow: 0 6px 24px rgba(0,0,0,0.09) !important;
   }
-  html[data-theme="light"] .chart-title  { color: #64748b !important; }
+  html[data-theme="light"] .chart-title  { color: #586475 !important; }
   html[data-theme="light"] .chart-legend { color: #94a3b8; }
 
   /* ── Overview section ── */
@@ -3454,7 +3454,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     background: #fff; border-color: #e2e8f0;
     box-shadow: 0 16px 48px rgba(0,0,0,0.15);
   }
-  html[data-theme="light"] .cookie-btn-decline { border-color: #cbd5e1; color: #94a3b8; }
+  html[data-theme="light"] .cookie-btn-decline { border-color: #cbd5e1; color: #586475; }
+  html[data-theme="light"] .cookie-btn-settings { color: #586475; }
   html[data-theme="light"] .cookie-toggle-slider { background: #cbd5e1; }
 
   html[data-theme="light"] .tlg-drop {
@@ -4616,7 +4617,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   /* ── Light mode overrides for Premium Visual Upgrade block ── */
 
   /* Nav tabs */
-  html[data-theme="light"] .tnav-btn { color: #64748b !important; }
+  html[data-theme="light"] .tnav-btn { color: #586475 !important; }
   html[data-theme="light"] .tnav-btn:hover { color: #0f172a !important; background: rgba(0,0,0,0.03) !important; }
   html[data-theme="light"] .tnav-btn.active {
     color: #4f46e5 !important;
@@ -4780,7 +4781,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   html[data-theme="light"] .cal-nav-btn { background: #f1f5f9 !important; border-color: #e2e8f0 !important; color: #64748b !important; }
   html[data-theme="light"] .cal-nav-btn:hover { background: #e2e8f0 !important; color: #334155 !important; }
   html[data-theme="light"] .cal-grid { background: rgba(14,14,18,0.08) !important; border-color: rgba(14,14,18,0.1) !important; }
-  html[data-theme="light"] .cal-day-hdr { background: #e8edf5 !important; color: #64748b !important; }
+  html[data-theme="light"] .cal-day-hdr { background: #e8edf5 !important; color: #586475 !important; }
   html[data-theme="light"] .cal-cell { background: #ffffff !important; }
   html[data-theme="light"] .cal-cell.weekend { background: #f8fafc !important; }
   html[data-theme="light"] .cal-cell.has-trades { background: #f0f7ff !important; }
@@ -5616,7 +5617,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     <div class="s-col" style="display:contents">
 
       <!-- Account -->
-      <div class="s-section">
+      <div class="s-section" style="order:1">
         <div class="s-section-header">
           <div class="s-section-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
           <div><div class="s-section-title" data-i18n="set_grp_account">Account</div><div class="s-section-sub" data-i18n="set_grp_account_sub">Name, display name, email</div></div>
@@ -5664,7 +5665,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       </div>
 
       <!-- Preferences -->
-      <div class="s-section">
+      <div class="s-section" style="order:3">
         <div class="s-section-header">
           <div class="s-section-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="9" cy="6" r="2" fill="currentColor" opacity="0.5"/><circle cx="15" cy="12" r="2" fill="currentColor" opacity="0.5"/><circle cx="9" cy="18" r="2" fill="currentColor" opacity="0.5"/></svg></div>
           <div><div class="s-section-title" data-i18n="set_grp_prefs">Preferences</div><div class="s-section-sub" data-i18n="set_grp_prefs_sub">Language and display</div></div>
@@ -5683,7 +5684,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       </div>
 
       <!-- Security -->
-      <div class="s-section">
+      <div class="s-section" style="order:2">
         <div class="s-section-header">
           <div class="s-section-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
           <div><div class="s-section-title" data-i18n="set_security">Security</div><div class="s-section-sub" data-i18n="set_security_sub">PIN, 2FA, password</div></div>
@@ -5728,7 +5729,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       </div>
 
       <!-- Data Sources -->
-      <div class="s-section">
+      <div class="s-section" style="order:4">
         <div class="s-section-header">
           <div class="s-section-icon yellow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></div>
           <div><div class="s-section-title" data-i18n="set_grp_data">Data Sources</div><div class="s-section-sub">Stocks &amp; crypto market data</div></div>
@@ -5776,7 +5777,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       </div>
 
       <!-- Import -->
-      <div class="s-section s-section-full">
+      <div class="s-section s-section-full" style="order:5">
         <div class="s-section-header">
           <div class="s-section-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
           <div><div class="s-section-title" data-i18n="set_grp_import">Import</div><div class="s-section-sub">Broker connection &amp; file import</div></div>
@@ -5935,7 +5936,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       </div>
 
       <!-- Export -->
-      <div class="s-section s-section-full">
+      <div class="s-section s-section-full" style="order:6">
         <div class="s-section-header">
           <div class="s-section-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
           <div><div class="s-section-title" data-i18n="set_export">Export</div><div class="s-section-sub">Download your trade data as CSV</div></div>
@@ -13478,7 +13479,9 @@ function _buildLightCSS() {
 
     .chart-card { background:#f3f6fb !important; border:1px solid #e2e8f0 !important; box-shadow:0 2px 12px rgba(0,0,0,0.05) !important; }
     .chart-card::before { display:none !important; }
-    .chart-title { color:#64748b !important; }
+    .chart-title { color:#586475 !important; }
+    .donut-stat-value.green { color:#047857 !important; }
+    .donut-stat-value.red   { color:#be123c !important; }
     .comp-card  { background:#f3f6fb !important; border:1px solid #e2e8f0 !important; box-shadow:0 2px 12px rgba(0,0,0,0.05) !important; }
     .comp-card::before { display:none !important; }
     .comp-card h4 { color:#0f172a !important; }
@@ -13581,7 +13584,7 @@ function _buildLightCSS() {
     html[data-theme="light"] .cal-nav-btn { background:#f1f5f9 !important; border:1px solid #e2e8f0 !important; color:#475569 !important; }
     html[data-theme="light"] .cal-nav-btn:hover { background:#e2e8f0 !important; color:#1e293b !important; }
     html[data-theme="light"] .cal-grid { background:rgba(14,14,18,0.08) !important; border-color:rgba(14,14,18,0.1) !important; }
-    html[data-theme="light"] .cal-day-hdr { background:#e8edf5 !important; color:#64748b !important; }
+    html[data-theme="light"] .cal-day-hdr { background:#e8edf5 !important; color:#586475 !important; }
     html[data-theme="light"] .cal-cell { background:#ffffff !important; }
     html[data-theme="light"] .cal-cell.weekend { background:#f8fafc !important; }
     html[data-theme="light"] .cal-cell.has-trades { background:#f0f7ff !important; }
