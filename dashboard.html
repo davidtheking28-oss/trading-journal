@@ -3671,7 +3671,19 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-alloc-dot.blue { background: #818cf8; }
   .inv-alloc-dot.green { background: #34d399; }
   .inv-alloc-dot.yellow { background: #fbbf24; }
-  .inv-alloc-label { width: 170px; flex-shrink: 0; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .inv-alloc-label { width: 215px; flex-shrink: 0; color: var(--text2); white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; }
+  .inv-alloc-label > span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .inv-target-input {
+    width: 38px; text-align: center; font-size: 12px; font-weight: 700; font-family: inherit;
+    color: var(--text); background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    border-radius: 6px; padding: 2px 4px; outline: none; transition: border-color 0.15s, background 0.15s;
+    -moz-appearance: textfield;
+  }
+  .inv-target-input::-webkit-outer-spin-button, .inv-target-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .inv-target-input:hover { border-color: var(--border2); }
+  .inv-target-input:focus { border-color: var(--accent); background: var(--accent-glow); }
+  html[data-theme="light"] .inv-target-input { background: #fff; border-color: #cbd5e1; color: #0f172a; }
+  html[data-theme="light"] .inv-target-input:focus { border-color: var(--accent); }
   .inv-alloc-bar-wrap { flex: 1; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
   .inv-alloc-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
   .inv-alloc-invested { min-width: 80px; text-align: right; color: var(--text); font-weight: 600; font-size: 11px; white-space: nowrap; }
@@ -6140,7 +6152,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             <div class="inv-alloc-bars">
               <div class="inv-alloc-row">
                 <span class="inv-alloc-dot blue"></span>
-                <span class="inv-alloc-label" data-i18n="inv_blue">🔵 Blue Chips — Target 60%</span>
+                <span class="inv-alloc-label"><span data-i18n="inv_blue">🔵 Blue Chips — Target</span> <input type="number" class="inv-target-input" id="inv-tg-blue" min="0" max="100" step="1" onchange="invSetTarget('blue',this.value)" aria-label="Blue target %">%</span>
                 <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-blue" style="width:0%;background:#818cf8;"></div></div>
                 <span class="inv-alloc-invested" id="alloc-inv-blue">—</span>
                 <span class="inv-alloc-cur" id="alloc-cur-blue">0%</span>
@@ -6148,7 +6160,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
               </div>
               <div class="inv-alloc-row">
                 <span class="inv-alloc-dot green"></span>
-                <span class="inv-alloc-label" data-i18n="inv_green">🟢 Growth — Target 35%</span>
+                <span class="inv-alloc-label"><span data-i18n="inv_green">🟢 Growth — Target</span> <input type="number" class="inv-target-input" id="inv-tg-green" min="0" max="100" step="1" onchange="invSetTarget('green',this.value)" aria-label="Growth target %">%</span>
                 <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-green" style="width:0%;background:#34d399;"></div></div>
                 <span class="inv-alloc-invested" id="alloc-inv-green">—</span>
                 <span class="inv-alloc-cur" id="alloc-cur-green">0%</span>
@@ -6156,7 +6168,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
               </div>
               <div class="inv-alloc-row">
                 <span class="inv-alloc-dot yellow"></span>
-                <span class="inv-alloc-label" data-i18n="inv_yellow">🟡 Speculative — Target 5%</span>
+                <span class="inv-alloc-label"><span data-i18n="inv_yellow">🟡 Speculative — Target</span> <input type="number" class="inv-target-input" id="inv-tg-yellow" min="0" max="100" step="1" onchange="invSetTarget('yellow',this.value)" aria-label="Speculative target %">%</span>
                 <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-yellow" style="width:0%;background:#fbbf24;"></div></div>
                 <span class="inv-alloc-invested" id="alloc-inv-yellow">—</span>
                 <span class="inv-alloc-cur" id="alloc-cur-yellow">0%</span>
@@ -6164,7 +6176,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
               </div>
               <div class="inv-alloc-row">
                 <span class="inv-alloc-dot" style="background:#2dd4bf"></span>
-                <span class="inv-alloc-label" data-i18n="inv_cash_row">💵 מזומן — יעד 5%</span>
+                <span class="inv-alloc-label"><span data-i18n="inv_cash_row">💵 מזומן — יעד</span> <input type="number" class="inv-target-input" id="inv-tg-cash" min="0" max="100" step="1" onchange="invSetTarget('cash',this.value)" aria-label="Cash target %">%</span>
                 <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-cash" style="width:0%;background:#2dd4bf;"></div></div>
                 <span class="inv-alloc-invested" id="alloc-inv-cash">—</span>
                 <span class="inv-alloc-cur" id="alloc-cur-cash">0%</span>
@@ -9663,8 +9675,8 @@ const LANG_STRINGS = {
     inv_free_cash:'Free Cash', inv_total_value:'Total',
     inv_allocated:'Invested', inv_alloc_title:'Portfolio Allocation — Target',
     inv_available:'Available:', inv_donut_allocated:'Allocated',
-    inv_blue:'🔵 Blue Chips — Target 60%', inv_green:'🟢 Growth — Target 35%',
-    inv_yellow:'🟡 Speculative — Target 5%',
+    inv_blue:'🔵 Blue Chips — Target', inv_green:'🟢 Growth — Target',
+    inv_yellow:'🟡 Speculative — Target',
     inv_col_symbol:'Symbol', inv_col_sector:'Sector', inv_col_category:'Category',
     inv_col_avg:'Average', inv_col_value:'Value',
     inv_col_portfolio_pct:'% Portfolio', inv_col_remaining:'Remaining',
@@ -9789,8 +9801,8 @@ const LANG_STRINGS = {
     inv_free_cash:'מזומן פנוי', inv_total_value:'סך התיק',
     inv_allocated:'מושקע', inv_alloc_title:'הקצאת תיק — יעד',
     inv_available:'זמין:', inv_donut_allocated:'מוקצה',
-    inv_blue:'🔵 כחולות — יעד 60%', inv_green:'🟢 ירוקות — יעד 35%',
-    inv_yellow:'🟡 צהובות — יעד 5%',
+    inv_blue:'🔵 כחולות — יעד', inv_green:'🟢 ירוקות — יעד',
+    inv_yellow:'🟡 צהובות — יעד',
     inv_col_symbol:'סימבול', inv_col_sector:'סקטור', inv_col_category:'קטגוריה',
     inv_col_avg:'ממוצע', inv_col_value:'שווי',
     inv_col_portfolio_pct:'% תיק', inv_col_remaining:'נותר',
@@ -14692,15 +14704,17 @@ async function invLoadFromDB() {
     ? String(_userSettings.portfolio_total)
     : (invLoad().portfolioTotal || '');
   const { data } = await _sb.from('investments')
-    .select('holdings, deposits, currency')
+    .select('holdings, deposits, currency, alloc_targets')
     .eq('user_id', _currentUser.id)
     .single();
   const local = invLoad();
   if (data) {
     const holdings = (data.holdings || []).map(h => ({ ...h, locked: h.locked !== false ? true : false }));
-    _invData = { portfolioTotal, cashBalance: local.cashBalance || '', holdings, deposits: data.deposits || [] };
+    invApplyTargets(data.alloc_targets || local.allocTargets);
+    _invData = { portfolioTotal, cashBalance: local.cashBalance || '', holdings, deposits: data.deposits || [], allocTargets: invTargetsPayload() };
     if (data.currency) localStorage.setItem('inv_currency', data.currency);
   } else {
+    invApplyTargets(local.allocTargets);
     _invData = { portfolioTotal, cashBalance: local.cashBalance || '', holdings: local.holdings || [], deposits: local.deposits || [] };
     if (_invData.holdings.length || _invData.deposits.length) invSaveData(_invData);
   }
@@ -14734,6 +14748,7 @@ async function invInit() {
   if (dl) dl.innerHTML = Object.keys(SECTOR_MAP).filter(s => !symIsCrypto(s)).map(s => `<option value="${s}">`).join('');
   invRenderRows(data.holdings || []);
   invRenderDeposits(data.deposits || []);
+  invSyncTargetInputs();
   invRecalc();
   invFetchPrices();
   // Keep holdings P&L live: refresh quotes every 60s while on this tab
@@ -14815,10 +14830,19 @@ function invSetTarget(cat, pctStr) {
   const frac = pct / 100;
   if (cat === 'cash') ALLOC_CASH_TARGET = frac;
   else ALLOC_TARGETS[cat] = frac;
+  invSyncTargetInputs();
   invRecalc();
   const data = invLoad();
   data.allocTargets = invTargetsPayload();
   invSaveData(data);
+}
+
+function invSyncTargetInputs() {
+  const set = (id, frac) => { const el = document.getElementById(id); if (el && document.activeElement !== el) el.value = Math.round(frac * 100); };
+  set('inv-tg-blue', ALLOC_TARGETS.blue);
+  set('inv-tg-green', ALLOC_TARGETS.green);
+  set('inv-tg-yellow', ALLOC_TARGETS.yellow);
+  set('inv-tg-cash', ALLOC_CASH_TARGET);
 }
 
 function invRecalc() {
@@ -14926,7 +14950,7 @@ function invRecalc() {
   });
 
   // Cash row
-  const cashTarget = portfolioTotal * 0.05;
+  const cashTarget = portfolioTotal * ALLOC_CASH_TARGET;
   const cashPct = portfolioTotal > 0 ? (cash / portfolioTotal * 100) : 0;
   const cashBarW = cashTarget > 0 ? Math.min(cash / cashTarget * 100, 100) : 0;
   const cashOver = portfolioTotal > 0 && cash > cashTarget;
