@@ -14747,7 +14747,7 @@ function invRenderRows(holdings) {
   const tbody = document.getElementById('inv-tbody');
   if (!tbody) return;
   if (!holdings.length) {
-    tbody.innerHTML = `<tr><td colspan="12" class="inv-empty">אין אחזקות — לחץ "+ הוסף אחזקה"</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="12" class="inv-empty">אין אחזקות עדיין</td></tr>`;
     return;
   }
   tbody.innerHTML = holdings.map((h, i) => {
