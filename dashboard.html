@@ -1382,6 +1382,24 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   #tab-ibkr { display: none; }
   #tab-ibkr.active { display: block; }
 
+  /* First-visit tab intro banner */
+  .tab-intro {
+    display: flex; align-items: flex-start; gap: 12px;
+    background: linear-gradient(135deg, rgba(129,140,248,0.13), rgba(129,140,248,0.05));
+    border: 1px solid rgba(129,140,248,0.28);
+    border-radius: 14px; padding: 14px 16px; margin-bottom: 16px;
+    overflow: hidden;
+    transition: max-height 0.28s ease, opacity 0.28s ease, margin 0.28s ease, padding 0.28s ease;
+    animation: introIn 0.35s cubic-bezier(0.16,1,0.3,1);
+  }
+  @keyframes introIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  .tab-intro-icon { width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: rgba(129,140,248,0.18); color: var(--accent); }
+  .tab-intro-body { flex: 1; min-width: 0; }
+  .tab-intro-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .tab-intro-text { font-size: 12.5px; color: var(--text2); line-height: 1.55; }
+  .tab-intro-dismiss { flex-shrink: 0; align-self: center; background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 7px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity 0.15s; }
+  .tab-intro-dismiss:hover { opacity: 0.88; }
+  @media (max-width: 600px) { .tab-intro { flex-wrap: wrap; } .tab-intro-dismiss { width: 100%; } }
   .s-page-header { margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
   .s-page-header h2 { font-size: 23px; font-weight: 750; color: var(--text); margin: 0 0 5px; letter-spacing: -0.4px; }
   .s-page-header p  { font-size: 12.5px; color: var(--text3); margin: 0; }
@@ -7129,6 +7147,8 @@ async function _onAuthSuccess(user) {
   await offerMigration();
   onboardingCheck(user.id);
   _restoreLastTab();
+  const _activeTabEl = document.querySelector('.tab-content.active');
+  if (_activeTabEl) _maybeShowTabIntro(_activeTabEl.id.replace('tab-', ''), _activeTabEl);
   console.log('%c Trading Journal 2.0 ','background:#818cf8;color:#fff;font-weight:700;font-size:13px;border-radius:3px;padding:2px 6px');
   console.log('%cRunning in the browser — treat other users\' data with respect.','color:#8896a8;font-size:11px');
 }
@@ -7590,6 +7610,49 @@ function switchTab(name, btn) {
   }
   if (name==='missed') missedRender();
   if (name==='investments') invInit();
+  _maybeShowTabIntro(name, tabEl);
+}
+
+// ── First-visit tab intros ───────────────────────
+// A short "what is this tab for" banner shown once per tab, per user.
+const _tabIntros = {
+  overview:    { he: { t: 'סקירה כללית', d: 'מבט-על על הביצועים שלך: רווח/הפסד כולל, פוזיציות פתוחות בזמן אמת, אחוז הצלחה, וגרף מצטבר. אפשר לסנן לפי תקופה ולעבור בין מניות/קריפטו.' },
+                 en: { t: 'Overview', d: 'A snapshot of your performance: total P&L, live open positions, win rate and a cumulative chart. Filter by period and switch between stocks and crypto.' } },
+  stocks:      { he: { t: 'יומן העסקאות', d: 'כל העסקאות שלך — מסונכרנות מהברוקר או נוספות ידנית בכפתור "הוסף עסקה". לחיצה על שורה פותחת פירוט מלא, אפשר לחפש לפי סימבול ולסנן לפי תקופה.' },
+                 en: { t: 'Trade journal', d: 'All your trades — synced from your broker or added manually with "Add Trade". Click a row for full detail, search by symbol and filter by period.' } },
+  statistics:  { he: { t: 'סטטיסטיקה', d: 'ניתוח עומק של הביצועים: אחוז הצלחה, יחס רווח/סיכון (R), רצפי ניצחון/הפסד וגרפים. אפשר לסנן לפי scope ותקופה.' },
+                 en: { t: 'Statistics', d: 'Deep performance analysis: win rate, risk/reward (R), win/loss streaks and charts. Filter by scope and period.' } },
+  themes:      { he: { t: 'דופק השוק', d: 'ביצועי סקטורים בזמן אמת. לחיצה על סקטור מציגה את המניות המובילות בו, עם בחירת תקופה (היום/שבוע/חודש).' },
+                 en: { t: 'Market Pulse', d: 'Live sector performance. Click a sector to see its leading stocks, with a period selector (today/week/month).' } },
+  missed:      { he: { t: 'הזדמנויות שהוחמצו', d: 'תיעוד מניות שפספסת — מתי, באיזה מחיר ולמה. כלי ללמידה כדי לזהות דפוסים ולא לחזור על אותן החמצות.' },
+                 en: { t: 'Missed opportunities', d: 'Log trades you missed — when, at what price and why. A learning tool to spot patterns and avoid repeating them.' } },
+  investments: { he: { t: 'תיק השקעות', d: 'התיק ארוך-הטווח שלך: אחזקות, הקצאה מול יעד, מזומן פנוי והפקדות חודשיות. המחירים והרווח מתעדכנים חי.' },
+                 en: { t: 'Investments', d: 'Your long-term portfolio: holdings, allocation vs target, free cash and monthly deposits. Prices and P&L update live.' } },
+  ibkr:        { he: { t: 'הגדרות', d: 'ניהול החשבון והאבטחה (PIN / 2FA / סיסמה), חיבור הברוקר לסנכרון אוטומטי, ויצוא הנתונים שלך ל-CSV.' },
+                 en: { t: 'Settings', d: 'Manage your account and security (PIN / 2FA / password), connect your broker for auto-sync, and export your data to CSV.' } },
+};
+function _maybeShowTabIntro(name, tabEl) {
+  if (!tabEl || !_currentUser) return;
+  const intro = _tabIntros[name];
+  if (!intro) return;
+  const key = 'tj_intro_' + _currentUser.id + '_' + name;
+  try { if (localStorage.getItem(key)) return; } catch {}
+  if (tabEl.querySelector('.tab-intro')) return;
+  const c = _lang === 'he' ? intro.he : intro.en;
+  const el = document.createElement('div');
+  el.className = 'tab-intro';
+  el.innerHTML = `<div class="tab-intro-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2h6c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z"/></svg></div>
+    <div class="tab-intro-body"><div class="tab-intro-title">${esc(c.t)}</div><div class="tab-intro-text">${esc(c.d)}</div></div>
+    <button class="tab-intro-dismiss" onclick="_dismissTabIntro(this)">${_lang === 'he' ? 'הבנתי' : 'Got it'}</button>`;
+  tabEl.insertBefore(el, tabEl.firstChild);
+  try { localStorage.setItem(key, '1'); } catch {}
+}
+function _dismissTabIntro(btn) {
+  const el = btn.closest('.tab-intro');
+  if (!el) return;
+  el.style.maxHeight = el.offsetHeight + 'px';
+  requestAnimationFrame(() => { el.style.maxHeight = '0'; el.style.opacity = '0'; el.style.marginBottom = '0'; el.style.paddingTop = '0'; el.style.paddingBottom = '0'; });
+  setTimeout(() => el.remove(), 280);
 }
 
 // Restore the tab the user last viewed (set in switchTab). Falls back to the
