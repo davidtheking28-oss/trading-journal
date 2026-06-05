@@ -5462,12 +5462,12 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         </div>
         <div id="stats-scope-dd" class="scope-dd">
           <button class="scope-dd-btn" onclick="toggleScopeDD('stats-scope-dd')">
-            <span id="stats-scope-lbl">הכל</span>
+            <span id="stats-scope-lbl">📈 מניות</span>
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
           </button>
           <div class="scope-dd-menu" id="stats-scope-menu">
-            <button class="active" onclick="setStatsScope('all',this,'stats-scope-dd')">הכל</button>
-            <button onclick="setStatsScope('stock',this,'stats-scope-dd')">📈 מניות</button>
+            <button onclick="setStatsScope('all',this,'stats-scope-dd')">הכל</button>
+            <button class="active" onclick="setStatsScope('stock',this,'stats-scope-dd')">📈 מניות</button>
             <button onclick="setStatsScope('crypto',this,'stats-scope-dd')">₿ קריפטו</button>
           </div>
         </div>
@@ -7709,13 +7709,52 @@ function setOvScope(s, btn, ddId) {
   renderOverview();
 }
 
-let statsScope = 'all';
+let statsScope = 'stock';
+let _statsInitialized = false;
+
+function _saveStatsState() {
+  const ms = document.getElementById('stats-month');
+  const ys = document.getElementById('stats-year');
+  localStorage.setItem('stats_state_v1', JSON.stringify({
+    scope: statsScope,
+    month: ms?.value || '',
+    year:  ys?.value  || ''
+  }));
+}
+
+function _restoreStatsState() {
+  if (_statsInitialized) return;
+  _statsInitialized = true;
+  try {
+    const raw = localStorage.getItem('stats_state_v1');
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (s.scope && _scopeLabels[s.scope]) {
+      statsScope = s.scope;
+      const lbl = document.getElementById('stats-scope-lbl');
+      if (lbl) lbl.textContent = _scopeLabels[s.scope];
+      document.querySelectorAll('#stats-scope-menu button').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('onclick')?.includes(`'${s.scope}'`));
+      });
+    }
+    const ms = document.getElementById('stats-month');
+    const ys = document.getElementById('stats-year');
+    if (ms && s.month) ms.value = s.month;
+    if (ys && s.year)  ys.value = s.year;
+    if (s.month || s.year) {
+      _pdYear['stats'] = s.year ? +s.year : new Date().getFullYear();
+      updatePeriodLabel('stats');
+    }
+  } catch(e) {}
+}
+
 function setStatsScope(s, btn, ddId) {
   statsScope = s;
   document.getElementById('stats-scope-lbl').textContent = _scopeLabels[s];
   document.querySelectorAll('#stats-scope-menu button').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
   _closeAllDDs();
+  _saveStatsState();
   renderStatistics();
 }
 
@@ -7796,7 +7835,7 @@ function _setPeriod(prefix, month, year) {
   _closeAllDDs();
   if (prefix==='ov') renderOverview();
   else if (prefix==='st') renderTable('stock');
-  else renderStatistics();
+  else { _saveStatsState(); renderStatistics(); }
 }
 
 // Filter by a whole year (no specific month).
@@ -7810,7 +7849,7 @@ function _setYearOnly(prefix, year) {
   _closeAllDDs();
   if (prefix==='ov') renderOverview();
   else if (prefix==='st') renderTable('stock');
-  else renderStatistics();
+  else { _saveStatsState(); renderStatistics(); }
 }
 
 function _resetPeriod(prefix) {
@@ -7822,7 +7861,7 @@ function _resetPeriod(prefix) {
   _closeAllDDs();
   if (prefix==='ov') renderOverview();
   else if (prefix==='st') renderTable('stock');
-  else renderStatistics();
+  else { _saveStatsState(); renderStatistics(); }
 }
 
 function updatePeriodLabel(prefix) {
@@ -10143,6 +10182,7 @@ async function _updateLivePL() {
 }
 
 function renderStatistics() {
+  _restoreStatsState();
   const { month, year } = getFilter('stats');
   let allTrades = [...db.stocks, ...db.crypto].filter(t => !t.deleted && t.entryDate);
   if (month) allTrades = allTrades.filter(t => +t.entryDate.slice(5, 7) === +month);
