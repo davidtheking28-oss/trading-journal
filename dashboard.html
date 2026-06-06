@@ -6902,9 +6902,15 @@ const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
 let _currentUser = null;
 let _currentSession = null;
 
-// Helper — get current JWT access token
+// Helper — get current JWT access token.
+// Serve from the cached session on the hot path so concurrent startup calls don't
+// all hit getSession() at once (supabase-js v2's Web Locks can return a null
+// session under that contention → spurious 401s). Fall back to getSession() when
+// the cached token is missing or within 60s of expiry — that path auto-refreshes.
 async function _getToken() {
-  if (_currentSession?.access_token) return _currentSession.access_token;
+  const now = Math.floor(Date.now() / 1000);
+  const s = _currentSession;
+  if (s?.access_token && s.expires_at && s.expires_at > now + 60) return s.access_token;
   const { data: { session } } = await _sb.auth.getSession();
   if (session) _currentSession = session;
   return session?.access_token ?? '';
