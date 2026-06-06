@@ -6916,6 +6916,26 @@ async function _getToken() {
   return session?.access_token ?? '';
 }
 
+// Soft 401 recovery for edge functions: if a /functions/v1/ call comes back 401,
+// force one session refresh and retry with the fresh token before the caller sees
+// the error. Covers every edge-function fetch site centrally. Other fetches pass through.
+const _origFetch = window.fetch.bind(window);
+window.fetch = async (input, init) => {
+  const res = await _origFetch(input, init);
+  const url = typeof input === 'string' ? input : (input?.url ?? '');
+  if (res.status !== 401 || !url.includes('/functions/v1/')) return res;
+  try {
+    const { data: { session } } = await _sb.auth.refreshSession();
+    if (!session) return res;
+    _currentSession = session;
+    const retryInit = { ...(init || {}) };
+    retryInit.headers = { ...(init?.headers || {}), 'Authorization': `Bearer ${session.access_token}` };
+    return await _origFetch(input, retryInit);
+  } catch {
+    return res;
+  }
+};
+
 // ─────────────────────────────────────────────
 // AUTH
 // ─────────────────────────────────────────────
