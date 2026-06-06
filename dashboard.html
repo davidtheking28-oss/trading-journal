@@ -5274,8 +5274,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
     /* Clear the bar so content/last rows aren't hidden behind it */
     main { padding-bottom: calc(74px + env(safe-area-inset-bottom)); }
-    /* The cramped top scroll-strip is replaced by the bottom bar + drawer */
-    #top-nav { display: none; }
+    /* The cramped top scroll-strip is replaced by the bottom bar + drawer
+       (!important overrides the element's inline display:flex) */
+    #top-nav { display: none !important; }
     /* Lift the cookie banner above the bottom bar so it doesn't overlap it */
     .cookie-banner { bottom: calc(80px + env(safe-area-inset-bottom)); }
   }
