@@ -5276,6 +5276,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     main { padding-bottom: calc(74px + env(safe-area-inset-bottom)); }
     /* The cramped top scroll-strip is replaced by the bottom bar + drawer */
     #top-nav { display: none; }
+    /* Lift the cookie banner above the bottom bar so it doesn't overlap it */
+    .cookie-banner { bottom: calc(80px + env(safe-area-inset-bottom)); }
   }
   html[data-theme="light"] .mobile-nav {
     background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(244,247,252,0.99));
