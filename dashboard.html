@@ -5315,6 +5315,13 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   /* Mobile KPI columns — also override the late unconditional 5-col rule */
   @media (max-width: 768px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; } }
 
+  /* Mobile: trim Statistics to the essentials, and Market Pulse to indices +
+     the top/bottom movers (the full sector list is hidden on small screens). */
+  @media (max-width: 768px) {
+    .stats-secondary { display: none; }
+    #tt-grid { display: none; }
+  }
+
 </style>
 </head>
 <body>
@@ -5627,6 +5634,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div style="height:200px;position:relative;width:100%;"><canvas id="chart-donut" style="display:none"></canvas></div>
         <div id="donut-stats" class="donut-stats" style="flex:1;margin-top:8px;"></div>
       </div>
+      <!-- Secondary stats — hidden on mobile to keep the view to the essentials -->
+      <div class="stats-secondary">
       <div id="skel-monthly" style="display:none"></div>
       <canvas id="chart-monthly" style="display:none"></canvas>
       <div class="ov-section" style="margin-bottom:10px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Monthly Tracker <span id="mt-year-label" style="font-size:11px;font-weight:500;color:var(--text3);margin-right:6px;"></span></div>
@@ -5634,6 +5643,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <div class="ov-section" style="margin-bottom:10px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Trading Summary</div>
       <div id="trading-summary-wrap" style="margin-bottom:22px;"></div>
       <div id="comparison-wrap" style="margin-bottom:22px;"></div>
+      </div>
     </div>
 
     <!-- ===== IBKR (placeholder below) ===== -->
@@ -6442,13 +6452,13 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     <span>הוסף</span>
   </button>
-  <button class="mnav-btn" data-tab="crypto" onclick="mNav('crypto')" aria-label="קריפטו">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 8.5h4a2 2 0 0 1 0 4h-4m0 0h4.2a2 2 0 0 1 0 4H9.5m0-8V7m0 10v-1.5m2-8V7m0 10v-1.5"/></svg>
-    <span>קריפטו</span>
+  <button class="mnav-btn" data-tab="statistics" onclick="mNav('statistics')" aria-label="סטטיסטיקות">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <span>סטטיסטיקה</span>
   </button>
-  <button class="mnav-btn" data-tab="_more" onclick="toggleSidebar()" aria-label="עוד">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-    <span>עוד</span>
+  <button class="mnav-btn" data-tab="themes" onclick="mNav('themes')" aria-label="Market Pulse">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span>מדדי שוק</span>
   </button>
 </nav>
 
@@ -16391,8 +16401,9 @@ function ttRender(themes, indices) {
   // ── Meta: Top3/Bottom3 + Breadth ──
   const metaEl = document.getElementById('tt-meta');
   if (metaEl) {
-    const top3 = sorted.slice(0, 5);
-    const bot3 = sorted.slice(-5).reverse();
+    const _ttN = window.innerWidth <= 768 ? 3 : 5;
+    const top3 = sorted.slice(0, _ttN);
+    const bot3 = sorted.slice(-_ttN).reverse();
     const green = sorted.filter(t => t[pKey] >= 0).length;
     const red   = sorted.filter(t => t[pKey] <  0).length;
     const total = sorted.length;
