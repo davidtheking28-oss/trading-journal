@@ -99,10 +99,7 @@ async function fetchTheme(theme: { name: string; ticker: string }) {
     const filteredCloses = valid.map(x => x.c);
     const filteredTs     = valid.map(x => x.t);
 
-    const livePrice = meta.regularMarketPrice;
-    const prevClose = meta.chartPreviousClose ?? meta.previousClose;
-    const todayPct  = meta.regularMarketChangePercent
-      ?? (livePrice != null && prevClose ? ((livePrice - prevClose) / prevClose) * 100 : calcPct(filteredCloses, 1));
+    const todayPct = calcPct(filteredCloses, 1);
 
     return {
       name:   theme.name,
