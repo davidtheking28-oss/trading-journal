@@ -7658,11 +7658,14 @@ async function _syncReloadTrades() {
 function _teardownRealtimeSync() {
   if (_rtChannel) { try { _sb.removeChannel(_rtChannel); } catch {} _rtChannel = null; }
 }
-function _setupRealtimeSync() {
+async function _setupRealtimeSync() {
   if (!_currentUser) return;
   _teardownRealtimeSync();
   const uid = _currentUser.id;
   const f = 'user_id=eq.' + uid;
+  // Realtime must carry the user's JWT or RLS filters out every change event.
+  const token = await _getToken();
+  if (token && _sb.realtime?.setAuth) { try { _sb.realtime.setAuth(token); } catch {} }
   const activeTab = () => (document.querySelector('.tab-content.active') || {}).id || '';
   let tt;
   const reloadTrades = () => { clearTimeout(tt); tt = setTimeout(_syncReloadTrades, 400); };
