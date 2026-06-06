@@ -5320,12 +5320,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     #tt-grid { display: none; }
     /* Keep Market Pulse to indices + the 3/3 podium — drop the full chip list */
     .tt-breadth-chips { display: none; }
-    /* Overview top bar overflowed on mobile (Add Trade + two F&G gauges in a
-       no-wrap row). Let it wrap and center so the gauges stack instead of
-       running off-screen; drop the now-pointless dividers. */
-    .ov-top-bar { flex-wrap: wrap !important; justify-content: center; gap: 10px; padding: 10px 8px; }
-    .ov-top-bar .ov-bar-divider { display: none; }
-    .ov-top-bar .fg-widget { flex: 0 1 auto; }
+    /* Hide the overview top bar on mobile — the two F&G gauges felt cluttered
+       and Add Trade is redundant with the bottom-bar + button. */
+    .ov-top-bar { display: none; }
 
     /* Trades table — show only the essentials on mobile: Symbol, Status, P&L
        and the action buttons. Prices, dates, R, notes etc. are one tap away in
