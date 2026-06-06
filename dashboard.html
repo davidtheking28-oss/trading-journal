@@ -7254,6 +7254,7 @@ async function authForgotPassword() {
 }
 
 async function authSignOut() {
+  _teardownRealtimeSync();
   await _sb.auth.signOut();
   _currentUser = null;
   document.getElementById('auth-overlay').style.display = 'flex';
@@ -7372,6 +7373,7 @@ async function _onAuthSuccess(user) {
   document.getElementById('auth-overlay').style.display = 'none';
   _maybeRequireName(user);
   await Promise.all([loadDB(), loadUserSettings()]);
+  _setupRealtimeSync(); // keep every open device in step (computer ⇆ phone)
   loadCryptoSymbolsFromCoinGecko(); // background — don't delay startup or broker sync
 
   // Show admin-only UI elements
@@ -7631,6 +7633,46 @@ async function loadDB() {
   );
   await _dedupeTrades(); // always keep the journal free of duplicates
   initFilters(); renderOverview(); renderTable('stock');
+}
+
+// ── Live cross-device sync (Supabase Realtime) ───────────────────────────
+// A change made on one device (add/edit/delete a trade) is pushed to every
+// other open session and re-rendered, so the computer and the phone stay in
+// step without a manual refresh. Lighter than loadDB(): re-fetches and
+// re-renders but keeps the user's current filter and skips the dedupe write
+// (so a remote change can't trigger a write→event loop).
+let _rtChannel = null;
+async function _syncReloadTrades() {
+  if (!_currentUser) return;
+  const { data, error } = await _sb.from('trades').select('*')
+    .eq('user_id', _currentUser.id).order('entry_date', { ascending: false });
+  if (error) return;
+  const all = (data || []).map(_rowToTrade).filter(validateTradeSchema);
+  db.stocks = all.filter(t => t.type === 'stock'  && !t.deleted);
+  db.crypto = all.filter(t => t.type === 'crypto' && !t.deleted);
+  db._deletedFingerprints = new Set(all.filter(t => t.deleted).map(t =>
+    `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`));
+  renderOverview();
+  renderTable('stock');
+}
+function _teardownRealtimeSync() {
+  if (_rtChannel) { try { _sb.removeChannel(_rtChannel); } catch {} _rtChannel = null; }
+}
+function _setupRealtimeSync() {
+  if (!_currentUser) return;
+  _teardownRealtimeSync();
+  const uid = _currentUser.id;
+  const f = 'user_id=eq.' + uid;
+  const activeTab = () => (document.querySelector('.tab-content.active') || {}).id || '';
+  let tt;
+  const reloadTrades = () => { clearTimeout(tt); tt = setTimeout(_syncReloadTrades, 400); };
+  _rtChannel = _sb.channel('rt-' + uid)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'trades', filter: f }, reloadTrades)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'missed_opportunities', filter: f },
+        () => { if (activeTab() === 'tab-missed') missedRender(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'investments', filter: f },
+        () => { if (activeTab() === 'tab-investments') invInit(); })
+    .subscribe();
 }
 
 // Remove duplicate trades — runs on every load and after every sync. Only
@@ -13143,6 +13185,7 @@ function rtAutoFill(symInputId, statusId) {
       _currentSession = session;
     }
     if (event === 'SIGNED_OUT') {
+      _teardownRealtimeSync();
       _currentUser = null;
       _currentSession = null;
       db = { stocks: [], crypto: [] };
