@@ -5210,6 +5210,81 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     .btn-icon { min-width: 44px; min-height: 44px; padding: 10px; }
   }
 
+  /* ══════════════════════════════════════════
+     MOBILE BOTTOM NAV — critical functions, thumb-reachable
+  ══════════════════════════════════════════ */
+  .mobile-nav { display: none; }
+  @media (max-width: 768px) {
+    .mobile-nav {
+      display: flex;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 150;
+      justify-content: space-around;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 6px max(6px, env(safe-area-inset-bottom));
+      background: linear-gradient(180deg, rgba(11,21,40,0.94), rgba(9,18,33,0.99));
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(255,255,255,0.07);
+      box-shadow: 0 -6px 24px rgba(0,0,0,0.35);
+    }
+    .mnav-btn {
+      flex: 1 1 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      min-height: 50px;
+      padding: 6px 0 4px;
+      background: none;
+      border: none;
+      color: var(--text3);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      cursor: pointer;
+      transition: color 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mnav-btn svg { width: 22px; height: 22px; stroke-width: 1.9; }
+    .mnav-btn.active { color: var(--accent); }
+    .mnav-btn.active svg { filter: drop-shadow(0 0 6px rgba(79,131,255,0.5)); }
+    .mnav-add {
+      flex: 0 0 auto;
+      width: 54px; height: 54px;
+      margin-top: -20px;
+      border-radius: 50%;
+      background: linear-gradient(150deg, #6a93ff, var(--accent));
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 4px solid var(--bg);
+      box-shadow: 0 8px 20px rgba(79,131,255,0.5);
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mnav-add:active { transform: scale(0.92); }
+    .mnav-add svg { width: 26px; height: 26px; stroke-width: 2.4; }
+    .mnav-add span { display: none; }
+
+    /* Clear the bar so content/last rows aren't hidden behind it */
+    main { padding-bottom: calc(74px + env(safe-area-inset-bottom)); }
+    /* The cramped top scroll-strip is replaced by the bottom bar + drawer */
+    #top-nav { display: none; }
+  }
+  html[data-theme="light"] .mobile-nav {
+    background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(244,247,252,0.99));
+    border-top-color: rgba(15,23,42,0.08);
+    box-shadow: 0 -6px 24px rgba(15,23,42,0.12);
+  }
+  html[data-theme="light"] .mnav-btn { color: #64748b; }
+  html[data-theme="light"] .mnav-add { border-color: #f4f7fc; }
+
 </style>
 </head>
 <body>
@@ -6322,6 +6397,30 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   </main>
   </div><!-- /.app-body -->
 </div>
+
+<!-- MOBILE BOTTOM NAV — shown ≤768px only -->
+<nav class="mobile-nav" aria-label="ניווט מהיר">
+  <button class="mnav-btn active" data-tab="overview" onclick="mNav('overview')" aria-label="סקירה">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <span>בית</span>
+  </button>
+  <button class="mnav-btn" data-tab="stocks" onclick="mNav('stocks')" aria-label="מניות">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+    <span>מניות</span>
+  </button>
+  <button class="mnav-add" onclick="fabToggle()" aria-label="הוסף עסקה">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <span>הוסף</span>
+  </button>
+  <button class="mnav-btn" data-tab="crypto" onclick="mNav('crypto')" aria-label="קריפטו">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 8.5h4a2 2 0 0 1 0 4h-4m0 0h4.2a2 2 0 0 1 0 4H9.5m0-8V7m0 10v-1.5m2-8V7m0 10v-1.5"/></svg>
+    <span>קריפטו</span>
+  </button>
+  <button class="mnav-btn" data-tab="_more" onclick="toggleSidebar()" aria-label="עוד">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    <span>עוד</span>
+  </button>
+</nav>
 
 <!-- STOP LOSS PROMPT -->
 <div id="stop-prompt-overlay" style="
@@ -7643,7 +7742,19 @@ function switchTab(name, btn) {
   }
   if (name==='missed') missedRender();
   if (name==='investments') invInit();
+  _syncMobileNav(name);
   _maybeShowTabIntro(name, tabEl);
+}
+
+// Mobile bottom-nav: route a tap to the real sidebar tab button (keeps the
+// drawer's highlight in sync too), then highlight the matching bar item.
+function mNav(name) {
+  const btn = document.querySelector(`.tab-btn[onclick*="switchTab('${name}'"]`)
+           || document.querySelector(`.tnav-btn[onclick*="switchTab('${name}'"]`);
+  if (btn) switchTab(name, btn);
+}
+function _syncMobileNav(name) {
+  document.querySelectorAll('.mnav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
 }
 
 // ── First-visit tab intros ───────────────────────
