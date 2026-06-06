@@ -73,13 +73,21 @@ function calcYtd(closes: number[], timestamps: number[]): number | null {
   return ((last - base) / base) * 100;
 }
 
+const YF_HOSTS = ['query1.finance.yahoo.com', 'query2.finance.yahoo.com'];
+
 async function fetchTheme(theme: { name: string; ticker: string }) {
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${theme.ticker}?range=1y&interval=1d`;
-    const res = await fetch(url, { headers: YF_HEADERS });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
-    const result = json?.chart?.result?.[0];
+    let result = null;
+    for (const host of YF_HOSTS) {
+      try {
+        const url = `https://${host}/v8/finance/chart/${theme.ticker}?range=1y&interval=1d`;
+        const res = await fetch(url, { headers: YF_HEADERS });
+        if (!res.ok) continue;
+        const json = await res.json();
+        result = json?.chart?.result?.[0];
+        if (result) break;
+      } catch { /* try next host */ }
+    }
     if (!result) throw new Error('no result');
 
     const meta = result.meta;
