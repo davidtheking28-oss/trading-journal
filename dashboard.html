@@ -156,6 +156,13 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .header-title .accent {
     color: var(--accent);
   }
+  /* Time-of-day greeting + first name — shown in the header on mobile (≤768px)
+     in place of the "Trading Journal" / "TJ" brand text. */
+  .header-greeting {
+    display: none;
+    font-size: 15px; font-weight: 700; color: var(--text);
+    letter-spacing: -0.3px; white-space: nowrap;
+  }
   .header-actions { display: flex; align-items: center; gap: 8px; }
 
   /* NAV */
@@ -5325,6 +5332,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
        (!important overrides the element's inline display:flex.) */
     .ov-top-bar { display: none !important; }
 
+    /* Header: show a time-of-day greeting + first name instead of the "TJ" mark. */
+    .header-title .accent { display: none !important; }
+    .header-title::after { content: '' !important; }
+    .header-greeting { display: inline-block !important; }
+
     /* Trades toolbar — declutter on mobile. Drop the secondary actions
        (Add Trade is on the bottom bar; Clean Duplicates and Archive are rare
        maintenance), keeping the view toggle, the stats summary and search. */
@@ -5404,6 +5416,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <line x1="139" y1="52" x2="139" y2="95" stroke="url(#hg)" stroke-width="2"/><rect x="133" y="58" width="12" height="30" rx="2" fill="url(#hg)"/>
       </svg>
       <span class="accent" style="font-size:15px;">Trading Journal</span>
+      <span class="header-greeting" id="header-greeting"></span>
     </div>
 
     <!-- Center Nav Tabs -->
@@ -7271,14 +7284,28 @@ const ADMIN_ID = '9f9ffff4-0936-446c-b816-410b50894e8b';
 function _timeGreeting() {
   const h = new Date().getHours();
   if (h >= 5 && h < 12) return 'בוקר טוב';
-  if (h >= 12 && h < 17) return 'אחה"צ טוב';
+  if (h >= 12 && h < 17) return 'צהריים טובים';
   if (h >= 17 && h < 22) return 'ערב טוב';
   return 'לילה טוב';
+}
+
+// First name as saved in Settings (falls back to the display name's first word,
+// then the email handle). Shown in the header in place of the "TJ" mark on mobile.
+function _firstName(user) {
+  return (user?.user_metadata?.first_name || '').trim()
+      || (user?.user_metadata?.full_name || '').trim().split(/\s+/)[0]
+      || (user?.email || '').split('@')[0]
+      || '';
+}
+function _setHeaderGreeting(name) {
+  const hg = document.getElementById('header-greeting');
+  if (hg) hg.textContent = `${_timeGreeting()} ${(name || '').trim()}`.trim();
 }
 
 async function _onAuthSuccess(user) {
   _currentUser = user;
   const _displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Trading Journal';
+  _setHeaderGreeting(_firstName(user));
   const _nameEl = document.getElementById('header-user-name');
   if (_nameEl) {
     _nameEl.textContent = _displayName;
@@ -7291,6 +7318,7 @@ async function _onAuthSuccess(user) {
       if (!n || !n.trim()) return;
       _nameEl.textContent = n.trim();
       await _sb.auth.updateUser({ data: { full_name: n.trim() } });
+      _setHeaderGreeting(n.trim().split(/\s+/)[0]);
       toast('שם עודכן ✓', 'success');
     };
   }
@@ -9877,6 +9905,8 @@ async function profileSave() {
   btn.disabled = true;
   try {
     await _sb.auth.updateUser({ data: { first_name: first, last_name: last, full_name: display } });
+    if (_currentUser?.user_metadata) { _currentUser.user_metadata.first_name = first; _currentUser.user_metadata.full_name = display; }
+    _setHeaderGreeting(first || display.split(/\s+/)[0]);
     const el = document.getElementById('header-user-name');
     if (el) el.textContent = display;
     document.getElementById('profile-display').value = display;
