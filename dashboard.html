@@ -5327,19 +5327,17 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     .ov-top-bar .ov-bar-divider { display: none; }
     .ov-top-bar .fg-widget { flex: 0 1 auto; }
 
-    /* Trades table — show only the essentials on mobile (Status, Symbol, Entry,
-       Exit, P&L, Actions). Full detail is one tap away in the expanded row, so
-       hide the rest. Excludes .expanded-row / .year-group-row (single colspan
-       cells) so those keep spanning the full width. */
-    #stocks-wrap table { min-width: 0; width: 100%; font-size: 11px; }
-    /* Drop the fixed colgroup widths so the visible columns size to content
-       and the table fits the viewport instead of summing to ~514px. */
+    /* Trades table — show only the essentials on mobile: Symbol, Status, P&L
+       and the action buttons. Prices, dates, R, notes etc. are one tap away in
+       the expanded row. Excludes .expanded-row / .year-group-row (single
+       colspan cells) so those keep spanning the full width. */
+    #stocks-wrap table { min-width: 0 !important; width: 100%; font-size: 11px; }
     #stocks-wrap table col { width: auto !important; }
-    #stocks-wrap table thead th:not(:nth-child(4)):not(:nth-child(6)):not(:nth-child(7)):not(:nth-child(13)):not(:nth-child(16)):not(:nth-child(19)),
-    #stocks-wrap table tbody tr:not(.expanded-row):not(.year-group-row) > td:not(:nth-child(4)):not(:nth-child(6)):not(:nth-child(7)):not(:nth-child(13)):not(:nth-child(16)):not(:nth-child(19)) { display: none; }
-    #stocks-wrap table th, #stocks-wrap table td { padding-left: 4px; padding-right: 4px; }
+    #stocks-wrap table thead th:not(:nth-child(4)):not(:nth-child(6)):not(:nth-child(16)):not(:nth-child(19)),
+    #stocks-wrap table tbody tr:not(.expanded-row):not(.year-group-row) > td:not(:nth-child(4)):not(:nth-child(6)):not(:nth-child(16)):not(:nth-child(19)) { display: none; }
+    #stocks-wrap table th, #stocks-wrap table td { padding: 10px 6px !important; }
     /* Compact the action buttons so the row fits the phone width */
-    #stocks-wrap table td:nth-child(19) button { padding: 4px; min-width: 0; }
+    #stocks-wrap table td:nth-child(19) button { padding: 5px !important; min-width: 0; }
     #stocks-wrap table td:nth-child(19) { white-space: nowrap; }
   }
 
