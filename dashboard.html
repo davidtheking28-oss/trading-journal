@@ -5331,10 +5331,13 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
        Exit, P&L, Actions). Full detail is one tap away in the expanded row, so
        hide the rest. Excludes .expanded-row / .year-group-row (single colspan
        cells) so those keep spanning the full width. */
-    #stocks-wrap table { min-width: 0; width: 100%; }
+    #stocks-wrap table { min-width: 0; width: 100%; font-size: 11px; }
     #stocks-wrap table thead th:not(:nth-child(4)):not(:nth-child(6)):not(:nth-child(7)):not(:nth-child(13)):not(:nth-child(16)):not(:nth-child(19)),
     #stocks-wrap table tbody tr:not(.expanded-row):not(.year-group-row) > td:not(:nth-child(4)):not(:nth-child(6)):not(:nth-child(7)):not(:nth-child(13)):not(:nth-child(16)):not(:nth-child(19)) { display: none; }
-    #stocks-wrap table th, #stocks-wrap table td { padding-left: 7px; padding-right: 7px; }
+    #stocks-wrap table th, #stocks-wrap table td { padding-left: 4px; padding-right: 4px; }
+    /* Compact the action buttons so the row fits the phone width */
+    #stocks-wrap table td:nth-child(19) button { padding: 4px; min-width: 0; }
+    #stocks-wrap table td:nth-child(19) { white-space: nowrap; }
   }
 
 </style>
