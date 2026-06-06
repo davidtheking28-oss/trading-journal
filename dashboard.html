@@ -7637,6 +7637,7 @@ const _tabIntros = {
 };
 function _maybeShowTabIntro(name, tabEl) {
   if (!tabEl || !_currentUser) return;
+  if (_userSettings.tab_intros_dismissed) return;
   const intro = _tabIntros[name];
   if (!intro) return;
   const key = 'tj_intro_' + _currentUser.id + '_' + name;
@@ -7657,6 +7658,8 @@ function _dismissTabIntro(btn) {
   el.style.maxHeight = el.offsetHeight + 'px';
   requestAnimationFrame(() => { el.style.maxHeight = '0'; el.style.opacity = '0'; el.style.marginBottom = '0'; el.style.paddingTop = '0'; el.style.paddingBottom = '0'; });
   setTimeout(() => el.remove(), 280);
+  _userSettings.tab_intros_dismissed = true;
+  _saveUserSettings({ tab_intros_dismissed: true });
 }
 
 // Restore the tab the user last viewed (set in switchTab). Falls back to the
