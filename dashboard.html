@@ -6905,6 +6905,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     </div>
 
     <div style="display:flex;flex-direction:column;gap:10px;">
+      <input id="auth-first" class="form-control" type="text" placeholder="שם פרטי" autocomplete="given-name"
+        style="display:none;background:rgba(10,10,10,0.95);border:1px solid rgba(148,163,184,0.12);border-radius:10px;padding:12px 14px;font-size:14px;color:#f1f5f9;"
+        onkeydown="if(event.key==='Enter')document.getElementById('auth-email').focus()">
       <input id="auth-email" class="form-control" type="email" placeholder="אימייל" autocomplete="email"
         style="background:rgba(10,10,10,0.95);border:1px solid rgba(148,163,184,0.12);border-radius:10px;padding:12px 14px;font-size:14px;color:#f1f5f9;"
         onkeydown="if(event.key==='Enter')document.getElementById('auth-pass').focus()">
@@ -6971,6 +6974,20 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 </div>
 
 <!-- ONBOARDING WIZARD -->
+<!-- Required first-name gate — blocks the app for any signed-in user without a
+     name (e.g. Google sign-in, or accounts created before the field existed). -->
+<div id="name-gate" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(5,10,22,0.9);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:linear-gradient(145deg,#091525,#0b1e38);border:1px solid rgba(79,131,255,0.18);border-radius:20px;padding:32px 28px;width:100%;max-width:380px;box-shadow:0 24px 80px rgba(0,0,0,.8);text-align:center;">
+    <div style="font-size:20px;font-weight:800;color:var(--text);margin-bottom:8px;">איך לקרוא לך?</div>
+    <div style="font-size:13px;color:var(--text3);line-height:1.6;margin-bottom:20px;">נשתמש בשם הפרטי שלך כדי לקדם אותך בברכה אישית ביומן.</div>
+    <input id="name-gate-input" type="text" placeholder="שם פרטי" autocomplete="given-name" maxlength="40"
+      style="width:100%;background:rgba(10,10,10,0.95);border:1px solid rgba(148,163,184,0.12);border-radius:10px;padding:12px 14px;font-size:15px;color:#f1f5f9;text-align:center;font-family:inherit;"
+      onkeydown="if(event.key==='Enter')nameGateSave()">
+    <div id="name-gate-msg" style="display:none;color:var(--red);font-size:12px;margin-top:8px;"></div>
+    <button onclick="nameGateSave()" style="width:100%;margin-top:16px;padding:12px;background:linear-gradient(135deg,#4f83ff,#818cf8);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 20px rgba(79,131,255,0.35);">המשך</button>
+  </div>
+</div>
+
 <div id="ob-overlay" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(5,10,22,0.85);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px;">
   <div style="background:linear-gradient(145deg,#091525,#0b1e38);border:1px solid rgba(79,131,255,0.18);border-radius:22px;padding:36px 32px 32px;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,.8);position:relative;">
     <!-- Progress dots -->
@@ -7129,6 +7146,8 @@ function openLegal(type) {
 function authSetMode(mode) {
   _authMode = mode;
   const isReg = mode === 'register';
+  document.getElementById('auth-first').style.display     = isReg ? '' : 'none';
+  if (!isReg) document.getElementById('auth-first').value = '';
   document.getElementById('auth-pass2').style.display     = isReg ? '' : 'none';
   document.getElementById('auth-consent-row').style.display = isReg ? 'flex' : 'none';
   if (!isReg) document.getElementById('auth-consent').checked = false;
@@ -7185,11 +7204,13 @@ async function authSubmit() {
 
   try {
     if (_authMode === 'register') {
+      const first = (document.getElementById('auth-first').value || '').trim();
       const pass2 = document.getElementById('auth-pass2').value || '';
+      if (!first) { _authMsg('נא להזין שם פרטי', 'error'); document.getElementById('auth-first').focus(); return; }
       if (pass !== pass2) { _authMsg('הסיסמאות אינן תואמות', 'error'); return; }
       if (pass.length < 8) { _authMsg('סיסמה חייבת להכיל לפחות 8 תווים', 'error'); return; }
       if (!document.getElementById('auth-consent').checked) { _authMsg('יש לאשר את תנאי השימוש ומדיניות הפרטיות', 'error'); return; }
-      const { error } = await _sb.auth.signUp({ email, password: pass });
+      const { error } = await _sb.auth.signUp({ email, password: pass, options: { data: { first_name: first, full_name: first } } });
       if (error) throw error;
       _authMsg('נשלח אימייל אישור — בדוק את תיבת הדואר שלך', 'success');
     } else {
@@ -7302,6 +7323,32 @@ function _setHeaderGreeting(name) {
   if (hg) hg.textContent = `${_timeGreeting()} ${(name || '').trim()}`.trim();
 }
 
+// Block the app until a signed-in user has a first name on record. Covers
+// Google sign-ins and any account made before the registration field existed.
+function _maybeRequireName(user) {
+  const m = user?.user_metadata || {};
+  if ((m.first_name && m.first_name.trim()) || (m.full_name && m.full_name.trim())) return;
+  const gate = document.getElementById('name-gate');
+  if (!gate) return;
+  gate.style.display = 'flex';
+  setTimeout(() => document.getElementById('name-gate-input')?.focus(), 120);
+}
+async function nameGateSave() {
+  const input = document.getElementById('name-gate-input');
+  const msg = document.getElementById('name-gate-msg');
+  const first = (input.value || '').trim();
+  if (!first) { msg.textContent = 'נא להזין שם פרטי'; msg.style.display = ''; input.focus(); return; }
+  try {
+    await _sb.auth.updateUser({ data: { first_name: first, full_name: first } });
+    if (_currentUser?.user_metadata) { _currentUser.user_metadata.first_name = first; _currentUser.user_metadata.full_name = first; }
+    _setHeaderGreeting(first);
+    const el = document.getElementById('header-user-name'); if (el) el.textContent = first;
+    document.getElementById('name-gate').style.display = 'none';
+  } catch {
+    msg.textContent = 'שגיאה — נסה שוב'; msg.style.display = '';
+  }
+}
+
 async function _onAuthSuccess(user) {
   _currentUser = user;
   const _displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Trading Journal';
@@ -7323,6 +7370,7 @@ async function _onAuthSuccess(user) {
     };
   }
   document.getElementById('auth-overlay').style.display = 'none';
+  _maybeRequireName(user);
   await Promise.all([loadDB(), loadUserSettings()]);
   loadCryptoSymbolsFromCoinGecko(); // background — don't delay startup or broker sync
 
