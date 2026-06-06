@@ -6900,10 +6900,13 @@ const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
 });
 let _currentUser = null;
+let _currentSession = null;
 
 // Helper — get current JWT access token
 async function _getToken() {
+  if (_currentSession?.access_token) return _currentSession.access_token;
   const { data: { session } } = await _sb.auth.getSession();
+  if (session) _currentSession = session;
   return session?.access_token ?? '';
 }
 
@@ -12835,17 +12838,23 @@ function rtAutoFill(symInputId, statusId) {
   // Check for an existing Supabase session (persisted from last visit)
   const { data: { session } } = await _sb.auth.getSession();
   if (session?.user) {
+    _currentSession = session;
     await _onAuthSuccess(session.user);
   }
   // else auth overlay stays visible
 
   // Listen for future auth state changes (sign in / sign out / token refresh)
   _sb.auth.onAuthStateChange(async (event, session) => {
+    if (session) _currentSession = session;
     if (event === 'SIGNED_IN' && !_currentUser && session?.user) {
       await _onAuthSuccess(session.user);
     }
+    if (event === 'TOKEN_REFRESHED' && session) {
+      _currentSession = session;
+    }
     if (event === 'SIGNED_OUT') {
       _currentUser = null;
+      _currentSession = null;
       db = { stocks: [], crypto: [] };
       document.getElementById('auth-overlay').style.display = 'flex';
     }
