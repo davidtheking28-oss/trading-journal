@@ -5288,6 +5288,33 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   html[data-theme="light"] .mnav-btn { color: #64748b; }
   html[data-theme="light"] .mnav-add { border-color: #f4f7fc; }
 
+  /* ══════════════════════════════════════════
+     TABLET (769–1100px) — full app, tuned for a medium touch screen.
+     Placed late so it overrides the unconditional .kpi-grid above.
+  ══════════════════════════════════════════ */
+  @media (min-width: 769px) and (max-width: 1100px) {
+    /* Touch-friendly top navigation (was a cramped 20px-tall strip) */
+    #top-nav { gap: 2px; }
+    .tnav-btn {
+      min-height: 46px;
+      padding: 0 14px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    /* Give the 7-tab strip room so it fits without horizontal scroll */
+    header .header-title  { flex-basis: 140px !important; }
+    header .header-actions { flex-basis: 140px !important; }
+    /* Comfortable tap targets for header + icon buttons */
+    .header-actions .btn-sm { min-height: 38px; }
+    .btn-icon { min-width: 40px; min-height: 40px; }
+    /* Three KPI columns read better than five on a tablet */
+    .kpi-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    /* Roomier rows for touch */
+    table td, table th { padding-top: 11px; padding-bottom: 11px; }
+  }
+  /* Mobile KPI columns — also override the late unconditional 5-col rule */
+  @media (max-width: 768px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; } }
+
 </style>
 </head>
 <body>
