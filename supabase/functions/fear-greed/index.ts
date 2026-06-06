@@ -20,6 +20,21 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 
+  // Shared cache — identical for all users. Refresh at most every 5 min; serve
+  // the last good payload if CNN is unreachable.
+  const admin = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+  );
+  const CACHE_KEY = 'fear-greed';
+  const CACHE_TTL_MS = 300_000;
+  const jsonHeaders = { ...CORS, 'Content-Type': 'application/json' };
+  const { data: cached } = await admin
+    .from('market_cache').select('payload, refreshed_at').eq('cache_key', CACHE_KEY).maybeSingle();
+  if (cached && Date.now() - new Date(cached.refreshed_at).getTime() < CACHE_TTL_MS) {
+    return new Response(JSON.stringify(cached.payload), { headers: jsonHeaders });
+  }
+
   try {
     const res = await fetch('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', {
       headers: {
@@ -35,11 +50,12 @@ Deno.serve(async (req) => {
     const score = data?.fear_and_greed?.score;
     const rating = data?.fear_and_greed?.rating;
     if (score == null) throw new Error('no score in response');
-    return new Response(JSON.stringify({ score, rating }), {
-      headers: { ...CORS, 'Content-Type': 'application/json' }
-    });
+    const payload = { score, rating };
+    await admin.from('market_cache').upsert({ cache_key: CACHE_KEY, payload, refreshed_at: new Date().toISOString() });
+    return new Response(JSON.stringify(payload), { headers: jsonHeaders });
   } catch (e) {
     console.error('[fear-greed] error:', e);
+    if (cached) return new Response(JSON.stringify(cached.payload), { headers: jsonHeaders });
     return new Response(JSON.stringify({ error: 'Failed to fetch data' }), {
       status: 500, headers: { ...CORS, 'Content-Type': 'application/json' }
     });

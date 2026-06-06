@@ -99,10 +99,15 @@ async function fetchTheme(theme: { name: string; ticker: string }) {
     const filteredCloses = valid.map(x => x.c);
     const filteredTs     = valid.map(x => x.t);
 
+    const livePrice = meta.regularMarketPrice;
+    const prevClose = meta.chartPreviousClose ?? meta.previousClose;
+    const todayPct  = meta.regularMarketChangePercent
+      ?? (livePrice != null && prevClose ? ((livePrice - prevClose) / prevClose) * 100 : calcPct(filteredCloses, 1));
+
     return {
       name:   theme.name,
       ticker: theme.ticker,
-      today:  meta.regularMarketChangePercent ?? calcPct(filteredCloses, 1),
+      today:  todayPct,
       w1:     calcPct(filteredCloses, 5),
       m1:     calcPct(filteredCloses, 21),
       m3:     calcPct(filteredCloses, 63),
@@ -143,16 +148,33 @@ serve(async (req: Request) => {
   }
   supabase.from('ai_requests').insert({ user_id: user.id }).then(() => {});
 
+  // Shared cache: this data is identical for every user. Serve a row that all
+  // users share, refreshed at most once per CACHE_TTL_MS. On a source failure
+  // we fall back to the last good cached payload instead of erroring.
+  const admin = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+  );
+  const CACHE_KEY = 'theme-tracker';
+  const CACHE_TTL_MS = 60_000;
+  const { data: cached } = await admin
+    .from('market_cache').select('payload, refreshed_at').eq('cache_key', CACHE_KEY).maybeSingle();
+  const jsonHeaders = { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'max-age=60' };
+  if (cached && Date.now() - new Date(cached.refreshed_at).getTime() < CACHE_TTL_MS) {
+    return new Response(JSON.stringify(cached.payload), { headers: jsonHeaders });
+  }
+
   try {
     const [results, indices] = await Promise.all([
       Promise.all(THEMES.map(fetchTheme)),
       Promise.all(INDICES.map(fetchTheme)),
     ]);
-    return new Response(JSON.stringify({ themes: results, indices, ts: Date.now() }), {
-      headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'max-age=60' },
-    });
+    const payload = { themes: results, indices, ts: Date.now() };
+    await admin.from('market_cache').upsert({ cache_key: CACHE_KEY, payload, refreshed_at: new Date().toISOString() });
+    return new Response(JSON.stringify(payload), { headers: jsonHeaders });
   } catch (e) {
     console.error('[theme-tracker] error:', e);
+    if (cached) return new Response(JSON.stringify(cached.payload), { headers: jsonHeaders });
     return new Response(JSON.stringify({ error: 'Failed to fetch data' }), {
       status: 500,
       headers: { ...CORS, 'Content-Type': 'application/json' },
