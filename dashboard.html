@@ -5325,6 +5325,13 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
        (!important overrides the element's inline display:flex.) */
     .ov-top-bar { display: none !important; }
 
+    /* Trades toolbar — declutter on mobile. Drop the secondary actions
+       (Add Trade is on the bottom bar; Clean Duplicates and Archive are rare
+       maintenance), keeping the view toggle, the stats summary and search. */
+    #tab-stocks .table-toolbar .btn-primary,
+    #tab-stocks .table-toolbar .btn-danger,
+    #tab-stocks .table-toolbar #st-archive-btn { display: none !important; }
+
     /* Trades table — show only the essentials on mobile: Symbol, Status, P&L
        and the action buttons. Prices, dates, R, notes etc. are one tap away in
        the expanded row. Excludes .expanded-row / .year-group-row (single
