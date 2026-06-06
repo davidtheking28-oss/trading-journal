@@ -5321,10 +5321,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     /* Keep Market Pulse to indices + the 3/3 podium — drop the full chip list */
     .tt-breadth-chips { display: none; }
     /* Overview top bar overflowed on mobile (Add Trade + two F&G gauges in a
-       no-wrap row). Add Trade is redundant with the bottom-bar +, so drop it
-       and the dividers, then let the two gauges wrap and center. */
+       no-wrap row). Let it wrap and center so the gauges stack instead of
+       running off-screen; drop the now-pointless dividers. */
     .ov-top-bar { flex-wrap: wrap !important; justify-content: center; gap: 10px; padding: 10px 8px; }
-    .ov-top-bar > .btn-primary { display: none; }
     .ov-top-bar .ov-bar-divider { display: none; }
     .ov-top-bar .fg-widget { flex: 0 1 auto; }
   }
