@@ -664,7 +664,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   }
   /* ── Cursor pointer on all interactive elements ── */
   button, [onclick], .tab-btn, .er-pill,
-  .ps-stars, .sortable, .kpi-card, .data-row, .recycle-header,
+  .ps-stars, .sortable, .data-row, .recycle-header,
   .pin-key, .pin-toggle, .ss-thumb-wrap { cursor: pointer; }
 
   .kpi-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
@@ -797,7 +797,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     display: flex; align-items: center; gap: 16px;
     background: linear-gradient(145deg, #0f0f12, #131316);
     border: 1px solid rgba(255,255,255,0.07); border-radius: 14px;
-    padding: 14px 20px; margin-bottom: 14px; cursor: pointer;
+    padding: 14px 20px; margin-bottom: 14px;
     transition: border-color 0.2s, box-shadow 0.2s;
     position: relative; overflow: hidden;
   }
@@ -806,7 +806,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 60%);
     pointer-events: none;
   }
-  .fg-widget:hover { border-color: rgba(129,140,248,0.3); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
   .fg-gauge-wrap { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
   .fg-gauge-wrap svg { transform: rotate(-90deg); }
   .fg-gauge-text {
@@ -836,7 +835,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   }
   .btn:active, .btn-sm:active { transform: scale(0.94) !important; transition: transform 0.08s !important; }
   .btn-icon:active            { transform: scale(0.90) !important; transition: transform 0.08s !important; }
-  .kpi-card:active            { transform: translateY(0) scale(0.975) !important; }
   .tab-btn .nav-icon          { transition: transform 0.25s var(--ease-out); display:flex; align-items:center; justify-content:center; }
   .tab-btn:hover .nav-icon    { transform: scale(1.2); }
   .tab-btn.active .nav-icon   { transform: scale(1.1); }
