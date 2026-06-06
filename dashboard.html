@@ -5332,6 +5332,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
        hide the rest. Excludes .expanded-row / .year-group-row (single colspan
        cells) so those keep spanning the full width. */
     #stocks-wrap table { min-width: 0; width: 100%; font-size: 11px; }
+    /* Drop the fixed colgroup widths so the visible columns size to content
+       and the table fits the viewport instead of summing to ~514px. */
+    #stocks-wrap table col { width: auto !important; }
     #stocks-wrap table thead th:not(:nth-child(4)):not(:nth-child(6)):not(:nth-child(7)):not(:nth-child(13)):not(:nth-child(16)):not(:nth-child(19)),
     #stocks-wrap table tbody tr:not(.expanded-row):not(.year-group-row) > td:not(:nth-child(4)):not(:nth-child(6)):not(:nth-child(7)):not(:nth-child(13)):not(:nth-child(16)):not(:nth-child(19)) { display: none; }
     #stocks-wrap table th, #stocks-wrap table td { padding-left: 4px; padding-right: 4px; }
