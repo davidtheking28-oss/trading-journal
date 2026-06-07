@@ -156,13 +156,13 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .header-title .accent {
     color: var(--accent);
   }
-  /* Time-of-day greeting + first name — shown in the header on mobile (≤768px)
-     in place of the "Trading Journal" / "TJ" brand text. */
+  /* Time-of-day greeting + first name — shown in header instead of "Trading Journal" */
   .header-greeting {
-    display: none;
+    display: inline-block;
     font-size: 15px; font-weight: 700; color: var(--text);
     letter-spacing: -0.3px; white-space: nowrap;
   }
+  .header-title .accent { display: none; }
   .header-actions { display: flex; align-items: center; gap: 8px; }
 
   /* NAV */
@@ -1316,8 +1316,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
      RESPONSIVE — Compact phone (≤ 480px)
   ══════════════════════════════════════════ */
   @media (max-width: 480px) {
-    .header-title .accent { display: none; }
-    .header-title::after { content: 'TJ'; color: var(--accent); font-weight: 800; }
     .header-title { flex-basis: auto !important; }
     .header-actions { flex-basis: auto !important; gap: 4px !important; }
     .ob-replay-btn { min-width: 44px !important; min-height: 44px !important; width: 44px !important; height: 44px !important; }
@@ -1327,7 +1325,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
      RESPONSIVE — Small phone (≤ 400px)
   ══════════════════════════════════════════ */
   @media (max-width: 400px) {
-    .header-title::after { content: 'TJ'; }
     .kpi-value { font-size: 17px; }
     main { padding: 10px; }
   }
@@ -5331,11 +5328,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
        and Add Trade is redundant with the bottom-bar + button.
        (!important overrides the element's inline display:flex.) */
     .ov-top-bar { display: none !important; }
-
-    /* Header: show a time-of-day greeting + first name instead of the "TJ" mark. */
-    .header-title .accent { display: none !important; }
-    .header-title::after { content: '' !important; }
-    .header-greeting { display: inline-block !important; }
 
     /* Trades toolbar — declutter on mobile. Drop the secondary actions
        (Add Trade is on the bottom bar; Clean Duplicates and Archive are rare
