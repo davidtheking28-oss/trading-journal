@@ -15229,8 +15229,18 @@ function invSetTarget(cat, pctStr) {
   if (!isFinite(pct)) pct = 0;
   pct = Math.max(0, Math.min(100, pct));
   const frac = pct / 100;
+  const prev = cat === 'cash' ? ALLOC_CASH_TARGET : ALLOC_TARGETS[cat];
   if (cat === 'cash') ALLOC_CASH_TARGET = frac;
   else ALLOC_TARGETS[cat] = frac;
+  const total = ALLOC_TARGETS.blue + ALLOC_TARGETS.green + ALLOC_TARGETS.yellow + ALLOC_CASH_TARGET;
+  if (total > 1.0001) {
+    if (cat === 'cash') ALLOC_CASH_TARGET = prev;
+    else ALLOC_TARGETS[cat] = prev;
+    invSyncTargetInputs();
+    const over = Math.round(total * 100);
+    toast(`סה"כ יעדים ${over}% — חייב להיות עד 100%`, 'error');
+    return;
+  }
   invSyncTargetInputs();
   invRecalc();
   const data = invLoad();
