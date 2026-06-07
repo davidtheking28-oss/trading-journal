@@ -3710,9 +3710,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-alloc-cur { min-width: 44px; text-align: right; color: var(--text2); font-size: 11px; }
   .inv-alloc-remaining { color: var(--text3); white-space: nowrap; font-size: 11px; min-width: 110px; text-align: right; }
   .inv-cash-input { min-width: 80px; width: 80px; text-align: right; background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.18); color: var(--text); font-weight: 600; font-size: 11px; outline: none; padding: 1px 2px; }
-  .inv-alloc-donut-row { display: flex; gap: 20px; align-items: flex-start; }
+  .inv-alloc-donut-row { display: flex; gap: 24px; align-items: center; }
   .inv-alloc-bars { flex: 1; display: flex; flex-direction: column; gap: 10px; }
-  .inv-donut-wrap { display: flex; flex-direction: row; align-items: center; gap: 16px; flex-shrink: 0; }
+  .inv-donut-wrap { display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .inv-donut-legend { display: flex; flex-direction: column; gap: 10px; direction: ltr; }
   .inv-donut-leg-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text2); }
   .inv-donut-leg-row .inv-leg-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
@@ -6341,22 +6341,16 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
                 <span class="inv-alloc-remaining" id="alloc-rem-cash">—</span>
               </div>
             </div>
-            <div class="inv-donut-wrap">
-              <svg width="180" height="180" viewBox="0 0 130 130">
+            <div class="inv-donut-wrap" style="align-self:center;">
+              <svg width="160" height="160" viewBox="0 0 130 130">
                 <circle cx="65" cy="65" r="50" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="18"/>
-                <circle id="donut-cash"   cx="65" cy="65" r="50" fill="none" stroke="#2dd4bf"                stroke-width="18" stroke-dasharray="314 314" stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
-                <circle id="donut-yellow" cx="65" cy="65" r="50" fill="none" stroke="#fbbf24"                stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
-                <circle id="donut-green"  cx="65" cy="65" r="50" fill="none" stroke="#34d399"                stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
-                <circle id="donut-blue"   cx="65" cy="65" r="50" fill="none" stroke="#818cf8"                stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
+                <circle id="donut-cash"   cx="65" cy="65" r="50" fill="none" stroke="#2dd4bf" stroke-width="18" stroke-dasharray="314 314" stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
+                <circle id="donut-yellow" cx="65" cy="65" r="50" fill="none" stroke="#fbbf24" stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
+                <circle id="donut-green"  cx="65" cy="65" r="50" fill="none" stroke="#34d399" stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
+                <circle id="donut-blue"   cx="65" cy="65" r="50" fill="none" stroke="#818cf8" stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
                 <text x="65" y="58" text-anchor="middle" fill="var(--text)"  font-size="16" font-weight="700" id="donut-label-pct">0%</text>
-                <text x="65" y="74" text-anchor="middle" fill="var(--text3)" font-size="9" id="donut-allocated-label">Allocated</text>
+                <text x="65" y="74" text-anchor="middle" fill="var(--text3)" font-size="9"  id="donut-allocated-label">Allocated</text>
               </svg>
-              <div class="inv-donut-legend">
-                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:#818cf8"></span><span class="inv-leg-label" data-i18n="inv_legend_blue">Blue Chips</span><b id="leg-blue">0%</b></div>
-                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:#34d399"></span><span class="inv-leg-label" data-i18n="inv_legend_green">Growth</span><b id="leg-green">0%</b></div>
-                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:#fbbf24"></span><span class="inv-leg-label" data-i18n="inv_legend_yellow">Speculative</span><b id="leg-yellow">0%</b></div>
-                <div class="inv-donut-leg-row"><span class="inv-leg-dot" style="background:#2dd4bf"></span><span class="inv-leg-label" data-i18n="inv_cash">Cash</span><b id="leg-cash">100%</b></div>
-              </div>
             </div>
           </div>
         </div>
