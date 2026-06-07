@@ -3519,6 +3519,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     transition: border-color 0.2s, box-shadow 0.2s;
   }
   .inv-portfolio-bar input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(129,140,248,0.12); }
+  #inv-portfolio-total::-webkit-outer-spin-button,
+  #inv-portfolio-total::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .inv-portfolio-bar .inv-total-allocated { font-size: 12px; color: var(--text3); margin-right: auto; }
   .inv-portfolio-bar .inv-total-allocated span { color: var(--accent); font-weight: 700; font-size: 14px; }
   .inv-currency-seg {
@@ -6300,7 +6302,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
         <div class="inv-portfolio-bar">
           <label data-i18n="inv_portfolio_total">סך תיק</label>
-          <input type="number" id="inv-portfolio-total" placeholder="100000" min="0" step="any" oninput="invRecalc();invAutoSaveTotal()">
+          <input type="text" inputmode="numeric" id="inv-portfolio-total" placeholder="100000" style="-moz-appearance:textfield;" oninput="invRecalc();invAutoSaveTotal()">
+          <div class="inv-currency-seg">
+            <button class="inv-cur-opt active" id="inv-cur-usd" onclick="invSetCurrency('$')">$</button>
+            <button class="inv-cur-opt" id="inv-cur-ils" onclick="invSetCurrency('₪')">₪</button>
+          </div>
           <div class="inv-total-allocated"><span data-i18n="inv_free_cash">מזומן פנוי</span>: <span id="inv-cash-value">—</span> · <span data-i18n="inv_allocated">מושקע</span> <span id="inv-allocated-pct">0%</span></div>
         </div>
 
