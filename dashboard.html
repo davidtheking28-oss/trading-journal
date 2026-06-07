@@ -5859,10 +5859,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           </div>
           <div class="s-profile-grid">
             <div class="profile-field">
-              <label class="profile-label" data-i18n="settings_display">Display Name</label>
-              <input class="profile-input" id="profile-display" type="text" placeholder="השם שיופיע בכותרת" oninput="profileMarkDirty()">
-            </div>
-            <div class="profile-field">
               <label class="profile-label" data-i18n="settings_email">Email</label>
               <input class="profile-input" id="profile-email" type="email" disabled>
             </div>
@@ -9980,7 +9976,6 @@ function profileLoad() {
   const m = _currentUser.user_metadata || {};
   document.getElementById('profile-first').value   = m.first_name   || '';
   document.getElementById('profile-last').value    = m.last_name    || '';
-  document.getElementById('profile-display').value = m.full_name    || '';
   document.getElementById('profile-email').value   = _currentUser.email || '';
   document.getElementById('profile-save-btn').style.display = 'none';
 }
@@ -9992,7 +9987,7 @@ function profileMarkDirty() {
 async function profileSave() {
   const first   = document.getElementById('profile-first').value.trim();
   const last    = document.getElementById('profile-last').value.trim();
-  const display = document.getElementById('profile-display').value.trim() || [first, last].filter(Boolean).join(' ') || _currentUser.email.split('@')[0];
+  const display = [first, last].filter(Boolean).join(' ') || _currentUser.email.split('@')[0];
   const btn = document.getElementById('profile-save-btn');
   btn.textContent = 'Saving...';
   btn.disabled = true;
@@ -10002,7 +9997,6 @@ async function profileSave() {
     _setHeaderGreeting(first || display.split(/\s+/)[0]);
     const el = document.getElementById('header-user-name');
     if (el) el.textContent = display;
-    document.getElementById('profile-display').value = display;
     btn.style.display = 'none';
     toast('פרופיל נשמר ✓', 'success');
   } catch {
@@ -10132,7 +10126,7 @@ const LANG_STRINGS = {
     set_av_key:'Alpha Vantage Key — financial data for all stocks including small caps',
     set_get_free_key:'Get free key',
     set_page_title:'Settings', set_page_sub:'Manage your account, security, and data preferences.',
-    set_grp_account:'Account', set_grp_account_sub:'Name, display name, email',
+    set_grp_account:'Account', set_grp_account_sub:'Name, email',
     set_grp_prefs:'Preferences', set_grp_prefs_sub:'Language and display',
     set_security_sub:'PIN, 2FA, password',
     set_avatar_label:'Profile Picture', set_avatar_sub:'JPG or PNG, max 2MB', set_avatar_btn:'Change Photo',
@@ -10258,7 +10252,7 @@ const LANG_STRINGS = {
     set_av_key:'מפתח Alpha Vantage — נתונים פיננסיים לכל מניה כולל סמולקאפ',
     set_get_free_key:'קבל מפתח חינמי',
     set_page_title:'הגדרות', set_page_sub:'נהל את החשבון, האבטחה והעדפות הנתונים שלך.',
-    set_grp_account:'חשבון', set_grp_account_sub:'שם, שם תצוגה, אימייל',
+    set_grp_account:'חשבון', set_grp_account_sub:'שם, אימייל',
     set_grp_prefs:'העדפות', set_grp_prefs_sub:'שפה ותצוגה',
     set_security_sub:'PIN, 2FA, סיסמה',
     set_avatar_label:'תמונת פרופיל', set_avatar_sub:'JPG או PNG, עד 2MB', set_avatar_btn:'שנה תמונה',
