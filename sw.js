@@ -2,7 +2,11 @@ const CACHE = 'tj-v29';
 const PRECACHE = [
   './dashboard.html',
   './manifest.json',
-  './assets/icon.svg'
+  './assets/icon.svg',
+  './assets/icon-192.png',
+  './assets/icon-512.png',
+  './assets/icon-maskable-512.png',
+  './assets/apple-touch-icon.png'
 ];
 
 self.addEventListener('install', e => {
