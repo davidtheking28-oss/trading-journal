@@ -7951,6 +7951,7 @@ const _tabIntros = {
 function _maybeShowTabIntro(name, tabEl) {
   if (!tabEl || !_currentUser) return;
   if (_userSettings.tab_intros_dismissed) return;
+  try { if (localStorage.getItem('ob_done_' + _currentUser.id)) return; } catch {}
   const intro = _tabIntros[name];
   if (!intro) return;
   const key = 'tj_intro_' + _currentUser.id + '_' + name;
