@@ -11645,6 +11645,8 @@ async function _flexFetch(jwt, { debug } = {}) {
     throw err;
   }
   if (debug) return { xml, trades: flexParseXML(xml) };
+  _saveOpenPositions(flexParseOpenPositions(xml));
+  renderOpenPositions();
   return flexParseXML(xml);
 }
 
@@ -11811,6 +11813,8 @@ async function _flexImportFromCache() {
 
   try {
     const trades = flexParseXML(row.xml);
+    _saveOpenPositions(flexParseOpenPositions(row.xml));
+    renderOpenPositions();
     const { imported, updated } = await _flexImport(trades);
     await _sb.from('flex_statement_cache').update({ imported_at: new Date().toISOString() }).eq('user_id', _currentUser.id);
     _flexMarkSync(true);
