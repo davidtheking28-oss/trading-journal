@@ -10607,22 +10607,27 @@ function renderOpenPositions() {
   }
   const wrap = document.getElementById('open-pos-table-wrap');
   if (!wrap) return;
+  const stocks = positions.filter(p => p.assetCategory === 'STK' || p.assetCategory === '');
+  if (!stocks.length) { section.style.display = 'none'; return; }
   wrap.innerHTML = `
-    <table class="open-pos-table" style="width:100%;border-collapse:collapse;">
+    <table class="data-table open-pos-table" style="width:100%;border-collapse:collapse;">
       <thead><tr>
-        <th>סמל</th><th>כמות</th><th>מחיר עלות</th><th>מחיר שוק</th><th>שווי</th><th>רו"ה פתוח</th>
+        <th>L/S</th><th>סמל</th><th>כמות</th><th>מחיר כניסה</th><th>מחיר שוק</th><th>רו"ה $</th><th>רו"ה %</th>
       </tr></thead>
       <tbody>
-        ${positions.map(p => {
-          const cls = p.unrealizedPnL >= 0 ? 'pos-green' : 'pos-red';
+        ${stocks.map(p => {
+          const isLong = p.side !== 'Short';
+          const pct = p.costBasis ? ((p.markPrice - p.costBasis) / p.costBasis * 100) : 0;
+          const cls = p.unrealizedPnL >= 0 ? 'green' : 'red';
           const sign = p.unrealizedPnL >= 0 ? '+' : '';
           return `<tr>
+            <td><span class="badge ${isLong ? 'badge-L' : 'badge-S'}">${isLong ? 'L' : 'S'}</span></td>
             <td class="sym-col">${p.symbol}</td>
             <td><span class="sensitive">${Math.abs(p.qty).toLocaleString()}</span></td>
             <td><span class="sensitive">$${p.costBasis.toFixed(2)}</span></td>
             <td><span class="sensitive">$${p.markPrice.toFixed(2)}</span></td>
-            <td><span class="sensitive">$${p.positionValue.toLocaleString('en', { maximumFractionDigits: 0 })}</span></td>
-            <td class="${cls}"><span class="sensitive">${sign}$${p.unrealizedPnL.toFixed(0)}</span></td>
+            <td class="${cls}" style="font-weight:700"><span class="sensitive">${sign}$${p.unrealizedPnL.toFixed(0)}</span></td>
+            <td class="${cls}" style="font-weight:700"><span class="sensitive">${sign}${Math.abs(pct).toFixed(2)}%</span></td>
           </tr>`;
         }).join('')}
       </tbody>
@@ -13542,6 +13547,7 @@ function flexParseOpenPositions(xml) {
       positionValue: +el.getAttribute('positionValue') || 0,
       currency:      el.getAttribute('currency') || 'USD',
       side:          el.getAttribute('side') || 'Long',
+      assetCategory: el.getAttribute('assetCategory') || '',
     }))
     .filter(p => p.symbol && p.qty !== 0);
 }
