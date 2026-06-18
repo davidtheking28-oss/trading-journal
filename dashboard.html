@@ -1359,6 +1359,17 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .ibkr-status-dot.disconnected { background: #f85149; }
 
   /* ══════════════════════════════════════
+     OPEN POSITIONS TABLE
+  ══════════════════════════════════════ */
+  .open-pos-table th, .open-pos-table td { text-align: right; }
+  .open-pos-table th { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 10px; }
+  .open-pos-table td { font-size: 13px; padding: 8px 10px; border-top: 1px solid rgba(255,255,255,0.04); }
+  .open-pos-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .open-pos-table .sym-col { font-weight: 700; font-family: monospace; color: var(--text); }
+  .open-pos-table .pos-green { color: var(--green); font-weight: 700; }
+  .open-pos-table .pos-red   { color: var(--red);   font-weight: 700; }
+
+  /* ══════════════════════════════════════
      COINGECKO STATUS
   ══════════════════════════════════════ */
   .cg-status {
