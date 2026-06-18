@@ -10115,7 +10115,6 @@ const LANG_STRINGS = {
     set_ibkr_how:'How to configure:',
     set_ibkr_steps:'Create an Activity Flex Query → Period: Last 365 Calendar Days, Format: XML, add the Trades section (with "Trade ID") and the Open Positions section → Copy the Token and Query ID',
     set_sync:'Sync', m_save_short:'Save',
-    open_pos_title:'Open Positions (IBKR)',
     set_tlg_drop:'Drag .tlg file or click to select',
     set_export_desc:'Export all trades to a CSV file for external analysis.',
     set_broker_desc:'Import trades from your broker\'s export file. Select broker, upload CSV, and confirm column mapping.',
@@ -10243,7 +10242,6 @@ const LANG_STRINGS = {
     set_ibkr_how:'איך להגדיר:',
     set_ibkr_steps:'צור Activity Flex Query → Period: Last 365 Calendar Days, פורמט: XML, הוסף סעיף Trades (עם "Trade ID") וסעיף Open Positions → העתק את Token ו-Query ID',
     set_sync:'סנכרן', m_save_short:'שמור',
-    open_pos_title:'פוזיציות פתוחות (IBKR)',
     set_tlg_drop:'גרור קובץ .tlg או לחץ לבחירה',
     set_export_desc:'ייצוא כל העסקאות לקובץ CSV לניתוח חיצוני.',
     set_broker_desc:'ייבוא עסקאות מקובץ ייצוא של הברוקר. בחר ברוקר, העלה קובץ CSV, ואשר את מיפוי העמודות.',
@@ -11648,7 +11646,6 @@ async function _flexFetch(jwt, { debug } = {}) {
     throw err;
   }
   if (debug) return { xml, trades: flexParseXML(xml) };
-  _saveOpenPositions(flexParseOpenPositions(xml));
   return flexParseXML(xml);
 }
 
@@ -11815,9 +11812,7 @@ async function _flexImportFromCache() {
 
   try {
     const trades = flexParseXML(row.xml);
-    _saveOpenPositions(flexParseOpenPositions(row.xml));
     const { imported, updated } = await _flexImport(trades);
-    await _flexImportOpenPositions(_loadOpenPositions());
     await _sb.from('flex_statement_cache').update({ imported_at: new Date().toISOString() }).eq('user_id', _currentUser.id);
     _flexMarkSync(true);
     _setBrokerBadge('ibkr', 'ok');
@@ -11864,7 +11859,6 @@ async function _autoFlexSync() {
     _flexMarkSync(true);
     _setBrokerBadge('ibkr', 'ok');
     const { imported, updated, newlyImported } = await _flexImport(trades);
-    await _flexImportOpenPositions(_loadOpenPositions());
     if (imported > 0 || updated > 0) {
       const msg = [imported ? `${imported} חדשות` : '', updated ? `${updated} עודכנו` : ''].filter(Boolean).join(' | ');
       flexSetStatus(`✓ ${msg}`, 'var(--green)');
@@ -13343,7 +13337,6 @@ async function flexSync() {
     _flexMarkSync(true);
     _setBrokerBadge('ibkr', 'ok');
     const { imported, updated } = await _flexImport(trades);
-    await _flexImportOpenPositions(_loadOpenPositions());
     if (imported > 0 || updated > 0) {
       const msg = [imported ? `${imported} נוספו` : '', updated ? `${updated} עודכנו` : ''].filter(Boolean).join(' | ');
       flexSetStatus(`✓ ${msg}`, 'var(--green)');
@@ -13473,77 +13466,6 @@ function flexParseXML(xml) {
 
   return trades;
 }
-function flexParseOpenPositions(xml) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(xml, 'text/xml');
-  return [...doc.querySelectorAll('OpenPosition')]
-    .map(el => ({
-      symbol:               el.getAttribute('symbol') || '',
-      qty:                  +el.getAttribute('position') || 0,
-      markPrice:            +el.getAttribute('markPrice') || 0,
-      costBasis:            +el.getAttribute('costBasisPrice') || 0,
-      unrealizedPnL:        +el.getAttribute('fifoPnlUnrealized') || 0,
-      positionValue:        +el.getAttribute('positionValue') || 0,
-      currency:             el.getAttribute('currency') || 'USD',
-      side:                 el.getAttribute('side') || 'Long',
-      assetCategory:        el.getAttribute('assetCategory') || '',
-      openDateTime:         el.getAttribute('openDateTime') || '',
-      originatingOrderID:   el.getAttribute('originatingOrderID') || '',
-    }))
-    .filter(p => p.symbol && p.qty !== 0);
-}
-function _saveOpenPositions(positions) {
-  if (!_currentUser) return;
-  localStorage.setItem('ibkr_open_pos_' + _currentUser.id, JSON.stringify(positions));
-  localStorage.setItem('ibkr_open_pos_ts_' + _currentUser.id, new Date().toISOString());
-}
-function _loadOpenPositions() {
-  if (!_currentUser) return [];
-  try { return JSON.parse(localStorage.getItem('ibkr_open_pos_' + _currentUser.id) || '[]'); } catch { return []; }
-}
-function _openPositionsTs() {
-  if (!_currentUser) return null;
-  return localStorage.getItem('ibkr_open_pos_ts_' + _currentUser.id);
-}
-async function _flexImportOpenPositions(positions) {
-  const stocks = positions.filter(p => p.assetCategory === 'STK' && p.qty > 0);
-  if (!stocks.length || !_currentUser) return;
-  let added = 0;
-  for (const p of stocks) {
-    const dateRaw = (p.openDateTime || '').split(';')[0];
-    const entryDate = dateRaw && dateRaw.length === 8
-      ? `${dateRaw.slice(0,4)}-${dateRaw.slice(4,6)}-${dateRaw.slice(6,8)}`
-      : '';
-    if (!entryDate || !p.costBasis) continue;
-    const ibkrId = p.originatingOrderID || '';
-    let existing = ibkrId ? db.stocks.find(x => !x.deleted && x.ibkr_id === ibkrId) : null;
-    if (!existing) existing = db.stocks.find(x =>
-      !x.deleted && x.symbol === p.symbol && !x.exitPrice &&
-      x.entryDate === entryDate && Math.abs((x.entryPrice || 0) - p.costBasis) < 0.01
-    );
-    if (existing) continue;
-    const row = _tradeToRow({
-      symbol: p.symbol, type: 'stock', ls: 'L',
-      entryDate, entryPrice: p.costBasis,
-      shares: p.qty, commission: 0, stop: 0, ecn: 0,
-      entry_reason: '', market_cond: '', process_score: 0,
-      notes_keep: '', notes_improve: '',
-      ...(ibkrId ? { ibkr_id: ibkrId } : {}),
-      deleted: false,
-    });
-    const { data: inserted, error } = await _sb.from('trades').insert(row).select().single();
-    if (error) continue;
-    db.stocks.push(_rowToTrade(inserted));
-    added++;
-  }
-  if (added > 0) {
-    initFilters();
-    renderTable('stock');
-    renderOverview();
-    toast(`✓ IBKR: ${added} פוזיציות פתוחות נוספו`, 'success');
-  }
-}
-
 function flexIsDuplicate(t) {
   const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
   if (db._deletedFingerprints?.has(fp)) return true;
