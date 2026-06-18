@@ -1359,17 +1359,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .ibkr-status-dot.disconnected { background: #f85149; }
 
   /* ══════════════════════════════════════
-     OPEN POSITIONS TABLE
-  ══════════════════════════════════════ */
-  .open-pos-table th, .open-pos-table td { text-align: right; }
-  .open-pos-table th { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 10px; }
-  .open-pos-table td { font-size: 13px; padding: 8px 10px; border-top: 1px solid rgba(255,255,255,0.04); }
-  .open-pos-table tr:hover td { background: rgba(255,255,255,0.02); }
-  .open-pos-table .sym-col { font-weight: 700; font-family: monospace; color: var(--text); }
-  .open-pos-table .pos-green { color: var(--green); font-weight: 700; }
-  .open-pos-table .pos-red   { color: var(--red);   font-weight: 700; }
-
-  /* ══════════════════════════════════════
      COINGECKO STATUS
   ══════════════════════════════════════ */
   .cg-status {
@@ -5610,15 +5599,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div id="ov-calendar" class="ov-cal-panel"></div>
       </div>
 
-      <div id="open-positions-section" style="display:none;margin-top:16px;margin-bottom:4px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-          <div class="chart-title" style="margin-bottom:0;" data-i18n="open_pos_title">פוזיציות פתוחות</div>
-          <span id="open-pos-ts" style="font-size:11px;color:var(--text3);"></span>
-        </div>
-        <div class="chart-card" style="padding:0;overflow:hidden;">
-          <div id="open-pos-table-wrap"></div>
-        </div>
-      </div>
 
     </div>
 
@@ -10590,48 +10570,6 @@ function renderOverview() {
   _updateLivePL();
   _ovLiveTimer = setInterval(_updateLivePL, 60000);
 
-  renderOpenPositions();
-  applyPrivacy();
-}
-
-function renderOpenPositions() {
-  const section = document.getElementById('open-positions-section');
-  if (!section) return;
-  const positions = _loadOpenPositions();
-  if (!positions.length) { section.style.display = 'none'; return; }
-  section.style.display = 'block';
-  const ts = _openPositionsTs();
-  const tsEl = document.getElementById('open-pos-ts');
-  if (tsEl && ts) {
-    tsEl.textContent = new Date(ts).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-  }
-  const wrap = document.getElementById('open-pos-table-wrap');
-  if (!wrap) return;
-  const stocks = positions.filter(p => p.assetCategory === 'STK' || p.assetCategory === '');
-  if (!stocks.length) { section.style.display = 'none'; return; }
-  wrap.innerHTML = `
-    <table class="data-table open-pos-table" style="width:100%;border-collapse:collapse;">
-      <thead><tr>
-        <th>L/S</th><th>סמל</th><th>כמות</th><th>מחיר כניסה</th><th>מחיר שוק</th><th>רו"ה $</th><th>רו"ה %</th>
-      </tr></thead>
-      <tbody>
-        ${stocks.map(p => {
-          const isLong = p.side !== 'Short';
-          const pct = p.costBasis ? ((p.markPrice - p.costBasis) / p.costBasis * 100) : 0;
-          const cls = p.unrealizedPnL >= 0 ? 'green' : 'red';
-          const sign = p.unrealizedPnL >= 0 ? '+' : '';
-          return `<tr>
-            <td><span class="badge ${isLong ? 'badge-L' : 'badge-S'}">${isLong ? 'L' : 'S'}</span></td>
-            <td class="sym-col">${p.symbol}</td>
-            <td><span class="sensitive">${Math.abs(p.qty).toLocaleString()}</span></td>
-            <td><span class="sensitive">$${p.costBasis.toFixed(2)}</span></td>
-            <td><span class="sensitive">$${p.markPrice.toFixed(2)}</span></td>
-            <td class="${cls}" style="font-weight:700"><span class="sensitive">${sign}$${p.unrealizedPnL.toFixed(0)}</span></td>
-            <td class="${cls}" style="font-weight:700"><span class="sensitive">${sign}${Math.abs(pct).toFixed(2)}%</span></td>
-          </tr>`;
-        }).join('')}
-      </tbody>
-    </table>`;
   applyPrivacy();
 }
 
@@ -11711,7 +11649,6 @@ async function _flexFetch(jwt, { debug } = {}) {
   }
   if (debug) return { xml, trades: flexParseXML(xml) };
   _saveOpenPositions(flexParseOpenPositions(xml));
-  renderOpenPositions();
   return flexParseXML(xml);
 }
 
@@ -11879,7 +11816,6 @@ async function _flexImportFromCache() {
   try {
     const trades = flexParseXML(row.xml);
     _saveOpenPositions(flexParseOpenPositions(row.xml));
-    renderOpenPositions();
     const { imported, updated } = await _flexImport(trades);
     await _flexImportOpenPositions(_loadOpenPositions());
     await _sb.from('flex_statement_cache').update({ imported_at: new Date().toISOString() }).eq('user_id', _currentUser.id);
