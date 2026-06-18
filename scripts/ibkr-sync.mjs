@@ -64,30 +64,45 @@ async function fetchStatement(token, qid) {
 }
 
 async function main() {
+  const mode = process.argv[2] === 'confirm' ? 'confirm' : 'full';
+  const tok = t => /^[a-zA-Z0-9]{6,64}$/.test(t || '');
+  const qid = q => /^\d{1,15}$/.test(q || '');
+
   const { data: rows, error } = await sb
     .from('user_settings')
-    .select('user_id, flex_token, flex_query_id')
+    .select('user_id, flex_token, flex_query_id, flex_confirm_query_id')
     .not('flex_token', 'is', null);
   if (error) fail('user_settings query failed: ' + error.message + ' (check the SERVICE_ROLE key is correct)');
 
-  const targets = (rows || []).filter(u =>
-    /^[a-zA-Z0-9]{6,64}$/.test(u.flex_token || '') && /^\d{1,15}$/.test(u.flex_query_id || ''));
-  console.log(`IBKR sync: ${targets.length} user(s) with valid config`);
+  const targets = (rows || []).filter(u => tok(u.flex_token) &&
+    (mode === 'confirm' ? qid(u.flex_confirm_query_id) : (qid(u.flex_query_id) || qid(u.flex_confirm_query_id))));
+  console.log(`IBKR sync [${mode}]: ${targets.length} user(s) with valid config`);
 
+  const rows6 = xml => (xml.match(/<Trade |<TradeConfirm /g) || []).length;
   const CONC = 4; // tokens are independent — safe to run a few in parallel
   let ok = 0, fail = 0;
   for (let i = 0; i < targets.length; i += CONC) {
     await Promise.all(targets.slice(i, i + CONC).map(async u => {
       const who = u.user_id.slice(0, 8);
       try {
-        const { xml, refCode } = await fetchStatement(u.flex_token, u.flex_query_id);
-        const { error: upErr } = await sb.from('flex_statement_cache').upsert({
-          user_id: u.user_id, xml, ref_code: refCode,
-          fetched_at: new Date().toISOString(), imported_at: null,
-        });
-        if (upErr) throw new Error('cache upsert: ' + upErr.message);
+        const now = new Date().toISOString();
+        if (mode === 'full' && qid(u.flex_query_id)) {
+          const { xml, refCode } = await fetchStatement(u.flex_token, u.flex_query_id);
+          const { error: upErr } = await sb.from('flex_statement_cache').upsert({
+            user_id: u.user_id, xml, ref_code: refCode, fetched_at: now, imported_at: null,
+          });
+          if (upErr) throw new Error('activity cache upsert: ' + upErr.message);
+          console.log(`  ✓ ${who} activity — ${rows6(xml)} rows`);
+        }
+        if (qid(u.flex_confirm_query_id)) {
+          const { xml } = await fetchStatement(u.flex_token, u.flex_confirm_query_id);
+          const { error: upErr } = await sb.from('flex_statement_cache').upsert({
+            user_id: u.user_id, xml_confirm: xml, confirm_fetched_at: now, confirm_imported_at: null,
+          });
+          if (upErr) throw new Error('confirm cache upsert: ' + upErr.message);
+          console.log(`  ✓ ${who} confirm — ${rows6(xml)} rows`);
+        }
         ok++;
-        console.log(`  ✓ ${who} — ${(xml.match(/<Trade |<TradeConfirm /g) || []).length} trade rows`);
       } catch (e) {
         fail++;
         console.log(`  ✗ ${who} — ${e.message}`);

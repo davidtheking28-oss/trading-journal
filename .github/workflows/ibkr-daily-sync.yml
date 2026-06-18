@@ -5,10 +5,17 @@ name: IBKR daily sync
 # can import it instantly on login without hitting error 1001.
 on:
   schedule:
-    # Trade Confirmation Flex updates intraday, so pull frequently during US
-    # market hours to surface new fills/closes within ~20 min instead of next day.
-    - cron: '*/30 13-21 * * 1-5'   # every 30 min, ~13:00-21:00 UTC (US market hours), Mon-Fri
-  workflow_dispatch: {}        # allow manual runs
+    # Daily FULL run: pulls the Activity Flex (365-day history) + confirm. This is
+    # what backfills history for new users and reconciles everyone once a day.
+    - cron: '0 13 * * 1-5'         # once daily, ~13:00 UTC (~9:00 ET), Mon-Fri
+    # Intraday CONFIRM run: Trade Confirmation Flex updates within the day, so pull
+    # frequently during US market hours to surface fills/closes within ~30 min.
+    - cron: '*/30 13-21 * * 1-5'   # every 30 min, ~13:00-21:00 UTC, Mon-Fri
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'full or confirm'
+        default: 'full'
 
 jobs:
   sync:
@@ -29,4 +36,4 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: node scripts/ibkr-sync.mjs
+        run: node scripts/ibkr-sync.mjs ${{ github.event.schedule == '0 13 * * 1-5' && 'full' || (github.event_name == 'workflow_dispatch' && inputs.mode || 'confirm') }}

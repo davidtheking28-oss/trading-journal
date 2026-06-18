@@ -5992,7 +5992,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6;display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px;">
               <a href="broker-guide.html#ibkr" target="_blank" style="font-size:11px;font-weight:600;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;flex-shrink:0;">מדריך מלא <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></a>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 180px auto;gap:10px;align-items:end;margin-bottom:12px;">
+            <div style="display:grid;grid-template-columns:1fr 150px 150px auto;gap:10px;align-items:end;margin-bottom:12px;">
               <div>
                 <div class="ibkr-field-label">Token</div>
                 <div style="position:relative;">
@@ -6003,8 +6003,12 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
                 </div>
               </div>
               <div>
-                <div class="ibkr-field-label">Query ID</div>
+                <div class="ibkr-field-label">Activity Query ID</div>
                 <input id="flex-query-id" class="form-control" type="text" placeholder="1462900" autocomplete="off" style="font-size:12px;padding:6px 10px;" onkeydown="if(event.key==='Enter')flexSave()" onblur="if(document.getElementById('flex-token').value&&this.value)flexSave()">
+              </div>
+              <div>
+                <div class="ibkr-field-label">Confirm Query ID</div>
+                <input id="flex-confirm-query-id" class="form-control" type="text" placeholder="אופציונלי" autocomplete="off" style="font-size:12px;padding:6px 10px;" onkeydown="if(event.key==='Enter')flexSave()" onblur="if(document.getElementById('flex-token').value&&this.value)flexSave()">
               </div>
               <div class="ibkr-actions" style="margin-bottom:0;">
                 <button class="btn btn-secondary btn-sm" onclick="flexSave()" data-i18n="m_save_short">Save</button>
@@ -9437,7 +9441,7 @@ let _userSettings = {};
 async function loadUserSettings() {
   if (!_currentUser) return;
   const { data } = await _sb.from('user_settings')
-    .select('groq_api_key, groq_inv_key, finnhub_key, fmp_key, av_key, flex_token, flex_query_id, portfolio_total, bybit_api_key, bybit_api_secret')
+    .select('groq_api_key, groq_inv_key, finnhub_key, fmp_key, av_key, flex_token, flex_query_id, flex_confirm_query_id, portfolio_total, bybit_api_key, bybit_api_secret')
     .eq('user_id', _currentUser.id)
     .single();
   _userSettings = data || {};
@@ -9469,6 +9473,10 @@ async function loadUserSettings() {
   if (_userSettings.flex_query_id) {
     const el = document.getElementById('flex-query-id');
     if (el) { el.value = _userSettings.flex_query_id; el.placeholder = ''; }
+  }
+  if (_userSettings.flex_confirm_query_id) {
+    const el = document.getElementById('flex-confirm-query-id');
+    if (el) { el.value = _userSettings.flex_confirm_query_id; el.placeholder = ''; }
   }
   if (_userSettings.bybit_api_key) {
     const el = document.getElementById('bybit-api-key');
@@ -10114,7 +10122,7 @@ const LANG_STRINGS = {
     set_2fa:'Two-Factor Authentication',
     set_ibkr_desc:'Enables automatic trade import from Interactive Brokers.',
     set_ibkr_how:'How to configure:',
-    set_ibkr_steps:'Create a Trade Confirmation Flex Query → Format: XML, add the Trade Confirmation section with the "Trade ID" field → Copy the Token and Query ID',
+    set_ibkr_steps:'Create two Flex Queries (Format: XML, both with the "Trade ID" field): an Activity Flex Query (Period: Last 365 Calendar Days, Trades section) for history, and a Trade Confirmation Flex Query (Trade Confirmation section) for near-real-time updates → paste the Token, the Activity Query ID, and the Confirm Query ID',
     set_sync:'Sync', m_save_short:'Save',
     set_tlg_drop:'Drag .tlg file or click to select',
     set_export_desc:'Export all trades to a CSV file for external analysis.',
@@ -10241,7 +10249,7 @@ const LANG_STRINGS = {
     set_2fa:'אימות דו-שלבי',
     set_ibkr_desc:'מאפשר ייבוא עסקאות אוטומטי מ-Interactive Brokers.',
     set_ibkr_how:'איך להגדיר:',
-    set_ibkr_steps:'צור Trade Confirmation Flex Query → פורמט: XML, הוסף את סעיף Trade Confirmation עם השדה "Trade ID" → העתק את Token ו-Query ID',
+    set_ibkr_steps:'צור שני Flex Queries (פורמט: XML, שניהם עם השדה "Trade ID"): גם Activity Flex Query (Period: Last 365 Calendar Days, סעיף Trades) להיסטוריה, וגם Trade Confirmation Flex Query (סעיף Trade Confirmation) לעדכון כמעט בזמן-אמת → הדבק את ה-Token, ה-Activity Query ID וה-Confirm Query ID',
     set_sync:'סנכרן', m_save_short:'שמור',
     set_tlg_drop:'גרור קובץ .tlg או לחץ לבחירה',
     set_export_desc:'ייצוא כל העסקאות לקובץ CSV לניתוח חיצוני.',
@@ -11801,20 +11809,31 @@ async function _flexImportFromCache() {
   let row;
   try {
     const { data } = await _sb.from('flex_statement_cache')
-      .select('xml, fetched_at, imported_at').eq('user_id', _currentUser.id).maybeSingle();
+      .select('xml, fetched_at, imported_at, xml_confirm, confirm_fetched_at, confirm_imported_at')
+      .eq('user_id', _currentUser.id).maybeSingle();
     row = data;
   } catch (e) { return false; }
-  if (!row?.xml) return false;
-  // Stale cache (cron gap > 30h) → let the live fallback try instead.
-  if (Date.now() - new Date(row.fetched_at).getTime() > 30 * 60 * 60 * 1000) return false;
+  if (!row || (!row.xml && !row.xml_confirm)) return false;
 
-  const alreadyImported = row.imported_at && new Date(row.imported_at) >= new Date(row.fetched_at);
-  if (alreadyImported) { _flexMarkSync(true); _setBrokerBadge('ibkr', 'ok'); flexSetStatus('✓ עדכני', 'var(--text3)'); return true; }
+  const STALE = 30 * 60 * 60 * 1000;
+  const activityUsable = !!row.xml && (Date.now() - new Date(row.fetched_at).getTime() <= STALE);
+  const activityFresh  = activityUsable && (!row.imported_at || new Date(row.imported_at) < new Date(row.fetched_at));
+  const confirmFresh   = !!row.xml_confirm && (!row.confirm_imported_at || new Date(row.confirm_imported_at) < new Date(row.confirm_fetched_at));
+
+  if (!activityFresh && !confirmFresh) {
+    if (activityUsable || row.xml_confirm) { _flexMarkSync(true); _setBrokerBadge('ibkr', 'ok'); flexSetStatus('✓ עדכני', 'var(--text3)'); return true; }
+    return false;
+  }
 
   try {
-    const trades = flexParseXML(row.xml);
+    const trades = [];
+    if (activityFresh) trades.push(...flexParseXML(row.xml));
+    if (confirmFresh)  trades.push(...flexParseXML(row.xml_confirm));
     const { imported, updated } = await _flexImport(trades);
-    await _sb.from('flex_statement_cache').update({ imported_at: new Date().toISOString() }).eq('user_id', _currentUser.id);
+    const stamp = {};
+    if (activityFresh) stamp.imported_at = new Date().toISOString();
+    if (confirmFresh)  stamp.confirm_imported_at = new Date().toISOString();
+    await _sb.from('flex_statement_cache').update(stamp).eq('user_id', _currentUser.id);
     _flexMarkSync(true);
     _setBrokerBadge('ibkr', 'ok');
     if (imported > 0 || updated > 0) {
@@ -13308,10 +13327,12 @@ function toggleExpand(bodyId, rowId) {
 async function flexSave() {
   const t = document.getElementById('flex-token')?.value.trim();
   const q = document.getElementById('flex-query-id')?.value.trim();
+  const qc = document.getElementById('flex-confirm-query-id')?.value.trim();
   if (!t || !q) { toast('נא להזין Token ו-Query ID', 'error'); return; }
   if (!/^[a-zA-Z0-9]{6,64}$/.test(t)) { toast('Token לא תקין — מספרים ואותיות בלבד, לפחות 6 תווים', 'error'); return; }
   if (!/^\d{4,15}$/.test(q)) { toast('Query ID לא תקין — מספרים בלבד (לדוגמה: 1462900)', 'error'); return; }
-  await _saveUserSettings({ flex_token: t, flex_query_id: q });
+  if (qc && !/^\d{4,15}$/.test(qc)) { toast('Confirm Query ID לא תקין — מספרים בלבד', 'error'); return; }
+  await _saveUserSettings({ flex_token: t, flex_query_id: q, flex_confirm_query_id: qc || null });
   toast('פרטי IBKR נשמרו ✓', 'success');
   flexSetStatus('פרטים נשמרו — יסונכרן אוטומטית', 'var(--text2)');
   _setBrokerBadge('ibkr', 'pending');
@@ -13828,7 +13849,7 @@ const _origLockNow = lockNow;
 lockNow = function() {
   _origLockNow();
   // Wipe token/key fields from DOM
-  ['flex-token','flex-query-id','finnhub-key-input'].forEach(id => {
+  ['flex-token','flex-query-id','flex-confirm-query-id','finnhub-key-input'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
