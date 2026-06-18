@@ -5613,7 +5613,17 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
           </button>
         </div>
-        <div id="trades-scope-pills" style="display:flex;gap:6px;"></div>
+        <div id="trades-scope-dd" class="scope-dd">
+          <button class="scope-dd-btn" onclick="toggleScopeDD('trades-scope-dd')">
+            <span id="trades-scope-lbl">📈 מניות</span>
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
+          </button>
+          <div class="scope-dd-menu" id="trades-scope-menu">
+            <button class="active" onclick="setTradesScope('stock',this,'trades-scope-dd')">📈 מניות</button>
+            <button onclick="setTradesScope('crypto',this,'trades-scope-dd')">₿ קריפטו</button>
+            <button onclick="setTradesScope('all',this,'trades-scope-dd')">הכל</button>
+          </div>
+        </div>
         <div class="filter-stats" id="st-filter-info"></div>
       </div>
       <div class="table-toolbar">
@@ -7883,7 +7893,14 @@ function resetFilter(p) {
 // ─────────────────────────────────────────────
 let ovScope = 'stock';
 let _tradesScope = 'stock';
-function _setTradesScope(s) { _tradesScope = s; renderTable('stock'); }
+function setTradesScope(s, btn, ddId) {
+  _tradesScope = s;
+  document.getElementById('trades-scope-lbl').textContent = _scopeLabels[s];
+  document.querySelectorAll('#trades-scope-menu button').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  _closeAllDDs();
+  renderTable('stock');
+}
 
 function switchTab(name, btn) {
   if (name === 'ai' && _currentUser?.id !== ADMIN_ID) return;
@@ -8622,18 +8639,6 @@ function _expandedRowHTML(tr, key) {
 }
 
 function renderTable(type) {
-  if (type === 'stock') {
-    const pillsEl = document.getElementById('trades-scope-pills');
-    if (pillsEl) {
-      const opts = [
-        { key:'stock',  label: t('comp_stocks')?.replace(/^[^\s]+\s/,'') || 'מניות' },
-        { key:'crypto', label: t('comp_crypto')?.replace(/^[^\s]+\s/,'') || 'קריפטו' },
-      ];
-      pillsEl.innerHTML = opts.map(o =>
-        `<button class="comp-scope-pill${o.key===_tradesScope?' active':''}" onclick="_setTradesScope('${o.key}')">${o.label}</button>`
-      ).join('');
-    }
-  }
   const p = type==='stock' ? 'st' : 'cr';
   const wrap = document.getElementById(type==='stock' ? 'stocks-wrap' : 'crypto-wrap');
 
