@@ -16521,7 +16521,7 @@ function ttRender(themes, indices) {
   const indicesEl = document.getElementById('tt-indices');
   if (indicesEl && indices?.length) {
     indicesEl.innerHTML = indices.map(idx => {
-      const pct = idx.today;
+      const pct = idx[pKey];
       const cls = pct == null ? 'flat' : pct > 0 ? 'pos' : pct < 0 ? 'neg' : 'flat';
       const sign = pct != null && pct > 0 ? '+' : '';
       const display = pct != null ? sign + pct.toFixed(2) + '%' : '—';
