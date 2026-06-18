@@ -5610,6 +5610,16 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div id="ov-calendar" class="ov-cal-panel"></div>
       </div>
 
+      <div id="open-positions-section" style="display:none;margin-top:16px;margin-bottom:4px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div class="chart-title" style="margin-bottom:0;" data-i18n="open_pos_title">פוזיציות פתוחות</div>
+          <span id="open-pos-ts" style="font-size:11px;color:var(--text3);"></span>
+        </div>
+        <div class="chart-card" style="padding:0;overflow:hidden;">
+          <div id="open-pos-table-wrap"></div>
+        </div>
+      </div>
+
     </div>
 
     <!-- ===== STOCKS ===== -->
@@ -10578,6 +10588,43 @@ function renderOverview() {
   _updateLivePL();
   _ovLiveTimer = setInterval(_updateLivePL, 60000);
 
+  renderOpenPositions();
+  applyPrivacy();
+}
+
+function renderOpenPositions() {
+  const section = document.getElementById('open-positions-section');
+  if (!section) return;
+  const positions = _loadOpenPositions();
+  if (!positions.length) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  const ts = _openPositionsTs();
+  const tsEl = document.getElementById('open-pos-ts');
+  if (tsEl && ts) {
+    tsEl.textContent = new Date(ts).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  }
+  const wrap = document.getElementById('open-pos-table-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = `
+    <table class="open-pos-table" style="width:100%;border-collapse:collapse;">
+      <thead><tr>
+        <th>סמל</th><th>כמות</th><th>מחיר עלות</th><th>מחיר שוק</th><th>שווי</th><th>רו"ה פתוח</th>
+      </tr></thead>
+      <tbody>
+        ${positions.map(p => {
+          const cls = p.unrealizedPnL >= 0 ? 'pos-green' : 'pos-red';
+          const sign = p.unrealizedPnL >= 0 ? '+' : '';
+          return `<tr>
+            <td class="sym-col">${p.symbol}</td>
+            <td><span class="sensitive">${Math.abs(p.qty).toLocaleString()}</span></td>
+            <td><span class="sensitive">$${p.costBasis.toFixed(2)}</span></td>
+            <td><span class="sensitive">$${p.markPrice.toFixed(2)}</span></td>
+            <td><span class="sensitive">$${p.positionValue.toLocaleString('en', { maximumFractionDigits: 0 })}</span></td>
+            <td class="${cls}"><span class="sensitive">${sign}$${p.unrealizedPnL.toFixed(0)}</span></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
   applyPrivacy();
 }
 
