@@ -7407,7 +7407,8 @@ async function _onAuthSuccess(user) {
   loadStockSymbols();
   _autoFlexSync();
   _autoBybitSync();
-  setInterval(() => { _autoFlexSync(); _autoBybitSync(); }, 30 * 60 * 1000);
+  setInterval(() => { _autoFlexSync(); }, 10 * 60 * 1000);
+  setInterval(() => { _autoBybitSync(); }, 30 * 60 * 1000);
   loadFearGreed();
   loadCryptoFearGreed();
   ttLoad(false);
@@ -10113,7 +10114,7 @@ const LANG_STRINGS = {
     set_2fa:'Two-Factor Authentication',
     set_ibkr_desc:'Enables automatic trade import from Interactive Brokers.',
     set_ibkr_how:'How to configure:',
-    set_ibkr_steps:'Create an Activity Flex Query → Period: Last 365 Calendar Days, Format: XML, add the Trades section (with "Trade ID") and the Open Positions section → Copy the Token and Query ID',
+    set_ibkr_steps:'Create a Trade Confirmation Flex Query → Format: XML, add the Trade Confirmation section with the "Trade ID" field → Copy the Token and Query ID',
     set_sync:'Sync', m_save_short:'Save',
     set_tlg_drop:'Drag .tlg file or click to select',
     set_export_desc:'Export all trades to a CSV file for external analysis.',
@@ -10240,7 +10241,7 @@ const LANG_STRINGS = {
     set_2fa:'אימות דו-שלבי',
     set_ibkr_desc:'מאפשר ייבוא עסקאות אוטומטי מ-Interactive Brokers.',
     set_ibkr_how:'איך להגדיר:',
-    set_ibkr_steps:'צור Activity Flex Query → Period: Last 365 Calendar Days, פורמט: XML, הוסף סעיף Trades (עם "Trade ID") וסעיף Open Positions → העתק את Token ו-Query ID',
+    set_ibkr_steps:'צור Trade Confirmation Flex Query → פורמט: XML, הוסף את סעיף Trade Confirmation עם השדה "Trade ID" → העתק את Token ו-Query ID',
     set_sync:'סנכרן', m_save_short:'שמור',
     set_tlg_drop:'גרור קובץ .tlg או לחץ לבחירה',
     set_export_desc:'ייצוא כל העסקאות לקובץ CSV לניתוח חיצוני.',
@@ -13369,7 +13370,7 @@ function flexExtractTag(xml, tag) {
 function flexParseXML(xml) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(xml, 'text/xml');
-  const tradeEls = [...doc.querySelectorAll('Trade')];
+  const tradeEls = [...doc.querySelectorAll('Trade, TradeConfirm')];
 
   // Group executions by symbol
   const bySymbol = {};
@@ -13378,8 +13379,8 @@ function flexParseXML(xml) {
     const dt    = el.getAttribute('dateTime') || '';
     const side  = (el.getAttribute('buySell') || '').toUpperCase();
     const qty   = Math.abs(+el.getAttribute('quantity') || 0);
-    const price = +el.getAttribute('tradePrice') || 0;
-    const comm  = Math.abs(+el.getAttribute('ibCommission') || 0);
+    const price = +el.getAttribute('tradePrice') || +el.getAttribute('price') || 0;
+    const comm  = Math.abs(+el.getAttribute('ibCommission') || +el.getAttribute('commission') || 0);
     const tid   = el.getAttribute('tradeID') || el.getAttribute('ibExecID') || ''; // IBKR's unique execution id
     if (!sym || !dt || !side || !qty || !price) return;
 

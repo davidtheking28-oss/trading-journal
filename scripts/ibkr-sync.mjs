@@ -87,7 +87,7 @@ async function main() {
         });
         if (upErr) throw new Error('cache upsert: ' + upErr.message);
         ok++;
-        console.log(`  ✓ ${who} — ${(xml.match(/<Trade /g) || []).length} trade rows`);
+        console.log(`  ✓ ${who} — ${(xml.match(/<Trade |<TradeConfirm /g) || []).length} trade rows`);
       } catch (e) {
         fail++;
         console.log(`  ✗ ${who} — ${e.message}`);

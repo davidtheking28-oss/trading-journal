@@ -5,7 +5,9 @@ name: IBKR daily sync
 # can import it instantly on login without hitting error 1001.
 on:
   schedule:
-    - cron: '0 15 * * 1-5'   # 15:00 UTC (~11:00 ET), Mon-Fri — after EOD processing
+    # Trade Confirmation Flex updates intraday, so pull frequently during US
+    # market hours to surface new fills/closes within ~20 min instead of next day.
+    - cron: '*/20 13-21 * * 1-5'   # every 20 min, ~13:00-21:00 UTC (US market hours), Mon-Fri
   workflow_dispatch: {}        # allow manual runs
 
 jobs:
