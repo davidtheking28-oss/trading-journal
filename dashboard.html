@@ -11881,6 +11881,7 @@ async function _flexImportFromCache() {
     _saveOpenPositions(flexParseOpenPositions(row.xml));
     renderOpenPositions();
     const { imported, updated } = await _flexImport(trades);
+    await _flexImportOpenPositions(_loadOpenPositions());
     await _sb.from('flex_statement_cache').update({ imported_at: new Date().toISOString() }).eq('user_id', _currentUser.id);
     _flexMarkSync(true);
     _setBrokerBadge('ibkr', 'ok');
@@ -11927,6 +11928,7 @@ async function _autoFlexSync() {
     _flexMarkSync(true);
     _setBrokerBadge('ibkr', 'ok');
     const { imported, updated, newlyImported } = await _flexImport(trades);
+    await _flexImportOpenPositions(_loadOpenPositions());
     if (imported > 0 || updated > 0) {
       const msg = [imported ? `${imported} חדשות` : '', updated ? `${updated} עודכנו` : ''].filter(Boolean).join(' | ');
       flexSetStatus(`✓ ${msg}`, 'var(--green)');
@@ -13405,6 +13407,7 @@ async function flexSync() {
     _flexMarkSync(true);
     _setBrokerBadge('ibkr', 'ok');
     const { imported, updated } = await _flexImport(trades);
+    await _flexImportOpenPositions(_loadOpenPositions());
     if (imported > 0 || updated > 0) {
       const msg = [imported ? `${imported} נוספו` : '', updated ? `${updated} עודכנו` : ''].filter(Boolean).join(' | ');
       flexSetStatus(`✓ ${msg}`, 'var(--green)');
@@ -13539,15 +13542,17 @@ function flexParseOpenPositions(xml) {
   const doc = parser.parseFromString(xml, 'text/xml');
   return [...doc.querySelectorAll('OpenPosition')]
     .map(el => ({
-      symbol:        el.getAttribute('symbol') || '',
-      qty:           +el.getAttribute('position') || 0,
-      markPrice:     +el.getAttribute('markPrice') || 0,
-      costBasis:     +el.getAttribute('costBasisPrice') || 0,
-      unrealizedPnL: +el.getAttribute('fifoPnlUnrealized') || 0,
-      positionValue: +el.getAttribute('positionValue') || 0,
-      currency:      el.getAttribute('currency') || 'USD',
-      side:          el.getAttribute('side') || 'Long',
-      assetCategory: el.getAttribute('assetCategory') || '',
+      symbol:               el.getAttribute('symbol') || '',
+      qty:                  +el.getAttribute('position') || 0,
+      markPrice:            +el.getAttribute('markPrice') || 0,
+      costBasis:            +el.getAttribute('costBasisPrice') || 0,
+      unrealizedPnL:        +el.getAttribute('fifoPnlUnrealized') || 0,
+      positionValue:        +el.getAttribute('positionValue') || 0,
+      currency:             el.getAttribute('currency') || 'USD',
+      side:                 el.getAttribute('side') || 'Long',
+      assetCategory:        el.getAttribute('assetCategory') || '',
+      openDateTime:         el.getAttribute('openDateTime') || '',
+      originatingOrderID:   el.getAttribute('originatingOrderID') || '',
     }))
     .filter(p => p.symbol && p.qty !== 0);
 }
@@ -13563,6 +13568,44 @@ function _loadOpenPositions() {
 function _openPositionsTs() {
   if (!_currentUser) return null;
   return localStorage.getItem('ibkr_open_pos_ts_' + _currentUser.id);
+}
+async function _flexImportOpenPositions(positions) {
+  const stocks = positions.filter(p => p.assetCategory === 'STK' && p.qty > 0);
+  if (!stocks.length || !_currentUser) return;
+  let added = 0;
+  for (const p of stocks) {
+    const dateRaw = (p.openDateTime || '').split(';')[0];
+    const entryDate = dateRaw && dateRaw.length === 8
+      ? `${dateRaw.slice(0,4)}-${dateRaw.slice(4,6)}-${dateRaw.slice(6,8)}`
+      : '';
+    if (!entryDate || !p.costBasis) continue;
+    const ibkrId = p.originatingOrderID || '';
+    let existing = ibkrId ? db.stocks.find(x => !x.deleted && x.ibkr_id === ibkrId) : null;
+    if (!existing) existing = db.stocks.find(x =>
+      !x.deleted && x.symbol === p.symbol && !x.exitPrice &&
+      x.entryDate === entryDate && Math.abs((x.entryPrice || 0) - p.costBasis) < 0.01
+    );
+    if (existing) continue;
+    const row = _tradeToRow({
+      symbol: p.symbol, type: 'stock', ls: 'L',
+      entryDate, entryPrice: p.costBasis,
+      shares: p.qty, commission: 0, stop: 0, ecn: 0,
+      entry_reason: '', market_cond: '', process_score: 0,
+      notes_keep: '', notes_improve: '',
+      ...(ibkrId ? { ibkr_id: ibkrId } : {}),
+      deleted: false,
+    });
+    const { data: inserted, error } = await _sb.from('trades').insert(row).select().single();
+    if (error) continue;
+    db.stocks.push(_rowToTrade(inserted));
+    added++;
+  }
+  if (added > 0) {
+    initFilters();
+    renderTable('stock');
+    renderOverview();
+    toast(`✓ IBKR: ${added} פוזיציות פתוחות נוספו`, 'success');
+  }
 }
 
 function flexIsDuplicate(t) {
