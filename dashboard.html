@@ -13465,6 +13465,35 @@ function flexParseXML(xml) {
 
   return trades;
 }
+function flexParseOpenPositions(xml) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xml, 'text/xml');
+  return [...doc.querySelectorAll('OpenPosition')]
+    .map(el => ({
+      symbol:        el.getAttribute('symbol') || '',
+      qty:           +el.getAttribute('position') || 0,
+      markPrice:     +el.getAttribute('markPrice') || 0,
+      costBasis:     +el.getAttribute('costBasisPrice') || 0,
+      unrealizedPnL: +el.getAttribute('fifoPnlUnrealized') || 0,
+      positionValue: +el.getAttribute('positionValue') || 0,
+      currency:      el.getAttribute('currency') || 'USD',
+      side:          el.getAttribute('side') || 'Long',
+    }))
+    .filter(p => p.symbol && p.qty !== 0);
+}
+function _saveOpenPositions(positions) {
+  if (!_currentUser) return;
+  localStorage.setItem('ibkr_open_pos_' + _currentUser.id, JSON.stringify(positions));
+  localStorage.setItem('ibkr_open_pos_ts_' + _currentUser.id, new Date().toISOString());
+}
+function _loadOpenPositions() {
+  if (!_currentUser) return [];
+  try { return JSON.parse(localStorage.getItem('ibkr_open_pos_' + _currentUser.id) || '[]'); } catch { return []; }
+}
+function _openPositionsTs() {
+  if (!_currentUser) return null;
+  return localStorage.getItem('ibkr_open_pos_ts_' + _currentUser.id);
+}
 
 function flexIsDuplicate(t) {
   const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
