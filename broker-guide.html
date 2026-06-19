@@ -62,7 +62,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(13,21,38,0.82);backdrop-fi
 /* STEPS */
 .steps{display:flex;flex-direction:column;gap:0}
 .step{display:flex;gap:16px;padding-bottom:28px;position:relative}
-.step:not(:last-child)::before{content:'';position:absolute;right:15px;top:36px;bottom:0;width:2px;background:var(--border)}
+.step:not(:last-child)::before{content:'';position:absolute;right:17px;top:36px;bottom:0;width:2px;background:var(--border)}
 .step-dot{width:36px;height:36px;border-radius:50%;background:var(--card);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);flex-shrink:0;z-index:1}
 .step-body{flex:1;padding-top:4px}
 .step-title{font-size:15px;font-weight:700;margin-bottom:6px}
@@ -140,7 +140,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
   </a>
   <a href="dashboard.html" class="nav-back">
     חזרה לאפליקציה
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
   </a>
 </nav>
 
@@ -221,7 +221,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
         <div class="step-dot">2</div>
         <div class="step-body">
           <div class="step-title">פתח את Flex Queries</div>
-          <div class="step-desc">בתפריט העליון לחץ <code>Performance & Reports</code> ← <code>Flex Queries</code>.</div>
+          <div class="step-desc">בתפריט העליון לחץ <code>Performance &amp; Reports</code> ← <code>Flex Queries</code>.</div>
         </div>
       </div>
 
@@ -337,7 +337,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
         <div class="step-dot">2</div>
         <div class="step-body">
           <div class="step-title">פתח את API Management</div>
-          <div class="step-desc">לחץ על האייקון של הפרופיל שלך בפינה הימנית העליונה → <code>My Profile</code> → <code>API</code>.</div>
+          <div class="step-desc">לחץ על האייקון של הפרופיל שלך בפינה הימנית העליונה ← <code>My Profile</code> ← <code>API</code>.</div>
         </div>
       </div>
 
@@ -387,7 +387,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
         <div class="step-dot">6</div>
         <div class="step-body">
           <div class="step-title">הזן ביומן והכל מוכן</div>
-          <div class="step-desc">חזור לאפליקציה → Settings → Bybit. הדבק את ה-Key וה-Secret ולחץ <code>Save</code>, אחר כך <code>Sync</code>.</div>
+          <div class="step-desc">ביומן: <code>הגדרות</code> ← <code>חיבור לברוקר (Bybit)</code> ← הדבק <strong>API Key</strong> + <strong>API Secret</strong> ← <code>שמור</code> ← <code>סנכרן</code>.</div>
         </div>
       </div>
     </div>
@@ -464,7 +464,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
       </div>
       <div class="trouble-item">
         <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Bybit — "Invalid API Key"</div>
-        <div class="trouble-a">לך ב-Bybit ל-<code>My Profile → API</code> וודא שה-Key פעיל ולא פג תוקף. אם פג — יצור חדש.</div>
+        <div class="trouble-a">לך ב-Bybit ל-<code>My Profile ← API</code>, ודא שה-Key פעיל ולא פג תוקף. אם פג — צור חדש.</div>
       </div>
       <div class="trouble-item">
         <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>עסקאות כפולות לאחר Sync</div>
@@ -479,7 +479,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
     <p class="cta-sub">כנס ליומן → הגדרות → חיבור לברוקר, ועקוב אחרי המדריך.</p>
     <a href="dashboard.html" class="btn-cta">
       פתח את האפליקציה
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
     </a>
   </div>
 
