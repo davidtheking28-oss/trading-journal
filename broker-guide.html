@@ -215,26 +215,11 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
       <div class="step">
         <div class="step-dot">3</div>
         <div class="step-body">
-          <div class="step-title">צור Flex Query חדש</div>
-          <div class="step-desc">לחץ <code>Create</code>, בחר <strong>Activity Flex Query</strong>. תן לו שם כלשהו (למשל <code>Trading Journal</code>) ואשר.</div>
-
-          <div class="callout callout-warn" style="margin-top:12px">
+          <div class="step-title">צור Activity Flex Query</div>
+          <div class="step-desc">לחץ <code>Create</code> ← בחר <strong>Activity Flex Query</strong> ← תן שם (למשל <code>Trading Journal</code>).</div>
+          <div class="callout callout-warn" style="margin-top:10px">
             <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <div class="callout-text">שים לב: קיימים שני סוגים ברשימה — <strong>Activity</strong> ו-Trade Confirmation. חייבים לבחור <strong>Activity</strong>.</div>
-          </div>
-
-          <div style="margin-top:16px;margin-bottom:8px;font-size:13px;font-weight:600;color:var(--text)">פתח <code style="font-family:'IBM Plex Mono',monospace;font-size:12px;background:rgba(255,255,255,0.07);padding:1px 6px;border-radius:4px;color:var(--accent)">Sections → Trades</code> ולחץ <strong>Select All</strong>:</div>
-
-          <div class="callout callout-tip" style="margin-top:4px">
-            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            <div class="callout-text"><strong>הדרך הקלה:</strong> בראש רשימת השדות של Trades יש <strong>Select All</strong> — לחיצה אחת מסמנת הכל, ואין צורך לחפש שדות בודדים. היומן קורא רק את מה שהוא צריך, אז שדות מיותרים לא מזיקים.</div>
-          </div>
-
-          <div style="margin-top:12px;font-size:12px;color:var(--text3)">אם אתה מעדיף מינימום — ודא שלפחות אלה מסומנים: <code style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text2)">Symbol · Buy/Sell · Quantity · TradePrice · Date/Time · IB Commission · Trade ID</code></div>
-
-          <div class="callout callout-tip" style="margin-top:14px">
-            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            <div class="callout-text">פורמט: <strong>XML</strong>. טווח תאריכים: <strong>Last 365 Calendar Days</strong>. לחץ <code>Save</code> — זהו, את ה-Query סיימת.</div>
+            <div class="callout-text">חובה <strong>Activity</strong> — לא Trade Confirmation (זה סוג אחר ברשימה).</div>
           </div>
         </div>
       </div>
@@ -242,8 +227,24 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
       <div class="step">
         <div class="step-dot">4</div>
         <div class="step-body">
-          <div class="step-title">העתק את Query ID</div>
-          <div class="step-desc">לחץ על האייקון הכחול (i) ליד שם ה-Query ברשימה — שם יופיע ה-ID המספרי. העתק אותו.</div>
+          <div class="step-title">בחר שדות — בקליק אחד</div>
+          <div class="step-desc">פתח <code>Sections</code> ← <code>Trades</code> ← לחץ <strong>Select All</strong>. זהו. (היומן קורא רק מה שצריך, אז שדות מיותרים לא מזיקים.)</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">5</div>
+        <div class="step-body">
+          <div class="step-title">הגדר פורמט ושמור</div>
+          <div class="step-desc">פורמט: <strong>XML</strong> · טווח: <strong>Last 365 Calendar Days</strong> ← לחץ <code>Save</code>.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">6</div>
+        <div class="step-body">
+          <div class="step-title">העתק את ה-Query ID</div>
+          <div class="step-desc">לחץ על האייקון <strong>ⓘ</strong> ליד שם ה-Query — יופיע מספר. העתק אותו.</div>
           <div class="field-row">
             <div class="field-label">Query ID — נראה כך</div>
             <div class="field-mock">1462900</div>
@@ -252,13 +253,13 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
       </div>
 
       <div class="step">
-        <div class="step-dot">5</div>
+        <div class="step-dot">7</div>
         <div class="step-body">
-          <div class="step-title">קבל Flex Token</div>
-          <div class="step-desc">באותו עמוד <code>Flex Queries</code> יש גם אזור בשם <strong>Flex Web Service Configuration</strong> — לחץ על גלגל השיניים שלו ואז <code>Generate Token</code>. (אם השירות כבוי, הפעל אותו קודם.)</div>
+          <div class="step-title">צור Token</div>
+          <div class="step-desc">באותו עמוד, באזור <strong>Flex Web Service Configuration</strong> ← גלגל שיניים ⚙ ← <code>Generate Token</code>. (אם השירות כבוי — הפעל אותו קודם.)</div>
           <div class="callout callout-warn" style="margin-top:10px">
             <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <div class="callout-text"><strong>שמור את ה-Token עכשיו!</strong> IBKR מראה אותו פעם אחת בלבד — אם תסגור את הדף, תצטרך לייצר חדש.</div>
+            <div class="callout-text"><strong>שמור את ה-Token מיד!</strong> IBKR מציג אותו פעם אחת בלבד.</div>
           </div>
           <div class="field-row">
             <div class="field-label">Token — נראה כך</div>
@@ -268,13 +269,13 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
       </div>
 
       <div class="step">
-        <div class="step-dot">6</div>
+        <div class="step-dot">8</div>
         <div class="step-body">
-          <div class="step-title">הזן ביומן והכל מוכן</div>
-          <div class="step-desc">חזור ליומן → <code>הגדרות</code> → <code>חיבור לברוקר (IBKR)</code>. הדבק את ה-<strong>Token</strong> ואת ה-<strong>Query ID</strong>, לחץ <code>שמור</code>, ואז <code>סנכרן</code>.</div>
+          <div class="step-title">הדבק ביומן — וסיימת</div>
+          <div class="step-desc">ביומן: <code>הגדרות</code> ← <code>חיבור לברוקר (IBKR)</code> ← הדבק <strong>Token</strong> + <strong>Query ID</strong> ← <code>שמור</code> ← <code>סנכרן</code>.</div>
           <div class="callout callout-tip" style="margin-top:10px">
             <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <div class="callout-text"><strong>מעכשיו זה אוטומטי.</strong> לא תצטרך לחזור על התהליך — היומן מושך עסקאות חדשות לבד פעם ביום, פותח וסוגר פוזיציות בעצמו.</div>
+            <div class="callout-text"><strong>מעכשיו זה אוטומטי.</strong> היומן מושך עסקאות חדשות לבד, פותח וסוגר פוזיציות בעצמו — לא תחזור על זה.</div>
           </div>
         </div>
       </div>
