@@ -88,7 +88,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
 
 /* TROUBLESHOOT */
 .trouble-list{display:flex;flex-direction:column;gap:10px}
-.trouble-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:border-color .2s,background .2s}
+.trouble-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;transition:border-color .2s,background .2s}
 .trouble-item:hover{border-color:rgba(129,140,248,0.35);background:#161616}
 .trouble-q{font-size:14px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px}
 .trouble-q svg{flex-shrink:0;color:var(--red)}
@@ -102,9 +102,19 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
 .btn-cta{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;background:linear-gradient(135deg,#818cf8,#6366f1);color:#fff;font-size:15px;font-weight:600;border-radius:10px;text-decoration:none;border:none;cursor:pointer;font-family:inherit;transition:opacity .2s,transform .15s}
 .btn-cta:hover{opacity:.88;transform:translateY(-1px)}
 
+/* A11y: visible keyboard focus */
+a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
+/* Respect reduced-motion preference */
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+
 @media(max-width:600px){
   .container{padding:32px 16px 60px}
   .section-header{flex-wrap:wrap}
+  .step-desc{font-size:15px}
+  .toc-list a{padding:6px 0}
 }
 </style>
 </head>
