@@ -168,7 +168,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
 
     <div class="callout callout-tip">
       <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-      <div class="callout-text"><strong>השורה התחתונה:</strong> בסוף התהליך תעתיק <strong>2 דברים בלבד</strong> מ-IBKR — <strong>Token</strong> ו-<strong>Query ID</strong> — תדביק אותם ביומן, וזהו. כל השאר זה רק איך להשיג אותם.</div>
+      <div class="callout-text"><strong>השורה התחתונה:</strong> הגדרה חד-פעמית של ~5 דקות (חינם). בסוף התהליך תעתיק <strong>2 דברים בלבד</strong> מ-IBKR — <strong>Token</strong> ו-<strong>Query ID</strong> — תדביק אותם ביומן, וזהו. מרגע זה העסקאות מסתנכרנות לבד.</div>
     </div>
 
     <!-- MOCKUP: where the 2 values live -->
@@ -255,7 +255,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
         <div class="step-dot">5</div>
         <div class="step-body">
           <div class="step-title">קבל Flex Token</div>
-          <div class="step-desc">לך ל-<code>Performance & Reports</code> → <code>Flex Queries</code>. בצד ימין למטה תראה כרטיס בשם <strong>Flex Web Service Configuration</strong> — לחץ על גלגל השיניים שלו ואז <code>Generate Token</code>.</div>
+          <div class="step-desc">באותו עמוד <code>Flex Queries</code> יש גם אזור בשם <strong>Flex Web Service Configuration</strong> — לחץ על גלגל השיניים שלו ואז <code>Generate Token</code>. (אם השירות כבוי, הפעל אותו קודם.)</div>
           <div class="callout callout-warn" style="margin-top:10px">
             <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <div class="callout-text"><strong>שמור את ה-Token עכשיו!</strong> IBKR מראה אותו פעם אחת בלבד — אם תסגור את הדף, תצטרך לייצר חדש.</div>
@@ -271,9 +271,18 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
         <div class="step-dot">6</div>
         <div class="step-body">
           <div class="step-title">הזן ביומן והכל מוכן</div>
-          <div class="step-desc">חזור לאפליקציה → Settings → Interactive Brokers. הדבק את ה-Token ואת ה-Query ID ולחץ <code>Save</code>. אחר כך לחץ <code>Sync</code>.</div>
+          <div class="step-desc">חזור ליומן → <code>הגדרות</code> → <code>חיבור לברוקר (IBKR)</code>. הדבק את ה-<strong>Token</strong> ואת ה-<strong>Query ID</strong>, לחץ <code>שמור</code>, ואז <code>סנכרן</code>.</div>
+          <div class="callout callout-tip" style="margin-top:10px">
+            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <div class="callout-text"><strong>מעכשיו זה אוטומטי.</strong> לא תצטרך לחזור על התהליך — היומן מושך עסקאות חדשות לבד פעם ביום, פותח וסוגר פוזיציות בעצמו.</div>
+          </div>
         </div>
       </div>
+    </div>
+
+    <div class="callout callout-info" style="margin-top:8px">
+      <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div class="callout-text"><strong>אופציונלי — עדכון כמעט בזמן-אמת:</strong> ברירת המחדל מתעדכנת פעם ביום וזה מספיק לרוב. אם תרצה שעסקאות יופיעו תוך דקות, צור ב-IBKR גם <strong>Trade Confirmation Flex Query</strong> (אותם שדות, Format XML) והדבק את ה-Query ID שלו ביומן תחת <code>הגדרות → IBKR → הגדרות מתקדמות</code>. לא חובה.</div>
     </div>
   </section>
 
