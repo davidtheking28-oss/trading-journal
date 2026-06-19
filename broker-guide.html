@@ -166,6 +166,35 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
       <div class="callout-text"><strong>מה זה Flex Query?</strong> זה כמו לבקש מ-IBKR דו"ח של כל הקניות והמכירות שלך. פעם אחת מגדירים — ואחר כך לוחצים Sync ביומן וזהו.</div>
     </div>
 
+    <div class="callout callout-tip">
+      <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      <div class="callout-text"><strong>השורה התחתונה:</strong> בסוף התהליך תעתיק <strong>2 דברים בלבד</strong> מ-IBKR — <strong>Token</strong> ו-<strong>Query ID</strong> — תדביק אותם ביומן, וזהו. כל השאר זה רק איך להשיג אותם.</div>
+    </div>
+
+    <!-- MOCKUP: where the 2 values live -->
+    <div style="background:#0d0d0d;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:8px 0 4px">
+      <div style="background:#161616;padding:8px 12px;font-size:11px;color:var(--text3);border-bottom:1px solid var(--border);display:flex;gap:6px;align-items:center">
+        <span style="width:9px;height:9px;border-radius:50%;background:#ff6b8a;display:inline-block"></span>
+        <span style="width:9px;height:9px;border-radius:50%;background:#fbbf24;display:inline-block"></span>
+        <span style="width:9px;height:9px;border-radius:50%;background:#2dd4a0;display:inline-block"></span>
+        <span style="margin-right:8px">client.ibkr.com → Performance &amp; Reports → Flex Queries</span>
+      </div>
+      <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+        <div style="border:1px dashed rgba(96,165,250,0.4);border-radius:8px;padding:12px;background:rgba(96,165,250,0.04)">
+          <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:8px">Activity Flex Query</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--text2);background:rgba(255,255,255,0.03);border-radius:6px;padding:8px 10px">
+            <span>Trading Journal</span>
+            <span style="font-family:'IBM Plex Mono',monospace;color:var(--text3)">ⓘ ✎ ▶</span>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:6px">↑ פה ה-<strong style="color:var(--blue)">Query ID</strong> מסתתר — לחיצה על ⓘ מציגה אותו</div>
+        </div>
+        <div style="border:1px dashed rgba(45,212,160,0.4);border-radius:8px;padding:12px;background:rgba(45,212,160,0.04)">
+          <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:6px">Flex Web Service Configuration ⚙</div>
+          <div style="font-size:11px;color:var(--text3)">↑ פה מייצרים את ה-<strong style="color:var(--green)">Token</strong> (גלגל שיניים ← Generate Token)</div>
+        </div>
+      </div>
+    </div>
+
     <div class="steps">
       <div class="step">
         <div class="step-dot">1</div>
@@ -194,50 +223,14 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
             <div class="callout-text">שים לב: קיימים שני סוגים ברשימה — <strong>Activity</strong> ו-Trade Confirmation. חייבים לבחור <strong>Activity</strong>.</div>
           </div>
 
-          <div style="margin-top:16px;margin-bottom:8px;font-size:13px;font-weight:600;color:var(--text)">מצא את Sections → Trades וסמן את 8 השדות האלה:</div>
+          <div style="margin-top:16px;margin-bottom:8px;font-size:13px;font-weight:600;color:var(--text)">פתח <code style="font-family:'IBM Plex Mono',monospace;font-size:12px;background:rgba(255,255,255,0.07);padding:1px 6px;border-radius:4px;color:var(--accent)">Sections → Trades</code> ולחץ <strong>Select All</strong>:</div>
 
-          <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
-            <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(129,140,248,0.06);border:1px solid rgba(129,140,248,0.15);border-radius:8px">
-              <code style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent);min-width:140px">Symbol</code>
-              <span style="font-size:13px;color:var(--text2)">טיקר המניה / קריפטו</span>
-              <span style="margin-right:auto;font-size:11px;font-weight:700;color:var(--accent);background:rgba(129,140,248,0.12);padding:2px 7px;border-radius:4px">חובה</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(129,140,248,0.06);border:1px solid rgba(129,140,248,0.15);border-radius:8px">
-              <code style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent);min-width:140px">Open/Close Indicator</code>
-              <span style="font-size:13px;color:var(--text2)">האם פתיחת פוזיציה או סגירה</span>
-              <span style="margin-right:auto;font-size:11px;font-weight:700;color:var(--accent);background:rgba(129,140,248,0.12);padding:2px 7px;border-radius:4px">חובה</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(129,140,248,0.06);border:1px solid rgba(129,140,248,0.15);border-radius:8px">
-              <code style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent);min-width:140px">Date/Time</code>
-              <span style="font-size:13px;color:var(--text2)">תאריך ושעת הביצוע</span>
-              <span style="margin-right:auto;font-size:11px;font-weight:700;color:var(--accent);background:rgba(129,140,248,0.12);padding:2px 7px;border-radius:4px">חובה</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(129,140,248,0.06);border:1px solid rgba(129,140,248,0.15);border-radius:8px">
-              <code style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent);min-width:140px">TradePrice</code>
-              <span style="font-size:13px;color:var(--text2)">מחיר הביצוע בפועל</span>
-              <span style="margin-right:auto;font-size:11px;font-weight:700;color:var(--accent);background:rgba(129,140,248,0.12);padding:2px 7px;border-radius:4px">חובה</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(129,140,248,0.06);border:1px solid rgba(129,140,248,0.15);border-radius:8px">
-              <code style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent);min-width:140px">IB Commission</code>
-              <span style="font-size:13px;color:var(--text2)">עמלה ששולמה לברוקר</span>
-              <span style="margin-right:auto;font-size:11px;font-weight:700;color:var(--accent);background:rgba(129,140,248,0.12);padding:2px 7px;border-radius:4px">חובה</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(129,140,248,0.06);border:1px solid rgba(129,140,248,0.15);border-radius:8px">
-              <code style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent);min-width:140px">Buy/Sell</code>
-              <span style="font-size:13px;color:var(--text2)">כיוון העסקה — BUY או SELL</span>
-              <span style="margin-right:auto;font-size:11px;font-weight:700;color:var(--accent);background:rgba(129,140,248,0.12);padding:2px 7px;border-radius:4px">חובה</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(129,140,248,0.06);border:1px solid rgba(129,140,248,0.15);border-radius:8px">
-              <code style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent);min-width:140px">Quantity</code>
-              <span style="font-size:13px;color:var(--text2)">מספר המניות שבוצעו</span>
-              <span style="margin-right:auto;font-size:11px;font-weight:700;color:var(--accent);background:rgba(129,140,248,0.12);padding:2px 7px;border-radius:4px">חובה</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(129,140,248,0.06);border:1px solid rgba(129,140,248,0.15);border-radius:8px">
-              <code style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent);min-width:140px">Trade ID</code>
-              <span style="font-size:13px;color:var(--text2)">מזהה ייחודי לכל ביצוע — מונע כפילויות</span>
-              <span style="margin-right:auto;font-size:11px;font-weight:700;color:var(--accent);background:rgba(129,140,248,0.12);padding:2px 7px;border-radius:4px">חובה</span>
-            </div>
+          <div class="callout callout-tip" style="margin-top:4px">
+            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <div class="callout-text"><strong>הדרך הקלה:</strong> בראש רשימת השדות של Trades יש <strong>Select All</strong> — לחיצה אחת מסמנת הכל, ואין צורך לחפש שדות בודדים. היומן קורא רק את מה שהוא צריך, אז שדות מיותרים לא מזיקים.</div>
           </div>
+
+          <div style="margin-top:12px;font-size:12px;color:var(--text3)">אם אתה מעדיף מינימום — ודא שלפחות אלה מסומנים: <code style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text2)">Symbol · Buy/Sell · Quantity · TradePrice · Date/Time · IB Commission · Trade ID</code></div>
 
           <div class="callout callout-tip" style="margin-top:14px">
             <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
