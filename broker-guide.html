@@ -12,18 +12,21 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0a0a0a;--card:#111;--border:rgba(255,255,255,0.07);
-  --text:#f1f5f9;--text2:#a8b8cc;--text3:#6b7f96;
-  --accent:#818cf8;--green:#2dd4a0;--yellow:#fbbf24;--red:#ff6b8a;
+  --bg:#0d1526;--card:linear-gradient(145deg,#091525,#0b1e38);--border:rgba(255,255,255,0.07);
+  --text:#f1f5f9;--text2:#a8b8cc;--text3:#7f93ad;
+  --accent:#4f83ff;--green:#2dd4a0;--yellow:#fbbf24;--red:#ff6b8a;
   --blue:#60a5fa;
 }
 html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;line-height:1.6;min-height:100vh}
+body{background:radial-gradient(110% 70% at 88% -8%,rgba(79,131,255,0.13),transparent 55%),var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;line-height:1.6;min-height:100vh}
+@keyframes riseIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.guide-hero{animation:riseIn .6s cubic-bezier(.2,.7,.2,1) both}
+.toc{animation:riseIn .6s cubic-bezier(.2,.7,.2,1) .12s both}
 
 /* NAV */
-nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
+nav{position:sticky;top:0;z-index:100;background:rgba(13,21,38,0.82);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
 .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
-.nav-logo-icon{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center}
+.nav-logo-icon{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#4f83ff,#3b62d6);display:flex;align-items:center;justify-content:center}
 .nav-logo-text{font-size:15px;font-weight:700;color:var(--text)}
 .nav-back{font-size:13px;color:var(--text2);text-decoration:none;display:flex;align-items:center;gap:5px;transition:color .2s}
 .nav-back:hover{color:var(--text)}
@@ -35,7 +38,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
 
 /* HERO */
 .guide-hero{margin-bottom:48px}
-.guide-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:rgba(129,140,248,0.1);border:1px solid rgba(129,140,248,0.25);border-radius:100px;font-size:11px;font-weight:600;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px}
+.guide-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:rgba(79,131,255,0.1);border:1px solid rgba(79,131,255,0.25);border-radius:100px;font-size:11px;font-weight:600;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px}
 .guide-title{font-size:clamp(28px,4vw,42px);font-weight:800;letter-spacing:-1px;line-height:1.1;margin-bottom:12px}
 .guide-sub{font-size:16px;color:var(--text2);line-height:1.75;max-width:560px}
 
@@ -50,7 +53,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
 /* SECTIONS */
 .guide-section{margin-bottom:56px}
 .section-header{display:flex;align-items:center;gap:14px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border)}
-.section-num{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;color:#fff;flex-shrink:0}
+.section-num{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#4f83ff,#3b62d6);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;color:#fff;flex-shrink:0}
 .section-title{font-size:22px;font-weight:700;letter-spacing:-0.4px}
 .section-broker-badge{font-size:11px;font-weight:600;padding:2px 10px;border-radius:20px;margin-right:8px}
 .badge-ibkr{background:rgba(96,165,250,0.12);color:#60a5fa;border:1px solid rgba(96,165,250,0.2)}
@@ -70,7 +73,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
 .callout{border-radius:10px;padding:14px 16px;margin:14px 0;display:flex;gap:12px;align-items:flex-start;font-size:14px;line-height:1.65}
 .callout-tip{background:rgba(45,212,160,0.07);border:1px solid rgba(45,212,160,0.18)}
 .callout-warn{background:rgba(251,191,36,0.07);border:1px solid rgba(251,191,36,0.18)}
-.callout-info{background:rgba(129,140,248,0.07);border:1px solid rgba(129,140,248,0.18)}
+.callout-info{background:rgba(79,131,255,0.07);border:1px solid rgba(79,131,255,0.18)}
 .callout-icon{flex-shrink:0;margin-top:2px;width:18px;height:18px}
 .callout-tip .callout-icon{color:var(--green)}
 .callout-warn .callout-icon{color:var(--yellow)}
@@ -89,17 +92,17 @@ nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-fi
 /* TROUBLESHOOT */
 .trouble-list{display:flex;flex-direction:column;gap:10px}
 .trouble-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;transition:border-color .2s,background .2s}
-.trouble-item:hover{border-color:rgba(129,140,248,0.35);background:#161616}
+.trouble-item:hover{border-color:rgba(79,131,255,0.35);background:#0e1d35}
 .trouble-q{font-size:14px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px}
 .trouble-q svg{flex-shrink:0;color:var(--red)}
 .trouble-a{font-size:13px;color:var(--text2);line-height:1.65}
 .trouble-a code{font-family:'IBM Plex Mono',monospace;font-size:12px;background:rgba(255,255,255,0.07);padding:1px 6px;border-radius:4px;color:var(--accent)}
 
 /* CTA */
-.guide-cta{background:linear-gradient(135deg,rgba(129,140,248,0.08),rgba(99,102,241,0.05));border:1px solid rgba(129,140,248,0.2);border-radius:16px;padding:32px;text-align:center;margin-top:48px}
+.guide-cta{background:linear-gradient(135deg,rgba(79,131,255,0.10),rgba(79,131,255,0.03));border:1px solid rgba(79,131,255,0.2);border-radius:18px;padding:32px;text-align:center;margin-top:48px}
 .cta-title{font-size:22px;font-weight:800;margin-bottom:8px;letter-spacing:-0.4px}
 .cta-sub{font-size:15px;color:var(--text2);margin-bottom:24px}
-.btn-cta{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;background:linear-gradient(135deg,#818cf8,#6366f1);color:#fff;font-size:15px;font-weight:600;border-radius:10px;text-decoration:none;border:none;cursor:pointer;font-family:inherit;transition:opacity .2s,transform .15s}
+.btn-cta{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;background:linear-gradient(135deg,#4f83ff,#3b62d6);color:#fff;font-size:15px;font-weight:600;border-radius:10px;text-decoration:none;border:none;cursor:pointer;font-family:inherit;transition:opacity .2s,transform .15s}
 .btn-cta:hover{opacity:.88;transform:translateY(-1px)}
 
 /* A11y: visible keyboard focus */
@@ -127,8 +130,8 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
         <line x1="44" y1="60" x2="156" y2="60" stroke="rgba(255,255,255,0.3)" stroke-width="6"/>
         <line x1="44" y1="100" x2="156" y2="100" stroke="rgba(255,255,255,0.3)" stroke-width="6"/>
         <rect x="52" y="115" width="18" height="25" rx="4" fill="#ff6b8a"/>
-        <rect x="83" y="95" width="18" height="45" rx="4" fill="#818cf8"/>
-        <rect x="114" y="72" width="18" height="68" rx="4" fill="#818cf8"/>
+        <rect x="83" y="95" width="18" height="45" rx="4" fill="#4f83ff"/>
+        <rect x="114" y="72" width="18" height="68" rx="4" fill="#4f83ff"/>
         <rect x="145" y="58" width="18" height="82" rx="4" fill="#2dd4a0"/>
         <polyline points="61,128 92,113 123,81 154,67" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="6" stroke-linecap="round"/>
       </svg>
@@ -182,8 +185,8 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
     </div>
 
     <!-- MOCKUP: where the 2 values live -->
-    <div style="background:#0d0d0d;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:8px 0 4px">
-      <div style="background:#161616;padding:8px 12px;font-size:11px;color:var(--text3);border-bottom:1px solid var(--border);display:flex;gap:6px;align-items:center">
+    <div style="background:#0a1525;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:8px 0 4px;box-shadow:0 10px 30px rgba(0,0,0,0.35)">
+      <div style="background:#0c1a30;padding:8px 12px;font-size:11px;color:var(--text3);border-bottom:1px solid var(--border);display:flex;gap:6px;align-items:center">
         <span style="width:9px;height:9px;border-radius:50%;background:#ff6b8a;display:inline-block"></span>
         <span style="width:9px;height:9px;border-radius:50%;background:#fbbf24;display:inline-block"></span>
         <span style="width:9px;height:9px;border-radius:50%;background:#2dd4a0;display:inline-block"></span>
