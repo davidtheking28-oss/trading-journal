@@ -23,5 +23,9 @@ node_modules/
 .DS_Store
 Thumbs.db
 
+# Supabase CLI local state
+supabase/.temp/
+
 # Misc
 style-preview.html
+trade*.zip
