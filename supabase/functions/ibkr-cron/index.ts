@@ -29,7 +29,7 @@ async function fetchStatement(token: string, qid: string) {
     const r = await fetch(`${IBKR_BASE}.SendRequest?t=${token}&q=${qid}&v=3`, { headers: UA });
     const xml = await r.text();
     refCode = tag(xml, 'ReferenceCode');
-    if (refCode && tag(xml, 'Status') !== 'Fail') break;
+    if (refCode && !tag(xml, 'ErrorCode')) break;
     refCode = '';
     sendCode = tag(xml, 'ErrorCode');
     sendErr = tag(xml, 'ErrorMessage') || 'unknown';
@@ -45,8 +45,10 @@ async function fetchStatement(token: string, qid: string) {
     await sleep(DELAYS[i]);
     const r = await fetch(`${IBKR_BASE}.GetStatement?t=${token}&q=${encodeURIComponent(refCode)}&v=3`, { headers: UA });
     const xml = await r.text();
-    if (tag(xml, 'Status') !== 'Fail') return { xml, refCode };
+    // IBKR signals "not ready" / rate-limit with an <ErrorCode> and Status
+    // "Warn" or "Fail" — only a doc with NO ErrorCode is a real statement.
     getCode = tag(xml, 'ErrorCode');
+    if (!getCode) return { xml, refCode };
     getErr = tag(xml, 'ErrorMessage') || 'unknown';
     if (!RETRYABLE.has(getCode)) throw new Error(`get failed: ${getErr} [${getCode}]`);
   }

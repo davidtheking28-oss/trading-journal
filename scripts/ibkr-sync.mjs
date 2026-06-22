@@ -37,7 +37,7 @@ async function fetchStatement(token, qid) {
     const r = await fetch(`${IBKR_BASE}.SendRequest?t=${token}&q=${qid}&v=3`, { headers: UA });
     const xml = await r.text();
     refCode = tag(xml, 'ReferenceCode');
-    if (refCode && tag(xml, 'Status') !== 'Fail') break;
+    if (refCode && !tag(xml, 'ErrorCode')) break;
     refCode = '';
     sendCode = tag(xml, 'ErrorCode');
     sendErr  = tag(xml, 'ErrorMessage') || 'unknown';
@@ -55,8 +55,10 @@ async function fetchStatement(token, qid) {
     await sleep(DELAYS[i]);
     const r = await fetch(`${IBKR_BASE}.GetStatement?t=${token}&q=${encodeURIComponent(refCode)}&v=3`, { headers: UA });
     const xml = await r.text();
-    if (tag(xml, 'Status') !== 'Fail') return { xml, refCode };
+    // Reject any response carrying an <ErrorCode> (IBKR uses Status "Warn" for
+    // rate-limit 1018, not just "Fail") so an error doc is never cached as data.
     getCode = tag(xml, 'ErrorCode');
+    if (!getCode) return { xml, refCode };
     getErr  = tag(xml, 'ErrorMessage') || 'unknown';
     if (!RETRYABLE.has(getCode)) throw new Error(`get failed: ${getErr} [${getCode}]`);
   }
