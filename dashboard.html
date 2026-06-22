@@ -16998,10 +16998,6 @@ async function brokerImport() {
   document.getElementById('bi-preview').style.display = 'none';
   document.getElementById('bi-import-btn').style.display = 'none';
 }
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(() => {});
-}
 </script>
 
 <!-- PIN Overlay -->
