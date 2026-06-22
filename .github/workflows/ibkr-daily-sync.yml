@@ -1,16 +1,13 @@
 name: IBKR daily sync
 
-# Pre-fetch each user's IBKR Flex statement at a time when IBKR's reporting
-# backend is available (after the once-daily EOD batch), and cache it so the app
-# can import it instantly on login without hitting error 1001.
+# Pre-fetch each user's IBKR Flex statement and cache it so the app can import it
+# instantly on login without hitting error 1001.
+#
+# NOTE: Scheduling moved to Supabase pg_cron (see the ibkr-cron Edge Function and
+# the schedule_ibkr_cron_jobs migration). GitHub Actions' scheduled runs proved
+# unreliable — most ticks were silently dropped — so the `schedule:` triggers were
+# removed. This workflow stays only as a manual fallback (Run workflow).
 on:
-  schedule:
-    # Daily FULL run: pulls the Activity Flex (365-day history) + confirm. This is
-    # what backfills history for new users and reconciles everyone once a day.
-    - cron: '0 13 * * 1-5'         # once daily, ~13:00 UTC (~9:00 ET), Mon-Fri
-    # Intraday CONFIRM run: Trade Confirmation Flex updates within the day, so pull
-    # frequently during US market hours to surface fills/closes within ~30 min.
-    - cron: '*/30 13-21 * * 1-5'   # every 30 min, ~13:00-21:00 UTC, Mon-Fri
   workflow_dispatch:
     inputs:
       mode:
