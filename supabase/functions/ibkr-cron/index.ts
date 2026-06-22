@@ -73,6 +73,7 @@ async function runSync(sb: ReturnType<typeof createClient>, mode: string) {
   const rows6 = (xml: string) => (xml.match(/<Trade |<TradeConfirm /g) || []).length;
   const CONC = 4;
   let ok = 0, fail = 0;
+  const errs: string[] = [];
   for (let i = 0; i < targets.length; i += CONC) {
     await Promise.all(targets.slice(i, i + CONC).map(async (u: any) => {
       const who = u.user_id.slice(0, 8);
@@ -96,12 +97,13 @@ async function runSync(sb: ReturnType<typeof createClient>, mode: string) {
         ok++;
       } catch (e) {
         fail++;
+        errs.push(`${who}: ${(e as Error).message}`);
         console.log(`  x ${who} — ${(e as Error).message}`);
       }
     }));
   }
   console.log(`Done [${mode}]: ${ok} ok, ${fail} failed`);
-  return { ok, fail };
+  return { ok, fail, errs };
 }
 
 Deno.serve(async (req: Request) => {
