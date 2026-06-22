@@ -61,42 +61,56 @@ async function runSync(sb: ReturnType<typeof createClient>, mode: string) {
     .from('user_settings')
     .select('user_id, flex_token, flex_query_id, flex_confirm_query_id')
     .not('flex_token', 'is', null);
-  if (error) { console.log('user_settings query failed: ' + error.message); return { ok: 0, fail: 0 }; }
+  if (error) { console.log('user_settings query failed: ' + error.message); return { ok: 0, fail: 0, errs: [] }; }
 
-  // full → Activity query only (365-day history); confirm → Trade Confirmation
-  // only. Keeping each invocation to one statement per user bounds the Edge
-  // function's runtime; the two cron cadences cover both tracks independently.
-  const targets = (rows || []).filter((u: any) => tok(u.flex_token) &&
-    (mode === 'confirm' ? qid(u.flex_confirm_query_id) : qid(u.flex_query_id)));
-  console.log(`IBKR sync [${mode}]: ${targets.length} user(s) with valid config`);
+  // full → Activity query (365-day history); confirm → Trade Confirmation. One
+  // statement per invocation bounds the Edge function's runtime; the two cron
+  // cadences cover both tracks independently.
+  const queryOf = (u: any) => mode === 'confirm' ? u.flex_confirm_query_id : u.flex_query_id;
+  const targets = (rows || []).filter((u: any) => tok(u.flex_token) && qid(queryOf(u)));
+
+  // Group users by the IBKR query they pull. A Flex query ID is globally unique
+  // in IBKR, so users sharing one are pulling the same account — fetch it ONCE
+  // and fan the XML out to all of them. This halves IBKR load and avoids the 1018
+  // "too many requests" that double-pulling the same account triggers.
+  const groups = new Map<string, any[]>();
+  for (const u of targets) {
+    const q = queryOf(u);
+    const arr = groups.get(q);
+    if (arr) arr.push(u); else groups.set(q, [u]);
+  }
+  console.log(`IBKR sync [${mode}]: ${targets.length} user(s), ${groups.size} unique query(ies)`);
 
   const rows6 = (xml: string) => (xml.match(/<Trade |<TradeConfirm /g) || []).length;
   const CONC = 4;
   let ok = 0, fail = 0;
   const errs: string[] = [];
-  for (let i = 0; i < targets.length; i += CONC) {
-    await Promise.all(targets.slice(i, i + CONC).map(async (u: any) => {
-      const who = u.user_id.slice(0, 8);
+  const entries = [...groups.entries()];
+  for (let i = 0; i < entries.length; i += CONC) {
+    await Promise.all(entries.slice(i, i + CONC).map(async ([q, users]) => {
+      const who = users.map((u: any) => u.user_id.slice(0, 8)).join(',');
       try {
-        const now = new Date().toISOString();
-        if (mode === 'full') {
-          const { xml, refCode } = await fetchStatement(u.flex_token, u.flex_query_id);
-          const { error: upErr } = await sb.from('flex_statement_cache').upsert({
-            user_id: u.user_id, xml, ref_code: refCode, fetched_at: now, imported_at: null,
-          });
-          if (upErr) throw new Error('activity cache upsert: ' + upErr.message);
-          console.log(`  ok ${who} activity — ${rows6(xml)} rows`);
-        } else {
-          const { xml } = await fetchStatement(u.flex_token, u.flex_confirm_query_id);
-          const { error: upErr } = await sb.from('flex_statement_cache').upsert({
-            user_id: u.user_id, xml_confirm: xml, confirm_fetched_at: now, confirm_imported_at: null,
-          });
-          if (upErr) throw new Error('confirm cache upsert: ' + upErr.message);
-          console.log(`  ok ${who} confirm — ${rows6(xml)} rows`);
+        // Try members' tokens until one resolves the statement — they are separate
+        // tokens for the same IBKR account, so any valid one returns the same data.
+        let xml = '', refCode = '', lastErr: Error | null = null;
+        for (const u of users) {
+          try { ({ xml, refCode } = await fetchStatement(u.flex_token, q)); break; }
+          catch (e) { lastErr = e as Error; }
         }
-        ok++;
+        if (!xml) throw lastErr ?? new Error('no token resolved the statement');
+
+        const now = new Date().toISOString();
+        const patch = mode === 'full'
+          ? { xml, ref_code: refCode, fetched_at: now, imported_at: null }
+          : { xml_confirm: xml, confirm_fetched_at: now, confirm_imported_at: null };
+        for (const u of users) {
+          const { error: upErr } = await sb.from('flex_statement_cache').upsert({ user_id: u.user_id, ...patch });
+          if (upErr) throw new Error('cache upsert: ' + upErr.message);
+        }
+        ok += users.length;
+        console.log(`  ok ${who} ${mode} (q${q}) — ${rows6(xml)} rows`);
       } catch (e) {
-        fail++;
+        fail += users.length;
         errs.push(`${who}: ${(e as Error).message}`);
         console.log(`  x ${who} — ${(e as Error).message}`);
       }
