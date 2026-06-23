@@ -87,6 +87,7 @@ async function runSync(sb: ReturnType<typeof createClient>, mode: string) {
   const CONC = 4;
   let ok = 0, fail = 0;
   const errs: string[] = [];
+  const logRows: any[] = [];
   const entries = [...groups.entries()];
   for (let i = 0; i < entries.length; i += CONC) {
     await Promise.all(entries.slice(i, i + CONC).map(async ([q, users]) => {
@@ -110,13 +111,21 @@ async function runSync(sb: ReturnType<typeof createClient>, mode: string) {
           if (upErr) throw new Error('cache upsert: ' + upErr.message);
         }
         ok += users.length;
+        for (const u of users) logRows.push({ user_id: u.user_id, mode, status: 'ok' });
         console.log(`  ok ${who} ${mode} (q${q}) — ${rows6(xml)} rows`);
       } catch (e) {
         fail += users.length;
-        errs.push(`${who}: ${(e as Error).message}`);
-        console.log(`  x ${who} — ${(e as Error).message}`);
+        const msg = (e as Error).message;
+        const code = (msg.match(/\[(\d+)\]/) || [])[1] ?? null;
+        for (const u of users) logRows.push({ user_id: u.user_id, mode, status: 'fail', error_code: code, error_msg: msg });
+        errs.push(`${who}: ${msg}`);
+        console.log(`  x ${who} — ${msg}`);
       }
     }));
+  }
+  if (logRows.length) {
+    const { error: logErr } = await sb.from('flex_sync_log').insert(logRows);
+    if (logErr) console.log('sync log insert failed: ' + logErr.message);
   }
   console.log(`Done [${mode}]: ${ok} ok, ${fail} failed`);
   return { ok, fail, errs };
