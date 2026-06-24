@@ -9,7 +9,8 @@
 // function secrets need to be set out of band.
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
 
-const STUCK_WINDOW_H = 26; // a daily-refreshed track is stuck if no success in ~a day
+const STUCK_WINDOW_H = 26;   // daily-refreshed track: stuck if no success in ~a day
+const CONFIRM_WINDOW_H = 4;  // intraday confirm track: catch breakage within hours
 
 Deno.serve(async (req: Request) => {
   const sb = createClient(
@@ -23,11 +24,17 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
   }
 
-  const since = new Date(Date.now() - STUCK_WINDOW_H * 3600 * 1000).toISOString();
-  const { data: logs } = await sb
+  // scope 'confirm' = tight intraday check on the Trade Confirmation track only;
+  // default 'daily' = the broad once-a-day no-success-at-all check.
+  const scope = (await req.json().catch(() => ({})))?.scope === 'confirm' ? 'confirm' : 'daily';
+  const windowH = scope === 'confirm' ? CONFIRM_WINDOW_H : STUCK_WINDOW_H;
+  const since = new Date(Date.now() - windowH * 3600 * 1000).toISOString();
+  let logQuery = sb
     .from('flex_sync_log')
-    .select('user_id, status, error_msg, run_at')
+    .select('user_id, status, error_msg, run_at, mode')
     .gte('run_at', since);
+  if (scope === 'confirm') logQuery = logQuery.eq('mode', 'confirm');
+  const { data: logs } = await logQuery;
 
   type G = { ok: number; fail: number; lastErr: string | null; lastErrAt: number };
   const byUser = new Map<string, G>();
@@ -57,7 +64,10 @@ Deno.serve(async (req: Request) => {
     try { email = (await sb.auth.admin.getUserById(uid)).data.user?.email ?? email; } catch (_) { /* keep id prefix */ }
     lines.push(`• ${email} — ${g.fail} fail(s), last: ${g.lastErr ?? 'unknown'}`);
   }
-  const text = `⚠️ IBKR sync stuck (no success in ${STUCK_WINDOW_H}h):\n${lines.join('\n')}`;
+  const label = scope === 'confirm'
+    ? `IBKR confirm sync stuck (no confirm success in ${windowH}h)`
+    : `IBKR sync stuck (no success in ${windowH}h)`;
+  const text = `⚠️ ${label}:\n${lines.join('\n')}`;
 
   const r = await fetch(`https://api.telegram.org/bot${tok.value}/sendMessage`, {
     method: 'POST',
