@@ -7638,6 +7638,9 @@ async function loadDB() {
       `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`
     )
   );
+  db._deletedBrokerIds = new Set(
+    all.filter(t => t.deleted && (t.ibkr_id || t.bybit_id)).map(t => t.ibkr_id || t.bybit_id)
+  );
   await _dedupeTrades(); // always keep the journal free of duplicates
   initFilters(); renderOverview(); renderTable('stock');
 }
@@ -7659,6 +7662,7 @@ async function _syncReloadTrades() {
   db.crypto = all.filter(t => t.type === 'crypto' && !t.deleted);
   db._deletedFingerprints = new Set(all.filter(t => t.deleted).map(t =>
     `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`));
+  db._deletedBrokerIds = new Set(all.filter(t => t.deleted && (t.ibkr_id || t.bybit_id)).map(t => t.ibkr_id || t.bybit_id));
   renderOverview();
   renderTable('stock');
 }
@@ -7721,6 +7725,16 @@ async function _dedupeTrades() {
     db.crypto = db.crypto.filter(x => !x.deleted);
   }
   return toRemove.length;
+}
+// Whether an incoming broker/import trade was previously deleted by the user.
+// Broker trades (ibkr_id/bybit_id) are matched by their unique execution id so a
+// deleted trade never blocks a different same-price re-entry on the same day;
+// untagged (manual/CSV) trades fall back to the symbol+date+price+shares print.
+function _isDeletedImport(t) {
+  const bid = t.ibkr_id || t.bybit_id;
+  if (bid) return !!db._deletedBrokerIds?.has(bid);
+  const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
+  return !!db._deletedFingerprints?.has(fp);
 }
 // ─────────────────────────────────────────────
 // CALCULATIONS
@@ -11743,7 +11757,7 @@ async function _flexImportInner(trades) {
 
     // New trade — honor user deletions (don't re-import something deleted).
     const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
-    if (db._deletedFingerprints?.has(fp)) return;
+    if (_isDeletedImport(t)) return;
     toInsert.push(t);
   });
 
@@ -11959,7 +11973,7 @@ async function _autoBybitSync() {
     let imported = 0;
     for (const t of trades) {
       const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
-      if (db._deletedFingerprints?.has(fp)) continue;
+      if (_isDeletedImport(t)) continue;
       if (await _bybitExisting(t, fp)) continue;
       const { data, error } = await _sb.from('trades').insert(_tradeToRow({ ...t, deleted: false })).select().single();
       if (!error) { db.crypto.unshift(_rowToTrade(data)); imported++; }
@@ -13635,7 +13649,7 @@ async function bybitImportAll() {
   let imported = 0, dupes = 0;
   for (const t of trades) {
     const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
-    if (db._deletedFingerprints?.has(fp)) { dupes++; continue; }
+    if (_isDeletedImport(t)) { dupes++; continue; }
     if (await _bybitExisting(t, fp)) { dupes++; continue; }
     const { data, error } = await _sb.from('trades').insert(_tradeToRow({ ...t, deleted: false })).select().single();
     if (!error) { db.crypto.unshift(_rowToTrade(data)); imported++; }
