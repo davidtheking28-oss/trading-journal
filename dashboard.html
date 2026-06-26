@@ -7586,6 +7586,7 @@ function _rowToTrade(row) {
     processScore: row.process_score,
     mood:         row.mood          || '',
     ibkr_id:      row.ibkr_id       || null,
+    bybit_id:     row.bybit_id      || null,
     deleted:      row.deleted       || false,
     deletedAt:    row.deleted_at,
   };
@@ -7616,8 +7617,9 @@ function _tradeToRow(trade) {
     deleted:       trade.deleted     || false,
     deleted_at:    trade.deletedAt   || null,
     // Only set when present so manual-trade inserts work even before the
-    // ibkr_id column migration has been applied.
+    // broker-id column migrations have been applied.
     ...(trade.ibkr_id ? { ibkr_id: trade.ibkr_id } : {}),
+    ...(trade.bybit_id ? { bybit_id: trade.bybit_id } : {}),
   };
 }
 
@@ -7695,14 +7697,15 @@ async function _dedupeTrades() {
   const toRemove = [];
   for (const type of ['stock', 'crypto']) {
     const live = (type === 'stock' ? db.stocks : db.crypto).filter(x => !x.deleted);
-    const seenId = new Set();      // ibkr_ids already kept
+    const seenId = new Set();      // broker ids (ibkr/bybit) already kept
     const taggedFp = new Set();    // full fingerprints of kept tagged trades
+    const bid = t => t.ibkr_id || t.bybit_id;  // stable broker id from either source
     // Process tagged (canonical) trades first so untagged duplicates are the ones removed.
-    const ordered = [...live].sort((a, b) => (a.ibkr_id ? 0 : 1) - (b.ibkr_id ? 0 : 1) || ((+a.id || 0) - (+b.id || 0)));
+    const ordered = [...live].sort((a, b) => (bid(a) ? 0 : 1) - (bid(b) ? 0 : 1) || ((+a.id || 0) - (+b.id || 0)));
     for (const t of ordered) {
-      if (t.ibkr_id) {
-        if (seenId.has(t.ibkr_id)) toRemove.push(t);
-        else { seenId.add(t.ibkr_id); taggedFp.add(fp(t)); }
+      if (bid(t)) {
+        if (seenId.has(bid(t))) toRemove.push(t);
+        else { seenId.add(bid(t)); taggedFp.add(fp(t)); }
       } else if (taggedFp.has(fp(t))) {
         toRemove.push(t); // exact duplicate of a tagged trade
       }
@@ -11912,6 +11915,22 @@ async function _autoFlexSync() {
   }
 }
 
+// True if a Bybit trade already exists locally (so skip insert). Prefers the
+// stable bybit_id; falls back to the entry fingerprint and backfills bybit_id
+// onto a matched legacy row so future syncs (and the server cron) dedup cleanly.
+async function _bybitExisting(t, fp) {
+  if (t.bybit_id && db.crypto.some(e => !e.deleted && e.bybit_id === t.bybit_id)) return true;
+  const byFp = db.crypto.find(e => !e.deleted &&
+    `${e.symbol}||${e.entryDate}||${Math.round((e.entryPrice||0)*1000)}||${Math.round((e.shares||0)*1000)}` === fp
+  );
+  if (!byFp) return false;
+  if (t.bybit_id && !byFp.bybit_id) {
+    byFp.bybit_id = t.bybit_id;
+    await _sb.from('trades').update({ bybit_id: t.bybit_id }).eq('id', byFp.id).eq('user_id', _currentUser.id);
+  }
+  return true;
+}
+
 async function _autoBybitSync() {
   if (!_currentUser) return;
   if (!_userSettings.bybit_api_key) return;
@@ -11941,10 +11960,7 @@ async function _autoBybitSync() {
     for (const t of trades) {
       const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
       if (db._deletedFingerprints?.has(fp)) continue;
-      const existing = db.crypto.find(e =>
-        `${e.symbol}||${e.entryDate}||${Math.round((e.entryPrice||0)*1000)}||${Math.round((e.shares||0)*1000)}` === fp
-      );
-      if (existing) continue;
+      if (await _bybitExisting(t, fp)) continue;
       const { data, error } = await _sb.from('trades').insert(_tradeToRow({ ...t, deleted: false })).select().single();
       if (!error) { db.crypto.unshift(_rowToTrade(data)); imported++; }
     }
@@ -13620,10 +13636,7 @@ async function bybitImportAll() {
   for (const t of trades) {
     const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
     if (db._deletedFingerprints?.has(fp)) { dupes++; continue; }
-    const existing = db.crypto.find(e =>
-      `${e.symbol}||${e.entryDate}||${Math.round((e.entryPrice||0)*1000)}||${Math.round((e.shares||0)*1000)}` === fp
-    );
-    if (existing) { dupes++; continue; }
+    if (await _bybitExisting(t, fp)) { dupes++; continue; }
     const { data, error } = await _sb.from('trades').insert(_tradeToRow({ ...t, deleted: false })).select().single();
     if (!error) { db.crypto.unshift(_rowToTrade(data)); imported++; }
   }
