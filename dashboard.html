@@ -7652,6 +7652,12 @@ async function loadDB() {
 // re-renders but keeps the user's current filter and skips the dedupe write
 // (so a remote change can't trigger a write→event loop).
 let _rtChannel = null;
+// Suppress realtime-triggered reloads during our own bulk writes (dedupe,
+// bybit_id backfill, imports) so their echoes don't thrash the UI with
+// re-renders — that burst was perceived as the page "jumping" for a few
+// seconds right after login.
+let _rtSuppressUntil = 0;
+const _rtSuppress = (ms = 4000) => { _rtSuppressUntil = Math.max(_rtSuppressUntil, Date.now() + ms); };
 async function _syncReloadTrades() {
   if (!_currentUser) return;
   const { data, error } = await _sb.from('trades').select('*')
@@ -7679,7 +7685,7 @@ async function _setupRealtimeSync() {
   if (token && _sb.realtime?.setAuth) { try { _sb.realtime.setAuth(token); } catch {} }
   const activeTab = () => (document.querySelector('.tab-content.active') || {}).id || '';
   let tt;
-  const reloadTrades = () => { clearTimeout(tt); tt = setTimeout(_syncReloadTrades, 400); };
+  const reloadTrades = () => { if (Date.now() < _rtSuppressUntil) return; clearTimeout(tt); tt = setTimeout(_syncReloadTrades, 800); };
   _rtChannel = _sb.channel('rt-' + uid)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'trades', filter: f }, reloadTrades)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'missed_opportunities', filter: f },
@@ -7716,6 +7722,7 @@ async function _dedupeTrades() {
     }
   }
   for (const t of toRemove) {
+    _rtSuppress();
     t.deleted = true;
     await _sb.from('trades').update({ deleted: true, deleted_at: new Date().toISOString() })
       .eq('id', t.id).eq('user_id', _currentUser.id);
@@ -11939,6 +11946,7 @@ async function _bybitExisting(t, fp) {
   );
   if (!byFp) return false;
   if (t.bybit_id && !byFp.bybit_id) {
+    _rtSuppress();
     byFp.bybit_id = t.bybit_id;
     await _sb.from('trades').update({ bybit_id: t.bybit_id }).eq('id', byFp.id).eq('user_id', _currentUser.id);
   }
