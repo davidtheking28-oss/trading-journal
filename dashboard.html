@@ -2963,7 +2963,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     border-bottom: 1px solid rgba(129,140,248,0.1) !important;
   }
 
-
   /* ── Buttons ── */
   .btn-primary {
     background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%) !important;
@@ -5599,7 +5598,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div id="ov-calendar" class="ov-cal-panel"></div>
       </div>
 
-
     </div>
 
     <!-- ===== STOCKS ===== -->
@@ -5642,7 +5640,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <div class="table-wrap" id="stocks-wrap"><div class="table-skeleton"><div class="skel-row"></div><div class="skel-row"></div><div class="skel-row"></div><div class="skel-row"></div><div class="skel-row"></div></div></div>
       <div id="st-archive-wrap" style="display:none;margin-top:16px;border-top:1px solid var(--border);padding-top:16px;" data-open="0"></div>
     </div>
-
 
     <!-- ===== STATISTICS ===== -->
     <div id="tab-statistics" class="tab-content">
@@ -5871,7 +5868,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           <button class="btn btn-primary btn-sm" id="profile-save-btn" onclick="profileSave()" style="display:none;margin-top:12px;align-self:flex-start;" data-i18n="settings_save_profile">Save Profile</button>
         </div>
       </div>
-
 
       <!-- Security -->
       <div class="s-section" style="order:2">
@@ -6400,7 +6396,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           <datalist id="inv-sym-list"></datalist>
           <button class="inv-add-row" onclick="invAddRow()" data-i18n="inv_add_holding">+ Add Holding</button>
         </div>
-
 
         <div class="inv-summary-bar">
           <div class="inv-sum-stat">
@@ -7285,6 +7280,7 @@ function onboardingStep(n) {
 function onboardingDone() {
   localStorage.setItem('ob_done_' + _currentUser?.id, '1');
   document.getElementById('ob-overlay').style.display = 'none';
+  _saveUserSettings({ onboarding_done: true }); // persist across devices
 }
 
 function onboardingReplay() {
@@ -9466,10 +9462,13 @@ let _userSettings = {};
 async function loadUserSettings() {
   if (!_currentUser) return;
   const { data } = await _sb.from('user_settings')
-    .select('groq_api_key, groq_inv_key, finnhub_key, fmp_key, av_key, flex_token, flex_query_id, flex_confirm_query_id, portfolio_total, bybit_api_key, bybit_api_secret')
+    .select('groq_api_key, groq_inv_key, finnhub_key, fmp_key, av_key, flex_token, flex_query_id, flex_confirm_query_id, portfolio_total, bybit_api_key, bybit_api_secret, onboarding_done')
     .eq('user_id', _currentUser.id)
     .single();
   _userSettings = data || {};
+  // Onboarding-done lives on the server so it follows the user across devices /
+  // cleared caches. Mirror it into localStorage, which the intro checks read.
+  if (_userSettings.onboarding_done) { try { localStorage.setItem('ob_done_' + _currentUser.id, '1'); } catch {} }
   const av = _currentUser?.user_metadata?.avatar;
   if (av) _setAvatar(av);
 
@@ -13342,7 +13341,6 @@ function _setAvatar(url) {
   if (hav) hav.style.borderColor = url ? 'rgba(129,140,248,0.5)' : 'rgba(129,140,248,0.25)';
 }
 
-
 function switchSettingsPanel(id) {
   document.querySelectorAll('.s-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.s-nav-item').forEach(i => i.classList.remove('active'));
@@ -15777,8 +15775,6 @@ function invAutoSaveTotal() {
   if (_invData) _invData.portfolioTotal = val;
   _saveUserSettings({ portfolio_total: val ? +val : null });
 }
-
-
 
 function invUpdateDonut(byCat, portfolioTotal, cash = 0) {
   const C = 314.159;
