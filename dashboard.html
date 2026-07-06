@@ -5419,7 +5419,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <button class="tnav-btn" onclick="switchTab('stocks',this)" data-i18n="nav_stocks">Stocks</button>
       <button class="tnav-btn" onclick="switchTab('statistics',this)">Statistics</button>
       <button class="tnav-btn" onclick="switchTab('themes',this)">Market Pulse</button>
-      <button class="tnav-btn" onclick="switchTab('ai',this)">Minervini</button>
       <button class="tnav-btn" onclick="switchTab('screener',this)">Screener</button>
       <button class="tnav-btn" onclick="switchTab('missed',this)">Missed</button>
       <button class="tnav-btn" onclick="switchTab('investments',this)">Investments</button>
@@ -10334,7 +10333,7 @@ function setLang(lang) {
 
   // Top nav
   const tnav = document.querySelectorAll('#top-nav .tnav-btn');
-  const tnavKeys = ['nav_overview','nav_stocks','nav_statistics','nav_themes','nav_ai','nav_screener','nav_missed','nav_investments','nav_settings'];
+  const tnavKeys = ['nav_overview','nav_stocks','nav_statistics','nav_themes','nav_screener','nav_missed','nav_investments','nav_settings'];
   tnav.forEach((btn, i) => { if (tnavKeys[i]) btn.textContent = s[tnavKeys[i]]; });
 
   // Sidebar nav-labels
