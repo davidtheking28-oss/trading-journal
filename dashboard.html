@@ -47,6 +47,7 @@
            form-action 'none';
            base-uri    'none';
            object-src  'none';
+           frame-src   https://davidtheking28-oss.github.io;
            frame-ancestors 'none';
            upgrade-insecure-requests;">
 <!-- Referrer Policy: לא לדלוף URL בבקשות -->
@@ -5419,6 +5420,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <button class="tnav-btn" onclick="switchTab('statistics',this)">Statistics</button>
       <button class="tnav-btn" onclick="switchTab('themes',this)">Market Pulse</button>
       <button class="tnav-btn" onclick="switchTab('ai',this)">Minervini</button>
+      <button class="tnav-btn" onclick="switchTab('screener',this)">Screener</button>
       <button class="tnav-btn" onclick="switchTab('missed',this)">Missed</button>
       <button class="tnav-btn" onclick="switchTab('investments',this)">Investments</button>
     </div>
@@ -6305,6 +6307,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     </div>
 
     <!-- ===== INVESTMENTS ===== -->
+    <div id="tab-screener" class="tab-content">
+      <iframe id="screener-frame" title="מסנן מניות SEPA" loading="lazy"
+        style="width:100%;height:calc(100vh - 130px);min-height:560px;border:1px solid rgba(255,255,255,0.07);border-radius:14px;background:#0d1526"></iframe>
+    </div>
+
     <div id="tab-investments" class="tab-content">
       <div class="inv-wrap">
         <div class="inv-header">
@@ -7958,6 +7965,7 @@ function switchTab(name, btn) {
     // Key is pre-filled by loadUserSettings() on login — nothing to do here
   }
   if (name==='missed') missedRender();
+  if (name==='screener') { const f=document.getElementById('screener-frame'); if(!f.src) f.src='https://davidtheking28-oss.github.io/stock-screener/'; }
   if (name==='investments') invInit();
   _syncMobileNav(name);
   _maybeShowTabIntro(name, tabEl);
