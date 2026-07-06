@@ -7966,7 +7966,9 @@ function switchTab(name, btn) {
   if (name==='missed') missedRender();
   if (name==='screener') {
     const f=document.getElementById('screener-frame');
-    if(!f.src) f.src='https://davidtheking28-oss.github.io/stock-screener/?theme=tj';
+    const scrTheme = document.documentElement.getAttribute('data-theme')==='light' ? 'tj-light' : 'tj';
+    if(!f.src) f.src='https://davidtheking28-oss.github.io/stock-screener/?theme='+scrTheme;
+    else try{ f.contentDocument.documentElement.dataset.theme=scrTheme; }catch(e){}
     const fit=()=>{ f.style.height=Math.max(520, window.innerHeight - f.getBoundingClientRect().top - 14)+'px'; };
     fit();
     if(!f._fitBound){ f._fitBound=true; window.addEventListener('resize', fit); }
@@ -14264,6 +14266,7 @@ function toggleTheme() {
   const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
   localStorage.setItem('tj-theme', next);
   _applyTheme(next);
+  try{ const f=document.getElementById('screener-frame'); if(f?.src) f.contentDocument.documentElement.dataset.theme = next==='light'?'tj-light':'tj'; }catch(e){}
 }
 function _updateThemeBtn(theme) {
   const icon = document.getElementById('theme-icon'), label = document.getElementById('theme-label');
