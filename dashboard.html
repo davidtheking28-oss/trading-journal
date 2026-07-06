@@ -10071,7 +10071,7 @@ const LANG_STRINGS = {
   en: {
     nav_overview:'Home', nav_stocks:'Stocks / Crypto', nav_crypto:'Crypto',
     nav_statistics:'Statistics', nav_settings:'Settings', nav_themes:'Market Pulse',
-    nav_ai:'Minervini', nav_missed:'Missed', nav_investments:'Investments',
+    nav_ai:'Minervini', nav_screener:'Screener', nav_missed:'Missed', nav_investments:'Investments',
     nav_section:'Navigation', add_trade:'Add Trade',
     filter_label:'Filter:', all_time:'All Time', archive:'📅 Archive',
     search:'Search symbol...',
@@ -10200,7 +10200,7 @@ const LANG_STRINGS = {
     set_finnhub_desc:'נדרש לנתוני מחיר מניות בזמן אמת. הרשם חינם ב-finnhub.io — הכנס את המפתח ולחץ Save.',
     set_av_desc:'נתוני פיננסים לכל המניות כולל Small Cap.',
     nav_statistics:'סטטיסטיקות', nav_settings:'הגדרות', nav_themes:'Market Pulse',
-    nav_ai:'Minervini', nav_missed:'פוספסו', nav_investments:'השקעות',
+    nav_ai:'Minervini', nav_screener:'מסנן מניות', nav_missed:'פוספסו', nav_investments:'השקעות',
     nav_section:'ניווט', add_trade:'הוסף עסקה',
     filter_label:'סינון:', all_time:'כל הזמן', archive:'📅 ארכיון',
     search:'חיפוש סימבול...',
@@ -10334,7 +10334,7 @@ function setLang(lang) {
 
   // Top nav
   const tnav = document.querySelectorAll('#top-nav .tnav-btn');
-  const tnavKeys = ['nav_overview','nav_stocks','nav_statistics','nav_themes','nav_ai','nav_missed','nav_investments','nav_settings'];
+  const tnavKeys = ['nav_overview','nav_stocks','nav_statistics','nav_themes','nav_ai','nav_screener','nav_missed','nav_investments','nav_settings'];
   tnav.forEach((btn, i) => { if (tnavKeys[i]) btn.textContent = s[tnavKeys[i]]; });
 
   // Sidebar nav-labels
