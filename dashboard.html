@@ -192,6 +192,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
 
   main { flex: 1; padding: 28px; max-width: none; width: 100%; margin: 0; }
+  main.full-bleed { padding: 0 !important; overflow-y: hidden !important; scrollbar-gutter: auto !important; }
 
   .tab-content { display: none; }
   .tab-content.active { display: block; }
@@ -6307,8 +6308,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
     <!-- ===== INVESTMENTS ===== -->
     <div id="tab-screener" class="tab-content">
-      <iframe id="screener-frame" title="מסנן מניות SEPA" loading="lazy"
-        style="width:100%;height:calc(100vh - 130px);min-height:520px;border:1px solid rgba(255,255,255,0.07);border-radius:14px;background:#0a0a0a"></iframe>
+      <iframe id="screener-frame" title="מסנן מניות SEPA"
+        style="width:100%;height:calc(100vh - 130px);min-height:520px;border:none;display:block;background:#101013"></iframe>
     </div>
 
     <div id="tab-investments" class="tab-content">
@@ -7942,6 +7943,7 @@ function switchTab(name, btn) {
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
   btn.classList.add('active');
   const tabEl = document.getElementById('tab-'+name);
+  document.getElementById('main-content')?.classList.toggle('full-bleed', name==='screener');
   tabEl.classList.add('active');
   tabEl.classList.remove('tab-entering');
   void tabEl.offsetWidth;
@@ -7969,8 +7971,8 @@ function switchTab(name, btn) {
     const scrTheme = document.documentElement.getAttribute('data-theme')==='light' ? 'tj-light' : 'tj';
     if(!f.src) f.src='https://davidtheking28-oss.github.io/stock-screener/?theme='+scrTheme;
     else try{ f.contentDocument.documentElement.dataset.theme=scrTheme; }catch(e){}
-    const fit=()=>{ f.style.height=Math.max(520, window.innerHeight - f.getBoundingClientRect().top - 14)+'px'; };
-    fit();
+    const fit=()=>{ f.style.height=Math.max(520, window.innerHeight - f.getBoundingClientRect().top)+'px'; };
+    fit(); requestAnimationFrame(fit); setTimeout(fit,120);
     if(!f._fitBound){ f._fitBound=true; window.addEventListener('resize', fit); }
   }
   if (name==='investments') invInit();
@@ -7980,6 +7982,11 @@ function switchTab(name, btn) {
 
 // Mobile bottom-nav: route a tap to the real sidebar tab button (keeps the
 // drawer's highlight in sync too), then highlight the matching bar item.
+window.addEventListener('load', () => setTimeout(() => {
+  const f = document.getElementById('screener-frame');
+  if (f && !f.src) f.src = 'https://davidtheking28-oss.github.io/stock-screener/?theme=' + (document.documentElement.getAttribute('data-theme')==='light' ? 'tj-light' : 'tj');
+}, 1500));
+
 function mNav(name) {
   const btn = document.querySelector(`.tab-btn[onclick*="switchTab('${name}'"]`)
            || document.querySelector(`.tnav-btn[onclick*="switchTab('${name}'"]`);
