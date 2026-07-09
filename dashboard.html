@@ -47,6 +47,7 @@
            form-action 'none';
            base-uri    'none';
            object-src  'none';
+           frame-src   https://davidtheking28-oss.github.io;
            frame-ancestors 'none';
            upgrade-insecure-requests;">
 <!-- Referrer Policy: לא לדלוף URL בבקשות -->
@@ -191,6 +192,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
 
   main { flex: 1; padding: 28px; max-width: none; width: 100%; margin: 0; }
+  main.full-bleed { padding: 0 !important; overflow-y: hidden !important; scrollbar-gutter: auto !important; }
 
   .tab-content { display: none; }
   .tab-content.active { display: block; }
@@ -5418,7 +5420,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <button class="tnav-btn" onclick="switchTab('stocks',this)" data-i18n="nav_stocks">Stocks</button>
       <button class="tnav-btn" onclick="switchTab('statistics',this)">Statistics</button>
       <button class="tnav-btn" onclick="switchTab('themes',this)">Market Pulse</button>
-      <button class="tnav-btn" onclick="switchTab('ai',this)">Minervini</button>
+      <button class="tnav-btn" onclick="switchTab('screener',this)">Screener</button>
       <button class="tnav-btn" onclick="switchTab('missed',this)">Missed</button>
       <button class="tnav-btn" onclick="switchTab('investments',this)">Investments</button>
     </div>
@@ -6305,6 +6307,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     </div>
 
     <!-- ===== INVESTMENTS ===== -->
+    <div id="tab-screener" class="tab-content">
+      <iframe id="screener-frame" title="מסנן מניות SEPA"
+        style="width:100%;height:calc(100vh - 130px);min-height:520px;border:none;display:block;background:#101013"></iframe>
+    </div>
+
     <div id="tab-investments" class="tab-content">
       <div class="inv-wrap">
         <div class="inv-header">
@@ -7941,6 +7948,7 @@ function switchTab(name, btn) {
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
   btn.classList.add('active');
   const tabEl = document.getElementById('tab-'+name);
+  document.getElementById('main-content')?.classList.toggle('full-bleed', name==='screener');
   tabEl.classList.add('active');
   tabEl.classList.remove('tab-entering');
   void tabEl.offsetWidth;
@@ -7963,6 +7971,15 @@ function switchTab(name, btn) {
     // Key is pre-filled by loadUserSettings() on login — nothing to do here
   }
   if (name==='missed') missedRender();
+  if (name==='screener') {
+    const f=document.getElementById('screener-frame');
+    const scrTheme = document.documentElement.getAttribute('data-theme')==='light' ? 'tj-light' : 'tj';
+    if(!f.src) f.src='https://davidtheking28-oss.github.io/stock-screener/?theme='+scrTheme;
+    else try{ f.contentDocument.documentElement.dataset.theme=scrTheme; }catch(e){}
+    const fit=()=>{ f.style.height=Math.max(520, window.innerHeight - f.getBoundingClientRect().top)+'px'; };
+    fit(); requestAnimationFrame(fit); setTimeout(fit,120);
+    if(!f._fitBound){ f._fitBound=true; window.addEventListener('resize', fit); }
+  }
   if (name==='investments') invInit();
   _syncMobileNav(name);
   _maybeShowTabIntro(name, tabEl);
@@ -7970,6 +7987,11 @@ function switchTab(name, btn) {
 
 // Mobile bottom-nav: route a tap to the real sidebar tab button (keeps the
 // drawer's highlight in sync too), then highlight the matching bar item.
+window.addEventListener('load', () => setTimeout(() => {
+  const f = document.getElementById('screener-frame');
+  if (f && !f.src) f.src = 'https://davidtheking28-oss.github.io/stock-screener/?theme=' + (document.documentElement.getAttribute('data-theme')==='light' ? 'tj-light' : 'tj');
+}, 1500));
+
 function mNav(name) {
   const btn = document.querySelector(`.tab-btn[onclick*="switchTab('${name}'"]`)
            || document.querySelector(`.tnav-btn[onclick*="switchTab('${name}'"]`);
@@ -10068,7 +10090,7 @@ const LANG_STRINGS = {
   en: {
     nav_overview:'Home', nav_stocks:'Stocks / Crypto', nav_crypto:'Crypto',
     nav_statistics:'Statistics', nav_settings:'Settings', nav_themes:'Market Pulse',
-    nav_ai:'Minervini', nav_missed:'Missed', nav_investments:'Investments',
+    nav_ai:'Minervini', nav_screener:'Screener', nav_missed:'Missed', nav_investments:'Investments',
     nav_section:'Navigation', add_trade:'Add Trade',
     filter_label:'Filter:', all_time:'All Time', archive:'📅 Archive',
     search:'Search symbol...',
@@ -10197,7 +10219,7 @@ const LANG_STRINGS = {
     set_finnhub_desc:'נדרש לנתוני מחיר מניות בזמן אמת. הרשם חינם ב-finnhub.io — הכנס את המפתח ולחץ Save.',
     set_av_desc:'נתוני פיננסים לכל המניות כולל Small Cap.',
     nav_statistics:'סטטיסטיקות', nav_settings:'הגדרות', nav_themes:'Market Pulse',
-    nav_ai:'Minervini', nav_missed:'פוספסו', nav_investments:'השקעות',
+    nav_ai:'Minervini', nav_screener:'מסנן מניות', nav_missed:'פוספסו', nav_investments:'השקעות',
     nav_section:'ניווט', add_trade:'הוסף עסקה',
     filter_label:'סינון:', all_time:'כל הזמן', archive:'📅 ארכיון',
     search:'חיפוש סימבול...',
@@ -10331,7 +10353,7 @@ function setLang(lang) {
 
   // Top nav
   const tnav = document.querySelectorAll('#top-nav .tnav-btn');
-  const tnavKeys = ['nav_overview','nav_stocks','nav_statistics','nav_themes','nav_ai','nav_missed','nav_investments','nav_settings'];
+  const tnavKeys = ['nav_overview','nav_stocks','nav_statistics','nav_themes','nav_screener','nav_missed','nav_investments','nav_settings'];
   tnav.forEach((btn, i) => { if (tnavKeys[i]) btn.textContent = s[tnavKeys[i]]; });
 
   // Sidebar nav-labels
@@ -14261,6 +14283,7 @@ function toggleTheme() {
   const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
   localStorage.setItem('tj-theme', next);
   _applyTheme(next);
+  try{ const f=document.getElementById('screener-frame'); if(f?.src) f.contentDocument.documentElement.dataset.theme = next==='light'?'tj-light':'tj'; }catch(e){}
 }
 function _updateThemeBtn(theme) {
   const icon = document.getElementById('theme-icon'), label = document.getElementById('theme-label');
