@@ -1,6 +1,6 @@
 {
-  "name": "Trading Journal 2.0",
-  "short_name": "TJ 2.0",
+  "name": "ChartRoom",
+  "short_name": "ChartRoom",
   "description": "יומן מסחר מקצועי — רשום, נתח, שפר",
   "start_url": "./dashboard.html",
   "scope": "./",
