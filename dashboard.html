@@ -7682,10 +7682,15 @@ async function _setupRealtimeSync() {
   const activeTab = () => (document.querySelector('.tab-content.active') || {}).id || '';
   let tt;
   const reloadTrades = () => { if (Date.now() < _rtSuppressUntil) return; clearTimeout(tt); tt = setTimeout(_syncReloadTrades, 800); };
+  let mtt;
+  const reloadMissed = () => {
+    if (Date.now() < _rtSuppressUntil) return;
+    if (activeTab() !== 'tab-missed') return;
+    clearTimeout(mtt); mtt = setTimeout(missedRender, 800);
+  };
   _rtChannel = _sb.channel('rt-' + uid)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'trades', filter: f }, reloadTrades)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'missed_opportunities', filter: f },
-        () => { if (activeTab() === 'tab-missed') missedRender(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'missed_opportunities', filter: f }, reloadMissed)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'investments', filter: f },
         () => { if (activeTab() === 'tab-investments') invInit(); })
     .subscribe();
@@ -13591,7 +13596,7 @@ async function bybitSync() {
     const json = await res.json();
     if (!res.ok || json.error) throw new Error(json.error || 'שגיאה');
     _setBrokerBadge('bybit', 'ok');
-    const trades = json.trades || [];
+    const trades = (json.trades || []).filter(t => !_isDeletedImport(t));
     bybitSetStatus(`נמצאו ${trades.length} עסקאות`, 'var(--green)');
     bybitRenderPreview(trades);
   } catch(e) {
@@ -13635,6 +13640,11 @@ function bybitRenderPreview(trades) {
 async function bybitImportOne(idx) {
   const t = window._bybitPendingTrades?.[idx];
   if (!t) return;
+  const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
+  if (_isDeletedImport(t) || await _bybitExisting(t, fp)) {
+    toast(`${t.symbol} כבר קיים ביומן`, 'error');
+    return;
+  }
   const btn = document.getElementById(`bybit-btn-${idx}`);
   if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
   const { data: inserted, error } = await _sb.from('trades').insert(_tradeToRow({ ...t, deleted: false })).select().single();
@@ -14447,6 +14457,7 @@ async function missedAdd() {
   if (!date)                   { toast('הכנס תאריך','error'); return; }
   if (isNaN(price)||price<=0)  { toast('הכנס מחיר תקין','error'); return; }
 
+  _rtSuppress();
   const { data, error } = await _sb.from('missed_opportunities')
     .insert({ user_id: _currentUser.id, symbol: sym, date, price, sector, note })
     .select().single();
@@ -14467,6 +14478,7 @@ async function missedAdd() {
 
 async function missedDelete(id) {
   if (!confirm('למחוק הזדמנות זו? הפעולה אינה הפיכה')) return;
+  _rtSuppress();
   const { error } = await _sb.from('missed_opportunities').delete().eq('id', id).eq('user_id', _currentUser.id);
   if (error) { toast('שגיאה במחיקה','error'); return; }
   await missedRender();
@@ -14550,6 +14562,7 @@ async function missedSaveEdit(id) {
   if (!date)                  { toast('הכנס תאריך','error'); return; }
   if (isNaN(price)||price<=0) { toast('הכנס מחיר תקין','error'); return; }
 
+  _rtSuppress();
   const { error } = await _sb.from('missed_opportunities')
     .update({ symbol: sym, sector, date, price, note })
     .eq('id', id).eq('user_id', _currentUser.id);
