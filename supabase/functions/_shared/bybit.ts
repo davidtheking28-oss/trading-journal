@@ -37,7 +37,7 @@ interface ExecEntry { qty: number; price: number; fee: number; time: number; }
 interface OpenPos { side: 'Long' | 'Short'; entries: ExecEntry[]; }
 
 export interface BybitTrade {
-  type: 'crypto'; ls: 'Long' | 'Short'; symbol: string; entryDate: string; closeDate: string;
+  type: 'crypto'; ls: 'L' | 'S'; symbol: string; entryDate: string; closeDate: string;
   entryPrice: number; exitPrice: number; shares: number; commission: number; pnl: number;
   stop: null; t: never[]; bybit_id: string;
 }
@@ -117,7 +117,7 @@ export async function computeBybitTrades(apiKey: string, apiSecret: string, days
         : Math.round((ep - xp) * closedSize * 100) / 100 - commission;
 
       trades.push({
-        type: 'crypto', ls,
+        type: 'crypto', ls: ls === 'Long' ? 'L' : 'S',
         symbol: symbol.replace(/USDT$|USD$|BUSD$/, ''),
         entryDate: new Date(entryTime).toISOString().split('T')[0],
         closeDate: new Date(time).toISOString().split('T')[0],
