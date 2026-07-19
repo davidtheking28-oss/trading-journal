@@ -9,7 +9,7 @@ Personal trading journal web app — multi-user SaaS built on Supabase.
 - Hosting: GitHub Pages → `https://davidtheking28-oss.github.io/trading-journal/`
 - Supabase project ref: `fnklrqxwyeibfptaxewf`
 
-**Repo:** `c:/Users/david/projects/trading-journal/` (local) | `davidtheking28-oss/trading-journal` (GitHub)
+**Repo:** `c:/Users/david/trading-journal/` (local) | `davidtheking28-oss/trading-journal` (GitHub)
 
 ---
 

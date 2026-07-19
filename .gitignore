@@ -29,3 +29,6 @@ supabase/.temp/
 # Misc
 style-preview.html
 trade*.zip
+
+# Playwright MCP artifacts
+.playwright-mcp/
