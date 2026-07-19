@@ -39,7 +39,7 @@ serve(async (req: Request) => {
   // Full-history backfill (one-time-ish) so a newly-connected user gets everything,
   // not just Bybit's default last-7-days window.
   try {
-    const trades = await computeBybitTrades(apiKey, apiSecret, 365);
+    const trades = await computeBybitTrades(apiKey, apiSecret, 730);
     return new Response(JSON.stringify({ trades }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
   } catch (e) {
     return new Response(JSON.stringify({ error: (e as Error).message || 'Bybit error' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
