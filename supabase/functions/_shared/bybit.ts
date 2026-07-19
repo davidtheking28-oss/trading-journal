@@ -110,11 +110,10 @@ export async function computeBybitTrades(apiKey: string, apiSecret: string, days
       }
 
       const commission = Math.round((entryFees + fee) * 10000) / 10000;
-      const ep = Math.round(avgEntry * 100) / 100;
-      const xp = Math.round(price * 100) / 100;
-      const pnl = ls === 'Long'
-        ? Math.round((xp - ep) * closedSize * 100) / 100 - commission
-        : Math.round((ep - xp) * closedSize * 100) / 100 - commission;
+      const ep = avgEntry;
+      const xp = price;
+      const gross = ls === 'Long' ? (xp - ep) * closedSize : (ep - xp) * closedSize;
+      const pnl = Math.round((gross - commission) * 10000) / 10000;
 
       trades.push({
         type: 'crypto', ls: ls === 'Long' ? 'L' : 'S',
@@ -124,6 +123,12 @@ export async function computeBybitTrades(apiKey: string, apiSecret: string, days
         entryPrice: ep, exitPrice: xp, shares: closedSize, commission, pnl,
         stop: null, t: [], bybit_id: exec.execId,
       });
+
+      const opened = qty - closedSize;
+      if (opened > 0.0001) {
+        const newSide: 'Long' | 'Short' = side === 'Buy' ? 'Long' : 'Short';
+        openPositions.set(symbol, { side: newSide, entries: [{ qty: opened, price, fee: 0, time }] });
+      }
     }
   }
   return trades;

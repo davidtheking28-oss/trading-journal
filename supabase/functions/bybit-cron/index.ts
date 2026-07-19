@@ -40,7 +40,7 @@ Deno.serve(async (req: Request) => {
           const tradeRows = trades.map((t) => ({
             user_id: u.user_id, type: 'crypto', entry_date: t.entryDate, ls: t.ls,
             symbol: t.symbol, entry_price: t.entryPrice, shares: t.shares, stop: t.stop,
-            targets: t.t, close_date: t.closeDate, closed_shares: null, exit_price: t.exitPrice,
+            targets: t.t, close_date: t.closeDate, closed_shares: t.shares, exit_price: t.exitPrice,
             ecn: 0, commission: t.commission, deleted: false, bybit_id: t.bybit_id,
           }));
           // Insert-if-absent on the closing execId: never overwrites manual edits,
