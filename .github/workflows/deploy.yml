@@ -71,3 +71,4 @@ jobs:
           supabase functions deploy theme-tracker     --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
           supabase functions deploy sector-holdings   --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
           supabase functions deploy bybit             --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
+          supabase functions deploy bybit-cron        --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
