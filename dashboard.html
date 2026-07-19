@@ -7358,8 +7358,10 @@ async function _onAuthSuccess(user) {
   loadStockSymbols();
   _autoFlexSync();
   _autoBybitSync();
-  setInterval(() => { _autoFlexSync(); }, 10 * 60 * 1000);
-  setInterval(() => { _autoBybitSync(); }, 30 * 60 * 1000);
+  if (window._flexSyncTimer) clearInterval(window._flexSyncTimer);
+  window._flexSyncTimer = setInterval(() => { _autoFlexSync(); }, 10 * 60 * 1000);
+  if (window._bybitSyncTimer) clearInterval(window._bybitSyncTimer);
+  window._bybitSyncTimer = setInterval(() => { _autoBybitSync(); }, 30 * 60 * 1000);
   loadFearGreed();
   loadCryptoFearGreed();
   ttLoad(false);
@@ -7733,12 +7735,13 @@ function calcPct(tr) {
 
 function stats(trades) {
   const total = trades.reduce((s,t) => s+calcTotal(t), 0);
-  const wins = trades.filter(t => calcPL(t) > 0);
-  const losses = trades.filter(t => calcPL(t) <= 0);
-  const wr = trades.length ? wins.length / trades.length * 100 : 0;
-  const best = trades.length ? Math.max(...trades.map(t=>calcPL(t))) : 0;
-  const worst = trades.length ? Math.min(...trades.map(t=>calcPL(t))) : 0;
-  const avg = trades.length ? trades.reduce((s,t)=>s+calcPL(t),0) / trades.length : 0;
+  const closed = trades.filter(t => t.closeDate || (+t.exitPrice > 0) || (t.t && t.t.length > 0));
+  const wins = closed.filter(t => calcPL(t) > 0);
+  const losses = closed.filter(t => calcPL(t) <= 0);
+  const wr = closed.length ? wins.length / closed.length * 100 : 0;
+  const best = closed.length ? Math.max(...closed.map(t=>calcPL(t))) : 0;
+  const worst = closed.length ? Math.min(...closed.map(t=>calcPL(t))) : 0;
+  const avg = closed.length ? closed.reduce((s,t)=>s+calcPL(t),0) / closed.length : 0;
   return {total, wins:wins.length, losses:losses.length, wr, best, worst, avg, n:trades.length};
 }
 
@@ -7798,9 +7801,9 @@ function fmtDate(s) {
   return d.toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit',year:'2-digit'});
 }
 
-function filterTrades(type, month, year) {
+function filterTrades(type, month, year, ignoreScope) {
   let active;
-  if (type === 'stock' && _tradesScope !== 'stock') {
+  if (!ignoreScope && type === 'stock' && _tradesScope !== 'stock') {
     if (_tradesScope === 'all') {
       active = [
         ...db.stocks.filter(x=>!x.deleted).map(x=>({...x,_tt:'stock'})),
@@ -8573,7 +8576,7 @@ function _expandedRowHTML(tr, key) {
     : `<span style="color:var(--text3);font-size:12px;">${t('tile_no_targets')}</span>`;
 
   const mcLabel = {'green':t('mc_green'),'orange':t('mc_orange'),'red':t('mc_red'),'easy':t('mc_easy'),'hard':t('mc_hard'),'up':t('mc_up'),'press':t('mc_press'),'down':t('mc_down')};
-  const mcSafe = Object.prototype.hasOwnProperty.call(mcLabel, tr.market_cond) ? tr.market_cond : '';
+  const mcSafe = Object.prototype.hasOwnProperty.call(mcLabel, tr.marketCond) ? tr.marketCond : '';
 
   const noteKeep = tr.notes_keep
     ? `<div class="tr-note tr-note-keep"><div class="tr-note-label">${t('tile_keep')}</div><div class="tr-note-text">${esc(tr.notes_keep)}</div></div>` : '';
@@ -8773,7 +8776,7 @@ function renderTable(type) {
       <td>${fmtDate(tr.entryDate)}</td>
       <td><span class="badge badge-${tr.ls}">${tr.ls}</span></td>
       <td>${tradeStatus(tr)}</td>
-      <td>${erBadge(tr.entry_reason)}</td>
+      <td>${erBadge(tr.entryReason)}</td>
       <td><strong>${esc(tr.symbol)}</strong></td>
       <td class="sensitive">$${fmtPrice(tr.entryPrice)}</td>
       <td>${tr.shares}</td>
@@ -8934,7 +8937,7 @@ function showCalTradeModal(type, id) {
     : `<span style="color:var(--text3);font-size:12px;">${t('tile_no_targets')}</span>`;
 
   const mcLabel = {'green':t('mc_green'),'orange':t('mc_orange'),'red':t('mc_red'),'easy':t('mc_easy'),'hard':t('mc_hard'),'up':t('mc_up'),'press':t('mc_press'),'down':t('mc_down')};
-  const mcSafe = Object.prototype.hasOwnProperty.call(mcLabel, tr.market_cond) ? tr.market_cond : '';
+  const mcSafe = Object.prototype.hasOwnProperty.call(mcLabel, tr.marketCond) ? tr.marketCond : '';
 
   const noteKeep = tr.notes_keep
     ? `<div class="tr-note tr-note-keep"><div class="tr-note-label">${t('tile_keep')}</div><div class="tr-note-text">${esc(tr.notes_keep)}</div></div>` : '';
@@ -9767,22 +9770,26 @@ function qaSave() {
 
   const type = isCrypto ? 'crypto' : 'stock';
   const arr  = isCrypto ? db.crypto : db.stocks;
-  const newId = arr.length ? Math.max(...arr.map(t => t.id)) + 1 : 1;
 
   const trade = {
-    id: newId, type,
+    type,
     entryDate, ls: qaLS, symbol, entryPrice, shares, stop,
     t: [], closeDate: '', closedShares: 0, exitPrice: 0,
     ecn: 0, commission,
     notes_keep: '', notes_improve: note,
-    entry_reason: ER_OPTIONS.includes(qaER) ? qaER : '',
-    market_cond:  document.getElementById('qa-market-cond').value || '',
-    process_score: qaPS || 0,
+    entryReason: ER_OPTIONS.includes(qaER) ? qaER : '',
+    marketCond:  document.getElementById('qa-market-cond').value || '',
+    processScore: qaPS || 0,
     mood: sanitizeText(document.getElementById('qa-mood').value, 300)
   };
 
-  arr.push(trade);
-  saveDB();
+  _sb.from('trades').insert(_tradeToRow(trade)).select().single().then(({ data, error }) => {
+    if (error) { toast('שגיאה בשמירה: ' + error.message, 'error'); return; }
+    arr.unshift(_rowToTrade(data));
+    renderTable(type);
+    renderOverview();
+    initFilters();
+  });
   auditLog('trade_added', symbol + ' (quick-add)');
   toast('✅ עסקה נוספה: ' + symbol, 'success');
 
@@ -10477,8 +10484,8 @@ function renderOverview() {
   const info = document.getElementById('ov-filter-info');
   if (info) info.textContent = (month||year) ? `${month?months()[+month-1]:''} ${year||''}`.trim() : '';
 
-  let stTrades = filterTrades('stock', month, year);
-  let crTrades = filterTrades('crypto', month, year);
+  let stTrades = filterTrades('stock', month, year, true);
+  let crTrades = filterTrades('crypto', month, year, true);
   let trades;
   if (ovScope==='stock') trades = stTrades;
   else if (ovScope==='crypto') trades = crTrades;
@@ -10571,6 +10578,9 @@ async function _updateLivePL() {
   const el  = document.getElementById('kpi-live-pl');
   const sub = document.getElementById('kpi-live-sub');
   if (!el) return;
+  if (document.hidden) return;
+  const ovTab = document.getElementById('tab-overview');
+  if (ovTab && !ovTab.classList.contains('active')) return;
   const open = [...db.stocks, ...db.crypto].filter(t =>
     !t.deleted && (!t.exitPrice || t.exitPrice === 0) && t.symbol && t.entryPrice > 0
   );
@@ -10592,8 +10602,8 @@ async function _updateLivePL() {
       const price = data.c;
       if (!price) return;
       open.filter(t => t.symbol.toUpperCase() === sym).forEach(t => {
-        const shares = (t.shares || t.quantity || 0) - (t.closedShares || 0);
-        const side = (t.side || '').toLowerCase() === 'short' ? -1 : 1;
+        const shares = (t.shares || 0) - (t.closedShares || 0);
+        const side = t.ls === 'S' ? -1 : 1;
         totalUnreal += side * shares * (price - t.entryPrice);
       });
     } catch {}
@@ -11092,9 +11102,9 @@ function getFormTrade() {
                     : 2.5,
     notes_keep:    sanitizeText(document.getElementById('m-notes-keep').value, 500),
     notes_improve: sanitizeText(document.getElementById('m-notes-improve').value, 500),
-    entry_reason:  ER_OPTIONS.includes(modalER) ? modalER : '',
-    market_cond:   document.getElementById('m-market-cond').value || '',
-    process_score: modalPS || 0,
+    entryReason:  ER_OPTIONS.includes(modalER) ? modalER : '',
+    marketCond:   document.getElementById('m-market-cond').value || '',
+    processScore: modalPS || 0,
     mood:          (document.getElementById('m-mood').value || '').trim().slice(0, 300)
   };
 }
@@ -11315,7 +11325,7 @@ function exportCSV(type) {
     const pct = risk ? tot/risk*100 : 0;
     const tgts= (t.t||[]).map((tg,i)=>`T${i+1}:${tg.shares}@${tg.price}`).join(';');
     return [
-      t.id, t.assetType, t.entryDate, t.ls, csvSafe(t.entry_reason||''), csvSafe(t.symbol),
+      t.id, t.assetType, t.entryDate, t.ls, csvSafe(t.entryReason||''), csvSafe(t.symbol),
       t.entryPrice, t.shares, t.stop, tgts,
       t.closeDate, t.closedShares, t.exitPrice,
       csvSafe(SECTOR_MAP[(t.symbol||'').toUpperCase().replace(/USDT\.P|USDT|\.P$/,'')] || ''), t.commission,
@@ -11939,7 +11949,7 @@ async function _autoBybitSync() {
       const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
       if (_isDeletedImport(t)) continue;
       if (await _bybitExisting(t, fp)) continue;
-      const { data, error } = await _sb.from('trades').insert(_tradeToRow({ ...t, deleted: false })).select().single();
+      const { data, error } = await _sb.from('trades').insert(_tradeToRow({ ...t, closedShares: t.shares, deleted: false })).select().single();
       if (!error) { db.crypto.unshift(_rowToTrade(data)); imported++; }
     }
     if (imported > 0) {
@@ -13446,7 +13456,7 @@ function flexParseXML(xml) {
         shares:     lot.qty,
         commission: r6(lot.comm + lot.exits.reduce((s, e) => s + e.comm, 0)),
         stop: 0, ecn: 0,
-        entry_reason: '', market_cond: '', process_score: 0,
+        entryReason: '', marketCond: '', processScore: 0,
         notes_keep: '', notes_improve: '',
       };
       if (lot.tid) trade.ibkr_id = lot.tid; // IBKR's unique entry-execution id
@@ -13599,7 +13609,7 @@ async function bybitImportOne(idx) {
   }
   const btn = document.getElementById(`bybit-btn-${idx}`);
   if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
-  const { data: inserted, error } = await _sb.from('trades').insert(_tradeToRow({ ...t, deleted: false })).select().single();
+  const { data: inserted, error } = await _sb.from('trades').insert(_tradeToRow({ ...t, closedShares: t.shares, deleted: false })).select().single();
   if (error) {
     toast('שגיאה בשמירה: ' + error.message, 'error');
     if (btn) { btn.disabled = false; btn.textContent = 'Import'; }
@@ -13619,7 +13629,7 @@ async function bybitImportAll() {
     const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
     if (_isDeletedImport(t)) { dupes++; continue; }
     if (await _bybitExisting(t, fp)) { dupes++; continue; }
-    const { data, error } = await _sb.from('trades').insert(_tradeToRow({ ...t, deleted: false })).select().single();
+    const { data, error } = await _sb.from('trades').insert(_tradeToRow({ ...t, closedShares: t.shares, deleted: false })).select().single();
     if (!error) { db.crypto.unshift(_rowToTrade(data)); imported++; }
   }
   renderTable('crypto');
