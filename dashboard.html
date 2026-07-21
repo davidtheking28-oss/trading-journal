@@ -59,18 +59,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<!-- Supabase JS client — pinned to 2.105.3 with SRI -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.3/dist/umd/supabase.min.js"
-        integrity="sha384-iWpUQPQzWsFiosLgsS8o+e6E8y3Gm+EW2m/vAAo7A2H3fuc4KOKEx+5CAord2H2z"
-        crossorigin="anonymous"></script>
 <script>
 const SUPABASE_URL = 'https://fnklrqxwyeibfptaxewf.supabase.co';
 const SUPABASE_ANON = '__SUPABASE_ANON__';
 </script>
-<!-- SRI — chart.js 4.4.4 מוצמד לגרסה עם hash מאומת -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"
-        integrity="sha384-NrKB+u6Ts6AtkIhwPixiKTzgSKNblyhlk0Sohlgar9UHUBzai/sgnNNWWd291xqt"
-        crossorigin="anonymous"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -7037,6 +7029,16 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
 <div class="toast-container" id="toasts"></div>
 
+<!-- Loaded here (end of body) rather than <head> so the page's markup parses
+     and paints before blocking on these two library fetches. -->
+<!-- Supabase JS client — pinned to 2.105.3 with SRI -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.3/dist/umd/supabase.min.js"
+        integrity="sha384-iWpUQPQzWsFiosLgsS8o+e6E8y3Gm+EW2m/vAAo7A2H3fuc4KOKEx+5CAord2H2z"
+        crossorigin="anonymous"></script>
+<!-- SRI — chart.js 4.4.4 מוצמד לגרסה עם hash מאומת -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"
+        integrity="sha384-NrKB+u6Ts6AtkIhwPixiKTzgSKNblyhlk0Sohlgar9UHUBzai/sgnNNWWd291xqt"
+        crossorigin="anonymous"></script>
 <script>
 // ─────────────────────────────────────────────
 // SUPABASE CLIENT
@@ -11684,10 +11686,13 @@ async function _flexImportInner(trades) {
   trades.forEach(t => {
     const arr = t.type === 'crypto' ? db.crypto : db.stocks;
 
-    // Orphan close — sell with no matching buy in the window; close any open
-    // position with the same symbol.
+    // Orphan close — an execution closing a position opened before the Flex
+    // window. Matched only against an open position of the same side
+    // (_closeLs), and preferring an exact share-count match when several are
+    // open, so a long and a short in the same symbol can't cross-match.
     if (t._orphanClose) {
-      const open = arr.find(x => !x.deleted && x.symbol === t.symbol && !x.exitPrice);
+      const candidates = arr.filter(x => !x.deleted && x.symbol === t.symbol && !x.exitPrice && (!t._closeLs || x.ls === t._closeLs));
+      const open = candidates.find(x => Math.abs((x.shares || 0) - (t.closedShares || 0)) < 0.01) || candidates[0];
       if (open) {
         open.exitPrice    = t.exitPrice;
         open.closeDate    = t.closeDate;
@@ -13418,6 +13423,11 @@ function flexParseXML(xml) {
     const price = +el.getAttribute('tradePrice') || +el.getAttribute('price') || 0;
     const comm  = Math.abs(+el.getAttribute('ibCommission') || +el.getAttribute('commission') || 0);
     const tid   = el.getAttribute('tradeID') || el.getAttribute('ibExecID') || ''; // IBKR's unique execution id
+    // IBKR reports whether an execution opens or closes a position when the
+    // Flex query includes the "Open/Close Indicator" column — authoritative
+    // when present, since it removes any guesswork around shorts.
+    const ocRaw = (el.getAttribute('openCloseIndicator') || '').toUpperCase();
+    const oc    = ocRaw === 'O' ? 'O' : ocRaw === 'C' ? 'C' : null;
     if (!sym || !dt || !side || !qty || !price) return;
 
     // Parse date: yyyyMMdd;HHmmss
@@ -13427,30 +13437,29 @@ function flexParseXML(xml) {
       : '';
     if (!date) return;
 
-    if (!bySymbol[sym]) bySymbol[sym] = { buys: [], sells: [] };
-    const entry = { date, price, qty, comm, dt, tid };
-    if (side === 'BUY')  bySymbol[sym].buys.push(entry);
-    if (side === 'SELL') bySymbol[sym].sells.push(entry);
+    if (!bySymbol[sym]) bySymbol[sym] = [];
+    bySymbol[sym].push({ date, price, qty, comm, dt, tid, side, oc });
   });
 
   const trades = [];
   const r6 = n => Math.round(n * 1e6) / 1e6;
-  Object.entries(bySymbol).forEach(([symbol, { buys, sells }]) => {
+  Object.entries(bySymbol).forEach(([symbol, execsIn]) => {
     const type = symIsCrypto(symbol) ? 'crypto' : 'stock';
 
-    // Single chronological execution stream so closes are matched to the right
-    // opening lot, FIFO. Each BUY opens/adds a long lot; each SELL consumes open
-    // long lots (consuming shares so the same sell is never reused). A SELL with
-    // no open lot left is an orphan close (position opened before the window).
-    const execs = [
-      ...buys.map(b  => ({ ...b, side: 'BUY' })),
-      ...sells.map(s => ({ ...s, side: 'SELL' })),
-    ].sort((a, b) => a.dt.localeCompare(b.dt));
+    // Single chronological execution stream, side-aware: a BUY first covers
+    // any open short lots (FIFO) before opening a new long lot; a SELL first
+    // closes any open long lots (FIFO) before opening a new short lot. When
+    // the Flex report includes openCloseIndicator that signal is trusted
+    // directly instead of inferred from queue state. Leftover close volume
+    // with nothing open in-window is a pre-window position (orphan close),
+    // tagged with the side it closes so the importer only matches an open
+    // position of that same direction.
+    const execs = [...execsIn].sort((a, b) => a.dt.localeCompare(b.dt));
 
-    let lots = []; // open long lots: { qty, remaining, price, comm, date, dt, exits:[] }
-    const finalize = lot => {
+    let longLots = [], shortLots = [];
+    const finalize = (lot, ls) => {
       const trade = {
-        symbol, type, ls: 'L',
+        symbol, type, ls,
         entryDate:  lot.date,
         entryPrice: lot.price,
         shares:     lot.qty,
@@ -13469,36 +13478,51 @@ function flexParseXML(xml) {
       }
       trades.push(trade);
     };
-
-    for (const ex of execs) {
-      if (ex.side === 'BUY') {
-        lots.push({ qty: ex.qty, remaining: ex.qty, price: ex.price, comm: ex.comm, date: ex.date, dt: ex.dt, tid: ex.tid, exits: [] });
-        continue;
-      }
-      // SELL — close open long lots FIFO, splitting across lots as needed.
+    const openLot = (ex, queue) => queue.push({ qty: ex.qty, remaining: ex.qty, price: ex.price, comm: ex.comm, date: ex.date, dt: ex.dt, tid: ex.tid, exits: [] });
+    const closeAgainst = (ex, queue, ls) => {
       let q = ex.qty;
-      while (q > 1e-9 && lots.length) {
-        const lot = lots[0];
+      while (q > 1e-9 && queue.length) {
+        const lot = queue[0];
         const take = Math.min(lot.remaining, q);
         lot.exits.push({ price: ex.price, qty: take, date: ex.date, dt: ex.dt, comm: ex.comm * (take / ex.qty) });
         lot.remaining -= take;
         q -= take;
-        if (lot.remaining <= 1e-9) { lots.shift(); finalize(lot); }
+        if (lot.remaining <= 1e-9) { queue.shift(); finalize(lot, ls); }
       }
-      if (q > 1e-9) {
-        // No open lot to close — position was opened before the Flex window.
-        trades.push({
-          symbol, type, _orphanClose: true,
-          exitPrice:    ex.price,
-          closeDate:    ex.date,
-          closedShares: q,
-          commission:   r6(ex.comm * (q / ex.qty)),
-          _exitDt:      ex.dt,
-          ...(ex.tid ? { ibkr_id: ex.tid } : {}),
-        });
+      return q; // leftover, unmatched within this window
+    };
+
+    for (const ex of execs) {
+      if (ex.side === 'BUY') {
+        // openCloseIndicator, when present, is authoritative
+        if (ex.oc === 'O') { openLot(ex, longLots); continue; }
+        if (ex.oc === 'C') {
+          const left = closeAgainst(ex, shortLots, 'S');
+          if (left > 1e-9) trades.push({ symbol, type, _orphanClose: true, _closeLs: 'S',
+            exitPrice: ex.price, closeDate: ex.date, closedShares: left,
+            commission: r6(ex.comm * (left / ex.qty)), _exitDt: ex.dt, ...(ex.tid ? { ibkr_id: ex.tid } : {}) });
+          continue;
+        }
+        // No indicator — infer: cover open shorts first, excess opens a new long.
+        const left = closeAgainst(ex, shortLots, 'S');
+        if (left > 1e-9) openLot({ ...ex, qty: left, comm: ex.comm * (left / ex.qty) }, longLots);
+        continue;
       }
+      // SELL
+      if (ex.oc === 'O') { openLot(ex, shortLots); continue; }
+      if (ex.oc === 'C') {
+        const left = closeAgainst(ex, longLots, 'L');
+        if (left > 1e-9) trades.push({ symbol, type, _orphanClose: true, _closeLs: 'L',
+          exitPrice: ex.price, closeDate: ex.date, closedShares: left,
+          commission: r6(ex.comm * (left / ex.qty)), _exitDt: ex.dt, ...(ex.tid ? { ibkr_id: ex.tid } : {}) });
+        continue;
+      }
+      // No indicator — infer: close open longs first, excess opens a new short.
+      const left = closeAgainst(ex, longLots, 'L');
+      if (left > 1e-9) openLot({ ...ex, qty: left, comm: ex.comm * (left / ex.qty) }, shortLots);
     }
-    lots.forEach(finalize); // leftover open / partially-closed positions
+    longLots.forEach(lot => finalize(lot, 'L'));   // leftover open / partially-closed longs
+    shortLots.forEach(lot => finalize(lot, 'S'));  // leftover open / partially-closed shorts
   });
 
   return trades;
@@ -13794,14 +13818,29 @@ async function totpToggle() {
 // ── AES-GCM encryption for sensitive localStorage values ──
 // Key = PBKDF2( pinHash + origin, salt, 100k rounds )
 // Without PIN: origin-only key (weaker but better than plaintext)
-const SEC_SALT = new TextEncoder().encode('tj-credentials-v2');
+// v2 used a hardcoded salt shared by every install — a precomputed rainbow
+// table against it would work for all users at once. v3 salts per-device
+// (random, generated once, stored locally) so each install must be attacked
+// individually. v2 entries are transparently decrypted with the legacy salt
+// and re-encrypted under v3 on next read.
+const SEC_SALT_LEGACY_V2 = new TextEncoder().encode('tj-credentials-v2');
+const SEC_SALT_KEY = 'tj-sec-salt-v3';
+function _secSaltV3() {
+  let stored = localStorage.getItem(SEC_SALT_KEY);
+  if (!stored) {
+    const bytes = crypto.getRandomValues(new Uint8Array(16));
+    stored = btoa(String.fromCharCode(...bytes));
+    localStorage.setItem(SEC_SALT_KEY, stored);
+  }
+  return Uint8Array.from(atob(stored), c => c.charCodeAt(0));
+}
 
-async function _secKey() {
+async function _secKey(salt) {
   const pinHash = localStorage.getItem(PIN_KEY) || 'no-pin';
   const raw = new TextEncoder().encode(pinHash + 'tj-local-app');
   const km  = await crypto.subtle.importKey('raw', raw, 'PBKDF2', false, ['deriveKey']);
   return crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt: SEC_SALT, iterations: 100000, hash: 'SHA-256' },
+    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
     km,
     { name: 'AES-GCM', length: 256 },
     false, ['encrypt','decrypt']
@@ -13810,7 +13849,7 @@ async function _secKey() {
 
 async function secStore(lsKey, value) {
   if (!value) { localStorage.removeItem(lsKey); return; }
-  const key = await _secKey();
+  const key = await _secKey(_secSaltV3());
   const iv  = crypto.getRandomValues(new Uint8Array(12));
   const enc = await crypto.subtle.encrypt(
     { name: 'AES-GCM', iv },
@@ -13818,7 +13857,7 @@ async function secStore(lsKey, value) {
     new TextEncoder().encode(value)
   );
   localStorage.setItem(lsKey, JSON.stringify({
-    v: 2,
+    v: 3,
     iv:   Array.from(iv),
     data: Array.from(new Uint8Array(enc))
   }));
@@ -13830,13 +13869,16 @@ async function secLoad(lsKey) {
   try {
     const parsed = JSON.parse(raw);
     if (!parsed.v || parsed.v < 2) return ''; // plaintext remnant → ignore
-    const key = await _secKey();
+    const salt = parsed.v >= 3 ? _secSaltV3() : SEC_SALT_LEGACY_V2;
+    const key = await _secKey(salt);
     const dec = await crypto.subtle.decrypt(
       { name: 'AES-GCM', iv: new Uint8Array(parsed.iv) },
       key,
       new Uint8Array(parsed.data)
     );
-    return new TextDecoder().decode(dec);
+    const value = new TextDecoder().decode(dec);
+    if (parsed.v < 3) await secStore(lsKey, value); // migrate to per-device salt
+    return value;
   } catch(e) {
     console.warn('[Security] Failed to decrypt credential:', lsKey);
     localStorage.removeItem(lsKey); // wipe corrupted/unreadable data
@@ -15727,13 +15769,17 @@ function invAutoSector(idx) {
   }, 600);
 }
 
+let _invSaveTotalTimer = null;
 function invAutoSaveTotal() {
   const val = document.getElementById('inv-portfolio-total')?.value || '';
   // The portfolio total lives in user_settings — persist only that. Never rewrite
   // the holdings here: invLoad() may return stale localStorage and would clobber
   // the precise holdings stored in the DB.
   if (_invData) _invData.portfolioTotal = val;
-  _saveUserSettings({ portfolio_total: val ? +val : null });
+  clearTimeout(_invSaveTotalTimer);
+  _invSaveTotalTimer = setTimeout(() => {
+    _saveUserSettings({ portfolio_total: val ? +val : null });
+  }, 500);
 }
 
 function invUpdateDonut(byCat, portfolioTotal, cash = 0) {

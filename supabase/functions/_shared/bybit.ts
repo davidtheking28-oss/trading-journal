@@ -43,7 +43,9 @@ export interface BybitTrade {
 }
 
 // Fetch every Linear Trade execution in the last `days`, paging backward in
-// 7-day windows (3 cursor pages each). Throws on a Bybit API error.
+// 7-day windows and following the cursor within each window until Bybit
+// reports no more pages — no fixed page cap, so a very active window can't
+// silently lose executions past an arbitrary limit. Throws on a Bybit API error.
 async function fetchExecutions(apiKey: string, apiSecret: string, days: number): Promise<Record<string, string>[]> {
   const all: Record<string, string>[] = [];
   const now = Date.now();
@@ -51,7 +53,7 @@ async function fetchExecutions(apiKey: string, apiSecret: string, days: number):
   for (let winEnd = now; winEnd > oldest; winEnd -= WEEK_MS) {
     const winStart = Math.max(winEnd - WEEK_MS, oldest);
     let cursor = '';
-    for (let page = 0; page < 3; page++) {
+    while (true) {
       const params: Record<string, string> = {
         category: 'linear', limit: '200', execType: 'Trade',
         startTime: String(winStart), endTime: String(winEnd),
