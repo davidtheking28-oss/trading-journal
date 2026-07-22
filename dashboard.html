@@ -7797,6 +7797,12 @@ function fmtR(tot, stopRisk) {
   const cls = r > 0 ? 'num-green' : r < 0 ? 'num-red' : '';
   return `<span class="${cls}">${r >= 0 ? '+' : ''}${r.toFixed(2)}R</span>`;
 }
+// "Today" in the visitor's own local calendar day — new Date().toISOString()
+// converts to UTC first, which silently rolls back to yesterday's date for
+// anyone east of UTC during their early-morning hours (e.g. Israel, 00:00-02:xx).
+function _todayLocal(d = new Date()) {
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
 function fmtDate(s) {
   if (!s) return '—';
   const d = new Date(s+'T00:00:00');
@@ -9267,9 +9273,8 @@ let qaLS = 'L';
 let qaCollapsed = false; // managed by modal open/close
 
 function qaInit() {
-  const today = new Date().toISOString().split('T')[0];
   const el = document.getElementById('qa-date');
-  if (el && !el.value) el.value = today;
+  if (el && !el.value) el.value = _todayLocal();
 }
 
 function qaToggle() { fabToggle(); }
@@ -9281,7 +9286,7 @@ function fabToggle() {
   document.body.style.overflow = isOpen ? 'hidden' : '';
   if (isOpen) {
     const d = document.getElementById('qa-date');
-    if (d && !d.value) d.value = new Date().toISOString().split('T')[0];
+    if (d && !d.value) d.value = _todayLocal();
     setTimeout(() => document.getElementById('qa-symbol')?.focus(), 80);
   }
 }
@@ -10987,7 +10992,7 @@ function openModal(type, tr=null) {
   document.getElementById('modal-title').textContent = tr ? t('modal_edit') : t('modal_add');
   document.getElementById('m-id').value = tr ? tr.id : '';
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = _todayLocal();
   document.getElementById('m-entryDate').value   = tr ? (tr.entryDate||'')    : today;
   document.getElementById('m-ls').value          = tr ? (tr.ls||'L')           : 'L';
   document.getElementById('m-symbol').value      = tr ? (tr.symbol||'')        : '';
@@ -12503,7 +12508,7 @@ function ibkrConfirmTrade(idx) {
   const newTrade = {
     id: arr.length ? Math.max(...arr.map(x=>x.id))+1 : 1,
     type,
-    entryDate: t.entryDate || new Date().toISOString().split('T')[0],
+    entryDate: t.entryDate || _todayLocal(),
     ls: t.ls,
     symbol: t.symbol,
     entryPrice: t.entryPrice,
@@ -15596,7 +15601,7 @@ function invToggleBuyRow(i) {
   document.getElementById('inv-pos-qty').value = '';
   document.getElementById('inv-pos-price').value = '';
   document.getElementById('inv-pos-current-price').value = currentPrice || '';
-  document.getElementById('inv-pos-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('inv-pos-date').value = _todayLocal();
   document.getElementById('inv-pos-result').style.display = 'none';
   invSetPosMode('buy');
 

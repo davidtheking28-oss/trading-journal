@@ -8,6 +8,15 @@ const BYBIT_BASE = 'https://api.bybit.com';
 const encoder = new TextEncoder();
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
+// Calendar date in the trader's local (Israel) timezone. This server has no
+// per-user timezone, and Date.toISOString() renders in UTC — which silently
+// rolls a late-night Israel trade (00:00-02:xx local, still the previous day
+// in UTC) back onto the wrong journal day.
+const IL_TZ_FMT = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit' });
+function localDateStr(ms: number): string {
+  return IL_TZ_FMT.format(new Date(ms)); // en-CA formats as yyyy-mm-dd
+}
+
 async function hmacSha256(secret: string, message: string): Promise<string> {
   const key = await crypto.subtle.importKey(
     'raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
@@ -120,8 +129,8 @@ export async function computeBybitTrades(apiKey: string, apiSecret: string, days
       trades.push({
         type: 'crypto', ls: ls === 'Long' ? 'L' : 'S',
         symbol: symbol.replace(/USDT$|USD$|BUSD$/, ''),
-        entryDate: new Date(entryTime).toISOString().split('T')[0],
-        closeDate: new Date(time).toISOString().split('T')[0],
+        entryDate: localDateStr(entryTime),
+        closeDate: localDateStr(time),
         entryPrice: ep, exitPrice: xp, shares: closedSize, commission, pnl,
         stop: null, t: [], bybit_id: exec.execId,
       });
