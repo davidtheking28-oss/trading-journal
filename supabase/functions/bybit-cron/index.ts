@@ -7,7 +7,12 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
 import { computeBybitTrades } from '../_shared/bybit.ts';
 
-const RECENT_DAYS = 9; // a couple of 7-day windows — plenty for a 30-min cadence
+// Wide enough to cover the entry leg of most swing holds — computeBybitTrades
+// silently skips (rather than mis-prices) a closing execution whose opening
+// leg falls outside this window, so a too-short window here means missed
+// trades, not wrong ones, but wider is still better. Cheap now that
+// fetchExecutions has no per-window page cap.
+const RECENT_DAYS = 45;
 
 Deno.serve(async (req: Request) => {
   const sb = createClient(
