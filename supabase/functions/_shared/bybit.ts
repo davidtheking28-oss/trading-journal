@@ -102,43 +102,51 @@ export async function computeBybitTrades(apiKey: string, apiSecret: string, days
       openPositions.get(symbol)!.entries.push({ qty, price, fee, time });
     } else {
       const pos = openPositions.get(symbol);
-      let entryTime: number, avgEntry: number, entryFees: number, ls: 'Long' | 'Short';
+      const opened = qty - closedSize;
+      // A flip's execution fee covers both the close and the newly opened
+      // leg — split it by quantity so neither side is charged the full fee
+      // (the close used to eat 100% of it while the new leg got fee:0).
+      const closeFeeShare = opened > 0.0001 ? fee * (closedSize / qty) : fee;
+      const openFeeShare = fee - closeFeeShare;
 
       if (pos) {
-        ls = pos.side;
-        entryTime = pos.entries[0].time;
+        const ls = pos.side;
+        const entryTime = pos.entries[0].time;
         const totalQty = pos.entries.reduce((s, e) => s + e.qty, 0);
-        avgEntry = pos.entries.reduce((s, e) => s + e.price * e.qty, 0) / totalQty;
-        entryFees = pos.entries.reduce((s, e) => s + e.fee, 0);
+        const avgEntry = pos.entries.reduce((s, e) => s + e.price * e.qty, 0) / totalQty;
+        const totalEntryFees = pos.entries.reduce((s, e) => s + e.fee, 0);
+        // Prorate accumulated entry fees by the fraction of the position being
+        // closed now, carrying the rest forward — collapsing to fee:0 here
+        // used to dump 100% of the entry fee onto the first partial close and
+        // leave later partial closes of the same lot with none.
+        const entryFeeShare = totalEntryFees * (Math.min(closedSize, totalQty) / totalQty);
         const remaining = totalQty - closedSize;
         if (remaining <= 0.0001) openPositions.delete(symbol);
-        else pos.entries = [{ qty: remaining, price: avgEntry, fee: 0, time: pos.entries[0].time }];
-      } else {
-        ls = side === 'Sell' ? 'Long' : 'Short';
-        entryTime = time;
-        avgEntry = price;
-        entryFees = 0;
+        else pos.entries = [{ qty: remaining, price: avgEntry, fee: totalEntryFees - entryFeeShare, time: pos.entries[0].time }];
+
+        const commission = Math.round((entryFeeShare + closeFeeShare) * 10000) / 10000;
+        const ep = avgEntry;
+        const xp = price;
+        const gross = ls === 'Long' ? (xp - ep) * closedSize : (ep - xp) * closedSize;
+        const pnl = Math.round((gross - commission) * 10000) / 10000;
+
+        trades.push({
+          type: 'crypto', ls: ls === 'Long' ? 'L' : 'S',
+          symbol: symbol.replace(/USDT$|USD$|BUSD$/, ''),
+          entryDate: localDateStr(entryTime),
+          closeDate: localDateStr(time),
+          entryPrice: ep, exitPrice: xp, shares: closedSize, commission, pnl,
+          stop: null, t: [], bybit_id: exec.execId,
+        });
       }
+      // else: this execution closes a position whose opening leg isn't in
+      // the fetched window (e.g. bybit-cron's short lookback vs. a longer
+      // swing hold). We have no real entry price to compute P&L from here —
+      // skip rather than fabricate entryPrice = exitPrice (silent zero P&L).
 
-      const commission = Math.round((entryFees + fee) * 10000) / 10000;
-      const ep = avgEntry;
-      const xp = price;
-      const gross = ls === 'Long' ? (xp - ep) * closedSize : (ep - xp) * closedSize;
-      const pnl = Math.round((gross - commission) * 10000) / 10000;
-
-      trades.push({
-        type: 'crypto', ls: ls === 'Long' ? 'L' : 'S',
-        symbol: symbol.replace(/USDT$|USD$|BUSD$/, ''),
-        entryDate: localDateStr(entryTime),
-        closeDate: localDateStr(time),
-        entryPrice: ep, exitPrice: xp, shares: closedSize, commission, pnl,
-        stop: null, t: [], bybit_id: exec.execId,
-      });
-
-      const opened = qty - closedSize;
       if (opened > 0.0001) {
         const newSide: 'Long' | 'Short' = side === 'Buy' ? 'Long' : 'Short';
-        openPositions.set(symbol, { side: newSide, entries: [{ qty: opened, price, fee: 0, time }] });
+        openPositions.set(symbol, { side: newSide, entries: [{ qty: opened, price, fee: openFeeShare, time }] });
       }
     }
   }
