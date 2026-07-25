@@ -5156,7 +5156,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
     /* Touch targets */
     .tnav-btn { min-height: 44px; padding: 0 10px; }
-    .btn-icon  { min-width: 36px; min-height: 36px; padding: 8px; }
+    .btn-icon  { min-width: 44px; min-height: 44px; padding: 10px; }
     .tab-btn   { min-height: 44px; }
   }
 
@@ -5957,7 +5957,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
                 <div class="ibkr-field-label">Token</div>
                 <div style="position:relative;">
                   <input id="flex-token" class="form-control" type="password" placeholder="••••••••" autocomplete="off" style="font-size:12px;padding:6px 36px 6px 10px;" onkeydown="if(event.key==='Enter')flexSave()">
-                  <button type="button" onclick="toggleReveal('flex-token',this)" tabindex="-1" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:2px;color:var(--text3);line-height:0;">
+                  <button type="button" onclick="toggleReveal('flex-token',this)" tabindex="-1" aria-label="הצג/הסתר טוקן" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:2px;color:var(--text3);line-height:0;">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
                 </div>
@@ -6009,7 +6009,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
                 <div class="ibkr-field-label">API Key</div>
                 <div style="position:relative;">
                   <input id="bybit-api-key" class="form-control" type="password" placeholder="••••••••" autocomplete="off" style="font-size:12px;padding:6px 36px 6px 10px;" onkeydown="if(event.key==='Enter')bybitSave()">
-                  <button type="button" onclick="toggleReveal('bybit-api-key',this)" tabindex="-1" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:2px;color:var(--text3);line-height:0;">
+                  <button type="button" onclick="toggleReveal('bybit-api-key',this)" tabindex="-1" aria-label="הצג/הסתר מפתח API" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:2px;color:var(--text3);line-height:0;">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
                 </div>
@@ -6018,7 +6018,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
                 <div class="ibkr-field-label">API Secret</div>
                 <div style="position:relative;">
                   <input id="bybit-api-secret" class="form-control" type="password" placeholder="••••••••" autocomplete="off" style="font-size:12px;padding:6px 36px 6px 10px;" onkeydown="if(event.key==='Enter')bybitSave()" onblur="if(document.getElementById('bybit-api-key').value&&this.value)bybitSave()">
-                  <button type="button" onclick="toggleReveal('bybit-api-secret',this)" tabindex="-1" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:2px;color:var(--text3);line-height:0;">
+                  <button type="button" onclick="toggleReveal('bybit-api-secret',this)" tabindex="-1" aria-label="הצג/הסתר סוד API" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:2px;color:var(--text3);line-height:0;">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
                 </div>
