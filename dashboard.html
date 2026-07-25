@@ -12299,7 +12299,9 @@ async function deduplicateDB(type) {
   if (type === 'stock') db.stocks = db.stocks.filter(t => !keepIds.has(t.id));
   else db.crypto = db.crypto.filter(t => !keepIds.has(t.id));
   if (_currentUser) {
-    const { error } = await _sb.from('trades').update({ deleted: true }).in('id', toRemove).eq('user_id', _currentUser.id);
+    // deleted_at must be set alongside deleted — cleanOldDeleted() prunes by it,
+    // so a row soft-deleted without it would linger forever.
+    const { error } = await _sb.from('trades').update({ deleted: true, deleted_at: new Date().toISOString() }).in('id', toRemove).eq('user_id', _currentUser.id);
     if (error) { toast('שגיאה בנקה כפילויות', 'error'); console.error(error); return; }
   }
   renderTable(type);
