@@ -968,7 +968,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .mt-table .mt-empty { color: var(--text3); }
   .mt-table td.cl-green { color: var(--green) !important; }
   .mt-table td.cl-red   { color: var(--red) !important; }
-  .ts-table { width: auto; border-collapse: collapse; font-size: 13px; }
+  /* width:auto asks for a compact table, but the global `table` rule's
+     min-width:1600px (meant for the trades grid) still applied and stretched
+     this 196px summary across the page, forcing horizontal scroll. */
+  .ts-table { width: auto; min-width: 0; border-collapse: collapse; font-size: 13px; }
   .ts-table td { padding: 9px 16px; border-bottom: 1px solid var(--border); color: var(--text); white-space: nowrap; }
   .ts-table td.green { color: var(--green); }
   .ts-table td.red   { color: var(--red); }
@@ -1170,11 +1173,52 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     padding: 14px 16px;
     margin-top: 14px;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 12px;
   }
   .cp-label { font-size: 10px; color: var(--text3); margin-bottom: 3px; text-transform: uppercase; }
   .cp-value { font-size: 14px; font-weight: 700; color: var(--yellow); }
+
+  /* Overview guard strip — today's entries + open risk */
+  .ov-guard {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding: 9px 14px; margin-bottom: 12px;
+    background: linear-gradient(145deg, #091525, #0b1e38);
+    border: 1px solid rgba(255,255,255,0.07); border-radius: 14px;
+    font-size: 12px;
+  }
+  [data-theme="light"] .ov-guard { background: var(--card); }
+  .ovg-item { display: flex; align-items: center; gap: 6px; }
+  .ovg-label { color: var(--text2); }
+  .ovg-val { font-weight: 800; font-size: 14px; color: var(--text); }
+  .ovg-val.warn { color: var(--yellow); }
+  .ovg-val.bad  { color: var(--red); }
+  .ovg-sep { width: 1px; height: 18px; background: var(--border); }
+  .ovg-limit {
+    width: 46px; padding: 3px 6px; font-size: 12px; font-weight: 700; text-align: center;
+    background: rgba(255,255,255,0.05); color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px; font-family: inherit;
+  }
+  .ovg-limit:focus { border-color: var(--accent); outline: none; }
+  .ovg-note { color: var(--text2); margin-right: auto; }
+
+  /* Position sizer — quantity from risk, so a stop is worth entering */
+  .sizer-row {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    margin-top: 10px; padding: 9px 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border); border-radius: var(--radius);
+  }
+  .sizer-lbl { font-size: 11px; color: var(--text3); white-space: nowrap; }
+  .sizer-input {
+    width: 62px; padding: 5px 8px; font-size: 12px; font-weight: 600;
+    background: var(--bg2, rgba(0,0,0,0.2)); color: var(--text);
+    border: 1px solid var(--border); border-radius: 7px; font-family: inherit;
+  }
+  .sizer-input:focus { border-color: var(--accent); outline: none; }
+  .sizer-out { font-size: 12px; color: var(--text2); flex: 1; min-width: 150px; }
+  .sizer-out strong { color: var(--accent); font-weight: 800; }
+  #sizer-apply:disabled { opacity: .4; cursor: not-allowed; }
 
   /* TOAST */
   .toast-container { position: fixed; bottom: 20px; left: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
@@ -1302,6 +1346,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     /* Form */
     .form-row, .form-row-3 { grid-template-columns: 1fr; }
     .calc-preview { grid-template-columns: repeat(2, 1fr); }
+    .sizer-out { min-width: 100%; order: 9; }
+    /* Keep the two new numeric inputs at the 44px touch minimum on mobile */
+    .sizer-input, .ovg-limit { min-height: 44px; }
 
     /* Modal — bottom sheet on mobile */
     .modal-overlay {
@@ -3752,6 +3799,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .missed-card-sym { font-size: 15px; font-weight: 800; color: var(--accent); font-family: monospace; letter-spacing: 1px; }
   .missed-card-price { font-size: 13px; font-weight: 700; color: var(--text); margin-top: 4px; }
   .missed-card-meta { font-size: 11px; color: var(--text3); margin-top: 3px; }
+  .missed-since:not(:empty) { font-size: 11px; font-weight: 700; margin-top: 5px; }
   .missed-card-note { font-size: 11px; color: var(--text2); margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); font-style: italic; }
   .missed-card-actions { display: flex; gap: 4px; justify-content: flex-end; margin-top: 10px; }
   .missed-empty { text-align: center; color: var(--text3); padding: 50px; font-size: 13px; }
@@ -5537,6 +5585,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div id="crypto-fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;border:none;background:transparent;box-shadow:none;padding:0;backdrop-filter:none;"></div>
       </div>
 
+      <!-- Days with 4+ entries lose ~60x more than single-entry days across the
+           book. This is the only place that number is visible before the fact. -->
+      <div id="ov-guard" class="ov-guard"></div>
+
       <!-- Period filter -->
       <div class="month-filter" style="margin-bottom:16px;">
         <label data-i18n="filter_label">סינון:</label>
@@ -5668,6 +5720,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <div id="trading-summary-wrap" style="margin-bottom:22px;"></div>
       <div class="ov-section" style="margin-bottom:10px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg> ביצועים לפי סטאפ</div>
       <div id="setup-breakdown-wrap" style="margin-bottom:22px;"></div>
+      <div class="ov-section" style="margin-bottom:10px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> ביצועים לפי זמן החזקה</div>
+      <div id="hold-breakdown-wrap" style="margin-bottom:22px;"></div>
       <div id="comparison-wrap" style="margin-bottom:22px;"></div>
       </div>
     </div>
@@ -6784,7 +6838,15 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           <div><div class="cp-label">P/L</div><div class="cp-value" id="cp-pl">—</div></div>
           <div><div class="cp-label">סה"כ</div><div class="cp-value" id="cp-total">—</div></div>
           <div><div class="cp-label">$ בעסקה</div><div class="cp-value" id="cp-risk">—</div></div>
+          <div><div class="cp-label">סיכון לסטופ</div><div class="cp-value" id="cp-stoprisk">—</div></div>
           <div><div class="cp-label">% תשואה</div><div class="cp-value" id="cp-pct">—</div></div>
+        </div>
+        <div class="sizer-row">
+          <label class="sizer-lbl">סיכון מהתיק</label>
+          <input type="number" id="m-risk-pct" class="sizer-input" step="0.25" min="0.1" max="10" value="1" oninput="sizerCalc()">
+          <span class="sizer-lbl">%</span>
+          <span class="sizer-out" id="sizer-out">הזן שער כניסה וסטופ</span>
+          <button type="button" class="btn btn-secondary btn-sm" id="sizer-apply" onclick="sizerApply()" disabled>החל</button>
         </div>
       </div>
 
@@ -10641,8 +10703,64 @@ async function loadCryptoFearGreed() {
   _cfgTimer = setTimeout(loadCryptoFearGreed, 24 * 60 * 60 * 1000);
 }
 
+const DAY_LIMIT_KEY = 'tj_day_trade_limit';
+function dayLimit() { return +localStorage.getItem(DAY_LIMIT_KEY) || 3; }
+function setDayLimit(v) {
+  const n = Math.max(1, Math.min(50, +v || 3));
+  localStorage.setItem(DAY_LIMIT_KEY, n);
+  renderGuard();
+}
+
+// Two numbers you can act on before the fact: how many positions you've opened
+// today, and how much is at risk right now if every open stop fills.
+function renderGuard() {
+  const host = document.getElementById('ov-guard');
+  if (!host) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const all = [...db.stocks, ...db.crypto].filter(tr => !tr.deleted);
+  const todayN = all.filter(tr => tr.entryDate === today).length;
+  const lim = dayLimit();
+  const cls = todayN > lim ? 'bad' : todayN === lim ? 'warn' : '';
+
+  const open = all.filter(tr => !tr.exitPrice || +tr.exitPrice === 0);
+  let openRisk = 0, unknown = 0;
+  open.forEach(tr => {
+    const stop = +tr.stop || 0;
+    const rem = (+tr.shares || 0) - (+tr.closedShares || 0);
+    if (stop > 0 && rem > 0 && +tr.entryPrice > 0) openRisk += Math.abs(+tr.entryPrice - stop) * rem;
+    else if (rem > 0) unknown++;
+  });
+  const pt = portfolioTotal();
+  const riskPct = pt ? openRisk / pt * 100 : null;
+  const riskCls = riskPct == null ? '' : riskPct > 6 ? 'bad' : riskPct > 3 ? 'warn' : '';
+
+  host.innerHTML = `
+    <div class="ovg-item">
+      <span class="ovg-label">כניסות היום</span>
+      <span class="ovg-val ${cls}">${todayN}</span>
+      <span class="ovg-label">מתוך</span>
+      <input class="ovg-limit" type="number" min="1" max="50" value="${lim}"
+             onchange="setDayLimit(this.value)" title="מגבלת כניסות יומית">
+    </div>
+    <div class="ovg-sep"></div>
+    <div class="ovg-item">
+      <span class="ovg-label">סיכון פתוח</span>
+      <span class="ovg-val ${riskCls} sensitive">${openRisk > 0 ? '$' + fmt(openRisk, 0) : '—'}</span>
+      ${riskPct != null && openRisk > 0 ? `<span class="ovg-label">(${fmt(riskPct, 1)}% מהתיק)</span>` : ''}
+    </div>
+    <div class="ovg-sep"></div>
+    <div class="ovg-item">
+      <span class="ovg-label">פוזיציות פתוחות</span>
+      <span class="ovg-val">${open.length}</span>
+    </div>
+    ${unknown ? `<span class="ovg-note">${unknown} פתוחות בלי סטופ — לא נכללות בסיכון</span>` : ''}
+    ${cls === 'bad' ? `<span class="ovg-note" style="color:var(--red)">עברת את המגבלה היומית</span>` : ''}`;
+  applyPrivacy();
+}
+
 function renderOverview() {
   try { renderReviewInbox(); } catch (e) { console.error(e); }
+  try { renderGuard(); } catch (e) { console.error(e); }
   const now = new Date();
   const om = document.getElementById('ov-month');
   const oy = document.getElementById('ov-year');
@@ -10816,16 +10934,28 @@ function renderStatistics() {
     else               { curL++; maxL = Math.max(maxL, curL); curW = 0; }
   });
 
+  // Same risk definition the rest of the app uses — this used to inline its own
+  // and so kept the fee-dominated outliers calcStopRisk already rejects.
   let rSum = 0, rCount = 0;
   closed.forEach(t => {
-    const sl = t.stop || 0;
-    if (!sl || !t.entryPrice) return;
-    const risk = Math.abs(t.entryPrice - sl) * (t.closedShares || t.shares || 0);
-    if (risk > 0) { rSum += calcPL(t) / risk; rCount++; }
+    const risk = calcStopRisk(t);
+    if (risk > 0) { rSum += calcTotal(t) / risk; rCount++; }
   });
   const avgR = rCount > 0 ? rSum / rCount : 0;
 
-  const fmt = v => (v >= 0 ? '+' : '') + '$' + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // Peak-to-trough on the realised equity curve. Cumulative P&L shows where you
+  // are; this shows how far down you had to sit to get there.
+  let eq = 0, peak = 0, maxDD = 0;
+  [...closed].sort((a, b) => (a.closeDate || a.entryDate || '').localeCompare(b.closeDate || b.entryDate || ''))
+    .forEach(t => {
+      eq += calcTotal(t);
+      if (eq > peak) peak = eq;
+      maxDD = Math.min(maxDD, eq - peak);
+    });
+
+  // Negatives dropped their sign entirely and leaned on the red class alone, so
+  // "הפסד ממוצע $44.00" read as a gain in any context where color is lost.
+  const fmt = v => (v >= 0 ? '+' : '-') + '$' + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const pct  = v => v.toFixed(1) + '%';
 
   const kpis = [
@@ -10841,7 +10971,8 @@ function renderStatistics() {
     { label: t('st_max_loss_streak'),value: maxL, cls: '' },
     { label: t('st_avg_hold_win'),   value: adv.avgWinDays.toFixed(1) + 'd', cls: '' },
     { label: t('st_avg_hold_loss'),  value: adv.avgLossDays.toFixed(1) + 'd', cls: '' },
-    { label: t('st_avg_r'),          value: avgR ? avgR.toFixed(2) + 'R' : '—', cls: avgR >= 1 ? 'green' : '' },
+    { label: t('st_avg_r'),          value: rCount ? avgR.toFixed(2) + 'R' : '—', cls: avgR >= 1 ? 'green' : '' },
+    { label: 'ירידה מקסימלית',        value: fmt(maxDD), cls: 'red', sensitive: true },
     { label: t('st_win_rate'),       value: pct(st.wr),                  cls: st.wr >= 50 ? 'green' : 'red' },
   ];
 
@@ -10858,6 +10989,7 @@ function renderStatistics() {
   renderMonthlyTracker(trades);
   renderTradingSummary(trades);
   renderSetupBreakdown(trades);
+  renderHoldBreakdown(trades);
   renderComparison(stTrades, crTrades);
   applyPrivacy();
 }
@@ -10897,7 +11029,7 @@ function renderSetupBreakdown(trades) {
   }).sort((a, b) => b.total - a.total);
 
   const untagged = closed.length - tagged.length;
-  host.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+  host.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;min-width:0;border-collapse:collapse;font-size:12px">
     <thead><tr style="color:var(--text3);text-align:right">
       <th style="padding:7px 8px;font-weight:600">סטאפ</th>
       <th style="padding:7px 8px;font-weight:600">עסקאות</th>
@@ -10924,6 +11056,67 @@ function renderSetupBreakdown(trades) {
     ${untagged ? `<div style="color:var(--text3);font-size:11px;margin-top:8px">
       ${untagged} עסקאות סגורות עדיין בלי סטאפ ולא נכללות כאן.</div>` : ''}
   </div>`;
+}
+
+// How long a position was given to work. Across the book, exits inside two days
+// hit 5% and everything held past three weeks was the only positive bucket, so
+// this is the cut that separates the strategy from the impatience.
+const HOLD_BUCKETS = [
+  { max: 0,        label: 'תוך-יומי' },
+  { max: 2,        label: '1–2 ימים' },
+  { max: 5,        label: '3–5 ימים' },
+  { max: 20,       label: '6–20 ימים' },
+  { max: Infinity, label: '20+ ימים' },
+];
+function _holdDays(t) {
+  if (!t.closeDate || !t.entryDate) return null;
+  const a = Date.parse(t.entryDate), b = Date.parse(t.closeDate);
+  if (isNaN(a) || isNaN(b)) return null;
+  return Math.max(0, Math.round((b - a) / 86400000));
+}
+function renderHoldBreakdown(trades) {
+  const host = document.getElementById('hold-breakdown-wrap');
+  if (!host) return;
+  const closed = trades.filter(t => t.closeDate && t.exitPrice && _holdDays(t) !== null);
+  if (!closed.length) {
+    host.innerHTML = `<div style="padding:14px 16px;background:linear-gradient(145deg,#091525,#0b1e38);
+      border:1px solid rgba(255,255,255,0.07);border-radius:14px;color:var(--text3);font-size:12px">
+      אין עסקאות סגורות עם תאריך סגירה בתקופה שנבחרה.</div>`;
+    return;
+  }
+  const rows = HOLD_BUCKETS.map((b, i) => {
+    const lo = i === 0 ? -1 : HOLD_BUCKETS[i - 1].max;
+    const arr = closed.filter(t => { const d = _holdDays(t); return d > lo && d <= b.max; });
+    if (!arr.length) return null;
+    const pnl = arr.map(calcTotal);
+    const total = pnl.reduce((a, c) => a + c, 0);
+    const wins = pnl.filter(v => v > 0).length;
+    return { label: b.label, n: arr.length, wr: wins / arr.length * 100, avg: total / arr.length, total };
+  }).filter(Boolean);
+
+  const worst = Math.max(...rows.map(r => Math.abs(r.total)), 1);
+  host.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;min-width:0;border-collapse:collapse;font-size:12px">
+    <thead><tr style="color:var(--text3);text-align:right">
+      <th style="padding:7px 8px;font-weight:600">זמן החזקה</th>
+      <th style="padding:7px 8px;font-weight:600">עסקאות</th>
+      <th style="padding:7px 8px;font-weight:600">הצלחה</th>
+      <th style="padding:7px 8px;font-weight:600">ממוצע לעסקה</th>
+      <th style="padding:7px 8px;font-weight:600">סה״כ</th>
+      <th style="padding:7px 8px;font-weight:600;width:180px"></th>
+    </tr></thead><tbody>
+    ${rows.map(r => `<tr style="border-top:1px solid rgba(255,255,255,0.05)">
+      <td style="padding:7px 8px;font-weight:600">${r.label}</td>
+      <td style="padding:7px 8px">${r.n}</td>
+      <td style="padding:7px 8px" class="${r.wr>=50?'num-green':r.wr<20?'num-red':''}">${r.wr.toFixed(0)}%</td>
+      <td style="padding:7px 8px" class="${r.avg>=0?'num-green':'num-red'} sensitive">${fmtUSD(r.avg)}</td>
+      <td style="padding:7px 8px;font-weight:700" class="${r.total>=0?'num-green':'num-red'} sensitive">${fmtUSD(r.total)}</td>
+      <td style="padding:7px 8px">
+        <div style="height:6px;border-radius:3px;background:rgba(255,255,255,0.05);overflow:hidden">
+          <div style="height:100%;width:${Math.abs(r.total)/worst*100}%;background:${r.total>=0?'var(--green)':'var(--red)'}"></div>
+        </div>
+      </td>
+    </tr>`).join('')}
+    </tbody></table></div>`;
 }
 
 // ── Subtle gridline color per design system recommendation ──
@@ -11368,7 +11561,57 @@ function liveCalc() {
   set('cp-pl', fmtUSD(pl), plColor);
   set('cp-total', fmtUSD(tot), totColor);
   set('cp-risk', risk ? '$'+fmt(risk,0) : '—', 'var(--yellow)');
+  const sr = calcStopRisk(tr);
+  const pt = portfolioTotal();
+  set('cp-stoprisk', sr ? '$'+fmt(sr,0) + (pt ? ' · '+fmt(sr/pt*100,2)+'%' : '') : '—', 'var(--yellow)');
   set('cp-pct', fmtPct(pct), pctColor);
+  sizerCalc();
+}
+
+// The portfolio total the investments tab already tracks, reused as the sizing
+// base so risk % means something rather than being a free-floating number.
+function portfolioTotal() {
+  const el = document.getElementById('inv-portfolio-total');
+  const v = +(el?.value) || +(_userSettings?.portfolio_total) || 0;
+  return v > 0 ? v : 0;
+}
+
+// Quantity is the output of the stop, not an independent guess. 21 of 248
+// trades carried a stop, which is what made R unmeasurable everywhere else.
+let _sizerShares = 0;
+function sizerCalc() {
+  const out = document.getElementById('sizer-out');
+  const btn = document.getElementById('sizer-apply');
+  if (!out) return;
+  const entry = +document.getElementById('m-entryPrice')?.value || 0;
+  const stop  = +document.getElementById('m-stop')?.value || 0;
+  const pctIn = +document.getElementById('m-risk-pct')?.value || 0;
+  const total = portfolioTotal();
+  _sizerShares = 0;
+  if (!total)            { out.textContent = 'הזן סך תיק בטאב ההשקעות'; }
+  else if (!entry || !stop) { out.textContent = 'הזן שער כניסה וסטופ'; }
+  else if (entry === stop)  { out.textContent = 'הסטופ זהה לשער הכניסה'; }
+  else if (!(pctIn > 0))    { out.textContent = 'הזן אחוז סיכון'; }
+  else {
+    const budget = total * pctIn / 100;
+    const perShare = Math.abs(entry - stop);
+    const shares = Math.floor(budget / perShare);
+    _sizerShares = shares;
+    const cost = shares * entry;
+    out.innerHTML = shares > 0
+      ? `סיכון $${fmt(budget,0)} → <strong>${shares.toLocaleString()}</strong> יחידות · עלות $${fmt(cost,0)}`
+        + (cost > total ? ' <span class="num-red">· מעבר לגודל התיק</span>' : '')
+      : 'הסטופ רחוק מדי לתקציב הסיכון הזה';
+  }
+  if (btn) btn.disabled = !_sizerShares;
+}
+
+function sizerApply() {
+  if (!_sizerShares) return;
+  const el = document.getElementById('m-shares');
+  if (!el) return;
+  el.value = _sizerShares;
+  liveCalc();
 }
 
 async function saveTrade() {
@@ -11394,6 +11637,7 @@ async function saveTrade() {
     const row = _tradeToRow(data);
     const { error } = await _sb.from('trades').update(row).eq('id', data.id).eq('user_id', _currentUser.id);
     if (error) { arr[i] = prev; renderTable(type); toast('שגיאה בעדכון עסקה','error'); console.error(error); return; }
+    try { renderGuard(); } catch {}
     auditLog('trade_edited', data.symbol);
     toast('עסקה עודכנה','success');
   } else {
@@ -11406,6 +11650,9 @@ async function saveTrade() {
     arr.push(data);
     auditLog('trade_added', data.symbol);
     renderTable(type); initFilters();
+    // The daily-entry count is the whole point of the guard; it has to move the
+    // moment a trade is saved, not on the next visit to the overview tab.
+    try { renderGuard(); } catch {}
     toast('עסקה נוספה','success');
   }
 }
@@ -11547,33 +11794,43 @@ const csvSafe = s => {
   return /^[=+\-@\t]/.test(escaped) ? `"\t${escaped}"` : `"${escaped}"`;
 };
 function exportCSV(type) {
-  const all = type === 'stock'  ? db.stocks.map(t=>({...t,assetType:'stock'}))
-            : type === 'crypto' ? db.crypto.map(t=>({...t,assetType:'crypto'}))
+  // Deleted rows are hidden everywhere else in the app; an export that carries
+  // them out is a backup you cannot restore from cleanly.
+  const live = arr => arr.filter(t => !t.deleted);
+  const all = type === 'stock'  ? live(db.stocks).map(t=>({...t,assetType:'stock'}))
+            : type === 'crypto' ? live(db.crypto).map(t=>({...t,assetType:'crypto'}))
             : [
-                ...db.stocks.map(t=>({...t,assetType:'stock'})),
-                ...db.crypto.map(t=>({...t,assetType:'crypto'}))
+                ...live(db.stocks).map(t=>({...t,assetType:'stock'})),
+                ...live(db.crypto).map(t=>({...t,assetType:'crypto'}))
               ];
   if (!all.length) { toast('אין נתונים לייצוא','error'); return; }
 
-  const hdrs = ['ID','סוג','תאריך כניסה','L/S','סיבת כניסה','סימבול','שער כניסה','מניות','סטופ','יעדים','תאריך סגירה','מניות סגירה','מחיר יציאה','סקטור','עמלה','P/L','סה"כ','$ בעסקה','% תשואה','מה לשמר','מה לשפר'];
+  const hdrs = ['ID','סוג','תאריך כניסה','L/S','סיבת כניסה','סטאפ','סימבול','שער כניסה','מניות','סטופ','יעדים','תאריך סגירה','מניות סגירה','מחיר יציאה','סקטור','עמלה','ימי החזקה','P/L','סה"כ','$ בעסקה','% תשואה','R','מה לשמר','מה לשפר'];
   const rows = all.map(t => {
     const pl  = calcPL(t);
     const tot = calcTotal(t);
     const risk= calcRisk(t);
     const pct = risk ? tot/risk*100 : 0;
+    const sr  = calcStopRisk(t);
+    const days= _holdDays(t);
     const tgts= (t.t||[]).map((tg,i)=>`T${i+1}:${tg.shares}@${tg.price}`).join(';');
     return [
-      t.id, t.assetType, t.entryDate, t.ls, csvSafe(t.entryReason||''), csvSafe(t.symbol),
+      t.id, t.assetType, t.entryDate, t.ls, csvSafe(t.entryReason||''),
+      csvSafe(SETUP_LABELS[t.setupType] || t.setupType || ''), csvSafe(t.symbol),
       t.entryPrice, t.shares, t.stop, tgts,
       t.closeDate, t.closedShares, t.exitPrice,
       csvSafe(SECTOR_MAP[(t.symbol||'').toUpperCase().replace(/USDT\.P|USDT|\.P$/,'')] || ''), t.commission,
+      days == null ? '' : days,
       pl.toFixed(2), tot.toFixed(2), risk.toFixed(2), pct.toFixed(2),
+      sr ? (tot/sr).toFixed(2) : '',
       csvSafe(t.notes_keep||''),
       csvSafe(t.notes_improve||'')
     ];
   });
 
-  const csv = '\uFEFF' + [hdrs, ...rows].map(r=>r.join(',')).join('\n');
+  // The '\u05E1\u05D4"\u05DB' header carries a bare quote \u2014 unquoted it breaks any strict CSV
+  // parser at the very first line.
+  const csv = '\uFEFF' + [hdrs.map(csvSafe), ...rows].map(r=>r.join(',')).join('\n');
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -14755,6 +15012,7 @@ function missedRenderList(list) {
         </div>
         <div class="missed-card-price">$${(+r.price).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
         <div class="missed-card-meta">${r.sector ? esc(r.sector)+' · ' : ''}${fmtDate(r.date)}</div>
+        <div class="missed-since" id="missed-since-${r.id}"></div>
         ${r.note ? `<div class="missed-card-note">${esc(r.note)}</div>` : ''}
       </div>`).join('');
     return `
@@ -14773,6 +15031,38 @@ async function missedRender() {
   const list = await missedLoad();
   _missedList = list;
   missedRenderList(list);
+  missedFollowUp(list);
+}
+
+// A missed-opportunity log without an outcome is a list of regrets. This says
+// what the trade would have done, which is the only part worth learning from.
+const _missedQuotes = {};
+async function missedFollowUp(list) {
+  if (!list.length) return;
+  if (!getFinnhubKey()) return;
+  const token = await _getToken();
+  const syms = [...new Set(list.map(r => (r.sym || '').toUpperCase()).filter(Boolean))];
+  await Promise.all(syms.map(async sym => {
+    if (_missedQuotes[sym] === undefined) {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=quote&symbol=${encodeURIComponent(sym)}`,
+          { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        _missedQuotes[sym] = +data.c || null;
+      } catch { _missedQuotes[sym] = null; }
+    }
+    const price = _missedQuotes[sym];
+    list.filter(r => (r.sym || '').toUpperCase() === sym).forEach(r => {
+      const el = document.getElementById('missed-since-' + r.id);
+      if (!el) return;
+      const base = +r.price || 0;
+      if (!price || !base) { el.textContent = ''; return; }
+      const chg = (price - base) / base * 100;
+      el.innerHTML = `<span class="${chg >= 0 ? 'num-green' : 'num-red'}">${fmtPct(chg)}</span>
+        <span style="color:var(--text3)">מאז · $${fmtPrice(price)}</span>`;
+    });
+  }));
+  applyPrivacy();
 }
 
 function missedEdit(id) {
