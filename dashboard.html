@@ -1164,37 +1164,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .cp-label { font-size: 10px; color: var(--text3); margin-bottom: 3px; text-transform: uppercase; }
   .cp-value { font-size: 14px; font-weight: 700; color: var(--yellow); }
 
-  /* Overview guard strip — today's entries + open risk */
-  .ov-guard {
-    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-    padding: 9px 14px; margin-bottom: 12px;
-    background: linear-gradient(145deg, #091525, #0b1e38);
-    border: 1px solid rgba(255,255,255,0.07); border-radius: 14px;
-    font-size: 12px;
-  }
-  [data-theme="light"] .ov-guard { background: var(--card); }
-  .ovg-item { display: flex; align-items: center; gap: 6px; }
-  .ovg-label { color: var(--text2); }
-  .ovg-val { font-weight: 800; font-size: 14px; color: var(--text); }
-  .ovg-val.warn { color: var(--yellow); }
-  .ovg-val.bad  { color: var(--red); }
-  .ovg-sep { width: 1px; height: 18px; background: var(--border); }
-  /* type="text" (not "number") on purpose — the app-wide
-     `input[type="number"]{background:rgba(10,10,10,.9many)!important}` rule
-     was winning over this class and forcing a near-black box that broke off
-     the navy card. Tinted to match the journal's other in-card numeric field
-     (.inv-portfolio-bar input) instead. */
-  /* #ov-guard prefix (ID + class) outranks the theme rules above that target
-     input[type="text"] directly — those have higher specificity than a bare
-     class and were winning even with !important on both sides. */
-  #ov-guard .ovg-limit {
-    width: 40px; padding: 3px 6px; font-size: 12px; font-weight: 800; text-align: center;
-    background: rgba(129,140,248,0.12) !important; color: var(--accent) !important;
-    border: 1px solid rgba(129,140,248,0.25) !important; border-radius: 6px !important; font-family: inherit;
-  }
-  #ov-guard .ovg-limit:focus { border-color: var(--accent) !important; outline: none; box-shadow: 0 0 0 3px rgba(129,140,248,0.12); }
-  .ovg-note { color: var(--text2); margin-right: auto; }
-
   /* Position sizer — quantity from risk, so a stop is worth entering */
   .sizer-row {
     display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
@@ -1340,8 +1309,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     .form-row, .form-row-3 { grid-template-columns: 1fr; }
     .calc-preview { grid-template-columns: repeat(2, 1fr); }
     .sizer-out { min-width: 100%; order: 9; }
-    /* Keep the two new numeric inputs at the 44px touch minimum on mobile */
-    .sizer-input, .ovg-limit { min-height: 44px; }
+    /* Keep the sizer's numeric input at the 44px touch minimum on mobile */
+    .sizer-input { min-height: 44px; }
 
     /* Modal — bottom sheet on mobile */
     .modal-overlay {
@@ -5572,10 +5541,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div class="ov-bar-divider"></div>
         <div id="crypto-fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;border:none;background:transparent;box-shadow:none;padding:0;backdrop-filter:none;"></div>
       </div>
-
-      <!-- Days with 4+ entries lose ~60x more than single-entry days across the
-           book. This is the only place that number is visible before the fact. -->
-      <div id="ov-guard" class="ov-guard"></div>
 
       <!-- Period filter -->
       <div class="month-filter" style="margin-bottom:16px;">
@@ -10624,69 +10589,7 @@ async function loadCryptoFearGreed() {
   _cfgTimer = setTimeout(loadCryptoFearGreed, 24 * 60 * 60 * 1000);
 }
 
-const DAY_LIMIT_KEY = 'tj_day_trade_limit';
-// Until the user sets one explicitly, the limit tracks however many positions
-// are already open — a fixed "3" was arbitrary for anyone whose book already
-// runs bigger or smaller than that.
-function dayLimit(fallback) {
-  const v = +localStorage.getItem(DAY_LIMIT_KEY);
-  return v > 0 ? v : (fallback > 0 ? fallback : 3);
-}
-function setDayLimit(v) {
-  const n = Math.max(1, Math.min(50, +v || 3));
-  localStorage.setItem(DAY_LIMIT_KEY, n);
-  renderGuard();
-}
-
-// Two numbers you can act on before the fact: how many positions you've opened
-// today, and how much is at risk right now if every open stop fills.
-function renderGuard() {
-  const host = document.getElementById('ov-guard');
-  if (!host) return;
-  const today = new Date().toISOString().slice(0, 10);
-  const all = [...db.stocks, ...db.crypto].filter(tr => !tr.deleted);
-  const todayN = all.filter(tr => tr.entryDate === today).length;
-  const open = all.filter(tr => !tr.exitPrice || +tr.exitPrice === 0);
-  const lim = dayLimit(open.length);
-  const cls = todayN > lim ? 'bad' : todayN === lim ? 'warn' : '';
-
-  let openRisk = 0, unknown = 0;
-  open.forEach(tr => {
-    const stop = +tr.stop || 0;
-    const rem = (+tr.shares || 0) - (+tr.closedShares || 0);
-    if (stop > 0 && rem > 0 && +tr.entryPrice > 0) openRisk += Math.abs(+tr.entryPrice - stop) * rem;
-    else if (rem > 0) unknown++;
-  });
-  const pt = portfolioTotal();
-  const riskPct = pt ? openRisk / pt * 100 : null;
-  const riskCls = riskPct == null ? '' : riskPct > 6 ? 'bad' : riskPct > 3 ? 'warn' : '';
-
-  host.innerHTML = `
-    <div class="ovg-item">
-      <span class="ovg-label">כניסות היום</span>
-      <span class="ovg-val ${cls}">${todayN}</span>
-      <span class="ovg-label">מתוך</span>
-      <input class="ovg-limit" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" value="${lim}"
-             onchange="setDayLimit(this.value)" title="מגבלת כניסות יומית">
-    </div>
-    <div class="ovg-sep"></div>
-    <div class="ovg-item">
-      <span class="ovg-label">סיכון פתוח</span>
-      <span class="ovg-val ${riskCls} sensitive">${openRisk > 0 ? '$' + fmt(openRisk, 0) : '—'}</span>
-      ${riskPct != null && openRisk > 0 ? `<span class="ovg-label">(${fmt(riskPct, 1)}% מהתיק)</span>` : ''}
-    </div>
-    <div class="ovg-sep"></div>
-    <div class="ovg-item">
-      <span class="ovg-label">פוזיציות פתוחות</span>
-      <span class="ovg-val">${open.length}</span>
-    </div>
-    ${unknown ? `<span class="ovg-note">${unknown} פתוחות בלי סטופ — לא נכללות בסיכון</span>` : ''}
-    ${cls === 'bad' ? `<span class="ovg-note" style="color:var(--red)">עברת את המגבלה היומית</span>` : ''}`;
-  applyPrivacy();
-}
-
 function renderOverview() {
-  try { renderGuard(); } catch (e) { console.error(e); }
   const now = new Date();
   const om = document.getElementById('ov-month');
   const oy = document.getElementById('ov-year');
@@ -11563,7 +11466,6 @@ async function saveTrade() {
     const row = _tradeToRow(data);
     const { error } = await _sb.from('trades').update(row).eq('id', data.id).eq('user_id', _currentUser.id);
     if (error) { arr[i] = prev; renderTable(type); toast('שגיאה בעדכון עסקה','error'); console.error(error); return; }
-    try { renderGuard(); } catch {}
     auditLog('trade_edited', data.symbol);
     toast('עסקה עודכנה','success');
   } else {
@@ -11576,9 +11478,6 @@ async function saveTrade() {
     arr.push(data);
     auditLog('trade_added', data.symbol);
     renderTable(type); initFilters();
-    // The daily-entry count is the whole point of the guard; it has to move the
-    // moment a trade is saved, not on the next visit to the overview tab.
-    try { renderGuard(); } catch {}
     toast('עסקה נוספה','success');
   }
 }
