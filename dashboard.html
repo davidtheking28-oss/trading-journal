@@ -2691,7 +2691,12 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     --border:      rgba(255,255,255,0.07);
     --border2:     rgba(255,255,255,0.11);
     --text:        #f1f5f9;
-    --text1:       #f1f5f9;
+    /* Aliased rather than duplicated: --text1 was a hardcoded near-white that
+       no light-mode block ever overrode, so the AI chat bubbles, the quick-add
+       modal stats and the symbol autocomplete rendered white-on-white (~1.1:1)
+       for anyone using the light theme. Following --text keeps it correct in
+       any theme, including ones built at runtime. */
+    --text1:       var(--text);
     --text2:       #a8b8cc;
     --text3:       #8896a8;
     --accent:      #818cf8;
@@ -7998,7 +8003,11 @@ function switchTab(name, btn) {
   try { localStorage.setItem('tj_active_tab', name); } catch {}
   document.querySelectorAll('.tab-btn,.tnav-btn').forEach(b=>{ b.classList.remove('active'); b.style.color=''; });
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-  btn.classList.add('active');
+  // Callers that navigate programmatically (the screener → journal handoff, the
+  // command palette) pass no button. This threw and aborted the whole handler,
+  // so clicking "add to journal" in the embedded screener did nothing at all.
+  (btn || document.querySelector(`.tnav-btn[onclick*="switchTab('${name}'"], .tab-btn[onclick*="switchTab('${name}'"]`))
+    ?.classList.add('active');
   const tabEl = document.getElementById('tab-'+name);
   document.getElementById('main-content')?.classList.toggle('full-bleed', name==='screener');
   tabEl.classList.add('active');
@@ -8466,7 +8475,11 @@ function applySearch(trades, type) {
 function tradeSector(tr) {
   const raw = (tr.symbol || '').toUpperCase().replace(/USDT\.P|USDT|\.P$/,'');
   const sec = SECTOR_MAP[raw];
-  if (!sec) return `<span class="sector-cell" data-sym="${raw}" style="color:var(--text3)">—</span>`;
+  // Unescaped here, this was the file's one real XSS sink: it fires precisely
+  // for symbols missing from SECTOR_MAP, and neither the CSV importer nor the
+  // IBKR Flex parser applies the save-path symbol filter, so a hostile symbol
+  // from an imported statement reached the attribute raw.
+  if (!sec) return `<span class="sector-cell" data-sym="${esc(raw)}" style="color:var(--text3)">—</span>`;
   return `<span class="sector-cell" style="color:var(--text2);font-size:12px">${esc(sec)}</span>`;
 }
 
@@ -8769,6 +8782,13 @@ function _expandedRowHTML(tr, key) {
 function renderTable(type) {
   const p = type==='stock' ? 'st' : 'cr';
   const wrap = document.getElementById(type==='stock' ? 'stocks-wrap' : 'crypto-wrap');
+  // Crypto was folded into the stocks tab behind the scope switch, so
+  // #crypto-wrap no longer exists and every renderTable('crypto') threw on the
+  // first wrap.innerHTML. Broker sync calls it right after the inserts commit,
+  // so a successful IBKR/Bybit import reported itself as a failure — and the
+  // Flex cache path swallowed the throw before stamping imported_at, causing
+  // the same statement to re-import on every tick.
+  if (!wrap) return;
 
   // Update toggle button icon
   const toggleBtn = document.getElementById(p+'-view-toggle');
@@ -9636,12 +9656,24 @@ async function loadUserSettings() {
 }
 
 async function _saveUserSettings(patch) {
-  if (!_currentUser) return;
+  if (!_currentUser) return false;
+  const prev = {};
+  for (const k in patch) prev[k] = _userSettings[k];
   Object.assign(_userSettings, patch);
-  await _sb.from('user_settings').upsert(
+  // The error was discarded, so a rejected upsert still left the value in
+  // memory and every caller toasted success — an API key looked saved, worked
+  // all session, and was gone at next login with nothing having said so.
+  const { error } = await _sb.from('user_settings').upsert(
     { user_id: _currentUser.id, ...patch },
     { onConflict: 'user_id' }
   );
+  if (error) {
+    Object.assign(_userSettings, prev);
+    console.error('user_settings save failed', error);
+    toast('ההגדרה לא נשמרה', 'error');
+    return false;
+  }
+  return true;
 }
 
 function getFinnhubKey() { return _userSettings.finnhub_key || ''; }
@@ -10874,8 +10906,8 @@ function renderSetupBreakdown(trades) {
   const closed = trades.filter(t => t.closeDate && t.exitPrice);
   const tagged = closed.filter(t => t.setupType);
   if (!tagged.length) {
-    host.innerHTML = `<div style="padding:14px 16px;background:linear-gradient(145deg,#091525,#0b1e38);
-      border:1px solid rgba(255,255,255,0.07);border-radius:14px;color:var(--text3);font-size:12px;line-height:1.7">
+    host.innerHTML = `<div style="padding:14px 16px;background:var(--card);
+      border:1px solid var(--border);border-radius:14px;color:var(--text2);font-size:12px;line-height:1.7">
       אף עסקה סגורה עדיין לא מתויגת בסוג סטאפ. תייג כמה ב״להשלמה״ שבסקירה הכללית — משם מגיע הפילוח.
       </div>`;
     return;
@@ -10951,8 +10983,8 @@ function renderHoldBreakdown(trades) {
   if (!host) return;
   const closed = trades.filter(t => t.closeDate && t.exitPrice && _holdDays(t) !== null);
   if (!closed.length) {
-    host.innerHTML = `<div style="padding:14px 16px;background:linear-gradient(145deg,#091525,#0b1e38);
-      border:1px solid rgba(255,255,255,0.07);border-radius:14px;color:var(--text3);font-size:12px">
+    host.innerHTML = `<div style="padding:14px 16px;background:var(--card);
+      border:1px solid var(--border);border-radius:14px;color:var(--text2);font-size:12px">
       אין עסקאות סגורות עם תאריך סגירה בתקופה שנבחרה.</div>`;
     return;
   }
@@ -11511,6 +11543,13 @@ async function saveTrade() {
     if (i === -1) { toast('שגיאה: עסקה לא נמצאה','error'); return; }
     const prev = arr[i];
     data.id = prev.id;
+    // getFormTrade() builds a fresh object with no broker ids, so replacing the
+    // row wholesale dropped ibkr_id/bybit_id from memory. The next sync then
+    // failed to match the trade and imported it a second time as a duplicate.
+    data.ibkr_id  = prev.ibkr_id  ?? null;
+    data.bybit_id = prev.bybit_id ?? null;
+    data.deleted   = prev.deleted;
+    data.deletedAt = prev.deletedAt;
     arr[i] = data; // optimistic
     renderTable(type); initFilters(); closeModal();
     const row = _tradeToRow(data);
@@ -12373,11 +12412,14 @@ function stopPromptSave() {
   const arr = t.type === 'crypto' ? db.crypto : db.stocks;
   const tr  = arr.find(x => x.id === t.id);
   if (tr) {
+    const prevStop = tr.stop;
     tr.stop = val;
     renderTable(t.type); // optimistic — מיד
     _sb.from('trades').update({ stop: val }).eq('id', tr.id).eq('user_id', _currentUser.id)
       .then(({ error, data }) => {
-        if (error) { toast('שגיאה בשמירת stop', 'error'); }
+        // An unreverted stop keeps feeding the R column and the Avg-R KPI all
+        // session from a value that was never written.
+        if (error) { tr.stop = prevStop; renderTable(t.type); toast('שגיאה בשמירת stop', 'error'); }
         else { toast('Stop loss נשמר ✓', 'success'); }
       });
   }
@@ -12656,13 +12698,20 @@ async function deduplicateDB(type) {
   if (removed === 0) { toast('לא נמצאו כפילויות', 'success'); return; }
   if (!confirm(`נמצאו ${removed} עסקאות כפולות ב${type==='stock'?'מניות':'קריפטו'}. למחוק לצמיתות?`)) return;
   const keepIds = new Set(toRemove);
+  const prevStocks = db.stocks, prevCrypto = db.crypto;
   if (type === 'stock') db.stocks = db.stocks.filter(t => !keepIds.has(t.id));
   else db.crypto = db.crypto.filter(t => !keepIds.has(t.id));
   if (_currentUser) {
     // deleted_at must be set alongside deleted — cleanOldDeleted() prunes by it,
     // so a row soft-deleted without it would linger forever.
     const { error } = await _sb.from('trades').update({ deleted: true, deleted_at: new Date().toISOString() }).in('id', toRemove).eq('user_id', _currentUser.id);
-    if (error) { toast('שגיאה בנקה כפילויות', 'error'); console.error(error); return; }
+    // Without this the rows stayed dropped from memory on failure, so the next
+    // re-render made trades that still exist in Supabase vanish from the journal.
+    if (error) {
+      db.stocks = prevStocks; db.crypto = prevCrypto;
+      renderTable(type);
+      toast('שגיאה בנקה כפילויות', 'error'); console.error(error); return;
+    }
   }
   renderTable(type);
   toast(`הוסרו ${removed} כפילויות`, 'success');
@@ -14070,10 +14119,22 @@ function totpEnabled() { return localStorage.getItem(TOTP_ENABLED_KEY)==='1'; }
 let _totpPendingUnlock = false;
 async function totpStep() {
   if (!totpEnabled()) { pinUnlock(); return; }
+  // #pin-totp-row and #totp-input were never added to the markup, so this threw
+  // inside the unlock timeout and pinUnlock() never ran: turning 2FA on locked
+  // the user out of their own journal with no code field to type into and no
+  // way back except clearing localStorage. Until the UI exists, a correct PIN
+  // unlocks and the user is told the second factor could not be shown.
+  const row = document.getElementById('pin-totp-row');
+  const input = document.getElementById('totp-input');
+  if (!row || !input) {
+    console.error('TOTP prompt markup missing — unlocking on PIN alone');
+    pinUnlock();
+    return;
+  }
   _totpPendingUnlock = true;
   document.getElementById('pin-sub-text').textContent = 'הכנס קוד 6 ספרות מה-Authenticator';
-  document.getElementById('pin-totp-row').style.display = 'flex';
-  document.getElementById('totp-input').focus();
+  row.style.display = 'flex';
+  input.focus();
 }
 const TOTP_ATTEMPTS_KEY = 'tj-totp-attempts';
 const TOTP_LOCKOUT_KEY  = 'tj-totp-lockout';
@@ -14564,6 +14625,33 @@ function _buildLightCSS() {
     /* Action buttons */
     .btn-icon   { background:rgba(0,0,0,0.03) !important; border-color:rgba(0,0,0,0.1) !important; color:#475569 !important; }
     .btn-camera { background:rgba(0,0,0,0.03) !important; border-color:rgba(0,0,0,0.1) !important; color:#475569 !important; }
+
+    /* Full-bleed dark overlays — these four carry their own dark card on an
+       inline style no selector can reach, so light mode only ever recoloured
+       their text and left it near-black on near-black. The login card was the
+       worst of it: _initTheme() restores the saved theme before sign-in, so a
+       returning light-mode user met an unreadable form. Keep them dark, like
+       the sector modal already does deliberately, and pin the text to match. */
+    #auth-overlay, #name-gate, #ob-overlay, #stop-prompt-overlay {
+      --text:#f1f5f9; --text1:#f1f5f9; --text2:#a8b8cc; --text3:#8896a8;
+      --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.11);
+    }
+    #auth-overlay, #auth-overlay *,
+    #name-gate, #name-gate *,
+    #ob-overlay, #ob-overlay *,
+    #stop-prompt-overlay, #stop-prompt-overlay * { color:#f1f5f9; }
+    #auth-overlay .form-label, #name-gate .form-label,
+    #ob-overlay .form-label, #stop-prompt-overlay .form-label { color:#a8b8cc !important; }
+    #auth-overlay input, #auth-overlay .form-control,
+    #name-gate input, #name-gate .form-control,
+    #ob-overlay input, #ob-overlay .form-control,
+    #stop-prompt-overlay input, #stop-prompt-overlay .form-control {
+      background:rgba(255,255,255,0.06) !important;
+      border-color:rgba(255,255,255,0.12) !important;
+      color:#f1f5f9 !important;
+    }
+    #auth-overlay input::placeholder, #name-gate input::placeholder,
+    #ob-overlay input::placeholder, #stop-prompt-overlay input::placeholder { color:#8896a8 !important; }
   `;
 }
 
