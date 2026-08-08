@@ -7949,6 +7949,28 @@ window.addEventListener('load', () => setTimeout(() => {
   if (f && !f.src) f.src = 'https://davidtheking28-oss.github.io/stock-screener/?theme=' + (document.documentElement.getAttribute('data-theme')==='light' ? 'tj-light' : 'tj');
 }, 1500));
 
+// The screener iframe can hand a setup over to be logged. Only messages from
+// the screener's own origin AND from that frame's window are honoured — origin
+// alone would let any other embedded page on the same host post this.
+const SCREENER_ORIGIN = 'https://davidtheking28-oss.github.io';
+window.addEventListener('message', (e) => {
+  if (e.origin !== SCREENER_ORIGIN) return;
+  const frame = document.getElementById('screener-frame');
+  if (!frame || e.source !== frame.contentWindow) return;
+  const msg = e.data;
+  if (!msg || msg.type !== 'tj:add-trade' || !msg.payload) return;
+  const p = msg.payload;
+  if (typeof p.symbol !== 'string' || !/^[A-Z0-9.\-]{1,12}$/.test(p.symbol)) return;
+  switchTab('stocks');
+  openModal('stock');
+  const set = (id, v) => { const el = document.getElementById(id); if (el && v != null && isFinite(v)) el.value = v; };
+  document.getElementById('m-symbol').value = p.symbol;
+  set('m-entryPrice', p.entryPrice);
+  set('m-stop', p.stop);
+  liveCalc();
+  toast(`${p.symbol} נטען מהמסנן — השלם כמות ושמור`);
+});
+
 function mNav(name) {
   const btn = document.querySelector(`.tab-btn[onclick*="switchTab('${name}'"]`)
            || document.querySelector(`.tnav-btn[onclick*="switchTab('${name}'"]`);
