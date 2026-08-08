@@ -7784,8 +7784,12 @@ function calcPct(tr) {
 function isClosed(t) { return !!(t.closeDate || (+t.exitPrice > 0) || (t.t && t.t.length > 0)); }
 
 function stats(trades) {
-  const total = trades.reduce((s,t) => s+calcTotal(t), 0);
   const closed = trades.filter(isClosed);
+  // Realised P&L only. Summing every row folded the entry commission of each
+  // still-open position into the headline, so "P&L כולל" never reconciled with
+  // avg × closed count. Those fees aren't lost — they ride on the trade and get
+  // recognised when it closes, which is where they belong.
+  const total = closed.reduce((s,t) => s+calcTotal(t), 0);
   // Win/loss classification uses net P&L (after commission) so a trade that's
   // a net loss after fees never counts as a "win" — matches the net "total"
   // above instead of the pre-commission calcPL.
@@ -7794,8 +7798,9 @@ function stats(trades) {
   const wr = closed.length ? wins.length / closed.length * 100 : 0;
   const best = closed.length ? Math.max(...closed.map(t=>calcTotal(t))) : 0;
   const worst = closed.length ? Math.min(...closed.map(t=>calcTotal(t))) : 0;
-  const avg = closed.length ? closed.reduce((s,t)=>s+calcTotal(t),0) / closed.length : 0;
-  return {total, wins:wins.length, losses:losses.length, wr, best, worst, avg, n:trades.length};
+  const avg = closed.length ? total / closed.length : 0;
+  return {total, wins:wins.length, losses:losses.length, wr, best, worst, avg,
+          n:trades.length, nClosed:closed.length, nOpen:trades.length-closed.length};
 }
 
 // ─────────────────────────────────────────────
@@ -10654,7 +10659,7 @@ function renderOverview() {
     <div class="kpi-card ${st.total>=0?'c-green':'c-red'}">
       <div class="kpi-label">${t('kpi_pnl')}</div>
       <div class="kpi-value ${st.total>=0?'green':'red'} sensitive">${fmtUSD(st.total)}</div>
-      <div class="kpi-sub">${st.n} ${t('trades')}</div>
+      <div class="kpi-sub">${st.nClosed} ${t('trades')}${st.nOpen ? ` · ${st.nOpen} פתוחות` : ''}</div>
       ${monKeys.length>=2 ? `<div class="kpi-trend ${trendCls} sensitive">${trendLbl}</div>` : ''}
     </div>
     <div class="kpi-card c-yellow" id="kpi-live-card">
