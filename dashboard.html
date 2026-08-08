@@ -7646,12 +7646,19 @@ function _tradeToRow(trade) {
   };
 }
 
+// Broker sync deduplicates against db.stocks/db.crypto. If it runs before the
+// journal has finished loading, those arrays are empty, every fill looks new,
+// and the whole statement is imported again — which is how one Bybit fill ended
+// up stored five times across five sync runs. Nothing may sync until this flag
+// is set, and it is cleared whenever a load fails or a user signs out.
+let _dbLoaded = false;
+
 async function loadDB() {
-  if (!_currentUser) { db = JSON.parse(JSON.stringify(SEED)); return; }
+  if (!_currentUser) { db = JSON.parse(JSON.stringify(SEED)); _dbLoaded = false; return; }
   const { data, error } = await _sb.from('trades').select('*')
     .eq('user_id', _currentUser.id)
     .order('entry_date', { ascending: false });
-  if (error) { toast('שגיאה בטעינת נתונים — נסה לרענן', 'error'); console.error('[loadDB]', error); return; }
+  if (error) { _dbLoaded = false; toast('שגיאה בטעינת נתונים — נסה לרענן', 'error'); console.error('[loadDB]', error); return; }
   const all = (data || []).map(_rowToTrade).filter(validateTradeSchema);
   db.stocks  = all.filter(t => t.type === 'stock'  && !t.deleted);
   db.crypto  = all.filter(t => t.type === 'crypto' && !t.deleted);
@@ -7665,6 +7672,7 @@ async function loadDB() {
     all.filter(t => t.deleted && (t.ibkr_id || t.bybit_id)).map(t => t.ibkr_id || t.bybit_id)
   );
   await _dedupeTrades(); // always keep the journal free of duplicates
+  _dbLoaded = true;
   initFilters(); renderOverview(); renderTable('stock');
 }
 
@@ -12072,6 +12080,9 @@ async function _flexImport(trades) {
   // Re-entrancy guard: if a manual and an automatic import overlap, both could
   // pass the in-memory dedup before either inserts → duplicates. Run one at a time.
   if (_flexImporting) return { imported: 0, updated: 0, newlyImported: [] };
+  // Same reason as the Bybit guard: dedup reads db.stocks/db.crypto, so an
+  // import that beats loadDB() sees an empty journal and re-imports everything.
+  if (!_dbLoaded) return { imported: 0, updated: 0, newlyImported: [] };
   _flexImporting = true;
   try {
     return await _flexImportInner(trades);
@@ -12089,6 +12100,24 @@ async function _flexImportInner(trades) {
     x.symbol === t.symbol && x.entryDate === t.entryDate &&
     Math.abs((x.entryPrice || 0) - (t.entryPrice || 0)) < 0.01 &&
     Math.abs((x.shares || 0) - (t.shares || 0)) < 0.01;
+
+  // A hand-entered trade records the whole position at a rounded price, while
+  // the broker reports each fill separately — AIR went in manually as 14 shares
+  // @84.08 and came back from IBKR as 1 @84.77 plus 12 @84.90. The exact match
+  // above cannot see that, so seven manual trades were re-imported alongside
+  // their broker copies and counted twice. Only used against untagged rows, and
+  // only to skip the insert, never to overwrite the manual entry.
+  const looksLikeSameManualTrade = (x, t) =>
+    !x.ibkr_id && !x.bybit_id &&
+    x.symbol === t.symbol && x.entryDate === t.entryDate &&
+    (x.entryPrice || 0) > 0 &&
+    // 4%: the widest gap among the seven confirmed duplicates was QS at 3.3%,
+    // where the hand-typed entry price was simply imprecise. Wide enough to be
+    // a judgement call, so it is deliberately fenced in — same symbol, same
+    // day, target untagged by any broker, and the broker's quantity no larger
+    // than the recorded position. It only ever skips an insert.
+    Math.abs((x.entryPrice || 0) - (t.entryPrice || 0)) / (x.entryPrice || 1) < 0.04 &&
+    (t.shares || 0) <= (x.shares || 0) + 0.01;
 
   trades.forEach(t => {
     const arr = t.type === 'crypto' ? db.crypto : db.stocks;
@@ -12117,7 +12146,8 @@ async function _flexImportInner(trades) {
     let existing = null;
     if (t.ibkr_id) {
       existing = arr.find(x => !x.deleted && x.ibkr_id === t.ibkr_id)
-              || arr.find(x => !x.deleted && !x.ibkr_id && sameEntry(x, t));
+              || arr.find(x => !x.deleted && !x.ibkr_id && sameEntry(x, t))
+              || arr.find(x => !x.deleted && looksLikeSameManualTrade(x, t));
     } else {
       existing = arr.find(x => !x.deleted && sameEntry(x, t));
     }
@@ -12333,6 +12363,7 @@ async function _bybitExisting(t, fp) {
 
 async function _autoBybitSync() {
   if (!_currentUser) return;
+  if (!_dbLoaded) return;   // dedup needs the journal in memory first
   if (!_userSettings.bybit_api_key) return;
   const COOLDOWN_MS = 6 * 60 * 60 * 1000;
   const lastKey = 'bybit_sync_ts_' + _currentUser.id;
