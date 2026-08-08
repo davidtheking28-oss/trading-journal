@@ -7779,9 +7779,13 @@ function calcPct(tr) {
   return risk ? (calcTotal(tr) / risk) * 100 : 0;
 }
 
+// Single definition of "closed", so stats() and advancedStats() can't disagree
+// about which trades they are averaging over.
+function isClosed(t) { return !!(t.closeDate || (+t.exitPrice > 0) || (t.t && t.t.length > 0)); }
+
 function stats(trades) {
   const total = trades.reduce((s,t) => s+calcTotal(t), 0);
-  const closed = trades.filter(t => t.closeDate || (+t.exitPrice > 0) || (t.t && t.t.length > 0));
+  const closed = trades.filter(isClosed);
   // Win/loss classification uses net P&L (after commission) so a trade that's
   // a net loss after fees never counts as a "win" — matches the net "total"
   // above instead of the pre-commission calcPL.
@@ -9936,8 +9940,13 @@ function tradeDays(t) {
 }
 
 function advancedStats(trades) {
-  const winners = trades.filter(t => calcTotal(t) > 0);
-  const losers  = trades.filter(t => calcTotal(t) < 0);
+  // Open positions carry a commission and nothing else, so calcTotal returns
+  // -commission and each one used to land in "losers" — 12 open trades at -$2
+  // pulled the average loss from -$44.54 to -$41.78 and fed the expectancy and
+  // win/loss KPIs from a different population than stats() uses.
+  const closed  = trades.filter(isClosed);
+  const winners = closed.filter(t => calcTotal(t) > 0);
+  const losers  = closed.filter(t => calcTotal(t) < 0);
   const avgWin     = winners.length ? winners.reduce((s,t) => s + calcTotal(t), 0) / winners.length : 0;
   const avgLoss    = losers.length  ? losers.reduce((s,t)  => s + calcTotal(t), 0) / losers.length  : 0;
   const avgWinDays = winners.length ? winners.reduce((s,t) => s + tradeDays(t), 0) / winners.length : 0;
@@ -11451,6 +11460,13 @@ async function saveTrade() {
   if (!data.symbol)     { toast('נא להזין סימבול','error'); return; }
   if (!data.entryDate)  { toast('נא להזין תאריך כניסה','error'); return; }
   if (!data.entryPrice) { toast('נא להזין שער כניסה','error'); return; }
+  // Closing more than was bought silently multiplies the P&L. It happened on 11
+  // rows: a position entered in several tranches got the full exit quantity
+  // written onto every tranche, overstating the book's loss by $615.
+  if ((+data.closedShares || 0) > (+data.shares || 0)) {
+    toast(`כמות סגורה (${+data.closedShares}) גדולה מהכמות שנקנתה (${+data.shares || 0})`, 'error');
+    return;
+  }
 
   data.type = type;
   const arr = type==='stock' ? db.stocks : db.crypto;
@@ -15022,12 +15038,22 @@ function _aiGetTrades(start, end) {
       if (!cd) continue;
       if (start && cd < start) continue;
       if (end   && cd > end)   continue;
+      // The system prompt builds a whole STEM framework and asks the model to
+      // judge each trade against the market condition and the planned stop —
+      // none of which was being sent, which left it inventing the inputs.
+      const stopRisk = calcStopRisk(t);
+      const total = calcTotal(t);
       result.push({
         symbol: t.symbol || '', asset: assetType,
         direction: t.ls || 'L',
         entryDate: t.entryDate || '', closeDate: cd,
         entryPrice: t.entryPrice || 0, exitPrice: t.exitPrice || 0,
         shares: t.shares || 0, pnl: Math.round(_aiCalcPnl(t) * 100) / 100,
+        stop: t.stop || null,
+        r_multiple: stopRisk ? Math.round(total / stopRisk * 100) / 100 : null,
+        setup: t.setupType || null,
+        market_condition: t.marketCond || null,
+        hold_days: _holdDays(t),
         notes_keep: t.notes_keep || '', notes_improve: t.notes_improve || '',
       });
     }
@@ -15280,7 +15306,22 @@ async function aiRunReport() {
   const improvePhrases = trades.filter(t=>t.notes_improve).map(t=>`[${t.symbol} ${t.closeDate}]: "${t.notes_improve}"`).join('\n') || 'אין הערות שיפור';
   const keepPhrases    = trades.filter(t=>t.notes_keep).map(t=>`[${t.symbol} ${t.closeDate}]: "${t.notes_keep}"`).join('\n') || 'אין הערות שימור';
 
+  // State the coverage explicitly. The instructions above describe STEM, stops
+  // and setups as if every trade carries them; most carry none, and without
+  // being told so the model fills the gaps with assumptions.
+  const _cov = (fn) => trades.filter(fn).length;
+  const coverage = `Of ${trades.length} closed trades in this period: ` +
+    `${_cov(t => t.market_condition)} have a recorded market condition (STEM), ` +
+    `${_cov(t => t.stop)} have a planned stop (so only those have a real R-multiple), ` +
+    `${_cov(t => t.setup)} have a setup type, ` +
+    `${_cov(t => t.notes_improve || t.notes_keep)} have journal notes. ` +
+    `Fields shown as null are NOT recorded — never infer or invent them. ` +
+    `If a field you need is mostly missing, say so plainly and tell the trader to start logging it.`;
+
   const userPrompt = `Here is the full trading data for ${label}:
+
+=== DATA COVERAGE — read this before analysing ===
+${coverage}
 
 === SUMMARY STATS ===
 ${summaryData}
