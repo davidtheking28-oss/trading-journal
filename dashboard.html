@@ -1179,12 +1179,20 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .ovg-val.warn { color: var(--yellow); }
   .ovg-val.bad  { color: var(--red); }
   .ovg-sep { width: 1px; height: 18px; background: var(--border); }
-  .ovg-limit {
-    width: 46px; padding: 3px 6px; font-size: 12px; font-weight: 700; text-align: center;
-    background: rgba(255,255,255,0.05); color: var(--text);
-    border: 1px solid var(--border); border-radius: 6px; font-family: inherit;
+  /* type="text" (not "number") on purpose — the app-wide
+     `input[type="number"]{background:rgba(10,10,10,.9many)!important}` rule
+     was winning over this class and forcing a near-black box that broke off
+     the navy card. Tinted to match the journal's other in-card numeric field
+     (.inv-portfolio-bar input) instead. */
+  /* #ov-guard prefix (ID + class) outranks the theme rules above that target
+     input[type="text"] directly — those have higher specificity than a bare
+     class and were winning even with !important on both sides. */
+  #ov-guard .ovg-limit {
+    width: 40px; padding: 3px 6px; font-size: 12px; font-weight: 800; text-align: center;
+    background: rgba(129,140,248,0.12) !important; color: var(--accent) !important;
+    border: 1px solid rgba(129,140,248,0.25) !important; border-radius: 6px !important; font-family: inherit;
   }
-  .ovg-limit:focus { border-color: var(--accent); outline: none; }
+  #ov-guard .ovg-limit:focus { border-color: var(--accent) !important; outline: none; box-shadow: 0 0 0 3px rgba(129,140,248,0.12); }
   .ovg-note { color: var(--text2); margin-right: auto; }
 
   /* Position sizer — quantity from risk, so a stop is worth entering */
@@ -10617,7 +10625,13 @@ async function loadCryptoFearGreed() {
 }
 
 const DAY_LIMIT_KEY = 'tj_day_trade_limit';
-function dayLimit() { return +localStorage.getItem(DAY_LIMIT_KEY) || 3; }
+// Until the user sets one explicitly, the limit tracks however many positions
+// are already open — a fixed "3" was arbitrary for anyone whose book already
+// runs bigger or smaller than that.
+function dayLimit(fallback) {
+  const v = +localStorage.getItem(DAY_LIMIT_KEY);
+  return v > 0 ? v : (fallback > 0 ? fallback : 3);
+}
 function setDayLimit(v) {
   const n = Math.max(1, Math.min(50, +v || 3));
   localStorage.setItem(DAY_LIMIT_KEY, n);
@@ -10632,10 +10646,10 @@ function renderGuard() {
   const today = new Date().toISOString().slice(0, 10);
   const all = [...db.stocks, ...db.crypto].filter(tr => !tr.deleted);
   const todayN = all.filter(tr => tr.entryDate === today).length;
-  const lim = dayLimit();
+  const open = all.filter(tr => !tr.exitPrice || +tr.exitPrice === 0);
+  const lim = dayLimit(open.length);
   const cls = todayN > lim ? 'bad' : todayN === lim ? 'warn' : '';
 
-  const open = all.filter(tr => !tr.exitPrice || +tr.exitPrice === 0);
   let openRisk = 0, unknown = 0;
   open.forEach(tr => {
     const stop = +tr.stop || 0;
@@ -10652,7 +10666,7 @@ function renderGuard() {
       <span class="ovg-label">כניסות היום</span>
       <span class="ovg-val ${cls}">${todayN}</span>
       <span class="ovg-label">מתוך</span>
-      <input class="ovg-limit" type="number" min="1" max="50" value="${lim}"
+      <input class="ovg-limit" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" value="${lim}"
              onchange="setDayLimit(this.value)" title="מגבלת כניסות יומית">
     </div>
     <div class="ovg-sep"></div>
