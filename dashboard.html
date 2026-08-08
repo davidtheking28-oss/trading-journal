@@ -581,6 +581,22 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .er-pill.active-cheath  { background: rgba(245,166,35,0.18);  border-color: #f5a623; color: #f5a623; }
   .er-pill.active-handle  { background: rgba(255,121,77,0.18);  border-color: #ff794d; color: #ff794d; }
   .er-pill.active-bo      { background: rgba(63,185,80,0.18);   border-color: #3fb950; color: #3fb950; }
+  .er-pill.active-blue    { background: rgba(79,131,255,0.18);  border-color: var(--accent); color: #a8c0ff; }
+
+  /* ── Review inbox ── */
+  .review-inbox { background: linear-gradient(145deg,#091525,#0b1e38); border: 1px solid rgba(255,255,255,0.07);
+                  border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; }
+  .ri-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .ri-title { font-size: 13px; font-weight: 700; color: var(--text); }
+  .ri-sub { font-size: 11px; color: var(--text3); margin-right: auto; }
+  .ri-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+  .ri-sym { font-weight: 700; font-size: 13px; min-width: 74px; }
+  .ri-miss { font-size: 11px; color: var(--amber, #f5b94a); }
+  .ri-stop { width: 92px; padding: 5px 8px; font-size: 12px; border-radius: 7px;
+             background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: var(--text); }
+  .ri-more { background: none; border: none; color: var(--accent); font-size: 12px;
+             font-weight: 600; cursor: pointer; padding: 6px 0; }
 
   /* badge in table */
   .er-badge {
@@ -5504,6 +5520,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     <!-- ===== OVERVIEW ===== -->
     <div id="tab-overview" class="tab-content active">
 
+      <!-- Trades imported from a broker never pass through the add-trade modal,
+           so they arrive with no stop and no setup and nothing ever asks for
+           them. This is where they get tagged. -->
+      <div id="review-inbox" class="review-inbox" style="display:none"></div>
+
       <!-- Top bar: Add Trade + Fear & Greed -->
       <div class="ov-top-bar" style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-bottom:12px;padding:8px 14px;">
         <button class="btn btn-primary" onclick="fabToggle()" style="gap:6px;display:inline-flex;align-items:center;flex-shrink:0;padding:7px 16px;font-size:13px;font-weight:600;border-radius:9px;">
@@ -5645,6 +5666,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <div id="monthly-tracker-wrap" style="overflow-x:auto;margin-bottom:22px;"></div>
       <div class="ov-section" style="margin-bottom:10px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Trading Summary</div>
       <div id="trading-summary-wrap" style="margin-bottom:22px;"></div>
+      <div class="ov-section" style="margin-bottom:10px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg> ביצועים לפי סטאפ</div>
+      <div id="setup-breakdown-wrap" style="margin-bottom:22px;"></div>
       <div id="comparison-wrap" style="margin-bottom:22px;"></div>
       </div>
     </div>
@@ -6779,6 +6802,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           <input type="hidden" id="m-entry-reason">
         </div>
         <input type="hidden" id="m-setup-type">
+        <div class="form-group">
+          <label class="form-label">סוג הסטאפ</label>
+          <div class="er-pills" id="m-setup-pills"></div>
+        </div>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label" data-i18n="m_market_cond">Market Condition</label>
@@ -7532,6 +7559,7 @@ function _rowToTrade(row) {
     notes_keep:   row.notes_keep    || '',
     notes_improve:row.notes_improve || '',
     entryReason:  row.entry_reason  || '',
+    setupType:    row.setup_type    || '',
     marketCond:   row.market_cond   || '',
     processScore: row.process_score,
     mood:         row.mood          || '',
@@ -7561,6 +7589,7 @@ function _tradeToRow(trade) {
     notes_keep:    trade.notes_keep  || '',
     notes_improve: trade.notes_improve || '',
     entry_reason:  trade.entryReason || '',
+    setup_type:    trade.setupType   || '',
     market_cond:   trade.marketCond  || '',
     process_score: trade.processScore|| null,
     mood:          trade.mood        || '',
@@ -7785,20 +7814,38 @@ function fmtPct(n) {
 function clr(v) { return v > 0 ? 'num-green' : v < 0 ? 'num-red' : ''; }
 // calcStopRisk — סיכון אמיתי: (מחיר כניסה - סטופ) × מניות
 function calcStopRisk(tr) {
-  // Risk reference for the R-multiple = the stop. When no stop is set (e.g. broker
-  // imports) fall back to the exit price — same formula, exit instead of stop.
-  // If neither exists (open position, no stop) R is undefined → return 0 → "—".
-  const ref = (+tr.stop) || (+tr.exitPrice) || 0;
-  if (!ref) return 0;
-  const diff = Math.abs((+tr.entryPrice||0) - ref);
-  return diff * (+tr.shares||0);
+  // Risk reference is the stop, and only the stop. Falling back to the exit
+  // price made R come out at ±1 by construction on every stopless trade — the
+  // sign the P&L already carries — so the book's avgR was reporting the win
+  // rate dressed as a risk metric instead of admitting it did not know. Of 236
+  // closed trades, 215 have no stop; those now read "—" rather than a number
+  // that looks measured but is not.
+  const stop = +tr.stop || 0;
+  if (!stop) return 0;
+  const entry = +tr.entryPrice || 0;
+  // Size the risk on the quantity the P&L is measured over. Using the full
+  // position against a partial close divided a 3-share gain by 7-share risk.
+  const qty = (+tr.closedShares || +tr.shares || 0);
+  const risk = Math.abs(entry - stop) * qty;
+  if (!(risk > 0)) return 0;
+  // A position whose planned risk is smaller than its own commission produces
+  // an R driven by fees, not by the trade (a 6-unit sub-cent perp risked $0.002
+  // and reported -2023R). Not measurable, so say so.
+  if (risk <= Math.abs(+tr.commission || 0)) return 0;
+  return risk;
 }
 // fmtR — מחשב R-Multiple: כמה כפולות סיכון הרווחנו/הפסדנו
 function fmtR(tot, stopRisk) {
   if (!stopRisk || isNaN(stopRisk) || stopRisk === 0) return '<span style="color:var(--text3)">—</span>';
   const r = tot / stopRisk;
   const cls = r > 0 ? 'num-green' : r < 0 ? 'num-red' : '';
-  return `<span class="${cls}">${r >= 0 ? '+' : ''}${r.toFixed(2)}R</span>`;
+  // A loss past -1R means the position was held beyond the stop that was
+  // planned for it. With average losses running larger than average wins, that
+  // is the specific behaviour worth seeing at a glance rather than averaging away.
+  const breach = r <= -1.05
+    ? ` <span title="ההפסד עבר את הסטופ המתוכנן" style="color:var(--red);font-weight:700">⚠</span>`
+    : '';
+  return `<span class="${cls}">${r >= 0 ? '+' : ''}${r.toFixed(2)}R</span>${breach}`;
 }
 // "Today" in the visitor's own local calendar day — new Date().toISOString()
 // converts to UTC first, which silently rolls back to yesterday's date for
@@ -9266,6 +9313,94 @@ function modalSetER(val) {
   });
 }
 
+// ── Review inbox ──
+// Of 248 trades, 124 came from a broker sync. Those never open the add-trade
+// modal, so nothing ever asks for a stop or a setup, and both columns sat
+// empty across the whole book — which is what left the R metrics with 8%
+// coverage. This surfaces the untagged ones and takes the two fields inline.
+let _riLimit = 5;
+function reviewInboxTrades() {
+  return [...db.stocks, ...db.crypto]
+    .filter(t => !t.deleted && !t.archived)
+    .filter(t => !(+t.stop) || !t.setupType)
+    .sort((a, b) => (b.entryDate || '').localeCompare(a.entryDate || ''));
+}
+function renderReviewInbox() {
+  const host = document.getElementById('review-inbox');
+  if (!host) return;
+  const all = reviewInboxTrades();
+  if (!all.length) { host.style.display = 'none'; return; }
+  const shown = all.slice(0, _riLimit);
+  host.innerHTML =
+    `<div class="ri-head">
+       <span class="ri-title">להשלמה</span>
+       <span class="ri-sub">${all.length} עסקאות בלי סטופ או סוג סטאפ — בלעדיהם ה-R לא ניתן לחישוב</span>
+     </div>` +
+    shown.map(t => {
+      const miss = [];
+      if (!(+t.stop)) miss.push('סטופ');
+      if (!t.setupType) miss.push('סטאפ');
+      return `<div class="ri-row">
+        <span class="ri-sym">${t.symbol || '—'}</span>
+        <span class="ri-miss">חסר: ${miss.join(' · ')}</span>
+        <input class="ri-stop" type="number" step="0.01" placeholder="סטופ"
+               value="${(+t.stop) || ''}" onchange="riSetStop('${t.id}', this.value)">
+        <select class="ri-stop" style="width:118px" onchange="riSetSetup('${t.id}', this.value)">
+          <option value="">— סטאפ —</option>
+          ${SETUP_OPTIONS.map(s => `<option value="${s}"${t.setupType===s?' selected':''}>${SETUP_LABELS[s]}</option>`).join('')}
+        </select>
+      </div>`;
+    }).join('') +
+    (all.length > shown.length
+      ? `<button class="ri-more" onclick="_riLimit+=10;renderReviewInbox()">עוד ${Math.min(10, all.length-shown.length)} מתוך ${all.length-shown.length}</button>`
+      : '');
+  host.style.display = '';
+}
+function _riFind(id) {
+  return [...db.stocks, ...db.crypto].find(t => String(t.id) === String(id));
+}
+async function _riPatch(id, patch) {
+  const tr = _riFind(id); if (!tr) return;
+  Object.assign(tr, patch);                       // optimistic
+  renderReviewInbox();
+  const col = Object.keys(patch)[0] === 'stop' ? 'stop' : 'setup_type';
+  const { error } = await _sb.from('trades')
+    .update({ [col]: patch.stop !== undefined ? patch.stop : patch.setupType })
+    .eq('id', id).eq('user_id', _currentUser.id);
+  if (error) { toast('שמירה נכשלה', 'error'); console.error(error); return; }
+  renderTable(tr.type === 'crypto' ? 'crypto' : 'stock');
+}
+function riSetStop(id, val) {
+  const n = sanitizeNumber(val, 0);
+  if (!n) return;
+  _riPatch(id, { stop: n });
+  toast('סטופ נשמר');
+}
+function riSetSetup(id, val) {
+  if (!SETUP_OPTIONS.includes(val)) return;
+  _riPatch(id, { setupType: val });
+  toast('סטאפ נשמר');
+}
+
+// ── Setup type ──
+// The column and a hidden input already existed but nothing ever wrote to them,
+// which is why all 248 trades carry an empty setup_type and no breakdown by
+// setup was possible. Same pill interaction as the entry reason.
+const SETUP_OPTIONS = ['vcp','breakout','pullback','powerplay','reversal','earnings','other'];
+const SETUP_LABELS = { vcp:'VCP', breakout:'פריצה', pullback:'תיקון', powerplay:'Power Play',
+                       reversal:'היפוך', earnings:'דוחות', other:'אחר' };
+function setupRenderPills(containerId, val) {
+  const host = document.getElementById(containerId); if (!host) return;
+  host.innerHTML = SETUP_OPTIONS.map(s =>
+    `<button type="button" class="er-pill${s===val?' active-blue':''}" data-setup="${s}"
+      onclick="modalSetSetup('${s}')">${SETUP_LABELS[s]}</button>`).join('');
+}
+function modalSetSetup(val) {
+  const el = document.getElementById('m-setup-type');
+  el.value = el.value === val ? '' : val;
+  setupRenderPills('m-setup-pills', el.value);
+}
+
 function erSetPills(containerId, val) {
   // used when opening modal with existing trade
   document.querySelectorAll('#'+containerId+' .er-pill').forEach(p => {
@@ -10507,6 +10642,7 @@ async function loadCryptoFearGreed() {
 }
 
 function renderOverview() {
+  try { renderReviewInbox(); } catch (e) { console.error(e); }
   const now = new Date();
   const om = document.getElementById('ov-month');
   const oy = document.getElementById('ov-year');
@@ -10721,8 +10857,73 @@ function renderStatistics() {
   renderDonut(st, adv, trades);
   renderMonthlyTracker(trades);
   renderTradingSummary(trades);
+  renderSetupBreakdown(trades);
   renderComparison(stTrades, crTrades);
   applyPrivacy();
+}
+
+// Which setup actually pays. Expectancy is the number that matters here: a
+// setup can win often and still lose money, and with the book's 25.8% hit rate
+// and wins smaller than losses that is exactly the shape to watch for.
+function renderSetupBreakdown(trades) {
+  const host = document.getElementById('setup-breakdown-wrap');
+  if (!host) return;
+  const closed = trades.filter(t => t.closeDate && t.exitPrice);
+  const tagged = closed.filter(t => t.setupType);
+  if (!tagged.length) {
+    host.innerHTML = `<div style="padding:14px 16px;background:linear-gradient(145deg,#091525,#0b1e38);
+      border:1px solid rgba(255,255,255,0.07);border-radius:14px;color:var(--text3);font-size:12px;line-height:1.7">
+      אף עסקה סגורה עדיין לא מתויגת בסוג סטאפ. תייג כמה ב״להשלמה״ שבסקירה הכללית — משם מגיע הפילוח.
+      </div>`;
+    return;
+  }
+  const groups = {};
+  tagged.forEach(t => {
+    const k = t.setupType;
+    (groups[k] = groups[k] || []).push(t);
+  });
+  const rows = Object.entries(groups).map(([k, arr]) => {
+    const pnl = arr.map(calcTotal);
+    const wins = pnl.filter(v => v > 0), losses = pnl.filter(v => v <= 0);
+    const total = pnl.reduce((a, b) => a + b, 0);
+    const wr = arr.length ? wins.length / arr.length * 100 : 0;
+    const avgW = wins.length ? wins.reduce((a, b) => a + b, 0) / wins.length : 0;
+    const avgL = losses.length ? losses.reduce((a, b) => a + b, 0) / losses.length : 0;
+    const exp = arr.length ? total / arr.length : 0;
+    // R only where a stop was recorded, so this stays honest about coverage
+    const rs = arr.map(t => { const r = calcStopRisk(t); return r ? calcTotal(t) / r : null; }).filter(v => v != null);
+    const avgR = rs.length ? rs.reduce((a, b) => a + b, 0) / rs.length : null;
+    return { k, n: arr.length, wr, avgW, avgL, total, exp, avgR, rn: rs.length };
+  }).sort((a, b) => b.total - a.total);
+
+  const untagged = closed.length - tagged.length;
+  host.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr style="color:var(--text3);text-align:right">
+      <th style="padding:7px 8px;font-weight:600">סטאפ</th>
+      <th style="padding:7px 8px;font-weight:600">עסקאות</th>
+      <th style="padding:7px 8px;font-weight:600">הצלחה</th>
+      <th style="padding:7px 8px;font-weight:600">רווח ממוצע</th>
+      <th style="padding:7px 8px;font-weight:600">הפסד ממוצע</th>
+      <th style="padding:7px 8px;font-weight:600">תוחלת</th>
+      <th style="padding:7px 8px;font-weight:600">R ממוצע</th>
+      <th style="padding:7px 8px;font-weight:600">סה״כ</th>
+    </tr></thead><tbody>
+    ${rows.map(r => `<tr style="border-top:1px solid rgba(255,255,255,0.05)">
+      <td style="padding:7px 8px;font-weight:600">${SETUP_LABELS[r.k] || r.k}</td>
+      <td style="padding:7px 8px">${r.n}</td>
+      <td style="padding:7px 8px">${r.wr.toFixed(0)}%</td>
+      <td style="padding:7px 8px" class="num-green sensitive">${fmtUSD(r.avgW)}</td>
+      <td style="padding:7px 8px" class="num-red sensitive">${fmtUSD(r.avgL)}</td>
+      <td style="padding:7px 8px;font-weight:700" class="${r.exp>=0?'num-green':'num-red'} sensitive">${fmtUSD(r.exp)}</td>
+      <td style="padding:7px 8px">${r.avgR==null?'<span style="color:var(--text3)">—</span>':
+          `<span class="${r.avgR>=0?'num-green':'num-red'}">${r.avgR>=0?'+':''}${r.avgR.toFixed(2)}R</span>
+           <span style="color:var(--text3);font-size:10px">(${r.rn})</span>`}</td>
+      <td style="padding:7px 8px;font-weight:700" class="${r.total>=0?'num-green':'num-red'} sensitive">${fmtUSD(r.total)}</td>
+    </tr>`).join('')}
+    </tbody></table>
+    ${untagged ? `<div style="color:var(--text3);font-size:11px;margin-top:8px">
+      ${untagged} עסקאות סגורות עדיין בלי סטאפ ולא נכללות כאן.</div>` : ''}
+  </div>`;
 }
 
 // ── Subtle gridline color per design system recommendation ──
@@ -11031,6 +11232,9 @@ function openModal(type, tr=null) {
   modalER = tr ? (tr.entryReason || '') : '';
   document.getElementById('m-entry-reason').value = modalER;
   erSetPills('m-er-pills', modalER);
+  const _setup = tr ? (tr.setupType || '') : '';
+  document.getElementById('m-setup-type').value = _setup;
+  setupRenderPills('m-setup-pills', _setup);
   document.getElementById('m-market-cond').value = tr ? (tr.marketCond || '') : '';
   modalPS = tr ? (tr.processScore || 0) : 0;
   const psEl = document.getElementById('m-process-score');
@@ -11135,6 +11339,8 @@ function getFormTrade() {
     notes_keep:    sanitizeText(document.getElementById('m-notes-keep').value, 500),
     notes_improve: sanitizeText(document.getElementById('m-notes-improve').value, 500),
     entryReason:  ER_OPTIONS.includes(modalER) ? modalER : '',
+    setupType:    SETUP_OPTIONS.includes(document.getElementById('m-setup-type').value)
+                    ? document.getElementById('m-setup-type').value : '',
     marketCond:   document.getElementById('m-market-cond').value || '',
     processScore: modalPS || 0,
     mood:          (document.getElementById('m-mood').value || '').trim().slice(0, 300)
