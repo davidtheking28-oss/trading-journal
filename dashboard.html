@@ -10863,7 +10863,8 @@ function renderSetupBreakdown(trades) {
     // R only where a stop was recorded, so this stays honest about coverage
     const rs = arr.map(t => { const r = calcStopRisk(t); return r ? calcTotal(t) / r : null; }).filter(v => v != null);
     const avgR = rs.length ? rs.reduce((a, b) => a + b, 0) / rs.length : null;
-    return { k, n: arr.length, wr, avgW, avgL, total, exp, avgR, rn: rs.length };
+    return { k, n: arr.length, wr, avgW, avgL, total, exp, avgR, rn: rs.length,
+             nWins: wins.length, nLosses: losses.length };
   }).sort((a, b) => b.total - a.total);
 
   const untagged = closed.length - tagged.length;
@@ -10882,8 +10883,8 @@ function renderSetupBreakdown(trades) {
       <td style="padding:7px 8px;font-weight:600">${SETUP_LABELS[r.k] || r.k}</td>
       <td style="padding:7px 8px">${r.n}</td>
       <td style="padding:7px 8px">${r.wr.toFixed(0)}%</td>
-      <td style="padding:7px 8px" class="num-green sensitive">${fmtUSD(r.avgW)}</td>
-      <td style="padding:7px 8px" class="num-red sensitive">${fmtUSD(r.avgL)}</td>
+      <td style="padding:7px 8px" class="num-green sensitive">${r.nWins ? fmtUSD(r.avgW) : '<span style="color:var(--text3)">—</span>'}</td>
+      <td style="padding:7px 8px" class="num-red sensitive">${r.nLosses ? fmtUSD(r.avgL) : '<span style="color:var(--text3)">—</span>'}</td>
       <td style="padding:7px 8px;font-weight:700" class="${r.exp>=0?'num-green':'num-red'} sensitive">${fmtUSD(r.exp)}</td>
       <td style="padding:7px 8px">${r.avgR==null?'<span style="color:var(--text3)">—</span>':
           `<span class="${r.avgR>=0?'num-green':'num-red'}">${r.avgR>=0?'+':''}${r.avgR.toFixed(2)}R</span>
