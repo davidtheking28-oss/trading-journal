@@ -324,6 +324,26 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   /* Tabular nums for all financial data */
   td { font-variant-numeric: tabular-nums; }
 
+  /* ── Signed figures in an RTL page ──
+     The document is dir="rtl", so the bidi algorithm treats a leading "+"/"-"
+     as neutral and reorders it to the visual right: "-$82.00" rendered as
+     "$82.00-". On a P&L screen the sign is the most important glyph on the
+     page, and it was landing on the wrong side of 38 figures across the KPI
+     cards, the donut, the monthly tracker and the comparison panel.
+     Isolating each figure as its own LTR run fixes the order without touching
+     the surrounding Hebrew layout. */
+  .num-green, .num-red, .num-yellow,
+  .kpi-value, .kpi-trend, .cp-value,
+  .donut-stat-value, .comp-stat-val,
+  .mt-table td, .ts-table td,
+  .cl-green, .cl-red {
+    unicode-bidi: isolate;
+    direction: ltr;
+  }
+  /* Table cells keep their RTL alignment; only the run direction is isolated. */
+  .mt-table td, .ts-table td { text-align: center; }
+  .ts-table td:first-child { direction: rtl; text-align: right; }
+
   /* EXPANDED ROW */
   .expanded-row td { padding: 0 !important; }
   .expanded-inner { padding: 16px 20px; background: rgba(129,140,248,0.03); border-top: 1px solid var(--border2); }
@@ -3038,7 +3058,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     --border2:     rgba(14,14,18,0.13);
     --text:        #0f172a;
     --text2:       #334155;
-    --text3:       #8896a8;
+    /* #8896a8 measured 3.01:1 on the white card — under AA for 10-13px labels,
+       which is every secondary label in the app. #64748b clears it at 4.76. */
+    --text3:       #64748b;
     --accent:      #0ea5e9;
     --accent2:     #0284c7;
     --accent-glow: rgba(14,165,233,0.12);
@@ -4557,7 +4579,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     --border2: rgba(14,14,18,0.12);
     --text:  #0f172a;
     --text2: #334155;
-    --text3: #8896a8;
+    --text3: #64748b;   /* AA on white; #8896a8 was 3.01:1 */
     --accent: #4f46e5;
     --accent2: #6366f1;
     --accent-glow: rgba(37,99,235,0.1);
@@ -10632,7 +10654,11 @@ function renderOverview() {
   if (monKeys.length >= 2) {
     const diff = byMon[monKeys[monKeys.length-1]] - byMon[monKeys[monKeys.length-2]];
     trendCls = diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat';
-    trendLbl = (diff > 0 ? '▲ ' : diff < 0 ? '▼ ' : '') + fmtUSD(Math.abs(diff)) + ' ' + t('kpi_vs_prev');
+    // Math.abs() strips the direction but fmtUSD() re-adds a "+" to anything
+    // non-negative, so a month that fell $98 read "▼ +$98.00" — arrow and sign
+    // contradicting each other. The arrow carries the direction; the figure is
+    // the unsigned magnitude.
+    trendLbl = (diff > 0 ? '▲ ' : diff < 0 ? '▼ ' : '') + '$' + Math.abs(diff).toFixed(2) + ' ' + t('kpi_vs_prev');
   }
 
   // Avg R
