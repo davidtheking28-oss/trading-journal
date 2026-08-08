@@ -340,8 +340,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     unicode-bidi: isolate;
     direction: ltr;
   }
-  /* Table cells keep their RTL alignment; only the run direction is isolated. */
+  /* Table cells keep their RTL alignment; only the run direction is isolated.
+     The first column of each is a Hebrew label, not a figure — leave it RTL. */
   .mt-table td, .ts-table td { text-align: center; }
+  .mt-table td:first-child,
   .ts-table td:first-child { direction: rtl; text-align: right; }
 
   /* EXPANDED ROW */
