@@ -583,21 +583,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .er-pill.active-bo      { background: rgba(63,185,80,0.18);   border-color: #3fb950; color: #3fb950; }
   .er-pill.active-blue    { background: rgba(79,131,255,0.18);  border-color: var(--accent); color: #a8c0ff; }
 
-  /* ── Review inbox ── */
-  .review-inbox { background: linear-gradient(145deg,#091525,#0b1e38); border: 1px solid rgba(255,255,255,0.07);
-                  border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; }
-  .ri-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-  .ri-title { font-size: 13px; font-weight: 700; color: var(--text); }
-  .ri-sub { font-size: 11px; color: var(--text3); margin-right: auto; }
-  .ri-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-            padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.05); }
-  .ri-sym { font-weight: 700; font-size: 13px; min-width: 74px; }
-  .ri-miss { font-size: 11px; color: var(--amber, #f5b94a); }
-  .ri-stop { width: 92px; padding: 5px 8px; font-size: 12px; border-radius: 7px;
-             background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: var(--text); }
-  .ri-more { background: none; border: none; color: var(--accent); font-size: 12px;
-             font-weight: 600; cursor: pointer; padding: 6px 0; }
-
   /* badge in table */
   .er-badge {
     display: inline-block; padding: 2px 8px; border-radius: 10px;
@@ -5568,11 +5553,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     <!-- ===== OVERVIEW ===== -->
     <div id="tab-overview" class="tab-content active">
 
-      <!-- Trades imported from a broker never pass through the add-trade modal,
-           so they arrive with no stop and no setup and nothing ever asks for
-           them. This is where they get tagged. -->
-      <div id="review-inbox" class="review-inbox" style="display:none"></div>
-
       <!-- Top bar: Add Trade + Fear & Greed -->
       <div class="ov-top-bar" style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-bottom:12px;padding:8px 14px;">
         <button class="btn btn-primary" onclick="fabToggle()" style="gap:6px;display:inline-flex;align-items:center;flex-shrink:0;padding:7px 16px;font-size:13px;font-weight:600;border-radius:9px;">
@@ -9377,73 +9357,6 @@ function modalSetER(val) {
 
 // ── Review inbox ──
 // Of 248 trades, 124 came from a broker sync. Those never open the add-trade
-// modal, so nothing ever asks for a stop or a setup, and both columns sat
-// empty across the whole book — which is what left the R metrics with 8%
-// coverage. This surfaces the untagged ones and takes the two fields inline.
-let _riLimit = 5;
-function reviewInboxTrades() {
-  return [...db.stocks, ...db.crypto]
-    .filter(t => !t.deleted && !t.archived)
-    .filter(t => !(+t.stop) || !t.setupType)
-    .sort((a, b) => (b.entryDate || '').localeCompare(a.entryDate || ''));
-}
-function renderReviewInbox() {
-  const host = document.getElementById('review-inbox');
-  if (!host) return;
-  const all = reviewInboxTrades();
-  if (!all.length) { host.style.display = 'none'; return; }
-  const shown = all.slice(0, _riLimit);
-  host.innerHTML =
-    `<div class="ri-head">
-       <span class="ri-title">להשלמה</span>
-       <span class="ri-sub">${all.length} עסקאות בלי סטופ או סוג סטאפ — בלעדיהם ה-R לא ניתן לחישוב</span>
-     </div>` +
-    shown.map(t => {
-      const miss = [];
-      if (!(+t.stop)) miss.push('סטופ');
-      if (!t.setupType) miss.push('סטאפ');
-      return `<div class="ri-row">
-        <span class="ri-sym">${t.symbol || '—'}</span>
-        <span class="ri-miss">חסר: ${miss.join(' · ')}</span>
-        <input class="ri-stop" type="number" step="0.01" placeholder="סטופ"
-               value="${(+t.stop) || ''}" onchange="riSetStop('${t.id}', this.value)">
-        <select class="ri-stop" style="width:118px" onchange="riSetSetup('${t.id}', this.value)">
-          <option value="">— סטאפ —</option>
-          ${SETUP_OPTIONS.map(s => `<option value="${s}"${t.setupType===s?' selected':''}>${SETUP_LABELS[s]}</option>`).join('')}
-        </select>
-      </div>`;
-    }).join('') +
-    (all.length > shown.length
-      ? `<button class="ri-more" onclick="_riLimit+=10;renderReviewInbox()">עוד ${Math.min(10, all.length-shown.length)} מתוך ${all.length-shown.length}</button>`
-      : '');
-  host.style.display = '';
-}
-function _riFind(id) {
-  return [...db.stocks, ...db.crypto].find(t => String(t.id) === String(id));
-}
-async function _riPatch(id, patch) {
-  const tr = _riFind(id); if (!tr) return;
-  Object.assign(tr, patch);                       // optimistic
-  renderReviewInbox();
-  const col = Object.keys(patch)[0] === 'stop' ? 'stop' : 'setup_type';
-  const { error } = await _sb.from('trades')
-    .update({ [col]: patch.stop !== undefined ? patch.stop : patch.setupType })
-    .eq('id', id).eq('user_id', _currentUser.id);
-  if (error) { toast('שמירה נכשלה', 'error'); console.error(error); return; }
-  renderTable(tr.type === 'crypto' ? 'crypto' : 'stock');
-}
-function riSetStop(id, val) {
-  const n = sanitizeNumber(val, 0);
-  if (!n) return;
-  _riPatch(id, { stop: n });
-  toast('סטופ נשמר');
-}
-function riSetSetup(id, val) {
-  if (!SETUP_OPTIONS.includes(val)) return;
-  _riPatch(id, { setupType: val });
-  toast('סטאפ נשמר');
-}
-
 // ── Setup type ──
 // The column and a hidden input already existed but nothing ever wrote to them,
 // which is why all 248 trades carry an empty setup_type and no breakdown by
@@ -10759,7 +10672,6 @@ function renderGuard() {
 }
 
 function renderOverview() {
-  try { renderReviewInbox(); } catch (e) { console.error(e); }
   try { renderGuard(); } catch (e) { console.error(e); }
   const now = new Date();
   const om = document.getElementById('ov-month');
