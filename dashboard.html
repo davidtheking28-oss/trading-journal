@@ -7282,6 +7282,9 @@ async function authSignOut() {
   _teardownRealtimeSync();
   await _sb.auth.signOut();
   _currentUser = null;
+  if (_ovLiveTimer) { clearInterval(_ovLiveTimer); _ovLiveTimer = null; }
+  db = JSON.parse(JSON.stringify(SEED));
+  _dbLoaded = false;
   document.getElementById('auth-overlay').style.display = 'flex';
   toast('יצאת מהחשבון', 'info');
 }
@@ -8153,9 +8156,8 @@ function _restoreLastTab() {
 // ─── Command palette (⌘/Ctrl-K) ──────────────────
 function _navTo(name) {
   const btn = Array.from(document.querySelectorAll('.tnav-btn,.tab-btn')).find(b =>
-    (b.getAttribute('onclick') || '').includes(`switchTab('${name}'`) && b.offsetParent !== null)
-    || document.querySelector('.tnav-btn:last-child');
-  if (btn) switchTab(name, btn);
+    (b.getAttribute('onclick') || '').includes(`switchTab('${name}'`) && b.offsetParent !== null);
+  switchTab(name, btn);
 }
 function _cmdkActions() {
   const admin = _currentUser?.id === ADMIN_ID;
@@ -9975,31 +9977,29 @@ function qaSave() {
     if (error) { toast('שגיאה בשמירה: ' + error.message, 'error'); return; }
     arr.unshift(_rowToTrade(data));
     renderTable(type);
+    auditLog('trade_added', symbol + ' (quick-add)');
+    toast('✅ עסקה נוספה: ' + symbol, 'success');
+
+    // איפוס שדות (שמור תאריך ועמלה)
+    const _symEl = document.getElementById('qa-symbol');
+    _symEl.value = ''; _symEl.dataset.symValid = ''; _symEl.dataset.symPrice = '';
+    const _stEl = document.getElementById('qa-sym-status');
+    if (_stEl) { _stEl.textContent = ''; _stEl.className = 'sym-status'; }
+    document.getElementById('qa-entry').value  = '';
+    document.getElementById('qa-shares').value = '';
+    document.getElementById('qa-stop').value   = '';
+    document.getElementById('qa-note').value   = '';
+    document.getElementById('qa-mood').value   = '';
+    document.getElementById('qa-stop-pct').textContent = '';
+    document.getElementById('qa-preview').style.display = 'none';
+    document.getElementById('qa-market-cond').value = '';
+    qaPS = 0; document.querySelectorAll('#qa-ps-stars span').forEach(s => s.className = '');
+    qaER = ''; document.querySelectorAll('#qa-er-pills .er-pill').forEach(p => p.className = 'er-pill');
+
     renderOverview();
     initFilters();
+    fabToggle(); // סגור מודל אחרי שמירה
   });
-  auditLog('trade_added', symbol + ' (quick-add)');
-  toast('✅ עסקה נוספה: ' + symbol, 'success');
-
-  // איפוס שדות (שמור תאריך ועמלה)
-  const _symEl = document.getElementById('qa-symbol');
-  _symEl.value = ''; _symEl.dataset.symValid = ''; _symEl.dataset.symPrice = '';
-  const _stEl = document.getElementById('qa-sym-status');
-  if (_stEl) { _stEl.textContent = ''; _stEl.className = 'sym-status'; }
-  document.getElementById('qa-entry').value  = '';
-  document.getElementById('qa-shares').value = '';
-  document.getElementById('qa-stop').value   = '';
-  document.getElementById('qa-note').value   = '';
-  document.getElementById('qa-mood').value   = '';
-  document.getElementById('qa-stop-pct').textContent = '';
-  document.getElementById('qa-preview').style.display = 'none';
-  document.getElementById('qa-market-cond').value = '';
-  qaPS = 0; document.querySelectorAll('#qa-ps-stars span').forEach(s => s.className = '');
-  qaER = ''; document.querySelectorAll('#qa-er-pills .er-pill').forEach(p => p.className = 'er-pill');
-
-  renderOverview();
-  initFilters();
-  fabToggle(); // סגור מודל אחרי שמירה
 }
 
 function tradeDays(t) {
@@ -10771,6 +10771,7 @@ function renderOverview() {
   applyPrivacy();
 }
 
+let _livePLToken = 0;
 async function _updateLivePL() {
   const el  = document.getElementById('kpi-live-pl');
   const sub = document.getElementById('kpi-live-sub');
@@ -10778,6 +10779,7 @@ async function _updateLivePL() {
   if (document.hidden) return;
   const ovTab = document.getElementById('tab-overview');
   if (ovTab && !ovTab.classList.contains('active')) return;
+  const myToken = ++_livePLToken;
   const open = [...db.stocks, ...db.crypto].filter(t =>
     !t.deleted && (!t.exitPrice || t.exitPrice === 0) && t.symbol && t.entryPrice > 0
   );
@@ -10805,6 +10807,7 @@ async function _updateLivePL() {
       });
     } catch {}
   }));
+  if (myToken !== _livePLToken) return;
   const sign = totalUnreal >= 0 ? '+' : '';
   el.textContent = sign + '$' + Math.abs(totalUnreal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   el.className = totalUnreal >= 0 ? 'num-green' : 'num-red';
@@ -12772,10 +12775,9 @@ function tlgConfirm(idx) {
 
   const type = symIsCrypto(t.symbol) ? 'crypto' : 'stock';
   const arr  = type === 'crypto' ? db.crypto : db.stocks;
-  const newId = arr.length ? Math.max(...arr.map(x => x.id)) + 1 : 1;
 
-  arr.push({
-    id: newId, type,
+  const trade = {
+    type,
     entryDate:    t.entryDate,
     ls:           t.ls,
     symbol:       t.symbol,
@@ -12790,14 +12792,25 @@ function tlgConfirm(idx) {
     commission:   t.commission,
     notes_keep:   'יובא מאינטראקטיב ישראל',
     notes_improve: '',
-  });
-  saveDB();
+  };
 
   const btn = document.getElementById(`tlg-btn-${idx}`);
-  if (btn) { btn.disabled = true; btn.textContent = '✓ נוסף'; }
-  toast(`${t.symbol} נוסף ל${type === 'crypto' ? 'קריפטו' : 'מניות'}`, 'success');
-  auditLog('trade_added', t.symbol + ' (TLG import)');
-  initFilters();
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+
+  _sb.from('trades').insert(_tradeToRow(trade)).select().single().then(({ data, error }) => {
+    if (error) {
+      if (btn) { btn.disabled = false; btn.textContent = '+ ייבא'; }
+      toast('שגיאה בשמירה: ' + error.message, 'error');
+      return;
+    }
+    arr.unshift(_rowToTrade(data));
+    if (btn) btn.textContent = '✓ נוסף';
+    toast(`${t.symbol} נוסף ל${type === 'crypto' ? 'קריפטו' : 'מניות'}`, 'success');
+    auditLog('trade_added', t.symbol + ' (TLG import)');
+    renderTable(type);
+    renderOverview();
+    initFilters();
+  });
 }
 // ────────────────────────────────────────────────────────────────
 
@@ -16151,7 +16164,7 @@ function invToggleBuyRow(i) {
   const updatePreview = () => {
     const qty   = +(document.getElementById('inv-pos-qty')?.value) || 0;
     const price = +(document.getElementById('inv-pos-price')?.value) || 0;
-    const mode  = document.getElementById('inv-pos-modal')?.dataset.mode || 'buy';
+    const mode  = document.getElementById('inv-position-modal')?.dataset.mode || 'buy';
     const res   = document.getElementById('inv-pos-result');
     if (!qty) { res.style.display = 'none'; return; }
     res.style.display = 'block';
@@ -16958,6 +16971,9 @@ async function brokerImport() {
       <div class="pin-dot" id="pd3"></div>
     </div>
     <div id="pin-msg"></div>
+    <div id="pin-lockout-msg" style="display:none;margin:10px 0 4px;padding:10px 14px;border-radius:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);font-size:13px;color:var(--red)">
+      יותר מדי ניסיונות — נסה שוב בעוד <b id="pin-lockout-cd" style="unicode-bidi:isolate;direction:ltr"></b>
+    </div>
     <div class="pin-grid">
       <button class="pin-key" onclick="pinPress('1')">1</button>
       <button class="pin-key" onclick="pinPress('2')">2</button>
