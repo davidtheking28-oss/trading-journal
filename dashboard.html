@@ -9538,7 +9538,7 @@ let _userSettings = {};
 async function loadUserSettings() {
   if (!_currentUser) return;
   const { data } = await _sb.from('user_settings')
-    .select('groq_api_key, groq_inv_key, finnhub_key, fmp_key, av_key, flex_token, flex_query_id, flex_confirm_query_id, portfolio_total, bybit_api_key, bybit_api_secret, onboarding_done')
+    .select('groq_api_key, groq_inv_key, finnhub_key, fmp_key, av_key, flex_query_id, flex_confirm_query_id, portfolio_total, onboarding_done')
     .eq('user_id', _currentUser.id)
     .single();
   _userSettings = data || {};
@@ -9561,9 +9561,15 @@ async function loadUserSettings() {
     const el = document.getElementById('av-key-input');
     if (el) { el.value = ''; el.placeholder = 'מפתח שמור ✓'; }
   }
+  // Broker credentials live in Vault and are never sent to the browser — the
+  // field shows that one is stored, not what it is.
+  const { data: _bp } = await _sb.rpc('broker_secrets_present');
+  _userSettings.flex_token       = _bp?.flex_token       ? true : false;
+  _userSettings.bybit_api_key    = _bp?.bybit_api_key    ? true : false;
+  _userSettings.bybit_api_secret = _bp?.bybit_api_secret ? true : false;
   if (_userSettings.flex_token) {
     const el = document.getElementById('flex-token');
-    if (el) { el.value = _userSettings.flex_token; el.placeholder = ''; }
+    if (el) { el.value = ''; el.placeholder = 'טוקן שמור ✓'; }
     _brokerBadgeFromStore('ibkr', true);
   }
   if (_userSettings.flex_query_id) {
@@ -9578,9 +9584,9 @@ async function loadUserSettings() {
   }
   if (_userSettings.bybit_api_key) {
     const el = document.getElementById('bybit-api-key');
-    if (el) { el.value = _userSettings.bybit_api_key; el.placeholder = ''; }
+    if (el) { el.value = ''; el.placeholder = 'מפתח שמור ✓'; }
     const el2 = document.getElementById('bybit-api-secret');
-    if (el2 && _userSettings.bybit_api_secret) { el2.value = _userSettings.bybit_api_secret; el2.placeholder = ''; }
+    if (el2 && _userSettings.bybit_api_secret) { el2.value = ''; el2.placeholder = 'סוד שמור ✓'; }
     _brokerBadgeFromStore('bybit', true);
   }
   renderFmpKeyStatus();
@@ -13429,7 +13435,12 @@ async function flexSave() {
   if (!/^[a-zA-Z0-9]{6,64}$/.test(t)) { toast('Token לא תקין — מספרים ואותיות בלבד, לפחות 6 תווים', 'error'); return; }
   if (!/^\d{4,15}$/.test(q)) { toast('Query ID לא תקין — מספרים בלבד (לדוגמה: 1462900)', 'error'); return; }
   if (qc && !/^\d{4,15}$/.test(qc)) { toast('Confirm Query ID לא תקין — מספרים בלבד', 'error'); return; }
-  await _saveUserSettings({ flex_token: t, flex_query_id: q, flex_confirm_query_id: qc || null });
+  const { error: _secErr } = await _sb.rpc('set_broker_secret', { p_field: 'flex_token', p_value: t });
+  if (_secErr) { toast('שמירת הטוקן נכשלה: ' + _secErr.message, 'error'); return; }
+  if (!await _saveUserSettings({ flex_query_id: q, flex_confirm_query_id: qc || null })) return;
+  _userSettings.flex_token = true;
+  const _ft = document.getElementById('flex-token');
+  if (_ft) { _ft.value = ''; _ft.placeholder = 'טוקן שמור ✓'; }
   toast('פרטי IBKR נשמרו ✓', 'success');
   flexSetStatus('פרטים נשמרו — יסונכרן אוטומטית', 'var(--text2)');
   _setBrokerBadge('ibkr', 'pending');
@@ -13627,7 +13638,14 @@ async function bybitSave() {
   const k = document.getElementById('bybit-api-key')?.value.trim();
   const s = document.getElementById('bybit-api-secret')?.value.trim();
   if (!k || !s) { toast('נא להזין API Key ו-Secret', 'error'); return; }
-  await _saveUserSettings({ bybit_api_key: k, bybit_api_secret: s });
+  const r1 = await _sb.rpc('set_broker_secret', { p_field: 'bybit_api_key',    p_value: k });
+  const r2 = await _sb.rpc('set_broker_secret', { p_field: 'bybit_api_secret', p_value: s });
+  if (r1.error || r2.error) { toast('שמירת פרטי Bybit נכשלה: ' + (r1.error || r2.error).message, 'error'); return; }
+  _userSettings.bybit_api_key = true; _userSettings.bybit_api_secret = true;
+  const _bk = document.getElementById('bybit-api-key');
+  if (_bk) { _bk.value = ''; _bk.placeholder = 'מפתח שמור ✓'; }
+  const _bs = document.getElementById('bybit-api-secret');
+  if (_bs) { _bs.value = ''; _bs.placeholder = 'סוד שמור ✓'; }
   toast('פרטי Bybit נשמרו ✓', 'success');
   bybitSetStatus('פרטים נשמרו — יסונכרן אוטומטית', 'var(--text2)');
   _setBrokerBadge('bybit', 'pending');

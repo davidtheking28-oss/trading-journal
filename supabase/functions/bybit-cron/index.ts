@@ -26,11 +26,17 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
   }
 
-  const { data: rows } = await sb
-    .from('user_settings')
-    .select('user_id, bybit_api_key, bybit_api_secret')
-    .not('bybit_api_key', 'is', null);
-  const targets = (rows ?? []).filter((u: any) => u.bybit_api_key && u.bybit_api_secret);
+  // Credentials live in Vault now; hydrate them onto each row so the rest of
+  // this function keeps working against u.bybit_api_key / u.bybit_api_secret.
+  const { data: rows } = await sb.from('user_settings').select('user_id');
+  const targets: any[] = [];
+  for (const r of (rows ?? []) as any[]) {
+    const [{ data: k }, { data: s }] = await Promise.all([
+      sb.rpc('get_broker_secret', { p_user_id: r.user_id, p_field: 'bybit_api_key' }),
+      sb.rpc('get_broker_secret', { p_user_id: r.user_id, p_field: 'bybit_api_secret' }),
+    ]);
+    if (k && s) targets.push({ user_id: r.user_id, bybit_api_key: k, bybit_api_secret: s });
+  }
 
   const CONC = 4;
   let ok = 0, fail = 0;

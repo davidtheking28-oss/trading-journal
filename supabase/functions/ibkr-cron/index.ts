@@ -59,11 +59,19 @@ async function runSync(sb: ReturnType<typeof createClient>, mode: string) {
   const tok = (t: string) => /^[a-zA-Z0-9]{6,64}$/.test(t || '');
   const qid = (q: string) => /^\d{1,15}$/.test(q || '');
 
-  const { data: rows, error } = await sb
+  const { data: settingsRows, error } = await sb
     .from('user_settings')
-    .select('user_id, flex_token, flex_query_id, flex_confirm_query_id')
-    .not('flex_token', 'is', null);
+    .select('user_id, flex_query_id, flex_confirm_query_id');
   if (error) { console.log('user_settings query failed: ' + error.message); return { ok: 0, fail: 0, errs: [] }; }
+
+  // The Flex token lives in Vault now; hydrate it so the rest of this function
+  // keeps working against u.flex_token.
+  const rows: any[] = [];
+  for (const r of (settingsRows ?? []) as any[]) {
+    const { data: tokenRaw } = await sb.rpc('get_broker_secret',
+      { p_user_id: r.user_id, p_field: 'flex_token' });
+    if (tokenRaw) rows.push({ ...r, flex_token: tokenRaw });
+  }
 
   // full → Activity query (365-day history); confirm → Trade Confirmation. One
   // statement per invocation bounds the Edge function's runtime; the two cron

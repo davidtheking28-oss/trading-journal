@@ -24,14 +24,13 @@ serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 
-  const { data: settings } = await supabase
-    .from('user_settings')
-    .select('bybit_api_key, bybit_api_secret')
-    .eq('user_id', user.id)
-    .single();
-
-  const apiKey = settings?.bybit_api_key ?? '';
-  const apiSecret = settings?.bybit_api_secret ?? '';
+  // Credentials live in Vault, not in a plaintext user_settings column.
+  const [{ data: apiKeyRaw }, { data: apiSecretRaw }] = await Promise.all([
+    supabase.rpc('get_broker_secret', { p_user_id: user.id, p_field: 'bybit_api_key' }),
+    supabase.rpc('get_broker_secret', { p_user_id: user.id, p_field: 'bybit_api_secret' }),
+  ]);
+  const apiKey = apiKeyRaw ?? '';
+  const apiSecret = apiSecretRaw ?? '';
   if (!apiKey || !apiSecret) {
     return new Response(JSON.stringify({ error: 'Missing Bybit credentials' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }

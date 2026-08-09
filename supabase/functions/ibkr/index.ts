@@ -29,11 +29,14 @@ serve(async (req: Request) => {
   // Credentials come from DB — never from client request params
   const { data: settings } = await supabase
     .from('user_settings')
-    .select('flex_token, flex_query_id')
+    .select('flex_query_id')
     .eq('user_id', user.id)
     .single();
 
-  const flexToken = settings?.flex_token ?? '';
+  // The token lives in Vault, not in a plaintext user_settings column.
+  const { data: flexTokenRaw } = await supabase.rpc('get_broker_secret',
+    { p_user_id: user.id, p_field: 'flex_token' });
+  const flexToken = flexTokenRaw ?? '';
   const qid       = settings?.flex_query_id ?? '';
 
   if (!flexToken || !/^[a-zA-Z0-9]{6,64}$/.test(flexToken)) {
