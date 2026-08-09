@@ -4817,6 +4817,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .cal-summary { font-size: 14px; font-weight: 700; }
   .cal-divider { width: 1px; height: 14px; background: rgba(255,255,255,0.12); }
   .cal-trade-count { font-size: 11px; color: var(--text3); font-weight: 500; }
+  /* The grid is 620px wide and clipped its own overflow, so on a 390px phone 44
+     cells were simply unreachable — the page did not even scroll. */
+  .cal-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr) 110px; gap: 1px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius2); overflow: hidden; min-width: 620px; }
   .cal-day-hdr { background: #111111 !important; color: var(--text3); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; padding: 9px 8px; text-align: center; }
   .cal-day-hdr.hdr-week { font-size: 11px; letter-spacing: 0.4px; }
@@ -6664,7 +6667,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <div class="qa-modal-stats">
         <span><span data-i18n="qa_pos_size">Position</span><strong id="qa-prev-pl">—</strong></span>
         <span><span data-i18n="qa_risk_pct">Risk %</span><strong id="qa-prev-pct">—</strong></span>
-        <span><span data-i18n="qa_stop_from">Stop from Entry</span><strong id="qa-stop-pct" style="color:var(--red)"></strong></span>
+        <span><span data-i18n="qa_stop_from">Stop from Entry</span><strong id="qa-stop-from" style="color:var(--red)"></strong></span>
       </div>
       <button class="qa-save" onclick="qaSave()" data-i18n="qa_save">💾 Save Trade</button>
     </div>
@@ -6754,6 +6757,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
                   autocomplete="off">
                 <div id="m-symbol-drop" class="sym-ac-drop" style="display:none"></div>
               </div>
+              <span id="m-type-badge" class="qa-type-badge stock" onclick="mToggleType()" title="לחץ לשינוי סוג">Stock</span>
             </div>
             <div class="sym-status" id="m-sym-status"></div>
           </div>
@@ -7312,12 +7316,6 @@ function onboardingDone() {
   _saveUserSettings({ onboarding_done: true }); // persist across devices
 }
 
-function onboardingReplay() {
-  localStorage.removeItem('ob_done_' + _currentUser?.id);
-  const el = document.getElementById('ob-overlay');
-  el.style.display = 'flex';
-  onboardingStep(1);
-}
 
 function onboardingOpenTrade() {
   onboardingDone();
@@ -7428,9 +7426,6 @@ async function _onAuthSuccess(user) {
   // Post-load UI setup
   initFilters();
   applyPrivacy();
-  renderAuditLog();
-  cleanOldDeleted();
-  _migrateCommission();
   loadStockSymbols();
   _autoFlexSync();
   _autoBybitSync();
@@ -7760,17 +7755,22 @@ async function _dedupeTrades() {
       }
     }
   }
+  let removed = 0;
   for (const t of toRemove) {
     _rtSuppress();
-    t.deleted = true;
-    await _sb.from('trades').update({ deleted: true, deleted_at: new Date().toISOString() })
+    // Only drop it from memory once the soft-delete actually persisted, or the
+    // row reappears on the next load and the journal contradicts itself.
+    const { error } = await _sb.from('trades').update({ deleted: true, deleted_at: new Date().toISOString() })
       .eq('id', t.id).eq('user_id', _currentUser.id);
+    if (error) { console.error('[dedupe]', error); continue; }
+    t.deleted = true;
+    removed++;
   }
-  if (toRemove.length) {
+  if (removed) {
     db.stocks = db.stocks.filter(x => !x.deleted);
     db.crypto = db.crypto.filter(x => !x.deleted);
   }
-  return toRemove.length;
+  return removed;
 }
 // Whether an incoming broker/import trade was previously deleted by the user.
 // Broker trades (ibkr_id/bybit_id) are matched by their unique execution id so a
@@ -8030,7 +8030,6 @@ function switchTab(name, btn) {
   if (name !== 'investments' && _invPriceTimer) { clearInterval(_invPriceTimer); _invPriceTimer = null; }
   if (name==='stocks') renderTable('stock');
   if (name==='crypto') renderTable('crypto');
-  if (name==='archive') renderArchive();
   if (name==='statistics') renderStatistics();
   if (name==='themes') { ttLoad(true); ttStartTimer(); } else { ttStopTimer(); }
   if (name==='ibkr') {
@@ -8571,6 +8570,7 @@ function renderCalendar(type) {
   const navType = isAll ? 'overview' : type;
   const p    = isAll ? 'ov' : (type === 'stock' ? 'st' : 'cr');
   const wrap = document.getElementById(isAll ? 'ov-calendar' : (type === 'stock' ? 'stocks-wrap' : 'crypto-wrap'));
+  if (!wrap) return;   // #crypto-wrap is gone — same guard renderTable already has
   if (!calendarNav[navType]) {
     const f = getFilter(p), now = new Date();
     calendarNav[navType] = { year: f.year?+f.year:now.getFullYear(), month: f.month?+f.month:now.getMonth()+1 };
@@ -8636,7 +8636,7 @@ function renderCalendar(type) {
     </div>
     <button class="cal-nav-btn" onclick="calNavNext('${navType}')" title="חודש הבא"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
   </div>
-  <div class="cal-grid">`;
+  <div class="cal-scroll"><div class="cal-grid">`;
 
   // Header row — days first, week-sum last (RTL: WeekSum appears leftmost)
   DAY_HDRS_ORDER.forEach((h,i) => {
@@ -8698,7 +8698,7 @@ function renderCalendar(type) {
     }
   }
 
-  html += `</div></div>`;
+  html += `</div></div></div>`;
   wrap.innerHTML = html;
 }
 
@@ -8890,18 +8890,22 @@ function renderTable(type) {
 
   // Build per-year sequential trade numbers based on chronological entry date
   // Use all trades of this type (not just filtered) for accurate year numbering
-  const allOfType = type === 'stock' ? db.stocks : db.crypto;
-  const _fullIds = new Set(allOfType.filter(t => !t.deleted).map(t => t.id));
+  // In "all"/"crypto" scope the rendered rows span both arrays, so numbering and
+  // new-row detection have to cover both — keyed on each row's own type. Before
+  // this, every crypto row was numbered "—" and flashed as new on every render.
+  const _fullIds = new Set([...db.stocks, ...db.crypto].filter(t => !t.deleted).map(t => t.id));
   const _prevIds = _prevTradeIds[type];
-  const yearTradeNum = {};
-  [...allOfType]
-    .filter(t => !t.deleted)
-    .sort((a, b) => (a.entryDate || '').localeCompare(b.entryDate || ''))
-    .forEach(t => {
-      const y = t.entryDate ? t.entryDate.slice(0, 4) : '—';
-      if (!yearTradeNum[y]) yearTradeNum[y] = { next: 1 };
-      yearTradeNum[y][t.id] = yearTradeNum[y].next++;
-    });
+  const yearTradeNum = { stock: {}, crypto: {} };
+  ['stock', 'crypto'].forEach(tt => {
+    [...(tt === 'stock' ? db.stocks : db.crypto)]
+      .filter(t => !t.deleted)
+      .sort((a, b) => (a.entryDate || '').localeCompare(b.entryDate || ''))
+      .forEach(t => {
+        const y = t.entryDate ? t.entryDate.slice(0, 4) : '—';
+        if (!yearTradeNum[tt][y]) yearTradeNum[tt][y] = { next: 1 };
+        yearTradeNum[tt][y][t.id] = yearTradeNum[tt][y].next++;
+      });
+  });
 
   trades.forEach(tr => {
     // Year group header when no year filter is active
@@ -8927,7 +8931,7 @@ function renderTable(type) {
     const isExp = expanded[key];
 
     const trYear = tr.entryDate ? tr.entryDate.slice(0,4) : '—';
-    const trNum = yearTradeNum[trYear]?.[tr.id] ?? '—';
+    const trNum = yearTradeNum[tr._tt || type]?.[trYear]?.[tr.id] ?? '—';
     const _flash = _prevIds && !_prevIds.has(tr.id) ? ' row-flash' : '';
     h += `<tr class="data-row ${rowCls}${_flash}" data-rowkey="${key}" onclick="toggleTradeRow('${type}',${tr.id})">
       <td style="color:var(--text);font-size:12px;font-weight:600;">${trNum}</td>
@@ -9052,8 +9056,7 @@ function showCalDayModal(ds) {
   const dtStyle = dayTotal >= 0 ? 'color:var(--green)' : 'color:var(--red)';
   const [y,mo,d] = ds.split('-');
   const title = `${+d}/${+mo}/${y}`;
-  document.getElementById('cal-trade-modal-title').textContent = `${title} · ${all.length} ${t('trades')} · <span style="${dtStyle}">${fmtUSD(dayTotal)}</span>`;
-  document.getElementById('cal-trade-modal-title').innerHTML = `${title} &nbsp;·&nbsp; ${all.length} ${t('trades')} &nbsp;·&nbsp; <span style="${dtStyle}">${fmtUSD(dayTotal)}</span>`;
+  document.getElementById('cal-trade-modal-title').innerHTML =`${title} &nbsp;·&nbsp; ${all.length} ${t('trades')} &nbsp;·&nbsp; <span style="${dtStyle}">${fmtUSD(dayTotal)}</span>`;
   document.getElementById('cal-trade-modal-body').innerHTML = all.map(tr => {
     const pl = calcTotal(tr); const pct = calcPct(tr);
     const plStyle = pl >= 0 ? 'color:var(--green)' : 'color:var(--red)';
@@ -9156,81 +9159,6 @@ function closeCalTradeModal() {
 // ARCHIVE — שנים קודמות
 // ══════════════════════════════════════════════
 const _ICON_ARCHIVE = `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>`;
-function renderArchive() {
-  const wrap = document.getElementById('archive-wrap');
-  if (!wrap) return;
-  const curYear = new Date().getFullYear();
-
-  // Collect all past-year trades grouped by year
-  const byYear = {};
-  ['stock','crypto'].forEach(type => {
-    const arr = type==='stock' ? db.stocks : db.crypto;
-    arr.filter(t => !t.deleted && t.entryDate).forEach(t => {
-      const y = +t.entryDate.slice(0,4);
-      if (y >= curYear) return; // skip current year
-      if (!byYear[y]) byYear[y] = { stock: [], crypto: [] };
-      byYear[y][type].push(t);
-    });
-  });
-
-  const years = Object.keys(byYear).map(Number).sort((a,b)=>b-a);
-
-  if (!years.length) {
-    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">${_ICON_ARCHIVE}</div><p>אין עסקאות בארכיון — כל העסקאות הן משנת ${curYear}</p></div>`;
-    return;
-  }
-
-  let h = `<div style="padding:4px 0 16px;font-size:12px;color:var(--text3);">ארכיון מכיל עסקאות מלפני שנת ${curYear}. לחץ על שנה לפתיחה.</div>`;
-
-  years.forEach(y => {
-    const stTrades = byYear[y].stock;
-    const crTrades = byYear[y].crypto;
-    const allTrades = [...stTrades, ...crTrades];
-    const yst = stats(allTrades);
-    const stSt = stats(stTrades);
-    const crSt = stats(crTrades);
-    const tc = yst.total >= 0 ? 'var(--green)' : 'var(--red)';
-    const uid = 'arc-'+y;
-
-    h += `<div class="archive-year-block" id="${uid}-block">
-      <div class="archive-year-header" onclick="archiveToggle('${uid}')">
-        <span class="archive-year-label">📅 ${y}</span>
-        <span class="archive-year-summary">
-          ${allTrades.length} עסקאות &nbsp;|&nbsp;
-          P&L: <strong style="color:${tc}">${fmtUSD(yst.total)}</strong> &nbsp;|&nbsp;
-          Win: <strong>${fmt(yst.wr,1)}%</strong> &nbsp;|&nbsp;
-          ${yst.wins}W / ${yst.losses}L
-        </span>
-        <span class="archive-chevron" id="${uid}-chev">▼</span>
-      </div>
-      <div class="archive-year-body" id="${uid}-body" style="display:none;">`;
-
-    // Stats cards for the year
-    h += `<div class="archive-stats-row">`;
-    // Combined
-    h += archiveStatCard('סה"כ השנה', fmtUSD(yst.total), tc, allTrades.length+' עסקאות | Win '+fmt(yst.wr,1)+'%');
-    if (stTrades.length) h += archiveStatCard('מניות', fmtUSD(stSt.total), stSt.total>=0?'var(--green)':'var(--red)', stTrades.length+' עסקאות | Win '+fmt(stSt.wr,1)+'%');
-    if (crTrades.length) h += archiveStatCard('קריפטו', fmtUSD(crSt.total), crSt.total>=0?'var(--green)':'var(--red)', crTrades.length+' עסקאות | Win '+fmt(crSt.wr,1)+'%');
-    if (allTrades.length) h += archiveStatCard('עסקה הטובה', fmtUSD(yst.best), 'var(--green)', '');
-    if (allTrades.length) h += archiveStatCard('עסקה הגרועה', fmtUSD(yst.worst), 'var(--red)', '');
-    h += `</div>`;
-
-    // Stocks table
-    if (stTrades.length) {
-      h += `<div class="archive-type-label">📋 מניות — ${y}</div>`;
-      h += archiveTradeTable(stTrades, 'stock');
-    }
-    // Crypto table
-    if (crTrades.length) {
-      h += `<div class="archive-type-label">₿ קריפטו — ${y}</div>`;
-      h += archiveTradeTable(crTrades, 'crypto');
-    }
-
-    h += `</div></div>`; // body + block
-  });
-
-  wrap.innerHTML = h;
-}
 
 function archiveStatCard(label, value, color, sub) {
   return `<div class="archive-stat-card">
@@ -9448,7 +9376,6 @@ function qaInit() {
   if (el && !el.value) el.value = _todayLocal();
 }
 
-function qaToggle() { fabToggle(); }
 
 function fabToggle() {
   const modal = document.getElementById('qa-modal');
@@ -9703,9 +9630,10 @@ function getFmpKey() { return _userSettings.fmp_key || ''; }
 function getAvKey()  { return _userSettings.av_key  || ''; }
 
 async function saveFmpKey() {
-  const val = (document.getElementById('fmp-key-input')?.value || '').trim();
+  const el = document.getElementById('fmp-key-input');
+  const val = (el?.value || '').trim();
   await _saveUserSettings({ fmp_key: val || null });
-  document.getElementById('fmp-key-input').value = '';
+  if (el) el.value = '';
   toast(val ? 'מפתח FMP נשמר 🔐' : 'מפתח FMP הוסר', 'success');
   renderFmpKeyStatus();
 }
@@ -9917,11 +9845,14 @@ function qaCalc() {
 
   // % סטופ מהכניסה
   const stopPctEl = document.getElementById('qa-stop-pct');
+  const stopFromEl = document.getElementById('qa-stop-from');
   if (entry && stop) {
     const pct = ((stop - entry) / entry * 100);
     stopPctEl.textContent = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
     stopPctEl.className = 'qa-stop-pct' + (pct < 0 ? ' neg' : '');
+    if (stopFromEl) stopFromEl.textContent = stopPctEl.textContent;
   } else {
+    if (stopFromEl) stopFromEl.textContent = '';
     stopPctEl.textContent = '';
   }
 
@@ -9991,6 +9922,7 @@ function qaSave() {
     document.getElementById('qa-note').value   = '';
     document.getElementById('qa-mood').value   = '';
     document.getElementById('qa-stop-pct').textContent = '';
+    document.getElementById('qa-stop-from').textContent = '';
     document.getElementById('qa-preview').style.display = 'none';
     document.getElementById('qa-market-cond').value = '';
     qaPS = 0; document.querySelectorAll('#qa-ps-stars span').forEach(s => s.className = '');
@@ -10327,6 +10259,7 @@ const LANG_STRINGS = {
     set_grp_data:'Data Sources & Security', set_grp_import:'Broker Connection',
     st_best:'Best Trade', st_worst:'Worst Trade', st_avg_trade:'Avg per Trade',
     st_avg_win:'Avg Win', st_avg_loss:'Avg Loss', st_expectancy:'Expectancy',
+    scope_all:'All',
     st_wl_ratio:'W/L Ratio', st_max_win_streak:'Max Win Streak', st_max_loss_streak:'Max Loss Streak',
     st_avg_hold_win:'Avg Hold (Win)', st_avg_hold_loss:'Avg Hold (Loss)',
     st_avg_r:'Avg R', st_win_rate:'Win Rate',
@@ -10456,6 +10389,7 @@ const LANG_STRINGS = {
     set_grp_data:'מקורות נתונים ואבטחה', set_grp_import:'חיבור ברוקר',
     st_best:'עסקה הטובה ביותר', st_worst:'עסקה הגרועה ביותר', st_avg_trade:'ממוצע לעסקה',
     st_avg_win:'ממוצע רווח', st_avg_loss:'ממוצע הפסד', st_expectancy:'ציפיה (Expectancy)',
+    scope_all:'הכל',
     st_wl_ratio:'יחס W/L', st_max_win_streak:'רצף ניצחון מקסימלי', st_max_loss_streak:'רצף הפסד מקסימלי',
     st_avg_hold_win:'ימי החזקה ממוצע (זכייה)', st_avg_hold_loss:'ימי החזקה ממוצע (הפסד)',
     st_avg_r:'ממוצע R', st_win_rate:'אחוז הצלחה',
@@ -10704,8 +10638,10 @@ function renderOverview() {
   }
 
   // Avg R
-  const withR = trades.filter(tr2 => calcStopRisk(tr2) > 0);
-  const avgR  = withR.length ? withR.reduce((s,tr2) => s + calcPL(tr2)/calcStopRisk(tr2), 0) / withR.length : null;
+  // Net of commission and closed-only, so this matches the statistics tab's R
+  // instead of contradicting it — gross vs net flipped the sign on small trades.
+  const withR = trades.filter(tr2 => isClosed(tr2) && calcStopRisk(tr2) > 0);
+  const avgR  = withR.length ? withR.reduce((s,tr2) => s + calcTotal(tr2)/calcStopRisk(tr2), 0) / withR.length : null;
 
   // Open positions
   const openTrades = [...db.stocks, ...db.crypto].filter(tr2 => !tr2.deleted && !tr2.exitPrice);
@@ -10788,8 +10724,9 @@ async function _updateLivePL() {
     if (sub) sub.textContent = t('kpi_no_open');
     return;
   }
-  const key = getFinnhubKey();
-  if (!key) { el.textContent = '—'; return; }
+  // The finnhub edge function has a shared fallback key and the personal field is
+  // hidden from non-admins, so gating on a personal key killed this card for
+  // every regular user. The JWT alone is enough.
   const token = await _getToken();
   const symbols = [...new Set(open.map(t => t.symbol.toUpperCase()))];
   let totalUnreal = 0;
@@ -11216,15 +11153,17 @@ function renderDonut(st, adv, trades) {
   });
 
   // ── Compute extra stats ──────────────────────────
-  const sorted = [...(trades||[])].sort((a,b) => (a.entryDate||'').localeCompare(b.entryDate||''));
+  // Closed trades, net of commission — same basis as stats() and the statistics
+  // tab, which used calcTotal while this block used gross calcPL.
+  const sorted = [...(trades||[])].filter(isClosed).sort((a,b) => (a.entryDate||'').localeCompare(b.entryDate||''));
   let maxWinStreak=0, maxLossStreak=0, curW=0, curL=0;
   sorted.forEach(t => {
-    const pl = calcPL(t);
+    const pl = calcTotal(t);
     if (pl > 0) { curW++; curL=0; maxWinStreak=Math.max(maxWinStreak,curW); }
     else if (pl < 0) { curL++; curW=0; maxLossStreak=Math.max(maxLossStreak,curL); }
   });
-  const winSum  = sorted.reduce((s,t)=>{ const v=calcPL(t); return v>0?s+v:s; },0);
-  const lossSum = Math.abs(sorted.reduce((s,t)=>{ const v=calcPL(t); return v<0?s+v:s; },0));
+  const winSum  = sorted.reduce((s,t)=>{ const v=calcTotal(t); return v>0?s+v:s; },0);
+  const lossSum = Math.abs(sorted.reduce((s,t)=>{ const v=calcTotal(t); return v<0?s+v:s; },0));
   const pf = lossSum > 0 ? (winSum/lossSum) : null;
   const wlRatio = adv && adv.avgLoss && adv.avgLoss !== 0 ? Math.abs(adv.avgWin / adv.avgLoss) : null;
 
@@ -11356,7 +11295,10 @@ function openModal(type, tr=null) {
   if (tr && tr.t) tr.t.forEach(tg => addTarget(tg));
   updateAddTgtBtn();
   liveCalc();
-  mAutoType(); // sync badge with current symbol
+  // An existing trade's stored type is authoritative — re-detecting it from the
+  // symbol reclassified tickers like DASH/SOL and sent the edit to the wrong array.
+  if (tr) applyTypeBadge(document.getElementById('m-type-badge'), document.getElementById('m-type').value === 'crypto');
+  else mAutoType();
   document.getElementById('trade-modal').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -11530,7 +11472,7 @@ function sizerApply() {
 }
 
 async function saveTrade() {
-  const type = document.getElementById('m-type').value;
+  let type = document.getElementById('m-type').value;
   const idVal = document.getElementById('m-id').value;
   const data = getFormTrade();
 
@@ -11546,9 +11488,20 @@ async function saveTrade() {
   }
 
   data.type = type;
-  const arr = type==='stock' ? db.stocks : db.crypto;
+  let arr = type==='stock' ? db.stocks : db.crypto;
 
   if (idVal) {
+    // The modal re-detects stock/crypto from the symbol, so editing a trade whose
+    // ticker looks like the other kind pointed at the wrong array and threw the
+    // user's changes away with "עסקה לא נמצאה". The row's real home wins.
+    if (!arr.some(t=>String(t.id)===String(idVal))) {
+      const other = arr === db.stocks ? db.crypto : db.stocks;
+      if (other.some(t=>String(t.id)===String(idVal))) {
+        arr = other;
+        type = other === db.crypto ? 'crypto' : 'stock';
+        data.type = type;
+      }
+    }
     // Edit existing trade
     const i = arr.findIndex(t=>String(t.id)===String(idVal));
     if (i === -1) { toast('שגיאה: עסקה לא נמצאה','error'); return; }
@@ -11776,7 +11729,7 @@ function toast(msg, type='success') {
   el.className = `toast ${type}`;
   // שימוש ב-textContent ולא innerHTML למניעת XSS
   const icon = document.createElement('span');
-  icon.textContent = type === 'success' ? '✅' : '❌';
+  icon.textContent = type === 'error' ? '❌' : type === 'warning' ? '⚠️' : type === 'info' ? 'ℹ️' : '✅';
   el.appendChild(icon);
   el.appendChild(document.createTextNode(' ' + String(msg).slice(0, 100)));
   c.appendChild(el);
@@ -11885,20 +11838,6 @@ async function _sha256Legacy(pin) {
 }
 
 // Detect and migrate: FNV-style (≤8 hex chars) and SHA-256 v2 (64 hex chars) → force re-hash on next login
-function migrateOldPIN() {
-  const stored = localStorage.getItem(PIN_KEY);
-  if (!stored) return false;
-  // FNV hash (legacy v1) — too weak, force reset
-  if (stored.length <= 8) {
-    localStorage.removeItem(PIN_KEY);
-    localStorage.removeItem(PIN_SETUP_KEY);
-    toast('אבטחה שודרגה — נדרש הגדרת קוד PIN מחדש', 'warning');
-    return true;
-  }
-  // SHA-256 v2 (64 hex chars, no prefix) — will be silently upgraded to PBKDF2 on next successful login
-  // No action needed here; verifyPIN() handles the comparison and pinUnlock() re-stores with hashPIN()
-  return false;
-}
 
 function hasPIN() { return !!localStorage.getItem(PIN_KEY); }
 
@@ -12133,10 +12072,11 @@ async function _flexImportInner(trades) {
       const candidates = arr.filter(x => !x.deleted && x.symbol === t.symbol && !x.exitPrice && (!t._closeLs || x.ls === t._closeLs));
       const open = candidates.find(x => Math.abs((x.shares || 0) - (t.closedShares || 0)) < 0.01) || candidates[0];
       if (open) {
+        const prev = { exitPrice: open.exitPrice, closeDate: open.closeDate, closedShares: open.closedShares };
         open.exitPrice    = t.exitPrice;
         open.closeDate    = t.closeDate;
         open.closedShares = t.closedShares;
-        toUpdate.push(open);
+        toUpdate.push({ row: open, prev });
         updated++;
       }
       return;
@@ -12159,6 +12099,8 @@ async function _flexImportInner(trades) {
       // Same trade already in the journal → update it in place (corrects the
       // exit on re-sync, backfills the id), never insert a second copy.
       let changed = false;
+      const prev = { ibkr_id: existing.ibkr_id, exitPrice: existing.exitPrice, closeDate: existing.closeDate,
+                     closedShares: existing.closedShares, t: existing.t, commission: existing.commission };
       if (t.ibkr_id && existing.ibkr_id !== t.ibkr_id) { existing.ibkr_id = t.ibkr_id; changed = true; }
       if (t.exitPrice && (Math.abs((existing.exitPrice || 0) - t.exitPrice) > 1e-9
           || Math.abs((existing.closedShares || 0) - (t.closedShares || 0)) > 1e-9)) {
@@ -12169,20 +12111,32 @@ async function _flexImportInner(trades) {
         existing.commission   = t.commission;
         changed = true;
       }
-      if (changed) { toUpdate.push(existing); updated++; }
+      if (changed) { toUpdate.push({ row: existing, prev }); updated++; }
       return;
     }
 
     // New trade — honor user deletions (don't re-import something deleted).
-    const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
     if (_isDeletedImport(t)) return;
+    // Untagged fills (Flex query without the Trade ID column) are only matched
+    // against the journal, so two identical fills in the same statement both got
+    // queued and both got inserted. _dedupeTrades can't clean that up later —
+    // it only removes an untagged row that matches a tagged one.
+    if (!t.ibkr_id && toInsert.some(x => x.type === t.type && sameEntry(x, t))) return;
     toInsert.push(t);
   });
 
-  for (const trade of toUpdate) {
-    const row = _tradeToRow(trade);
-    await _sb.from('trades').update(row).eq('id', trade.id).eq('user_id', _currentUser.id);
+  let updateFailed = 0;
+  for (const { row: trade, prev } of toUpdate) {
+    const { error } = await _sb.from('trades').update(_tradeToRow(trade)).eq('id', trade.id).eq('user_id', _currentUser.id);
+    if (error) {
+      // The journal already showed the position as closed at the new exit price
+      // and recomputed P&L from it. Put the old values back rather than lie.
+      Object.assign(trade, prev);
+      updated--; updateFailed++;
+      console.error('[flex update]', error);
+    }
   }
+  if (updateFailed) toast(`${updateFailed} עדכוני סנכרון נכשלו — הנתונים לא נשמרו`, 'error');
 
   for (const t of toInsert) {
     const row = _tradeToRow({ ...t, deleted: false });
@@ -12246,7 +12200,7 @@ function _flexSyncCooldownLeft() {
 // Import the statement that the scheduled server job pre-fetched at a good time
 // (flex_statement_cache). Reuses the existing parse + import path, so there is
 // no live IBKR call and no 1001. Returns true if a fresh cache was used.
-async function _flexImportFromCache() {
+async function _flexImportFromCache(manual = false) {
   if (!_currentUser) return false;
   let row;
   try {
@@ -12263,6 +12217,10 @@ async function _flexImportFromCache() {
   const confirmFresh   = !!row.xml_confirm && (!row.confirm_imported_at || new Date(row.confirm_imported_at) < new Date(row.confirm_fetched_at));
 
   if (!activityFresh && !confirmFresh) {
+    // A cache that was already imported is "up to date" only for the background
+    // pass. On a manual press it must fall through to a live fetch — otherwise
+    // pressing סנכרן after closing a position reports "✓ עדכני" and pulls nothing.
+    if (manual) return false;
     if (activityUsable || row.xml_confirm) { _flexMarkSync(true); _setBrokerBadge('ibkr', 'ok'); flexSetStatus('✓ עדכני', 'var(--text3)'); return true; }
     return false;
   }
@@ -12358,8 +12316,9 @@ async function _bybitExisting(t, fp) {
   if (!byFp) return false;
   if (t.bybit_id && !byFp.bybit_id) {
     _rtSuppress();
-    byFp.bybit_id = t.bybit_id;
-    await _sb.from('trades').update({ bybit_id: t.bybit_id }).eq('id', byFp.id).eq('user_id', _currentUser.id);
+    const { error } = await _sb.from('trades').update({ bybit_id: t.bybit_id }).eq('id', byFp.id).eq('user_id', _currentUser.id);
+    if (!error) byFp.bybit_id = t.bybit_id;
+    else console.error('[bybit backfill]', error);
   }
   return true;
 }
@@ -12386,18 +12345,22 @@ async function _autoBybitSync() {
     });
     const json = await res.json();
     if (!res.ok || json.error) throw new Error(json.error || 'שגיאה');
-    localStorage.setItem(lastKey, String(Date.now()));
     _setBrokerBadge('bybit', 'ok');
 
     const trades = json.trades || [];
-    let imported = 0;
+    let imported = 0, insFailed = 0;
     for (const t of trades) {
       const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
       if (_isDeletedImport(t)) continue;
       if (await _bybitExisting(t, fp)) continue;
       const { data, error } = await _sb.from('trades').insert(_tradeToRow({ ...t, closedShares: t.shares, deleted: false })).select().single();
-      if (!error) { db.crypto.unshift(_rowToTrade(data)); imported++; }
+      if (error) { insFailed++; console.error('[bybit insert]', error); continue; }
+      db.crypto.unshift(_rowToTrade(data)); imported++;
     }
+    // The cooldown blocks retries for 6h, so only claim a successful run once the
+    // inserts actually landed — otherwise a failed sync locked itself out.
+    if (!insFailed) localStorage.setItem(lastKey, String(Date.now()));
+    else toast(`Bybit: ${insFailed} עסקאות לא נשמרו`, 'error');
     if (imported > 0) {
       initFilters();
       renderTable('crypto');
@@ -12541,32 +12504,9 @@ function stopAutoLock() {
 // ══════════════════════════════════════════════
 const CHECKSUM_KEY = 'tj-checksum';
 
-function dbChecksum(data) {
-  const s = JSON.stringify(data);
-  let h = 0;
-  for (let i = 0; i < s.length; i++) {
-    h = ((h << 5) - h + s.charCodeAt(i)) | 0;
-  }
-  return (h >>> 0).toString(16);
-}
 
 function saveDB() { /* no-op — CRUD functions write directly to Supabase */ }
 
-function verifyIntegrity() {
-  const raw = localStorage.getItem(KEY);
-  const stored = localStorage.getItem(CHECKSUM_KEY);
-  if (!raw || !stored) return true; // אין נתונים — לא רלוונטי
-  try {
-    const parsed = JSON.parse(raw);
-    const expected = dbChecksum(parsed);
-    if (expected !== stored) {
-      console.warn('[Security] Data integrity check FAILED — possible tampering detected');
-      toast('⚠️ נתונים שונו מחוץ לאפליקציה! מאפס לנתונים מאובטחים.', 'error');
-      return false;
-    }
-  } catch(e) { return false; }
-  return true;
-}
 
 // ══════════════════════════════════════════════
 // INTERACTIVE ISRAEL — TLG FILE IMPORT
@@ -12813,192 +12753,6 @@ function tlgConfirm(idx) {
   });
 }
 // ────────────────────────────────────────────────────────────────
-
-// ══════════════════════════════════════════════
-// IBKR CLIENT PORTAL GATEWAY INTEGRATION
-// ══════════════════════════════════════════════
-const IBKR_BASE = 'https://localhost:5000/v1/api';
-let ibkrConnected = false;
-let _ibkrPending = [];          // module-scoped, not exposed on window
-let _ibkrCheckLastMs = 0;       // rate-limit timestamp for ibkrCheckConnection
-const _ibkrInFlight = new Map();// deduplication of concurrent requests
-
-// Whitelist of allowed IBKR API paths
-const IBKR_ALLOWED_PATHS = new Set([
-  '/iserver/auth/status',
-  '/portfolio/accounts',
-  '/iserver/account/trades',
-]);
-const IBKR_ACCOUNT_TRADES_RE = /^\/iserver\/account\/[A-Z0-9]{1,20}\/trades$/;
-
-async function ibkrFetch(path) {
-  // Path whitelist validation
-  if (!IBKR_ALLOWED_PATHS.has(path) && !IBKR_ACCOUNT_TRADES_RE.test(path)) {
-    console.warn('[IBKR] Blocked unlisted path:', path);
-    return null;
-  }
-
-  // Request deduplication — reuse in-flight promise for same path
-  if (_ibkrInFlight.has(path)) return _ibkrInFlight.get(path);
-
-  const controller = new AbortController();
-  const timeoutId  = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
-  const promise = fetch(IBKR_BASE + path, {
-    credentials: 'include',
-    headers: { 'User-Agent': 'trading-journal' },
-    signal: controller.signal
-  })
-  .then(res => {
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    return res.json();
-  })
-  .catch(() => null)
-  .finally(() => {
-    clearTimeout(timeoutId);
-    _ibkrInFlight.delete(path);
-  });
-
-  _ibkrInFlight.set(path, promise);
-  return promise;
-}
-
-function ibkrSetStatus(connected, label) {
-  ibkrConnected = connected;
-  const dot = document.getElementById('ibkr-conn-dot');
-  const hdrDot = document.getElementById('ibkr-header-dot');
-  const txt = document.getElementById('ibkr-conn-text');
-  if (dot) {
-    dot.className = 'ibkr-status-dot' + (connected ? ' connected' : ' disconnected');
-  }
-  if (hdrDot) {
-    hdrDot.className = 'ibkr-status-dot' + (connected ? ' connected' : ' disconnected');
-    hdrDot.title = connected ? 'IBKR מחובר' : 'IBKR לא מחובר';
-  }
-  if (txt) txt.textContent = label || (connected ? 'מחובר' : 'לא מחובר');
-}
-
-function ibkrLog(msg, cls) {
-  const log = document.getElementById('ibkr-log');
-  if (!log) return;
-  const div = document.createElement('div');
-  div.className = 'ibkr-log-entry ' + (cls || 'ibkr-log-info');
-  div.textContent = new Date().toLocaleTimeString('he-IL') + ' — ' + msg;
-  log.appendChild(div);
-  log.scrollTop = log.scrollHeight;
-}
-
-async function ibkrCheckConnection() {
-  // Rate limit: 2 seconds between checks
-  const now = Date.now();
-  if (now - _ibkrCheckLastMs < 2000) return;
-  _ibkrCheckLastMs = now;
-
-  const btn = document.getElementById('ibkr-check-btn');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ בודק...'; }
-  ibkrSetStatus(false, 'בודק חיבור...');
-
-  const data = await ibkrFetch('/iserver/auth/status');
-
-  if (btn) { btn.disabled = false; btn.textContent = '🔄 בדוק חיבור'; }
-
-  if (!data) {
-    ibkrSetStatus(false, 'שגיאת חיבור — Gateway לא זמין');
-    toast('IBKR Gateway לא זמין — פתח את localhost:5000 תחילה', 'error');
-    return;
-  }
-
-  const auth = data.authenticated === true || data.connected === true;
-  if (auth) {
-    ibkrSetStatus(true, 'מחובר ומאומת');
-    auditLog('ibkr_connected');
-    toast('IBKR מחובר בהצלחה', 'success');
-    const accountCard = document.getElementById('ibkr-account-card');
-    const importCard = document.getElementById('ibkr-import-card');
-    if (accountCard) accountCard.style.display = '';
-    if (importCard) importCard.style.display = '';
-
-    // Set default date range (last 30 days)
-    const now = new Date();
-    const from = new Date(now);
-    from.setDate(from.getDate() - 30);
-    const toInput = document.getElementById('ibkr-date-to');
-    const fromInput = document.getElementById('ibkr-date-from');
-    if (toInput) toInput.value = _todayLocal(now);
-    if (fromInput) fromInput.value = _todayLocal(from);
-
-    const log = document.getElementById('ibkr-log');
-    if (log) log.innerHTML = '';
-    ibkrLog('מחובר ל-IBKR Gateway', 'ibkr-log-ok');
-    await ibkrLoadAccounts();
-  } else {
-    ibkrSetStatus(false, 'לא מאומת — נדרש התחברות ב-Gateway');
-    toast('IBKR Gateway פעיל אך לא מאומת — התחבר דרך localhost:5000', 'error');
-  }
-}
-
-async function ibkrLoadAccounts() {
-  const sel = document.getElementById('ibkr-account-select');
-  if (!sel) return;
-  const data = await ibkrFetch('/portfolio/accounts');
-  if (!data || !Array.isArray(data)) {
-    ibkrLog('לא ניתן לטעון חשבונות', 'ibkr-log-err');
-    sel.innerHTML = '<option value="">— שגיאה בטעינת חשבונות —</option>';
-    return;
-  }
-  sel.innerHTML = data.map(acc =>
-    `<option value="${esc(acc.id||acc.accountId||'')}">${esc(acc.id||acc.accountId||'')} ${acc.alias ? '('+esc(acc.alias)+')' : ''}</option>`
-  ).join('');
-  if (data.length > 0) {
-    ibkrLog('נטענו ' + data.length + ' חשבונות', 'ibkr-log-ok');
-  }
-}
-
-function ibkrConfirmTrade(idx) {
-  // Validate index — must be safe integer within bounds
-  if (!Number.isInteger(idx) || idx < 0 || idx >= _ibkrPending.length) return;
-  const t = _ibkrPending[idx];
-  if (!t) return;
-
-  // Auto-detect type from symbol (same logic as qaAutoType)
-  const type = symIsCrypto(t.symbol) ? 'crypto' : 'stock';
-  const arr  = type === 'crypto' ? db.crypto : db.stocks;
-  const newTrade = {
-    id: arr.length ? Math.max(...arr.map(x=>x.id))+1 : 1,
-    type,
-    entryDate: t.entryDate || _todayLocal(),
-    ls: t.ls,
-    symbol: t.symbol,
-    entryPrice: t.entryPrice,
-    shares: t.shares,
-    stop: 0,
-    t: [],
-    closeDate: '',
-    closedShares: 0,
-    exitPrice: 0,
-    ecn: 0,
-    commission: t.commission || 0,
-    notes_keep: 'יובא מ-IBKR',
-    notes_improve: ''
-  };
-  arr.push(newTrade);
-  saveDB();
-  const journalLabel = type === 'crypto' ? 'יומן קריפטו' : 'יומן מניות';
-  ibkrLog('עסקה ' + t.symbol + ' נוספה ל' + journalLabel, 'ibkr-log-ok');
-  toast('עסקה ' + t.symbol + ' נוספה ל' + journalLabel, 'success');
-
-  // Remove the import button for this trade
-  const preview = document.getElementById('ibkr-trades-preview');
-  if (preview) {
-    const btns = preview.querySelectorAll('.ibkr-trade-preview');
-    if (btns[idx]) {
-      btns[idx].style.opacity = '0.4';
-      const btn = btns[idx].querySelector('button');
-      if (btn) { btn.disabled = true; btn.textContent = '✓ נוסף'; }
-    }
-  }
-  initFilters();
-}
 
 // ══════════════════════════════════════════════
 // TRADE SCREENSHOTS — IndexedDB
@@ -13342,7 +13096,6 @@ function auditLog(action, details = '') {
   logs.unshift(entry);
   if (logs.length > 500) logs.length = 500;
   localStorage.setItem(AUDIT_KEY, JSON.stringify(logs));
-  renderAuditLog();
 
   // SHA-256 — async, non-blocking enhancement
   const payload = prevSha + String(entry.ts) + entry.action + entry.details;
@@ -13358,38 +13111,8 @@ function auditLog(action, details = '') {
     .catch(() => {});
 }
 
-function auditVerifyChain() {
-  const logs = JSON.parse(localStorage.getItem(AUDIT_KEY) || '[]');
-  if (logs.length < 2) return true;
-  for (let i = 0; i < logs.length - 1; i++) {
-    const cur  = logs[i];
-    const prev = logs[i + 1];
-    // Verify FNV chain
-    const prevHash = prev.h || '0000000000000000';
-    let h = 0x811c9dc5;
-    for (const c of (prevHash + cur.ts + cur.action + cur.details)) {
-      h ^= c.charCodeAt(0); h = (h * 0x01000193) >>> 0;
-    }
-    if (h.toString(16).padStart(8, '0') !== cur.h) return false;
-  }
-  return true;
-}
 
 // SHA-256 chain verification (async — call separately for deep audit)
-async function auditVerifyChainSHA256() {
-  const logs = JSON.parse(localStorage.getItem(AUDIT_KEY) || '[]');
-  if (logs.length < 2) return true;
-  for (let i = 0; i < logs.length - 1; i++) {
-    const cur  = logs[i];
-    const prev = logs[i + 1];
-    if (!cur.sh || !prev.sh) continue; // skip entries without SHA field
-    const payload = (prev.sh || '0'.repeat(64)) + String(cur.ts) + cur.action + cur.details;
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(payload));
-    const expected = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-    if (expected !== cur.sh) return false;
-  }
-  return true;
-}
 
 function fmtAuditTs(ts) {
   const d = new Date(ts);
@@ -13411,88 +13134,12 @@ const ACTION_LABELS = {
   ibkr_import:  'IBKR ייבוא'
 };
 
-function renderAuditLog() {
-  const tbody = document.getElementById('audit-tbody');
-  if (!tbody) return;
-  const logs = JSON.parse(localStorage.getItem(AUDIT_KEY) || '[]').slice(0, 50);
-  if (!logs.length) {
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:16px;">אין רשומות</td></tr>';
-    return;
-  }
-  tbody.innerHTML = logs.map(l => {
-    const safeAction = String(l.action||'').replace(/[^a-z0-9_]/g,'');
-    const rowCls = `audit-row-${safeAction}`;
-    const label = ACTION_LABELS[l.action] || esc(l.action);
-    return `<tr class="${rowCls}"><td>${fmtAuditTs(l.ts)}</td><td>${label}</td><td>${esc(l.details)}</td></tr>`;
-  }).join('');
-}
 
-function clearAuditLog() {
-  if (!confirm('למחוק את יומן הביקורת? הפעולה אינה הפיכה')) return;
-  localStorage.removeItem(AUDIT_KEY);
-  renderAuditLog();
-  toast('יומן נוקה', 'success');
-}
 
 // ══════════════════════════════════════════════
 // FEATURE 4 — SOFT DELETE / RECYCLE BIN
 // ══════════════════════════════════════════════
-function restoreTrade(type, id) {
-  const arr = type==='stock' ? db.stocks : db.crypto;
-  const tr = arr.find(t => t.id === id);
-  if (tr) { tr.deleted = false; delete tr.deletedAt; saveDB(); }
-  renderTable(type);
-  renderRecycleBin(type);
-  toast('עסקה שוחזרה', 'success');
-}
 
-function renderRecycleBin(type) {
-  const containerId = type === 'stock' ? 'recycle-stock' : 'recycle-crypto';
-  let container = document.getElementById(containerId);
-  if (!container) return;
-  const arr = type==='stock' ? db.stocks : db.crypto;
-  const deleted = arr.filter(t => t.deleted);
-  const body = container.querySelector('.recycle-body');
-  const header = container.querySelector('.recycle-header');
-  if (header) {
-    header.querySelector('.recycle-count').textContent = deleted.length ? ` (${deleted.length})` : '';
-  }
-  if (!body) return;
-  if (!deleted.length) {
-    body.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:8px 0;">הסל ריק</div>';
-    return;
-  }
-  body.innerHTML = deleted.map(tr => {
-    const deletedDate = tr.deletedAt ? new Date(tr.deletedAt).toLocaleDateString('he-IL') : '—';
-    return `<div class="recycle-item">
-      <span><span class="recycle-sym">${esc(tr.symbol)}</span><span class="recycle-date">${fmtDate(tr.entryDate)}</span></span>
-      <span style="color:var(--text3);font-size:11px;">נמחק: ${deletedDate}</span>
-      <button class="btn btn-secondary btn-sm" onclick="restoreTrade('${type}',${tr.id})">↩ שחזר</button>
-    </div>`;
-  }).join('');
-}
-
-async function _migrateCommission() {
-  const FLAG = 'comm_migrated_5';
-  if (localStorage.getItem(FLAG) || !_currentUser) return;
-  const { error } = await _sb.from('trades')
-    .update({ commission: 5.0 })
-    .eq('user_id', _currentUser.id)
-    .eq('commission', 2.5);
-  if (!error) localStorage.setItem(FLAG, '1');
-}
-
-function cleanOldDeleted() {
-  const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
-  const cutoff = Date.now() - THIRTY_DAYS;
-  let changed = false;
-  ['stocks','crypto'].forEach(key => {
-    const before = db[key].length;
-    db[key] = db[key].filter(t => !(t.deleted && t.deletedAt && t.deletedAt < cutoff));
-    if (db[key].length !== before) changed = true;
-  });
-  if (changed) saveDB();
-}
 
 // ─────────────────────────────────────────────
 // REAL-TIME MARKET DATA (Yahoo Finance)
@@ -13637,20 +13284,6 @@ document.addEventListener('click', e => {
 });
 
 // Auto-fill the price input that's in the same widget as the symbol input
-function rtAutoFill(symInputId, statusId) {
-  const inp = document.getElementById(symInputId);
-  if (!inp || !inp.dataset.symPrice) return;
-  const price = parseFloat(inp.dataset.symPrice);
-  if (!price) return;
-  // Detect which widget: quick-add (qa-) or modal (m-)
-  const priceId = symInputId.startsWith('qa-') ? 'qa-entry' : 'm-entry';
-  const priceInp = document.getElementById(priceId);
-  if (priceInp) {
-    priceInp.value = price;
-    priceInp.dispatchEvent(new Event('input'));
-    toast('📈 מחיר עודכן: $' + fmtPrice(price), 'success');
-  }
-}
 
 // ─────────────────────────────────────────────
 // INIT
@@ -13757,9 +13390,6 @@ function toggleFlexAdvanced() {
   if (adv) adv.style.display = adv.style.display === 'none' ? 'block' : 'none';
 }
 
-function toggleIbkrCard() {
-  document.getElementById('ibkr-sync-card')?.classList.toggle('collapsed');
-}
 
 function _setAvatar(url) {
   ['nav-avatar-img','avatar-preview-img','header-avatar-img'].forEach(id => {
@@ -13776,12 +13406,6 @@ function _setAvatar(url) {
   if (hav) hav.style.borderColor = url ? 'rgba(129,140,248,0.5)' : 'rgba(129,140,248,0.25)';
 }
 
-function switchSettingsPanel(id) {
-  document.querySelectorAll('.s-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.s-nav-item').forEach(i => i.classList.remove('active'));
-  document.getElementById('s-panel-' + id)?.classList.add('active');
-  document.querySelector(`.s-nav-item[data-panel="${id}"]`)?.classList.add('active');
-}
 
 async function settingsChangePassword() {
   const pw  = document.getElementById('pw-new')?.value?.trim();
@@ -13837,7 +13461,7 @@ async function flexSync() {
 
   try {
     // Prefer the server pre-fetched statement — instant, no 1001.
-    if (await _flexImportFromCache()) return;
+    if (await _flexImportFromCache(true)) return;
     const trades = await _flexFetch(jwt);
     _flexMarkSync(true);
     _setBrokerBadge('ibkr', 'ok');
@@ -13989,17 +13613,6 @@ function flexParseXML(xml) {
   });
 
   return trades;
-}
-function flexIsDuplicate(t) {
-  const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
-  if (db._deletedFingerprints?.has(fp)) return true;
-  const arr = t.type === 'crypto' ? db.crypto : db.stocks;
-  return arr.some(x =>
-    x.symbol === t.symbol &&
-    x.entryDate === t.entryDate &&
-    Math.abs(x.entryPrice - t.entryPrice) < 0.01 &&
-    Math.abs((x.shares || 0) - (t.shares || 0)) < 0.01
-  );
 }
 
 // Init on tab open — pre-fill saved credentials
@@ -14771,11 +14384,6 @@ function toggleTheme() {
   _applyTheme(next);
   try{ const f=document.getElementById('screener-frame'); if(f?.src) f.contentDocument.documentElement.dataset.theme = next==='light'?'tj-light':'tj'; }catch(e){}
 }
-function _updateThemeBtn(theme) {
-  const icon = document.getElementById('theme-icon'), label = document.getElementById('theme-label');
-  if (icon)  icon.innerHTML  = theme === 'light' ? _THEME_SVG_MOON : _THEME_SVG_SUN;
-  if (label) label.textContent = theme === 'light' ? 'מצב כהה' : 'מצב בהיר';
-}
 (function _initTheme() {
   const saved = localStorage.getItem('tj-theme') || 'dark';
   if (document.readyState === 'loading') {
@@ -15048,7 +14656,6 @@ async function missedRender() {
 const _missedQuotes = {};
 async function missedFollowUp(list) {
   if (!list.length) return;
-  if (!getFinnhubKey()) return;
   const token = await _getToken();
   const syms = [...new Set(list.map(r => (r.sym || '').toUpperCase()).filter(Boolean))];
   await Promise.all(syms.map(async sym => {
@@ -16117,6 +15724,11 @@ async function invFetchPrices(save = true) {
       const data = await r.json();
       const price = data.c || data.pc;
       if (!price) return;
+      // invRenderRows() replaces #inv-tbody wholesale, so a row captured before
+      // the await can be detached by the time the quote lands. Writing to it
+      // updated nothing, then invRecalc()+invAutoSave() persisted the live DOM
+      // with the prices still at 0.
+      if (!row.isConnected) return;
       const inputs = row.querySelectorAll('input');
       const priceInput = inputs[4];
       if (priceInput) { priceInput.value = price; updated++; }
@@ -16288,11 +15900,6 @@ function invAutoSave() {
   }, 800);
 }
 
-function invSave() {
-  const data = invGetCurrentData();
-  invSaveData(data);
-  toast(t('inv_saved'), 'success');
-}
 
 const _invSectorTimers = {};
 function invAutoSector(idx) {
@@ -16551,7 +16158,6 @@ function ttRender(themes, indices) {
       : score >= 40 ? ['Neutral', '#94a3b8']
       : score >= 20 ? ['Fear', '#f97316']
       : ['Extreme Fear', '#ff6b8a'];
-    ttRenderPulseWidget(score, label, color);
   }
 
   // ── Meta: Top3/Bottom3 + Breadth ──
@@ -16632,30 +16238,6 @@ function ttRender(themes, indices) {
                  + `<div class="tt-col">${sorted.slice(0, half).map(renderRow).join('')}</div>`;
 }
 
-function ttRenderPulseWidget(score, label, color) {
-  const el = document.getElementById('ov-pulse-widget');
-  if (!el) return;
-  const R = 33, C = 40, FULL = 2 * Math.PI * R;
-  const dash = (score / 100) * FULL;
-  el.innerHTML = `
-    <div class="fg-gauge-wrap">
-      <svg width="80" height="80" viewBox="0 0 80 80">
-        <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/>
-        <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="${color}" stroke-width="6"
-          stroke-dasharray="${dash} ${FULL}" stroke-linecap="round"
-          style="filter:drop-shadow(0 0 6px ${color}80)"/>
-      </svg>
-      <div class="fg-gauge-text">
-        <span class="fg-score" style="color:${color}">${score}</span>
-        <span class="fg-score-sub">/100</span>
-      </div>
-    </div>
-    <div class="fg-info">
-      <div class="fg-label">Market Pulse</div>
-      <div class="fg-rating" style="color:${color}">${label}</div>
-      <div class="fg-source">Themes · ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
-    </div>`;
-}
 
 // ─────────────────────────────────────────────
 // ─────────────────────────────────────────────
