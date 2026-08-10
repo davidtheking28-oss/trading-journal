@@ -2994,8 +2994,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     /* #8896a8 measured 3.01:1 on the white card — under AA for 10-13px labels,
        which is every secondary label in the app. #64748b clears it at 4.76. */
     --text3:       #64748b;
-    --accent:      #0ea5e9;
-    --accent2:     #0284c7;
+    --accent:      #4f46e5;
+    --accent2:     #6366f1;
     --accent-glow: rgba(14,165,233,0.12);
     --green:       #059669;
     --green-bg:    rgba(5,150,105,0.1);
@@ -4193,6 +4193,19 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     background: radial-gradient(ellipse 140% 80% at 50% -10%, rgba(129,140,248,0.12) 0%, transparent 55%),
                 radial-gradient(ellipse 80% 60% at 10% 90%, rgba(167,139,250,0.08) 0%, transparent 50%),
                 #070c19 !important;
+  }
+  #auth-layout { display: flex; width: 100%; height: 100%; }
+  #auth-card-col { flex: 0 0 460px; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  #auth-showcase {
+    flex: 1 1 auto; display: flex; align-items: center; justify-content: center;
+    padding: 40px; position: relative; overflow: hidden;
+    border-inline-start: 1px solid rgba(129,140,248,0.1);
+  }
+  html[data-theme="light"] #auth-showcase { border-inline-start-color: rgba(14,14,18,0.08); }
+  @media (max-width: 767px) {
+    #auth-layout { flex-direction: column; }
+    #auth-card-col { flex: 1 1 auto; width: 100%; padding: 20px; }
+    #auth-showcase { display: none; }
   }
 
   /* ── Scrollbar on main ── */
@@ -6764,8 +6777,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 </div>
 
 <!-- AUTH OVERLAY -->
-<div id="auth-overlay" style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;flex-direction:column;padding:20px;">
-  <div style="background:rgba(14,20,34,0.92);border:1px solid rgba(129,140,248,0.14);border-radius:var(--r-lg);padding:38px 36px 34px;width:100%;max-width:400px;box-shadow:0 24px 80px rgba(0,0,0,.8),0 0 0 1px rgba(129,140,248,0.06);backdrop-filter:blur(24px);position:relative;overflow:hidden;">
+<div id="auth-overlay" style="display:none;position:fixed;inset:0;z-index:9999;">
+ <div id="auth-layout">
+  <div id="auth-card-col">
+   <div style="background:rgba(14,20,34,0.92);border:1px solid rgba(129,140,248,0.14);border-radius:var(--r-lg);padding:38px 36px 34px;width:100%;max-width:400px;box-shadow:0 24px 80px rgba(0,0,0,.8),0 0 0 1px rgba(129,140,248,0.06);backdrop-filter:blur(24px);position:relative;overflow:hidden;">
     <!-- Subtle top glow line -->
     <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(129,140,248,0.5),transparent);"></div>
 
@@ -6867,7 +6882,33 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       &nbsp;·&nbsp;
       <a onclick="openLegal('accessibility')" style="color:var(--text3);cursor:pointer;text-decoration:underline;">הצהרת נגישות</a>
     </div>
+   </div>
   </div>
+
+  <div id="auth-showcase">
+   <div style="max-width:440px;width:100%;">
+    <div style="font-size:28px;font-weight:800;color:var(--text);line-height:1.35;margin-bottom:14px;">עקוב אחרי כל עסקה.<br>שפר כל החלטה.</div>
+    <div style="font-size:14px;color:var(--text3);line-height:1.7;margin-bottom:36px;max-width:380px;">יומן מסחר חכם עם ניתוח ביצועים, תובנות AI ומעקב אחר סטטיסטיקות בזמן אמת — כל מה שצריך כדי להפוך נתונים לתובנות מסחר.</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+     <div class="kpi-card c-green">
+      <div class="kpi-label">אחוז הצלחה</div>
+      <div class="kpi-value green">63.4%</div>
+      <div class="kpi-sub">128W / 74L</div>
+     </div>
+     <div class="kpi-card c-blue">
+      <div class="kpi-label">רווח כולל</div>
+      <div class="kpi-value green">$18,420</div>
+      <div class="kpi-sub">202 עסקאות</div>
+     </div>
+     <div class="kpi-card c-yellow">
+      <div class="kpi-label">R ממוצע</div>
+      <div class="kpi-value green">1.85R</div>
+      <div class="kpi-sub">עם סטופ מוגדר</div>
+     </div>
+    </div>
+   </div>
+  </div>
+ </div>
 </div>
 
 <!-- ONBOARDING WIZARD -->
@@ -13980,7 +14021,7 @@ function _buildLightCSS() {
       --bg:#dde4ee; --bg2:#cdd6e2; --card:#f3f6fb; --card2:#eef2f8;
       --border:rgba(14,14,18,0.08); --border2:rgba(14,14,18,0.13);
       --text:#0f172a; --text2:#334155; --text3:#64748b;
-      --accent:#0ea5e9; --accent2:#0284c7; --accent-glow:rgba(14,165,233,0.12);
+      --accent:#4f46e5; --accent2:#6366f1; --accent-glow:rgba(14,165,233,0.12);
       --green:#059669; --green-bg:rgba(5,150,105,0.1);
       --red:#e11d48; --red-bg:rgba(225,29,72,0.08);
       --yellow:#b45309; --yellow-bg:rgba(180,83,9,0.08);
