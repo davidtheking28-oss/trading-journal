@@ -115,7 +115,9 @@
   --mono:     'IBM Plex Mono', monospace;
   --display:  'Rubik', 'Heebo', sans-serif;
   --body:     'Heebo', sans-serif;
-  --r:        16px;
+  --r-sm:     8px;
+  --r-md:     14px;
+  --r-lg:     24px;
 }
 
 html { scroll-behavior: smooth; }
@@ -129,29 +131,14 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Aurora mesh background */
+/* Background glow */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
-  background:
-    radial-gradient(ellipse 90% 60% at 110% -10%, rgba(79,127,255,0.18) 0%, transparent 55%),
-    radial-gradient(ellipse 70% 50% at -10% 70%, rgba(155,114,255,0.13) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 70% at 50% 110%, rgba(79,127,255,0.09) 0%, transparent 50%),
-    radial-gradient(ellipse 40% 30% at 80% 50%, rgba(0,230,118,0.04) 0%, transparent 60%);
+  background: radial-gradient(ellipse 80% 55% at 105% -8%, rgba(79,127,255,0.16) 0%, transparent 55%);
   pointer-events: none;
   z-index: 0;
-}
-
-/* Subtle noise texture */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.4;
 }
 
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
@@ -175,7 +162,7 @@ nav {
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid var(--border2);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   padding: 0 18px;
   height: 58px;
   display: flex;
@@ -207,7 +194,7 @@ nav {
 .nav-link {
   padding: 7px 14px;
   background: none; border: 1px solid var(--border2);
-  border-radius: 8px; color: var(--text2);
+  border-radius: var(--r-sm); color: var(--text2);
   font-size: 13px; font-weight: 500;
   cursor: pointer; text-decoration: none;
   transition: color .2s, border-color .2s;
@@ -218,16 +205,16 @@ nav {
 
 .nav-cta {
   padding: 8px 18px;
-  background: linear-gradient(135deg, #4f7fff, #9b72ff);
-  border: none; border-radius: 8px;
+  background: var(--accent);
+  border: none; border-radius: var(--r-sm);
   color: #fff; font-size: 13px; font-weight: 600;
   cursor: pointer; text-decoration: none;
   transition: opacity .2s, transform .15s, box-shadow .2s;
   font-family: var(--body);
-  box-shadow: 0 3px 16px rgba(79,127,255,0.4);
+  box-shadow: 0 3px 16px rgba(79,127,255,0.3);
   white-space: nowrap;
 }
-.nav-cta:hover { opacity: .88; transform: translateY(-1px); box-shadow: 0 5px 22px rgba(79,127,255,0.55); }
+.nav-cta:hover { opacity: .88; transform: translateY(-1px); box-shadow: 0 5px 22px rgba(79,127,255,0.4); }
 
 /* ── SECTION BASE ── */
 section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
@@ -242,7 +229,6 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   color: var(--accent); letter-spacing: 1.5px; text-transform: uppercase;
   margin-bottom: 20px;
 }
-.section-pill::before { content: '//'; opacity: 0.4; }
 
 .section-title {
   font-family: var(--display);
@@ -318,7 +304,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 
 .btn-hero-primary {
   padding: 13px 26px; font-size: 15px; font-weight: 600;
-  border-radius: 11px; cursor: pointer; text-decoration: none;
+  border-radius: var(--r-sm); cursor: pointer; text-decoration: none;
   display: inline-flex; align-items: center; gap: 8px;
   background: linear-gradient(135deg, #4f7fff 0%, #9b72ff 100%);
   color: #fff; border: none; font-family: var(--body);
@@ -329,7 +315,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 
 .btn-hero-ghost {
   padding: 13px 22px; font-size: 15px; font-weight: 500;
-  border-radius: 11px; cursor: pointer; text-decoration: none;
+  border-radius: var(--r-sm); cursor: pointer; text-decoration: none;
   display: inline-flex; align-items: center; gap: 8px;
   background: rgba(255,255,255,0.04); color: var(--text2);
   border: 1px solid var(--border2); font-family: var(--body);
@@ -337,10 +323,30 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 }
 .btn-hero-ghost:hover { background: rgba(255,255,255,0.07); color: var(--text); border-color: var(--border); }
 
+.btn-solid {
+  padding: 13px 26px; font-size: 15px; font-weight: 600;
+  border-radius: var(--r-sm); cursor: pointer; text-decoration: none;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--accent);
+  color: #fff; border: none; font-family: var(--body);
+  transition: opacity .2s, transform .15s;
+}
+.btn-solid:hover { opacity: .88; transform: translateY(-1px); }
+
+.btn-cta-dark {
+  padding: 15px 32px; font-size: 16px; font-weight: 600;
+  border-radius: var(--r-sm); cursor: pointer; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--bg2); color: var(--text);
+  border: 1px solid rgba(79,127,255,0.3); font-family: var(--body);
+  transition: all .2s;
+}
+.btn-cta-dark:hover { background: #010509; border-color: rgba(79,127,255,0.5); transform: translateY(-1px); }
+
 /* Hero stats */
 .hero-stats {
   display: flex; gap: 0; margin-top: 40px;
-  border: 1px solid var(--border2); border-radius: 12px;
+  border: 1px solid var(--border2); border-radius: var(--r-md);
   overflow: hidden; width: fit-content;
 }
 
@@ -387,9 +393,9 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 .hero-card {
   background: linear-gradient(160deg, #0c1830 0%, #08122a 100%);
   border: 1px solid rgba(79,127,255,0.15);
-  border-radius: 20px;
+  border-radius: var(--r-lg);
   padding: 20px;
-  box-shadow: 0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(79,127,255,0.06);
+  box-shadow: 0 20px 30px rgba(0,0,0,0.35), 0 0 0 1px rgba(79,127,255,0.06), inset 0 1px 0 rgba(255,255,255,0.06);
   position: relative; overflow: hidden;
 }
 
@@ -403,8 +409,6 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   display: flex; justify-content: space-between; align-items: center;
   margin-bottom: 16px;
 }
-
-.card-dots { display: none; }
 
 .card-label {
   font-family: var(--mono); font-size: 10px;
@@ -420,7 +424,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 .cm {
   background: rgba(255,255,255,0.03);
   border: 1px solid var(--border2);
-  border-radius: 10px; padding: 10px 12px;
+  border-radius: var(--r-sm); padding: 10px 12px;
 }
 .cm-label { font-size: 10px; color: var(--text3); margin-bottom: 4px; font-family: var(--mono); }
 .cm-val { font-family: var(--mono); font-size: 17px; font-weight: 600; letter-spacing: -0.5px; }
@@ -430,7 +434,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 
 /* Chart */
 .card-chart {
-  height: 88px; border-radius: 8px; overflow: hidden;
+  height: 88px; border-radius: var(--r-sm); overflow: hidden;
   background: rgba(79,127,255,0.03); margin-bottom: 14px;
   border: 1px solid var(--border2);
 }
@@ -442,7 +446,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   display: flex; justify-content: space-between; align-items: center;
   padding: 8px 10px;
   background: rgba(255,255,255,0.02);
-  border-radius: 8px; border: 1px solid var(--border2);
+  border-radius: var(--r-sm); border: 1px solid var(--border2);
   font-size: 12px;
 }
 
@@ -457,7 +461,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   margin-top: 12px; padding: 9px 12px;
   background: rgba(155,114,255,0.06);
   border: 1px solid rgba(155,114,255,0.15);
-  border-radius: 8px;
+  border-radius: var(--r-sm);
   display: flex; align-items: center; gap: 8px;
   font-size: 11px; color: rgba(196,167,255,0.9);
   font-family: var(--mono);
@@ -472,7 +476,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 
 /* ── DEMO CARD (mirrors real dashboard palette) ── */
 .demo-app {
-  background: #0b0b0e; border-radius: 12px; overflow: hidden;
+  background: #0b0b0e; border-radius: var(--r-md); overflow: hidden;
   font-family: var(--body);
 }
 .demo-nav {
@@ -499,12 +503,12 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 .d-kpi-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 12px; }
 .d-kpi {
   background: #111111; border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 10px; padding: 14px 16px;
+  border-radius: var(--r-sm); padding: 14px 16px;
   position: relative; overflow: hidden;
 }
 .d-kpi::after {
   content: ''; position: absolute; top: 0; right: 0; left: 0; height: 2px;
-  border-radius: 10px 10px 0 0;
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
 }
 .d-kpi.blue::after  { background: linear-gradient(90deg, transparent, rgba(129,140,248,0.6), transparent); }
 .d-kpi.green::after { background: linear-gradient(90deg, transparent, rgba(45,212,160,0.6), transparent); }
@@ -520,7 +524,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 .d-kpi-sub { font-size: 10px; color: #8896a8; margin-top: 5px; line-height: 1.4; }
 
 /* Trade table */
-.d-trades-wrap { background: #111111; border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; overflow: hidden; }
+.d-trades-wrap { background: #111111; border: 1px solid rgba(255,255,255,0.07); border-radius: var(--r-sm); overflow: hidden; }
 .d-trade-hdr {
   display: flex; align-items: center; gap: 8px;
   padding: 7px 12px; border-bottom: 1px solid rgba(255,255,255,0.06);
@@ -541,7 +545,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 .d-trade-pnl.neg { color: #ff6b8a; }
 
 /* Chart card */
-.d-chart { background: #111111; border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 9px; margin-bottom: 8px; position: relative; overflow: hidden; }
+.d-chart { background: #111111; border: 1px solid rgba(255,255,255,0.06); border-radius: var(--r-sm); padding: 9px; margin-bottom: 8px; position: relative; overflow: hidden; }
 .d-chart::before { content: ''; position: absolute; top: 0; right: 0; left: 0; height: 1.5px; background: linear-gradient(90deg, transparent, rgba(129,140,248,0.55), transparent); }
 .d-chart-lbl { font-size: 8.5px; font-weight: 700; color: #8896a8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 7px; }
 .d-bars { display: flex; gap: 3px; align-items: flex-end; height: 38px; }
@@ -552,7 +556,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 .d-insight strong { color: #f1f5f9; }
 
 /* AI screen */
-.d-ai-card { background: rgba(129,140,248,0.05); border: 1px solid rgba(129,140,248,0.16); border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+.d-ai-card { background: rgba(129,140,248,0.05); border: 1px solid rgba(129,140,248,0.16); border-radius: var(--r-sm); padding: 10px; margin-bottom: 8px; }
 .d-ai-hdr { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
 .d-ai-icon { width: 20px; height: 20px; border-radius: 5px; background: linear-gradient(135deg,#6366f1,#818cf8); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .d-ai-name { font-size: 11px; font-weight: 700; color: #818cf8; }
@@ -567,11 +571,11 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 .d-pattern { margin-top: 8px; padding: 7px 9px; background: rgba(167,139,250,0.08); border: 1px solid rgba(167,139,250,0.2); border-radius: 6px; font-size: 10px; color: rgba(196,167,255,0.9); line-height: 1.5; }
 
 /* Market Pulse screen */
-.d-fg { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.15); border-radius: 8px; margin-bottom: 8px; }
+.d-fg { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.15); border-radius: var(--r-sm); margin-bottom: 8px; }
 .d-fg-num   { font-size: 28px; font-weight: 800; color: #fbbf24; line-height: 1; font-variant-numeric: tabular-nums; font-family: 'IBM Plex Mono', monospace; }
 .d-fg-label { font-size: 11px; font-weight: 700; color: #fbbf24; }
 .d-fg-sub   { font-size: 9.5px; color: #8896a8; margin-top: 2px; }
-.d-stem     { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; padding: 2px 7px; background: rgba(45,212,160,0.1); border-radius: 10px; font-size: 9.5px; color: #2dd4a0; font-weight: 700; }
+.d-stem     { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; padding: 2px 7px; background: rgba(45,212,160,0.1); border-radius: var(--r-sm); font-size: 9.5px; color: #2dd4a0; font-weight: 700; }
 .d-sector   { display: flex; align-items: center; gap: 6px; margin-bottom: 11px; }
 .d-s-name   { font-size: 10px; color: #a8b8cc; width: 44px; flex-shrink: 0; text-align: right; }
 .d-s-bw     { flex: 1; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
@@ -617,9 +621,9 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 #how { text-align: center; }
 
 .steps-row {
-  display: grid; grid-template-columns: repeat(3,1fr);
+  display: grid; grid-template-columns: 1fr 1.35fr 1fr;
   gap: 0; margin-top: 52px;
-  max-width: 860px; margin-left: auto; margin-right: auto;
+  max-width: 900px; margin-left: auto; margin-right: auto;
   position: relative;
 }
 
@@ -647,6 +651,17 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   box-shadow: 0 0 0 4px rgba(79,127,255,0.06);
 }
 
+.step-mid {
+  padding-top: 22px;
+}
+.step-mid .step-circle {
+  width: 68px; height: 68px; font-size: 22px;
+  background: rgba(79,127,255,0.08);
+  border-color: rgba(79,127,255,0.35);
+  box-shadow: 0 0 0 6px rgba(79,127,255,0.08);
+}
+.step-mid .step-title { font-size: 20px; }
+
 .step-title {
   font-family: var(--display); font-size: 18px; font-weight: 700;
   color: var(--text); letter-spacing: -0.5px;
@@ -654,18 +669,18 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 .step-desc { font-size: 14px; color: var(--text2); line-height: 1.75; }
 
 /* ── PRICING ── */
-#pricing { text-align: center; }
+#pricing { text-align: center; padding-top: 64px; padding-bottom: 64px; }
 
 .pricing-outer {
   max-width: 440px; margin: 52px auto 0;
-  position: relative; border-radius: 24px;
+  position: relative; border-radius: var(--r-lg);
   padding: 2px;
   background: linear-gradient(135deg, rgba(79,127,255,0.4), rgba(155,114,255,0.3), rgba(79,127,255,0.4));
 }
 
 .pricing-card {
   background: linear-gradient(160deg, #0d1c36 0%, #09152a 100%);
-  border-radius: 22px; padding: 40px 36px;
+  border-radius: var(--r-lg); padding: 40px 36px;
   position: relative; overflow: hidden;
 }
 
@@ -709,7 +724,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 .pl-check { color: var(--green); flex-shrink: 0; }
 
 /* ── FAQ ── */
-#faq { text-align: center; }
+#faq { text-align: center; padding-top: 64px; padding-bottom: 64px; }
 
 .faq-list {
   max-width: 680px; margin: 52px auto 0;
@@ -720,7 +735,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 .faq-item {
   background: var(--card);
   border: 1px solid var(--border2);
-  border-radius: 12px; overflow: hidden;
+  border-radius: var(--r-md); overflow: hidden;
   transition: border-color .2s;
 }
 .faq-item.open { border-color: rgba(79,127,255,0.2); }
@@ -759,7 +774,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   text-align: center;
   background: linear-gradient(160deg, rgba(79,127,255,0.09) 0%, rgba(155,114,255,0.06) 100%);
   border: 1px solid rgba(79,127,255,0.18);
-  border-radius: 28px; padding: 64px 48px;
+  border-radius: var(--r-lg); padding: 64px 48px;
   position: relative; overflow: hidden;
 }
 
@@ -836,7 +851,7 @@ footer {
 
 @media (max-width: 480px) {
   .hero-title { letter-spacing: -1.6px; }
-  .hero-stats { flex-direction: column; border-radius: 12px; }
+  .hero-stats { flex-direction: column; border-radius: var(--r-md); }
   .hero-stat { border-right: none !important; border-bottom: 1px solid var(--border2); padding: 10px 16px; }
   .hero-stat:last-child { border-bottom: none; }
   .comp-header { display: none; }
@@ -861,7 +876,7 @@ footer {
   margin: 0 -24px;
   border-bottom: 1px solid var(--border2);
   align-items: start;
-  border-radius: 12px;
+  border-radius: var(--r-md);
   transition: border-color .25s, background .25s, transform .25s;
   position: relative;
 }
@@ -919,7 +934,7 @@ footer {
 .comp-wrap {
   max-width: 680px; margin: 52px auto 0;
   border: 1px solid var(--border2);
-  border-radius: 18px; overflow: hidden;
+  border-radius: var(--r-md); overflow: hidden;
   box-shadow: 0 30px 70px rgba(0,0,0,0.45);
 }
 .comp-header {
@@ -978,6 +993,7 @@ footer {
   <symbol id="i-arr"   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></symbol>
   <symbol id="i-chev"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="i-x"     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
 </svg>
 
 <!-- NAV -->
@@ -1050,11 +1066,6 @@ footer {
       <div class="hero-visual-glow"></div>
       <div class="hero-card" style="padding:0;overflow:hidden;">
         <div class="card-topbar" style="padding:12px 14px 0;">
-          <div class="card-dots">
-            <div class="card-dot dot-r"></div>
-            <div class="card-dot dot-y"></div>
-            <div class="card-dot dot-g"></div>
-          </div>
           <span class="card-label">ChartRoom</span>
         </div>
 
@@ -1076,8 +1087,8 @@ footer {
               </div>
               <div class="d-kpi blue">
                 <div class="d-kpi-lbl">Win Rate</div>
-                <div class="d-kpi-val blue">71.4%</div>
-                <div class="d-kpi-sub">34 מתוך 47 עסקאות</div>
+                <div class="d-kpi-val blue">68.1%</div>
+                <div class="d-kpi-sub">32 מתוך 47 עסקאות</div>
               </div>
               <div class="d-kpi yel">
                 <div class="d-kpi-lbl">Profit Factor</div>
@@ -1096,7 +1107,7 @@ footer {
             <div class="d-trades-wrap">
               <div class="d-trade-hdr"><span style="min-width:44px">נייר</span><span style="min-width:46px">כיוון</span><span style="flex:1">סטאפ</span><span>P&amp;L</span></div>
               <div class="d-trade"><span class="d-trade-sym">NVDA</span><span class="d-badge L">Long</span><span class="d-trade-meta">Breakout</span><span class="d-trade-pnl pos">+$2,140</span></div>
-              <div class="d-trade"><span class="d-trade-sym">MSFT</span><span class="d-badge L">Long</span><span class="d-trade-meta">LPS</span><span class="d-trade-pnl pos">+$980</span></div>
+              <div class="d-trade"><span class="d-trade-sym">MSFT</span><span class="d-badge L">Long</span><span class="d-trade-meta">LPS</span><span class="d-trade-pnl neg">-$540</span></div>
               <div class="d-trade"><span class="d-trade-sym">BTC</span><span class="d-badge L">Long</span><span class="d-trade-meta">Handle</span><span class="d-trade-pnl pos">+$1,620</span></div>
               <div class="d-trade"><span class="d-trade-sym">TSLA</span><span class="d-badge S">Short</span><span class="d-trade-meta">חדש</span><span class="d-trade-pnl neg">-$310</span></div>
             </div>
@@ -1338,7 +1349,7 @@ footer {
       <h3 class="step-title">הירשם בחינם</h3>
       <p class="step-desc">פחות מדקה, ללא כרטיס אשראי. אימייל או Google Sign-In — וכבר בפנים.</p>
     </div>
-    <div class="step reveal">
+    <div class="step step-mid reveal">
       <div class="step-circle">02</div>
       <h3 class="step-title">חבר את הברוקר</h3>
       <p class="step-desc">Interactive Brokers דרך Flex Query, Bybit דרך API Key. ייבוא אוטומטי מהרגע הראשון — מניות, קריפטו, ETFs.</p>
@@ -1354,14 +1365,13 @@ footer {
 <!-- COMPARISON -->
 <section id="vs" aria-labelledby="vs-heading">
   <div class="centered reveal">
-    <div class="section-pill">vs. ספרדשיט</div>
     <h2 class="section-title" id="vs-heading">למה Excel לא מספיק</h2>
     <p class="section-sub" style="margin:0 auto;">רוב הסוחרים מנהלים יומן ב-Excel. זה עובד — עד שמבינים מה מפספסים.</p>
   </div>
   <div class="comp-wrap reveal">
     <div class="comp-header">
       <div class="ch-label"></div>
-      <div class="ch-bad">Excel / ספרדשיט</div>
+      <div class="ch-bad">Excel</div>
       <div class="ch-good">ChartRoom</div>
     </div>
     <div class="comp-row">
@@ -1381,12 +1391,12 @@ footer {
     </div>
     <div class="comp-row">
       <div class="comp-label">Market Pulse + Fear &amp; Greed</div>
-      <div class="comp-cell bad">—</div>
+      <div class="comp-cell bad"><svg width="14" height="14" aria-hidden="true"><use href="#i-x"/></svg></div>
       <div class="comp-cell good">כלול</div>
     </div>
     <div class="comp-row">
       <div class="comp-label">מסנן מניות (Trend Template)</div>
-      <div class="comp-cell bad">—</div>
+      <div class="comp-cell bad"><svg width="14" height="14" aria-hidden="true"><use href="#i-x"/></svg></div>
       <div class="comp-cell good">מובנה</div>
     </div>
     <div class="comp-row">
@@ -1423,7 +1433,7 @@ footer {
         <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>מסנן מניות מובנה — Trend Template</li>
         <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>גיבוי ענן מאובטח — RLS, HTTPS מוצפן</li>
       </ul>
-      <a href="dashboard.html" class="btn-hero-primary" style="width:100%;justify-content:center;">
+      <a href="dashboard.html" class="btn-solid" style="width:100%;">
         גלה את הדפוסים שלך — חינם
       </a>
     </div>
@@ -1433,7 +1443,6 @@ footer {
 <!-- FAQ -->
 <section id="faq" class="centered" aria-labelledby="faq-heading">
   <div class="reveal">
-    <div class="section-pill">שאלות</div>
     <h2 class="section-title" id="faq-heading">שאלות נפוצות</h2>
   </div>
   <div class="faq-list" role="list">
@@ -1474,7 +1483,7 @@ footer {
     <div class="cta-bg" aria-hidden="true"></div>
     <h2 class="cta-title">הסוחרים שמשתפרים — יש להם פלטפורמה.</h2>
     <p class="cta-sub">כל שבוע בלי מעקב הוא שבוע של טעויות שחוזרות על עצמן. תפסיק לנחש, תתחיל לעקוב.</p>
-    <a href="dashboard.html" class="btn-hero-primary" style="display:inline-flex;font-size:16px;padding:15px 32px;">
+    <a href="dashboard.html" class="btn-cta-dark">
       גלה את הדפוסים שלך — חינם
       <svg width="15" height="15" aria-hidden="true"><use href="#i-arr"/></svg>
     </a>
