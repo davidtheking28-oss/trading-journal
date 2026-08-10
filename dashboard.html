@@ -6888,7 +6888,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   <div id="auth-showcase">
    <div style="max-width:440px;width:100%;">
     <div style="font-size:28px;font-weight:800;color:var(--text);line-height:1.35;margin-bottom:14px;">עקוב אחרי כל עסקה.<br>שפר כל החלטה.</div>
-    <div style="font-size:14px;color:var(--text3);line-height:1.7;margin-bottom:36px;max-width:380px;">יומן מסחר חכם עם ניתוח ביצועים, תובנות AI ומעקב אחר סטטיסטיקות בזמן אמת — כל מה שצריך כדי להפוך נתונים לתובנות מסחר.</div>
+    <div class="auth-showcase-sub" style="font-size:14px;color:var(--text3);line-height:1.7;margin-bottom:36px;max-width:380px;">יומן מסחר חכם עם ניתוח ביצועים, תובנות AI ומעקב אחר סטטיסטיקות בזמן אמת — כל מה שצריך כדי להפוך נתונים לתובנות מסחר.</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
      <div class="kpi-card c-green">
       <div class="kpi-label">אחוז הצלחה</div>
@@ -14247,6 +14247,14 @@ function _buildLightCSS() {
     #stop-prompt-overlay, #stop-prompt-overlay * { color:#f1f5f9; }
     #auth-overlay .form-label, #name-gate .form-label,
     #ob-overlay .form-label, #stop-prompt-overlay .form-label { color:#a8b8cc !important; }
+    /* #auth-showcase sits outside the dark login card, directly on the themed
+       page background — it must follow the theme normally, not the card's
+       pinned-dark palette above. */
+    #auth-showcase, #auth-showcase * { color:#0f172a !important; }
+    #auth-showcase .auth-showcase-sub,
+    #auth-showcase .kpi-label,
+    #auth-showcase .kpi-sub { color:#475569 !important; }
+    #auth-showcase .kpi-value.green { color:#059669 !important; }
     #auth-overlay input, #auth-overlay .form-control,
     #name-gate input, #name-gate .form-control,
     #ob-overlay input, #ob-overlay .form-control,
