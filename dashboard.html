@@ -11991,17 +11991,25 @@ async function _flexImportInner(trades) {
   // above cannot see that, so seven manual trades were re-imported alongside
   // their broker copies and counted twice. Only used against untagged rows, and
   // only to skip the insert, never to overwrite the manual entry.
+  // GROY (2026-08-10): manual entry recorded 110 shares, the real fill was 113 —
+  // just past the old "broker qty never exceeds manual" guard, so it re-imported.
+  // ANAB same day: manual date was off by one (51.46 vs the broker's 51.15 the
+  // day before) — an exact date match missed it too. Both widened below: date
+  // within a day, and share count within 5% either direction (the original
+  // qty-no-larger check stays as a fallback for bigger scale-ins).
   const looksLikeSameManualTrade = (x, t) =>
     !x.ibkr_id && !x.bybit_id &&
-    x.symbol === t.symbol && x.entryDate === t.entryDate &&
+    x.symbol === t.symbol &&
+    Math.abs(new Date(x.entryDate+'T00:00:00') - new Date(t.entryDate+'T00:00:00')) <= 86400000 &&
     (x.entryPrice || 0) > 0 &&
     // 4%: the widest gap among the seven confirmed duplicates was QS at 3.3%,
     // where the hand-typed entry price was simply imprecise. Wide enough to be
     // a judgement call, so it is deliberately fenced in — same symbol, same
-    // day, target untagged by any broker, and the broker's quantity no larger
-    // than the recorded position. It only ever skips an insert.
+    // day (±1), target untagged by any broker, and the share count close to
+    // the recorded position. It only ever skips an insert.
     Math.abs((x.entryPrice || 0) - (t.entryPrice || 0)) / (x.entryPrice || 1) < 0.04 &&
-    (t.shares || 0) <= (x.shares || 0) + 0.01;
+    ((t.shares || 0) <= (x.shares || 0) + 0.01 ||
+     Math.abs((t.shares || 0) - (x.shares || 0)) <= Math.max(0.01, (x.shares || 0) * 0.05));
 
   trades.forEach(t => {
     const arr = t.type === 'crypto' ? db.crypto : db.stocks;
