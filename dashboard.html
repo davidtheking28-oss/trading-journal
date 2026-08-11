@@ -13963,6 +13963,28 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
+// An open Realtime WebSocket makes a page ineligible for Chrome's back/forward
+// cache. That is why switching to another browser tab and coming back discarded
+// and fully reloaded the app every single time — taking the embedded screener
+// iframe with it, so it looked like the screener was re-scanning from scratch.
+// Drop the socket while hidden so the page can be bfcached, and reconnect on
+// return; the catch-up reload covers any change that landed while disconnected.
+let _rtResumeTimer = null;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    clearTimeout(_rtResumeTimer);
+    _teardownRealtimeSync();
+  } else if (_currentUser) {
+    clearTimeout(_rtResumeTimer);
+    _rtResumeTimer = setTimeout(() => { _setupRealtimeSync(); _syncReloadTrades(); }, 150);
+  }
+});
+// Restored straight out of bfcache — no scripts re-run, so the socket closed on
+// hide has to be re-established explicitly.
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted && _currentUser) { _setupRealtimeSync(); _syncReloadTrades(); }
+});
+
 // ── Clear all sensitive fields from DOM on lock ──
 // Prevents shoulder-surfing or form autofill leakage after unlock
 const _origLockNow = lockNow;
