@@ -13469,6 +13469,13 @@ function flexParseXML(xml) {
   // Group executions by symbol
   const bySymbol = {};
   tradeEls.forEach(el => {
+    // IBKR's Flex report mixes real stock fills with FX conversions (assetCategory
+    // "CASH", symbols like USD.ILS/ILS.USD) and other non-equity rows in the same
+    // <Trade> stream. Importing those as if they were positions polluted the
+    // journal with fake permanently-open "trades" carrying share counts like
+    // 3014 or 0.0478 — inflating trade counts and any stats derived from them.
+    const assetCat = (el.getAttribute('assetCategory') || '').toUpperCase();
+    if (assetCat && assetCat !== 'STK') return;
     const sym   = el.getAttribute('symbol') || '';
     const dt    = el.getAttribute('dateTime') || '';
     const side  = (el.getAttribute('buySell') || '').toUpperCase();
