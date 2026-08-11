@@ -13233,8 +13233,18 @@ document.addEventListener('click', e => {
 // INIT
 // ─────────────────────────────────────────────
 (async function initApp() {
-  // Show auth overlay immediately — hide after session confirmed
-  document.getElementById('auth-overlay').style.display = 'flex';
+  // Returning from another page (e.g. the marketing site) always does a full
+  // navigation — that part can't change without turning this into an SPA. But
+  // flashing the login screen on every arrival, even for an already-signed-in
+  // user, made it feel like a full logout+reload each time. getSession() below
+  // resolves near-instantly for a cached session (local read, no network round
+  // trip unless the token is near expiry) — so peek localStorage synchronously
+  // for the likely session key first, and only show the auth overlay if a
+  // session doesn't look present. Genuinely logged-out users still see it
+  // immediately, same as before.
+  const _sessionKey = 'sb-' + SUPABASE_URL.replace(/^https?:\/\//, '').split('.')[0] + '-auth-token';
+  const _likelySignedIn = !!localStorage.getItem(_sessionKey);
+  if (!_likelySignedIn) document.getElementById('auth-overlay').style.display = 'flex';
 
   // Always-on initializations (don't need auth)
   qaInit();
@@ -13243,6 +13253,9 @@ document.addEventListener('click', e => {
 
   // Check for an existing Supabase session (persisted from last visit)
   const { data: { session } } = await _sb.auth.getSession();
+  // The localStorage guess was wrong (stale/corrupt token) — fall back to the
+  // overlay now instead of leaving the user staring at a blank shell.
+  if (!session?.user && _likelySignedIn) document.getElementById('auth-overlay').style.display = 'flex';
   if (session?.user) {
     _currentSession = session;
     await _onAuthSuccess(session.user);
