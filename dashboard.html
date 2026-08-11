@@ -7362,6 +7362,12 @@ async function _onAuthSuccess(user) {
   // Offer localStorage migration on first login
   await offerMigration();
   onboardingCheck(user.id);
+  // A full page reload (tab discarded by the browser while backgrounded, or a
+  // real navigation back to this page) always lands on the default Overview
+  // tab — the markup's only `.tab-content.active` by default. _restoreLastTab
+  // existed but was never called, so every reload silently dropped whichever
+  // tab (the embedded screener, statistics, etc.) the user was actually on.
+  _restoreLastTab();
   const _activeTabEl = document.querySelector('.tab-content.active');
   if (_activeTabEl) _maybeShowTabIntro(_activeTabEl.id.replace('tab-', ''), _activeTabEl);
   console.log('%c ChartRoom ','background:#818cf8;color:#fff;font-weight:700;font-size:13px;border-radius:var(--r-sm);padding:2px 6px');
