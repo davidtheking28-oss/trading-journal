@@ -54,3 +54,39 @@ unlike this one — push it manually).
   `initApp()` must stay conditional on a *missing* local session token, not
   unconditional. Showing it unconditionally flashes the login screen on every
   load even for an already-signed-in user, which reads as a full logout.
+
+## ⚠️ Don't reintroduce these regressions (fixed 2026-08-13)
+
+- **`flexParseXML`'s fill-consolidation step** (right before the FIFO
+  open/close loop, ~line 13522) must stay. IBKR's SMART order router can
+  split one order into several `<Trade>` fills across venues, each with its
+  own `tradeID`, landing within ~2s of each other at nearly the same price.
+  Without merging same-symbol/same-side/same-`openCloseIndicator` fills
+  (`sec` gap ≤2, price within 0.5%) into one qty-weighted-average execution
+  *before* FIFO lot matching, one real order inflates into 3-7 separate
+  journal rows — this is what caused the "too many trades last month"
+  complaint. Verified live: 21 raw SNDU fills on 2026-08-06 → 5 real trades.
+- **This is a heuristic, not authoritative.** The Flex query as currently
+  configured in IBKR doesn't expose an order-ID field, only `tradeID` (per
+  execution, not per order), so the merge guesses from time+price proximity.
+  If the IBKR Flex Query is ever reconfigured to include **IB Order ID**
+  (Client Portal → Reports → Flex Queries → edit the Trades query → add
+  column), switch the merge key to that field instead — it removes the
+  guesswork entirely and would resolve the residual ambiguous clusters
+  noted below.
+- **Retroactive cleanup is partial, by design.** On 2026-08-13, existing
+  fragmented rows were merged only for groups that could be proven safe
+  (all raw fills matched to existing rows 1:1, all closed at the identical
+  exit price/date, zero manual notes on the rows being removed) — 42 groups
+  for `5f72e0bb-…` (334→263 active rows), 1 group for `9f9ffff4-…`.
+  Ambiguous clusters (mixed/partial FIFO matches, e.g. SNDQ/SNDU on some
+  days) were deliberately left untouched rather than guessed at. Rollback
+  script: `rollback-fill-consolidation-2026-08-13.sql` (scratchpad, not
+  committed).
+- **`detect_fragmented_trades(p_user_id uuid)`** — a Postgres helper
+  function (not in this repo's migrations tracked here; applied directly
+  via Supabase MCP) flags symbol/day clusters of ≥3 active IBKR-sourced
+  trades as a periodic safety-net check. A nonzero result isn't proof of a
+  bug by itself (could be genuine high-frequency day trading) — verify
+  against the raw Flex XML the same way the 2026-08-13 fix was verified
+  before assuming re-fragmentation.
