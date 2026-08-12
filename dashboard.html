@@ -13504,7 +13504,12 @@ function flexParseXML(xml) {
   const trades = [];
   const r6 = n => Math.round(n * 1e6) / 1e6;
   Object.entries(bySymbol).forEach(([symbol, execsIn]) => {
-    const type = symIsCrypto(symbol) ? 'crypto' : 'stock';
+    // IBKR cannot report a crypto fill — this entire import path is Flex/Trade
+    // Confirmation data. Running the crypto-detection heuristic here anyway
+    // misclassified 71 real IBKR stock fills (MSTU, MSTZ and others — leveraged
+    // ETF tickers absent from the loaded stock-symbol list) as crypto, filing
+    // them under the wrong tab and wrong array entirely.
+    const type = 'stock';
 
     // Single chronological execution stream, side-aware: a BUY first covers
     // any open short lots (FIFO) before opening a new long lot; a SELL first
