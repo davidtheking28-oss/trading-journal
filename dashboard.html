@@ -13497,8 +13497,13 @@ function flexParseXML(xml) {
       : '';
     if (!date) return;
 
+    const timePart = dt.split(';')[1] || '';
+    const sec = date && timePart.length === 6
+      ? Date.UTC(+datePart.slice(0,4), +datePart.slice(4,6)-1, +datePart.slice(6,8), +timePart.slice(0,2), +timePart.slice(2,4), +timePart.slice(4,6)) / 1000
+      : 0;
+
     if (!bySymbol[sym]) bySymbol[sym] = [];
-    bySymbol[sym].push({ date, price, qty, comm, dt, tid, side, oc });
+    bySymbol[sym].push({ date, price, qty, comm, dt, sec, tid, side, oc });
   });
 
   const trades = [];
@@ -13519,7 +13524,29 @@ function flexParseXML(xml) {
     // with nothing open in-window is a pre-window position (orphan close),
     // tagged with the side it closes so the importer only matches an open
     // position of that same direction.
-    const execs = [...execsIn].sort((a, b) => a.dt.localeCompare(b.dt));
+    const sorted = [...execsIn].sort((a, b) => a.dt.localeCompare(b.dt));
+
+    // IBKR's SMART order router can split a single order into several fills
+    // across venues, all landing within a couple seconds of each other at
+    // essentially the same price — each arrives as its own <Trade> row with a
+    // distinct tradeID even though it's one order. Left unmerged, one real
+    // trade inflates into 3-6 journal rows. Merge consecutive same-side fills
+    // that land within 2s of each other and within 0.5% in price into one
+    // synthetic execution (qty-weighted average price) before FIFO matching.
+    const execs = [];
+    for (const ex of sorted) {
+      const prev = execs[execs.length - 1];
+      if (prev && prev.side === ex.side && (prev.oc || null) === (ex.oc || null)
+          && (ex.sec - prev.sec) <= 2 && Math.abs(ex.price - prev.price) <= prev.price * 0.005) {
+        const totalQty = prev.qty + ex.qty;
+        prev.price = r6((prev.price * prev.qty + ex.price * ex.qty) / totalQty);
+        prev.qty = totalQty;
+        prev.comm = r6(prev.comm + ex.comm);
+        prev.sec = ex.sec;
+        continue;
+      }
+      execs.push({ ...ex });
+    }
 
     let longLots = [], shortLots = [];
     const finalize = (lot, ls) => {
