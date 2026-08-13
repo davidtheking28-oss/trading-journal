@@ -13491,6 +13491,11 @@ function flexParseXML(xml) {
     // when present, since it removes any guesswork around shorts.
     const ocRaw = (el.getAttribute('openCloseIndicator') || '').toUpperCase();
     const oc    = ocRaw === 'O' ? 'O' : ocRaw === 'C' ? 'C' : null;
+    // IBKR's own order id, when the Flex query includes "IB Order ID". When
+    // present it's the authoritative key for merging SMART-router fragments
+    // (see below); not every account has this column configured yet, so the
+    // merge falls back to the time/price heuristic when it's missing.
+    const orderId = el.getAttribute('ibOrderID') || null;
     if (!sym || !dt || !side || !qty || !price) return;
 
     // Parse date: yyyyMMdd;HHmmss
@@ -13506,7 +13511,7 @@ function flexParseXML(xml) {
       : 0;
 
     if (!bySymbol[sym]) bySymbol[sym] = [];
-    bySymbol[sym].push({ date, price, qty, comm, dt, sec, tid, side, oc });
+    bySymbol[sym].push({ date, price, qty, comm, dt, sec, tid, side, oc, orderId });
   });
 
   const trades = [];
@@ -13530,15 +13535,35 @@ function flexParseXML(xml) {
     const sorted = [...execsIn].sort((a, b) => a.dt.localeCompare(b.dt));
 
     // IBKR's SMART order router can split a single order into several fills
-    // across venues, all landing within a couple seconds of each other at
-    // essentially the same price — each arrives as its own <Trade> row with a
-    // distinct tradeID even though it's one order. Left unmerged, one real
-    // trade inflates into 3-6 journal rows. Merge consecutive same-side fills
-    // that land within 2s of each other and within 0.5% in price into one
-    // synthetic execution (qty-weighted average price) before FIFO matching.
-    const execs = [];
+    // across venues, each arriving as its own <Trade> row with a distinct
+    // tradeID even though it's one order. Left unmerged, one real trade
+    // inflates into 3-6 journal rows. When the Flex query includes "IB Order
+    // ID" that field is authoritative — merge every fill sharing the same
+    // orderId, full stop, no guessing (grouped directly, not just adjacent
+    // fills, since same-order fills aren't always consecutive once sorted by
+    // time). Fills without an orderId (account hasn't added that column yet)
+    // fall back to the old heuristic: consecutive same-side fills within 2s
+    // of each other and within 0.5% in price. Either way the merge produces
+    // one synthetic execution (qty-weighted average price) before FIFO matching.
+    const mergeFills = list => list.slice(1).reduce((acc, ex) => {
+      const totalQty = acc.qty + ex.qty;
+      acc.price = r6((acc.price * acc.qty + ex.price * ex.qty) / totalQty);
+      acc.qty = totalQty;
+      acc.comm = r6(acc.comm + ex.comm);
+      acc.sec = Math.max(acc.sec, ex.sec);
+      return acc;
+    }, { ...list[0] });
+
+    const byOrderId = {};
+    const noOrderId = [];
     for (const ex of sorted) {
-      const prev = execs[execs.length - 1];
+      if (ex.orderId) (byOrderId[ex.orderId] ||= []).push(ex);
+      else noOrderId.push(ex);
+    }
+
+    const heuristicMerged = [];
+    for (const ex of noOrderId) {
+      const prev = heuristicMerged[heuristicMerged.length - 1];
       if (prev && prev.side === ex.side && (prev.oc || null) === (ex.oc || null)
           && (ex.sec - prev.sec) <= 2 && Math.abs(ex.price - prev.price) <= prev.price * 0.005) {
         const totalQty = prev.qty + ex.qty;
@@ -13548,8 +13573,11 @@ function flexParseXML(xml) {
         prev.sec = ex.sec;
         continue;
       }
-      execs.push({ ...ex });
+      heuristicMerged.push({ ...ex });
     }
+
+    const execs = [...Object.values(byOrderId).map(mergeFills), ...heuristicMerged]
+      .sort((a, b) => a.dt.localeCompare(b.dt));
 
     let longLots = [], shortLots = [];
     const finalize = (lot, ls) => {
