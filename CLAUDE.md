@@ -90,3 +90,11 @@ unlike this one — push it manually).
   bug by itself (could be genuine high-frequency day trading) — verify
   against the raw Flex XML the same way the 2026-08-13 fix was verified
   before assuming re-fragmentation.
+- **`ibOrderID` is now the authoritative merge key when present** (same day,
+  commit `b2f0345`). Not every account has that Flex column configured — the
+  time/price heuristic above is still the fallback, so both paths must keep
+  working (`flexParseXML`'s `byOrderId` / `noOrderId` split). If re-touching
+  this function, watch out for the exact bug this fix introduced and caught
+  in live Playwright verification: `list.reduce(fn, {...list[0]})` still
+  visits index 0, double-counting the first fill in a merged group — must be
+  `list.slice(1).reduce(fn, {...list[0]})`.
