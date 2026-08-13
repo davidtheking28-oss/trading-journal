@@ -115,16 +115,32 @@ unlike this one — push it manually).
   This directly overstated P&L (`(exitPrice-entryPrice)*closedShares`) for
   every affected row until fixed. Rollback:
   `rollback-closedshares-invariant-2026-08-13.sql` (scratchpad).
-- **⚠️ OPEN BUG, not yet root-caused:** a resync can revert a row's `shares`
-  / `entry_price` back to a stale pre-merge value while leaving
-  `closed_shares` / `commission` at the correct merged value — reproduced
-  live on account `9f9ffff4`'s AIR trade (id 101) after a legitimate resync
-  that happened after that row had already been correctly merged. `_flexImport`'s
-  update path (~line 12071-12088) never writes `shares`/`entryPrice` on an
-  existing-row update by design, which rules out that path as the direct
-  cause — the likely culprit is the *existing-row matching* logic (`~line
-  12058-12069`, especially the `looksLikeSameManualTrade` fallback) matching
-  the wrong row or re-deriving a different primary `ibkr_id` on a later parse
-  of the same fills. Needs dedicated investigation with real sync traffic
-  (or instrumented logging) before it can be fixed with confidence — do not
-  guess-patch the matching logic without reproducing it deterministically.
+- **RESOLVED (commit `baf222c`) — the resync-revert bug, and the actual cause
+  of the `closed_shares > shares` rows above.** An earlier note here blamed
+  the existing-row *matching* logic; that was wrong. Two defects in
+  `_flexImportInner`, both now fixed — keep both in place:
+  1. **Updates must write only the changed fields, never a full row.** The
+     persist step used `.update(_tradeToRow(trade))`, and `_tradeToRow` builds
+     *every* column from the in-memory copy. So a sync silently re-wrote
+     `shares`/`entry_price` from whatever the journal held at page-load —
+     reverting any change made since (another device, another tab, a
+     server-side correction). That is exactly how account `9f9ffff4`'s AIR
+     trade (id 101) came back with its pre-merge `shares=1`/`entry_price=84.77`
+     while `closed_shares`/`commission` stayed at the correct merged values.
+     A `patch` object is now built alongside each change and written instead.
+  2. **The exit half must not be copied onto a row of a different size.**
+     `flexParseXML` merges SMART-router fills that the journal may still hold
+     as separate rows. Matching by `ibkr_id` then found the fragment row and
+     copied the *merged order's* `closedShares` onto it while leaving `shares`
+     at the fragment — producing `closed_shares > shares` and overstating
+     P&L. Entry-side fields deliberately are not synced (a hand-entered
+     position matched via `looksLikeSameManualTrade` must keep the user's own
+     numbers), so the only safe move when sizes disagree is to skip the row;
+     consolidating a fragmented group stays a separate, deliberate operation.
+     The `sameSize` guard does this, and the orphan-close `candidates[0]`
+     fallback is guarded the same way.
+  Verified by replaying all three real scenarios (the AIR revert, a fragmented
+  row, and a legitimate partial→full close) against the fixed logic, and on
+  the live deployed page. Without fix #2 the 65-row cleanup above would have
+  been undone on the very next sync — confirmed by re-parsing the raw XML and
+  diffing against the post-cleanup DB state.
