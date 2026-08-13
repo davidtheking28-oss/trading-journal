@@ -6,6 +6,11 @@ No build step, no dependencies. Node's built-in runner only.
 node --test tests/logic.test.mjs
 ```
 
+Both layers also run on their own: the suite gates every deploy (the `test` job
+in `.github/workflows/deploy.yml` — a failure blocks Pages *and* the Edge
+Functions), and `data_health_check()` runs nightly at 03:45 UTC via the
+`data-health-alert` cron job, messaging Telegram only when a check fails.
+
 ## Layer 1 — logic (`logic.test.mjs`)
 
 `harness.mjs` reads `dashboard.html`, pulls individual functions out of the

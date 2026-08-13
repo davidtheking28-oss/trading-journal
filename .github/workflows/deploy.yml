@@ -10,7 +10,24 @@ permissions:
   id-token: write
 
 jobs:
+  # Gate for both deploy jobs: a broken calcPL or import path must not reach
+  # production just because the suite was only ever run locally.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run logic regression suite
+        run: node --test tests/logic.test.mjs
+
   deploy:
+    needs: test
     concurrency:
       group: "pages"
       cancel-in-progress: true
@@ -45,6 +62,7 @@ jobs:
         uses: actions/deploy-pages@v4
 
   deploy-functions:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

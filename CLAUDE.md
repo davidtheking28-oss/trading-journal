@@ -32,6 +32,11 @@ pure logic (parsing, P&L, dedup rules) by extracting functions out of
 `SELECT * FROM data_health_check();` — a nonzero `critical` row means live data
 is wrong right now.
 
+Both layers run unattended: the suite is a required job in
+`.github/workflows/deploy.yml` (a red test blocks the Pages deploy *and* the
+Edge Function deploy), and the `data-health-alert` cron job runs
+`data_health_check()` nightly at 03:45 UTC, messaging Telegram only on failure.
+
 **Every fix to a calculation or import bug belongs in that suite**, and the test
 must be shown to fail when the fix is reverted.
 
