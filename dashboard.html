@@ -12652,23 +12652,33 @@ function tlgParse(text) {
 
 async function deduplicateDB(type) {
   const arr = type === 'stock' ? db.stocks : db.crypto;
-  // Group by symbol+entryDate+entryPrice key
+  // Group by symbol+entryDate+entryPrice+shares. Share count is part of the
+  // identity: two lots of the same symbol/day/price with different sizes are
+  // different positions, not copies of one.
   const groups = {};
   arr.filter(t => !t.deleted).forEach(t => {
-    const key = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}`;
+    const key = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
     if (!groups[key]) groups[key] = [];
     groups[key].push(t);
   });
+  const brokerId = t => t.ibkr_id || t.bybit_id || null;
   const toRemove = [];
   Object.values(groups).forEach(group => {
     if (group.length < 2) return;
-    // Keep the one with exit price; if tied keep the one with stop; otherwise keep first
+    // Prefer keeping a broker-tagged row (the broker's own record), then one
+    // carrying an exit, then one carrying a stop.
     group.sort((a, b) => {
+      if (!!brokerId(b) !== !!brokerId(a)) return brokerId(b) ? 1 : -1;
       if (!!b.exitPrice !== !!a.exitPrice) return b.exitPrice ? 1 : -1;
       if (!!b.stop !== !!a.stop) return b.stop ? 1 : -1;
       return 0;
     });
-    group.slice(1).forEach(t => toRemove.push(t.id));
+    // A broker execution id is unique per fill, so two rows carrying different
+    // ids are different executions — never copies of each other. IBKR's SMART
+    // router routinely produces several same-symbol/day/price fills, and this
+    // grouping saw 73 of those real trades across two accounts as "duplicates"
+    // and offered to delete them. Only untagged rows can be redundant copies.
+    group.slice(1).filter(t => !brokerId(t)).forEach(t => toRemove.push(t.id));
   });
   const removed = toRemove.length;
   if (removed === 0) { toast('לא נמצאו כפילויות', 'success'); return; }
