@@ -152,6 +152,16 @@ unlike this one — push it manually).
   unique per fill, so two rows carrying different ids are never copies of each
   other. `shares` is now part of the identity key too (different size =
   different position), and only untagged rows are ever removable.
+- **Every import path must set `closedShares` on a closed position.**
+  `renderMonthlyTracker` selects on `exitPrice > 0 && closedShares > 0`, which
+  is a *different* closed-test than `isClosed()` (that one accepts a close date
+  or a partial alone). The CSV broker import (`biParseRows`) was the one path
+  that never set it, so CSV-imported closed trades were counted everywhere
+  except the monthly tracker, which showed an empty month. Fixed by setting
+  `closedShares: shares` when the row carries an exit price — matching the
+  Bybit and manual broker paths. The two closed-tests currently agree on all
+  live rows; if a path ever produces partials with no final `exitPrice` they
+  will diverge again, so prefer `isClosed()` in any new aggregation.
 - **`closedShares` means TOTAL closed volume, including every partial in `t`.**
   `calcPL` computes the final leg as `closedShares - sum(t[].shares)`, so a row
   using the other convention (`closedShares` = only the last leg) silently

@@ -16616,7 +16616,13 @@ function biParseRows(rows, mapping, def) {
         exitPrice = entryPrice + (pnl + commission) / shares * dir;
         if (exitPrice < 0) exitPrice = 0;
       }
-      trades.push({ symbol, ls, entryDate, entryPrice, exitPrice: exitPrice > 0 ? exitPrice : null, shares, commission });
+      // A row carrying an exit price is a closed position, so record how much
+      // of it closed — every other import path (Bybit, and the manual broker
+      // paths) sets closedShares explicitly. Leaving it null made these trades
+      // invisible to renderMonthlyTracker, which selects on closedShares > 0,
+      // so a CSV-imported month showed no performance at all.
+      trades.push({ symbol, ls, entryDate, entryPrice, exitPrice: exitPrice > 0 ? exitPrice : null, shares, commission,
+                    closedShares: exitPrice > 0 ? shares : null });
     } catch(e) { /* skip bad row */ }
   }
   return trades;
