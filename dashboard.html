@@ -7647,7 +7647,7 @@ async function _setupRealtimeSync() {
   const reloadMissed = () => {
     if (Date.now() < _rtSuppressUntil) return;
     if (activeTab() !== 'tab-missed') return;
-    clearTimeout(mtt); mtt = setTimeout(missedRender, 800);
+    clearTimeout(mtt); mtt = setTimeout(() => missedRender(true), 800);
   };
   _rtChannel = _sb.channel('rt-' + uid)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'trades', filter: f }, reloadTrades)
@@ -14593,6 +14593,7 @@ async function _missedFetchSector(sym, sectorEl) {
 
 // In-memory cache for missed opportunities
 let _missedList = [];
+let _missedLoaded = false;
 
 async function missedLoad() {
   if (!_currentUser) return [];
@@ -14640,7 +14641,7 @@ async function missedDelete(id) {
   _rtSuppress();
   const { error } = await _sb.from('missed_opportunities').delete().eq('id', id).eq('user_id', _currentUser.id);
   if (error) { toast('שגיאה במחיקה','error'); return; }
-  await missedRender();
+  await missedRender(true);
 }
 
 function missedRenderList(list) {
@@ -14686,9 +14687,11 @@ function missedRenderList(list) {
   });
 }
 
-async function missedRender() {
+async function missedRender(force = false) {
+  if (_missedLoaded && !force) { missedRenderList(_missedList); missedFollowUp(_missedList); return; }
   const list = await missedLoad();
   _missedList = list;
+  _missedLoaded = true;
   missedRenderList(list);
   missedFollowUp(list);
 }
@@ -14758,7 +14761,7 @@ async function missedSaveEdit(id) {
     .update({ symbol: sym, sector, date, price, note })
     .eq('id', id).eq('user_id', _currentUser.id);
   if (error) { toast('שגיאה בעדכון','error'); console.error(error); return; }
-  await missedRender();
+  await missedRender(true);
   toast('עודכן ✓','success');
 }
 
