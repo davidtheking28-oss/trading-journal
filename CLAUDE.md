@@ -144,3 +144,17 @@ unlike this one — push it manually).
   the live deployed page. Without fix #2 the 65-row cleanup above would have
   been undone on the very next sync — confirmed by re-parsing the raw XML and
   diffing against the post-cleanup DB state.
+- **`_dedupeTrades` must never remove a broker-tagged row** (commit `63481e2`).
+  It grouped only on symbol+entryDate+entryPrice, so IBKR's several
+  same-symbol/day/price SMART-router fills looked identical — the "נקה
+  כפילויות" button offered to permanently delete **73 real trades** across two
+  accounts, each with its own distinct `ibkr_id`. A broker execution id is
+  unique per fill, so two rows carrying different ids are never copies of each
+  other. `shares` is now part of the identity key too (different size =
+  different position), and only untagged rows are ever removable.
+- **`closedShares` means TOTAL closed volume, including every partial in `t`.**
+  `calcPL` computes the final leg as `closedShares - sum(t[].shares)`, so a row
+  using the other convention (`closedShares` = only the last leg) silently
+  drops that leg from P&L. The seeded demo data contained both conventions —
+  RDDT correct, HIPPO wrong — and the HIPPO row had been persisted to a real
+  account. Keep any new write path on the "total" convention.
