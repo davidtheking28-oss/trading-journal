@@ -98,3 +98,33 @@ unlike this one — push it manually).
   in live Playwright verification: `list.reduce(fn, {...list[0]})` still
   visits index 0, double-counting the first fill in a merged group — must be
   `list.slice(1).reduce(fn, {...list[0]})`.
+- **`closed_shares` must never exceed `shares` on a single row** — found
+  2026-08-13, pre-existing (predates every fix above), affected 65 rows
+  across both IBKR-connected accounts. Root cause: in unmerged fragmentation
+  groups, one representative row's `closed_shares` had accumulated the whole
+  group's cumulative exit volume instead of just its own fragment's — while
+  sibling rows in the same group already correctly showed their own smaller
+  amount. Confirmed by cross-checking every flagged row's `ibkr_id` against a
+  fresh from-scratch re-parse of the raw Flex XML with the current (correct)
+  algorithm. Fix applied was `closed_shares = shares` (capping), NOT
+  re-merging the group — matches the existing sibling rows' own correct
+  state and doesn't relitigate which fragmentation groups are safe to merge.
+  **One row (GROY, account 9f9ffff4) needed the opposite fix** — `shares`
+  itself was wrong (110 instead of 113), not `closed_shares` — verify which
+  field is actually wrong per-row before assuming "always cap closed_shares".
+  This directly overstated P&L (`(exitPrice-entryPrice)*closedShares`) for
+  every affected row until fixed. Rollback:
+  `rollback-closedshares-invariant-2026-08-13.sql` (scratchpad).
+- **⚠️ OPEN BUG, not yet root-caused:** a resync can revert a row's `shares`
+  / `entry_price` back to a stale pre-merge value while leaving
+  `closed_shares` / `commission` at the correct merged value — reproduced
+  live on account `9f9ffff4`'s AIR trade (id 101) after a legitimate resync
+  that happened after that row had already been correctly merged. `_flexImport`'s
+  update path (~line 12071-12088) never writes `shares`/`entryPrice` on an
+  existing-row update by design, which rules out that path as the direct
+  cause — the likely culprit is the *existing-row matching* logic (`~line
+  12058-12069`, especially the `looksLikeSameManualTrade` fallback) matching
+  the wrong row or re-deriving a different primary `ibkr_id` on a later parse
+  of the same fills. Needs dedicated investigation with real sync traffic
+  (or instrumented logging) before it can be fixed with confidence — do not
+  guess-patch the matching logic without reproducing it deterministically.
