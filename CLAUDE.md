@@ -23,6 +23,18 @@ Personal trading journal web app — multi-user SaaS built on Supabase.
 
 ---
 
+## Tests
+`node --test tests/logic.test.mjs` — no build step, no dependencies. Covers the
+pure logic (parsing, P&L, dedup rules) by extracting functions out of
+`dashboard.html`; see `tests/README.md`. Run it after touching `flexParseXML`,
+`calcPL`/`calcTotal`, `_flexImportInner`, `deduplicateDB`, `_dedupeTrades` or
+`biParseRows`. For data-level regressions the client tests cannot see, run
+`SELECT * FROM data_health_check();` — a nonzero `critical` row means live data
+is wrong right now.
+
+**Every fix to a calculation or import bug belongs in that suite**, and the test
+must be shown to fail when the fix is reverted.
+
 ## Supabase SQL — Use MCP
 When SQL needs to run against the Supabase project (migrations, schema changes, data queries), use the `supabase` MCP server directly — **do not tell the user to paste SQL into the SQL Editor manually**.
 Use the MCP tool to execute the SQL automatically.
