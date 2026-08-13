@@ -14015,13 +14015,13 @@ document.addEventListener('visibilitychange', () => {
     _teardownRealtimeSync();
   } else if (_currentUser) {
     clearTimeout(_rtResumeTimer);
-    _rtResumeTimer = setTimeout(() => { _setupRealtimeSync(); _syncReloadTrades(); }, 150);
+    _rtResumeTimer = setTimeout(() => { _setupRealtimeSync(); }, 150);
   }
 });
 // Restored straight out of bfcache — no scripts re-run, so the socket closed on
 // hide has to be re-established explicitly.
 window.addEventListener('pageshow', (e) => {
-  if (e.persisted && _currentUser) { _setupRealtimeSync(); _syncReloadTrades(); }
+  if (e.persisted && _currentUser) { _setupRealtimeSync(); }
 });
 
 // ── Clear all sensitive fields from DOM on lock ──
