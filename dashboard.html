@@ -12044,12 +12044,19 @@ async function _flexImportInner(trades) {
     if (t._orphanClose) {
       const candidates = arr.filter(x => !x.deleted && x.symbol === t.symbol && !x.exitPrice && (!t._closeLs || x.ls === t._closeLs));
       const open = candidates.find(x => Math.abs((x.shares || 0) - (t.closedShares || 0)) < 0.01) || candidates[0];
-      if (open) {
+      // The candidates[0] fallback can land on a position smaller than the
+      // volume being closed. Writing that closes more shares than the row ever
+      // held (closed_shares > shares) and overstates P&L, so skip instead.
+      if (open && (t.closedShares || 0) <= (open.shares || 0) + 0.01) {
         const prev = { exitPrice: open.exitPrice, closeDate: open.closeDate, closedShares: open.closedShares };
         open.exitPrice    = t.exitPrice;
         open.closeDate    = t.closeDate;
         open.closedShares = t.closedShares;
-        toUpdate.push({ row: open, prev });
+        toUpdate.push({ row: open, prev, patch: {
+          exit_price:    t.exitPrice   || null,
+          close_date:    t.closeDate   || null,
+          closed_shares: t.closedShares|| null,
+        } });
         updated++;
       }
       return;
@@ -12072,19 +12079,37 @@ async function _flexImportInner(trades) {
       // Same trade already in the journal → update it in place (corrects the
       // exit on re-sync, backfills the id), never insert a second copy.
       let changed = false;
+      const patch = {};
       const prev = { ibkr_id: existing.ibkr_id, exitPrice: existing.exitPrice, closeDate: existing.closeDate,
                      closedShares: existing.closedShares, t: existing.t, commission: existing.commission };
-      if (t.ibkr_id && existing.ibkr_id !== t.ibkr_id) { existing.ibkr_id = t.ibkr_id; changed = true; }
-      if (t.exitPrice && (Math.abs((existing.exitPrice || 0) - t.exitPrice) > 1e-9
+      if (t.ibkr_id && existing.ibkr_id !== t.ibkr_id) { existing.ibkr_id = t.ibkr_id; patch.ibkr_id = t.ibkr_id; changed = true; }
+      // The parsed exit only describes THIS row when both describe the same
+      // position. flexParseXML merges SMART-router fills that the journal may
+      // still hold as separate rows, so the merged trade carries the whole
+      // order's exit volume while the row holds one fragment's shares —
+      // copying only the exit half writes closed_shares > shares and directly
+      // overstates P&L ((exit-entry)*closedShares). This wrote 65 such rows
+      // across two accounts before it was caught. Entry-side fields are never
+      // synced here (a hand-entered position matched via looksLikeSameManualTrade
+      // must keep the user's own numbers), so when the sizes disagree the only
+      // safe move is to leave the row alone — consolidating a fragmented group
+      // is a separate, deliberate operation.
+      const sameSize = Math.abs((existing.shares || 0) - (t.shares || 0)) < 0.01;
+      if (sameSize && t.exitPrice && (Math.abs((existing.exitPrice || 0) - t.exitPrice) > 1e-9
           || Math.abs((existing.closedShares || 0) - (t.closedShares || 0)) > 1e-9)) {
         existing.exitPrice    = t.exitPrice;
         existing.closeDate    = t.closeDate;
         existing.closedShares = t.closedShares;
         existing.t            = t.t || [];
         existing.commission   = t.commission;
+        patch.exit_price    = t.exitPrice   || null;
+        patch.close_date    = t.closeDate   || null;
+        patch.closed_shares = t.closedShares|| null;
+        patch.targets       = t.t || [];
+        patch.commission    = t.commission  || 0;
         changed = true;
       }
-      if (changed) { toUpdate.push({ row: existing, prev }); updated++; }
+      if (changed) { toUpdate.push({ row: existing, prev, patch }); updated++; }
       return;
     }
 
@@ -12099,8 +12124,14 @@ async function _flexImportInner(trades) {
   });
 
   let updateFailed = 0;
-  for (const { row: trade, prev } of toUpdate) {
-    const { error } = await _sb.from('trades').update(_tradeToRow(trade)).eq('id', trade.id).eq('user_id', _currentUser.id);
+  for (const { row: trade, prev, patch } of toUpdate) {
+    // Write only the fields this sync actually changed. _tradeToRow builds a
+    // FULL row, so persisting it here re-wrote every column from the in-memory
+    // copy — silently reverting any change made since the journal was loaded
+    // (another device, another tab, a server-side correction). That is how a
+    // correctly merged trade came back with its old pre-merge shares/entry
+    // price while its exit fields stayed current.
+    const { error } = await _sb.from('trades').update(patch).eq('id', trade.id).eq('user_id', _currentUser.id);
     if (error) {
       // The journal already showed the position as closed at the new exit price
       // and recomputed P&L from it. Put the old values back rather than lie.
