@@ -7959,7 +7959,7 @@ function switchTab(name, btn) {
   if (name==='stocks') renderTable('stock');
   if (name==='crypto') renderTable('crypto');
   if (name==='statistics') renderStatistics();
-  if (name==='themes') { ttLoad(true); ttStartTimer(); } else { ttStopTimer(); }
+  if (name==='themes') { ttLoad(); ttStartTimer(); } else { ttStopTimer(); }
   if (name==='ibkr') {
     flexInit();
     bybitInit();
@@ -15425,7 +15425,7 @@ async function invSaveData(data) {
 }
 
 async function invInit() {
-  const data = await invLoadFromDB();
+  const data = _invData || await invLoadFromDB();
   const cur = invGetCurrency();
   document.getElementById('inv-cur-usd')?.classList.toggle('active', cur === '$');
   document.getElementById('inv-cur-ils')?.classList.toggle('active', cur === '₪');
