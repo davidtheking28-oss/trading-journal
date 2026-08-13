@@ -7373,6 +7373,7 @@ async function _onAuthSuccess(user) {
   _restoreLastTab();
   const _activeTabEl = document.querySelector('.tab-content.active');
   if (_activeTabEl) _maybeShowTabIntro(_activeTabEl.id.replace('tab-', ''), _activeTabEl);
+  _maybeShowOrderIdNotice();
   console.log('%c ChartRoom ','background:#818cf8;color:#fff;font-weight:700;font-size:13px;border-radius:var(--r-sm);padding:2px 6px');
   console.log('%cRunning in the browser — treat other users\' data with respect.','color:#8896a8;font-size:11px');
 }
@@ -8069,6 +8070,19 @@ function _dismissTabIntro(btn) {
   setTimeout(() => el.remove(), 280);
   _userSettings.tab_intros_dismissed = true;
   _saveUserSettings({ tab_intros_dismissed: true });
+}
+
+// One-time nudge (2026-08-13) for the one account whose Flex Query is still
+// missing the "IB Order ID" column — added directly to flexParseXML's fill-
+// consolidation grouping key when present, but this account's query (1601294)
+// hasn't had it configured/saved yet. Server-persisted (not localStorage) so
+// it survives across devices and only ever fires once, then never again.
+function _maybeShowOrderIdNotice() {
+  if (!_currentUser || _currentUser.id !== '5f72e0bb-fb32-4bd4-b766-96e907ece8fd') return;
+  if (_userSettings.order_id_notice_seen) return;
+  toast('צעד אחד נשאר: הוסף IB Order ID ב-IBKR. מדריך בהגדרות ← מדריך חיבור ברוקר', 'info');
+  _userSettings.order_id_notice_seen = true;
+  _saveUserSettings({ order_id_notice_seen: true });
 }
 
 // Restore the tab the user last viewed (set in switchTab). Falls back to the
