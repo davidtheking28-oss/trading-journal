@@ -96,8 +96,8 @@ unlike this one — push it manually).
   script: `rollback-fill-consolidation-2026-08-13.sql` (scratchpad, not
   committed).
 - **`detect_fragmented_trades(p_user_id uuid)`** — a Postgres helper
-  function (not in this repo's migrations tracked here; applied directly
-  via Supabase MCP) flags symbol/day clusters of ≥3 active IBKR-sourced
+  function (in `supabase/migrations/20260813_data_health_checks.sql`,
+  alongside `data_health_check`) flags symbol/day clusters of ≥3 active IBKR-sourced
   trades as a periodic safety-net check. A nonzero result isn't proof of a
   bug by itself (could be genuine high-frequency day trading) — verify
   against the raw Flex XML the same way the 2026-08-13 fix was verified

@@ -41,8 +41,9 @@ SELECT * FROM data_health_check('<uuid>');  -- one user
 ```
 
 Each row is a defect class that reached production. Nonzero `failing_rows` on a
-`critical` check means live data is currently wrong. The function lives in the
-database (applied via Supabase MCP), not in this repo's migrations.
+`critical` check means live data is currently wrong. Both functions live in
+`supabase/migrations/20260813_data_health_checks.sql` — keep that file and the
+deployed database in step when changing a check.
 
 Related: `detect_fragmented_trades(uuid)` flags symbol/day clusters of ≥3 IBKR
 rows as a re-fragmentation early warning. A nonzero result is not proof of a bug
