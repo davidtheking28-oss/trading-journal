@@ -79,7 +79,6 @@ jobs:
         run: |
           supabase functions deploy edgar       --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
           supabase functions deploy finnhub     --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
-          supabase functions deploy groq        --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
           supabase functions deploy ibkr        --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
           supabase functions deploy fmp         --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
           supabase functions deploy alphavantage --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt

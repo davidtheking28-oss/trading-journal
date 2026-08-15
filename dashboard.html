@@ -21,11 +21,11 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://davidtheking28-oss.github.io/trading-journal/dashboard.html">
 <meta property="og:title" content="ChartRoom — יומן מסחר מקצועי">
-<meta property="og:description" content="יומן מסחר מקצועי — רשום, נתח, שפר את ביצועי המסחר שלך. עקוב אחרי מניות וקריפטו, נהל סיכונים, וקבל ניתוח AI.">
+<meta property="og:description" content="יומן מסחר מקצועי — רשום, נתח, שפר את ביצועי המסחר שלך. עקוב אחרי מניות וקריפטו, נהל סיכונים, ושפר את הביצועים.">
 <meta property="og:site_name" content="ChartRoom">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="ChartRoom — יומן מסחר מקצועי">
-<meta name="twitter:description" content="יומן מסחר מקצועי — רשום, נתח, שפר את ביצועי המסחר שלך. עקוב אחרי מניות וקריפטו, נהל סיכונים, וקבל ניתוח AI.">
+<meta name="twitter:description" content="יומן מסחר מקצועי — רשום, נתח, שפר את ביצועי המסחר שלך. עקוב אחרי מניות וקריפטו, נהל סיכונים, ושפר את הביצועים.">
 <!-- ═══ Content Security Policy ════════════════════════════════════
      מגביל מה מותר לטעון ולשלוח מהדף:
      • script-src  — רק קוד מה-CDN הזה + קוד inline שכבר קיים בדף
@@ -3471,7 +3471,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   }
 
   /* ── AI Coach tab ── */
-  .ai-tab-btn { border-top: 1px solid var(--border); margin-top: 4px; padding-top: 10px !important; }
 
   /* ===== INVESTMENTS TAB ===== */
   #tab-investments { display: none; }
@@ -3726,127 +3725,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .missed-del-btn { background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer; font-size: 13px; padding: 4px 7px; border-radius: var(--r-sm); transition: all 0.15s; }
   .missed-del-btn:hover { color: var(--red); background: rgba(255,107,138,0.12); }
   .missed-del-btn.edit:hover { color: var(--accent); background: rgba(129,140,248,0.1); }
-  .ai-coach-wrap { max-width: 860px; margin: 0 auto; padding: 24px 16px 48px; }
-  .ai-header { margin-bottom: 28px; }
-  .ai-header-title {
-    display: flex; align-items: center; gap: 10px;
-    font-size: 18px; font-weight: 700; color: var(--text);
-  }
-  .ai-header-title svg { color: var(--accent); flex-shrink: 0; }
-  .ai-header-sub { font-size: 13px; color: var(--text3); margin-top: 4px; padding-right: 30px; }
-  .ai-controls {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: var(--radius2); padding: 20px; margin-bottom: 20px;
-    display: flex; flex-direction: column; gap: 16px;
-  }
-  .ai-control-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; }
-  .ai-control-group { display: flex; flex-direction: column; gap: 6px; }
-  .ai-label { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; }
-  .ai-key-hint { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--text3); font-size: 11px; margin-right: 4px; }
-  .ai-period-btns { display: flex; gap: 6px; flex-wrap: wrap; }
-  .ai-period-btn {
-    padding: 6px 14px; border-radius: var(--r-sm); border: 1px solid var(--border2);
-    background: var(--card2); color: var(--text2); font-size: 13px; font-weight: 500;
-    cursor: pointer; transition: var(--t-fast);
-  }
-  .ai-period-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .ai-period-btn.active { background: rgba(129,140,248,0.12); border-color: var(--accent); color: var(--accent); }
-  .ai-date-input {
-    padding: 6px 10px; border-radius: var(--r-sm); border: 1px solid var(--border2);
-    background: var(--card2); color: var(--text); font-size: 13px; outline: none;
-  }
-  .ai-date-input:focus { border-color: var(--accent); }
-  .ai-key-row { display: flex; gap: 6px; }
-  .ai-key-input {
-    flex: 1; min-width: 260px; padding: 8px 12px; border-radius: var(--r-sm);
-    border: 1px solid var(--border2); background: var(--card2); color: var(--text);
-    font-size: 13px; font-family: monospace; outline: none;
-  }
-  .ai-key-input:focus { border-color: var(--accent); }
-  .ai-key-toggle {
-    padding: 8px 10px; border-radius: var(--r-sm); border: 1px solid var(--border2);
-    background: var(--card2); color: var(--text2); cursor: pointer;
-  }
-  .ai-key-toggle:hover { color: var(--accent); }
-  .ai-run-btn {
-    display: flex; align-items: center; gap: 8px; justify-content: center;
-    padding: 10px 24px; border-radius: var(--r-md); border: none;
-    background: linear-gradient(135deg, #6366f1, #818cf8);
-    color: #fff; font-size: 14px; font-weight: 700;
-    cursor: pointer; transition: var(--t-base); letter-spacing: 0.02em;
-    box-shadow: 0 4px 16px rgba(129,140,248,0.25); align-self: flex-start;
-  }
-  .ai-run-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(129,140,248,0.35); }
-  .ai-run-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-  .ai-status {
-    padding: 12px 16px; border-radius: var(--radius); border: 1px solid var(--border);
-    background: var(--card); font-size: 13px; color: var(--text2);
-    display: flex; align-items: center; gap: 8px;
-  }
-  .ai-status.error { border-color: var(--red); color: var(--red); background: var(--red-bg); }
-  .ai-spinner {
-    width: 14px; height: 14px; border: 2px solid var(--border2);
-    border-top-color: var(--accent); border-radius: 50%;
-    animation: ai-spin 0.7s linear infinite; flex-shrink: 0;
-  }
-  @keyframes ai-spin { to { transform: rotate(360deg); } }
-  .ai-output {
-    border: 1px solid var(--border); border-radius: var(--radius2);
-    background: var(--card); overflow: hidden;
-  }
-  .ai-output-header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 12px 16px; border-bottom: 1px solid var(--border);
-    background: var(--card2); font-size: 13px; font-weight: 600; color: var(--text2);
-  }
-  .ai-copy-btn {
-    display: flex; align-items: center; gap: 5px; padding: 4px 10px;
-    border-radius: var(--r-sm); border: 1px solid var(--border2); background: transparent;
-    color: var(--text2); font-size: 12px; cursor: pointer; transition: var(--t-fast);
-  }
-  .ai-copy-btn:hover { color: var(--accent); border-color: var(--accent); }
-  .ai-output-body {
-    padding: 20px 24px; font-size: 14px; line-height: 1.7; color: var(--text);
-    white-space: pre-wrap; font-family: 'Inter', system-ui, sans-serif;
-    max-height: 70vh; overflow-y: auto;
-  }
-  .ai-output-body h2 { color: var(--accent); font-size: 15px; margin: 20px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
-  .ai-output-body h3 { color: var(--text); font-size: 14px; margin: 14px 0 6px; }
-  .ai-output-body strong { color: var(--text); font-weight: 700; }
-  .ai-output-body em { color: var(--text2); }
-  .ai-output-body ul, .ai-output-body ol { padding-right: 20px; margin: 8px 0; }
-  .ai-output-body li { margin: 4px 0; }
-  .ai-output-body code { background: var(--card2); padding: 1px 5px; border-radius: var(--r-sm); font-family: monospace; font-size: 12px; }
-  .ai-output-body .num-pos { color: var(--green); font-weight: 700; }
-
-  /* AI Chat */
-  .ai-chat-wrap { margin-top: 18px; border: 1px solid var(--border); border-radius: var(--radius2); background: var(--card); overflow: hidden; }
-  .ai-chat-header { padding: 10px 16px; background: var(--card2); border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; }
-  .ai-chat-messages { padding: 16px; display: flex; flex-direction: column; gap: 12px; max-height: 400px; overflow-y: auto; }
-  .ai-chat-msg { display: flex; flex-direction: column; gap: 4px; max-width: 85%; }
-  .ai-chat-msg.user { align-self: flex-start; }
-  .ai-chat-msg.bot  { align-self: flex-end; }
-  .ai-chat-bubble { padding: 10px 14px; border-radius: var(--r-md); font-size: 13px; line-height: 1.6; }
-  .ai-chat-msg.user .ai-chat-bubble { background: rgba(129,140,248,0.12); border: 1px solid rgba(129,140,248,0.25); color: var(--text1); border-radius: var(--r-md) var(--r-md) var(--r-sm) var(--r-md); }
-  .ai-chat-msg.bot  .ai-chat-bubble { background: var(--card2); border: 1px solid var(--border); color: var(--text1); border-radius: var(--r-md) var(--r-md) var(--r-md) var(--r-sm); }
-  .ai-chat-who { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text3); padding: 0 4px; }
-  .ai-chat-msg.user .ai-chat-who { color: var(--accent); }
-  .ai-chat-input-row { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); background: var(--card2); }
-  .ai-chat-input { flex: 1; background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--r-md); padding: 8px 12px; font-size: 13px; color: var(--text1); outline: none; transition: border-color 0.15s; font-family: inherit; }
-  .ai-chat-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(129,140,248,0.12); }
-  .ai-chat-send { background: var(--accent); border: none; border-radius: var(--r-md); padding: 8px 14px; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; transition: opacity 0.15s; white-space: nowrap; }
-  .ai-chat-send:hover { opacity: 0.85; }
-  .ai-chat-send:disabled { opacity: 0.4; cursor: not-allowed; }
-  .ai-output-body .num-neg { color: var(--red); font-weight: 700; }
-  /* light theme overrides */
-  html[data-theme="light"] .ai-controls { background: #fff; border-color: #e2e8f0; }
-  html[data-theme="light"] .ai-period-btn { background: #f8fafc; border-color: #cbd5e1; color: #475569; }
-  html[data-theme="light"] .ai-key-input,
-  html[data-theme="light"] .ai-date-input { background: #f8fafc; border-color: #cbd5e1; color: #1e293b; }
-  html[data-theme="light"] .ai-output { border-color: #e2e8f0; background: #fff; }
-  html[data-theme="light"] .ai-output-header { background: #f8fafc; color: #475569; }
-  html[data-theme="light"] .ai-output-body { color: #1e293b; }
-  html[data-theme="light"] .ai-output-body h2 { color: #0284c7; }
 
   /* Investment tab — light mode */
   html[data-theme="light"] .inv-table-wrap { background: #fff; border-color: #e2e8f0; }
@@ -5418,10 +5296,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="1"/><rect x="13" y="2" width="9" height="9" rx="1"/><rect x="2" y="13" width="9" height="9" rx="1"/><rect x="13" y="13" width="9" height="9" rx="1"/></svg></span>
         <span class="nav-label">Market Pulse</span>
       </button>
-      <button class="tab-btn ai-tab-btn" onclick="switchTab('ai',this)" aria-label="AI Minervini">
-        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a5 5 0 0 1 5 5c0 1.5-.6 2.8-1.6 3.8L17 20H7l1.6-9.2A5 5 0 0 1 7 7a5 5 0 0 1 5-5z"/><line x1="9" y1="20" x2="15" y2="20"/><circle cx="12" cy="7" r="1.5" fill="currentColor" opacity="0.6"/></svg></span>
-        <span class="nav-label">Minervini</span>
-      </button>
       <button class="tab-btn" onclick="switchTab('missed',this)" aria-label="Missed Opportunities">
         <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></span>
         <span class="nav-label">Missed</span>
@@ -6151,82 +6025,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     </div>
 
     <!-- ===== AI COACH ===== -->
-    <div id="tab-ai" class="tab-content">
-      <div class="ai-coach-wrap">
-
-        <div class="ai-header">
-          <div class="ai-header-title">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 0 1 5 5c0 1.5-.6 2.8-1.6 3.8L17 20H7l1.6-9.2A5 5 0 0 1 7 7a5 5 0 0 1 5-5z"/><line x1="9" y1="20" x2="15" y2="20"/><circle cx="12" cy="7" r="1.5" fill="currentColor" opacity="0.6"/></svg>
-            AI Minervini — דוח ביצועים
-          </div>
-          <div class="ai-header-sub">ניתוח עסקאות בשיטת SEPA · Trend Template · VCP</div>
-        </div>
-
-        <div class="ai-controls">
-          <div class="ai-control-row">
-            <div class="ai-control-group">
-              <label class="ai-label">תקופה</label>
-              <div class="ai-period-btns">
-                <button class="ai-period-btn active" data-period="month" onclick="aiSetPeriod('month',this)">30 יום אחרונים</button>
-                <button class="ai-period-btn" data-period="week" onclick="aiSetPeriod('week',this)">השבוע</button>
-                <button class="ai-period-btn" data-period="custom" onclick="aiSetPeriod('custom',this)">שבוע מסוים</button>
-                <button class="ai-period-btn" data-period="full" onclick="aiSetPeriod('full',this)">כל הזמן</button>
-              </div>
-            </div>
-            <div class="ai-control-group" id="ai-custom-date-wrap" style="display:none">
-              <label class="ai-label">תאריך בשבוע</label>
-              <input type="date" id="ai-custom-date" class="ai-date-input">
-            </div>
-          </div>
-
-          <div class="ai-control-row" id="ai-key-section" style="display:none">
-            <div class="ai-control-group" style="flex:1">
-              <label class="ai-label">
-                Groq API Key
-                <span class="ai-key-hint">מפתח אישי (Admin בלבד)</span>
-              </label>
-              <div class="ai-key-row">
-                <input type="password" id="ai-api-key" class="ai-key-input" placeholder="gsk_..." oninput="aiSaveKey()">
-                <button class="ai-key-toggle" onclick="aiToggleKey()" title="הצג/הסתר">
-                  <svg id="ai-key-eye" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <button class="ai-run-btn" id="ai-run-btn" onclick="aiRunReport()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            הפעל דוח
-          </button>
-        </div>
-
-        <div id="ai-status" class="ai-status" style="display:none"></div>
-
-        <div id="ai-output" class="ai-output" style="display:none">
-          <div class="ai-output-header">
-            <span id="ai-output-label">דוח ביצועים</span>
-            <button class="ai-copy-btn" onclick="aiCopyReport()" title="העתק">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-              העתק
-            </button>
-          </div>
-          <div id="ai-output-body" class="ai-output-body"></div>
-        </div>
-
-        <!-- Chat with Minervini -->
-        <div class="ai-chat-wrap" id="ai-chat-wrap" style="display:none">
-          <div class="ai-chat-header">💬 שאל את מינרוויני</div>
-          <div class="ai-chat-messages" id="ai-chat-messages"></div>
-          <div class="ai-chat-input-row">
-            <input class="ai-chat-input" id="ai-chat-input" placeholder="שאל שאלה... (לדוגמה: האם כדאי לי להגדיל פוזיציות?)"
-              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();aiChatSend();}">
-            <button class="ai-chat-send" id="ai-chat-send" onclick="aiChatSend()">שלח ↑</button>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
     <!-- ===== INVESTMENTS ===== -->
     <div id="tab-screener" class="tab-content">
       <iframe id="screener-frame" title="מסנן מניות SEPA"
@@ -7330,10 +7128,8 @@ async function _onAuthSuccess(user) {
 
   // Show admin-only UI elements
   const isAdmin = user.id === ADMIN_ID;
-  const aiKey = document.getElementById('ai-key-section');
   const fhKey = document.getElementById('finnhub-key-section');
   const fhRow = document.getElementById('finnhub-key-row');
-  if (aiKey) aiKey.style.display = isAdmin ? '' : 'none';
   if (fhKey) fhKey.style.display = isAdmin ? '' : 'none';
   // Regular users rely on the shared Finnhub key (edge-function secret) — hide the
   // personal-key field from them; data still flows via the fallback shared key.
@@ -7342,10 +7138,6 @@ async function _onAuthSuccess(user) {
   // users to do (keys are centralized, data loads in the background). Hide it.
   const dataSec = document.getElementById('s-data-sources');
   if (dataSec) dataSec.style.display = isAdmin ? '' : 'none';
-  document.querySelectorAll('.ai-tab-btn, .tnav-btn, .tab-btn').forEach(btn => {
-    const oc = btn.getAttribute('onclick') || '';
-    if (oc.includes("'ai'")) btn.style.display = isAdmin ? '' : 'none';
-  });
   const syncBtn = document.getElementById('flex-sync-btn');
   if (syncBtn) syncBtn.style.display = '';
   // Post-load UI setup
@@ -7419,12 +7211,10 @@ async function offerMigration() {
       await _sb.from('missed_opportunities').insert(missedRows);
     }
 
-    // Migrate plaintext Groq key from localStorage (one-time cleanup)
-    const localGroqKey = localStorage.getItem('tj-ai-key');
-    if (localGroqKey) {
-      if (!_userSettings.groq_api_key) await _saveUserSettings({ groq_api_key: localGroqKey });
-      localStorage.removeItem('tj-ai-key');
-    }
+    // Purge the old plaintext AI keys. The AI feature is gone; these are only
+    // still removed so a key left in localStorage from an older build doesn't
+    // sit there indefinitely.
+    localStorage.removeItem('tj-ai-key');
     localStorage.removeItem('groq-inv-key');
 
     toast(`✓ ${localTrades.length} עסקאות הועברו לענן`, 'success');
@@ -7942,7 +7732,6 @@ function setTradesScope(s, btn, ddId) {
 }
 
 function switchTab(name, btn) {
-  if (name === 'ai' && _currentUser?.id !== ADMIN_ID) return;
   try { localStorage.setItem('tj_active_tab', name); } catch {}
   document.querySelectorAll('.tab-btn,.tnav-btn').forEach(b=>{ b.classList.remove('active'); b.style.color=''; });
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
@@ -7969,9 +7758,6 @@ function switchTab(name, btn) {
     bybitInit();
     renderSecurityStatus();
     profileLoad();
-  }
-  if (name==='ai') {
-    // Key is pre-filled by loadUserSettings() on login — nothing to do here
   }
   if (name==='missed') missedRender();
   if (name==='screener') {
@@ -8119,7 +7905,6 @@ const _CMDK_ICONS = {
 };
 function _cmdkIc(name) { return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${_CMDK_ICONS[name]}</svg>`; }
 function _cmdkActions() {
-  const admin = _currentUser?.id === ADMIN_ID;
   const a = [
     { ic:_cmdkIc('home'), label:'מעבר: סקירה', kw:'home overview סקירה דשבורד בית', run:()=>_navTo('overview') },
     { ic:_cmdkIc('trend'), label:'מעבר: עסקאות', kw:'stocks trades מניות עסקאות טבלה יומן', run:()=>_navTo('stocks') },
@@ -8134,9 +7919,6 @@ function _cmdkActions() {
     { ic:_cmdkIc('sun'), label:'החלף ערכת נושא', kw:'theme dark light ערכת נושא צבע', run:()=>toggleTheme() },
   ];
   a.push({ ic:_cmdkIc('briefcase'), label:'מעבר: Investments', kw:'investments תיק השקעות', run:()=>_navTo('investments') });
-  if (admin) {
-    a.splice(5, 0, { ic:_cmdkIc('brain'), label:'מעבר: Minervini', kw:'minervini ai מינרביני', run:()=>_navTo('ai') });
-  }
   return a;
 }
 let _cmdkIdx = 0, _cmdkList = [];
@@ -9499,7 +9281,7 @@ let _userSettings = {};
 async function loadUserSettings() {
   if (!_currentUser) return;
   const { data } = await _sb.from('user_settings')
-    .select('groq_api_key, groq_inv_key, finnhub_key, fmp_key, av_key, flex_query_id, flex_confirm_query_id, portfolio_total, onboarding_done')
+    .select('finnhub_key, fmp_key, av_key, flex_query_id, flex_confirm_query_id, portfolio_total, onboarding_done')
     .eq('user_id', _currentUser.id)
     .single();
   _userSettings = data || {};
@@ -9510,10 +9292,6 @@ async function loadUserSettings() {
   if (av) _setAvatar(av);
 
   // Show saved status without exposing key value
-  if (_userSettings.groq_api_key) {
-    const el = document.getElementById('ai-api-key');
-    if (el) { el.value = ''; el.placeholder = 'מפתח שמור ✓'; }
-  }
   if (_userSettings.finnhub_key) {
     const el = document.getElementById('finnhub-key-input');
     if (el) { el.value = ''; el.placeholder = 'מפתח שמור ✓'; }
@@ -14849,586 +14627,6 @@ async function missedSaveEdit(id) {
   if (error) { toast('שגיאה בעדכון','error'); console.error(error); return; }
   await missedRender(true);
   toast('עודכן ✓','success');
-}
-
-// ─── AI Coach ───────────────────────────────────────────────────────────────
-
-let _aiPeriod = 'month';
-let _aiRunning = false;
-let _aiChatRunning = false;
-let _aiChatHistory = [];   // {role, content}
-let _aiChatContext = '';   // trade data summary for chat
-
-(function _aiInit() {
-  document.getElementById('ai-custom-date').value = _todayLocal();
-})();
-
-function aiSetPeriod(p, btn) {
-  _aiPeriod = p;
-  document.querySelectorAll('.ai-period-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('ai-custom-date-wrap').style.display = p === 'custom' ? '' : 'none';
-}
-
-async function aiSaveKey() {
-  const k = document.getElementById('ai-api-key').value.trim();
-  if (!k || !k.startsWith('gsk_')) return;
-  await _saveUserSettings({ groq_api_key: k });
-  const el = document.getElementById('ai-api-key');
-  if (el) { el.value = ''; el.placeholder = 'מפתח שמור ✓'; }
-  toast('מפתח Groq נשמר 🔐', 'success');
-}
-
-function aiToggleKey() {
-  const inp = document.getElementById('ai-api-key');
-  inp.type = inp.type === 'password' ? 'text' : 'password';
-}
-
-function _aiGetDateRange() {
-  if (_aiPeriod === 'full') return { start: null, end: null, label: 'כל הזמן — All Time' };
-  const fmt = d => _todayLocal(d);
-  const labelFmt = d => d.toLocaleDateString('he-IL', { day: 'numeric', month: 'short' });
-
-  if (_aiPeriod === 'month') {
-    const end = new Date();
-    const start = new Date(); start.setDate(end.getDate() - 30);
-    return { start: fmt(start), end: fmt(end), label: '30 ימים אחרונים' };
-  }
-
-  let ref;
-  if (_aiPeriod === 'custom') {
-    const v = document.getElementById('ai-custom-date').value;
-    ref = v ? new Date(v) : new Date();
-  } else {
-    ref = new Date();
-  }
-  const dow = ref.getDay();
-  const diffToMon = (dow === 0) ? -6 : 1 - dow;
-  const mon = new Date(ref); mon.setDate(ref.getDate() + diffToMon);
-  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-  return {
-    start: fmt(mon), end: fmt(sun),
-    label: `שבוע ${labelFmt(mon)} – ${labelFmt(sun)}`
-  };
-}
-
-function _aiCalcPnl(t) {
-  const entry   = parseFloat(t.entryPrice || 0);
-  const exitP   = parseFloat(t.exitPrice  || 0);
-  const shares  = parseFloat(t.shares     || 0);
-  const closed  = parseFloat(t.closedShares != null ? t.closedShares : shares) || shares;
-  const comm    = parseFloat(t.commission  || 0);
-  const ecn     = parseFloat(t.ecn        || 0);
-  const ls      = t.ls || 'L';
-  const partials = t.t || [];
-  let pnl = 0;
-  if (partials.length) {
-    for (const p of partials) {
-      const ps = parseFloat(p.shares || 0);
-      const pp = parseFloat(p.price  || 0);
-      pnl += ls === 'L' ? (pp - entry) * ps : (entry - pp) * ps;
-    }
-  } else {
-    pnl = ls === 'L' ? (exitP - entry) * closed : (entry - exitP) * closed;
-  }
-  return pnl - comm - ecn;
-}
-
-function _aiGetTrades(start, end) {
-  const stocks = Array.isArray(db.stocks) ? db.stocks : [];
-  const crypto = Array.isArray(db.crypto) ? db.crypto : [];
-  const result = [];
-  for (const [assetType, list] of [['stocks', stocks], ['crypto', crypto]]) {
-    for (const t of list) {
-      const cd = t.closeDate || '';
-      if (!cd) continue;
-      if (start && cd < start) continue;
-      if (end   && cd > end)   continue;
-      // The system prompt builds a whole STEM framework and asks the model to
-      // judge each trade against the market condition and the planned stop —
-      // none of which was being sent, which left it inventing the inputs.
-      const stopRisk = calcStopRisk(t);
-      const total = calcTotal(t);
-      result.push({
-        symbol: t.symbol || '', asset: assetType,
-        direction: t.ls || 'L',
-        entryDate: t.entryDate || '', closeDate: cd,
-        entryPrice: t.entryPrice || 0, exitPrice: t.exitPrice || 0,
-        shares: t.shares || 0, pnl: Math.round(_aiCalcPnl(t) * 100) / 100,
-        stop: t.stop || null,
-        r_multiple: stopRisk ? Math.round(total / stopRisk * 100) / 100 : null,
-        setup: t.setupType || null,
-        market_condition: t.marketCond || null,
-        hold_days: _holdDays(t),
-        notes_keep: t.notes_keep || '', notes_improve: t.notes_improve || '',
-      });
-    }
-  }
-  return result.sort((a,b) => a.closeDate.localeCompare(b.closeDate));
-}
-
-function _aiToolSummary(trades) {
-  if (!trades.length) return JSON.stringify({ total_trades: 0, message: 'No closed trades in this period.' });
-  const winners = trades.filter(t => t.pnl > 0);
-  const losers  = trades.filter(t => t.pnl < 0);
-  const total   = trades.reduce((s,t) => s + t.pnl, 0);
-  return JSON.stringify({
-    total_trades: trades.length, total_pnl: Math.round(total*100)/100,
-    winners: winners.length, losers: losers.length,
-    win_rate_pct: Math.round(winners.length / trades.length * 1000) / 10,
-    avg_win:  winners.length ? Math.round(winners.reduce((s,t)=>s+t.pnl,0)/winners.length*100)/100 : 0,
-    avg_loss: losers.length  ? Math.round(losers.reduce((s,t)=>s+t.pnl,0)/losers.length*100)/100   : 0,
-    profit_factor: losers.length ? Math.round(
-      winners.reduce((s,t)=>s+t.pnl,0) / Math.abs(losers.reduce((s,t)=>s+t.pnl,0)) * 100) / 100 : null,
-    best_trade:  trades.reduce((b,t) => t.pnl > b.pnl ? t : b),
-    worst_trade: trades.reduce((b,t) => t.pnl < b.pnl ? t : b),
-    all_trades: trades,
-  }, null, 2);
-}
-
-function _aiToolSymbols(trades) {
-  const by = {};
-  for (const t of trades) {
-    if (!by[t.symbol]) by[t.symbol] = { symbol: t.symbol, pnl: 0, trades: 0, wins: 0, asset: t.asset };
-    by[t.symbol].pnl    += t.pnl;
-    by[t.symbol].trades += 1;
-    if (t.pnl > 0) by[t.symbol].wins++;
-  }
-  const rows = Object.values(by).map(r => ({ ...r, pnl: Math.round(r.pnl*100)/100, win_rate: Math.round(r.wins/r.trades*1000)/10 }));
-  rows.sort((a,b) => b.pnl - a.pnl);
-  return JSON.stringify(rows, null, 2);
-}
-
-function _aiToolDaily(trades) {
-  const by = {};
-  for (const t of trades) {
-    if (!by[t.closeDate]) by[t.closeDate] = { date: t.closeDate, pnl: 0, trades: 0, wins: 0 };
-    by[t.closeDate].pnl    += t.pnl;
-    by[t.closeDate].trades += 1;
-    if (t.pnl > 0) by[t.closeDate].wins++;
-  }
-  return JSON.stringify(Object.values(by).sort((a,b)=>a.date.localeCompare(b.date)).map(r=>({...r,pnl:Math.round(r.pnl*100)/100})), null, 2);
-}
-
-function _aiToolNotes(trades) {
-  return JSON.stringify(trades.filter(t=>t.notes_keep||t.notes_improve).map(t=>({
-    symbol: t.symbol, date: t.closeDate, pnl: t.pnl, keep: t.notes_keep, improve: t.notes_improve
-  })), null, 2);
-}
-
-function _aiDispatchTool(name, trades) {
-  if (name === 'get_summary')          return _aiToolSummary(trades);
-  if (name === 'get_symbol_breakdown') return _aiToolSymbols(trades);
-  if (name === 'get_daily_breakdown')  return _aiToolDaily(trades);
-  if (name === 'get_notes')            return _aiToolNotes(trades);
-  return JSON.stringify({ error: 'unknown tool' });
-}
-
-function _aiMd(text) {
-  // minimal markdown → html
-  return text
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/`(.+?)`/g, '<code>$1</code>')
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>\n?)+/g, s => '<ul>' + s + '</ul>')
-    .replace(/(\+\$[\d,]+\.?\d*)/g, '<span class="num-pos">$1</span>')
-    .replace(/(−\$[\d,]+\.?\d*|-\$[\d,]+\.?\d*)/g, '<span class="num-neg">$1</span>')
-    .replace(/\n/g, '<br>');
-}
-
-async function aiRunReport() {
-  if (_aiRunning) return;
-
-  if (!_currentUser) { _aiShowStatus('error', 'נא להתחבר תחילה'); return; }
-
-  const { start, end, label } = _aiGetDateRange();
-  const trades = _aiGetTrades(start, end);
-
-  if (!trades.length) {
-    _aiShowStatus('error', `לא נמצאו עסקאות סגורות${start ? ` לתקופה ${start} → ${end}` : ''}. נסה "כל הזמן".`);
-    return;
-  }
-
-  _aiRunning = true;
-  document.getElementById('ai-run-btn').disabled = true;
-  document.getElementById('ai-output').style.display = 'none';
-  _aiShowStatus('loading', `טוען נתונים — ${trades.length} עסקאות | קורא ל-Groq…`);
-
-  // Build full data payload for Gemini (no tool-use needed)
-  const summaryData  = _aiToolSummary(trades);
-  const symbolsData  = _aiToolSymbols(trades);
-  const dailyData    = _aiToolDaily(trades);
-  const notesData    = _aiToolNotes(trades);
-
-  const system = `אתה מארק מינרוויני. אתה מדבר ישירות עם הסוחר — בשיחה, לא בדוח. הוא הראה לך את העסקאות שלו ואתה מגיב כמו שהיית מגיב אם הוא ישב מולך בחדר.
-
-תקופה: ${label}
-
-=== תנאי שוק — STEM (Stock Trading Environment Model) ===
-הסוחר מתעד בכל עסקה את תנאי השוק לפי מודל STEM:
-- 🟢 ירוק = Breakouts are working well — consider aggressive trading. פוזיציות גדולות, מסחר אגרסיבי מוצדק.
-- 🟠 כתום = Market is selective and/or highly rotational — you can trade but exercise caution. פוזיציות קטנות יותר, להיות מאוד סלקטיבי.
-- 🔴 אדום = Breakouts are not working well, risk is high — maximum caution advised. להיות בעיקר בצד, לחתוך הפסדים מהר מאוד.
-
-כשאתה מנתח עסקאות:
-- הפסד על breakout בשוק אדום = שגיאת ביצוע קטנה (השוק לא תומך)
-- הפסד על breakout בשוק ירוק = בעיה אמיתית בבחירת המניה או בניהול
-- אם הסוחר קנה בשוק אדום — שאל אותו למה לא ישב בצד
-
-כתוב בעברית. מספרים ומניות — באנגלית.
-
-=== השיטה שלך — SEPA ו-Trend Template ===
-
-אתה סוחר לפי שיטת SEPA (Specific Entry Point Analysis). הכלל הבסיסי שלך: מניה חייבת לעמוד בכל 8 תנאי ה-Trend Template לפני שאתה בכלל מסתכל עליה.
-
-**Trend Template — 8 התנאים:**
-1. מחיר המניה מעל ממוצע נע 150 יום (30 שבועות) וגם מעל ממוצע נע 200 יום (40 שבועות)
-2. ממוצע נע 150 יום מעל ממוצע נע 200 יום
-3. ממוצע נע 200 יום בעלייה לפחות חודש אחד (עדיף 4-5 חודשים)
-4. ממוצע נע 50 יום (10 שבועות) מעל ממוצע נע 150 יום וגם מעל ממוצע נע 200 יום
-5. מחיר המניה מעל ממוצע נע 50 יום
-6. מחיר המניה לפחות 30% מעל השפל של 52 שבועות (המניות הטובות ביותר יהיו 100%-300% מעל)
-7. מחיר המניה עד 25% מהשיא של 52 שבועות (ככל שקרוב יותר לשיא — טוב יותר)
-8. Relative Strength (IBD RS) לא פחות מ-70, עדיף 80-90+
-
-**VCP — Volatility Contraction Pattern:**
-דפוס הכניסה המועדף: התכווצות תנודתיות עם נפח יורד. כל pivot קטן יותר מהקודם. הכניסה — על breakout מעל ה-pivot האחרון בנפח גבוה.
-
-**כללי risk management שלך:**
-- סטופ לוס: 7-8% מתחת לנקודת הכניסה — לעולם לא יותר
-- יחס R/R מינימלי: 2:1 (עדיף 3:1)
-- לא להוסיף לפוזיציה מפסידה
-- לחתוך הפסדים מהר, להחזיק רווחים לאורך זמן
-- Stage 2 בלבד — לא לקנות מניות ב-Stage 1 (basing), Stage 3 (top), Stage 4 (downtrend)
-
-**3 יסודות בסיסיים לבחינה — רווחים, מכירות ומרווחים:**
-
-חיובי (מה לחפש):
-- רווחים ב-2-3 הרבעונים האחרונים +20% ומעלה — ככל שגבוה יותר, כך טוב יותר
-- מכירות בעלייה ב-2-3 הרבעונים האחרונים
-- האצה ברווחים ובמכירות — רבעון אחר רבעון — הסתכל על ממוצע 2 רבעונים (עלייה של 20%)
-- צמיחה נוכחית ביחס לצמיחה ממוצעת של 3-5 שנים (חפש האצה)
-- שנת פריצה (breakout year)
-- רווחים שנתיים חזקים
-- בדוק מרווחי רווח — האם הם מתרחבים או מתכווצים?
-- חפש מניות Code 3
-
-שלילי (אזהרות אדומות):
-- האטה מהותית ברווחים — אזהרה
-- שחיקת מרווחים — אזהרה
-- רווחים חיוביים עם מכירות שליליות — אורך חיים מוגבל
-- חברה שמציגה רווחים חזקים אך לא משלמת מיסים — דגל אדום
-
-**כללי מסחר מרכזיים:**
-1. היה מוכן לשבת בצד במזומן לתקופות ממושכות — לעולם אל תיתן לממוצעים ללחוץ אותך לעסקאות שלא עומדות בקריטריונים שלך
-2. שמור על כל ההפסדים קטנים יחסית לתשואה
-3. כאשר העסקאות עובדות — סחר באגרסיביות
-4. כאשר העסקאות לא עובדות — נסוג משמעותית
-5. לעולם אל תממצע הפסד (Never average down)
-6. לעולם אל תתן לרווח גדול להפוך להפסד
-7. תמיד כבד את הסיכון ושים משמעת מעל אגו
-
-**מה לעשות בתקופות קשות:**
-בתקופות קשות הרווחים שלך יהיו קטנים מהרגיל ואחוז העסקאות הרווחיות יהיה נמוך מהרגיל. **חייב לחתוך הפסדים מהר יותר לפיצוי. לא להרחיב סטופים.**
-- צא ממינוף (margin) מיד
-- צמצם חשיפה — גודל פוזיציה ומחויבות הון כוללת
-- היה פחות סלחן — הדק סטופים. אם בדרך כלל חותך הפסדים ב-7-8%, חתוך ב-4-5%
-- היה פחות תאב — הסתפק ברווחים קטנים יותר. אם בדרך כלל לוקח רווחים ב-15-20%, קח ב-10-12%
-
-**Power Play — הגדרה:**
-1. תנועת מחיר נפיצה בנפח עצום — המניה עולה 100% ומעלה בפחות מ-8 שבועות
-2. העלייה יכולה להיגרם מאירוע חדשות גדול (אישור FDA, תוצאות, הכרזה) — או ללא שום סיבה ברורה (חוזק בלתי מוסבר)
-3. לאחר מכן המניה נעה הצידה בטווח צפוף יחסית — לא מתקנת יותר מ-20% לאורך 3-6 שבועות (חלקן מופיעות אחרי 10-12 ימים בלבד)
-
-**סימנים למכירה — Signs to Consider Selling:**
-אלה האותות שמעידים שמניה כנראה הגיעה לשיאה ויש לשקול מכירה:
-1. 70% ימים עולים מתוך תקופה של 7 עד 15 ימים — וזה קרה פעמיים (2x)
-2. קצב עלייה מואץ (Accelerated rate of advance) — המניה מטפסת מהר מדי
-3. הגדול ביותר מבין ימי העלייה מגיע כאשר המניה כבר מורחבת (extended) מהבסיס
-4. הספרד (מרווח יומי) הגדול ביותר מגיע כאשר המניה כבר extended
-5. פער (Gap up) מגיע כאשר המניה כבר extended
-6. סימנים של היפוך כיוון (reversal) על נפח כבד
-7. הירידה היומית הגדולה ביותר מגיעה על הנפח הגדול ביותר
-8. הירידה השבועית הגדולה ביותר מגיעה על הנפח הגדול ביותר
-
-**Stage 3 — מאפיינים של שלב הפסגה:**
-1. התנודתיות עולה — המניה נעה קדימה ואחורה בתנועות רחבות ולא סדירות. הדפוס עשוי להיראות דומה ל-Stage 2, אך תנועת המחיר הרבה יותר אירטית.
-2. בשלב מסוים יש לרוב שבירת מחיר גדולה על עלייה בנפח — לרוב הירידה היומית הגדולה ביותר מאז תחילת Stage 2. על גרף שבועי — הירידה השבועית הגדולה ביותר מאז תחילת התנועה. שבירות אלה מגיעות כמעט תמיד על נפח מוחץ ומעידות על מכירה מוסדית כבדה.
-3. פעולת הפסגה של Stage 3 מגיעה לרוב לאחר שהמניה יצאה ממספר תקופות בסיס (consolidation) במהלך Stage 2 — בדרך כלל 3-5 בסיסות נוצרים לפני שיא Stage 3.
-
-**אותות דוביים — Bearish Signals (Violations):**
-אלה הפרות של מבנה עולה תקין — אם אתה רואה אחד מהם, שים לב:
-- נפח נמוך ביציאה, נפח גבוה בירידה (Low volume out – high volume in)
-- 3-4 lower lows רצופים על נפח — ללא כל פעולת תמיכה ביום 3 או 4
-- יותר ימי ירידה מימי עלייה
-- יותר סגירות רעות מסגירות טובות
-- סגירה מתחת לממוצע 20 יום זמן קצר אחרי הpivot — ובוודאי אם זה מתחת ל-50 יום
-- פעולת מחיר רחבה ותנודתית (Wide and volatile price action)
-
-=== הדמות שלך ===
-- אתה ישיר ואמיתי. לא מחמיא סתם ולא מוחץ סתם.
-- יש לך דעה ואתה אומר אותה — "זה היה טעות", "זה היה נכון", "הייתי עושה אחרת".
-- אתה מדבר מניסיון — "אני זוכר שגם אני...", "בשנת 1997 כשהרווחתי 155%...", "הדבר הכי קשה שלמדתי...".
-- אתה לא מרצה ולא מסביר הגדרות. אתה מגיב למה שאתה רואה.
-
-=== המבנה ===
-
-**חלק 1 — תגובה ראשונית**
-תגובה קצרה על התוצאה הכללית — אמיתית ובלי לעגל פינות.
-
-**חלק 2 — עסקאות ספציפיות**
-2-3 עסקאות שבלטו (טוב או רע). אמור מה חשבת כשראית אותן — האם הן עמדו ב-Trend Template? האם הכניסה הייתה על VCP אמיתי? האם ה-stop היה נכון?
-
-**חלק 3 — ניתוח הערות היומן (החלק הכי חשוב)**
-קרא את כל הערות "מה לשפר" ו"מה לשמר" שהסוחר כתב. הוא כתב את זה בעצמו — זה הזהב האמיתי.
-
-עבור כל עסקה עם הערות:
-- בדוק אם הבעיה שציין (ב"מה לשפר") קשורה לאחד מהאותות שלמדת: כניסה מאוחרת, stop רחב, מניה בStage 3, bearish signals שהתעלם מהם, selling signs שהיו ברורים.
-- בדוק אם מה שכתב ב"מה לשמר" אכן עקבי עם שיטת SEPA — ואם לא, אמור לו.
-- חפש דפוסים חוזרים — אם אותה מילה או ביטוי מופיע ב-2+ עסקאות, זה לא מקרה.
-
-דוגמאות לחיבורים שאתה עושה:
-- "לא כיבדתי את הסטופ" → "זה הדבר שהורג סוחרים. כלל אחד: הסטופ הוא מקום מחיר, לא החלטה רגשית."
-- "קניתי מאוחר מדי" → "אתה קונה אחרי הbreakout, לא עליו. VCP אמיתי מאפשר לך להיכנס בדיוק על הpivot."
-- "מכרתי מוקדם" → "זה לא בעיה בשיטה — זה בעיה באמון בעצמך. אם הקנייה הייתה נכונה, תן למניה לעבוד."
-- "נפח נמוך ביום הכניסה" → "זהו bearish signal ברור — אין אישור מוסדי. זה violation בסיסי."
-- "המניה ירדה מהר אחרי הכניסה" → "בדוק אם היו selling signs לפני — extended, largest up day, gap בלי בסיס חדש."
-
-אם אין הערות כלל — אמור לו: "אי אפשר להשתפר בלי לתעד. בלי יומן — אתה חוזר על אותן טעויות ולא יודע."
-
-**חלק 4 — המלצה אחת**
-פעולה אחת ספציפית לעסקה הבאה — קונקרטית לגמרי, לא עצות כלליות.
-
-**משפט סיום**
-משפט אחד. אמיתי. שיישאר איתו.
-
-השתמש במספרים אמיתיים — לא "הפסדת הרבה" אלא "הפסדת $340 ב-QS ביום אחד".`;
-
-  const notesWithPatterns = _aiToolNotes(trades);
-  const improvePhrases = trades.filter(t=>t.notes_improve).map(t=>`[${t.symbol} ${t.closeDate}]: "${t.notes_improve}"`).join('\n') || 'אין הערות שיפור';
-  const keepPhrases    = trades.filter(t=>t.notes_keep).map(t=>`[${t.symbol} ${t.closeDate}]: "${t.notes_keep}"`).join('\n') || 'אין הערות שימור';
-
-  // State the coverage explicitly. The instructions above describe STEM, stops
-  // and setups as if every trade carries them; most carry none, and without
-  // being told so the model fills the gaps with assumptions.
-  const _cov = (fn) => trades.filter(fn).length;
-  const coverage = `Of ${trades.length} closed trades in this period: ` +
-    `${_cov(t => t.market_condition)} have a recorded market condition (STEM), ` +
-    `${_cov(t => t.stop)} have a planned stop (so only those have a real R-multiple), ` +
-    `${_cov(t => t.setup)} have a setup type, ` +
-    `${_cov(t => t.notes_improve || t.notes_keep)} have journal notes. ` +
-    `Fields shown as null are NOT recorded — never infer or invent them. ` +
-    `If a field you need is mostly missing, say so plainly and tell the trader to start logging it.`;
-
-  const userPrompt = `Here is the full trading data for ${label}:
-
-=== DATA COVERAGE — read this before analysing ===
-${coverage}
-
-=== SUMMARY STATS ===
-${summaryData}
-
-=== DAILY BREAKDOWN ===
-${dailyData}
-
-=== SYMBOL BREAKDOWN ===
-${symbolsData}
-
-=== TRADER JOURNAL NOTES — "מה לשפר" (לשיפור) ===
-${improvePhrases}
-
-=== TRADER JOURNAL NOTES — "מה לשמר" (לשימור) ===
-${keepPhrases}
-
-Find recurring patterns in the "מה לשפר" notes above. If the same mistake appears multiple times (e.g., "bought too expensive", "no entry trigger", "stop too wide"), name the pattern and call it out directly.
-
-Now generate the full performance report as described in your instructions.`;
-
-  let fullText = '';
-  const outputBody = document.getElementById('ai-output-body');
-  outputBody.innerHTML = '';
-
-  try {
-    const resp = await fetch(`${SUPABASE_URL}/functions/v1/groq`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${await _getToken()}`,
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user',   content: userPrompt },
-        ],
-        stream: true,
-        max_tokens: 4096,
-        temperature: 0.7,
-      }),
-    });
-
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      throw new Error(err.error?.message || `HTTP ${resp.status}`);
-    }
-
-    const reader = resp.body.getReader();
-    const dec = new TextDecoder();
-    let buf = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += dec.decode(value, { stream: true });
-      const lines = buf.split('\n');
-      buf = lines.pop();
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const raw = line.slice(6).trim();
-        if (!raw || raw === '[DONE]') continue;
-        let ev;
-        try { ev = JSON.parse(raw); } catch { continue; }
-        const chunk = ev?.choices?.[0]?.delta?.content;
-        if (chunk) {
-          fullText += chunk;
-          outputBody.innerHTML = _aiMd(fullText);
-          outputBody.scrollTop = outputBody.scrollHeight;
-          document.getElementById('ai-output').style.display = '';
-          document.getElementById('ai-status').style.display = 'none';
-        }
-      }
-    }
-
-    _aiShowStatus('done', `הדוח מוכן — ${trades.length} עסקאות | ${label}`);
-    document.getElementById('ai-output-label').textContent = `דוח ביצועים — ${label}`;
-    document.getElementById('ai-output').style.display = '';
-    outputBody.innerHTML = _aiMd(fullText);
-
-    // Enable chat — seed context with report + trade data
-    _aiChatHistory = [];
-    _aiChatContext = `${system}\n\n=== REPORT ALREADY GIVEN ===\n${fullText}\n\n=== TRADE DATA ===\n${summaryData}\n${notesData}`;
-    document.getElementById('ai-chat-wrap').style.display = '';
-    document.getElementById('ai-chat-messages').innerHTML = '';
-    aiChatAddBubble('bot', 'יש לך שאלות? אני כאן.');
-
-  } catch (e) {
-    _aiShowStatus('error', `שגיאה: ${e.message}`);
-    console.error('[AI Minervini]', e);
-  }
-
-  _aiRunning = false;
-  document.getElementById('ai-run-btn').disabled = false;
-}
-
-// ─── Chat ────────────────────────────────────────────────────────────────────
-
-function aiChatAddBubble(who, text) {
-  const wrap = document.getElementById('ai-chat-messages');
-  const msg = document.createElement('div');
-  msg.className = `ai-chat-msg ${who}`;
-  msg.innerHTML = `
-    <div class="ai-chat-who">${who === 'user' ? 'אתה' : 'מינרוויני'}</div>
-    <div class="ai-chat-bubble" id="chat-bubble-${Date.now()}">${who === 'bot' ? _aiMd(text) : esc(text)}</div>`;
-  wrap.appendChild(msg);
-  wrap.scrollTop = wrap.scrollHeight;
-  return msg.querySelector('.ai-chat-bubble');
-}
-
-async function aiChatSend() {
-  if (_aiChatRunning) return;
-  const inp = document.getElementById('ai-chat-input');
-  const question = inp.value.trim();
-  if (!question) return;
-  inp.value = '';
-  aiChatAddBubble('user', question);
-  _aiChatHistory.push({ role: 'user', content: question });
-
-  _aiChatRunning = true;
-  document.getElementById('ai-chat-send').disabled = true;
-
-  const botBubble = aiChatAddBubble('bot', '...');
-  let botText = '';
-
-  try {
-    const messages = [
-      { role: 'system', content: _aiChatContext },
-      ..._aiChatHistory
-    ];
-
-    const resp = await fetch(`${SUPABASE_URL}/functions/v1/groq`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${await _getToken()}` },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages,
-        stream: true,
-        max_tokens: 1024,
-        temperature: 0.7,
-      }),
-    });
-
-    if (!resp.ok) { const t = await resp.text(); throw new Error(`HTTP ${resp.status}: ${t}`); }
-
-    const reader = resp.body.getReader();
-    const dec = new TextDecoder();
-    let buf = '';
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += dec.decode(value, { stream: true });
-      const lines = buf.split('\n');
-      buf = lines.pop();
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const raw = line.slice(6).trim();
-        if (!raw || raw === '[DONE]') continue;
-        let ev; try { ev = JSON.parse(raw); } catch { continue; }
-        const chunk = ev?.choices?.[0]?.delta?.content;
-        if (chunk) {
-          botText += chunk;
-          botBubble.innerHTML = _aiMd(botText);
-          document.getElementById('ai-chat-messages').scrollTop = 99999;
-        }
-      }
-    }
-
-    _aiChatHistory.push({ role: 'assistant', content: botText });
-
-  } catch(e) {
-    botBubble.innerHTML = `<span style="color:var(--red)">שגיאה: ${esc(e.message)}</span>`;
-  }
-
-  _aiChatRunning = false;
-  document.getElementById('ai-chat-send').disabled = false;
-  inp.focus();
-}
-
-function _aiShowStatus(type, msg) {
-  const el = document.getElementById('ai-status');
-  el.style.display = '';
-  el.className = 'ai-status' + (type === 'error' ? ' error' : '');
-  if (type === 'loading') {
-    el.innerHTML = `<div class="ai-spinner"></div><span>${msg}</span>`;
-  } else if (type === 'done') {
-    el.innerHTML = `<span style="color:var(--green)">✓</span> <span>${msg}</span>`;
-  } else {
-    const safe = msg.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    el.innerHTML = `<span>⚠ ${safe}</span>`;
-  }
-}
-
-function aiCopyReport() {
-  const body = document.getElementById('ai-output-body').innerText;
-  navigator.clipboard.writeText(body).then(() => {
-    const btn = document.querySelector('.ai-copy-btn');
-    const orig = btn.innerHTML;
-    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="20 6 9 17 4 12"/></svg> הועתק';
-    setTimeout(() => { btn.innerHTML = orig; }, 1800);
-  });
 }
 
 if ('serviceWorker' in navigator) {
