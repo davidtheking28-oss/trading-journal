@@ -38,9 +38,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if [ -n "$(git status --porcelain supabase/functions)" ]; then
             git add supabase/functions
-            git commit -m "chore: recover push-daily source from the deployed function
-
-It was running on a daily cron with no source in any repo."
+            git commit -m "chore: recover push-daily source (it ran on a daily cron with no source in any repo)"
             git push
           else
             echo "nothing to commit — download produced no new files"
