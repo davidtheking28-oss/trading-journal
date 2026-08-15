@@ -1,0 +1,48 @@
+name: Recover orphaned Edge Functions
+
+# One-off maintenance, run by hand. Two orphans exist:
+#  - push-daily is DEPLOYED and fires on a cron every day, but its source is in
+#    no repo, so it cannot be fixed or redeployed. Download it back into git.
+#  - groq is still deployed after the AI feature was removed. Nothing calls it,
+#    but it stays callable by any signed-in user and would burn the shared API
+#    key, so delete the deployment too.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Download push-daily source
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: supabase functions download push-daily --project-ref fnklrqxwyeibfptaxewf
+
+      - name: Delete the orphaned groq deployment
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: supabase functions delete groq --project-ref fnklrqxwyeibfptaxewf
+
+      - name: Commit the recovered source
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain supabase/functions)" ]; then
+            git add supabase/functions
+            git commit -m "chore: recover push-daily source from the deployed function
+
+It was running on a daily cron with no source in any repo."
+            git push
+          else
+            echo "nothing to commit — download produced no new files"
+            exit 1
+          fi
