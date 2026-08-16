@@ -14870,22 +14870,19 @@ function invSyncTargetInputs() {
   set('inv-tg-cash', ALLOC_CASH_TARGET);
 }
 
-function invRecalc() {
-  const tbody = document.getElementById('inv-tbody');
-  if (!tbody) return;
-  const rows = tbody.querySelectorAll('tr[data-idx]');
-
-  // Pass 1: accumulate totals
+// Pure accumulation, kept out of invRecalc so the arithmetic can be tested
+// without a DOM. Input is one plain object per holding; nothing here reads or
+// writes the page.
+function invAccumulate(holdings) {
   let totalCost = 0, totalCurrentValue = 0, totalUnrealizedPnL = null, pnlCost = 0;
   const byCat = { blue: 0, green: 0, yellow: 0 };
   const byCatValue = { blue: 0, green: 0, yellow: 0 };
   const rowData = [];
-  rows.forEach(row => {
-    const inputs = row.querySelectorAll('input');
-    const cat          = row.querySelector('.inv-cat-sel')?.value || '';
-    const entryShares  = +(inputs[2]?.value) || 0;
-    const entryPrice   = +(inputs[3]?.value) || 0;
-    const currentPrice = +(inputs[4]?.value) || 0;
+  holdings.forEach(h => {
+    const cat          = h.cat || '';
+    const entryShares  = +h.entryShares || 0;
+    const entryPrice   = +h.entryPrice || 0;
+    const currentPrice = +h.currentPrice || 0;
     const value  = currentPrice > 0 ? entryShares * currentPrice : entryShares * entryPrice;
     const cost   = entryShares * entryPrice;
     const pnlAmt = (currentPrice > 0 && entryPrice > 0) ? (currentPrice - entryPrice) * entryShares : null;
@@ -14899,8 +14896,39 @@ function invRecalc() {
     if (pnlAmt !== null) { totalUnrealizedPnL = (totalUnrealizedPnL || 0) + pnlAmt; pnlCost += cost; }
     if (cat && byCat[cat] !== undefined) byCat[cat] += cost;
     if (cat && byCatValue[cat] !== undefined) byCatValue[cat] += value;
-    rowData.push({ i: +row.dataset.idx, cat, value, cost, pnlAmt, pnlPct });
+    rowData.push({ i: h.i, cat, value, cost, pnlAmt, pnlPct });
   });
+  return { totalCost, totalCurrentValue, totalUnrealizedPnL, pnlCost, byCat, byCatValue, rowData };
+}
+
+// Donut slice percentages. Cash is clamped at both ends: a cost basis above the
+// portfolio total made `100 - totalAllocated` negative, which emitted an
+// invalid negative stroke-dasharray and drew the slice wrong.
+function invDonutPcts(byCat, portfolioTotal, cash = 0) {
+  const pct = v => portfolioTotal > 0 ? v / portfolioTotal * 100 : 0;
+  const pcts = { blue: pct(byCat.blue), green: pct(byCat.green), yellow: pct(byCat.yellow) };
+  const totalAllocated = pcts.blue + pcts.green + pcts.yellow;
+  pcts.cash = portfolioTotal > 0 ? Math.max(0, Math.min(cash / portfolioTotal * 100, 100 - totalAllocated)) : 0;
+  return pcts;
+}
+
+function invRecalc() {
+  const tbody = document.getElementById('inv-tbody');
+  if (!tbody) return;
+  const rows = tbody.querySelectorAll('tr[data-idx]');
+
+  // Pass 1: read the rows out of the DOM, then accumulate them purely
+  const { totalCost, totalCurrentValue, totalUnrealizedPnL, pnlCost, byCat, byCatValue, rowData } =
+    invAccumulate([...rows].map(row => {
+      const inputs = row.querySelectorAll('input');
+      return {
+        i: +row.dataset.idx,
+        cat: row.querySelector('.inv-cat-sel')?.value || '',
+        entryShares:  inputs[2]?.value,
+        entryPrice:   inputs[3]?.value,
+        currentPrice: inputs[4]?.value,
+      };
+    }));
 
   // Total portfolio is the anchor (input). Free cash is whatever isn't invested
   // in holdings (total − holdings value), so it stays in sync with the total and
@@ -15338,14 +15366,9 @@ function invAutoSaveTotal() {
 
 function invUpdateDonut(byCat, portfolioTotal, cash = 0) {
   const C = 314.159;
-  const pcts = {
-    blue:   portfolioTotal > 0 ? byCat.blue   / portfolioTotal * 100 : 0,
-    green:  portfolioTotal > 0 ? byCat.green  / portfolioTotal * 100 : 0,
-    yellow: portfolioTotal > 0 ? byCat.yellow / portfolioTotal * 100 : 0,
-  };
-  const totalAllocated = pcts.blue + pcts.green + pcts.yellow;
   // Cash = real free cash share. The remainder (unrealized gains) stays unfilled.
-  pcts.cash = portfolioTotal > 0 ? Math.max(0, Math.min(cash / portfolioTotal * 100, 100 - totalAllocated)) : 0;
+  const pcts = invDonutPcts(byCat, portfolioTotal, cash);
+  const totalAllocated = pcts.blue + pcts.green + pcts.yellow;
 
   const order = ['blue', 'green', 'yellow', 'cash'];
   let offset = 0;

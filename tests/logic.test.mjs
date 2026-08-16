@@ -214,3 +214,70 @@ describe('guards that cannot be exercised headless', () => {
     assert.match(csvSrc, /closedShares:\s*exitPrice\s*>\s*0\s*\?\s*shares\s*:\s*null/);
   });
 });
+
+// ── Investments tab ─────────────────────────────────────────────────────────
+// invRecalc reads its numbers straight out of the table inputs, so the
+// arithmetic was untestable until the accumulation was split into these two
+// pure functions. Every case below is a bug that shipped.
+const { invAccumulate } = load('invAccumulate');
+const { invDonutPcts } = load('invDonutPcts');
+
+const holding = (o = {}) => ({ cat: 'blue', entryShares: 10, entryPrice: 100, currentPrice: 110, ...o });
+
+describe('invAccumulate — portfolio totals', () => {
+  test('a holding with no quote is left out of the return denominator', () => {
+    // totalCost counted every row while totalUnrealizedPnL only counted rows
+    // that had a price, so one failed quote halved the headline return.
+    const r = invAccumulate([
+      holding(),                          // cost 1000, +100
+      holding({ currentPrice: 0 }),       // cost 1000, no quote
+    ]);
+    assert.equal(r.totalCost, 2000, 'invested total still shows every holding');
+    assert.equal(r.totalUnrealizedPnL, 100);
+    assert.equal(r.pnlCost, 1000, 'only quoted cost belongs in the % denominator');
+    assert.equal(r.totalUnrealizedPnL / r.pnlCost * 100, 10, 'must be +10%, not +5%');
+  });
+
+  test('an unquoted holding is valued at cost, not at zero', () => {
+    const r = invAccumulate([holding({ currentPrice: 0 })]);
+    assert.equal(r.totalCurrentValue, 1000);
+  });
+
+  test('with no quotes at all the return is null rather than 0%', () => {
+    const r = invAccumulate([holding({ currentPrice: 0 })]);
+    assert.equal(r.totalUnrealizedPnL, null, 'null renders as —; 0 would claim a flat portfolio');
+    assert.equal(r.pnlCost, 0);
+  });
+
+  test('category buckets accumulate cost, and values accumulate separately', () => {
+    const r = invAccumulate([holding({ cat: 'blue' }), holding({ cat: 'green', currentPrice: 200 })]);
+    assert.equal(r.byCat.blue, 1000);
+    assert.equal(r.byCat.green, 1000, 'buckets are cost-based so targets do not move with price');
+    assert.equal(r.byCatValue.green, 2000);
+  });
+
+  test('a zero-cost row cannot produce a per-row percentage', () => {
+    const r = invAccumulate([holding({ entryPrice: 0 })]);
+    assert.equal(r.rowData[0].pnlPct, null);
+    assert.equal(r.rowData[0].pnlAmt, null);
+  });
+});
+
+describe('invDonutPcts — allocation slices', () => {
+  test('cash never goes negative when cost basis exceeds the portfolio total', () => {
+    // 100 - totalAllocated went negative and emitted stroke-dasharray="-8.4 314".
+    const p = invDonutPcts({ blue: 1500, green: 0, yellow: 0 }, 1000, 200);
+    assert.equal(p.cash, 0);
+    assert.ok(p.cash >= 0);
+  });
+
+  test('cash is capped by the room the allocations leave', () => {
+    const p = invDonutPcts({ blue: 600, green: 0, yellow: 0 }, 1000, 900);
+    assert.equal(p.cash, 40, 'not 90 — only 40% of the ring is unallocated');
+  });
+
+  test('an empty portfolio yields zeros, not NaN', () => {
+    const p = invDonutPcts({ blue: 0, green: 0, yellow: 0 }, 0, 0);
+    assert.deepEqual(p, { blue: 0, green: 0, yellow: 0, cash: 0 });
+  });
+});
