@@ -13889,6 +13889,15 @@ document.addEventListener('visibilitychange', () => {
   } else if (_currentUser) {
     clearTimeout(_rtResumeTimer);
     _rtResumeTimer = setTimeout(() => { _setupRealtimeSync(); }, 150);
+    // The comment above promised this catch-up, but it was never written: the
+    // socket came back while the in-memory caches stayed warm, so a change made
+    // on another device while this tab was hidden stayed invisible until a full
+    // reload. Both caches are dropped and the visible tab repaints itself.
+    _missedLoaded = false;
+    _invData = null;
+    const tab = activeTab();
+    if (tab === 'tab-missed') missedRender(true);
+    else if (tab === 'tab-investments') invInit();
   }
 });
 // Restored straight out of bfcache — no scripts re-run, so the socket closed on
@@ -14506,6 +14515,9 @@ async function missedAdd() {
   const newItem = { id: data.id, sym: data.symbol, date: data.date, price: data.price, sector: data.sector || '', note: data.note || '' };
   _missedList = [newItem, ...(_missedList || [])].sort((a,b) => b.date.localeCompare(a.date));
   missedRenderList(_missedList);
+  // renderList rebuilds innerHTML, so every .missed-since is now an empty div —
+  // adding one row used to wipe the "% since" off all the others until a reload.
+  missedFollowUp(_missedList);
   toast('נוסף ✓','success');
 }
 
@@ -14560,7 +14572,7 @@ function missedRenderList(list) {
             <button class="missed-del-btn" onclick="missedDelete('${r.id}')" title="מחק">✕</button>
           </div>
         </div>
-        <div class="missed-card-price">$${(+r.price).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+        <div class="missed-card-price">$${fmtPrice(r.price)}</div>
         <div class="missed-card-meta">${r.sector ? esc(r.sector)+' · ' : ''}${fmtDate(r.date)}</div>
         <div class="missed-since" id="missed-since-${r.id}"></div>
         ${r.note ? `<div class="missed-card-note">${esc(r.note)}</div>` : ''}
@@ -14588,21 +14600,32 @@ async function missedRender(force = false) {
 
 // A missed-opportunity log without an outcome is a list of regrets. This says
 // what the trade would have done, which is the only part worth learning from.
+// Quotes are cached with a timestamp, not forever. The old cache keyed on
+// `=== undefined`, so the "% since" froze at whatever the price was the first
+// time the tab opened — and the socket teardown on visibilitychange keeps this
+// page alive in bfcache for days, so "first time" could be days ago.
+// A failed fetch is never written to the cache either: the shared Finnhub key
+// is rate-limited to 30/min per user and missedFollowUp fires every symbol at
+// once, so a single 429 used to blank that symbol's percentage permanently.
 const _missedQuotes = {};
+const _MISSED_QUOTE_TTL = 60_000;
 async function missedFollowUp(list) {
   if (!list.length) return;
   const token = await _getToken();
   const syms = [...new Set(list.map(r => (r.sym || '').toUpperCase()).filter(Boolean))];
   await Promise.all(syms.map(async sym => {
-    if (_missedQuotes[sym] === undefined) {
+    const hit = _missedQuotes[sym];
+    if (!hit || Date.now() - hit.ts > _MISSED_QUOTE_TTL) {
       try {
         const res = await fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=quote&symbol=${encodeURIComponent(sym)}`,
           { headers: { 'Authorization': `Bearer ${token}` } });
-        const data = await res.json();
-        _missedQuotes[sym] = +data.c || null;
-      } catch { _missedQuotes[sym] = null; }
+        if (res.ok) {
+          const data = await res.json();
+          _missedQuotes[sym] = { p: +data.c || null, ts: Date.now() };
+        }
+      } catch { /* keep any previous quote rather than blanking the card */ }
     }
-    const price = _missedQuotes[sym];
+    const price = _missedQuotes[sym]?.p;
     list.filter(r => (r.sym || '').toUpperCase() === sym).forEach(r => {
       const el = document.getElementById('missed-since-' + r.id);
       if (!el) return;
@@ -14862,7 +14885,7 @@ function invRecalc() {
   const rows = tbody.querySelectorAll('tr[data-idx]');
 
   // Pass 1: accumulate totals
-  let totalCost = 0, totalCurrentValue = 0, totalUnrealizedPnL = null;
+  let totalCost = 0, totalCurrentValue = 0, totalUnrealizedPnL = null, pnlCost = 0;
   const byCat = { blue: 0, green: 0, yellow: 0 };
   const byCatValue = { blue: 0, green: 0, yellow: 0 };
   const rowData = [];
@@ -14878,7 +14901,11 @@ function invRecalc() {
     const pnlPct = (pnlAmt !== null && cost > 0) ? (pnlAmt / cost) * 100 : null;
     totalCost         += cost;
     totalCurrentValue += value;
-    if (pnlAmt !== null) totalUnrealizedPnL = (totalUnrealizedPnL || 0) + pnlAmt;
+    // The total-return % divides by cost, so only cost that actually has a
+    // quote behind it belongs in that denominator. A holding whose quote failed
+    // contributes 0 P&L; counting its cost anyway dragged the headline % toward
+    // zero and made the portfolio look flatter than it is.
+    if (pnlAmt !== null) { totalUnrealizedPnL = (totalUnrealizedPnL || 0) + pnlAmt; pnlCost += cost; }
     if (cat && byCat[cat] !== undefined) byCat[cat] += cost;
     if (cat && byCatValue[cat] !== undefined) byCatValue[cat] += value;
     rowData.push({ i: +row.dataset.idx, cat, value, cost, pnlAmt, pnlPct });
@@ -15001,7 +15028,7 @@ function invRecalc() {
   if (pnlEl2) {
     if (totalUnrealizedPnL !== null) {
       const sign = totalUnrealizedPnL >= 0 ? '+' : '';
-      const pct  = totalCost > 0 ? (totalUnrealizedPnL / totalCost * 100).toFixed(1) : null;
+      const pct  = pnlCost > 0 ? (totalUnrealizedPnL / pnlCost * 100).toFixed(1) : null;
       pnlEl2.textContent = `${sign}${cur}${Math.abs(totalUnrealizedPnL).toLocaleString('en-US',{maximumFractionDigits:0})}${pct !== null ? ` (${sign}${pct}%)` : ''}`;
       pnlEl2.classList.remove('pnl-pos', 'pnl-neg');
       pnlEl2.classList.add(totalUnrealizedPnL >= 0 ? 'pnl-pos' : 'pnl-neg');
@@ -15094,8 +15121,12 @@ async function invFetchPrices(save = true) {
     _invPricesUpdatedAt = Date.now();
     invRecalc();
     if (save) invAutoSave();
-    invUpdatePricesTimestamp();
   }
+  // Repaint the age indicator on every tick, not only on success. It used to be
+  // inside the `updated > 0` block, so a rate-limited or failing feed left it
+  // frozen at "just now" while the prices — and every % derived from them —
+  // silently aged.
+  invUpdatePricesTimestamp();
 }
 
 let _invPricesUpdatedAt = null;
@@ -15219,6 +15250,9 @@ function invDeleteRow(i) {
   const data = invGetCurrentData();
   data.holdings.splice(i, 1);
   invRenderRows(data.holdings);
+  // invRenderRows only paints rows. Without this the summary, allocation bars,
+  // donut and per-row percentages kept counting the deleted position.
+  invRecalc();
   invSaveData(data);
 }
 
@@ -15313,7 +15347,7 @@ function invUpdateDonut(byCat, portfolioTotal, cash = 0) {
   };
   const totalAllocated = pcts.blue + pcts.green + pcts.yellow;
   // Cash = real free cash share. The remainder (unrealized gains) stays unfilled.
-  pcts.cash = portfolioTotal > 0 ? Math.min(cash / portfolioTotal * 100, 100 - totalAllocated) : 0;
+  pcts.cash = portfolioTotal > 0 ? Math.max(0, Math.min(cash / portfolioTotal * 100, 100 - totalAllocated)) : 0;
 
   const order = ['blue', 'green', 'yellow', 'cash'];
   let offset = 0;
