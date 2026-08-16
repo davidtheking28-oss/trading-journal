@@ -7440,7 +7440,12 @@ async function _setupRealtimeSync() {
   let mtt;
   const reloadMissed = () => {
     if (Date.now() < _rtSuppressUntil) return;
-    if (activeTab() !== 'tab-missed') return;
+    // Not on the tab: skip the re-render, but the in-memory list is now stale
+    // and missedRender() without force would happily paint it again. Dropping
+    // the loaded flag makes the next visit refetch. Without this the tab could
+    // show a row deleted elsewhere indefinitely — and deleting that ghost row
+    // matches nothing, which used to fail silently.
+    if (activeTab() !== 'tab-missed') { _missedLoaded = false; return; }
     clearTimeout(mtt); mtt = setTimeout(() => missedRender(true), 800);
   };
   _rtChannel = _sb.channel('rt-' + uid)
