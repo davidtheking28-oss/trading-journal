@@ -14502,10 +14502,27 @@ async function missedAdd() {
 
 async function missedDelete(id) {
   if (!confirm('למחוק הזדמנות זו? הפעולה אינה הפיכה')) return;
+  if (!_currentUser) { toast('לא מחובר — התחבר מחדש ונסה שוב','error'); return; }
   _rtSuppress();
-  const { error } = await _sb.from('missed_opportunities').delete().eq('id', id).eq('user_id', _currentUser.id);
-  if (error) { toast('שגיאה במחיקה','error'); return; }
+  // .select() so we can tell "deleted nothing" from "deleted successfully".
+  // A DELETE that matches no row is NOT an error in PostgREST — it returns 204
+  // with no error object, so the old code silently re-rendered the unchanged
+  // list and the button looked dead.
+  const { data, error } = await _sb.from('missed_opportunities')
+    .delete().eq('id', id).eq('user_id', _currentUser.id).select('id');
+  if (error) {
+    console.error('[missedDelete]', error);
+    toast('שגיאה במחיקה: ' + (error.message || error.code || 'unknown'), 'error');
+    return;
+  }
+  if (!data || !data.length) {
+    console.warn('[missedDelete] matched no row', { id, user: _currentUser.id });
+    toast('לא נמחק — השורה לא נמצאה תחת המשתמש הזה','error');
+    await missedRender(true);
+    return;
+  }
   await missedRender(true);
+  toast('נמחק ✓','success');
 }
 
 function missedRenderList(list) {
