@@ -3498,19 +3498,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   #inv-portfolio-total::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .inv-portfolio-bar .inv-total-allocated { font-size: 12px; color: var(--text3); margin-right: auto; }
   .inv-portfolio-bar .inv-total-allocated span { color: var(--accent); font-weight: 700; font-size: 14px; }
-  .inv-currency-seg {
-    display: inline-flex; flex-direction: row; flex-shrink: 0;
-    border: 1px solid rgba(129,140,248,0.25); border-radius: var(--r-sm); overflow: hidden;
-  }
-  .inv-cur-opt {
-    display: inline-block; font-size: 12px; font-weight: 700; padding: 4px 10px;
-    background: transparent; border: none; border-left: 1px solid rgba(129,140,248,0.25);
-    color: var(--text3); cursor: pointer; transition: background 0.15s, color 0.15s;
-    line-height: 1;
-  }
-  .inv-cur-opt:first-child { border-left: none; }
-  .inv-cur-opt.active { background: rgba(129,140,248,0.15); color: var(--accent); }
-  .inv-cur-opt:not(.active):hover { background: rgba(255,255,255,0.05); color: var(--text2); }
 
   /* Table */
   .inv-table-wrap {
@@ -6040,49 +6027,45 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
         <div class="inv-portfolio-bar">
           <label data-i18n="inv_portfolio_total">סך תיק</label>
-          <input type="text" inputmode="numeric" id="inv-portfolio-total" placeholder="100000" style="-moz-appearance:textfield;" oninput="invRecalc();invAutoSaveTotal()">
-          <div class="inv-currency-seg">
-            <button class="inv-cur-opt active" id="inv-cur-usd" onclick="invSetCurrency('$')">$</button>
-            <button class="inv-cur-opt" id="inv-cur-ils" onclick="invSetCurrency('₪')">₪</button>
-          </div>
-          <div class="inv-total-allocated"><span data-i18n="inv_free_cash">מזומן פנוי</span>: <span id="inv-cash-value">—</span> · <span data-i18n="inv_allocated">מושקע</span> <span id="inv-allocated-pct">0%</span></div>
+          <input type="text" class="sensitive" inputmode="numeric" id="inv-portfolio-total" placeholder="100000" style="-moz-appearance:textfield;" oninput="invRecalc();invAutoSaveTotal()">
+          <div class="inv-total-allocated"><span data-i18n="inv_free_cash">מזומן פנוי</span>: <span class="sensitive" id="inv-cash-value">—</span> · <span data-i18n="inv_allocated">מושקע</span> <span id="inv-allocated-pct">0%</span></div>
         </div>
 
         <div class="inv-alloc-dashboard">
-          <div class="inv-alloc-title" data-i18n="inv_alloc_title">Portfolio Allocation — Target</div>
+          <div class="inv-alloc-title" data-i18n="inv_alloc_title" title="מחושב לפי עלות (הון שהוקצה), לא לפי שווי נוכחי — כדי שיעדי ההקצאה לא יזוזו בכל תנודת מחיר.">Portfolio Allocation — Target</div>
           <div class="inv-alloc-donut-row">
             <div class="inv-alloc-bars">
               <div class="inv-alloc-row">
                 <span class="inv-alloc-dot blue"></span>
                 <span class="inv-alloc-label"><span data-i18n="inv_blue">🔵 Blue Chips — Target</span> <input type="number" class="inv-target-input" id="inv-tg-blue" min="0" max="100" step="1" onchange="invSetTarget('blue',this.value)" aria-label="Blue target %">%</span>
                 <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-blue" style="width:0%;background:#818cf8;"></div></div>
-                <span class="inv-alloc-invested" id="alloc-inv-blue">—</span>
+                <span class="inv-alloc-invested sensitive" id="alloc-inv-blue">—</span>
                 <span class="inv-alloc-cur" id="alloc-cur-blue">0%</span>
-                <span class="inv-alloc-remaining" id="alloc-rem-blue">—</span>
+                <span class="inv-alloc-remaining sensitive" id="alloc-rem-blue">—</span>
               </div>
               <div class="inv-alloc-row">
                 <span class="inv-alloc-dot green"></span>
                 <span class="inv-alloc-label"><span data-i18n="inv_green">🟢 Growth — Target</span> <input type="number" class="inv-target-input" id="inv-tg-green" min="0" max="100" step="1" onchange="invSetTarget('green',this.value)" aria-label="Growth target %">%</span>
                 <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-green" style="width:0%;background:#34d399;"></div></div>
-                <span class="inv-alloc-invested" id="alloc-inv-green">—</span>
+                <span class="inv-alloc-invested sensitive" id="alloc-inv-green">—</span>
                 <span class="inv-alloc-cur" id="alloc-cur-green">0%</span>
-                <span class="inv-alloc-remaining" id="alloc-rem-green">—</span>
+                <span class="inv-alloc-remaining sensitive" id="alloc-rem-green">—</span>
               </div>
               <div class="inv-alloc-row">
                 <span class="inv-alloc-dot yellow"></span>
                 <span class="inv-alloc-label"><span data-i18n="inv_yellow">🟡 Speculative — Target</span> <input type="number" class="inv-target-input" id="inv-tg-yellow" min="0" max="100" step="1" onchange="invSetTarget('yellow',this.value)" aria-label="Speculative target %">%</span>
                 <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-yellow" style="width:0%;background:#fbbf24;"></div></div>
-                <span class="inv-alloc-invested" id="alloc-inv-yellow">—</span>
+                <span class="inv-alloc-invested sensitive" id="alloc-inv-yellow">—</span>
                 <span class="inv-alloc-cur" id="alloc-cur-yellow">0%</span>
-                <span class="inv-alloc-remaining" id="alloc-rem-yellow">—</span>
+                <span class="inv-alloc-remaining sensitive" id="alloc-rem-yellow">—</span>
               </div>
               <div class="inv-alloc-row">
                 <span class="inv-alloc-dot" style="background:#2dd4bf"></span>
                 <span class="inv-alloc-label"><span data-i18n="inv_cash_row">💵 מזומן — יעד</span> <input type="number" class="inv-target-input" id="inv-tg-cash" min="0" max="100" step="1" onchange="invSetTarget('cash',this.value)" aria-label="Cash target %">%</span>
                 <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-cash" style="width:0%;background:#2dd4bf;"></div></div>
-                <span class="inv-alloc-invested" id="alloc-inv-cash">—</span>
+                <span class="inv-alloc-invested sensitive" id="alloc-inv-cash">—</span>
                 <span class="inv-alloc-cur" id="alloc-cur-cash">0%</span>
-                <span class="inv-alloc-remaining" id="alloc-rem-cash">—</span>
+                <span class="inv-alloc-remaining sensitive" id="alloc-rem-cash">—</span>
               </div>
             </div>
             <div class="inv-donut-wrap" style="align-self:center;">
@@ -6112,7 +6095,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
                 <th style="width:70px" data-i18n="inv_col_avg">Average</th>
                 <th style="width:75px" data-i18n="inv_col_value">Value</th>
                 <th style="width:100px"><span data-i18n="inv_col_pnl">P&L</span> <button id="inv-pnl-toggle" onclick="invTogglePnlMode()" style="font-size:11px;padding:4px 8px;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.07);color:var(--text2);cursor:pointer;margin-right:4px;vertical-align:middle;transition:all 0.15s;">$</button></th>
-                <th style="width:75px" data-i18n="inv_col_portfolio_pct">% Portfolio</th>
+                <th style="width:75px" data-i18n="inv_col_portfolio_pct" title="חלק מהתיק לפי שווי נוכחי. לוח ההקצאה למטה מחושב לפי עלות, ולכן השורות לא יסתכמו בדיוק לאחוז שמוצג שם.">% Portfolio</th>
                 <th style="width:75px" data-i18n="inv_col_remaining">Remaining</th>
                 <th style="width:52px"></th>
               </tr>
@@ -6126,15 +6109,15 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div class="inv-summary-bar">
           <div class="inv-sum-stat">
             <span class="inv-sum-label" data-i18n="inv_sum_invested">Total Invested</span>
-            <span class="inv-sum-val" id="inv-sum-cost">—</span>
+            <span class="inv-sum-val sensitive" id="inv-sum-cost">—</span>
           </div>
           <div class="inv-sum-stat">
             <span class="inv-sum-label" data-i18n="inv_sum_value">Current Value</span>
-            <span class="inv-sum-val" id="inv-sum-value">—</span>
+            <span class="inv-sum-val sensitive" id="inv-sum-value">—</span>
           </div>
           <div class="inv-sum-stat">
             <span class="inv-sum-label" data-i18n="inv_sum_pnl">Unrealized P&L</span>
-            <span class="inv-sum-val" id="inv-sum-pnl">—</span>
+            <span class="inv-sum-val sensitive" id="inv-sum-pnl">—</span>
           </div>
           <div class="inv-sum-stat inv-sum-updated">
             <span class="inv-sum-label" data-i18n="inv_sum_updated">Prices updated</span>
@@ -6151,15 +6134,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           <div class="inv-deposits-form">
             <input type="month" id="inv-dep-month">
             <input type="number" id="inv-dep-amount" placeholder="סכום" style="width:130px;" min="0" step="any">
-            <select id="inv-dep-currency" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 10px;font-size:13px;color:var(--text);cursor:pointer;">
-              <option value="$">$ USD</option>
-              <option value="₪">₪ ILS</option>
-            </select>
             <button class="inv-deposits-add-btn" onclick="invAddDeposit()" data-i18n="inv_add_deposit">+ Add Deposit</button>
           </div>
           <div class="inv-deposits-stats">
-            <div class="inv-dep-stat"><span class="inv-dep-stat-label" data-i18n="inv_total_dep">Total Deposited</span><span class="inv-dep-stat-val" id="dep-total-val">$0</span></div>
-            <div class="inv-dep-stat"><span class="inv-dep-stat-label" data-i18n="inv_pnl">P&L vs Deposits</span><span class="inv-dep-stat-val" id="dep-pnl-val">—</span></div>
+            <div class="inv-dep-stat"><span class="inv-dep-stat-label" data-i18n="inv_total_dep">Total Deposited</span><span class="inv-dep-stat-val sensitive" id="dep-total-val">$0</span></div>
+            <div class="inv-dep-stat"><span class="inv-dep-stat-label" data-i18n="inv_pnl">P&L vs Deposits</span><span class="inv-dep-stat-val sensitive" id="dep-pnl-val">—</span></div>
           </div>
           <div id="dep-list"></div>
         </div>
@@ -7011,6 +6990,16 @@ async function authSignOut() {
   await _sb.auth.signOut();
   _currentUser = null;
   if (_ovLiveTimer) { clearInterval(_ovLiveTimer); _ovLiveTimer = null; }
+  // Investments kept a 60s quote timer running past sign-out, firing a request
+  // per holding every minute with no token. Its caches survived too, so signing
+  // into a second account showed the previous user's holdings and missed rows
+  // until a full reload — missedRender()/invInit() both read the warm cache.
+  if (_invPriceTimer) { clearInterval(_invPriceTimer); _invPriceTimer = null; }
+  _invData = null;
+  _invPricesUpdatedAt = null;
+  _missedList = [];
+  _missedLoaded = false;
+  Object.keys(_missedQuotes).forEach(k => delete _missedQuotes[k]);
   db = JSON.parse(JSON.stringify(SEED));
   _dbLoaded = false;
   document.getElementById('auth-overlay').style.display = 'flex';
@@ -14572,9 +14561,9 @@ function missedRenderList(list) {
             <button class="missed-del-btn" onclick="missedDelete('${r.id}')" title="מחק">✕</button>
           </div>
         </div>
-        <div class="missed-card-price">$${fmtPrice(r.price)}</div>
+        <div class="missed-card-price sensitive">$${fmtPrice(r.price)}</div>
         <div class="missed-card-meta">${r.sector ? esc(r.sector)+' · ' : ''}${fmtDate(r.date)}</div>
-        <div class="missed-since" id="missed-since-${r.id}"></div>
+        <div class="missed-since sensitive" id="missed-since-${r.id}"></div>
         ${r.note ? `<div class="missed-card-note">${esc(r.note)}</div>` : ''}
       </div>`).join('');
     return `
@@ -14614,6 +14603,9 @@ async function missedFollowUp(list) {
   const token = await _getToken();
   const syms = [...new Set(list.map(r => (r.sym || '').toUpperCase()).filter(Boolean))];
   await Promise.all(syms.map(async sym => {
+    // Finnhub answers a crypto ticker with c:0, which looked identical to a
+    // failed request — the card just stayed blank forever with no explanation.
+    if (symIsCrypto(sym)) { _missedQuotes[sym] = { p: null, ts: Infinity }; }
     const hit = _missedQuotes[sym];
     if (!hit || Date.now() - hit.ts > _MISSED_QUOTE_TTL) {
       try {
@@ -14630,7 +14622,14 @@ async function missedFollowUp(list) {
       const el = document.getElementById('missed-since-' + r.id);
       if (!el) return;
       const base = +r.price || 0;
-      if (!price || !base) { el.textContent = ''; return; }
+      if (!price || !base) {
+        // A known-unquotable symbol says so; a request still in flight stays
+        // blank rather than flashing a dash it will replace a moment later.
+        el.textContent = (_missedQuotes[sym] && _missedQuotes[sym].p === null) ? '—' : '';
+        el.title = el.textContent ? 'אין מקור ציטוט לסימבול הזה' : '';
+        return;
+      }
+      el.title = '';
       const chg = (price - base) / base * 100;
       el.innerHTML = `<span class="${chg >= 0 ? 'num-green' : 'num-red'}">${fmtPct(chg)}</span>
         <span style="color:var(--text3)">מאז · $${fmtPrice(price)}</span>`;
@@ -14691,17 +14690,13 @@ const INV_KEY = 'inv_data_v1';
 let _invData = null;
 let _invSaveTimer = null;
 
-function invGetCurrency() {
-  return localStorage.getItem('inv_currency') || '$';
-}
-function invSetCurrency(cur) {
-  localStorage.setItem('inv_currency', cur);
-  document.getElementById('inv-cur-usd')?.classList.toggle('active', cur === '$');
-  document.getElementById('inv-cur-ils')?.classList.toggle('active', cur === '₪');
-  invSyncPnlBtn();
-  invRecalc();
-  invSaveData(invLoad());
-}
+// Holdings are priced by Finnhub in USD and nothing converts them, so the
+// portfolio is USD-denominated, full stop. The old $/₪ toggle only relabelled
+// those same dollar figures as shekels, and per-deposit currencies were summed
+// into one mixed number that the "P&L vs deposits" % then divided by. No
+// account had ever used ₪, so the fix is to drop the claim, not to bolt on an
+// FX layer nobody asked for.
+function invGetCurrency() { return '$'; }
 function invGetPnlMode() { return localStorage.getItem('inv_pnl_mode') || 'amount'; }
 function invSyncPnlBtn() {
   const btn = document.getElementById('inv-pnl-toggle');
@@ -14736,7 +14731,6 @@ async function invLoadFromDB() {
     const holdings = (data.holdings || []).map(h => ({ ...h, locked: h.locked !== false ? true : false }));
     invApplyTargets(data.alloc_targets || local.allocTargets);
     _invData = { portfolioTotal, cashBalance: local.cashBalance || '', holdings, deposits: data.deposits || [], allocTargets: invTargetsPayload() };
-    if (data.currency) localStorage.setItem('inv_currency', data.currency);
   } else {
     invApplyTargets(local.allocTargets);
     _invData = { portfolioTotal, cashBalance: local.cashBalance || '', holdings: local.holdings || [], deposits: local.deposits || [] };
@@ -14762,9 +14756,6 @@ async function invSaveData(data) {
 
 async function invInit() {
   const data = _invData || await invLoadFromDB();
-  const cur = invGetCurrency();
-  document.getElementById('inv-cur-usd')?.classList.toggle('active', cur === '$');
-  document.getElementById('inv-cur-ils')?.classList.toggle('active', cur === '₪');
   invSyncPnlBtn();
   const totalEl = document.getElementById('inv-portfolio-total');
   if (totalEl) totalEl.value = data.portfolioTotal || '';
@@ -14807,12 +14798,12 @@ function invRenderRows(holdings) {
           <option value="yellow" ${h.cat==='yellow'?'selected':''}>🟡 Speculative</option>
         </select>
       </td>
-      <td><input type="number" value="${h.entryShares||''}" placeholder="0" min="0" step="any" ${ro} ${locked?'':'oninput="invRecalc();invAutoSave()"'}></td>
-      <td><input type="number" value="${h.entryPrice||''}" placeholder="0.00" min="0" step="any" ${ro} ${locked?'':'oninput="invRecalc();invAutoSave()"'}></td>
-      <td><input type="number" value="${h.currentPrice||''}" placeholder="0.00" min="0" step="any" readonly tabindex="-1" style="cursor:default;opacity:0.7;" title="מחיר נשלף אוטומטית"></td>
-      <td><span class="inv-avg-label" id="inv-avg-${i}">—</span></td>
-      <td><span class="inv-value-label" id="inv-val-${i}">—</span></td>
-      <td><span class="inv-pnl-label" id="inv-pnl-${i}">—</span></td>
+      <td><input class="sensitive" type="number" value="${h.entryShares||''}" placeholder="0" min="0" step="any" ${ro} ${locked?'':'oninput="invRecalc();invAutoSave()"'}></td>
+      <td><input class="sensitive" type="number" value="${h.entryPrice||''}" placeholder="0.00" min="0" step="any" ${ro} ${locked?'':'oninput="invRecalc();invAutoSave()"'}></td>
+      <td><input class="sensitive" type="number" value="${h.currentPrice||''}" placeholder="0.00" min="0" step="any" readonly tabindex="-1" style="cursor:default;opacity:0.7;" title="מחיר נשלף אוטומטית"></td>
+      <td><span class="inv-avg-label sensitive" id="inv-avg-${i}">—</span></td>
+      <td><span class="inv-value-label sensitive" id="inv-val-${i}">—</span></td>
+      <td><span class="inv-pnl-label sensitive" id="inv-pnl-${i}">—</span></td>
       <td><div class="inv-pct-bar"><div class="inv-pct-fill" id="inv-bar-${i}" style="width:0%"></div><span class="inv-pct-label" id="inv-pct-${i}">0%</span></div></td>
       <td><span class="inv-cat-rem" id="inv-catrem-${i}">—</span></td>
       <td style="white-space:nowrap;width:52px;text-align:center;">
@@ -15072,6 +15063,9 @@ async function invLockRow(i) {
   if (ok) toast('נשמר ✓', 'success');
   invRenderRows(data.holdings);
   invRecalc();
+  // Committing a row is when its symbol becomes real — without this the new
+  // holding sat with no price and no P&L until the next 60s tick.
+  invFetchPrices();
 }
 
 function invAddRow() {
@@ -15098,6 +15092,7 @@ async function invFetchPrices(save = true) {
   if (!symbols.length) return;
 
   const token = await _getToken();
+  if (!token) return;
   let updated = 0;
   await Promise.all(symbols.map(async ({ row, sym }) => {
     try {
@@ -15230,7 +15225,10 @@ function invConfirmPositionModal() {
     const totalQty = oldQty + qty;
     const avgPrice = totalQty > 0 ? (oldQty * oldPrice + qty * price) / totalQty : price;
     if (inputs[2]) inputs[2].value = totalQty;
-    if (inputs[3]) inputs[3].value = avgPrice.toFixed(4);
+    // Rounded to 4dp this value went straight back into the DOM and invRecalc
+    // read it back as the cost basis, so every later % derived from a truncated
+    // average. 6dp keeps the field readable without feeding rounding into P&L.
+    if (inputs[3]) inputs[3].value = parseFloat(avgPrice.toFixed(6));
     invRecalc(); invAutoSave();
     toast(`עודכן: ${totalQty} מניות @ ${cur}${avgPrice.toFixed(2)} ממוצע`, 'success');
   } else {
@@ -15371,12 +15369,11 @@ function invUpdateDonut(byCat, portfolioTotal, cash = 0) {
 function invAddDeposit() {
   const month    = document.getElementById('inv-dep-month')?.value;
   const amount   = +(document.getElementById('inv-dep-amount')?.value) || 0;
-  const currency = document.getElementById('inv-dep-currency')?.value || '$';
   if (!month || !amount) { toast('Enter month and amount', 'error'); return; }
   // Read holdings from the DOM (precise) — never from stale localStorage.
   const data = invGetCurrentData();
   if (!data.deposits) data.deposits = [];
-  data.deposits.push({ month, amount, currency });
+  data.deposits.push({ month, amount });
   data.deposits.sort((a, b) => b.month.localeCompare(a.month));
   const totalElD = document.getElementById('inv-portfolio-total');
   const newTotal = (+(totalElD?.value) || 0) + amount;
@@ -15430,8 +15427,7 @@ function invRenderDeposits(deposits = [], totalCurrentValue = 0) {
   let cumul = totalDeposited;
   listEl.innerHTML = `<table class="inv-dep-table"><thead><tr><th>${t('inv_dep_month')}</th><th>${t('inv_dep_amount')}</th><th>${t('inv_dep_cumulative')}</th><th></th></tr></thead><tbody>${
     deposits.map((d, i) => {
-      const dCur = d.currency || cur;
-      const row = `<tr><td>${heMonth(d.month)}</td><td>${dCur}${(+d.amount).toLocaleString('en-US',{maximumFractionDigits:0})}</td><td>${cur}${cumul.toLocaleString('en-US',{maximumFractionDigits:0})}</td><td><button class="inv-dep-del" onclick="invDeleteDeposit(${i})">×</button></td></tr>`;
+      const row = `<tr><td>${heMonth(d.month)}</td><td class="sensitive">${cur}${(+d.amount).toLocaleString('en-US',{maximumFractionDigits:0})}</td><td class="sensitive">${cur}${cumul.toLocaleString('en-US',{maximumFractionDigits:0})}</td><td><button class="inv-dep-del" onclick="invDeleteDeposit(${i})">×</button></td></tr>`;
       cumul -= +d.amount;
       return row;
     }).join('')
