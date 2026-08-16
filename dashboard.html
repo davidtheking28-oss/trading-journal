@@ -7451,8 +7451,12 @@ async function _setupRealtimeSync() {
   _rtChannel = _sb.channel('rt-' + uid)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'trades', filter: f }, reloadTrades)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'missed_opportunities', filter: f }, reloadMissed)
+    // Same stale-cache trap as reloadMissed above, and worse here: invInit()
+    // reads `_invData || await invLoadFromDB()`, so once the cache is warm it
+    // never refetches. Skipping the refresh off-tab without clearing it left
+    // the portfolio showing values changed on another device indefinitely.
     .on('postgres_changes', { event: '*', schema: 'public', table: 'investments', filter: f },
-        () => { if (activeTab() === 'tab-investments') invInit(); })
+        () => { if (activeTab() === 'tab-investments') invInit(); else _invData = null; })
     .subscribe();
 }
 
