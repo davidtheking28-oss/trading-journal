@@ -479,6 +479,45 @@ describe('invSplitEntries — splitting a buy into N entries', () => {
   });
 });
 
+// ── What the stop costs on each tranche ─────────────────────────────────────
+const { invTrancheRisk } = load('invTrancheRisk');
+
+describe('invTrancheRisk — loss at the stop, per entry', () => {
+  test('each entry loses its own shares times the stop distance', () => {
+    const parts = invSplitEntries(60, 100, 3);
+    const risk = invTrancheRisk(parts, 100, 95);
+    assert.deepEqual(risk.map(r => r.loss), [100, 100, 100]);
+  });
+
+  test('the cumulative loss is what is on the line after each fill', () => {
+    // The stop does not wait for the last entry. After two of three tranches
+    // are filled, a stop hit costs both of them — showing only the per-tranche
+    // number would understate the exposure at every point but the first.
+    const parts = invSplitEntries(60, 100, 3);
+    const risk = invTrancheRisk(parts, 100, 95);
+    assert.deepEqual(risk.map(r => r.cum), [100, 200, 300]);
+  });
+
+  test('the total loss matches sizing the whole position at once', () => {
+    const parts = invSplitEntries(37, 20, 4);
+    const risk = invTrancheRisk(parts, 20, 18);
+    assert.equal(risk[risk.length - 1].cum, 37 * 2);
+  });
+
+  test('an uneven split charges the bigger first entry more', () => {
+    const parts = invSplitEntries(10, 100, 3);   // 4 / 3 / 3
+    const risk = invTrancheRisk(parts, 100, 90);
+    assert.deepEqual(risk.map(r => r.loss), [40, 30, 30]);
+  });
+
+  test('no stop, or a stop at or above entry, states no loss at all', () => {
+    const parts = invSplitEntries(60, 100, 3);
+    for (const stop of [0, null, undefined, 100, 120, -5]) {
+      assert.deepEqual(invTrancheRisk(parts, 100, stop), [], `stop ${stop}`);
+    }
+  });
+});
+
 describe('invPositionSize — hostile price input', () => {
   test('a negative price is refused, not turned into negative shares', () => {
     // min="0" on the input is not enforced. Unguarded this produced shares:-200
