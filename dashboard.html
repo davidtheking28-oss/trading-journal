@@ -7514,7 +7514,16 @@ async function _setupRealtimeSync() {
     // the stale rows stayed on screen and the next keystroke saved them back
     // over the change that had just arrived.
     .on('postgres_changes', { event: '*', schema: 'public', table: 'investments', filter: f },
-        () => { _invData = null; if (activeTab() === 'tab-investments') invInit(); })
+        () => {
+          // Ignore the echo of our own write, exactly as reloadTrades does.
+          // Without this, invSaveData -> realtime -> invInit -> invFetchPrices
+          // -> invRecalc -> invAutoSave -> invSaveData spun forever: measured at
+          // 15 writes in 40 idle seconds. The old code accidentally avoided it
+          // only because invInit() was a no-op against a warm cache.
+          if (Date.now() < _rtSuppressUntil) return;
+          _invData = null;
+          if (activeTab() === 'tab-investments') invInit();
+        })
     .subscribe();
 }
 
@@ -14810,6 +14819,9 @@ async function invSaveData(data) {
   const prev = _invData;
   _invData = data;
   if (!_currentUser) return;
+  // Our own write is about to come back over the realtime channel; mark it so
+  // the handler does not treat it as a change made elsewhere.
+  _rtSuppress();
   const row = { user_id: _currentUser.id, holdings: invStripBlank(data.holdings), deposits: data.deposits || [],
                 currency: invGetCurrency(), alloc_targets: data.allocTargets || invTargetsPayload() };
 
