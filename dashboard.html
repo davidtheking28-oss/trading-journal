@@ -15183,7 +15183,10 @@ function invPositionSize(o) {
   // Without a rate a ₪ portfolio cannot be sized at all. Falling back to some
   // default rate would silently place the order off an invented number.
   if (inShekels && !fxRate) return { ...nil, error: 'no-fx' };
-  if (!price) return { ...nil, error: 'no-price' };
+  // Not just `!price`: the number input does not enforce min="0", and a negative
+  // price produced negative share counts with a positive dollar position, while
+  // a non-finite one rendered "NaN מניות".
+  if (!(price > 0) || !Number.isFinite(price)) return { ...nil, error: 'no-price' };
 
   const amountLocal = portfolioValue * pct / 100;
   const amountUsd   = inShekels ? amountLocal / fxRate : amountLocal;
@@ -15402,6 +15405,12 @@ function invRecalc() {
       pnlEl2.classList.add(totalUnrealizedPnL >= 0 ? 'pnl-pos' : 'pnl-neg');
     } else { pnlEl2.textContent = '—'; pnlEl2.classList.remove('pnl-pos', 'pnl-neg'); }
   }
+
+  // Both calculators read the live table, but nothing re-rendered them, so with
+  // a modal open the caps and ✓/⚠ marks froze while quotes moved underneath —
+  // then jumped on the next keystroke.
+  if (document.getElementById('inv-calc-modal')?.classList.contains('open')) invCalcRender();
+  if (document.getElementById('inv-position-modal')?.classList.contains('open')) invSizerRender();
 }
 
 function invGetCurrentData() {
@@ -15533,9 +15542,14 @@ function invSizerCtx(catOverride) {
     return { cat: r.querySelector('.inv-cat-sel')?.value || '',
              entryShares: inp[2]?.value, entryPrice: inp[3]?.value, currentPrice: inp[4]?.value };
   }));
-  const portfolioTotal = +(document.getElementById('inv-portfolio-total')?.value) || 0;
+  // The field is type="text", so "100,000" reaches here and `+value` is NaN —
+  // which zeroed every cap and painted two red warnings on a valid order.
+  const raw = document.getElementById('inv-portfolio-total')?.value || '';
+  const parsed = +String(raw).replace(/[^\d.]/g, '');
+  const portfolioTotal = Number.isFinite(parsed) ? parsed : 0;
   return {
     cat, portfolioTotal,
+    holdingsValueUsd: totals.totalCurrentValue,
     catCostUsd: cat ? (totals.byCat[cat] || 0) : 0,
     catTargetFrac: cat ? (ALLOC_TARGETS[cat] || 0) : 0,
     catRiskCapPct: cat ? (ALLOC_RISK[cat] || 0) : 0,
@@ -15610,18 +15624,28 @@ function invSizerRender() {
 function invCalcInputs() {
   const cat = document.getElementById('ic-cat')?.value || 'blue';
   const ctx = invSizerCtx(cat);
+  const portfolioValue = +(document.getElementById('ic-portfolio')?.value) || 0;
+  const currency = document.getElementById('ic-currency')?.value || '$';
+  const fxRate = invFxLoad()?.rate || 0;
+
+  // The portfolio typed here is the one being sized against, so every cap has
+  // to be measured against it too. Reading the order size from this field while
+  // judging the caps against the tab's total let a 500k entry report "50% of
+  // portfolio" and still pass a cash check run against 100k.
+  const totalUsd = currency === '₪'
+    ? (fxRate > 0 ? portfolioValue / fxRate : 0)
+    : portfolioValue;
+
   return {
-    portfolioValue: +(document.getElementById('ic-portfolio')?.value) || 0,
-    portfolioCurrency: document.getElementById('ic-currency')?.value || '$',
-    fxRate: invFxLoad()?.rate || 0,
+    portfolioValue, portfolioCurrency: currency, fxRate,
     pctOfPortfolio: +(document.getElementById('ic-pct')?.value) || 0,
     price: +(document.getElementById('ic-price')?.value) || 0,
     stop: +(document.getElementById('ic-stop')?.value) || 0,
-    portfolioTotalUsd: ctx.portfolioTotal,
+    portfolioTotalUsd: totalUsd,
     catCostUsd: ctx.catCostUsd,
     catTargetFrac: ctx.catTargetFrac,
     catRiskCapPct: ctx.catRiskCapPct,
-    cashUsd: ctx.cashUsd,
+    cashUsd: Math.max(0, totalUsd - ctx.holdingsValueUsd),
   };
 }
 
@@ -15697,7 +15721,21 @@ function invCalcOpen() {
   ['ic-portfolio', 'ic-pct', 'ic-price', 'ic-stop', 'ic-tranches'].forEach(id => {
     const e = document.getElementById(id); if (e) e.oninput = invCalcRender;
   });
-  document.getElementById('ic-currency').onchange = () => { invFxRefresh().then(invCalcRender); invCalcRender(); };
+  // Flipping the currency must convert the amount, not just relabel it. The
+  // field is prefilled in dollars, so leaving it untouched turned a $32,253
+  // portfolio into ₪32,253 (~$11k) and quietly sized the order ~3x too small.
+  let icPrevCur = '$';
+  document.getElementById('ic-currency').onchange = async (e) => {
+    const next = e.target.value;
+    const fx = await invFxRefresh();
+    const el = document.getElementById('ic-portfolio');
+    const v = +el.value || 0;
+    if (v && fx?.rate > 0 && next !== icPrevCur) {
+      el.value = next === '₪' ? Math.round(v * fx.rate) : Math.round(v / fx.rate);
+    }
+    icPrevCur = next;
+    invCalcRender();
+  };
   const symEl = document.getElementById('ic-sym');
   symEl.onchange = invCalcFetchPrice;
   symEl.onblur = invCalcFetchPrice;
@@ -15988,10 +16026,8 @@ function invUpdateDonut(byCat, portfolioTotal, cash = 0) {
 
   const lbl = document.getElementById('donut-label-pct');
   if (lbl) lbl.textContent = totalAllocated.toFixed(0) + '%';
-  ['blue','green','yellow','cash'].forEach(k => {
-    const el = document.getElementById(`leg-${k}`);
-    if (el) el.textContent = (pcts[k] || 0).toFixed(1) + '%';
-  });
+  // (No leg-* legend elements exist in the markup; the loop that wrote them was
+  // dead code and has been removed.)
 }
 
 function invAddDeposit() {
@@ -16023,6 +16059,9 @@ function invDeleteDeposit(idx) {
   data.deposits = deposits;
   invSaveData(data);
   invRenderDeposits(deposits);
+  // Without this the P&L box renders "—" (invRenderDeposits was called with no
+  // current value) until something else happens to recalc.
+  invRecalc();
 }
 
 function invRenderDeposits(deposits = [], totalCurrentValue = 0) {
@@ -16037,7 +16076,11 @@ function invRenderDeposits(deposits = [], totalCurrentValue = 0) {
   if (totalEl) totalEl.textContent = cur + totalDeposited.toLocaleString('en-US', { maximumFractionDigits: 0 });
   if (pnlEl) {
     if (totalCurrentValue > 0 && totalDeposited) {
-      const pnl    = totalCurrentValue - totalDeposited;
+      // Deposits fund cash as well as holdings, so measuring them against the
+      // value of the holdings alone booked every uninvested shekel as a loss.
+      const portfolioNow = (+String(document.getElementById('inv-portfolio-total')?.value || '')
+                              .replace(/[^\d.]/g, '')) || totalCurrentValue;
+      const pnl    = Math.max(portfolioNow, totalCurrentValue) - totalDeposited;
       const pnlPct = (pnl / totalDeposited * 100).toFixed(1);
       pnlEl.textContent = (pnl >= 0 ? '+' : '') + cur + Math.abs(pnl).toLocaleString('en-US', { maximumFractionDigits: 0 }) + ` (${pnl >= 0 ? '+' : ''}${pnlPct}%)`;
       pnlEl.style.color = pnl >= 0 ? 'var(--green)' : 'var(--red)';

@@ -478,3 +478,32 @@ describe('invSplitEntries — splitting a buy into N entries', () => {
     }
   });
 });
+
+describe('invPositionSize — hostile price input', () => {
+  test('a negative price is refused, not turned into negative shares', () => {
+    // min="0" on the input is not enforced. Unguarded this produced shares:-200
+    // with a positive $10,000 position, and suggestedShares then exceeded two caps.
+    const r = sizing({ portfolioCurrency: '$', portfolioValue: 100000, pctOfPortfolio: 10, price: -50 });
+    assert.equal(r.shares, null);
+    assert.equal(r.error, 'no-price');
+  });
+
+  test('a non-finite price is refused rather than rendering NaN', () => {
+    for (const bad of [Infinity, -Infinity, NaN]) {
+      const r = sizing({ portfolioCurrency: '$', portfolioValue: 100000, pctOfPortfolio: 10, price: bad });
+      assert.equal(r.shares, null, `price ${bad}`);
+      assert.equal(r.error, 'no-price');
+    }
+  });
+
+  test('the suggestion never exceeds any individual cap', () => {
+    for (const price of [1, 7.5, 100, 999]) {
+      const r = sizing({ portfolioCurrency: '$', portfolioValue: 20000, pctOfPortfolio: 50,
+                         price, stop: price * 0.9, catCostUsd: 3000, cashUsd: 5000 });
+      for (const cap of ['maxSharesByTarget', 'maxSharesByRisk', 'maxSharesByCash']) {
+        if (r[cap] !== null) assert.ok(r.suggestedShares <= r[cap], `${cap} at price ${price}`);
+      }
+      assert.ok(r.suggestedShares >= 0);
+    }
+  });
+});
