@@ -14905,7 +14905,11 @@ function invRenderRows(holdings) {
           ? `<button class="inv-edit-btn" onclick="invEditRow(${i})" title="ערוך"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`
           : `<button class="inv-lock-btn" onclick="invLockRow(${i})" title="שמור"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>`
         }
-        ${locked ? `<button class="inv-buy-btn" onclick="invToggleBuyRow(${i})" title="קנייה/מכירה + מחשבון כמות וסיכון">+</button>` : ''}
+        <!-- Rendered for unlocked rows too: gating it on the locked flag meant a
+             brand-new holding had no way to reach the size calculator until it
+             had been saved, i.e. you had to commit to a quantity before the
+             tool that computes the quantity became available. -->
+        <button class="inv-buy-btn" onclick="invToggleBuyRow(${i})" title="קנייה/מכירה + מחשבון כמות וסיכון">+</button>
         <button class="inv-del-btn" onclick="invDeleteRow(${i})">×</button>
       </td>
     </tr>`;
@@ -15510,6 +15514,9 @@ function invToggleBuyRow(i) {
   if (!mainRow) return;
   const inputs = mainRow.querySelectorAll('input');
   const sym = inputs[0]?.value || '';
+  // On an unlocked row the symbol is whatever has been typed so far, so it can
+  // legitimately still be empty — the calculator needs one to price anything.
+  if (!sym.trim()) { toast('הכנס סימבול לשורה תחילה', 'error'); return; }
   _invPosSym = sym.toUpperCase().trim();
   const oldQty   = +(inputs[2]?.value) || 0;
   const oldPrice = +(inputs[3]?.value) || 0;
