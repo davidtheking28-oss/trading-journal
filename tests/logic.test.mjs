@@ -277,8 +277,8 @@ describe('invDonutPcts — allocation slices', () => {
   });
 
   test('an empty portfolio yields zeros, not NaN', () => {
-    const p = invDonutPcts({ blue: 0, green: 0, yellow: 0 }, 0, 0);
-    assert.deepEqual(p, { blue: 0, green: 0, yellow: 0, cash: 0 });
+    const p = invDonutPcts({ blue: 0, green: 0, yellow: 0, none: 0 }, 0, 0);
+    assert.deepEqual(p, { blue: 0, green: 0, yellow: 0, none: 0, cash: 0 });
   });
 });
 
@@ -404,5 +404,34 @@ describe('invPositionSize — the three caps', () => {
                        price: 100, catCostUsd: 99999 });
     assert.equal(r.suggestedShares, 0);
     assert.ok(r.maxSharesByTarget >= 0, 'an overfull category must not go negative');
+  });
+});
+
+describe('invAccumulate / invDonutPcts — uncategorised holdings', () => {
+  test('a holding with no category lands in its own bucket, not nowhere', () => {
+    // It counts toward totalCost either way, so excluding it from every bucket
+    // made real money invisible in the allocation view.
+    const r = invAccumulate([holding({ cat: '' }), holding({ cat: 'blue' })]);
+    assert.equal(r.byCat.none, 1000);
+    assert.equal(r.byCat.blue, 1000);
+    assert.equal(r.byCat.none + r.byCat.blue, r.totalCost, 'buckets must account for all cost');
+  });
+
+  test('an unknown category string is bucketed rather than dropped', () => {
+    const r = invAccumulate([holding({ cat: 'purple' })]);
+    assert.equal(r.byCat.none, 1000);
+  });
+
+  test('uncategorised cost takes room on the donut', () => {
+    const p = invDonutPcts({ blue: 2000, green: 0, yellow: 0, none: 6000 }, 10000, 10000);
+    assert.equal(p.none, 60);
+    assert.equal(p.cash, 20, 'cash gets only the 20% the allocations leave');
+    assert.ok(p.blue + p.green + p.yellow + p.none + p.cash <= 100.0001);
+  });
+
+  test('the ring never sums past 100 even when over-allocated', () => {
+    const p = invDonutPcts({ blue: 6000, green: 5500, yellow: 0, none: 3000 }, 10000, 5000);
+    assert.equal(p.cash, 0);
+    assert.ok(p.blue + p.green + p.yellow + p.none >= 100, 'the overflow is real');
   });
 });

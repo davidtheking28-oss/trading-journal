@@ -6062,6 +6062,14 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
                 <span class="inv-alloc-remaining sensitive" id="alloc-rem-yellow">—</span>
                 <span class="inv-alloc-riskcap" title="תקרת סיכון סטופ לעסקה בקטגוריה הזו, כאחוז מהתיק">סיכון <input type="number" class="inv-target-input" id="inv-rk-yellow" min="0" max="100" step="0.1" onchange="invSetRiskCap('yellow',this.value)" aria-label="yellow risk cap %">%</span>
               </div>
+              <div class="inv-alloc-row" id="alloc-row-none" style="display:none" title="אחזקות ללא קטגוריה. הן נספרות ב״מושקע״ ומקטינות את המזומן הפנוי, אז בלי שורה משלהן הן פשוט נעלמו מהתמונה.">
+                <span class="inv-alloc-dot" style="background:#94a3b8"></span>
+                <span class="inv-alloc-label">⚪ ללא קטגוריה</span>
+                <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-none" style="width:0%;background:#94a3b8;"></div></div>
+                <span class="inv-alloc-invested sensitive" id="alloc-inv-none">—</span>
+                <span class="inv-alloc-cur" id="alloc-cur-none">0%</span>
+                <span class="inv-alloc-remaining"></span>
+              </div>
               <div class="inv-alloc-row">
                 <span class="inv-alloc-dot" style="background:#2dd4bf"></span>
                 <span class="inv-alloc-label"><span data-i18n="inv_cash_row">💵 מזומן — יעד</span> <input type="number" class="inv-target-input" id="inv-tg-cash" min="0" max="100" step="1" onchange="invSetTarget('cash',this.value)" aria-label="Cash target %">%</span>
@@ -6075,6 +6083,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
               <svg width="160" height="160" viewBox="0 0 130 130">
                 <circle cx="65" cy="65" r="50" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="18"/>
                 <circle id="donut-cash"   cx="65" cy="65" r="50" fill="none" stroke="#2dd4bf" stroke-width="18" stroke-dasharray="314 314" stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
+                <circle id="donut-none"   cx="65" cy="65" r="50" fill="none" stroke="#94a3b8" stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
                 <circle id="donut-yellow" cx="65" cy="65" r="50" fill="none" stroke="#fbbf24" stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
                 <circle id="donut-green"  cx="65" cy="65" r="50" fill="none" stroke="#34d399" stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
                 <circle id="donut-blue"   cx="65" cy="65" r="50" fill="none" stroke="#818cf8" stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
@@ -14749,10 +14758,11 @@ async function invLoadFromDB() {
     ? String(_userSettings.portfolio_total)
     : (invLoad().portfolioTotal || '');
   const { data } = await _sb.from('investments')
-    .select('holdings, deposits, currency, alloc_targets')
+    .select('holdings, deposits, currency, alloc_targets, updated_at')
     .eq('user_id', _currentUser.id)
     .single();
   if (data) {
+    _invUpdatedAt = data.updated_at || null;
     const holdings = (data.holdings || []).map(h => ({ ...h, locked: h.locked !== false ? true : false }));
     invApplyTargets(data.alloc_targets);
     _invData = { portfolioTotal, holdings, deposits: data.deposits || [], allocTargets: invTargetsPayload() };
@@ -14762,19 +14772,40 @@ async function invLoadFromDB() {
     // browser that adopted whoever used the app last as your own portfolio.
     // Nothing writes that key any more, so it is only ever a stale leftover.
     invApplyTargets(null);
+    _invUpdatedAt = null;
     _invData = { portfolioTotal, holdings: [], deposits: [] };
   }
   return _invData;
 }
 
+let _invUpdatedAt = null;
+
 async function invSaveData(data) {
   const prev = _invData;
   _invData = data;
   if (!_currentUser) return;
-  const { error } = await _sb.from('investments').upsert(
-    { user_id: _currentUser.id, holdings: invStripBlank(data.holdings), deposits: data.deposits || [], currency: invGetCurrency(), alloc_targets: data.allocTargets || invTargetsPayload() },
-    { onConflict: 'user_id' }
-  );
+  const row = { user_id: _currentUser.id, holdings: invStripBlank(data.holdings), deposits: data.deposits || [],
+                currency: invGetCurrency(), alloc_targets: data.allocTargets || invTargetsPayload() };
+
+  // The save rewrites the whole holdings document, so without a guard the last
+  // tab to save silently erased what the other one did. Update only if the row
+  // still carries the updated_at we loaded; if it moved, someone else wrote
+  // first and we reload instead of clobbering them.
+  if (_invUpdatedAt) {
+    const { data: hit, error: upErr } = await _sb.from('investments')
+      .update(row).eq('user_id', _currentUser.id).eq('updated_at', _invUpdatedAt).select('updated_at');
+    if (upErr) { _invData = prev; toast('שגיאה בשמירת השקעות: ' + upErr.message, 'error'); return false; }
+    if (!hit || !hit.length) {
+      _invData = null; _invUpdatedAt = null;
+      toast('ההשקעות עודכנו במקום אחר — טוען מחדש כדי לא לדרוס', 'error');
+      await invInit();
+      return false;
+    }
+    _invUpdatedAt = hit[0].updated_at;
+    return true;
+  }
+
+  const { error } = await _sb.from('investments').upsert(row, { onConflict: 'user_id' });
   if (error) {
     console.error('[invSaveData]', error);
     // The in-memory copy was already swapped, so without this the screen keeps
@@ -14784,6 +14815,10 @@ async function invSaveData(data) {
     toast('שגיאה בשמירת השקעות: ' + error.message + ' — השינוי בוטל', 'error');
     return false;
   }
+  // Pick up the stamp the insert created so later saves take the guarded path.
+  const { data: fresh } = await _sb.from('investments')
+    .select('updated_at').eq('user_id', _currentUser.id).single();
+  _invUpdatedAt = fresh?.updated_at || null;
   return true;
 }
 
@@ -14916,8 +14951,12 @@ function invSyncTargetInputs(force = false) {
 // writes the page.
 function invAccumulate(holdings) {
   let totalCost = 0, totalCurrentValue = 0, totalUnrealizedPnL = null, pnlCost = 0;
-  const byCat = { blue: 0, green: 0, yellow: 0 };
-  const byCatValue = { blue: 0, green: 0, yellow: 0 };
+  // `none` is a real bucket, not a rounding error: a new row renders with no
+  // category selected, and such a holding used to count toward "invested" and
+  // shrink free cash while appearing in no bar, no slice and no remaining
+  // figure — money the allocation view simply did not show.
+  const byCat = { blue: 0, green: 0, yellow: 0, none: 0 };
+  const byCatValue = { blue: 0, green: 0, yellow: 0, none: 0 };
   const rowData = [];
   holdings.forEach(h => {
     const cat          = h.cat || '';
@@ -14935,8 +14974,9 @@ function invAccumulate(holdings) {
     // contributes 0 P&L; counting its cost anyway dragged the headline % toward
     // zero and made the portfolio look flatter than it is.
     if (pnlAmt !== null) { totalUnrealizedPnL = (totalUnrealizedPnL || 0) + pnlAmt; pnlCost += cost; }
-    if (cat && byCat[cat] !== undefined) byCat[cat] += cost;
-    if (cat && byCatValue[cat] !== undefined) byCatValue[cat] += value;
+    const bucket = (cat && byCat[cat] !== undefined) ? cat : 'none';
+    byCat[bucket] += cost;
+    byCatValue[bucket] += value;
     rowData.push({ i: h.i, cat, value, cost, pnlAmt, pnlPct });
   });
   return { totalCost, totalCurrentValue, totalUnrealizedPnL, pnlCost, byCat, byCatValue, rowData };
@@ -14947,8 +14987,8 @@ function invAccumulate(holdings) {
 // invalid negative stroke-dasharray and drew the slice wrong.
 function invDonutPcts(byCat, portfolioTotal, cash = 0) {
   const pct = v => portfolioTotal > 0 ? v / portfolioTotal * 100 : 0;
-  const pcts = { blue: pct(byCat.blue), green: pct(byCat.green), yellow: pct(byCat.yellow) };
-  const totalAllocated = pcts.blue + pcts.green + pcts.yellow;
+  const pcts = { blue: pct(byCat.blue), green: pct(byCat.green), yellow: pct(byCat.yellow), none: pct(byCat.none || 0) };
+  const totalAllocated = pcts.blue + pcts.green + pcts.yellow + pcts.none;
   pcts.cash = portfolioTotal > 0 ? Math.max(0, Math.min(cash / portfolioTotal * 100, 100 - totalAllocated)) : 0;
   return pcts;
 }
@@ -15170,7 +15210,29 @@ function invRecalc() {
   if (cashBarEl) { cashBarEl.style.width = cashBarW + '%'; cashBarEl.style.background = '#2dd4bf'; }
   const cashInvEl = document.getElementById('alloc-inv-cash');
   if (cashInvEl) cashInvEl.textContent = cash > 0 ? c + cash.toLocaleString('en-US', {maximumFractionDigits:0}) : '—';
-  if (cashCurEl) { cashCurEl.textContent = cashPct.toFixed(1) + '%'; cashCurEl.style.color = 'var(--text2)'; }
+  // The donut clamps cash to the room the allocations leave; printing the raw
+  // figure here made the same screen show two different cash percentages.
+  const cashShown = invDonutPcts(byCat, portfolioTotal, cash).cash;
+  if (cashCurEl) {
+    cashCurEl.textContent = cashShown.toFixed(1) + '%';
+    cashCurEl.style.color = 'var(--text2)';
+    cashCurEl.title = Math.abs(cashShown - cashPct) > 0.05
+      ? `מזומן פנוי הוא ${cashPct.toFixed(1)}% מהתיק, אך ההקצאות כבר תופסות את שאר הטבעת` : '';
+  }
+
+  // Uncategorized holdings get their own row instead of silently vanishing.
+  const noneAmt = byCat.none || 0;
+  const noneRow = document.getElementById('alloc-row-none');
+  if (noneRow) noneRow.style.display = noneAmt > 0 ? '' : 'none';
+  if (noneAmt > 0) {
+    const nonePct = effectiveTotal > 0 ? noneAmt / effectiveTotal * 100 : 0;
+    const nb = document.getElementById('alloc-bar-none');
+    const ni = document.getElementById('alloc-inv-none');
+    const nc = document.getElementById('alloc-cur-none');
+    if (nb) nb.style.width = Math.min(nonePct, 100) + '%';
+    if (ni) ni.textContent = `${c}${noneAmt.toLocaleString('en-US', {maximumFractionDigits:0})}`;
+    if (nc) nc.textContent = nonePct.toFixed(1) + '%';
+  }
   if (cashRemEl) {
     cashRemEl.textContent = '';
   }
@@ -15656,9 +15718,11 @@ function invUpdateDonut(byCat, portfolioTotal, cash = 0) {
   const C = 314.159;
   // Cash = real free cash share. The remainder (unrealized gains) stays unfilled.
   const pcts = invDonutPcts(byCat, portfolioTotal, cash);
-  const totalAllocated = pcts.blue + pcts.green + pcts.yellow;
+  // Includes uncategorised cost — the centre label reads "invested", and money
+  // in a holding with no category is still invested.
+  const totalAllocated = pcts.blue + pcts.green + pcts.yellow + pcts.none;
 
-  const order = ['blue', 'green', 'yellow', 'cash'];
+  const order = ['blue', 'green', 'yellow', 'none', 'cash'];
   let offset = 0;
   order.forEach(key => {
     const el = document.getElementById(`donut-${key}`);
