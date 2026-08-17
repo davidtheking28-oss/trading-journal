@@ -7472,12 +7472,14 @@ async function _setupRealtimeSync() {
   _rtChannel = _sb.channel('rt-' + uid)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'trades', filter: f }, reloadTrades)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'missed_opportunities', filter: f }, reloadMissed)
-    // Same stale-cache trap as reloadMissed above, and worse here: invInit()
-    // reads `_invData || await invLoadFromDB()`, so once the cache is warm it
-    // never refetches. Skipping the refresh off-tab without clearing it left
-    // the portfolio showing values changed on another device indefinitely.
+    // invInit() reads `_invData || await invLoadFromDB()`, so the cache MUST be
+    // dropped first or the "refresh" re-renders the very data it was meant to
+    // replace. Clearing it only on the off-tab branch — as this once did — left
+    // the on-tab case silently doing nothing, which is the case that matters:
+    // the stale rows stayed on screen and the next keystroke saved them back
+    // over the change that had just arrived.
     .on('postgres_changes', { event: '*', schema: 'public', table: 'investments', filter: f },
-        () => { if (activeTab() === 'tab-investments') invInit(); else _invData = null; })
+        () => { _invData = null; if (activeTab() === 'tab-investments') invInit(); })
     .subscribe();
 }
 
@@ -13990,17 +13992,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
   calcBreakeven();
-  // Restore portfolio total immediately on load (don't wait for tab click)
-  const totalEl = document.getElementById('inv-portfolio-total');
-  if (totalEl) {
-    try {
-      const saved = localStorage.getItem('inv_data_v1');
-      if (saved) {
-        const d = JSON.parse(saved);
-        if (d.portfolioTotal) totalEl.value = d.portfolioTotal;
-      }
-    } catch {}
-  }
+  // The portfolio total is restored by invInit from user_settings once the user
+  // is known. Prefilling it here from the legacy `inv_data_v1` key ran before
+  // sign-in and showed the previous user of this browser their predecessor's
+  // portfolio size.
 });
 
 // ── Theme System — Dynamic Stylesheet ──
@@ -14718,7 +14713,6 @@ if ('serviceWorker' in navigator) {
 }
 
 // ===== INVESTMENTS TAB =====
-const INV_KEY = 'inv_data_v1';
 let _invData = null;
 let _invSaveTimer = null;
 
@@ -14741,12 +14735,12 @@ function invTogglePnlMode() {
   invRecalc();
 }
 
+// Supabase is the only source of truth. This used to fall back to the
+// `inv_data_v1` localStorage blob, which nothing has written for a long time —
+// so the only thing it could ever return was another session's leftovers, and
+// invRenderDeposits/invGetCurrentData read it on every render.
 function invLoad() {
-  if (_invData) return _invData;
-  try {
-    const raw = localStorage.getItem(INV_KEY);
-    return raw ? JSON.parse(raw) : { portfolioTotal: '', cashBalance: '', holdings: [], deposits: [] };
-  } catch { return { portfolioTotal: '', holdings: [], deposits: [] }; }
+  return _invData || { portfolioTotal: '', holdings: [], deposits: [] };
 }
 
 async function invLoadFromDB() {
@@ -14758,29 +14752,36 @@ async function invLoadFromDB() {
     .select('holdings, deposits, currency, alloc_targets')
     .eq('user_id', _currentUser.id)
     .single();
-  const local = invLoad();
   if (data) {
     const holdings = (data.holdings || []).map(h => ({ ...h, locked: h.locked !== false ? true : false }));
-    invApplyTargets(data.alloc_targets || local.allocTargets);
-    _invData = { portfolioTotal, cashBalance: local.cashBalance || '', holdings, deposits: data.deposits || [], allocTargets: invTargetsPayload() };
+    invApplyTargets(data.alloc_targets);
+    _invData = { portfolioTotal, holdings, deposits: data.deposits || [], allocTargets: invTargetsPayload() };
   } else {
-    invApplyTargets(local.allocTargets);
-    _invData = { portfolioTotal, cashBalance: local.cashBalance || '', holdings: local.holdings || [], deposits: local.deposits || [] };
-    if (_invData.holdings.length || _invData.deposits.length) invSaveData(_invData);
+    // A brand-new account starts empty. This used to seed itself from the
+    // `inv_data_v1` localStorage blob and immediately save it — on a shared
+    // browser that adopted whoever used the app last as your own portfolio.
+    // Nothing writes that key any more, so it is only ever a stale leftover.
+    invApplyTargets(null);
+    _invData = { portfolioTotal, holdings: [], deposits: [] };
   }
   return _invData;
 }
 
 async function invSaveData(data) {
+  const prev = _invData;
   _invData = data;
   if (!_currentUser) return;
   const { error } = await _sb.from('investments').upsert(
-    { user_id: _currentUser.id, holdings: data.holdings || [], deposits: data.deposits || [], currency: invGetCurrency(), alloc_targets: data.allocTargets || invTargetsPayload() },
+    { user_id: _currentUser.id, holdings: invStripBlank(data.holdings), deposits: data.deposits || [], currency: invGetCurrency(), alloc_targets: data.allocTargets || invTargetsPayload() },
     { onConflict: 'user_id' }
   );
   if (error) {
     console.error('[invSaveData]', error);
-    toast('שגיאה בשמירת השקעות: ' + error.message, 'error');
+    // The in-memory copy was already swapped, so without this the screen keeps
+    // showing a change that never reached the server and a reload loses it.
+    _invData = prev;
+    if (prev) invRenderRows(prev.holdings || []);
+    toast('שגיאה בשמירת השקעות: ' + error.message + ' — השינוי בוטל', 'error');
     return false;
   }
   return true;
@@ -14830,9 +14831,9 @@ function invRenderRows(holdings) {
           <option value="yellow" ${h.cat==='yellow'?'selected':''}>🟡 Speculative</option>
         </select>
       </td>
-      <td><input class="sensitive" type="number" value="${h.entryShares||''}" placeholder="0" min="0" step="any" ${ro} ${locked?'':'oninput="invRecalc();invAutoSave()"'}></td>
-      <td><input class="sensitive" type="number" value="${h.entryPrice||''}" placeholder="0.00" min="0" step="any" ${ro} ${locked?'':'oninput="invRecalc();invAutoSave()"'}></td>
-      <td><input class="sensitive" type="number" value="${h.currentPrice||''}" placeholder="0.00" min="0" step="any" readonly tabindex="-1" style="cursor:default;opacity:0.7;" title="מחיר נשלף אוטומטית"></td>
+      <td><input class="sensitive" type="number" value="${+h.entryShares || ''}" placeholder="0" min="0" step="any" ${ro} ${locked?'':'oninput="invRecalc();invAutoSave()"'}></td>
+      <td><input class="sensitive" type="number" value="${+h.entryPrice || ''}" placeholder="0.00" min="0" step="any" ${ro} ${locked?'':'oninput="invRecalc();invAutoSave()"'}></td>
+      <td><input class="sensitive" type="number" value="${+h.currentPrice || ''}" placeholder="0.00" min="0" step="any" readonly tabindex="-1" style="cursor:default;opacity:0.7;" title="מחיר נשלף אוטומטית"></td>
       <td><span class="inv-avg-label sensitive" id="inv-avg-${i}">—</span></td>
       <td><span class="inv-value-label sensitive" id="inv-val-${i}">—</span></td>
       <td><span class="inv-pnl-label sensitive" id="inv-pnl-${i}">—</span></td>
@@ -14883,7 +14884,7 @@ function invSetTarget(cat, pctStr) {
   if (total > 1.0001) {
     if (cat === 'cash') ALLOC_CASH_TARGET = prev;
     else ALLOC_TARGETS[cat] = prev;
-    invSyncTargetInputs();
+    invSyncTargetInputs(true);
     const over = Math.round(total * 100);
     toast(`סה"כ יעדים ${over}% — חייב להיות עד 100%`, 'error');
     return;
@@ -14895,9 +14896,12 @@ function invSetTarget(cat, pctStr) {
   invSaveData(data);
 }
 
-function invSyncTargetInputs() {
-  const set = (id, frac) => { const el = document.getElementById(id); if (el && document.activeElement !== el) el.value = Math.round(frac * 100); };
-  const setPct = (id, pct) => { const el = document.getElementById(id); if (el && document.activeElement !== el) el.value = pct; };
+// `force` is used by the rejection paths: onchange fires while the input is
+// still focused, so the focus guard — which exists to avoid fighting the user
+// mid-type — would otherwise leave the rejected value on screen.
+function invSyncTargetInputs(force = false) {
+  const set = (id, frac) => { const el = document.getElementById(id); if (el && (force || document.activeElement !== el)) el.value = Math.round(frac * 100); };
+  const setPct = (id, pct) => { const el = document.getElementById(id); if (el && (force || document.activeElement !== el)) el.value = pct; };
   setPct('inv-rk-blue', ALLOC_RISK.blue);
   setPct('inv-rk-green', ALLOC_RISK.green);
   setPct('inv-rk-yellow', ALLOC_RISK.yellow);
@@ -14990,7 +14994,13 @@ function invApplyRisk(r) {
 }
 function invSetRiskCap(cat, pctStr) {
   const pct = +pctStr;
-  if (!(pct >= 0) || pct > 100) return;
+  // Returning silently left the rejected number sitting in the field while the
+  // sizer went on using the old cap — the screen and the maths disagreed.
+  if (!(pct >= 0) || pct > 100) {
+    toast('תקרת סיכון חייבת להיות בין 0 ל-100', 'error');
+    invSyncTargetInputs(true);
+    return;
+  }
   ALLOC_RISK[cat] = pct;
   const data = invLoad();
   data.allocTargets = invTargetsPayload();
@@ -15215,10 +15225,19 @@ function invGetCurrentData() {
     });
   });
   return {
+    // Deliberately NOT filtered. Callers index this array with the DOM's
+    // data-idx, so dropping blank rows here shifted every later holding down
+    // one — invDeleteRow(i) then removed a different position than the × that
+    // was clicked, and selling out of one row could delete another. Blank rows
+    // are stripped at save time instead, where no index depends on them.
     portfolioTotal: document.getElementById('inv-portfolio-total')?.value || '',
-    holdings: holdings.filter(h => h.symbol || h.entryShares || h.entryPrice),
+    holdings,
     deposits: invLoad().deposits || []
   };
+}
+
+function invStripBlank(holdings) {
+  return (holdings || []).filter(h => h.symbol || h.entryShares || h.entryPrice);
 }
 
 function invEditRow(i) {
@@ -15304,11 +15323,34 @@ function invUpdatePricesTimestamp() {
 }
 
 let _invPosRowIdx = null;
-let _invSzCtx = null;
+let _invPosSym = '';
+let _invPosCat = '';
+
+// Recomputed on every render rather than snapshotted when the modal opens: the
+// portfolio value field is editable and the 60s quote tick keeps moving the
+// cash figure, so a frozen context sized the order off one portfolio total
+// while judging the caps against another.
+function invSizerCtx() {
+  const cat = _invPosCat || '';
+  const totals = invAccumulate([...document.querySelectorAll('#inv-tbody tr[data-idx]')].map(r => {
+    const inp = r.querySelectorAll('input');
+    return { cat: r.querySelector('.inv-cat-sel')?.value || '',
+             entryShares: inp[2]?.value, entryPrice: inp[3]?.value, currentPrice: inp[4]?.value };
+  }));
+  const portfolioTotal = +(document.getElementById('inv-portfolio-total')?.value) || 0;
+  return {
+    cat, portfolioTotal,
+    catCostUsd: cat ? (totals.byCat[cat] || 0) : 0,
+    catTargetFrac: cat ? (ALLOC_TARGETS[cat] || 0) : 0,
+    catRiskCapPct: cat ? (ALLOC_RISK[cat] || 0) : 0,
+    cashUsd: Math.max(0, portfolioTotal - totals.totalCurrentValue),
+  };
+}
 
 function invSizerInputs() {
   const price = +(document.getElementById('inv-pos-price')?.value) || 0;
   const fx = invFxLoad();
+  const ctx = invSizerCtx();
   return {
     portfolioValue: +(document.getElementById('inv-sz-portfolio')?.value) || 0,
     portfolioCurrency: document.getElementById('inv-sz-currency')?.value || '$',
@@ -15316,11 +15358,11 @@ function invSizerInputs() {
     pctOfPortfolio: +(document.getElementById('inv-sz-pct')?.value) || 0,
     price,
     stop: +(document.getElementById('inv-sz-stop')?.value) || 0,
-    portfolioTotalUsd: _invSzCtx?.portfolioTotal || 0,
-    catCostUsd: _invSzCtx?.catCostUsd || 0,
-    catTargetFrac: _invSzCtx?.catTargetFrac || 0,
-    catRiskCapPct: _invSzCtx?.catRiskCapPct || 0,
-    cashUsd: _invSzCtx?.cashUsd || 0,
+    portfolioTotalUsd: ctx.portfolioTotal,
+    catCostUsd: ctx.catCostUsd,
+    catTargetFrac: ctx.catTargetFrac,
+    catRiskCapPct: ctx.catRiskCapPct,
+    cashUsd: ctx.cashUsd,
   };
 }
 
@@ -15374,11 +15416,13 @@ function invSizerApply() {
 
 function invToggleBuyRow(i) {
   _invPosRowIdx = i;
+  _invPosSym = '';
   const tbody = document.getElementById('inv-tbody');
   const mainRow = tbody?.querySelector(`tr[data-idx="${i}"]`);
   if (!mainRow) return;
   const inputs = mainRow.querySelectorAll('input');
   const sym = inputs[0]?.value || '';
+  _invPosSym = sym.toUpperCase().trim();
   const oldQty   = +(inputs[2]?.value) || 0;
   const oldPrice = +(inputs[3]?.value) || 0;
   const cur = invGetCurrency();
@@ -15416,23 +15460,11 @@ function invToggleBuyRow(i) {
 
   // Seed the sizer: price defaults to the live quote, and the desired % opens
   // on whatever room this holding's category has left against its target.
-  const cat = mainRow.querySelector('.inv-cat-sel')?.value || '';
-  const totals = invAccumulate([...document.querySelectorAll('#inv-tbody tr[data-idx]')].map(r => {
-    const inp = r.querySelectorAll('input');
-    return { cat: r.querySelector('.inv-cat-sel')?.value || '',
-             entryShares: inp[2]?.value, entryPrice: inp[3]?.value, currentPrice: inp[4]?.value };
-  }));
-  const portfolioTotal = +(document.getElementById('inv-portfolio-total')?.value) || 0;
-  _invSzCtx = {
-    cat, portfolioTotal,
-    catCostUsd: cat ? (totals.byCat[cat] || 0) : 0,
-    catTargetFrac: cat ? (ALLOC_TARGETS[cat] || 0) : 0,
-    catRiskCapPct: cat ? (ALLOC_RISK[cat] || 0) : 0,
-    cashUsd: Math.max(0, portfolioTotal - totals.totalCurrentValue),
-  };
-  const roomPct = portfolioTotal > 0
-    ? Math.max(0, (_invSzCtx.catTargetFrac * portfolioTotal - _invSzCtx.catCostUsd) / portfolioTotal * 100) : 0;
-  document.getElementById('inv-sz-portfolio').value = portfolioTotal || '';
+  _invPosCat = mainRow.querySelector('.inv-cat-sel')?.value || '';
+  const ctx = invSizerCtx();
+  const roomPct = ctx.portfolioTotal > 0
+    ? Math.max(0, (ctx.catTargetFrac * ctx.portfolioTotal - ctx.catCostUsd) / ctx.portfolioTotal * 100) : 0;
+  document.getElementById('inv-sz-portfolio').value = ctx.portfolioTotal || '';
   document.getElementById('inv-sz-currency').value = '$';
   document.getElementById('inv-sz-pct').value = roomPct ? roomPct.toFixed(1) : '';
   document.getElementById('inv-sz-stop').value = '';
@@ -15475,15 +15507,27 @@ function invConfirmPositionModal() {
   const mode  = document.getElementById('inv-position-modal')?.dataset.mode || 'buy';
   const qty   = +(document.getElementById('inv-pos-qty')?.value) || 0;
   const price = +(document.getElementById('inv-pos-price')?.value) || 0;
-  if (!qty) { toast('הכנס כמות', 'error'); return; }
-  if (mode === 'buy' && !price) { toast('הכנס מחיר', 'error'); return; }
+  // min="0" on the input is not enforced without a form submit. A negative sell
+  // quantity read as `oldQty - (-5)` minted five free shares at an unchanged
+  // average price; a negative buy price dragged the weighted average through
+  // zero.
+  if (!(qty > 0)) { toast('הכנס כמות חיובית', 'error'); return; }
+  if (mode === 'buy' && !(price > 0)) { toast('הכנס מחיר חיובי', 'error'); return; }
 
   const tbody = document.getElementById('inv-tbody');
   const mainRow = tbody?.querySelector(`tr[data-idx="${i}"]`);
   if (!mainRow) return;
   const inputs = mainRow.querySelectorAll('input');
+  // A debounced autosave can merge duplicates and renumber every data-idx while
+  // this modal is open, so the row now at index i may be a different holding.
+  if ((inputs[0]?.value || '').toUpperCase().trim() !== _invPosSym) {
+    toast('הטבלה השתנתה בינתיים — פתח מחדש את החלון', 'error');
+    invClosePositionModal();
+    return;
+  }
   const oldQty   = +(inputs[2]?.value) || 0;
   const oldPrice = +(inputs[3]?.value) || 0;
+  if (mode === 'sell' && qty > oldQty) { toast(`כמות גדולה מהאחזקה (${oldQty})`, 'error'); return; }
   const cur = invGetCurrency();
 
   invClosePositionModal();
@@ -15596,13 +15640,15 @@ function invAutoSector(idx) {
 let _invSaveTotalTimer = null;
 function invAutoSaveTotal() {
   const val = document.getElementById('inv-portfolio-total')?.value || '';
-  // The portfolio total lives in user_settings — persist only that. Never rewrite
-  // the holdings here: invLoad() may return stale localStorage and would clobber
-  // the precise holdings stored in the DB.
+  // The portfolio total lives in user_settings — persist only that, never the
+  // holdings.
   if (_invData) _invData.portfolioTotal = val;
   clearTimeout(_invSaveTotalTimer);
   _invSaveTotalTimer = setTimeout(() => {
-    _saveUserSettings({ portfolio_total: val ? +val : null });
+    // The field is type="text", so "100,000" or "$100k" reaches here. `+val` on
+    // those is NaN, which serialised to null and silently erased the total.
+    const n = +String(val).replace(/[^\d.]/g, '');
+    _saveUserSettings({ portfolio_total: val && Number.isFinite(n) && n > 0 ? n : null });
   }, 500);
 }
 
@@ -15617,10 +15663,14 @@ function invUpdateDonut(byCat, portfolioTotal, cash = 0) {
   order.forEach(key => {
     const el = document.getElementById(`donut-${key}`);
     if (!el) return;
-    const len = pcts[key] / 100 * C;
+    // Clamped to the room left on the ring. Unclamped, blue 60% + green 55%
+    // pushed yellow's offset past 100% so it wrapped around and painted over
+    // blue — an over-allocated portfolio drew a ring that read as under-full.
+    const slice = Math.max(0, Math.min(pcts[key], 100 - offset));
+    const len = slice / 100 * C;
     el.setAttribute('stroke-dasharray', `${len.toFixed(2)} ${C}`);
     el.setAttribute('stroke-dashoffset', `${(-offset / 100 * C).toFixed(2)}`);
-    offset += pcts[key];
+    offset += slice;
   });
 
   const lbl = document.getElementById('donut-label-pct');
