@@ -507,3 +507,28 @@ describe('invPositionSize — hostile price input', () => {
     }
   });
 });
+
+describe('allocation basis — invested and cash close at 100%', () => {
+  test('value-based buckets plus cash fill the ring exactly', () => {
+    // The whole point of moving off cost basis: on cost, a portfolio holding
+    // unrealised gains left a slice of the ring belonging to nothing.
+    const r = invAccumulate([
+      holding({ cat: 'blue',  entryShares: 10, entryPrice: 100, currentPrice: 150 }),
+      holding({ cat: 'green', entryShares: 10, entryPrice: 100, currentPrice: 120 }),
+    ]);
+    const total = 5000;
+    const cash = Math.max(0, total - r.totalCurrentValue);
+    const p = invDonutPcts(r.byCatValue, total, cash);
+    const sum = p.blue + p.green + p.yellow + p.none + p.cash;
+    assert.ok(Math.abs(sum - 100) < 1e-9, `ring sums to ${sum}, not 100`);
+  });
+
+  test('cost basis is what understated a category that had run up', () => {
+    // Guards the reason for the change: 79% by value vs 57.6% by cost was the
+    // gap that let the panel invite a buy into an over-weight category.
+    const r = invAccumulate([holding({ cat: 'blue', entryShares: 10, entryPrice: 100, currentPrice: 150 })]);
+    assert.equal(r.byCat.blue, 1000);
+    assert.equal(r.byCatValue.blue, 1500);
+    assert.ok(r.byCatValue.blue > r.byCat.blue);
+  });
+});
