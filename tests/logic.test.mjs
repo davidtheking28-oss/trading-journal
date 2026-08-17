@@ -435,3 +435,46 @@ describe('invAccumulate / invDonutPcts — uncategorised holdings', () => {
     assert.ok(p.blue + p.green + p.yellow + p.none >= 100, 'the overflow is real');
   });
 });
+
+// ── Scaling into a position in tranches ─────────────────────────────────────
+const { invSplitEntries } = load('invSplitEntries');
+
+describe('invSplitEntries — splitting a buy into N entries', () => {
+  test('an even split gives every entry the same size', () => {
+    const p = invSplitEntries(60, 100, 3);
+    assert.deepEqual(p.map(e => e.shares), [20, 20, 20]);
+    assert.deepEqual(p.map(e => e.usd), [2000, 2000, 2000]);
+  });
+
+  test('the entries always sum back to the total — never more', () => {
+    // 62 / 3 = 20.67. Rounding each tranche up would buy 63 shares: one more
+    // than the sizing allowed, i.e. past the risk cap that produced it.
+    for (const [total, n] of [[62, 3], [10, 3], [7, 4], [100, 7], [5, 5], [1, 3]]) {
+      const p = invSplitEntries(total, 50, n);
+      assert.equal(p.reduce((s, e) => s + e.shares, 0), total, `${total} split ${n} ways`);
+    }
+  });
+
+  test('the remainder goes to the earliest entries, largest first', () => {
+    const p = invSplitEntries(10, 100, 3);
+    assert.deepEqual(p.map(e => e.shares), [4, 3, 3]);
+  });
+
+  test('more entries than shares yields no zero-share entries', () => {
+    // Asking to split 2 shares into 5 buys cannot produce 5 real orders.
+    const p = invSplitEntries(2, 100, 5);
+    assert.equal(p.length, 2);
+    assert.ok(p.every(e => e.shares > 0));
+  });
+
+  test('one entry is the whole position', () => {
+    assert.deepEqual(invSplitEntries(37, 10, 1), [{ shares: 37, usd: 370 }]);
+  });
+
+  test('zero shares or a nonsense count yields nothing rather than NaN', () => {
+    for (const args of [[0, 100, 3], [10, 100, 0], [10, 100, -2], [null, 100, 3]]) {
+      const p = invSplitEntries(...args);
+      assert.ok(Array.isArray(p) && p.length === 0, `args ${JSON.stringify(args)}`);
+    }
+  });
+});
