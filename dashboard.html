@@ -3529,6 +3529,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
        18.7183 shares rendered as ".7183". */
     direction: ltr; text-align: right;
   }
+  /* Number inputs reserve room for the spinner even when it is not drawn, and
+     that reserved strip was what pushed 18.7183 and 515.36 out of view. */
+  .inv-table input[type=number]::-webkit-outer-spin-button,
+  .inv-table input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .inv-table input[type=number] { -moz-appearance: textfield; appearance: textfield; }
   .inv-table input:focus { border-color: var(--accent); outline: none; background: rgba(129,140,248,0.06); }
   .inv-table input[readonly] { background: transparent; border-color: transparent; cursor: default; pointer-events: none; color: var(--text2); }
   .inv-table select:disabled { background: transparent; border-color: transparent; cursor: default; pointer-events: none; opacity: 1; color: var(--text2); -webkit-appearance: none; appearance: none; }
