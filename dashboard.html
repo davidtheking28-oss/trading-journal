@@ -3669,9 +3669,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   html[data-theme="light"] .inv-target-input:focus { border-color: var(--accent); }
   .inv-alloc-bar-wrap { flex: 1; height: 6px; background: rgba(255,255,255,0.08); border-radius: var(--r-sm); overflow: hidden; }
   .inv-alloc-bar-fill { height: 100%; border-radius: var(--r-sm); transition: width 0.3s; }
-  .inv-alloc-invested { min-width: 80px; text-align: right; color: var(--text); font-weight: 600; font-size: 11px; white-space: nowrap; }
-  .inv-alloc-cur { min-width: 44px; text-align: right; color: var(--text2); font-size: 11px; }
-  .inv-alloc-remaining { color: var(--text3); white-space: nowrap; font-size: 11px; min-width: 110px; text-align: right; }
+  /* Fixed, not min-, widths: these columns only line up across rows if every
+     row reserves the same box regardless of how long its own text is. */
+  .inv-alloc-invested { width: 90px; flex: 0 0 90px; text-align: right; color: var(--text); font-weight: 600; font-size: 11px; white-space: nowrap; }
+  .inv-alloc-cur { width: 46px; flex: 0 0 46px; text-align: right; color: var(--text2); font-size: 11px; }
+  .inv-alloc-remaining { width: 128px; flex: 0 0 128px; color: var(--text3); white-space: nowrap; font-size: 11px; text-align: right; overflow: hidden; text-overflow: ellipsis; }
   .inv-cash-input { min-width: 80px; width: 80px; text-align: right; background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.18); color: var(--text); font-weight: 600; font-size: 11px; outline: none; padding: 1px 2px; }
   .inv-alloc-donut-row { display: flex; gap: 24px; align-items: center; }
   .inv-alloc-bars { flex: 1; display: flex; flex-direction: column; gap: 10px; }
@@ -6062,7 +6064,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         </div>
 
         <div class="inv-alloc-dashboard">
-          <div class="inv-alloc-title" data-i18n="inv_alloc_title" title="מחושב לפי עלות (הון שהוקצה), לא לפי שווי נוכחי — כדי שיעדי ההקצאה לא יזוזו בכל תנודת מחיר.">Portfolio Allocation — Target</div>
+          <div class="inv-alloc-title" data-i18n="inv_alloc_title" title="מחושב לפי שווי נוכחי — זו החשיפה האמיתית של התיק, ולכן מושקע + מזומן מסתכמים ל-100%.">Portfolio Allocation — Target</div>
           <div class="inv-alloc-donut-row">
             <div class="inv-alloc-bars">
               <div class="inv-alloc-row">
@@ -6072,7 +6074,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
                 <span class="inv-alloc-invested sensitive" id="alloc-inv-blue">—</span>
                 <span class="inv-alloc-cur" id="alloc-cur-blue">0%</span>
                 <span class="inv-alloc-remaining sensitive" id="alloc-rem-blue">—</span>
-                <span class="inv-alloc-riskcap" title="תקרת סיכון סטופ לעסקה בקטגוריה הזו, כאחוז מהתיק">סיכון <input type="number" class="inv-target-input" id="inv-rk-blue" min="0" max="100" step="0.1" onchange="invSetRiskCap('blue',this.value)" aria-label="blue risk cap %">%</span>
               </div>
               <div class="inv-alloc-row">
                 <span class="inv-alloc-dot green"></span>
@@ -6081,7 +6082,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
                 <span class="inv-alloc-invested sensitive" id="alloc-inv-green">—</span>
                 <span class="inv-alloc-cur" id="alloc-cur-green">0%</span>
                 <span class="inv-alloc-remaining sensitive" id="alloc-rem-green">—</span>
-                <span class="inv-alloc-riskcap" title="תקרת סיכון סטופ לעסקה בקטגוריה הזו, כאחוז מהתיק">סיכון <input type="number" class="inv-target-input" id="inv-rk-green" min="0" max="100" step="0.1" onchange="invSetRiskCap('green',this.value)" aria-label="green risk cap %">%</span>
               </div>
               <div class="inv-alloc-row">
                 <span class="inv-alloc-dot yellow"></span>
@@ -6090,7 +6090,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
                 <span class="inv-alloc-invested sensitive" id="alloc-inv-yellow">—</span>
                 <span class="inv-alloc-cur" id="alloc-cur-yellow">0%</span>
                 <span class="inv-alloc-remaining sensitive" id="alloc-rem-yellow">—</span>
-                <span class="inv-alloc-riskcap" title="תקרת סיכון סטופ לעסקה בקטגוריה הזו, כאחוז מהתיק">סיכון <input type="number" class="inv-target-input" id="inv-rk-yellow" min="0" max="100" step="0.1" onchange="invSetRiskCap('yellow',this.value)" aria-label="yellow risk cap %">%</span>
               </div>
               <div class="inv-alloc-row" id="alloc-row-none" style="display:none" title="אחזקות ללא קטגוריה. הן נספרות ב״מושקע״ ומקטינות את המזומן הפנוי, אז בלי שורה משלהן הן פשוט נעלמו מהתמונה.">
                 <span class="inv-alloc-dot" style="background:#94a3b8"></span>
@@ -6444,9 +6443,15 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             <input type="number" id="ic-stop" class="form-control" placeholder="0.00" min="0" step="any">
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">פעימות כניסה</label>
-          <input type="number" id="ic-tranches" class="form-control" value="1" min="1" max="20" step="1" placeholder="1">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="form-group">
+            <label class="form-label">פעימות כניסה</label>
+            <input type="number" id="ic-tranches" class="form-control" value="1" min="1" max="20" step="1" placeholder="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label" title="תקרת סיכון סטופ לעסקה בקטגוריה הזו, כאחוז מהתיק">תקרת סיכון (% מהתיק)</label>
+            <input type="number" id="ic-risk" class="form-control" min="0" max="100" step="0.1" placeholder="1.5">
+          </div>
         </div>
         <div id="ic-out" style="display:none;font-size:12.5px;line-height:1.95;color:var(--text2);margin-top:4px"></div>
         <div id="ic-tranche-out" style="display:none;font-size:12.5px;margin-top:10px;padding-top:10px;border-top:1px dashed rgba(255,255,255,0.12)"></div>
@@ -15049,10 +15054,6 @@ function invSetTarget(cat, pctStr) {
 // mid-type — would otherwise leave the rejected value on screen.
 function invSyncTargetInputs(force = false) {
   const set = (id, frac) => { const el = document.getElementById(id); if (el && (force || document.activeElement !== el)) el.value = Math.round(frac * 100); };
-  const setPct = (id, pct) => { const el = document.getElementById(id); if (el && (force || document.activeElement !== el)) el.value = pct; };
-  setPct('inv-rk-blue', ALLOC_RISK.blue);
-  setPct('inv-rk-green', ALLOC_RISK.green);
-  setPct('inv-rk-yellow', ALLOC_RISK.yellow);
   set('inv-tg-blue', ALLOC_TARGETS.blue);
   set('inv-tg-green', ALLOC_TARGETS.green);
   set('inv-tg-yellow', ALLOC_TARGETS.yellow);
@@ -15151,7 +15152,8 @@ function invSetRiskCap(cat, pctStr) {
   // sizer went on using the old cap — the screen and the maths disagreed.
   if (!(pct >= 0) || pct > 100) {
     toast('תקרת סיכון חייבת להיות בין 0 ל-100', 'error');
-    invSyncTargetInputs(true);
+    const el = document.getElementById('ic-risk');
+    if (el) el.value = ALLOC_RISK[cat];
     return;
   }
   ALLOC_RISK[cat] = pct;
@@ -15648,7 +15650,13 @@ function invCalcInputs() {
     portfolioTotalUsd: totalUsd,
     catCostUsd: ctx.catCostUsd,
     catTargetFrac: ctx.catTargetFrac,
-    catRiskCapPct: ctx.catRiskCapPct,
+    // The field is the live value while it is being typed; a half-typed or
+    // out-of-range entry must not silently size an order, so fall back to the
+    // saved cap rather than to 0 (which would drop the cap entirely).
+    catRiskCapPct: (() => {
+      const v = parseFloat(document.getElementById('ic-risk')?.value);
+      return (v >= 0 && v <= 100) ? v : ctx.catRiskCapPct;
+    })(),
     cashUsd: Math.max(0, totalUsd - ctx.holdingsValueUsd),
   };
 }
@@ -15719,13 +15727,20 @@ function invCalcOpen() {
     const room = ctx.portfolioTotal > 0
       ? Math.max(0, (ctx.catTargetFrac * ctx.portfolioTotal - ctx.catCostUsd) / ctx.portfolioTotal * 100) : 0;
     document.getElementById('ic-pct').value = room ? room.toFixed(1) : '';
+    document.getElementById('ic-risk').value = ALLOC_RISK[document.getElementById('ic-cat').value] ?? '';
     invCalcRender();
   };
   document.getElementById('ic-cat').onchange = applyCat;
   document.getElementById('ic-tranches').value = '1';
-  ['ic-portfolio', 'ic-pct', 'ic-price', 'ic-stop', 'ic-tranches'].forEach(id => {
+  ['ic-portfolio', 'ic-pct', 'ic-price', 'ic-stop', 'ic-tranches', 'ic-risk'].forEach(id => {
     const e = document.getElementById(id); if (e) e.oninput = invCalcRender;
   });
+  // The cap is a saved per-category setting, not a scratch field — committing
+  // it on change is what replaced the inputs removed from the allocation rows.
+  document.getElementById('ic-risk').onchange = (e) => {
+    invSetRiskCap(document.getElementById('ic-cat').value, e.target.value);
+    invCalcRender();
+  };
   // Flipping the currency must convert the amount, not just relabel it. The
   // field is prefilled in dollars, so leaving it untouched turned a $32,253
   // portfolio into ₪32,253 (~$11k) and quietly sized the order ~3x too small.
