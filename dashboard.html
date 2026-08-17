@@ -15060,6 +15060,14 @@ function invSyncTargetInputs(force = false) {
   set('inv-tg-cash', ALLOC_CASH_TARGET);
 }
 
+// The portfolio total lives in a type="text" field so it can be typed with
+// thousands separators. Every read of it must strip them identically, or the
+// same typed number means different things in different corners of the tab.
+function invParseTotal(raw) {
+  const n = +String(raw ?? '').replace(/[^\d.]/g, '');
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
 // Pure accumulation, kept out of invRecalc so the arithmetic can be tested
 // without a DOM. Input is one plain object per holding; nothing here reads or
 // writes the page.
@@ -15284,7 +15292,11 @@ function invRecalc() {
   // Total portfolio is the anchor (input). Free cash is whatever isn't invested
   // in holdings (total − holdings value), so it stays in sync with the total and
   // grows when a monthly deposit raises the total.
-  const portfolioTotal = +(document.getElementById('inv-portfolio-total')?.value) || 0;
+  // The field is type="text", so a typed "32,253" arrives with the comma and
+  // `+value` is NaN — which zeroed the whole panel: every bar, every percent and
+  // the free-cash figure. invSizerCtx and invCalcOpen already strip; this read
+  // was the one left behind.
+  const portfolioTotal = invParseTotal(document.getElementById('inv-portfolio-total')?.value);
   const cash = Math.max(0, portfolioTotal - totalCurrentValue);
   const effectiveTotal = portfolioTotal;
 
@@ -15395,8 +15407,18 @@ function invRecalc() {
     if (ni) ni.textContent = `${c}${noneAmt.toLocaleString('en-US', {maximumFractionDigits:0})}`;
     if (nc) nc.textContent = nonePct.toFixed(1) + '%';
   }
+  // The cash row had a target and a bar but an empty remaining column, so it
+  // was the one row that never said whether it was on plan. Excess cash is not
+  // a risk breach the way an over-weight category is, so it stays grey — but a
+  // shortfall means the buffer has been spent down and is worth naming.
   if (cashRemEl) {
-    cashRemEl.textContent = '';
+    if (portfolioTotal === 0) { cashRemEl.textContent = ''; }
+    else {
+      cashRemEl.textContent = cashOver
+        ? `עודף: ${c}${(cash - cashTarget).toLocaleString('en-US', {maximumFractionDigits:0})}`
+        : `חסר: ${c}${(cashTarget - cash).toLocaleString('en-US', {maximumFractionDigits:0})}`;
+      cashRemEl.style.color = cashOver ? 'var(--text3)' : 'var(--yellow, #fbbf24)';
+    }
   }
 
   const catRemaining = {};
@@ -15567,11 +15589,9 @@ function invSizerCtx(catOverride) {
     return { cat: r.querySelector('.inv-cat-sel')?.value || '',
              entryShares: inp[2]?.value, entryPrice: inp[3]?.value, currentPrice: inp[4]?.value };
   }));
-  // The field is type="text", so "100,000" reaches here and `+value` is NaN —
-  // which zeroed every cap and painted two red warnings on a valid order.
-  const raw = document.getElementById('inv-portfolio-total')?.value || '';
-  const parsed = +String(raw).replace(/[^\d.]/g, '');
-  const portfolioTotal = Number.isFinite(parsed) ? parsed : 0;
+  // "100,000" here used to be NaN, which zeroed every cap and painted two red
+  // warnings on a perfectly valid order.
+  const portfolioTotal = invParseTotal(document.getElementById('inv-portfolio-total')?.value);
   return {
     cat, portfolioTotal,
     holdingsValueUsd: totals.totalCurrentValue,

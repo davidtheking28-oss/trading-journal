@@ -479,6 +479,39 @@ describe('invSplitEntries — splitting a buy into N entries', () => {
   });
 });
 
+// ── Reading the typed portfolio total ───────────────────────────────────────
+const { invParseTotal } = load('invParseTotal');
+
+describe('invParseTotal — the total is typed, not picked', () => {
+  test('thousands separators survive', () => {
+    // The field is type="text" so the user can type "32,253". `+"32,253"` is
+    // NaN, and NaN||0 is 0 — which blanked every bar, every percent and the
+    // free-cash figure on the whole panel.
+    assert.equal(invParseTotal('32,253'), 32253);
+    assert.equal(invParseTotal('100,000'), 100000);
+    assert.equal(invParseTotal('1,234,567'), 1234567);
+  });
+
+  test('a plain number is unchanged', () => {
+    assert.equal(invParseTotal('32253'), 32253);
+    assert.equal(invParseTotal('32253.75'), 32253.75);
+    assert.equal(invParseTotal(32253), 32253);
+  });
+
+  test('currency marks and spaces are stripped', () => {
+    for (const raw of ['$32,253', '₪32,253', ' 32,253 ']) {
+      assert.equal(invParseTotal(raw), 32253, raw);
+    }
+  });
+
+  test('nothing usable reads as zero, never NaN', () => {
+    for (const raw of ['', null, undefined, 'abc', '-5', '1.2.3']) {
+      const v = invParseTotal(raw);
+      assert.ok(Number.isFinite(v) && v >= 0, `${raw} → ${v}`);
+    }
+  });
+});
+
 // ── What the stop costs on each tranche ─────────────────────────────────────
 const { invTrancheRisk } = load('invTrancheRisk');
 
