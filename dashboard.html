@@ -6042,6 +6042,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
                 <span class="inv-alloc-invested sensitive" id="alloc-inv-blue">—</span>
                 <span class="inv-alloc-cur" id="alloc-cur-blue">0%</span>
                 <span class="inv-alloc-remaining sensitive" id="alloc-rem-blue">—</span>
+                <span class="inv-alloc-riskcap" title="תקרת סיכון סטופ לעסקה בקטגוריה הזו, כאחוז מהתיק">סיכון <input type="number" class="inv-target-input" id="inv-rk-blue" min="0" max="100" step="0.1" onchange="invSetRiskCap('blue',this.value)" aria-label="blue risk cap %">%</span>
               </div>
               <div class="inv-alloc-row">
                 <span class="inv-alloc-dot green"></span>
@@ -6050,6 +6051,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
                 <span class="inv-alloc-invested sensitive" id="alloc-inv-green">—</span>
                 <span class="inv-alloc-cur" id="alloc-cur-green">0%</span>
                 <span class="inv-alloc-remaining sensitive" id="alloc-rem-green">—</span>
+                <span class="inv-alloc-riskcap" title="תקרת סיכון סטופ לעסקה בקטגוריה הזו, כאחוז מהתיק">סיכון <input type="number" class="inv-target-input" id="inv-rk-green" min="0" max="100" step="0.1" onchange="invSetRiskCap('green',this.value)" aria-label="green risk cap %">%</span>
               </div>
               <div class="inv-alloc-row">
                 <span class="inv-alloc-dot yellow"></span>
@@ -6058,6 +6060,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
                 <span class="inv-alloc-invested sensitive" id="alloc-inv-yellow">—</span>
                 <span class="inv-alloc-cur" id="alloc-cur-yellow">0%</span>
                 <span class="inv-alloc-remaining sensitive" id="alloc-rem-yellow">—</span>
+                <span class="inv-alloc-riskcap" title="תקרת סיכון סטופ לעסקה בקטגוריה הזו, כאחוז מהתיק">סיכון <input type="number" class="inv-target-input" id="inv-rk-yellow" min="0" max="100" step="0.1" onchange="invSetRiskCap('yellow',this.value)" aria-label="yellow risk cap %">%</span>
               </div>
               <div class="inv-alloc-row">
                 <span class="inv-alloc-dot" style="background:#2dd4bf"></span>
@@ -6386,6 +6389,35 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             <input type="date" id="inv-pos-date" class="form-control">
           </div>
         </div>
+      </div>
+      <div class="form-section" id="inv-pos-sizer">
+        <div class="form-section-title">מחשבון כמות וסיכון</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="form-group">
+            <label class="form-label">שווי התיק</label>
+            <div style="display:flex;gap:6px">
+              <input type="number" id="inv-sz-portfolio" class="form-control sensitive" placeholder="0" min="0" step="any" style="flex:1">
+              <select id="inv-sz-currency" class="form-control" style="width:64px;padding:7px 6px">
+                <option value="$">$</option>
+                <option value="₪">₪</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">אחוז רצוי מהתיק</label>
+            <input type="number" id="inv-sz-pct" class="form-control" placeholder="10" min="0" max="100" step="0.1">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:end">
+          <div class="form-group">
+            <label class="form-label">סטופ (אופציונלי)</label>
+            <input type="number" id="inv-sz-stop" class="form-control" placeholder="0.00" min="0" step="any">
+          </div>
+          <div class="form-group">
+            <button class="btn btn-secondary btn-sm" onclick="invSizerApply()" style="width:100%;height:36px">✨ הצע לי כמות</button>
+          </div>
+        </div>
+        <div id="inv-sz-out" style="display:none;font-size:12.5px;line-height:1.9;color:var(--text2)"></div>
       </div>
       <div id="inv-pos-result" style="display:none;background:rgba(79,131,255,0.08);border:1px solid rgba(79,131,255,0.2);border-radius:var(--r-md);padding:12px 16px;font-size:13px;color:var(--text2)"></div>
     </div>
@@ -14832,10 +14864,11 @@ function invApplyTargets(tg) {
     yellow: v.yellow != null ? +v.yellow : ALLOC_DEFAULTS.yellow,
   };
   ALLOC_CASH_TARGET = v.cash != null ? +v.cash : ALLOC_DEFAULTS.cash;
+  invApplyRisk(v.risk);
 }
 
 function invTargetsPayload() {
-  return { blue: ALLOC_TARGETS.blue, green: ALLOC_TARGETS.green, yellow: ALLOC_TARGETS.yellow, cash: ALLOC_CASH_TARGET };
+  return { blue: ALLOC_TARGETS.blue, green: ALLOC_TARGETS.green, yellow: ALLOC_TARGETS.yellow, cash: ALLOC_CASH_TARGET, risk: { ...ALLOC_RISK } };
 }
 
 function invSetTarget(cat, pctStr) {
@@ -14864,6 +14897,10 @@ function invSetTarget(cat, pctStr) {
 
 function invSyncTargetInputs() {
   const set = (id, frac) => { const el = document.getElementById(id); if (el && document.activeElement !== el) el.value = Math.round(frac * 100); };
+  const setPct = (id, pct) => { const el = document.getElementById(id); if (el && document.activeElement !== el) el.value = pct; };
+  setPct('inv-rk-blue', ALLOC_RISK.blue);
+  setPct('inv-rk-green', ALLOC_RISK.green);
+  setPct('inv-rk-yellow', ALLOC_RISK.yellow);
   set('inv-tg-blue', ALLOC_TARGETS.blue);
   set('inv-tg-green', ALLOC_TARGETS.green);
   set('inv-tg-yellow', ALLOC_TARGETS.yellow);
@@ -14910,6 +14947,112 @@ function invDonutPcts(byCat, portfolioTotal, cash = 0) {
   const totalAllocated = pcts.blue + pcts.green + pcts.yellow;
   pcts.cash = portfolioTotal > 0 ? Math.max(0, Math.min(cash / portfolioTotal * 100, 100 - totalAllocated)) : 0;
   return pcts;
+}
+
+// USD→ILS rate, refreshed at most hourly and remembered across reloads so a
+// dead network degrades to yesterday's rate (shown as stale) instead of to no
+// calculator at all.
+const FX_KEY = 'inv_fx_usd_ils';
+let _invFx = null;
+function invFxLoad() {
+  if (_invFx) return _invFx;
+  try { _invFx = JSON.parse(localStorage.getItem(FX_KEY) || 'null'); } catch { _invFx = null; }
+  return _invFx;
+}
+async function invFxRefresh() {
+  const cached = invFxLoad();
+  if (cached && Date.now() - cached.ts < 3600_000) return cached;
+  const token = await _getToken();
+  if (!token) return cached;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/fx?from=USD&to=ILS`,
+      { headers: { 'Authorization': `Bearer ${token}` } });
+    if (!res.ok) return cached;
+    const data = await res.json();
+    if (!(+data.rate > 0)) return cached;
+    _invFx = { rate: +data.rate, date: data.date || null, ts: Date.now() };
+    localStorage.setItem(FX_KEY, JSON.stringify(_invFx));
+  } catch { /* keep the cached rate rather than blanking the calculator */ }
+  return _invFx;
+}
+
+// Per-category stop-risk ceilings, stored alongside the allocation targets in
+// the same jsonb column so no migration is needed.
+const ALLOC_RISK_DEFAULTS = { blue: 1, green: 1.5, yellow: 2 };
+let ALLOC_RISK = { ...ALLOC_RISK_DEFAULTS };
+function invApplyRisk(r) {
+  const v = r && typeof r === 'object' ? r : {};
+  ALLOC_RISK = {
+    blue:   v.blue   != null ? +v.blue   : ALLOC_RISK_DEFAULTS.blue,
+    green:  v.green  != null ? +v.green  : ALLOC_RISK_DEFAULTS.green,
+    yellow: v.yellow != null ? +v.yellow : ALLOC_RISK_DEFAULTS.yellow,
+  };
+}
+function invSetRiskCap(cat, pctStr) {
+  const pct = +pctStr;
+  if (!(pct >= 0) || pct > 100) return;
+  ALLOC_RISK[cat] = pct;
+  const data = invLoad();
+  data.allocTargets = invTargetsPayload();
+  invSaveData(data);
+}
+
+// Position sizing. Everything the calculator shows is derived here so the
+// arithmetic can be tested without a DOM or a network.
+//   portfolio × desired%  →  (÷ fx if the portfolio is in ₪)  →  ÷ price  →  floor
+// The floor matters: it is the difference between a budget and an order, and it
+// makes the realised percentage lower than the one that was asked for.
+function invPositionSize(o) {
+  const price          = +o.price || 0;
+  const pct            = +o.pctOfPortfolio || 0;
+  const portfolioValue = +o.portfolioValue || 0;
+  const inShekels      = o.portfolioCurrency === '₪';
+  const fxRate         = +o.fxRate || 0;
+  const portfolioTotal = +o.portfolioTotalUsd || 0;
+  const cash           = +o.cashUsd || 0;
+  const stop           = +o.stop || 0;
+
+  const nil = { shares: null, amountUsd: null, positionUsd: null, actualPct: null,
+                riskUsd: null, riskPct: null, catRoomUsd: null,
+                maxSharesByTarget: null, maxSharesByRisk: null, maxSharesByCash: null,
+                suggestedShares: null, withinTarget: true, withinRisk: true, withinCash: true };
+
+  // Without a rate a ₪ portfolio cannot be sized at all. Falling back to some
+  // default rate would silently place the order off an invented number.
+  if (inShekels && !fxRate) return { ...nil, error: 'no-fx' };
+  if (!price) return { ...nil, error: 'no-price' };
+
+  const amountLocal = portfolioValue * pct / 100;
+  const amountUsd   = inShekels ? amountLocal / fxRate : amountLocal;
+  const shares      = Math.floor(amountUsd / price);
+  const positionUsd = shares * price;
+  const actualPct   = portfolioTotal > 0 ? positionUsd / portfolioTotal * 100 : null;
+
+  // A stop at or above the entry is not a negative risk — it is no stop.
+  const riskPerShare = stop > 0 && stop < price ? price - stop : 0;
+  const riskUsd = riskPerShare ? riskPerShare * shares : null;
+  const riskPct = riskUsd !== null && portfolioTotal > 0 ? riskUsd / portfolioTotal * 100 : null;
+
+  const catTargetUsd = portfolioTotal * (+o.catTargetFrac || 0);
+  const catRoomUsd   = Math.max(0, catTargetUsd - (+o.catCostUsd || 0));
+  const capPct       = +o.catRiskCapPct || 0;
+
+  const maxSharesByTarget = Math.floor(catRoomUsd / price);
+  const maxSharesByRisk   = riskPerShare && capPct
+    ? Math.floor(portfolioTotal * capPct / 100 / riskPerShare) : null;
+  const maxSharesByCash   = Math.floor(cash / price);
+
+  const caps = [maxSharesByTarget, maxSharesByRisk, maxSharesByCash].filter(n => n !== null);
+  const suggestedShares = Math.max(0, Math.min(...caps));
+
+  return {
+    shares, amountUsd, positionUsd, actualPct, riskUsd, riskPct, catRoomUsd,
+    maxSharesByTarget, maxSharesByRisk, maxSharesByCash, suggestedShares,
+    withinTarget: shares <= maxSharesByTarget,
+    withinRisk:   maxSharesByRisk === null || shares <= maxSharesByRisk,
+    withinCash:   shares <= maxSharesByCash,
+    error: null,
+  };
 }
 
 function invRecalc() {
@@ -15161,6 +15304,73 @@ function invUpdatePricesTimestamp() {
 }
 
 let _invPosRowIdx = null;
+let _invSzCtx = null;
+
+function invSizerInputs() {
+  const price = +(document.getElementById('inv-pos-price')?.value) || 0;
+  const fx = invFxLoad();
+  return {
+    portfolioValue: +(document.getElementById('inv-sz-portfolio')?.value) || 0,
+    portfolioCurrency: document.getElementById('inv-sz-currency')?.value || '$',
+    fxRate: fx?.rate || 0,
+    pctOfPortfolio: +(document.getElementById('inv-sz-pct')?.value) || 0,
+    price,
+    stop: +(document.getElementById('inv-sz-stop')?.value) || 0,
+    portfolioTotalUsd: _invSzCtx?.portfolioTotal || 0,
+    catCostUsd: _invSzCtx?.catCostUsd || 0,
+    catTargetFrac: _invSzCtx?.catTargetFrac || 0,
+    catRiskCapPct: _invSzCtx?.catRiskCapPct || 0,
+    cashUsd: _invSzCtx?.cashUsd || 0,
+  };
+}
+
+function invSizerRender() {
+  const out = document.getElementById('inv-sz-out');
+  if (!out) return;
+  const inp = invSizerInputs();
+  const mode = document.getElementById('inv-position-modal')?.dataset.mode || 'buy';
+  if (mode !== 'buy' || !inp.portfolioValue || !inp.pctOfPortfolio) { out.style.display = 'none'; return; }
+  out.style.display = 'block';
+
+  const r = invPositionSize(inp);
+  if (r.error === 'no-fx') {
+    // Deliberately no number: sizing a real order off a guessed rate is worse
+    // than showing nothing.
+    out.innerHTML = `<span style="color:var(--red)">אין שער דולר/שקל זמין — לא ניתן לחשב כמות.</span>
+      <span style="color:var(--text3)">נסה שוב בעוד רגע או עבור לדולר.</span>`;
+    return;
+  }
+  if (r.error) { out.style.display = 'none'; return; }
+
+  const fx = invFxLoad();
+  const stale = fx && Date.now() - fx.ts > 86400_000;
+  const conv = inp.portfolioCurrency === '₪'
+    ? `${(inp.portfolioValue * inp.pctOfPortfolio / 100).toLocaleString('en-US',{maximumFractionDigits:0})} ₪ ÷ ${fx.rate.toFixed(4)}${stale ? ' <span style="color:var(--yellow,#fbbf24)">(שער ישן)</span>' : ''} = `
+    : '';
+  const ok  = v => v ? '<span style="color:var(--green)">✓</span>' : '<span style="color:var(--red)">⚠</span>';
+  const cap = (label, within, detail) => `${ok(within)} ${label} <span style="color:var(--text3)">${detail}</span>`;
+
+  out.innerHTML = `
+    <div>${conv}<b class="sensitive">$${r.amountUsd.toLocaleString('en-US',{maximumFractionDigits:2})}</b> ÷ $${fmtPrice(inp.price)} →
+      <b style="color:var(--accent);font-size:15px">${r.shares}</b> מניות</div>
+    <div class="sensitive">גודל בפועל $${r.positionUsd.toLocaleString('en-US',{maximumFractionDigits:0})}${
+      r.actualPct !== null ? ` · <b>${r.actualPct.toFixed(1)}%</b> מהתיק בפועל` : ''}</div>
+    ${r.riskUsd !== null ? `<div class="sensitive">סיכון סטופ $${r.riskUsd.toLocaleString('en-US',{maximumFractionDigits:0})} · ${r.riskPct.toFixed(2)}% מהתיק</div>` : ''}
+    <div>${cap('יעד קטגוריה', r.withinTarget, `נשאר $${r.catRoomUsd.toLocaleString('en-US',{maximumFractionDigits:0})} · עד ${r.maxSharesByTarget} מניות`)}</div>
+    ${r.maxSharesByRisk !== null ? `<div>${cap('תקרת סיכון', r.withinRisk, `${inp.catRiskCapPct}% · עד ${r.maxSharesByRisk} מניות`)}</div>` : ''}
+    <div>${cap('מזומן פנוי', r.withinCash, `$${inp.cashUsd.toLocaleString('en-US',{maximumFractionDigits:0})} · עד ${r.maxSharesByCash} מניות`)}</div>`;
+  applyPrivacy();
+}
+
+function invSizerApply() {
+  const r = invPositionSize(invSizerInputs());
+  if (r.error === 'no-fx') { toast('אין שער דולר/שקל — לא ניתן להציע כמות', 'error'); return; }
+  if (r.error || r.suggestedShares === null) { toast('הכנס מחיר ואחוז תחילה', 'error'); return; }
+  const qtyEl = document.getElementById('inv-pos-qty');
+  qtyEl.value = r.suggestedShares;
+  qtyEl.dispatchEvent(new Event('input'));
+  toast(r.suggestedShares > 0 ? `הוצע: ${r.suggestedShares} מניות` : 'אין מקום לקנייה בקטגוריה הזו', r.suggestedShares > 0 ? 'success' : 'error');
+}
 
 function invToggleBuyRow(i) {
   _invPosRowIdx = i;
@@ -15204,6 +15414,36 @@ function invToggleBuyRow(i) {
   document.getElementById('inv-pos-qty').oninput   = updatePreview;
   document.getElementById('inv-pos-price').oninput = updatePreview;
 
+  // Seed the sizer: price defaults to the live quote, and the desired % opens
+  // on whatever room this holding's category has left against its target.
+  const cat = mainRow.querySelector('.inv-cat-sel')?.value || '';
+  const totals = invAccumulate([...document.querySelectorAll('#inv-tbody tr[data-idx]')].map(r => {
+    const inp = r.querySelectorAll('input');
+    return { cat: r.querySelector('.inv-cat-sel')?.value || '',
+             entryShares: inp[2]?.value, entryPrice: inp[3]?.value, currentPrice: inp[4]?.value };
+  }));
+  const portfolioTotal = +(document.getElementById('inv-portfolio-total')?.value) || 0;
+  _invSzCtx = {
+    cat, portfolioTotal,
+    catCostUsd: cat ? (totals.byCat[cat] || 0) : 0,
+    catTargetFrac: cat ? (ALLOC_TARGETS[cat] || 0) : 0,
+    catRiskCapPct: cat ? (ALLOC_RISK[cat] || 0) : 0,
+    cashUsd: Math.max(0, portfolioTotal - totals.totalCurrentValue),
+  };
+  const roomPct = portfolioTotal > 0
+    ? Math.max(0, (_invSzCtx.catTargetFrac * portfolioTotal - _invSzCtx.catCostUsd) / portfolioTotal * 100) : 0;
+  document.getElementById('inv-sz-portfolio').value = portfolioTotal || '';
+  document.getElementById('inv-sz-currency').value = '$';
+  document.getElementById('inv-sz-pct').value = roomPct ? roomPct.toFixed(1) : '';
+  document.getElementById('inv-sz-stop').value = '';
+  document.getElementById('inv-pos-price').value = currentPrice || '';
+  ['inv-sz-portfolio','inv-sz-pct','inv-sz-stop','inv-pos-price'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.oninput = invSizerRender;
+  });
+  document.getElementById('inv-sz-currency').onchange = () => { invFxRefresh().then(invSizerRender); invSizerRender(); };
+  invFxRefresh().then(invSizerRender);
+  invSizerRender();
+
   const modal = document.getElementById('inv-position-modal');
   modal.dataset.mode = 'buy';
   modal.classList.add('open');
@@ -15217,6 +15457,8 @@ function invSetPosMode(mode) {
   document.getElementById('inv-pos-sell-btn')?.classList.toggle('buy-active',  false);
   const priceGroup = document.getElementById('inv-pos-price-group');
   if (priceGroup) priceGroup.style.display = mode === 'sell' ? 'none' : '';
+  const sizer = document.getElementById('inv-pos-sizer');
+  if (sizer) sizer.style.display = mode === 'sell' ? 'none' : '';
   const modal = document.getElementById('inv-position-modal');
   if (modal) modal.dataset.mode = mode;
   document.getElementById('inv-pos-qty')?.dispatchEvent(new Event('input'));

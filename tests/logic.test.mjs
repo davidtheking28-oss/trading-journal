@@ -281,3 +281,120 @@ describe('invDonutPcts — allocation slices', () => {
     assert.deepEqual(p, { blue: 0, green: 0, yellow: 0, cash: 0 });
   });
 });
+
+// ── Position sizing calculator ──────────────────────────────────────────────
+// Portfolio value (₪ or $) × desired % → converted to USD → floored into whole
+// shares, then checked against the category target, the category risk cap and
+// available cash. A wrong number here is a wrong order, so the failure modes
+// matter as much as the happy path.
+const { invPositionSize } = load('invPositionSize');
+
+const sizing = (o = {}) => invPositionSize({
+  portfolioValue: 50000, portfolioCurrency: '₪', fxRate: 2.95,
+  pctOfPortfolio: 10, price: 320, stop: 0,
+  portfolioTotalUsd: 20000, catCostUsd: 0, catTargetFrac: 0.6,
+  catRiskCapPct: 1, cashUsd: 100000, ...o,
+});
+
+describe('invPositionSize — shares from a percentage of the portfolio', () => {
+  test('reproduces the reference calculation exactly', () => {
+    // 50,000₪ × 10% = 5,000₪ ; ÷ 2.95 = $1,694.92 ; ÷ $320 = 5.29 → 5
+    const r = sizing();
+    assert.equal(Math.round(r.amountUsd * 100) / 100, 1694.92);
+    assert.equal(r.shares, 5);
+  });
+
+  test('a dollar portfolio is not converted', () => {
+    const r = sizing({ portfolioCurrency: '$', portfolioValue: 1694.92, pctOfPortfolio: 100 });
+    assert.equal(r.shares, 5, 'the fx rate must not be applied to a $ portfolio');
+  });
+
+  test('shares are floored, never rounded up past the budget', () => {
+    const r = sizing({ portfolioCurrency: '$', portfolioValue: 1000, pctOfPortfolio: 100, price: 300 });
+    assert.equal(r.shares, 3, '3.33 shares must floor to 3');
+    assert.ok(r.shares * 300 <= 1000, 'the order can never exceed the budget');
+  });
+
+  test('the actual percentage reflects the floored share count', () => {
+    // The reference calculator stops at the requested %, hiding the gap the
+    // rounding leaves. 5 × $320 = $1,600 of a $20,000 portfolio is 8%, not 10%.
+    const r = sizing({ portfolioTotalUsd: 20000 });
+    assert.equal(r.positionUsd, 1600);
+    assert.equal(r.actualPct, 8);
+  });
+
+  test('a missing fx rate yields no share count at all', () => {
+    // Guessing a rate here would size a real order off an invented number.
+    for (const bad of [0, null, undefined, NaN]) {
+      const r = sizing({ fxRate: bad });
+      assert.equal(r.shares, null, `rate ${bad} must not produce a quantity`);
+      assert.equal(r.error, 'no-fx');
+    }
+  });
+
+  test('a dollar portfolio still works with no fx rate', () => {
+    const r = sizing({ portfolioCurrency: '$', fxRate: null, portfolioValue: 1000, pctOfPortfolio: 100, price: 100 });
+    assert.equal(r.shares, 10, 'no conversion is needed, so no rate is needed');
+    assert.equal(r.error, null);
+  });
+});
+
+describe('invPositionSize — the three caps', () => {
+  test('flags a buy that overshoots the category target', () => {
+    // Blue target 60% of $20,000 = $12,000, already $11,800 deep: $200 of room.
+    const r = sizing({ portfolioCurrency: '$', portfolioValue: 20000, pctOfPortfolio: 10,
+                       price: 100, catCostUsd: 11800 });
+    assert.equal(r.catRoomUsd, 200);
+    assert.equal(r.withinTarget, false);
+    assert.equal(r.maxSharesByTarget, 2);
+  });
+
+  test('flags a buy that breaches the category risk cap', () => {
+    // stop $80 on a $100 entry risks $20/share; a 1% cap on $20,000 allows $200,
+    // so 10 shares is the ceiling and 20 shares must be rejected.
+    const r = sizing({ portfolioCurrency: '$', portfolioValue: 20000, pctOfPortfolio: 10,
+                       price: 100, stop: 80 });
+    assert.equal(r.riskUsd, 400);
+    assert.equal(r.riskPct, 2);
+    assert.equal(r.withinRisk, false);
+    assert.equal(r.maxSharesByRisk, 10);
+  });
+
+  test('no stop means no risk figure, and the risk cap cannot fail', () => {
+    const r = sizing({ portfolioCurrency: '$', portfolioValue: 20000, pctOfPortfolio: 10, price: 100 });
+    assert.equal(r.riskUsd, null);
+    assert.equal(r.withinRisk, true, 'an unset stop is not a breach');
+    assert.equal(r.maxSharesByRisk, null);
+  });
+
+  test('a stop above the entry price is ignored rather than negated', () => {
+    const r = sizing({ portfolioCurrency: '$', portfolioValue: 20000, pctOfPortfolio: 10,
+                       price: 100, stop: 120 });
+    assert.equal(r.riskUsd, null, 'a stop above entry is not a -$20/share gain');
+    assert.equal(r.maxSharesByRisk, null);
+  });
+
+  test('cash on hand caps the suggestion', () => {
+    const r = sizing({ portfolioCurrency: '$', portfolioValue: 20000, pctOfPortfolio: 50,
+                       price: 100, cashUsd: 450 });
+    assert.equal(r.maxSharesByCash, 4);
+    assert.equal(r.withinCash, false);
+  });
+
+  test('the suggestion is the tightest of the three caps', () => {
+    // target room 2000 -> 20 shares, risk cap -> 10, cash 700 -> 7. Cash wins.
+    const r = sizing({ portfolioCurrency: '$', portfolioValue: 20000, pctOfPortfolio: 50,
+                       price: 100, stop: 80, catCostUsd: 10000, cashUsd: 700 });
+    assert.equal(r.maxSharesByTarget, 20);
+    assert.equal(r.maxSharesByRisk, 10);
+    assert.equal(r.maxSharesByCash, 7);
+    assert.equal(r.suggestedShares, 7);
+  });
+
+  test('a fully allocated category suggests nothing rather than a negative', () => {
+    const r = sizing({ portfolioCurrency: '$', portfolioValue: 20000, pctOfPortfolio: 10,
+                       price: 100, catCostUsd: 99999 });
+    assert.equal(r.suggestedShares, 0);
+    assert.ok(r.maxSharesByTarget >= 0, 'an overfull category must not go negative');
+  });
+});
