@@ -315,6 +315,14 @@ describe('invPositionSize — shares from a percentage of the portfolio', () => 
     assert.ok(r.shares * 300 <= 1000, 'the order can never exceed the budget');
   });
 
+  test('a fraction above half still rounds DOWN, not to the nearest', () => {
+    // $570 at $100 is 5.7 shares. Rounding to nearest buys 6 for $600 — $30 more
+    // than the budget allows. Only flooring keeps the order inside it.
+    const r = sizing({ portfolioCurrency: '$', portfolioValue: 570, pctOfPortfolio: 100, price: 100 });
+    assert.equal(r.shares, 5, '5.7 must floor to 5, never round to 6');
+    assert.ok(r.positionUsd <= 570, 'the order must never exceed the budget');
+  });
+
   test('the actual percentage reflects the floored share count', () => {
     // The reference calculator stops at the requested %, hiding the gap the
     // rounding leaves. 5 × $320 = $1,600 of a $20,000 portfolio is 8%, not 10%.
