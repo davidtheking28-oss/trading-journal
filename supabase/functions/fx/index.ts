@@ -37,7 +37,10 @@ serve(async (req: Request) => {
   }
 
   try {
-    const upstream = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`,
+    // The canonical host. api.frankfurter.app still answers but only via a 301
+    // to this URL, and relying on a redirect that may one day drop the query
+    // string is not worth the hop.
+    const upstream = await fetch(`https://api.frankfurter.dev/v1/latest?base=${from}&symbols=${to}`,
       { headers: { 'User-Agent': 'trading-journal/2.0' } });
     if (!upstream.ok) {
       return new Response(JSON.stringify({ error: 'Upstream error' }), { status: 502, headers: { ...CORS, 'Content-Type': 'application/json' } });
