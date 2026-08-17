@@ -15704,8 +15704,9 @@ async function invCalcFetchPrice() {
 }
 
 function invCalcOpen() {
-  const totalEl = document.getElementById('inv-portfolio-total');
-  document.getElementById('ic-portfolio').value = +(totalEl?.value) || '';
+  // Same comma trap as invSizerCtx: `+"32,253"` is NaN, which left this field
+  // blank and the whole calculator showing nothing.
+  document.getElementById('ic-portfolio').value = invSizerCtx('').portfolioTotal || '';
   document.getElementById('ic-currency').value = '$';
   ['ic-sym', 'ic-price', 'ic-stop'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
   // Open on the room left in the selected category, same rule as the in-row sizer.
