@@ -3552,6 +3552,12 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-pct-label { font-size: 12px; font-weight: 700; color: var(--text2); white-space: nowrap; min-width: 38px; }
   .inv-avg-label { font-size: 12px; color: var(--text3); }
   .inv-value-label { font-size: 12px; font-weight: 700; color: var(--text); }
+  .inv-calc-open {
+    margin-right: auto; background: rgba(129,140,248,0.14); border: 1px solid rgba(129,140,248,0.35);
+    color: var(--accent); font-size: 12.5px; font-weight: 700; padding: 7px 13px;
+    border-radius: var(--r-sm); cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  }
+  .inv-calc-open:hover { background: rgba(129,140,248,0.26); border-color: rgba(129,140,248,0.6); }
   .inv-add-row {
     width: 100%; padding: 13px; background: none; border: none;
     border-top: 1px dashed rgba(129,140,248,0.28); color: var(--accent);
@@ -6046,6 +6052,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div class="inv-header">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           <h2 data-i18n="inv_title">Investment Portfolio</h2>
+          <button class="inv-calc-open" onclick="invCalcOpen()" title="חשב כמות וסיכון לפני קנייה — גם למניה שעדיין לא בתיק">🧮 מחשבון כמות</button>
         </div>
 
         <div class="inv-portfolio-bar">
@@ -6384,6 +6391,65 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <button class="qa-save" onclick="qaSave()" data-i18n="qa_save">💾 Save Trade</button>
     </div>
     <div id="qa-preview" style="display:none"></div>
+  </div>
+</div>
+
+<!-- STANDALONE POSITION SIZE CALCULATOR -->
+<!-- Deliberately not tied to a holding row: the point is to size a buy BEFORE
+     the stock is in the portfolio, which the in-row calculator cannot do. -->
+<div class="modal-overlay" id="inv-calc-modal" onclick="if(event.target===this)invCalcClose()">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:470px;">
+    <div class="modal-header">
+      <div class="modal-title">🧮 מחשבון כמות וסיכון</div>
+      <button class="modal-close" onclick="invCalcClose()" aria-label="סגור">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="form-group">
+            <label class="form-label">סימבול (אופציונלי)</label>
+            <input type="text" id="ic-sym" class="form-control" placeholder="NVDA" style="text-transform:uppercase" list="inv-sym-list">
+          </div>
+          <div class="form-group">
+            <label class="form-label">קטגוריה</label>
+            <select id="ic-cat" class="form-control">
+              <option value="blue">🔵 Blue Chip</option>
+              <option value="green">🟢 Growth</option>
+              <option value="yellow">🟡 Speculative</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="form-group">
+            <label class="form-label">שווי התיק</label>
+            <div style="display:flex;gap:6px">
+              <input type="number" id="ic-portfolio" class="form-control sensitive" placeholder="0" min="0" step="any" style="flex:1">
+              <select id="ic-currency" class="form-control" style="width:64px;padding:7px 6px">
+                <option value="$">$</option><option value="₪">₪</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">אחוז רצוי מהתיק</label>
+            <input type="number" id="ic-pct" class="form-control" placeholder="10" min="0" max="100" step="0.1">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="form-group">
+            <label class="form-label">מחיר מניה ($)</label>
+            <input type="number" id="ic-price" class="form-control" placeholder="0.00" min="0" step="any">
+          </div>
+          <div class="form-group">
+            <label class="form-label">סטופ (אופציונלי)</label>
+            <input type="number" id="ic-stop" class="form-control" placeholder="0.00" min="0" step="any">
+          </div>
+        </div>
+        <div id="ic-out" style="display:none;font-size:12.5px;line-height:1.95;color:var(--text2);margin-top:4px"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="invCalcClose()">סגור</button>
+    </div>
   </div>
 </div>
 
@@ -15434,8 +15500,8 @@ let _invPosCat = '';
 // portfolio value field is editable and the 60s quote tick keeps moving the
 // cash figure, so a frozen context sized the order off one portfolio total
 // while judging the caps against another.
-function invSizerCtx() {
-  const cat = _invPosCat || '';
+function invSizerCtx(catOverride) {
+  const cat = catOverride !== undefined ? catOverride : (_invPosCat || '');
   const totals = invAccumulate([...document.querySelectorAll('#inv-tbody tr[data-idx]')].map(r => {
     const inp = r.querySelectorAll('input');
     return { cat: r.querySelector('.inv-cat-sel')?.value || '',
@@ -15470,23 +15536,18 @@ function invSizerInputs() {
   };
 }
 
-function invSizerRender() {
-  const out = document.getElementById('inv-sz-out');
-  if (!out) return;
-  const inp = invSizerInputs();
-  const mode = document.getElementById('inv-position-modal')?.dataset.mode || 'buy';
-  if (mode !== 'buy' || !inp.portfolioValue || !inp.pctOfPortfolio) { out.style.display = 'none'; return; }
-  out.style.display = 'block';
-
+// Shared by the in-row sizer and the standalone calculator so the two can never
+// disagree about what the same numbers mean.
+function invSizerPaint(out, inp) {
   const r = invPositionSize(inp);
   if (r.error === 'no-fx') {
     // Deliberately no number: sizing a real order off a guessed rate is worse
     // than showing nothing.
     out.innerHTML = `<span style="color:var(--red)">אין שער דולר/שקל זמין — לא ניתן לחשב כמות.</span>
       <span style="color:var(--text3)">נסה שוב בעוד רגע או עבור לדולר.</span>`;
-    return;
+    return r;
   }
-  if (r.error) { out.style.display = 'none'; return; }
+  if (r.error) { out.style.display = 'none'; return r; }
 
   const fx = invFxLoad();
   const stale = fx && Date.now() - fx.ts > 86400_000;
@@ -15506,6 +15567,96 @@ function invSizerRender() {
     ${r.maxSharesByRisk !== null ? `<div>${cap('תקרת סיכון', r.withinRisk, `${inp.catRiskCapPct}% · עד ${r.maxSharesByRisk} מניות`)}</div>` : ''}
     <div>${cap('מזומן פנוי', r.withinCash, `$${inp.cashUsd.toLocaleString('en-US',{maximumFractionDigits:0})} · עד ${r.maxSharesByCash} מניות`)}</div>`;
   applyPrivacy();
+  return r;
+}
+
+function invSizerRender() {
+  const out = document.getElementById('inv-sz-out');
+  if (!out) return;
+  const inp = invSizerInputs();
+  const mode = document.getElementById('inv-position-modal')?.dataset.mode || 'buy';
+  if (mode !== 'buy' || !inp.portfolioValue || !inp.pctOfPortfolio) { out.style.display = 'none'; return; }
+  out.style.display = 'block';
+  invSizerPaint(out, inp);
+}
+
+// ── Standalone calculator ──────────────────────────────────────────────────
+function invCalcInputs() {
+  const cat = document.getElementById('ic-cat')?.value || 'blue';
+  const ctx = invSizerCtx(cat);
+  return {
+    portfolioValue: +(document.getElementById('ic-portfolio')?.value) || 0,
+    portfolioCurrency: document.getElementById('ic-currency')?.value || '$',
+    fxRate: invFxLoad()?.rate || 0,
+    pctOfPortfolio: +(document.getElementById('ic-pct')?.value) || 0,
+    price: +(document.getElementById('ic-price')?.value) || 0,
+    stop: +(document.getElementById('ic-stop')?.value) || 0,
+    portfolioTotalUsd: ctx.portfolioTotal,
+    catCostUsd: ctx.catCostUsd,
+    catTargetFrac: ctx.catTargetFrac,
+    catRiskCapPct: ctx.catRiskCapPct,
+    cashUsd: ctx.cashUsd,
+  };
+}
+
+function invCalcRender() {
+  const out = document.getElementById('ic-out');
+  if (!out) return;
+  const inp = invCalcInputs();
+  if (!inp.portfolioValue || !inp.pctOfPortfolio || !inp.price) { out.style.display = 'none'; return; }
+  out.style.display = 'block';
+  invSizerPaint(out, inp);
+}
+
+// Fetching the quote is what makes this usable for a stock you do not own yet.
+async function invCalcFetchPrice() {
+  const sym = (document.getElementById('ic-sym')?.value || '').trim().toUpperCase().replace(/[^A-Z0-9._\-]/g, '');
+  if (!sym) return;
+  const priceEl = document.getElementById('ic-price');
+  try {
+    const token = await _getToken();
+    if (!token) return;
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=quote&symbol=${encodeURIComponent(sym)}`,
+      { headers: { 'Authorization': `Bearer ${token}` } });
+    if (!res.ok) { toast('לא ניתן למשוך מחיר — הזן ידנית', 'error'); return; }
+    const data = await res.json();
+    const p = +data.c || 0;
+    if (!p) { toast(`אין ציטוט ל-${sym} — הזן מחיר ידנית`, 'error'); return; }
+    priceEl.value = p;
+    invCalcRender();
+  } catch { toast('לא ניתן למשוך מחיר — הזן ידנית', 'error'); }
+}
+
+function invCalcOpen() {
+  const totalEl = document.getElementById('inv-portfolio-total');
+  document.getElementById('ic-portfolio').value = +(totalEl?.value) || '';
+  document.getElementById('ic-currency').value = '$';
+  ['ic-sym', 'ic-price', 'ic-stop'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+  // Open on the room left in the selected category, same rule as the in-row sizer.
+  const applyCat = () => {
+    const ctx = invSizerCtx(document.getElementById('ic-cat').value);
+    const room = ctx.portfolioTotal > 0
+      ? Math.max(0, (ctx.catTargetFrac * ctx.portfolioTotal - ctx.catCostUsd) / ctx.portfolioTotal * 100) : 0;
+    document.getElementById('ic-pct').value = room ? room.toFixed(1) : '';
+    invCalcRender();
+  };
+  document.getElementById('ic-cat').onchange = applyCat;
+  ['ic-portfolio', 'ic-pct', 'ic-price', 'ic-stop'].forEach(id => {
+    const e = document.getElementById(id); if (e) e.oninput = invCalcRender;
+  });
+  document.getElementById('ic-currency').onchange = () => { invFxRefresh().then(invCalcRender); invCalcRender(); };
+  const symEl = document.getElementById('ic-sym');
+  symEl.onchange = invCalcFetchPrice;
+  symEl.onblur = invCalcFetchPrice;
+  applyCat();
+  document.getElementById('ic-out').style.display = 'none';
+  invFxRefresh().then(invCalcRender);
+  document.getElementById('inv-calc-modal').classList.add('open');
+  setTimeout(() => symEl.focus(), 80);
+}
+
+function invCalcClose() {
+  document.getElementById('inv-calc-modal')?.classList.remove('open');
 }
 
 function invSizerApply() {
