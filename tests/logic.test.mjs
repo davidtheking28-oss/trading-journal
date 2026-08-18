@@ -599,3 +599,57 @@ describe('allocation basis — invested and cash close at 100%', () => {
     assert.ok(r.byCatValue.blue > r.byCat.blue);
   });
 });
+
+// ── Realtime echo suppression ───────────────────────────────────────────────
+// Suppression exists so a tab ignores the echo of its own write. It used to be
+// one shared window for every table, which meant a trades sync also muted the
+// investments and missed handlers: a genuine change from another device that
+// landed inside someone else's window was dropped and never reloaded.
+const rt = () => load('_rtSuppressUntil', '_rtSuppress', '_rtMuted');
+const TABLES = ['trades', 'missed_opportunities', 'investments'];
+
+describe('realtime suppression is per table', () => {
+  test('a write mutes its own table', () => {
+    for (const t of TABLES) {
+      const m = rt();
+      m._rtSuppress(t);
+      assert.equal(m._rtMuted(t), true, t);
+    }
+  });
+
+  test('a write never mutes another table', () => {
+    for (const written of TABLES) {
+      const m = rt();
+      m._rtSuppress(written);
+      for (const other of TABLES.filter(t => t !== written)) {
+        assert.equal(m._rtMuted(other), false,
+          `writing ${written} must not mute ${other}`);
+      }
+    }
+  });
+
+  test('nothing is muted before any write', () => {
+    const m = rt();
+    for (const t of TABLES) assert.equal(m._rtMuted(t), false, t);
+  });
+
+  test('the window expires', () => {
+    const m = rt();
+    m._rtSuppress('trades', -1);
+    assert.equal(m._rtMuted('trades'), false, 'an elapsed window no longer mutes');
+  });
+
+  test('a longer window is not shortened by a later short one', () => {
+    // Two writes in flight: the second must not cut the first one's window
+    // short, or the first write's echo arrives unsuppressed and reloads.
+    const m = rt();
+    m._rtSuppress('trades', 10000);
+    m._rtSuppress('trades', 1);
+    assert.equal(m._rtMuted('trades'), true);
+  });
+
+  test('an unknown table reads as not muted rather than throwing', () => {
+    const m = rt();
+    assert.equal(m._rtMuted('no_such_table'), false);
+  });
+});

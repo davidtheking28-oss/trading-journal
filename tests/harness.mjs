@@ -43,6 +43,34 @@ export function extractFunction(name) {
   throw new Error(`unbalanced braces reading ${name}`);
 }
 
+// Same idea for `const NAME = ...;` — arrow helpers and the small state objects
+// they close over are declared that way, so without this they could only be
+// tested through the browser. Scans to the `;` that closes the initialiser,
+// ignoring any inside strings, comments or nested brackets.
+export function extractConst(name) {
+  const re = new RegExp(`(^|\\n)\\s*(?:const|let)\\s+${name}\\s*=`);
+  const m = re.exec(SOURCE);
+  if (!m) throw new Error(`const ${name} not found in dashboard.html`);
+  const start = m.index + (m[1] ? 1 : 0);
+  let depth = 0, inStr = null, escaped = false;
+  for (let i = SOURCE.indexOf('=', start) + 1; i < SOURCE.length; i++) {
+    const c = SOURCE[i], next = SOURCE[i + 1];
+    if (inStr) {
+      if (escaped) escaped = false;
+      else if (c === '\\') escaped = true;
+      else if (c === inStr) inStr = null;
+      continue;
+    }
+    if (c === '/' && next === '/') { i = SOURCE.indexOf('\n', i); if (i === -1) break; continue; }
+    if (c === '/' && next === '*') { i = SOURCE.indexOf('*/', i) + 1; continue; }
+    if (c === '"' || c === "'" || c === '`') { inStr = c; continue; }
+    if (c === '{' || c === '[' || c === '(') depth++;
+    else if (c === '}' || c === ']' || c === ')') depth--;
+    else if (c === ';' && depth === 0) return SOURCE.slice(start, i + 1);
+  }
+  throw new Error(`unterminated declaration for ${name}`);
+}
+
 // Minimal DOMParser covering what flexParseXML asks of it: find every <Trade>
 // / <TradeConfirm> element and read its attributes.
 class StubElement {
@@ -74,8 +102,12 @@ export class DOMParser {
 
 // Evaluate the named functions together (so they can call each other) and hand
 // them back. Anything they reference beyond each other must be stubbed here.
+// Names are pulled in the order given, so a helper that closes over a state
+// object must be listed after it.
 export function load(...names) {
-  const src = names.map(extractFunction).join('\n');
+  const src = names.map(n =>
+    SOURCE.includes(`function ${n}(`) ? extractFunction(n) : extractConst(n)
+  ).join('\n');
   const factory = new Function('DOMParser', `${src}\nreturn { ${names.join(', ')} };`);
   return factory(DOMParser);
 }
