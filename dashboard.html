@@ -14877,7 +14877,24 @@ async function invLoadFromDB() {
     .single();
   if (data) {
     _invUpdatedAt = data.updated_at || null;
-    const holdings = (data.holdings || []).map(h => ({ ...h, locked: h.locked !== false ? true : false }));
+    // Stage 2: holdings come from their own table, one row each, carrying a
+    // real id instead of being identified by their index in an array.
+    const { data: rows, error: rowsErr } = await _sb.from('investment_holdings')
+      .select('id, symbol, cat, sector, entry_shares, entry_price, current_price, position')
+      .eq('user_id', _currentUser.id)
+      .order('position', { ascending: true });
+    // The jsonb document is still written on every save, so it is the fallback
+    // whenever the table cannot answer: a read error, or an account whose rows
+    // predate the backfill. Falling through to an empty portfolio instead would
+    // show the user nothing and then let the next autosave persist that.
+    const useRows = !rowsErr && rows && (rows.length > 0 || (data.holdings || []).length === 0);
+    const holdings = useRows
+      ? rows.map(r => ({ id: r.id, symbol: r.symbol || '', cat: r.cat || '', sector: r.sector || '',
+                         entryShares: +r.entry_shares || 0, entryPrice: +r.entry_price || 0,
+                         currentPrice: r.current_price == null ? undefined : +r.current_price,
+                         locked: true }))
+      : (data.holdings || []).map(h => ({ ...h, locked: h.locked !== false ? true : false }));
+    if (!useRows) console.warn('[investments] holdings table unavailable, using the jsonb document', rowsErr || '');
     invApplyTargets(data.alloc_targets);
     _invData = { portfolioTotal, holdings, deposits: data.deposits || [], allocTargets: invTargetsPayload() };
   } else {
@@ -14947,6 +14964,7 @@ async function _invSaveWrite(data, prev, gen) {
       return false;
     }
     _invUpdatedAt = hit[0].updated_at;
+    await _invSyncHoldingRows(data.holdings);
     return true;
   }
 
@@ -14964,7 +14982,72 @@ async function _invSaveWrite(data, prev, gen) {
   const { data: fresh } = await _sb.from('investments')
     .select('updated_at').eq('user_id', _currentUser.id).single();
   _invUpdatedAt = fresh?.updated_at || null;
+  await _invSyncHoldingRows(data.holdings);
   return true;
+}
+
+// Stage 2 dual-write. The jsonb document above stays the source of truth and
+// keeps carrying the optimistic-concurrency guard; this mirrors the same
+// holdings into their own rows and only ever runs after that guarded write has
+// already succeeded, so a conflict never reaches the table.
+//
+// Ids are preserved rather than delete-all/insert-all: reinserting would hand
+// every position a new identity on every keystroke, and a failed insert after a
+// successful delete would simply lose the portfolio.
+async function _invSyncHoldingRows(holdings) {
+  const live = invStripBlank(holdings);
+  const rows = live.map((h, i) => {
+    const r = {
+      user_id: _currentUser.id,
+      symbol: (h.symbol || '').toUpperCase().trim(),
+      cat: h.cat || null,
+      sector: h.sector || null,
+      entry_shares: +h.entryShares || 0,
+      entry_price: +h.entryPrice || 0,
+      current_price: +h.currentPrice || null,
+      position: i,
+    };
+    if (h.id) r.id = h.id;
+    return r;
+  });
+
+  // `position` comes back with each row because PostgREST does not promise to
+  // return upserted rows in the order they were sent. Pairing ids to holdings
+  // by array index would then be a coin flip, and a mis-paired id renames one
+  // position into another — the exact identity bug this table exists to end.
+  const { data: saved, error } = rows.length
+    ? await _sb.from('investment_holdings').upsert(rows).select('id, position')
+    : { data: [], error: null };
+  if (error) {
+    // Deliberately not surfaced and not rolled back: the document write already
+    // succeeded, so the user's data is safe and the next load falls back to it.
+    // Failing loudly here would report a loss that did not happen.
+    console.error('[invSyncHoldingRows] upsert', error);
+    return;
+  }
+
+  // Whatever the upsert did not return is a holding that was deleted. An empty
+  // keep-list has to delete everything rather than build `in.()`, which is not
+  // valid syntax and would throw instead of clearing the last position.
+  const keep = (saved || []).map(r => r.id).filter(Boolean);
+  let del = _sb.from('investment_holdings').delete().eq('user_id', _currentUser.id);
+  if (keep.length) del = del.not('id', 'in', `(${keep.join(',')})`);
+  const { error: delErr } = await del;
+  if (delErr) console.error('[invSyncHoldingRows] delete', delErr);
+
+  // Hand the ids back to the in-memory copy, or the next save re-inserts every
+  // row it just created. Matched by position, which is the index within the
+  // stripped list, not within _invData.holdings — blank editing rows sit in the
+  // latter and shift it.
+  if (_invData && Array.isArray(_invData.holdings) && (saved || []).length === live.length) {
+    const byPos = new Map((saved || []).map(r => [r.position, r.id]));
+    let i = 0;
+    for (const h of _invData.holdings) {
+      if (!(h.symbol || h.entryShares || h.entryPrice)) continue;
+      const id = byPos.get(i++);
+      if (id) h.id = id;
+    }
+  }
 }
 
 async function invInit() {
@@ -15462,10 +15545,16 @@ function invGetCurrentData() {
   const tbody = document.getElementById('inv-tbody');
   const rows = tbody ? tbody.querySelectorAll('tr[data-idx]') : [];
   const holdings = [];
+  const known = (_invData && _invData.holdings) || [];
   rows.forEach(row => {
     const inputs = row.querySelectorAll('input');
     const cat = row.querySelector('.inv-cat-sel')?.value || '';
     holdings.push({
+      // The DOM carries values, not identity. Without carrying the row's id
+      // across, every save would look like "delete everything, insert new
+      // everything" and the stable ids this table exists for would last exactly
+      // one edit. data-idx is the index the rest of this function relies on.
+      id:           known[+row.dataset.idx]?.id,
       symbol:       (inputs[0]?.value || '').toUpperCase().trim(),
       sector:       (inputs[1]?.value || '').trim(),
       cat,
