@@ -7533,8 +7533,17 @@ let _rtChannel = null;
 // bybit_id backfill, imports) so their echoes don't thrash the UI with
 // re-renders — that burst was perceived as the page "jumping" for a few
 // seconds right after login.
-let _rtSuppressUntil = 0;
-const _rtSuppress = (ms = 4000) => { _rtSuppressUntil = Math.max(_rtSuppressUntil, Date.now() + ms); };
+// Suppression says "the change about to arrive is my own echo", which is a
+// statement about one table. A single shared window meant a trades sync also
+// muted the investments and missed handlers, and vice versa — a genuine change
+// from another device that happened to land inside somebody else's 4-second
+// window was dropped and never reloaded. Keyed by table so each one only ever
+// mutes itself.
+const _rtSuppressUntil = { trades: 0, missed_opportunities: 0, investments: 0 };
+const _rtSuppress = (table, ms = 4000) => {
+  _rtSuppressUntil[table] = Math.max(_rtSuppressUntil[table] || 0, Date.now() + ms);
+};
+const _rtMuted = table => Date.now() < (_rtSuppressUntil[table] || 0);
 async function _syncReloadTrades() {
   if (!_currentUser) return;
   const { data, error } = await _sb.from('trades').select('*')
@@ -7562,10 +7571,10 @@ async function _setupRealtimeSync() {
   if (token && _sb.realtime?.setAuth) { try { _sb.realtime.setAuth(token); } catch {} }
   const activeTab = () => (document.querySelector('.tab-content.active') || {}).id || '';
   let tt;
-  const reloadTrades = () => { if (Date.now() < _rtSuppressUntil) return; clearTimeout(tt); tt = setTimeout(_syncReloadTrades, 800); };
+  const reloadTrades = () => { if (_rtMuted('trades')) return; clearTimeout(tt); tt = setTimeout(_syncReloadTrades, 800); };
   let mtt;
   const reloadMissed = () => {
-    if (Date.now() < _rtSuppressUntil) return;
+    if (_rtMuted('missed_opportunities')) return;
     // Not on the tab: skip the re-render, but the in-memory list is now stale
     // and missedRender() without force would happily paint it again. Dropping
     // the loaded flag makes the next visit refetch. Without this the tab could
@@ -7590,7 +7599,7 @@ async function _setupRealtimeSync() {
           // -> invRecalc -> invAutoSave -> invSaveData spun forever: measured at
           // 15 writes in 40 idle seconds. The old code accidentally avoided it
           // only because invInit() was a no-op against a warm cache.
-          if (Date.now() < _rtSuppressUntil) return;
+          if (_rtMuted('investments')) return;
           _invData = null;
           if (activeTab() === 'tab-investments') invInit();
         })
@@ -7625,7 +7634,7 @@ async function _dedupeTrades() {
   }
   let removed = 0;
   for (const t of toRemove) {
-    _rtSuppress();
+    _rtSuppress('trades');
     // Only drop it from memory once the soft-delete actually persisted, or the
     // row reappears on the next load and the journal contradicts itself.
     const { error } = await _sb.from('trades').update({ deleted: true, deleted_at: new Date().toISOString() })
@@ -12243,7 +12252,7 @@ async function _bybitExisting(t, fp) {
   );
   if (!byFp) return false;
   if (t.bybit_id && !byFp.bybit_id) {
-    _rtSuppress();
+    _rtSuppress('trades');
     const { error } = await _sb.from('trades').update({ bybit_id: t.bybit_id }).eq('id', byFp.id).eq('user_id', _currentUser.id);
     if (!error) byFp.bybit_id = t.bybit_id;
     else console.error('[bybit backfill]', error);
@@ -14629,7 +14638,7 @@ async function missedAdd() {
   if (!date)                   { toast('הכנס תאריך','error'); return; }
   if (isNaN(price)||price<=0)  { toast('הכנס מחיר תקין','error'); return; }
 
-  _rtSuppress();
+  _rtSuppress('missed_opportunities');
   const { data, error } = await _sb.from('missed_opportunities')
     .insert({ user_id: _currentUser.id, symbol: sym, date, price, sector, note })
     .select().single();
@@ -14654,7 +14663,7 @@ async function missedAdd() {
 async function missedDelete(id) {
   if (!confirm('למחוק הזדמנות זו? הפעולה אינה הפיכה')) return;
   if (!_currentUser) { toast('לא מחובר — התחבר מחדש ונסה שוב','error'); return; }
-  _rtSuppress();
+  _rtSuppress('missed_opportunities');
   // .select() so we can tell "deleted nothing" from "deleted successfully".
   // A DELETE that matches no row is NOT an error in PostgREST — it returns 204
   // with no error object, so the old code silently re-rendered the unchanged
@@ -14809,7 +14818,7 @@ async function missedSaveEdit(id) {
   if (!date)                  { toast('הכנס תאריך','error'); return; }
   if (isNaN(price)||price<=0) { toast('הכנס מחיר תקין','error'); return; }
 
-  _rtSuppress();
+  _rtSuppress('missed_opportunities');
   const { error } = await _sb.from('missed_opportunities')
     .update({ symbol: sym, sector, date, price, note })
     .eq('id', id).eq('user_id', _currentUser.id);
@@ -14919,7 +14928,7 @@ async function _invSaveWrite(data, prev, gen) {
   // the handler does not treat it as a change made elsewhere. Marked at the
   // moment of the write, not when it was queued — a write that waited its turn
   // would otherwise burn part of its suppression window sitting in the queue.
-  _rtSuppress();
+  _rtSuppress('investments');
   const row = { user_id: _currentUser.id, holdings: invStripBlank(data.holdings), deposits: data.deposits || [],
                 currency: invGetCurrency(), alloc_targets: data.allocTargets || invTargetsPayload() };
 
