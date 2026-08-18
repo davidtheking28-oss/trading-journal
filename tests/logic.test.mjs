@@ -284,16 +284,16 @@ describe('invDonutPcts — allocation slices', () => {
 
 // ── Position sizing calculator ──────────────────────────────────────────────
 // Portfolio value (₪ or $) × desired % → converted to USD → floored into whole
-// shares, then checked against the category target, the category risk cap and
-// available cash. A wrong number here is a wrong order, so the failure modes
-// matter as much as the happy path.
+// shares, then checked against the category target and available cash. A wrong
+// number here is a wrong order, so the failure modes matter as much as the
+// happy path.
 const { invPositionSize } = load('invPositionSize');
 
 const sizing = (o = {}) => invPositionSize({
   portfolioValue: 50000, portfolioCurrency: '₪', fxRate: 2.95,
   pctOfPortfolio: 10, price: 320, stop: 0,
   portfolioTotalUsd: 20000, catCostUsd: 0, catTargetFrac: 0.6,
-  catRiskCapPct: 1, cashUsd: 100000, ...o,
+  cashUsd: 100000, ...o,
 });
 
 describe('invPositionSize — shares from a percentage of the portfolio', () => {
@@ -357,29 +357,25 @@ describe('invPositionSize — the three caps', () => {
     assert.equal(r.maxSharesByTarget, 2);
   });
 
-  test('flags a buy that breaches the category risk cap', () => {
-    // stop $80 on a $100 entry risks $20/share; a 1% cap on $20,000 allows $200,
-    // so 10 shares is the ceiling and 20 shares must be rejected.
+  test('a stop reports what it costs at the sized quantity', () => {
+    // stop $80 on a $100 entry risks $20/share; 20 shares is $400, i.e. 2% of a
+    // $20,000 portfolio. Reported, not enforced — sizing no longer caps on it.
     const r = sizing({ portfolioCurrency: '$', portfolioValue: 20000, pctOfPortfolio: 10,
                        price: 100, stop: 80 });
     assert.equal(r.riskUsd, 400);
     assert.equal(r.riskPct, 2);
-    assert.equal(r.withinRisk, false);
-    assert.equal(r.maxSharesByRisk, 10);
   });
 
-  test('no stop means no risk figure, and the risk cap cannot fail', () => {
+  test('no stop means no risk figure', () => {
     const r = sizing({ portfolioCurrency: '$', portfolioValue: 20000, pctOfPortfolio: 10, price: 100 });
     assert.equal(r.riskUsd, null);
-    assert.equal(r.withinRisk, true, 'an unset stop is not a breach');
-    assert.equal(r.maxSharesByRisk, null);
+    assert.equal(r.riskPct, null);
   });
 
   test('a stop above the entry price is ignored rather than negated', () => {
     const r = sizing({ portfolioCurrency: '$', portfolioValue: 20000, pctOfPortfolio: 10,
                        price: 100, stop: 120 });
     assert.equal(r.riskUsd, null, 'a stop above entry is not a -$20/share gain');
-    assert.equal(r.maxSharesByRisk, null);
   });
 
   test('cash on hand caps the suggestion', () => {
@@ -389,12 +385,11 @@ describe('invPositionSize — the three caps', () => {
     assert.equal(r.withinCash, false);
   });
 
-  test('the suggestion is the tightest of the three caps', () => {
-    // target room 2000 -> 20 shares, risk cap -> 10, cash 700 -> 7. Cash wins.
+  test('the suggestion is the tighter of the two caps', () => {
+    // target room 2000 -> 20 shares, cash 700 -> 7. Cash wins.
     const r = sizing({ portfolioCurrency: '$', portfolioValue: 20000, pctOfPortfolio: 50,
                        price: 100, stop: 80, catCostUsd: 10000, cashUsd: 700 });
     assert.equal(r.maxSharesByTarget, 20);
-    assert.equal(r.maxSharesByRisk, 10);
     assert.equal(r.maxSharesByCash, 7);
     assert.equal(r.suggestedShares, 7);
   });
@@ -448,7 +443,7 @@ describe('invSplitEntries — splitting a buy into N entries', () => {
 
   test('the entries always sum back to the total — never more', () => {
     // 62 / 3 = 20.67. Rounding each tranche up would buy 63 shares: one more
-    // than the sizing allowed, i.e. past the risk cap that produced it.
+    // than the sizing allowed.
     for (const [total, n] of [[62, 3], [10, 3], [7, 4], [100, 7], [5, 5], [1, 3]]) {
       const p = invSplitEntries(total, 50, n);
       assert.equal(p.reduce((s, e) => s + e.shares, 0), total, `${total} split ${n} ways`);
@@ -572,7 +567,7 @@ describe('invPositionSize — hostile price input', () => {
     for (const price of [1, 7.5, 100, 999]) {
       const r = sizing({ portfolioCurrency: '$', portfolioValue: 20000, pctOfPortfolio: 50,
                          price, stop: price * 0.9, catCostUsd: 3000, cashUsd: 5000 });
-      for (const cap of ['maxSharesByTarget', 'maxSharesByRisk', 'maxSharesByCash']) {
+      for (const cap of ['maxSharesByTarget', 'maxSharesByCash']) {
         if (r[cap] !== null) assert.ok(r.suggestedShares <= r[cap], `${cap} at price ${price}`);
       }
       assert.ok(r.suggestedShares >= 0);
