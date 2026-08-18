@@ -14891,12 +14891,40 @@ async function invLoadFromDB() {
 
 let _invUpdatedAt = null;
 
-async function invSaveData(data) {
+// Saves are fired from a dozen independent places — a debounced autosave, a row
+// lock, a delete, a target change — and none of them knew about the others. Two
+// that overlapped both captured the same `_invUpdatedAt`, so the second matched
+// no row and reported "updated elsewhere": a conflict with ourselves, on one
+// device, with nobody else writing. It then reloaded and threw away the newer
+// edit. Queueing the writes means each one reads the stamp the previous write
+// produced. A real remote change still moves the stamp and still trips the
+// guard, which is the case it exists for.
+let _invSaveChain = Promise.resolve();
+// Bumped whenever a real conflict forced a reload, so writes composed before it
+// can tell that the ground moved under them.
+let _invReloadGen = 0;
+
+function invSaveData(data) {
   const prev = _invData;
+  // Optimistic and synchronous: the screen must not wait behind the queue.
   _invData = data;
-  if (!_currentUser) return;
+  if (!_currentUser) return Promise.resolve(undefined);
+  const gen = _invReloadGen;
+  const run = _invSaveChain.then(() => _invSaveWrite(data, prev, gen));
+  _invSaveChain = run.catch(() => {});
+  return run;
+}
+
+async function _invSaveWrite(data, prev, gen) {
+  // A conflict earlier in the queue already reloaded from the server. Writing a
+  // payload composed before that reload would put back the very state the
+  // reload discarded — and it would succeed, because the reload refreshed the
+  // stamp this write is guarded by.
+  if (gen !== _invReloadGen) return false;
   // Our own write is about to come back over the realtime channel; mark it so
-  // the handler does not treat it as a change made elsewhere.
+  // the handler does not treat it as a change made elsewhere. Marked at the
+  // moment of the write, not when it was queued — a write that waited its turn
+  // would otherwise burn part of its suppression window sitting in the queue.
   _rtSuppress();
   const row = { user_id: _currentUser.id, holdings: invStripBlank(data.holdings), deposits: data.deposits || [],
                 currency: invGetCurrency(), alloc_targets: data.allocTargets || invTargetsPayload() };
@@ -14910,7 +14938,7 @@ async function invSaveData(data) {
       .update(row).eq('user_id', _currentUser.id).eq('updated_at', _invUpdatedAt).select('updated_at');
     if (upErr) { _invData = prev; toast('שגיאה בשמירת השקעות: ' + upErr.message, 'error'); return false; }
     if (!hit || !hit.length) {
-      _invData = null; _invUpdatedAt = null;
+      _invData = null; _invUpdatedAt = null; _invReloadGen++;
       toast('ההשקעות עודכנו במקום אחר — טוען מחדש כדי לא לדרוס', 'error');
       await invInit();
       return false;
@@ -15155,6 +15183,15 @@ function invApplyRisk(r) {
   };
 }
 function invSetRiskCap(cat, pctStr) {
+  // Blank is not zero. `+"" === 0` passed every check below and stored a cap of
+  // 0, which invPositionSize reads as "no cap at all" — so clearing the field,
+  // or blurring it while empty, silently switched the risk limit off while the
+  // panel still looked configured. Live data already carries one such 0.
+  if (String(pctStr ?? '').trim() === '') {
+    const blankEl = document.getElementById('ic-risk');
+    if (blankEl) blankEl.value = ALLOC_RISK[cat];
+    return;
+  }
   const pct = +pctStr;
   // Returning silently left the rejected number sitting in the field while the
   // sizer went on using the old cap — the screen and the maths disagreed.
