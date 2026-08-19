@@ -62,6 +62,12 @@ unlike this one — push it manually).
   backgrounded browser tab getting discarded is enough to trigger one) always
   dumps the user back on the Overview tab regardless of which tab — screener,
   statistics, etc. — they were actually on.
+  **It reads/writes `tj_active_tab` in `sessionStorage`, not `localStorage`**
+  (changed 2026-08-19, on request): closing the app and coming back should land
+  on Overview, while a reload of the same tab should not lose your place.
+  sessionStorage is the only thing that distinguishes the two. Moving this key
+  back to localStorage reintroduces "it always reopens on the last tab"; deleting
+  the call reintroduces the regression above. Both have been reported as bugs.
 - **The realtime WebSocket teardown on `visibilitychange`** (search
   `_teardownRealtimeSync` near the bottom of the file) must stay. An open
   Supabase Realtime socket keeps the page ineligible for the browser's

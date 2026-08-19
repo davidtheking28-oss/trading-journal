@@ -7887,7 +7887,8 @@ function setTradesScope(s, btn, ddId) {
 }
 
 function switchTab(name, btn) {
-  try { localStorage.setItem('tj_active_tab', name); } catch {}
+  // sessionStorage, not localStorage: see _restoreLastTab.
+  try { sessionStorage.setItem('tj_active_tab', name); } catch {}
   document.querySelectorAll('.tab-btn,.tnav-btn').forEach(b=>{ b.classList.remove('active'); b.style.color=''; });
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
   // Callers that navigate programmatically (the screener → journal handoff, the
@@ -8028,8 +8029,18 @@ function _maybeShowOrderIdNotice() {
 
 // Restore the tab the user last viewed (set in switchTab). Falls back to the
 // default overview when nothing is saved or the target isn't navigable here.
+//
+// Deliberately sessionStorage. Two situations look identical to the page and
+// have to be told apart:
+//   • the browser reloaded the page under the user (a backgrounded tab getting
+//     discarded is enough) — losing their place there is the bug this function
+//     was written to fix;
+//   • the user actually left and came back — they expect to start at home.
+// sessionStorage is exactly that line: it survives a reload of the same tab and
+// is gone once the tab is closed. With localStorage the second case was
+// indistinguishable from the first and always restored.
 function _restoreLastTab() {
-  let name; try { name = localStorage.getItem('tj_active_tab'); } catch {}
+  let name; try { name = sessionStorage.getItem('tj_active_tab'); } catch {}
   if (!name || name === 'overview') return;
   const tabEl = document.getElementById('tab-' + name);
   if (!tabEl) return;
