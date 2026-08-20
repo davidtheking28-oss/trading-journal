@@ -7539,7 +7539,7 @@ let _rtChannel = null;
 // from another device that happened to land inside somebody else's 4-second
 // window was dropped and never reloaded. Keyed by table so each one only ever
 // mutes itself.
-const _rtSuppressUntil = { trades: 0, missed_opportunities: 0, investments: 0 };
+const _rtSuppressUntil = { trades: 0, missed_opportunities: 0, investments: 0, investment_holdings: 0 };
 const _rtSuppress = (table, ms = 4000) => {
   _rtSuppressUntil[table] = Math.max(_rtSuppressUntil[table] || 0, Date.now() + ms);
 };
@@ -7600,6 +7600,16 @@ async function _setupRealtimeSync() {
           // 15 writes in 40 idle seconds. The old code accidentally avoided it
           // only because invInit() was a no-op against a warm cache.
           if (_rtMuted('investments')) return;
+          _invData = null;
+          if (activeTab() === 'tab-investments') invInit();
+        })
+    // The holdings rows are written a round-trip after the document, so the
+    // document's echo alone reloads the other tab too early: it re-reads the
+    // fresh document but the not-yet-updated rows, and reads prefer the rows.
+    // This second event is what corrects it.
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'investment_holdings', filter: f },
+        () => {
+          if (_rtMuted('investment_holdings')) return;
           _invData = null;
           if (activeTab() === 'tab-investments') invInit();
         })
@@ -15029,6 +15039,8 @@ async function _invSaveWrite(data, prev, gen) {
 // every position a new identity on every keystroke, and a failed insert after a
 // successful delete would simply lose the portfolio.
 async function _invSyncHoldingRows(holdings) {
+  // This write echoes back on its own channel now that the table is published.
+  _rtSuppress('investment_holdings');
   const live = invStripBlank(holdings);
   const rows = live.map((h, i) => {
     const r = {
@@ -15053,10 +15065,13 @@ async function _invSyncHoldingRows(holdings) {
     ? await _sb.from('investment_holdings').upsert(rows).select('id, position')
     : { data: [], error: null };
   if (error) {
-    // Deliberately not surfaced and not rolled back: the document write already
-    // succeeded, so the user's data is safe and the next load falls back to it.
-    // Failing loudly here would report a loss that did not happen.
+    // This used to be silent, on the reasoning that the document write had
+    // already succeeded so the next load would fall back to it. That stopped
+    // being true when reads started preferring the table: whenever it returns
+    // any rows at all it wins, so a half-applied sync is what the user sees
+    // next, and their following save copies it back into the document.
     console.error('[invSyncHoldingRows] upsert', error);
+    toast('האחזקות נשמרו חלקית — רענן את הדף לפני שינוי נוסף', 'error');
     return;
   }
 
@@ -15067,13 +15082,24 @@ async function _invSyncHoldingRows(holdings) {
   let del = _sb.from('investment_holdings').delete().eq('user_id', _currentUser.id);
   if (keep.length) del = del.not('id', 'in', `(${keep.join(',')})`);
   const { error: delErr } = await del;
-  if (delErr) console.error('[invSyncHoldingRows] delete', delErr);
+  if (delErr) {
+    // Same reasoning as the upsert above: a failed cleanup leaves a deleted
+    // holding in the table, and the table is what the next load renders.
+    console.error('[invSyncHoldingRows] delete', delErr);
+    toast('האחזקות נשמרו חלקית — רענן את הדף לפני שינוי נוסף', 'error');
+  }
 
   // Hand the ids back to the in-memory copy, or the next save re-inserts every
   // row it just created. Matched by position, which is the index within the
   // stripped list, not within _invData.holdings — blank editing rows sit in the
   // latter and shift it.
-  if (_invData && Array.isArray(_invData.holdings) && (saved || []).length === live.length) {
+  // `_invData === data` matters: invSaveData swaps _invData synchronously while
+  // writes wait their turn on the queue, so by the time this runs _invData can
+  // already be a different, newer array. Comparing saved.length to live.length
+  // alone is no test at all — both derive from this write and always agree —
+  // and handing ids back into the newer array assigns each id to whichever
+  // holding happens to sit at that index now.
+  if (_invData === data && Array.isArray(_invData.holdings) && (saved || []).length === live.length) {
     const byPos = new Map((saved || []).map(r => [r.position, r.id]));
     let i = 0;
     for (const h of _invData.holdings) {
