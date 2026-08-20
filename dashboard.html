@@ -13572,6 +13572,13 @@ function flexParseXML(xml) {
     const assetCat = (el.getAttribute('assetCategory') || '').toUpperCase();
     if (assetCat && assetCat !== 'STK') return;
     const sym   = el.getAttribute('symbol') || '';
+    // The category test fails open: Flex only emits assetCategory when "Asset
+    // Class" is selected in the query, and the Trade Confirmation query is
+    // configured separately from the Activity one. Without this second test a
+    // query missing that column re-imports USD.ILS as a 3014-share position —
+    // the original bug, arriving through a different door. A six-letter pair
+    // with a dot is never a ticker.
+    if (/^[A-Z]{3}\.[A-Z]{3}$/.test(sym.toUpperCase())) return;
     const dt    = el.getAttribute('dateTime') || '';
     const side  = (el.getAttribute('buySell') || '').toUpperCase();
     const qty   = Math.abs(+el.getAttribute('quantity') || 0);
@@ -13646,17 +13653,33 @@ function flexParseXML(xml) {
       return acc;
     }, { ...list[0] });
 
+    // Keyed on side and open/close as well as the order id, exactly as the
+    // heuristic path below already partitions. One IBKR order can legitimately
+    // carry fills of both kinds: selling 100 against a 60-share long reports a
+    // "C" fill for 60 and an "O" fill for 40 under one ibOrderID. Grouping on
+    // the id alone welded those into a single 100-share close, which lost the
+    // new 40-share short and emitted a phantom orphan-close that then hunted
+    // for any open long in the symbol to stamp an exit onto. The two merge
+    // paths disagreed on the same statement — and the authoritative one was
+    // the one that was wrong.
     const byOrderId = {};
     const noOrderId = [];
     for (const ex of sorted) {
-      if (ex.orderId) (byOrderId[ex.orderId] ||= []).push(ex);
+      if (ex.orderId) (byOrderId[`${ex.orderId}|${ex.side}|${ex.oc || ''}`] ||= []).push(ex);
       else noOrderId.push(ex);
     }
 
     const heuristicMerged = [];
     for (const ex of noOrderId) {
       const prev = heuristicMerged[heuristicMerged.length - 1];
+      // `prev.sec && ex.sec`: a dateTime with no time part parses to sec 0, so
+      // the ≤2s test — the whole basis of this heuristic — passes for every
+      // fill on the day and the merge collapses to "same price, same day".
+      // Two deliberate entries at 10.00 and 10.01 became one 200-share
+      // position. With no clock there is nothing to be proximate about, so the
+      // safe answer is not to merge.
       if (prev && prev.side === ex.side && (prev.oc || null) === (ex.oc || null)
+          && prev.sec && ex.sec
           && (ex.sec - prev.sec) <= 2 && Math.abs(ex.price - prev.price) <= prev.price * 0.005) {
         const totalQty = prev.qty + ex.qty;
         prev.price = r6((prev.price * prev.qty + ex.price * ex.qty) / totalQty);

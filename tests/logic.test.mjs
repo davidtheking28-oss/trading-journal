@@ -653,3 +653,74 @@ describe('realtime suppression is per table', () => {
     assert.equal(m._rtMuted('no_such_table'), false);
   });
 });
+
+// ── flexParseXML: the two merge paths must agree ────────────────────────────
+// ibOrderID is authoritative when present and the time/price heuristic is the
+// fallback, so the same statement has to parse identically either way. Where
+// they disagree, one of them is wrong — and it was the authoritative one.
+const stripOrderIds = x => x.replace(/ ibOrderID="[^"]*"/g, '');
+
+describe('flexParseXML — order id and heuristic agree', () => {
+  // Selling 100 against a 60-share long: IBKR reports one "C" fill for 60 and
+  // one "O" fill for 40 under a single ibOrderID.
+  const reversal = xmlOf(
+    fill({ tradeID: 'p0', ibOrderID: '900', buySell: 'BUY',  quantity: '60', tradePrice: '10',
+           dateTime: '20260801;093000', openCloseIndicator: 'O' }),
+    fill({ tradeID: 'p1', ibOrderID: '901', buySell: 'SELL', quantity: '60', tradePrice: '11',
+           dateTime: '20260801;150000', openCloseIndicator: 'C' }),
+    fill({ tradeID: 'p2', ibOrderID: '901', buySell: 'SELL', quantity: '40', tradePrice: '11',
+           dateTime: '20260801;150000', openCloseIndicator: 'O' }),
+  );
+
+  const shape = out => out.map(t => [t.symbol, t.ls, t.shares, t.entryPrice, t.closedShares || 0, !!t._orphanClose]);
+
+  test('a reversal order opens the new side instead of a phantom close', () => {
+    const out = flexParseXML(reversal);
+    assert.equal(out.length, 2);
+    assert.deepEqual(shape(out), [['TST', 'L', 60, 10, 60, false], ['TST', 'S', 40, 11, 0, false]]);
+  });
+
+  test('the order-id path matches the heuristic path exactly', () => {
+    assert.deepEqual(shape(flexParseXML(reversal)), shape(flexParseXML(stripOrderIds(reversal))));
+  });
+
+  test('opposite sides sharing one order id are not welded together', () => {
+    // Grouping on the id alone turned a completed round trip into a single
+    // 100-share long at the average of the two prices.
+    const out = flexParseXML(xmlOf(
+      fill({ tradeID: 'q1', ibOrderID: '5', buySell: 'BUY',  quantity: '50', tradePrice: '10',
+             dateTime: '20260801;100000', openCloseIndicator: 'O' }),
+      fill({ tradeID: 'q2', ibOrderID: '5', buySell: 'SELL', quantity: '50', tradePrice: '11',
+             dateTime: '20260801;100001', openCloseIndicator: 'C' }),
+    ));
+    assert.equal(out.length, 1);
+    assert.equal(out[0].shares, 50, 'a buy and a sell must not merge into 100 shares');
+    assert.equal(out[0].exitPrice, 11, 'the round trip must close, not stay open');
+  });
+});
+
+describe('flexParseXML — rows that are not positions', () => {
+  test('an FX pair is rejected even with no assetCategory attribute', () => {
+    // Flex only emits assetCategory when "Asset Class" is selected, so the
+    // category test fails open and USD.ILS came back as a 3014-share holding.
+    const bare = '<FlexQueryResponse><Trade symbol="USD.ILS" dateTime="20260806;100000" ' +
+                 'buySell="BUY" quantity="3014" tradePrice="3.31" tradeID="x1" /></FlexQueryResponse>';
+    assert.deepEqual(flexParseXML(bare), []);
+  });
+
+  test('a real ticker containing a dot still imports', () => {
+    assert.equal(flexParseXML(xmlOf(fill({ symbol: 'BRK.B' })))[0].symbol, 'BRK.B');
+  });
+});
+
+describe('flexParseXML — a dateTime with no time part', () => {
+  test('same-day fills at different prices are not merged without a clock', () => {
+    // No time part parses to second 0 for every fill, so the <=2s proximity
+    // test passes trivially and the merge degrades to "same day, near price".
+    const out = flexParseXML(xmlOf(
+      fill({ tradeID: 'w1', dateTime: '20260806', quantity: '100', tradePrice: '10.00', openCloseIndicator: 'O' }),
+      fill({ tradeID: 'w2', dateTime: '20260806', quantity: '100', tradePrice: '10.01', openCloseIndicator: 'O' }),
+    ));
+    assert.equal(out.length, 2, 'two deliberate entries must stay two');
+  });
+});
