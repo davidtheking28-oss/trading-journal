@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TradeGrid — פלטפורמת המסחר שלך</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#08080a; --bg2:#0d0d10; --card:#111115; --border:rgba(255,255,255,.08);
+    --text:#f4f4f6; --text2:#9a9aa5; --text3:#5c5c66;
+    --violet:#8b5cf6; --blue:#3b82f6; --green:#22e5a0;
+    --violet-glow:rgba(139,92,246,.5); --blue-glow:rgba(59,130,246,.45); --green-glow:rgba(34,229,160,.45);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg); color:var(--text); font-family:'Heebo',sans-serif;
+    overflow-x:hidden; position:relative;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+
+  /* grain */
+  body::before{
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:1; opacity:.035; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .glow-text{
+    background:linear-gradient(90deg,var(--violet),var(--blue) 55%,var(--green));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+
+  .card{
+    background:linear-gradient(160deg,#121216,#0a0a0d);
+    border:1px solid var(--border); border-radius:20px;
+  }
+
+  .btn-cta{
+    background:linear-gradient(90deg,var(--violet),var(--blue));
+    box-shadow:0 0 0 rgba(139,92,246,0), 0 8px 30px -8px var(--violet-glow);
+    transition:box-shadow .3s ease, transform .2s ease;
+  }
+  .btn-cta:hover{ box-shadow:0 0 40px -4px var(--violet-glow), 0 8px 30px -6px var(--blue-glow); transform:translateY(-2px); }
+
+  .nav-link{ position:relative; color:var(--text2); transition:color .2s; }
+  .nav-link:hover{ color:var(--text); }
+  .nav-link::after{
+    content:''; position:absolute; right:0; bottom:-4px; width:0; height:1px;
+    background:linear-gradient(90deg,var(--violet),var(--green)); transition:width .25s ease;
+  }
+  .nav-link:hover::after{ width:100%; }
+
+  /* hero backdrop */
+  .hero-glow{
+    position:absolute; inset:0; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(600px 400px at 78% 15%, var(--violet-glow), transparent 60%),
+      radial-gradient(500px 350px at 15% 55%, var(--blue-glow), transparent 60%),
+      radial-gradient(400px 300px at 55% 90%, var(--green-glow), transparent 65%);
+    opacity:.28; filter:blur(10px);
+  }
+  .grid-overlay{
+    position:absolute; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+    background-size:52px 52px;
+    mask-image:radial-gradient(ellipse 90% 60% at 60% 20%, black 20%, transparent 80%);
+  }
+
+  /* terminal window */
+  .term{
+    background:#0a0a0d; border:1px solid rgba(255,255,255,.1); border-radius:14px;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,.7), 0 0 60px -20px var(--violet-glow);
+  }
+  .term-dot{ width:11px; height:11px; border-radius:50%; }
+  .caret{ display:inline-block; width:8px; height:16px; background:var(--green); animation:blink 1s steps(1) infinite; vertical-align:-3px; box-shadow:0 0 8px var(--green-glow); }
+  @keyframes blink{ 50%{ opacity:0; } }
+  .term-line{ opacity:0; animation:typeIn .4s ease forwards; }
+  @keyframes typeIn{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:translateY(0); } }
+
+  /* ticker */
+  .ticker-track{ display:flex; width:max-content; animation:scrollX 32s linear infinite; }
+  @keyframes scrollX{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
+  .ticker-item{ white-space:nowrap; }
+
+  /* compare cards */
+  .x-mark{ color:#f43f5e; }
+  .check-mark{ color:var(--green); text-shadow:0 0 12px var(--green-glow); }
+
+  /* range input styling */
+  input[type=range]{
+    -webkit-appearance:none; appearance:none; width:100%; height:6px; border-radius:999px;
+    background:linear-gradient(90deg,var(--violet),var(--blue)); outline:none; cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none; width:20px; height:20px; border-radius:50%;
+    background:#fff; border:3px solid var(--violet); box-shadow:0 0 14px var(--violet-glow); cursor:pointer;
+    transition:transform .15s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover{ transform:scale(1.15); }
+  input[type=range]::-moz-range-thumb{
+    width:20px; height:20px; border-radius:50%; background:#fff; border:3px solid var(--violet);
+    box-shadow:0 0 14px var(--violet-glow); cursor:pointer;
+  }
+
+  .tab-btn{ color:var(--text2); border-bottom:2px solid transparent; transition:all .2s; }
+  .tab-btn.active{ color:var(--text); border-color:var(--green); text-shadow:0 0 16px var(--green-glow); }
+
+  .gallery-item{ transition:transform .35s ease, box-shadow .35s ease; }
+  .gallery-item:hover{ transform:translateY(-6px); box-shadow:0 20px 50px -15px var(--violet-glow); }
+
+  .price-card{ position:relative; overflow:hidden; }
+  .price-card.featured::before{
+    content:''; position:absolute; inset:-2px; z-index:-1; border-radius:22px;
+    background:conic-gradient(from 0deg, var(--violet), var(--blue), var(--green), var(--violet));
+    animation:spin 6s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .price-card.featured{ background:#0d0d10; border-radius:20px; }
+
+  .reveal{ opacity:0; transform:translateY(24px); transition:opacity .7s ease, transform .7s ease; }
+  .reveal.in{ opacity:1; transform:translateY(0); }
+
+  ::selection{ background:var(--violet); color:#fff; }
+  ::-webkit-scrollbar{ width:10px; }
+  ::-webkit-scrollbar-track{ background:var(--bg); }
+  ::-webkit-scrollbar-thumb{ background:#2a2a32; border-radius:99px; }
+</style>
+</head>
+<body class="antialiased">
+
+<!-- ===== HEADER ===== -->
+<header class="fixed top-0 inset-x-0 z-50 backdrop-blur-xl bg-black/40 border-b border-white/5">
+  <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+    <div class="flex items-center gap-2.5">
+      <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center shadow-[0_0_18px_-2px_var(--violet-glow)]">
+        <span class="mono font-bold text-white text-sm">TG</span>
+      </div>
+      <span class="text-lg font-bold tracking-tight">Trade<span class="glow-text">Grid</span></span>
+    </div>
+    <nav class="hidden md:flex items-center gap-9 mono text-sm">
+      <a href="#compare" class="nav-link">למה אנחנו</a>
+      <a href="#calc" class="nav-link">מחשבון רווח</a>
+      <a href="#gallery" class="nav-link">תוצרים</a>
+      <a href="#pricing" class="nav-link">מחירון</a>
+    </nav>
+    <a href="#pricing" class="btn-cta text-white text-sm font-bold px-5 py-2.5 rounded-full">
+      התחל עכשיו
+    </a>
+  </div>
+</header>
+
+<!-- ===== HERO ===== -->
+<section class="relative pt-40 pb-28 px-6 overflow-hidden">
+  <div class="hero-glow"></div>
+  <div class="grid-overlay"></div>
+  <div class="max-w-7xl mx-auto relative z-10 grid lg:grid-cols-2 gap-16 items-center">
+    <div>
+      <div class="inline-flex items-center gap-2 mono text-xs text-green-400 border border-green-500/30 rounded-full px-3 py-1.5 mb-7 bg-green-500/5">
+        <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+        מחובר בזמן אמת ל־4 ברוקרים
+      </div>
+      <h1 class="text-5xl md:text-6xl font-black leading-[1.08] tracking-tight mb-6">
+        יומן המסחר שהופך<br>
+        <span class="glow-text">כאוס לתובנה.</span>
+      </h1>
+      <p class="text-lg text-[var(--text2)] leading-relaxed mb-9 max-w-lg">
+        חיבור ישיר לברוקר, מסנן מניות חכם ובניית תיק השקעות — הכל במקום אחד,
+        בלי גיליונות אקסל ובלי ניחושים.
+      </p>
+      <div class="flex flex-wrap items-center gap-4">
+        <a href="#pricing" class="btn-cta text-white font-bold px-8 py-4 rounded-full text-base">
+          הרשמה חינם — 14 יום
+        </a>
+        <a href="#calc" class="text-[var(--text2)] hover:text-white transition-colors text-sm mono flex items-center gap-2 group">
+          חשב את הרווח שלך
+          <span class="group-hover:-translate-x-1 transition-transform">←</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- terminal -->
+    <div class="term p-5 max-w-md mr-auto w-full" dir="ltr">
+      <div class="flex items-center gap-2 mb-4 pb-3 border-b border-white/5">
+        <div class="term-dot bg-[#ff5f56]"></div>
+        <div class="term-dot bg-[#ffbd2e]"></div>
+        <div class="term-dot bg-[#27c93f]"></div>
+        <span class="mono text-xs text-[var(--text3)] mr-auto">tradegrid — zsh</span>
+      </div>
+      <div class="mono text-sm leading-8">
+        <div class="term-line" style="animation-delay:.1s">
+          <span class="text-green-400">$</span> tradegrid connect --broker=ibkr
+        </div>
+        <div class="term-line text-[var(--text3)]" style="animation-delay:.5s">
+          ✓ Flex Query authenticated · 214 fills synced
+        </div>
+        <div class="term-line" style="animation-delay:1s">
+          <span class="text-green-400">$</span> tradegrid screener --sector=tech --rvol&gt;2
+        </div>
+        <div class="term-line text-[var(--text3)]" style="animation-delay:1.5s">
+          ✓ 17 candidates matched · avg score 8.4/10
+        </div>
+        <div class="term-line" style="animation-delay:2s">
+          <span class="text-green-400">$</span> tradegrid pnl --month=aug
+        </div>
+        <div class="term-line" style="animation-delay:2.4s">
+          <span class="text-blue-400">win rate</span> 63.2%&nbsp;&nbsp;<span class="text-violet-400">P&amp;L</span> <span class="text-green-400">+$8,214.60</span>
+        </div>
+        <div class="term-line" style="animation-delay:2.9s">
+          <span class="text-green-400">$</span> <span class="caret"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TICKER ===== -->
+<div class="border-y border-white/5 bg-[#0c0c0f] py-4 overflow-hidden">
+  <div class="ticker-track mono text-sm text-[var(--text3)]">
+    <div class="ticker-item flex items-center gap-16 pl-16">
+      <span>חיבור לברוקר</span><span class="text-violet-500">◆</span>
+      <span>מסנן מניות</span><span class="text-blue-500">◆</span>
+      <span>נתונים בזמן אמת</span><span class="text-green-500">◆</span>
+      <span>בניית תיק השקעות</span><span class="text-violet-500">◆</span>
+      <span>ניתוח סטטיסטי</span><span class="text-blue-500">◆</span>
+      <span>ניהול סיכונים</span><span class="text-green-500">◆</span>
+    </div>
+    <div class="ticker-item flex items-center gap-16 pl-16" aria-hidden="true">
+      <span>חיבור לברוקר</span><span class="text-violet-500">◆</span>
+      <span>מסנן מניות</span><span class="text-blue-500">◆</span>
+      <span>נתונים בזמן אמת</span><span class="text-green-500">◆</span>
+      <span>בניית תיק השקעות</span><span class="text-violet-500">◆</span>
+      <span>ניתוח סטטיסטי</span><span class="text-blue-500">◆</span>
+      <span>ניהול סיכונים</span><span class="text-green-500">◆</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== COMPARE ===== -->
+<section id="compare" class="py-28 px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-16 reveal">
+      <p class="mono text-xs text-violet-400 mb-3 tracking-widest">ה-DIFF</p>
+      <h2 class="text-4xl md:text-5xl font-black">בלעדינו מול <span class="glow-text">אתנו</span></h2>
+    </div>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="card p-8 reveal border-red-500/10">
+        <h3 class="text-xl font-bold text-[var(--text2)] mb-6">בלעדינו</h3>
+        <ul class="space-y-4 mono text-sm">
+          <li class="flex items-start gap-3"><span class="x-mark">✕</span> גיליון אקסל שמתעדכן ידנית</li>
+          <li class="flex items-start gap-3"><span class="x-mark">✕</span> אין מושג מה שיעור ההצלחה האמיתי</li>
+          <li class="flex items-start gap-3"><span class="x-mark">✕</span> סינון מניות בעשרות טאבים פתוחים</li>
+          <li class="flex items-start gap-3"><span class="x-mark">✕</span> עמלות שנעלמות בין השורות</li>
+          <li class="flex items-start gap-3"><span class="x-mark">✕</span> החלטות מהבטן, בלי דאטה</li>
+        </ul>
+      </div>
+      <div class="card p-8 reveal border-green-500/20 shadow-[0_0_50px_-20px_var(--green-glow)]">
+        <h3 class="text-xl font-bold mb-6 flex items-center gap-2">אתנו <span class="text-green-400">✓</span></h3>
+        <ul class="space-y-4 mono text-sm">
+          <li class="flex items-start gap-3"><span class="check-mark">✓</span> סנכרון אוטומטי מהברוקר, בזמן אמת</li>
+          <li class="flex items-start gap-3"><span class="check-mark">✓</span> סטטיסטיקה מדויקת: win rate, R ממוצע, expectancy</li>
+          <li class="flex items-start gap-3"><span class="check-mark">✓</span> מסנן מניות חכם במסך אחד</li>
+          <li class="flex items-start gap-3"><span class="check-mark">✓</span> כל עמלה מתועדת ומחושבת</li>
+          <li class="flex items-start gap-3"><span class="check-mark">✓</span> תיק השקעות בנוי לפי דאטה, לא ניחוש</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CALCULATOR ===== -->
+<section id="calc" class="py-28 px-6 bg-[#0a0a0d] border-y border-white/5">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-14 reveal">
+      <p class="mono text-xs text-blue-400 mb-3 tracking-widest">מחשבון אינטראקטיבי</p>
+      <h2 class="text-4xl md:text-5xl font-black">כמה זמן וכסף <span class="glow-text">תחסוך</span>?</h2>
+    </div>
+    <div class="grid lg:grid-cols-2 gap-10 items-start">
+      <div class="card p-8 space-y-8">
+        <div>
+          <div class="flex justify-between mb-3 text-sm">
+            <label class="text-[var(--text2)]">עסקאות בחודש</label>
+            <span id="v-trades" class="mono font-bold text-violet-400">40</span>
+          </div>
+          <input type="range" id="s-trades" min="5" max="200" value="40">
+        </div>
+        <div>
+          <div class="flex justify-between mb-3 text-sm">
+            <label class="text-[var(--text2)]">שעות ניתוח ידני בשבוע</label>
+            <span id="v-hours" class="mono font-bold text-blue-400">6</span>
+          </div>
+          <input type="range" id="s-hours" min="1" max="30" value="6">
+        </div>
+        <div>
+          <div class="flex justify-between mb-3 text-sm">
+            <label class="text-[var(--text2)]">גודל תיק ($)</label>
+            <span id="v-size" class="mono font-bold text-green-400">25,000</span>
+          </div>
+          <input type="range" id="s-size" min="1000" max="500000" step="1000" value="25000">
+        </div>
+        <div>
+          <div class="flex justify-between mb-3 text-sm">
+            <label class="text-[var(--text2)]">שיפור ב-win rate מדאטה מדויקת</label>
+            <span id="v-wr" class="mono font-bold text-violet-400">4%</span>
+          </div>
+          <input type="range" id="s-wr" min="0" max="15" value="4">
+        </div>
+      </div>
+
+      <div class="card p-8 relative overflow-hidden">
+        <div class="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-violet-500/20 blur-3xl"></div>
+        <p class="mono text-xs text-[var(--text3)] mb-2 relative">הערכה חודשית</p>
+        <div class="flex items-baseline gap-2 mb-1 relative">
+          <span id="out-month" class="text-5xl font-black glow-text mono">$0</span>
+          <span class="text-[var(--text3)] text-sm">/ חודש</span>
+        </div>
+        <p class="text-xs text-[var(--text3)] mb-8 relative">זמן שנחסך + שיפור תפעולי בביצועים</p>
+
+        <div class="grid grid-cols-2 gap-4 mb-8 relative">
+          <div class="bg-black/30 rounded-xl p-4 border border-white/5">
+            <p class="mono text-xs text-[var(--text3)] mb-1">שעות שנחסכות</p>
+            <p id="out-hours" class="text-2xl font-bold mono text-blue-400">0</p>
+          </div>
+          <div class="bg-black/30 rounded-xl p-4 border border-white/5">
+            <p class="mono text-xs text-[var(--text3)] mb-1">שיפור P&amp;L חודשי</p>
+            <p id="out-pnl" class="text-2xl font-bold mono text-green-400">$0</p>
+          </div>
+        </div>
+
+        <div class="pt-6 border-t border-white/5 relative">
+          <p class="mono text-xs text-[var(--text3)] mb-2">תחזית שנתית</p>
+          <p id="out-year" class="text-4xl font-black mono text-white">$0</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== GALLERY ===== -->
+<section id="gallery" class="py-28 px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-14 reveal">
+      <p class="mono text-xs text-green-400 mb-3 tracking-widest">בתוך הפלטפורמה</p>
+      <h2 class="text-4xl md:text-5xl font-black">כל <span class="glow-text">מסך</span>, בנוי לעבודה</h2>
+    </div>
+
+    <div class="flex justify-center gap-8 mb-12 mono text-sm">
+      <button class="tab-btn active pb-2" data-tab="all">הכל</button>
+      <button class="tab-btn pb-2" data-tab="graphics">גרפים</button>
+      <button class="tab-btn pb-2" data-tab="video">מסכי לייב</button>
+      <button class="tab-btn pb-2" data-tab="sites">מסננים</button>
+    </div>
+
+    <div id="gallery-grid" class="grid md:grid-cols-3 gap-6">
+      <div class="gallery-item card p-6" data-cat="graphics">
+        <div class="h-36 rounded-xl mb-4 bg-gradient-to-br from-violet-600/20 to-transparent flex items-center justify-center">
+          <svg class="w-14 h-14 text-violet-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7 15l4-6 3 4 5-8"/></svg>
+        </div>
+        <h3 class="font-bold mb-1">עקומת P&amp;L מצטברת</h3>
+        <p class="text-[var(--text3)] text-sm">מעקב ביצועים ריאלי לאורך זמן</p>
+      </div>
+      <div class="gallery-item card p-6" data-cat="video">
+        <div class="h-36 rounded-xl mb-4 bg-gradient-to-br from-blue-600/20 to-transparent flex items-center justify-center">
+          <svg class="w-14 h-14 text-blue-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <h3 class="font-bold mb-1">לוח שנה מסחר</h3>
+        <p class="text-[var(--text3)] text-sm">כל יום, כל תוצאה, בזמן אמת</p>
+      </div>
+      <div class="gallery-item card p-6" data-cat="sites">
+        <div class="h-36 rounded-xl mb-4 bg-gradient-to-br from-green-600/20 to-transparent flex items-center justify-center">
+          <svg class="w-14 h-14 text-green-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
+        </div>
+        <h3 class="font-bold mb-1">מסנן מניות חכם</h3>
+        <p class="text-[var(--text3)] text-sm">סינון לפי נפח, סקטור ומומנטום</p>
+      </div>
+      <div class="gallery-item card p-6" data-cat="graphics">
+        <div class="h-36 rounded-xl mb-4 bg-gradient-to-br from-violet-600/20 to-transparent flex items-center justify-center">
+          <svg class="w-14 h-14 text-violet-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+        </div>
+        <h3 class="font-bold mb-1">סטטיסטיקה מתקדמת</h3>
+        <p class="text-[var(--text3)] text-sm">win rate, expectancy, drawdown</p>
+      </div>
+      <div class="gallery-item card p-6" data-cat="sites">
+        <div class="h-36 rounded-xl mb-4 bg-gradient-to-br from-green-600/20 to-transparent flex items-center justify-center">
+          <svg class="w-14 h-14 text-green-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h16v4H4zM4 12h10v8H4zM16 12h4v8h-4z"/></svg>
+        </div>
+        <h3 class="font-bold mb-1">בניית תיק השקעות</h3>
+        <p class="text-[var(--text3)] text-sm">הקצאות, פעימות ומחשבון סטופ</p>
+      </div>
+      <div class="gallery-item card p-6" data-cat="video">
+        <div class="h-36 rounded-xl mb-4 bg-gradient-to-br from-blue-600/20 to-transparent flex items-center justify-center">
+          <svg class="w-14 h-14 text-blue-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <h3 class="font-bold mb-1">סנכרון ברוקר חי</h3>
+        <p class="text-[var(--text3)] text-sm">IBKR, Bybit ועוד — בזמן אמת</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PRICING / FINAL CTA ===== -->
+<section id="pricing" class="relative py-32 px-6 overflow-hidden">
+  <div class="hero-glow" style="opacity:.2"></div>
+  <div class="max-w-5xl mx-auto relative z-10">
+    <div class="text-center mb-16 reveal">
+      <p class="mono text-xs text-violet-400 mb-3 tracking-widest">מחירון</p>
+      <h2 class="text-4xl md:text-5xl font-black mb-4">תתחיל <span class="glow-text">לסחור חכם</span></h2>
+      <p class="text-[var(--text2)]">ללא כרטיס אשראי · ביטול בכל רגע</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 mb-16">
+      <div class="card p-8 reveal">
+        <h3 class="font-bold text-lg mb-1">בסיסי</h3>
+        <p class="text-[var(--text3)] text-sm mb-6">למתחילים ברצינות</p>
+        <div class="mono text-4xl font-black mb-6">$0<span class="text-base text-[var(--text3)] font-normal">/חודש</span></div>
+        <ul class="space-y-3 text-sm text-[var(--text2)] mb-8">
+          <li>✓ יומן מסחר ידני</li>
+          <li>✓ עד 50 עסקאות/חודש</li>
+          <li>✓ סטטיסטיקה בסיסית</li>
+        </ul>
+        <a href="#" class="block text-center border border-white/15 rounded-full py-3 font-bold hover:bg-white/5 transition">התחל חינם</a>
+      </div>
+
+      <div class="price-card featured p-8 reveal">
+        <div class="absolute top-5 left-5 mono text-xs bg-green-500/15 text-green-400 px-3 py-1 rounded-full border border-green-500/30">הכי פופולרי</div>
+        <h3 class="font-bold text-lg mb-1 mt-6">פרו</h3>
+        <p class="text-[var(--text3)] text-sm mb-6">לסוחרים פעילים</p>
+        <div class="mono text-4xl font-black mb-6 glow-text">$29<span class="text-base text-[var(--text3)] font-normal">/חודש</span></div>
+        <ul class="space-y-3 text-sm text-[var(--text2)] mb-8">
+          <li>✓ סנכרון ברוקר אוטומטי</li>
+          <li>✓ עסקאות ללא הגבלה</li>
+          <li>✓ מסנן מניות מלא</li>
+          <li>✓ סטטיסטיקה מתקדמת</li>
+        </ul>
+        <a href="#" class="btn-cta block text-center text-white rounded-full py-3 font-bold">הרשמה — 14 יום חינם</a>
+      </div>
+
+      <div class="card p-8 reveal">
+        <h3 class="font-bold text-lg mb-1">מוסדי</h3>
+        <p class="text-[var(--text3)] text-sm mb-6">לקבוצות ומנהלי תיקים</p>
+        <div class="mono text-4xl font-black mb-6">$99<span class="text-base text-[var(--text3)] font-normal">/חודש</span></div>
+        <ul class="space-y-3 text-sm text-[var(--text2)] mb-8">
+          <li>✓ כל מה שבפרו</li>
+          <li>✓ ריבוי משתמשים</li>
+          <li>✓ תמיכה ייעודית</li>
+        </ul>
+        <a href="#" class="block text-center border border-white/15 rounded-full py-3 font-bold hover:bg-white/5 transition">צור קשר</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="border-t border-white/5 py-10 px-6">
+  <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 mono text-xs text-[var(--text3)]">
+    <span>© 2026 TradeGrid</span>
+    <span>נבנה עבור סוחרים שרוצים דאטה, לא ניחושים</span>
+  </div>
+</footer>
+
+<script>
+  // ── reveal on scroll ──
+  const io = new IntersectionObserver(es => es.forEach(e => { if(e.isIntersecting) e.target.classList.add('in'); }), { threshold: .15 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // ── calculator ──
+  const sTrades = document.getElementById('s-trades');
+  const sHours  = document.getElementById('s-hours');
+  const sSize   = document.getElementById('s-size');
+  const sWr     = document.getElementById('s-wr');
+
+  function fmtUsd(n){ return '$' + Math.round(n).toLocaleString('en-US'); }
+
+  function calc(){
+    const trades = +sTrades.value;
+    const hours  = +sHours.value;
+    const size   = +sSize.value;
+    const wr     = +sWr.value;
+
+    document.getElementById('v-trades').textContent = trades;
+    document.getElementById('v-hours').textContent  = hours;
+    document.getElementById('v-size').textContent    = size.toLocaleString('en-US');
+    document.getElementById('v-wr').textContent      = wr + '%';
+
+    const hoursSavedMonthly = Math.round(hours * 4 * 0.65);
+    const pnlLift = size * (wr / 100) * (trades / 40) * 0.14;
+    const monthTotal = pnlLift + hoursSavedMonthly * 35;
+
+    document.getElementById('out-hours').textContent = hoursSavedMonthly;
+    document.getElementById('out-pnl').textContent    = fmtUsd(pnlLift);
+    document.getElementById('out-month').textContent  = fmtUsd(monthTotal);
+    document.getElementById('out-year').textContent   = fmtUsd(monthTotal * 12);
+  }
+  [sTrades, sHours, sSize, sWr].forEach(el => el.addEventListener('input', calc));
+  calc();
+
+  // ── gallery tabs ──
+  const tabs = document.querySelectorAll('.tab-btn');
+  const items = document.querySelectorAll('.gallery-item');
+  tabs.forEach(btn => btn.addEventListener('click', () => {
+    tabs.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const cat = btn.dataset.tab;
+    items.forEach(it => {
+      it.style.display = (cat === 'all' || it.dataset.cat === cat) ? '' : 'none';
+    });
+  }));
+</script>
+</body>
+</html>
