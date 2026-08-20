@@ -7007,6 +7007,38 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         crossorigin="anonymous"></script>
 <script>
 // ─────────────────────────────────────────────
+// ACCESSIBILITY WIDGET
+// ─────────────────────────────────────────────
+(function() {
+  var root = document.documentElement;
+  var KEY = 'a11y-prefs';
+  function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
+  function save(p) { try { localStorage.setItem(KEY, JSON.stringify(p)); } catch (e) {} }
+  var prefs = load();
+  function apply() {
+    root.style.fontSize = (prefs.scale || 100) + '%';
+    root.classList.toggle('a11y-contrast', !!prefs.contrast);
+    root.classList.toggle('a11y-underline', !!prefs.underline);
+    document.querySelectorAll('.a11y-item').forEach(function (b) {
+      b.classList.toggle('active', !!prefs[b.dataset.a11y]);
+    });
+  }
+  window.a11yToggle = function () {
+    var panel = document.getElementById('a11y-panel');
+    var open = panel.classList.toggle('open');
+    document.getElementById('a11y-toggle').setAttribute('aria-expanded', open);
+  };
+  window.a11yFont = function (delta) {
+    prefs.scale = Math.min(150, Math.max(80, (prefs.scale || 100) + delta));
+    save(prefs); apply();
+  };
+  window.a11yContrast = function () { prefs.contrast = !prefs.contrast; save(prefs); apply(); };
+  window.a11yUnderline = function () { prefs.underline = !prefs.underline; save(prefs); apply(); };
+  window.a11yReset = function () { prefs = {}; save(prefs); apply(); };
+  apply();
+})();
+
+// ─────────────────────────────────────────────
 // SUPABASE CLIENT
 // ─────────────────────────────────────────────
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
