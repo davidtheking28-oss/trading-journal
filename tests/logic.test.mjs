@@ -748,3 +748,35 @@ describe('saveTrade guards the closed-volume invariants', () => {
     assert.match(src, /legShares > \(\+data\.closedShares \|\| \+data\.shares \|\| 0\)/);
   });
 });
+
+// ── Open positions must not be counted as results ───────────────────────────
+// calcTotal on an open position is -commission. stats() has excluded those
+// since it was written; the calendar, the day modal, the overview trend and the
+// cumulative chart all summed unfiltered, so opening a position made the month
+// slightly negative and the equity curve step down.
+describe('aggregations count realised P&L only', () => {
+  const open   = { ls:'L', entryDate:'2026-02-03', entryPrice:10, shares:100, closedShares:null, exitPrice:null, commission:2.5, ecn:0, t:[] };
+  const closed = { ls:'L', entryDate:'2026-02-04', closeDate:'2026-02-05', entryPrice:10, shares:100, closedShares:100, exitPrice:11, commission:2.5, ecn:0, t:[] };
+
+  test('an open position scores as a loss when counted', () => {
+    // The premise of the bug: this is why an unfiltered sum drifts.
+    assert.equal(calcTotal(open), -2.5);
+    assert.equal(isClosed(open), false);
+    assert.equal(isClosed(closed), true);
+  });
+
+  test('the calendar sums only closed trades', () => {
+    const src = extractFunction('renderCalendar');
+    assert.match(src, /const realised = arr => arr\.filter\(isClosed\)/);
+    assert.match(src, /realised\(allMonthTrades\)\.reduce/, 'month total');
+    assert.match(src, /realised\(dt\)\.reduce/,             'day cell');
+    assert.match(src, /realised\(wTrades\)\.reduce/,        'week total');
+    assert.match(src, /realised\(allMonthTrades\)\.filter\(t => calcTotal\(t\) > 0\)/, 'win count');
+  });
+
+  test('the day modal, the trend and the equity curve filter too', () => {
+    assert.match(extractFunction('showCalDayModal'), /all\.filter\(isClosed\)\.reduce/);
+    assert.match(extractFunction('renderOverview'),  /trades\.filter\(isClosed\)\.forEach/);
+    assert.match(extractFunction('renderCumChart'),  /trades\.filter\(isClosed\)\.forEach/);
+  });
+});

@@ -8594,7 +8594,13 @@ function renderCalendar(type) {
   });
 
   const allMonthTrades = Object.values(byDay).flat();
-  const monthTotal = allMonthTrades.reduce((s,t) => s+calcTotal(t), 0);
+  // calcTotal on an open position is -commission, so summing unfiltered turned
+  // every open trade into a small loss: it dragged the month total down, and
+  // the win/loss badge counted each one as a loss. stats() was fixed to
+  // realised-only long ago; the calendar was not. Rows stay in byDay so the day
+  // still shows it was traded — only the money is realised-only.
+  const realised = arr => arr.filter(isClosed);
+  const monthTotal = realised(allMonthTrades).reduce((s,t) => s+calcTotal(t), 0);
   const totalStyle = monthTotal > 0 ? 'color:var(--green)' : monthTotal < 0 ? 'color:var(--red)' : 'color:var(--text2)';
   const daysInMonth = new Date(year, month, 0).getDate();
   const startDow    = new Date(year, month-1, 1).getDay(); // 0=Sun
@@ -8612,8 +8618,8 @@ function renderCalendar(type) {
   const DAY_HDRS_EN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat','Weekly Sum'];
   const DAY_HDRS_ORDER = _lang === 'he' ? DAY_HDRS_HE : DAY_HDRS_EN;
 
-  const winsCount  = allMonthTrades.filter(t => calcTotal(t) > 0).length;
-  const lossCount  = allMonthTrades.length - winsCount;
+  const winsCount  = realised(allMonthTrades).filter(t => calcTotal(t) > 0).length;
+  const lossCount  = realised(allMonthTrades).length - winsCount;
 
   const _isLight = document.documentElement.getAttribute('data-theme') === 'light';
   if (_isLight) {
@@ -8658,7 +8664,7 @@ function renderCalendar(type) {
       } else {
         const ds = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
         const dt = byDay[ds] || [];
-        const dayTotal = dt.reduce((s,t) => s+calcTotal(t), 0);
+        const dayTotal = realised(dt).reduce((s,t) => s+calcTotal(t), 0);
         const isToday  = ds === todayStr;
         const cls = [
           'cal-cell',
@@ -8687,7 +8693,7 @@ function renderCalendar(type) {
       const ds = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       return byDay[ds] || [];
     });
-    const wTotal = wTrades.reduce((s,t) => s+calcTotal(t), 0);
+    const wTotal = realised(wTrades).reduce((s,t) => s+calcTotal(t), 0);
     if (wTrades.length) {
       const wCls = wTotal >= 0 ? 'color:var(--green)' : 'color:var(--red)';
       html += `<div class="cal-week-sum">
@@ -9053,7 +9059,9 @@ function toggleTradeRow(type, id) {
 function showCalDayModal(ds) {
   const all = [...db.stocks, ...db.crypto].filter(t => !t.deleted && t.entryDate?.slice(0,10) === ds);
   if (!all.length) return;
-  const dayTotal = all.reduce((s,t) => s+calcTotal(t), 0);
+  // Realised only, matching the calendar cell this modal opens from — an open
+  // position's calcTotal is just -commission and is not a result yet.
+  const dayTotal = all.filter(isClosed).reduce((s,t) => s+calcTotal(t), 0);
   const dtStyle = dayTotal >= 0 ? 'color:var(--green)' : 'color:var(--red)';
   const [y,mo,d] = ds.split('-');
   const title = `${+d}/${+mo}/${y}`;
@@ -10626,7 +10634,9 @@ function renderOverview() {
 
   // Trend
   const byMon = {};
-  trades.forEach(t => { const k=(t.entryDate||'').slice(0,7); if(k) byMon[k]=(byMon[k]||0)+calcTotal(t); });
+  // Realised only: an open position contributes -commission and would show a
+  // month as slightly negative purely because positions were opened in it.
+  trades.filter(isClosed).forEach(t => { const k=(t.entryDate||'').slice(0,7); if(k) byMon[k]=(byMon[k]||0)+calcTotal(t); });
   const monKeys = Object.keys(byMon).sort();
   let trendCls='flat', trendLbl='—';
   if (monKeys.length >= 2) {
@@ -11028,7 +11038,10 @@ function renderCumChart(trades) {
 
   // Group by day or month
   const byKey = {};
-  trades.forEach(t => {
+  // Realised only. Otherwise every open position steps the equity curve down by
+  // its commission, so the curve's final point disagreed with the KPI headline
+  // that sits directly above it.
+  trades.filter(isClosed).forEach(t => {
     const d = useDaily ? t.entryDate?.slice(0, 10) : t.entryDate?.slice(0, 7);
     if (!d) return;
     byKey[d] = (byKey[d] || 0) + calcTotal(t);
