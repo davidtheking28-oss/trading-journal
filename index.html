@@ -1062,6 +1062,31 @@ footer {
 html.a11y-contrast body { background: #000 !important; color: #fff !important; }
 html.a11y-contrast a { color: #ffd400 !important; }
 html.a11y-underline a { text-decoration: underline !important; }
+
+/* ── COOKIE BANNER ── */
+.cookie-banner {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  z-index: 600; width: min(520px, calc(100vw - 32px));
+  background: var(--card2); border: 1px solid var(--border2);
+  border-radius: var(--r-lg); padding: 18px 20px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+  display: flex; gap: 14px; align-items: flex-start;
+}
+.cookie-icon { font-size: 24px; line-height: 1; flex-shrink: 0; }
+.cookie-body { flex: 1; min-width: 0; }
+.cookie-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.cookie-desc { font-size: 12px; color: var(--text2); line-height: 1.6; }
+.cookie-desc a { color: var(--accent); text-decoration: underline; }
+.cookie-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.cookie-btn-accept {
+  padding: 7px 16px; border-radius: var(--r-sm); border: none; font-size: 13px; font-weight: 600;
+  background: var(--accent); color: #fff; cursor: pointer;
+}
+.cookie-btn-decline {
+  padding: 7px 14px; border-radius: var(--r-sm); border: 1px solid var(--border2);
+  background: transparent; color: var(--text3); font-size: 13px; cursor: pointer;
+}
+@media (max-width: 480px) { .cookie-banner { bottom: 12px; padding: 14px 16px; } }
 </style>
 <noscript><style>.reveal { opacity:1; transform:none; }</style></noscript>
 </head>
@@ -1087,6 +1112,19 @@ html.a11y-underline a { text-decoration: underline !important; }
     <button class="a11y-item" data-a11y="underline" onclick="a11yUnderline()">הדגשת קישורים</button>
   </div>
   <button class="a11y-reset" onclick="a11yReset()">איפוס הגדרות</button>
+</div>
+
+<!-- COOKIE BANNER -->
+<div class="cookie-banner" id="cookie-banner" role="dialog" aria-label="הסכמה לעוגיות" style="display:none">
+  <div class="cookie-icon" aria-hidden="true">🍪</div>
+  <div class="cookie-body">
+    <div class="cookie-title">אנחנו משתמשים בעוגיות מינימליות</div>
+    <div class="cookie-desc">האתר טוען גופנים מ-Google Fonts, מה שמעביר את כתובת ה-IP שלך ל-Google. לא נאסף שום מידע נוסף ולא מופעל מעקב פרסומי. פרטים ב<a href="privacy.html">מדיניות הפרטיות</a>.</div>
+    <div class="cookie-actions">
+      <button class="cookie-btn-accept" onclick="cookieAccept()">אשר</button>
+      <button class="cookie-btn-decline" onclick="cookieDecline()">סגור</button>
+    </div>
+  </div>
 </div>
 
 <!-- SVG ICONS -->
@@ -1663,6 +1701,21 @@ html.a11y-underline a { text-decoration: underline !important; }
     window.a11yReset = function () { prefs = {}; save(prefs); apply(); };
     apply();
   })();
+
+  // Cookie consent
+  (function() {
+    if (!localStorage.getItem('cookie-consent')) {
+      setTimeout(() => { document.getElementById('cookie-banner').style.display = ''; }, 800);
+    }
+  })();
+  window.cookieAccept = function() {
+    localStorage.setItem('cookie-consent', JSON.stringify({ accepted: true, ts: Date.now() }));
+    document.getElementById('cookie-banner').style.display = 'none';
+  };
+  window.cookieDecline = function() {
+    localStorage.setItem('cookie-consent', JSON.stringify({ accepted: false, ts: Date.now() }));
+    document.getElementById('cookie-banner').style.display = 'none';
+  };
 
   // FAQ
   function toggleFaq(btn) {
