@@ -780,3 +780,59 @@ describe('aggregations count realised P&L only', () => {
     assert.match(extractFunction('renderCumChart'),  /trades\.filter\(isClosed\)\.forEach/);
   });
 });
+
+// ── The statistics screen must use one closed-test ──────────────────────────
+// stats() and advancedStats() filter on isClosed(); renderStatistics built its
+// own `closed` array from `exitPrice > 0 && closedShares > 0`. Both feed KPIs
+// shown side by side, so a row accepted by one test and not the other made
+// win-rate and profit-factor describe different sets of trades.
+describe('statistics KPIs share one population', () => {
+  const { advancedStats } = load('calcPL', 'calcTotal', 'isClosed', 'tradeDays', 'advancedStats');
+
+  test('renderStatistics filters with isClosed', () => {
+    const src = extractFunction('renderStatistics');
+    assert.match(src, /const closed\s+= trades\.filter\(isClosed\)/);
+    assert.doesNotMatch(src, /exitPrice > 0 && t\.closedShares > 0/);
+  });
+
+  test('the trading-summary table on the same screen agrees', () => {
+    // Its own win rate sat directly under the KPI one and was computed over a
+    // different set of rows, so the two could disagree by a few points.
+    const src = extractFunction('renderTradingSummary');
+    assert.ok(src.includes('const closed = trades.filter(isClosed);'));
+    assert.ok(src.includes('const losers  = closed.filter(t => calcTotal(t) <= 0);'));
+  });
+
+  test('a partial close counts for both, not just one', () => {
+    // Closed by isClosed (it has legs) but carries no exitPrice, so the old
+    // renderStatistics test dropped it out of profit-factor and drawdown while
+    // stats() still counted it in the win rate.
+    const partial = { ls:'L', entryDate:'2026-03-02', entryPrice:10, shares:100,
+                      closedShares:40, exitPrice:null, commission:0, ecn:0,
+                      t:[{ shares:40, price:12 }] };
+    assert.equal(isClosed(partial), true);
+    assert.equal(stats([partial]).nClosed, 1);
+    assert.ok(calcTotal(partial) > 0);
+  });
+
+  test('break-even is a loss for the win rate and for avgLoss alike', () => {
+    const flat = { ls:'L', entryDate:'2026-03-03', closeDate:'2026-03-04', entryPrice:10,
+                   shares:100, closedShares:100, exitPrice:10, commission:0, ecn:0, t:[] };
+    const win  = { ls:'L', entryDate:'2026-03-05', closeDate:'2026-03-06', entryPrice:10,
+                   shares:100, closedShares:100, exitPrice:11, commission:0, ecn:0, t:[] };
+    const loss = { ls:'L', entryDate:'2026-03-07', closeDate:'2026-03-08', entryPrice:10,
+                   shares:100, closedShares:100, exitPrice:9, commission:0, ecn:0, t:[] };
+    assert.equal(calcTotal(flat), 0);
+    const rows = [flat, win, loss];
+    const st  = stats(rows);
+    const adv = advancedStats(rows);
+    assert.equal(st.losses, 2, 'break-even counts against the win rate');
+    // Expectancy is wr*avgWin + (1-wr)*avgLoss, and both halves have to agree
+    // on who the losers are. With avgLoss averaged over < 0 only, the flat
+    // trade shrank the win rate to 1/3 while the remaining 2/3 was charged at
+    // the full -100 of the one real loss — a trade that cost nothing was
+    // priced as an average-sized loser.
+    assert.equal(adv.avgLoss, -50, 'the flat trade dilutes the average loss');
+    assert.ok(Math.abs((st.wr / 100 * adv.avgWin) + ((1 - st.wr / 100) * adv.avgLoss)) < 1e-9);
+  });
+});

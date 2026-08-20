@@ -9957,7 +9957,10 @@ function advancedStats(trades) {
   // win/loss KPIs from a different population than stats() uses.
   const closed  = trades.filter(isClosed);
   const winners = closed.filter(t => calcTotal(t) > 0);
-  const losers  = closed.filter(t => calcTotal(t) < 0);
+  // <= 0, matching stats()'s win-rate split. With < 0 a break-even row counted
+  // against the win rate but was left out of avgLoss, so expectancy
+  // (wr*avgWin + (1-wr)*avgLoss) charged it as a loss of average size.
+  const losers  = closed.filter(t => calcTotal(t) <= 0);
   const avgWin     = winners.length ? winners.reduce((s,t) => s + calcTotal(t), 0) / winners.length : 0;
   const avgLoss    = losers.length  ? losers.reduce((s,t)  => s + calcTotal(t), 0) / losers.length  : 0;
   const avgWinDays = winners.length ? winners.reduce((s,t) => s + tradeDays(t), 0) / winners.length : 0;
@@ -9997,7 +10000,7 @@ function renderMonthlyTracker(trades) {
   function monthStats(arr) {
     if (!arr || !arr.length) return null;
     const winners = arr.filter(t => calcTotal(t) > 0);
-    const losers  = arr.filter(t => calcTotal(t) < 0);
+    const losers  = arr.filter(t => calcTotal(t) <= 0);
     const avgGainPct = winners.length ? winners.reduce((s,t)=>{ const p=_tradePct(t); return p!==null?s+p:s; },0) / winners.length : null;
     const avgLossPct = losers.length  ? losers.reduce((s,t)=>{ const p=_tradePct(t); return p!==null?s+p:s; },0) / losers.length  : null;
     const winRate    = arr.length ? winners.length / arr.length * 100 : 0;
@@ -10075,11 +10078,11 @@ function renderMonthlyTracker(trades) {
 function renderTradingSummary(trades) {
   const wrap = document.getElementById('trading-summary-wrap');
   if (!wrap) return;
-  const closed = trades.filter(t => t.exitPrice > 0 && t.closedShares > 0);
+  const closed = trades.filter(isClosed);
   if (!closed.length) { wrap.innerHTML = `<div style="color:var(--text3);font-size:13px;padding:8px 0;">${t('ts_no_closed')}</div>`; return; }
 
   const winners = closed.filter(t => calcTotal(t) > 0);
-  const losers  = closed.filter(t => calcTotal(t) < 0);
+  const losers  = closed.filter(t => calcTotal(t) <= 0);
   const wr = closed.length ? winners.length / closed.length * 100 : 0;
   const lossRate = 100 - wr;
 
@@ -10781,7 +10784,10 @@ function renderStatistics() {
   const st  = stats(trades);
   const adv = advancedStats(trades);
 
-  const closed  = trades.filter(t => t.exitPrice > 0 && t.closedShares > 0);
+  // Must be the same closed-test stats()/advancedStats() use. This screen shows
+  // both families of KPI side by side, so a row that one counts and the other
+  // doesn't makes win-rate and profit-factor describe different populations.
+  const closed  = trades.filter(isClosed);
   const winners = closed.filter(t => calcTotal(t) > 0);
   const losers  = closed.filter(t => calcTotal(t) <= 0);
   const winSum  = winners.reduce((s, t) => s + calcTotal(t), 0);
