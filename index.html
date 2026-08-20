@@ -1030,12 +1030,64 @@ footer {
   .ticker-track { animation: none; }
   * { animation-duration:.01ms !important; transition-duration:.01ms !important; }
 }
+
+/* ── ACCESSIBILITY WIDGET ── */
+.a11y-btn {
+  position: fixed; bottom: 20px; left: 20px; z-index: 500;
+  width: 48px; height: 48px; border-radius: 50%;
+  background: var(--accent); color: #fff; border: none;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+  transition: transform .2s;
+}
+.a11y-btn:hover { transform: scale(1.06); }
+.a11y-panel {
+  position: fixed; bottom: 78px; left: 20px; z-index: 500;
+  width: 230px; background: var(--card); border: 1px solid var(--border2);
+  border-radius: var(--r-md); padding: 14px; display: none;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+}
+.a11y-panel.open { display: block; }
+.a11y-panel h4 { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; font-weight: 600; }
+.a11y-panel h4:not(:first-child) { margin-top: 14px; }
+.a11y-row { display: flex; gap: 6px; }
+.a11y-row button, .a11y-item {
+  flex: 1; padding: 8px; border-radius: var(--r-sm); border: 1px solid var(--border2);
+  background: rgba(255,255,255,0.03); color: var(--text); font-size: 12px; cursor: pointer;
+  font-family: var(--body);
+}
+.a11y-item.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.a11y-reset { width: 100%; margin-top: 12px; padding: 8px; border-radius: var(--r-sm); border: 1px solid var(--border2); background: none; color: var(--text3); font-size: 12px; cursor: pointer; font-family: var(--body); }
+
+html.a11y-contrast body { background: #000 !important; color: #fff !important; }
+html.a11y-contrast a { color: #ffd400 !important; }
+html.a11y-underline a { text-decoration: underline !important; }
 </style>
 <noscript><style>.reveal { opacity:1; transform:none; }</style></noscript>
 </head>
 <body>
 
 <a href="#main-content" class="skip-link">דלג לתוכן הראשי</a>
+
+<!-- ACCESSIBILITY WIDGET -->
+<button class="a11y-btn" onclick="a11yToggle()" aria-label="פתח תפריט נגישות" aria-haspopup="dialog" aria-expanded="false" aria-controls="a11y-panel" id="a11y-toggle">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4" r="2"/><path d="M19 8l-7 2-7-2"/><path d="M12 10v6"/><path d="M9 21l3-6 3 6"/><path d="M8 13l4 1 4-1"/></svg>
+</button>
+<div class="a11y-panel" id="a11y-panel" role="dialog" aria-label="הגדרות נגישות">
+  <h4>גודל טקסט</h4>
+  <div class="a11y-row">
+    <button onclick="a11yFont(-10)" aria-label="הקטן טקסט">א-</button>
+    <button onclick="a11yFont(10)" aria-label="הגדל טקסט">א+</button>
+  </div>
+  <h4>תצוגה</h4>
+  <div class="a11y-row">
+    <button class="a11y-item" data-a11y="contrast" onclick="a11yContrast()">ניגודיות גבוהה</button>
+  </div>
+  <div class="a11y-row">
+    <button class="a11y-item" data-a11y="underline" onclick="a11yUnderline()">הדגשת קישורים</button>
+  </div>
+  <button class="a11y-reset" onclick="a11yReset()">איפוס הגדרות</button>
+</div>
 
 <!-- SVG ICONS -->
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
@@ -1582,6 +1634,36 @@ footer {
 </footer>
 
 <script>
+  // Accessibility widget
+  (function() {
+    var root = document.documentElement;
+    var KEY = 'a11y-prefs';
+    function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
+    function save(p) { try { localStorage.setItem(KEY, JSON.stringify(p)); } catch (e) {} }
+    var prefs = load();
+    function apply() {
+      root.style.fontSize = (prefs.scale || 100) + '%';
+      root.classList.toggle('a11y-contrast', !!prefs.contrast);
+      root.classList.toggle('a11y-underline', !!prefs.underline);
+      document.querySelectorAll('.a11y-item').forEach(function (b) {
+        b.classList.toggle('active', !!prefs[b.dataset.a11y]);
+      });
+    }
+    window.a11yToggle = function () {
+      var panel = document.getElementById('a11y-panel');
+      var open = panel.classList.toggle('open');
+      document.getElementById('a11y-toggle').setAttribute('aria-expanded', open);
+    };
+    window.a11yFont = function (delta) {
+      prefs.scale = Math.min(150, Math.max(80, (prefs.scale || 100) + delta));
+      save(prefs); apply();
+    };
+    window.a11yContrast = function () { prefs.contrast = !prefs.contrast; save(prefs); apply(); };
+    window.a11yUnderline = function () { prefs.underline = !prefs.underline; save(prefs); apply(); };
+    window.a11yReset = function () { prefs = {}; save(prefs); apply(); };
+    apply();
+  })();
+
   // FAQ
   function toggleFaq(btn) {
     const item = btn.closest('.faq-item');
