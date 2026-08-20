@@ -625,6 +625,34 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 .ticker-chg.pos { color: var(--green); }
 .ticker-chg.neg { color: var(--red); }
 
+/* ── VALUE BAR ── */
+#value { padding-top: 64px; padding-bottom: 64px; }
+.value-grid {
+  max-width: 1180px; margin: 0 auto;
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 16px;
+}
+.value-card {
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: var(--r-md);
+  padding: 24px 20px;
+  transition: border-color .2s, transform .2s;
+}
+.value-card:hover { border-color: rgba(79,127,255,0.25); transform: translateY(-3px); }
+.value-icon {
+  width: 40px; height: 40px; border-radius: var(--r-sm);
+  background: rgba(79,127,255,0.08); border: 1px solid rgba(79,127,255,0.18);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent); margin-bottom: 16px;
+}
+.value-title {
+  font-family: var(--display); font-size: 15.5px; font-weight: 700;
+  color: var(--text); letter-spacing: -0.3px; margin-bottom: 8px;
+}
+.value-desc { font-size: 13px; color: var(--text2); line-height: 1.65; }
+@media (max-width: 900px) { .value-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 480px) { .value-grid { grid-template-columns: 1fr; } }
+
 /* ── FEATURES ── */
 #features { background: transparent; }
 
@@ -1057,13 +1085,13 @@ footer {
   <div class="hero-wrap">
     <div>
       <h1 class="hero-title" id="hero-heading">
-        <span class="hero-title-lead">הפלטפורמה של <span style="color:var(--accent)">הסוחר הרציני</span>.</span>
-        <span class="hl">כל הפסד יש לו דפוס. הגיע הזמן לגלות שלך.</span>
+        <span class="hero-title-lead">הפלטפורמה המלאה <span style="color:var(--accent)">לסוחר ולמשקיע</span>:</span>
+        <span class="hl">מחיבור אוטומטי לברוקר ועד לבניית תיק השקעות מנצח.</span>
       </h1>
-      <p class="hero-sub">ChartRoom מייבא עסקאות אוטומטית מברוקרים, סורק את השוק לפי <span class="kw">Trend Template</span>, ומנתח כל עסקה לפי שעה, יום וסקטור — כדי שתדע בדיוק מה עובד, ומה אתה חוזר עליו שוב ושוב.</p>
+      <p class="hero-sub">ChartRoom מחברת את הברוקר שלך בלחיצת כפתור, מציגה נתוני מניות וסקטורים בזמן אמת, מסננת עבורך הזדמנויות איכותיות, ומעניקה לך שליטה מלאה בניהול ובניית תיק ההשקעות. 100% חינם.</p>
       <div class="hero-actions">
         <a href="dashboard.html" class="btn-hero-primary">
-          גלה את הדפוסים שלך — חינם
+          התחל לבנות את התיק שלך — חינם ללא הגבלה
           <svg width="14" height="14" aria-hidden="true"><use href="#i-arr"/></svg>
         </a>
         <a href="#features" class="btn-hero-ghost">ראה איך זה עובד</a>
@@ -1072,9 +1100,9 @@ footer {
       <div class="hero-trust">
         <span class="trust-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>ללא כרטיס אשראי</span>
         <span class="trust-sep">·</span>
-        <span class="trust-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>הרשמה בפחות מדקה</span>
+        <span class="trust-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>חיבור Read-Only מאובטח 100%</span>
         <span class="trust-sep">·</span>
-        <span class="trust-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>נתונים מוצפנים ומאובטחים</span>
+        <span class="trust-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>סנכרון מהיר ב-60 שניות</span>
       </div>
       <div class="hero-stats" role="list" aria-label="נתונים">
         <div class="hero-stat" role="listitem">
@@ -1299,6 +1327,32 @@ footer {
   </div>
 </div>
 
+<!-- VALUE BAR -->
+<section id="value" aria-label="ארבעת עמודי התווך">
+  <div class="value-grid">
+    <div class="value-card reveal">
+      <div class="value-icon" aria-hidden="true"><svg width="18" height="18"><use href="#i-link"/></svg></div>
+      <h3 class="value-title">חיבור אוטומטי לברוקר</h3>
+      <p class="value-desc">סנכרון מ-Interactive Brokers ו-Bybit ב-0 דקות הקלדה.</p>
+    </div>
+    <div class="value-card reveal">
+      <div class="value-icon" aria-hidden="true"><svg width="18" height="18"><use href="#i-globe"/></svg></div>
+      <h3 class="value-title">נתוני שוק בזמן אמת</h3>
+      <p class="value-desc">דופק השוק, ביצועי סקטורים ומדדי סנטימנט בלייב.</p>
+    </div>
+    <div class="value-card reveal">
+      <div class="value-icon" aria-hidden="true"><svg width="18" height="18"><use href="#i-tgt"/></svg></div>
+      <h3 class="value-title">מסנן מניות מובנה</h3>
+      <p class="value-desc">סריקת השוק ואיתור מניות במגמת-על (Trend Template).</p>
+    </div>
+    <div class="value-card reveal">
+      <div class="value-icon" aria-hidden="true"><svg width="18" height="18"><use href="#i-bars"/></svg></div>
+      <h3 class="value-title">בניית תיק השקעות</h3>
+      <p class="value-desc">הקצאת הון, פיזור סיכונים ומעקב תשואה כוללת.</p>
+    </div>
+  </div>
+</section>
+
 <!-- FEATURES -->
 <section id="features" aria-labelledby="features-heading">
   <div class="centered reveal">
@@ -1311,46 +1365,37 @@ footer {
     <div class="feat-row reveal">
       <div class="feat-row-title">
         <span class="feat-row-badge">IBKR · Bybit</span>
-        <h3>ייבוא אוטומטי מהברוקר</h3>
+        <h3>יבוא עסקאות בלחיצת כפתור — בלי קבצי Excel ובלי הזנה ידנית</h3>
       </div>
       <div class="feat-row-desc">
-        <p>חבר את <span class="kw">Interactive Brokers</span> או <span class="kw">Bybit</span> וייבא את כל ההיסטוריה תוך דקה. אין CSV, אין הזנה ידנית — העסקאות שלך כבר בפנים.</p>
-      </div>
-    </div>
-    <div class="feat-row reveal">
-      <div class="feat-row-title">
-        <span class="feat-row-badge">סטטיסטיקות</span>
-        <h3>ניתוח ביצועים מעמיק</h3>
-      </div>
-      <div class="feat-row-desc">
-        <p><span class="kw">Win rate</span>, <span class="kw">profit factor</span> ו-<span class="kw">R-multiple</span> — לפי שעה, יום בשבוע וסקטור. גלה בדיוק מתי ה-edge שלך עובד, ומתי אתה סוחר נגד עצמך.</p>
+        <p>חבר את <span class="kw">Interactive Brokers</span> או <span class="kw">Bybit</span> בביטחון מלא. המערכת מושכת את היסטוריית העסקאות והביצועים שלך אוטומטית. חיבור קורא-בלבד (<span class="kw">Read-Only</span>) המבטיח אבטחה מקסימלית — ללא גישה לביצוע פעולות בחשבון.</p>
       </div>
     </div>
     <div class="feat-row reveal">
       <div class="feat-row-title">
         <span class="feat-row-badge">נתוני שוק</span>
-        <h3>Market Pulse בזמן אמת</h3>
+        <h3>דופק השוק בזמן אמת — לדעת לאן הכסף הגדול זורם</h3>
       </div>
       <div class="feat-row-desc">
-        <p><span class="kw">Fear &amp; Greed Index</span>, תמות שוק מובילות וסנטימנט קריפטו — הקשר השוקי המלא תמיד מול העיניים. תפסיק לסחור בוואקום.</p>
+        <p>אל תסחור בעיניים עצומות. קבל תמונה מלאה של השוק בלייב: ביצועי סקטורים (Tech, Energy, Finance ועוד), מדדי סנטימנט (<span class="kw">Fear &amp; Greed Index</span>), ומניות מובילות. תדע בדיוק אילו סקטורים מובילים את השוק ברגע זה.</p>
       </div>
     </div>
     <div class="feat-row reveal">
       <div class="feat-row-title">
         <span class="feat-row-badge">Trend Template</span>
-        <h3>מסנן מניות מובנה</h3>
+        <h3>לסנן את הרעש. למצוא רק את ההזדמנויות החזקות בשוק</h3>
       </div>
       <div class="feat-row-desc">
-        <p>סורק את השוק לפי 8 קריטריוני <span class="kw">Trend Template</span> ומחזיר רק מניות שעומדות במגמת-על — בלי לצאת מהאפליקציה לחפש הזדמנויות במקום אחר.</p>
+        <p>מנגנון הסינון המובנה של ChartRoom סורק את כל השוק ומציג לך רק מניות בעלות מבנה טכני ומגמתי חזק (<span class="kw">Trend Template</span>). במקום לחפש מניות ב-3 אתרים שונים, מצא את הסטאפ הבא שלך ישירות בתוך פלטפורמת המסחר שלך.</p>
       </div>
     </div>
     <div class="feat-row reveal">
       <div class="feat-row-title">
-        <span class="feat-row-badge">Watchlist</span>
-        <h3>עסקאות שפספסת</h3>
+        <span class="feat-row-badge">Portfolio Builder</span>
+        <h3>לבנות תיק השקעות חכם, מאוזן ומנוהל סיכונים</h3>
       </div>
       <div class="feat-row-desc">
-        <p>ראית הזדמנות, לא נכנסת, המניה עלתה. תעד ותנתח. זה הכלי הכי חשוב לשיפור ה-watchlist שלך לאורך זמן.</p>
+        <p>מסחר מוצלח הוא לא רק עסקאות בודדות — הוא ניהול התיק כולו. הקטגוריה הייעודית לבניית תיק השקעות מאפשרת לך לחלק את ההון בצורה חכמה, לנטר הקצאת נכסים בתיק (מניות, קריפטו, ETFs), ולראות ברגע אחד את התשואה הכוללת (YTD), חשיפת הסיכון וחלוקת המזומן.</p>
       </div>
     </div>
   </div>
@@ -1394,39 +1439,34 @@ footer {
       <div class="ch-good">ChartRoom</div>
     </div>
     <div class="comp-row">
-      <div class="comp-label">ייבוא עסקאות</div>
-      <div class="comp-cell bad">הזנה ידנית</div>
-      <div class="comp-cell good">אוטומטי מהברוקר</div>
+      <div class="comp-label">חיבור לברוקר</div>
+      <div class="comp-cell bad">הזנה ידנית מעייפת (10–30 דק')</div>
+      <div class="comp-cell good">אוטומטי לחלוטין ב-0 שניות</div>
     </div>
     <div class="comp-row">
-      <div class="comp-label">זמן עדכון לאחר עסקה</div>
-      <div class="comp-cell bad">10–30 דקות</div>
-      <div class="comp-cell good">0 דקות</div>
+      <div class="comp-label">נתוני שוק בזמן אמת</div>
+      <div class="comp-cell bad">ללא (דורש עדכון ידני)</div>
+      <div class="comp-cell good">מניות, סקטורים ומדדים בזמן אמת</div>
     </div>
     <div class="comp-row">
-      <div class="comp-label">ניתוח לפי שעה / יום / סקטור</div>
-      <div class="comp-cell bad">נוסחאות מורכבות</div>
-      <div class="comp-cell good">מובנה ואוטומטי</div>
+      <div class="comp-label">מסנן מניות (Screener)</div>
+      <div class="comp-cell bad">לא קיים</div>
+      <div class="comp-cell good">סורק מורכב מובנה במערכת</div>
     </div>
     <div class="comp-row">
-      <div class="comp-label">Market Pulse + Fear &amp; Greed</div>
-      <div class="comp-cell bad"><svg width="14" height="14" aria-hidden="true"><use href="#i-x"/></svg></div>
-      <div class="comp-cell good">כלול</div>
+      <div class="comp-label">כלי לבניית תיק השקעות</div>
+      <div class="comp-cell bad">נוסחאות מסובכות שנשברות</div>
+      <div class="comp-cell good">דשבורד הקצאת הון וניהול סיכונים מובנה</div>
     </div>
     <div class="comp-row">
-      <div class="comp-label">מסנן מניות (Trend Template)</div>
-      <div class="comp-cell bad"><svg width="14" height="14" aria-hidden="true"><use href="#i-x"/></svg></div>
-      <div class="comp-cell good">מובנה</div>
+      <div class="comp-label">זיהוי דפוסים וסטטיסטיקות</div>
+      <div class="comp-cell bad">דרוש תכנון ידני מורכב</div>
+      <div class="comp-cell good">ניתוח אוטומטי לפי שעה, יום וסקטור</div>
     </div>
     <div class="comp-row">
-      <div class="comp-label">גיבוי</div>
-      <div class="comp-cell bad">קובץ מקומי</div>
-      <div class="comp-cell good">ענן מאובטח</div>
-    </div>
-    <div class="comp-row">
-      <div class="comp-label">מחיר</div>
-      <div class="comp-cell bad">זמן יקר</div>
-      <div class="comp-cell good">חינמי לחלוטין</div>
+      <div class="comp-label">עלות</div>
+      <div class="comp-cell bad">עולה בזמן יקר וטעויות הקלדה</div>
+      <div class="comp-cell good">חינם לחלוטין (₪0)</div>
     </div>
   </div>
 </section>
@@ -1467,24 +1507,24 @@ footer {
     <div class="faq-list" role="list">
       <div class="faq-item reveal" role="listitem">
         <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a1">
-          האם השירות באמת חינמי?
+          האם החיבור לברוקר בטוח?
           <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
         </button>
-        <div class="faq-a" id="faq-a1" aria-hidden="true">כן, הגישה מלאה וחינמית לחלוטין. לפני כל שינוי במדיניות יישלח עדכון מראש.</div>
+        <div class="faq-a" id="faq-a1" aria-hidden="true">לחלוטין. החיבור מתבצע באמצעות מפתח Read-Only (כמו Flex Query ב-Interactive Brokers או API Key בקריפטו). אין למערכת שום יכולת לבצע עסקאות או למשוך כספים. הנתונים מאובטחים בהצפנת RLS ו-HTTPS.</div>
       </div>
       <div class="faq-item reveal" role="listitem">
         <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a2">
-          האם הנתונים שלי מאובטחים?
+          האם נתוני בזמן אמת ומסנן המניות באמת בחינם?
           <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
         </button>
-        <div class="faq-a" id="faq-a2" aria-hidden="true">הנתונים מאוחסנים ב-Supabase עם Row-Level Security — רק אתה יכול לגשת לנתונים שלך. HTTPS מוצפן בכל מקום.</div>
+        <div class="faq-a" id="faq-a2" aria-hidden="true">כן! כל הכלים בפלטפורמה — כולל מסנן המניות, נתוני הסקטורים בזמן אמת וכלי בניית התיק — פתוחים לשימוש ללא עלות וללא צורך בהזנת כרטיס אשראי.</div>
       </div>
       <div class="faq-item reveal" role="listitem">
         <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a3">
-          האם אפשר לייבא עסקאות אוטומטית?
+          איך קטגוריית בניית התיק עוזרת לי ספציפית?
           <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
         </button>
-        <div class="faq-a" id="faq-a3" aria-hidden="true">כן, תומך ב-Interactive Brokers (דרך Flex Query) ו-Bybit (דרך API Key). הזנה ידנית גם נתמכת מלאה. <a href="broker-guide.html" style="color:inherit;text-decoration:underline;">ראה מדריך חיבור ←</a></div>
+        <div class="faq-a" id="faq-a3" aria-hidden="true">היא מונעת חשיפת יתר לנכס יחיד, מראה לך את פיזור התיק בלייב, ועוזרת לך לתכנן פוזיציות חדשות בהתאם לגודל התיק ורמת הסיכון שהגדרת.</div>
       </div>
       <div class="faq-item reveal" role="listitem">
         <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a4">
@@ -1516,10 +1556,10 @@ footer {
 <section id="cta">
   <div class="cta-inner reveal">
     <div class="cta-bg" aria-hidden="true"></div>
-    <h2 class="cta-title">הסוחרים שמשתפרים — יש להם פלטפורמה.</h2>
-    <p class="cta-sub">כל שבוע בלי מעקב הוא שבוע של טעויות שחוזרות על עצמן. תפסיק לנחש, תתחיל לעקוב.</p>
+    <h2 class="cta-title">הסוחרים שמשתפרים — מנהלים את התיק שלהם עם נתונים.</h2>
+    <p class="cta-sub">הצטרף לסוחרים שכבר חוסכים זמן, מזהים את הדפוסים שלהם ובונים תיק השקעות חכם יותר.</p>
     <a href="dashboard.html" class="btn-cta-dark">
-      גלה את הדפוסים שלך — חינם
+      התחל לבנות את התיק שלך — חינם
       <svg width="15" height="15" aria-hidden="true"><use href="#i-arr"/></svg>
     </a>
     <p style="margin-top:16px;font-size:12px;color:var(--text3);">ללא כרטיס אשראי · הרשמה בפחות מדקה</p>
@@ -1619,9 +1659,9 @@ footer {
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
-    {"@type":"Question","name":"האם השירות באמת חינמי?","acceptedAnswer":{"@type":"Answer","text":"כן, הגישה מלאה וחינמית לחלוטין. לפני כל שינוי במדיניות יישלח עדכון מראש."}},
-    {"@type":"Question","name":"האם הנתונים שלי מאובטחים?","acceptedAnswer":{"@type":"Answer","text":"הנתונים מאוחסנים ב-Supabase עם Row-Level Security — רק אתה יכול לגשת לנתונים שלך. HTTPS מוצפן בכל מקום."}},
-    {"@type":"Question","name":"האם אפשר לייבא עסקאות אוטומטית?","acceptedAnswer":{"@type":"Answer","text":"כן, אם יש לך חשבון Interactive Brokers אפשר לחבר דרך Flex Query. הזנה ידנית גם נתמכת."}},
+    {"@type":"Question","name":"האם החיבור לברוקר בטוח?","acceptedAnswer":{"@type":"Answer","text":"לחלוטין. החיבור מתבצע באמצעות מפתח Read-Only (כמו Flex Query ב-Interactive Brokers או API Key בקריפטו). אין למערכת שום יכולת לבצע עסקאות או למשוך כספים. הנתונים מאובטחים בהצפנת RLS ו-HTTPS."}},
+    {"@type":"Question","name":"האם נתוני בזמן אמת ומסנן המניות באמת בחינם?","acceptedAnswer":{"@type":"Answer","text":"כן! כל הכלים בפלטפורמה — כולל מסנן המניות, נתוני הסקטורים בזמן אמת וכלי בניית התיק — פתוחים לשימוש ללא עלות וללא צורך בהזנת כרטיס אשראי."}},
+    {"@type":"Question","name":"איך קטגוריית בניית התיק עוזרת לי ספציפית?","acceptedAnswer":{"@type":"Answer","text":"היא מונעת חשיפת יתר לנכס יחיד, מראה לך את פיזור התיק בלייב, ועוזרת לך לתכנן פוזיציות חדשות בהתאם לגודל התיק ורמת הסיכון שהגדרת."}},
     {"@type":"Question","name":"האם עובד בנייד?","acceptedAnswer":{"@type":"Answer","text":"כן, האפליקציה רספונסיבית ועובדת בדפדפן בנייד. אפשר להתקין כ-PWA ישירות מהדפדפן."}}
   ]
 }

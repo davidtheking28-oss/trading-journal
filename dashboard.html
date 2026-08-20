@@ -14882,10 +14882,25 @@ async function invLoadFromDB() {
   const portfolioTotal = _userSettings.portfolio_total != null
     ? String(_userSettings.portfolio_total)
     : (invLoad().portfolioTotal || '');
-  const { data } = await _sb.from('investments')
+  // maybeSingle, and the error is kept. `.single()` reports "no row" and "the
+  // request failed" the same way — {data:null} — so a dropped connection, a 5xx
+  // or a token refreshing mid-flight all used to fall into the brand-new-account
+  // branch below. That branch clears _invUpdatedAt, which is what arms the
+  // last-writer-wins guard, so the next save took the unguarded path and wrote
+  // an empty portfolio over a real one — and now also deletes every row in
+  // investment_holdings, destroying both copies at once.
+  const { data, error: docErr } = await _sb.from('investments')
     .select('holdings, deposits, currency, alloc_targets, updated_at')
     .eq('user_id', _currentUser.id)
-    .single();
+    .maybeSingle();
+  if (docErr) {
+    console.error('[invLoadFromDB]', docErr);
+    toast('לא ניתן לטעון את ההשקעות — רענן את הדף', 'error');
+    // Deliberately does not touch _invData or _invUpdatedAt. _invData staying
+    // null is what stops invAutoSave from persisting this empty screen, and the
+    // untouched stamp keeps the guard armed if anything else tries.
+    return _invData || { portfolioTotal, holdings: [], deposits: [] };
+  }
   if (data) {
     _invUpdatedAt = data.updated_at || null;
     // Stage 2: holdings come from their own table, one row each, carrying a
@@ -14967,7 +14982,15 @@ async function _invSaveWrite(data, prev, gen) {
   if (_invUpdatedAt) {
     const { data: hit, error: upErr } = await _sb.from('investments')
       .update(row).eq('user_id', _currentUser.id).eq('updated_at', _invUpdatedAt).select('updated_at');
-    if (upErr) { _invData = prev; toast('שגיאה בשמירת השקעות: ' + upErr.message, 'error'); return false; }
+    if (upErr) {
+      // Re-render too, as the upsert branch does. Without it the DOM keeps rows
+      // the rolled-back copy no longer has, and invGetCurrentData maps identity
+      // by data-idx — so every later row picks up its neighbour's id.
+      _invData = prev;
+      if (prev) invRenderRows(prev.holdings || []);
+      toast('שגיאה בשמירת השקעות: ' + upErr.message, 'error');
+      return false;
+    }
     if (!hit || !hit.length) {
       _invData = null; _invUpdatedAt = null; _invReloadGen++;
       toast('ההשקעות עודכנו במקום אחר — טוען מחדש כדי לא לדרוס', 'error');
@@ -15168,6 +15191,12 @@ function invSetTarget(cat, pctStr) {
   }
   invSyncTargetInputs();
   invRecalc();
+  // invLoad() returns a blank portfolio when _invData is null, and _invData is
+  // null for the whole of an in-flight invInit — which the realtime handler, the
+  // reconnect handler and the conflict path all trigger. These inputs stay
+  // clickable throughout, so saving invLoad()'s fallback here would persist
+  // holdings: [] and wipe the account. Same guard invAutoSave already has.
+  if (!_invData) { toast('עוד טוען — נסה שוב בעוד רגע', 'error'); return; }
   const data = invLoad();
   data.allocTargets = invTargetsPayload();
   invSaveData(data);
@@ -16196,7 +16225,11 @@ function invAddDeposit() {
   data.deposits.push({ month, amount });
   data.deposits.sort((a, b) => b.month.localeCompare(a.month));
   const totalElD = document.getElementById('inv-portfolio-total');
-  const newTotal = (+(totalElD?.value) || 0) + amount;
+  // The third read of this field, missed when the other two were fixed. It is
+  // type="text" so "100,000" is a legal entry, and `+"100,000"` is NaN — which
+  // made a 2,000 deposit *replace* the total with 2,000 instead of adding to it,
+  // then persisted that to user_settings.
+  const newTotal = invParseTotal(totalElD?.value) + amount;
   if (totalElD) totalElD.value = newTotal;
   data.portfolioTotal = String(newTotal);
   invSaveData(data);
