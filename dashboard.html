@@ -11488,6 +11488,25 @@ async function saveTrade() {
     toast(`כמות סגורה (${+data.closedShares}) גדולה מהכמות שנקנתה (${+data.shares || 0})`, 'error');
     return;
   }
+  // The mirror case, which had no check at all and understates instead. A row
+  // with a close date AND an exit price reads as closed everywhere, but P&L is
+  // measured over closedShares alone — so a smaller closedShares with no
+  // partial leg explaining the rest silently drops that volume. Three live rows
+  // are in this state, one book short by ~$244. Either the remainder is still
+  // open (no close date) or it was sold (closedShares is the full size); the
+  // form cannot tell which, so it asks rather than guessing.
+  const legShares = (data.t || []).reduce((s, p) => s + (+p.shares || 0), 0);
+  if (data.closeDate && +data.exitPrice > 0 && !legShares
+      && (+data.closedShares || 0) > 0 && (+data.closedShares || 0) < (+data.shares || 0)) {
+    toast(`נסגרו ${+data.closedShares} מתוך ${+data.shares} — או שהיתרה עדיין פתוחה (הסר תאריך סגירה), או שנמכרה (עדכן כמות סגורה)`, 'error');
+    return;
+  }
+  // Partial legs must fit inside the closed volume, or calcPL derives a
+  // negative final leg and silently drops it.
+  if (legShares > (+data.closedShares || +data.shares || 0)) {
+    toast(`סך היציאות החלקיות (${legShares}) גדול מהכמות הסגורה`, 'error');
+    return;
+  }
 
   data.type = type;
   let arr = type==='stock' ? db.stocks : db.crypto;

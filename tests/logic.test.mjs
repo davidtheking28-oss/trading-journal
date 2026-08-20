@@ -724,3 +724,27 @@ describe('flexParseXML — a dateTime with no time part', () => {
     assert.equal(out.length, 2, 'two deliberate entries must stay two');
   });
 });
+
+// ── saveTrade's closed-volume guards ────────────────────────────────────────
+// saveTrade is welded to the DOM and Supabase, so these are guard checks: they
+// prove the conditions were not deleted, not that the behaviour is right.
+describe('saveTrade guards the closed-volume invariants', () => {
+  const src = extractFunction('saveTrade');
+
+  test('still rejects closing more than was bought', () => {
+    assert.match(src, /\(\+data\.closedShares \|\| 0\) > \(\+data\.shares \|\| 0\)/);
+  });
+
+  test('rejects a closed row whose volume is unaccounted for', () => {
+    // The mirror of the above, which understates instead of overstating: a row
+    // reads as closed everywhere while P&L covers only part of the position.
+    assert.match(src, /data\.closeDate && \+data\.exitPrice > 0 && !legShares/);
+    assert.match(src, /\(\+data\.closedShares \|\| 0\) < \(\+data\.shares \|\| 0\)/);
+  });
+
+  test('rejects partial legs that exceed the closed volume', () => {
+    // calcPL derives the final leg as closedShares - sum(legs); a negative
+    // result is skipped, so the surplus leg vanishes from P&L.
+    assert.match(src, /legShares > \(\+data\.closedShares \|\| \+data\.shares \|\| 0\)/);
+  });
+});
