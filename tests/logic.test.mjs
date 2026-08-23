@@ -888,6 +888,26 @@ describe('Interactive Israel (TLG) file import', () => {
       'each fill is charged once across all the lots it touched');
   });
 
+  test('a lot depletes as it is closed, so it cannot be closed twice', () => {
+    // Without decrementing the lot's remaining size, the second sell sees the
+    // full original 100 again and closes 60 more — 120 closed against a
+    // 100-share position, which is the closed_shares > shares defect that
+    // overstates P&L directly.
+    const trades = runTlg([
+      tlgFill('IBM', 'BUY',  'O', '20260801', 100, 10, 0),
+      tlgFill('IBM', 'SELL', 'C', '20260802', 60, 12, 0),
+      tlgFill('IBM', 'SELL', 'C', '20260803', 60, 13, 0),
+    ].join('\n'));
+    const long = trades.find(t => t.ls === 'L');
+    assert.equal(long.shares, 100);
+    assert.equal(long.closedShares, 100, 'a 100-share lot cannot close 120');
+    assert.ok(long.closedShares <= long.shares + 1e-9);
+    // The 20 shares the second sell had left over are a new short.
+    const short = trades.find(t => t.ls === 'S');
+    assert.ok(short, 'the unmatched remainder must open a short, not vanish');
+    assert.equal(short.shares, 20);
+  });
+
   test('one fill closing two lots splits its commission between them', () => {
     // The fill is charged a single commission for its whole size. Giving each
     // lot the full amount inflates costs by a factor of however many lots the
