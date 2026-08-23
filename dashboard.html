@@ -7375,6 +7375,7 @@ async function _onAuthSuccess(user) {
   const _activeTabEl = document.querySelector('.tab-content.active');
   if (_activeTabEl) _maybeShowTabIntro(_activeTabEl.id.replace('tab-', ''), _activeTabEl);
   _maybeShowOrderIdNotice();
+  _maybeShowFlexWindowNotice();
   console.log('%c ChartRoom ','background:#818cf8;color:#fff;font-weight:700;font-size:13px;border-radius:var(--r-sm);padding:2px 6px');
   console.log('%cRunning in the browser — treat other users\' data with respect.','color:#8896a8;font-size:11px');
 }
@@ -8118,6 +8119,40 @@ function _maybeShowOrderIdNotice() {
   toast('צעד אחד נשאר: הוסף IB Order ID ב-IBKR. מדריך בהגדרות ← מדריך חיבור ברוקר', 'info');
   _userSettings.order_id_notice_seen = true;
   _saveUserSettings({ order_id_notice_seen: true });
+}
+
+// A Flex query configured with too short a "Period" is the root cause of
+// every orphan-close bug seen so far: an execution closing a position whose
+// opening fill fell outside the statement window. This isn't specific to one
+// account — any user who sets Period to less than ~3 months in IBKR hits it —
+// so unlike _maybeShowOrderIdNotice above, this checks the user's own live
+// data instead of a hardcoded id.
+//
+// Deliberately no persisted "seen" flag: it reads the cached statement fresh
+// every login, so the moment the user actually fixes it in IBKR (Client
+// Portal → Reports → Flex Queries → Period = "Last 365 Days"), the next sync
+// widens the window and this stops firing on its own — nothing to go stale
+// the way order_id_notice_seen did (persisted true, but never read back into
+// _userSettings, so that notice re-toasted forever regardless of the flag;
+// fixed above, but avoided here by not having a flag at all). Throttled to
+// once per calendar day via localStorage purely so a user who logs in more
+// than once a day isn't shown the same toast repeatedly.
+async function _maybeShowFlexWindowNotice() {
+  if (!_currentUser) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const key = 'flex_window_notice_' + _currentUser.id;
+  try { if (localStorage.getItem(key) === today) return; } catch (e) {}
+  const { data, error } = await _sb.from('flex_statement_cache')
+    .select('xml').eq('user_id', _currentUser.id).maybeSingle();
+  if (error || !data?.xml) return; // no IBKR statement cached yet — nothing to warn about
+  const from = data.xml.match(/fromDate="(\d{8})"/)?.[1];
+  const to = data.xml.match(/toDate="(\d{8})"/)?.[1];
+  if (!from || !to) return;
+  const asDate = s => new Date(+s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8));
+  const days = Math.round((asDate(to) - asDate(from)) / 86400000);
+  if (days >= 90) return; // healthy window — 365 is the target, but nothing this short of it is the bug
+  toast(`חלון הדוח מ-IBKR קצר מדי (${days} ימים) — עלול לגרום לעסקאות "יתומות" עם נתונים חסרים. ב-Client Portal: Reports ← Flex Queries ← ערוך את שאילתת Trades ← Period = Last 365 Days`, 'info');
+  try { localStorage.setItem(key, today); } catch (e) {}
 }
 
 // Restore the tab the user last viewed (set in switchTab). Falls back to the
@@ -9548,7 +9583,7 @@ let _userSettings = {};
 async function loadUserSettings() {
   if (!_currentUser) return;
   const { data } = await _sb.from('user_settings')
-    .select('finnhub_key, fmp_key, av_key, flex_query_id, flex_confirm_query_id, portfolio_total, onboarding_done')
+    .select('finnhub_key, fmp_key, av_key, flex_query_id, flex_confirm_query_id, portfolio_total, onboarding_done, order_id_notice_seen')
     .eq('user_id', _currentUser.id)
     .single();
   _userSettings = data || {};
