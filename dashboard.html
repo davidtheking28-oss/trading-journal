@@ -12117,20 +12117,41 @@ async function _flexImportInner(trades) {
     // (_closeLs), and preferring an exact share-count match when several are
     // open, so a long and a short in the same symbol can't cross-match.
     if (t._orphanClose) {
-      const candidates = arr.filter(x => !x.deleted && x.symbol === t.symbol && !x.exitPrice && (!t._closeLs || x.ls === t._closeLs));
-      const open = candidates.find(x => Math.abs((x.shares || 0) - (t.closedShares || 0)) < 0.01) || candidates[0];
-      // The candidates[0] fallback can land on a position smaller than the
-      // volume being closed. Writing that closes more shares than the row ever
-      // held (closed_shares > shares) and overstates P&L, so skip instead.
-      if (open && (t.closedShares || 0) <= (open.shares || 0) + 0.01) {
-        const prev = { exitPrice: open.exitPrice, closeDate: open.closeDate, closedShares: open.closedShares };
+      // Candidates used to be filtered on `!x.exitPrice`, so a position closed
+      // by two separate orphan executions only ever received the first: setting
+      // exitPrice on it excluded that row from the second, which then found
+      // nothing and was dropped. ONDS (id 50, account 6f73a6c3) hit exactly
+      // this and had to be finished by hand. Match on remaining volume instead,
+      // and append the extra close as a partial leg.
+      const room = x => (x.shares || 0) - (x.closedShares || 0);
+      const candidates = arr.filter(x => !x.deleted && x.symbol === t.symbol
+        && room(x) > 0.01 && (!t._closeLs || x.ls === t._closeLs));
+      const open = candidates.find(x => Math.abs(room(x) - (t.closedShares || 0)) < 0.01) || candidates[0];
+      // The candidates[0] fallback can land on a position with less room than
+      // the volume being closed. Writing that produces closed_shares > shares
+      // and overstates P&L, so skip instead.
+      if (open && (t.closedShares || 0) <= room(open) + 0.01) {
+        const prev = { exitPrice: open.exitPrice, closeDate: open.closeDate,
+                       closedShares: open.closedShares, t: open.t };
+        // calcPL prices the remainder (closedShares - sum(t[].shares)) at
+        // exitPrice, so an exit already on the row has to be pinned down as an
+        // explicit leg before exitPrice is repointed at this execution —
+        // otherwise the earlier close silently reprices to the newer one.
+        const legs = Array.isArray(open.t) ? open.t.slice() : [];
+        if (open.exitPrice && (open.closedShares || 0) > 0) {
+          const booked = legs.reduce((a, g) => a + (+g.shares || 0), 0);
+          const rem = (open.closedShares || 0) - booked;
+          if (rem > 0.01) legs.push({ shares: rem, price: open.exitPrice });
+        }
+        open.t            = legs;
         open.exitPrice    = t.exitPrice;
         open.closeDate    = t.closeDate;
-        open.closedShares = t.closedShares;
+        open.closedShares = (open.closedShares || 0) + (t.closedShares || 0);
         toUpdate.push({ row: open, prev, patch: {
-          exit_price:    t.exitPrice   || null,
-          close_date:    t.closeDate   || null,
-          closed_shares: t.closedShares|| null,
+          exit_price:    t.exitPrice      || null,
+          close_date:    t.closeDate      || null,
+          closed_shares: open.closedShares || null,
+          targets:       legs,
         } });
         updated++;
       }
@@ -12626,56 +12647,76 @@ function tlgParse(text) {
       oc,
       entryDate,
       price:      Math.abs(parseFloat(p[12]) || 0),
+      time:       p[8] || "",
       qty:        Math.abs(parseFloat(p[10]) || 0),
       commission: Math.abs(parseFloat(p[14]) || 0),
       isBuy:      action.includes('BUY'),
     };
   }).filter(r => r.symbol && r.price && r.qty);
 
-  // Group by symbol → match buys to sells
+  // FIFO-match each symbol's fills against each other.
+  //
+  // This used to bucket fills into buys/sells and then, for every buy, scan the
+  // WHOLE sells list for anything dated on or after it. Nothing was ever
+  // consumed, so two buys of one symbol followed by a single sell closed BOTH
+  // buys against that same sell — the P&L and the sell's commission were
+  // counted once per buy. It also hardcoded ls:'L', so a short's opening SELL
+  // landed in the sells bucket, silently vanished as a position, and corrupted
+  // the matching of the real buys around it.
   const bySymbol = {};
-  rows.forEach(r => {
-    if (!bySymbol[r.symbol]) bySymbol[r.symbol] = { buys: [], sells: [] };
-    if (r.isBuy) bySymbol[r.symbol].buys.push(r);
-    else         bySymbol[r.symbol].sells.push(r);
-  });
+  rows.forEach(r => { (bySymbol[r.symbol] = bySymbol[r.symbol] || []).push(r); });
 
-  // Build trades: each BUY becomes a trade, sells become exits/targets
   const trades = [];
-  Object.entries(bySymbol).forEach(([sym, { buys, sells }]) => {
-    buys.forEach(buy => {
-      // Find matching sells (by date order)
-      const matchedSells = sells.filter(s => s.entryDate >= buy.entryDate);
-      let remaining = buy.qty;
-      const targets = [];
-      let closeDate = '', exitPrice = 0, closedShares = 0;
-
-      matchedSells.forEach(sell => {
-        if (remaining <= 0) return;
-        const used = Math.min(sell.qty, remaining);
-        remaining -= used;
-        closedShares += used;
-        closeDate = sell.entryDate;
-        exitPrice = sell.price; // last exit price
-        if (matchedSells.length > 1) {
-          targets.push({ shares: used, price: sell.price });
+  Object.entries(bySymbol).forEach(([sym, fills]) => {
+    // FIFO is meaningless on file order and the export is not guaranteed sorted.
+    fills.sort((a, b) => (a.entryDate + a.time).localeCompare(b.entryDate + b.time));
+    const lots = [];
+    fills.forEach(f => {
+      let qty = f.qty;
+      // The broker's O/C column decides when it is filled in; direction against
+      // what is actually open is the fallback for rows that leave it blank.
+      const opensOnly = f.oc.startsWith('O');
+      const want = f.isBuy ? 'S' : 'L';   // a buy closes shorts, a sell closes longs
+      if (!opensOnly) {
+        for (const lot of lots) {
+          if (qty <= 1e-9) break;
+          if (lot.ls !== want || lot.left <= 1e-9) continue;
+          const take = Math.min(lot.left, qty);
+          lot.left -= take;
+          qty -= take;
+          lot.closedShares += take;
+          lot.legs.push({ shares: take, price: f.price });
+          lot.closeDate = f.entryDate;
+          lot.exitPrice = f.price;
+          // The fill is charged one commission for its whole size; give each
+          // lot it closed only that lot's share.
+          lot.commission += f.commission * take / f.qty;
         }
-      });
-
-      trades.push({
-        symbol: sym,
-        name: buy.name,
-        entryDate: buy.entryDate,
-        entryPrice: buy.price,
-        shares: buy.qty,
-        commission: buy.commission + matchedSells.reduce((s,x) => s + x.commission, 0),
-        closeDate: closedShares > 0 ? closeDate : '',
-        exitPrice: closedShares > 0 ? exitPrice : 0,
-        closedShares,
-        targets: targets.length > 1 ? targets : [],
-        ls: 'L',
-      });
+      }
+      // Whatever is left opens a position — a plain open, or the far side of a
+      // reversal that closed more than was on the books.
+      if (qty > 1e-9) {
+        lots.push({
+          symbol: sym, name: f.name, entryDate: f.entryDate, entryPrice: f.price,
+          shares: qty, ls: f.isBuy ? 'L' : 'S', left: qty,
+          commission: f.commission * qty / f.qty,
+          closedShares: 0, closeDate: '', exitPrice: 0, legs: [],
+        });
+      }
     });
+    lots.forEach(l => trades.push({
+      symbol: l.symbol, name: l.name,
+      entryDate: l.entryDate, entryPrice: l.entryPrice, shares: l.shares,
+      commission: Math.round(l.commission * 10000) / 10000,
+      closeDate: l.closedShares > 0 ? l.closeDate : '',
+      exitPrice: l.closedShares > 0 ? l.exitPrice : 0,
+      closedShares: l.closedShares,
+      // closedShares is TOTAL closed volume and calcPL prices the remainder
+      // (closedShares - sum(targets[].shares)) at exitPrice, so the final leg
+      // must NOT also be listed as a target or it is counted twice.
+      targets: l.legs.length > 1 ? l.legs.slice(0, -1) : [],
+      ls: l.ls,
+    }));
   });
 
   if (!trades.length) {
@@ -12692,7 +12733,10 @@ function tlgParse(text) {
   if (!preview) return;
   preview.innerHTML = '';
   trades.forEach((t, i) => {
-    const pnl = t.closedShares > 0 ? ((t.exitPrice - t.entryPrice) * t.closedShares - t.commission).toFixed(2) : null;
+    // calcPL, not a long-only one-liner: this preview now shows shorts (whose
+    // P&L runs the other way) and multi-leg exits (which live in targets and
+    // were priced at the final exit by the subtraction below).
+    const pnl = t.closedShares > 0 ? (calcPL({ ...t, t: t.targets }) - t.commission).toFixed(2) : null;
     const pnlHtml = pnl !== null
       ? `<span style="color:${+pnl >= 0 ? 'var(--green)' : 'var(--red)'};">${+pnl >= 0 ? '+' : ''}$${pnl}</span>`
       : '<span style="color:var(--text3)">פתוח</span>';

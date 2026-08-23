@@ -185,8 +185,23 @@ describe('guards that cannot be exercised headless', () => {
   });
 
   test('orphan-close never closes more shares than the row holds', () => {
-    assert.match(importSrc, /t\.closedShares\s*\|\|\s*0\)\s*<=\s*\(open\.shares/,
+    assert.match(importSrc, /t\.closedShares\s*\|\|\s*0\)\s*<=\s*room\(open\)/,
       'the candidates[0] fallback must be size-guarded');
+  });
+
+  test('a second orphan close can still reach a partly-closed row', () => {
+    // Candidates were filtered on `!x.exitPrice`, so applying the first orphan
+    // close excluded that row from the second, which was then dropped with no
+    // warning. ONDS (id 50) had to be completed by hand because of this.
+    assert.doesNotMatch(importSrc, /!x\.exitPrice && \(!t\._closeLs/,
+      'excluding any row that already carries an exit drops the second close');
+    assert.match(importSrc, /const room = x =>/, 'candidates must be matched on remaining volume');
+    assert.match(importSrc, /open\.closedShares = \(open\.closedShares \|\| 0\) \+ \(t\.closedShares \|\| 0\)/,
+      'closed volume must accumulate, not overwrite');
+    // calcPL prices (closedShares - sum(t[].shares)) at exitPrice, so repointing
+    // exitPrice without booking the previous exit as a leg silently reprices it.
+    assert.match(importSrc, /legs\.push\(\{ shares: rem, price: open\.exitPrice \}\)/,
+      'the existing exit must be pinned as a partial leg before exitPrice moves');
   });
 
   test('"clean duplicates" never removes a broker-tagged row', () => {
@@ -834,5 +849,121 @@ describe('statistics KPIs share one population', () => {
     // priced as an average-sized loser.
     assert.equal(adv.avgLoss, -50, 'the flat trade dilutes the average loss');
     assert.ok(Math.abs((st.wr / 100 * adv.avgWin) + ((1 - st.wr / 100) * adv.avgLoss)) < 1e-9);
+  });
+});
+
+describe('Interactive Israel (TLG) file import', () => {
+  // tlgParse is welded to the DOM only for its status/preview elements, and it
+  // stores the parsed trades on window before touching either — so with those
+  // stubbed it runs headless and the matching can be tested for real.
+  const runTlg = text => {
+    const win = {};
+    const factory = new Function('document', 'window', 'calcPL',
+      `${extractFunction('tlgParse')}\ntlgParse(arguments[3]); return window._tlgPending;`);
+    return factory({ getElementById: () => null }, win, () => 0, text) || [];
+  };
+  // STK_TRD|OrderID|Symbol|Name|Exchange|Action|OC|Date|Time|Currency|Qty|Mult|Price|Value|Commission
+  const tlgFill = (sym, action, oc, date, qty, price, comm, time = '100000') =>
+    `STK_TRD|1|${sym}|${sym} Inc|SMART|${action}|${oc}|${date}|${time}|USD|${qty}|1|${price}|0|${comm}|`;
+
+  test('one sell cannot close two separate buys', () => {
+    // The matcher bucketed fills into buys/sells and, for every buy, scanned the
+    // whole sells list for anything dated on or after it. Nothing was consumed,
+    // so both buys closed against the same sell: the P&L and that sell's
+    // commission were each counted twice.
+    const trades = runTlg([
+      tlgFill('AAPL', 'BUY',  'O', '20260801', 100, 100, 1),
+      tlgFill('AAPL', 'BUY',  'O', '20260802', 100, 110, 1),
+      tlgFill('AAPL', 'SELL', 'C', '20260803', 100, 120, 1),
+    ].join('\n'));
+    assert.equal(trades.length, 2, 'two buys are two positions');
+    const closed = trades.filter(t => t.closedShares > 0);
+    assert.equal(closed.length, 1, 'only 100 shares were sold, so only one lot closed');
+    assert.equal(trades.reduce((a, t) => a + t.closedShares, 0), 100,
+      'total closed volume cannot exceed what was actually sold');
+    // FIFO: the first lot is the one that closed.
+    assert.equal(closed[0].entryPrice, 100);
+    assert.equal(closed[0].exitPrice, 120);
+    assert.equal(trades.reduce((a, t) => a + t.commission, 0), 3,
+      'each fill is charged once across all the lots it touched');
+  });
+
+  test('one fill closing two lots splits its commission between them', () => {
+    // The fill is charged a single commission for its whole size. Giving each
+    // lot the full amount inflates costs by a factor of however many lots the
+    // sell happened to span.
+    const trades = runTlg([
+      tlgFill('KO', 'BUY',  'O', '20260801', 50, 10, 0),
+      tlgFill('KO', 'BUY',  'O', '20260802', 50, 11, 0, '110000'),
+      tlgFill('KO', 'SELL', 'C', '20260803', 100, 12, 2),
+    ].join('\n'));
+    assert.equal(trades.length, 2);
+    assert.equal(trades.reduce((a, t) => a + t.commission, 0), 2,
+      'the sell was charged $2 once, not $2 per lot it closed');
+    assert.equal(trades[0].commission, 1);
+    assert.equal(trades[1].commission, 1);
+  });
+
+  test('a short position survives the import', () => {
+    // ls was hardcoded to 'L' and every SELL went into the sells bucket, so a
+    // short never became a position at all.
+    const trades = runTlg([
+      tlgFill('TSLA', 'SELL', 'O', '20260801', 50, 300, 1),
+      tlgFill('TSLA', 'BUY',  'C', '20260802', 50, 280, 1),
+    ].join('\n'));
+    assert.equal(trades.length, 1);
+    assert.equal(trades[0].ls, 'S');
+    assert.equal(trades[0].shares, 50);
+    assert.equal(trades[0].closedShares, 50);
+    assert.equal(trades[0].entryPrice, 300);
+    assert.equal(trades[0].exitPrice, 280);
+  });
+
+  test('an explicit Open marker never consumes an existing lot', () => {
+    const trades = runTlg([
+      tlgFill('NVDA', 'BUY',  'O', '20260801', 10, 100, 0),
+      tlgFill('NVDA', 'SELL', 'O', '20260802', 10, 120, 0),
+    ].join('\n'));
+    assert.equal(trades.length, 2, 'the second fill is a new short, not a close');
+    assert.equal(trades[1].ls, 'S');
+    assert.equal(trades[0].closedShares, 0, 'the long must stay open');
+  });
+
+  test('a multi-leg exit leaves the final leg to exitPrice, not targets', () => {
+    // closedShares is TOTAL closed volume and calcPL prices the remainder
+    // (closedShares - sum(t[].shares)) at exitPrice, so listing every leg as a
+    // target makes the remainder zero and the last leg disappears from P&L.
+    const trades = runTlg([
+      tlgFill('X', 'BUY',  'O', '20260801', 100, 10, 0),
+      tlgFill('X', 'SELL', 'C', '20260802',  40, 12, 0),
+      tlgFill('X', 'SELL', 'C', '20260803',  60, 14, 0),
+    ].join('\n'));
+    assert.equal(trades.length, 1);
+    const t = trades[0];
+    assert.equal(t.closedShares, 100);
+    assert.equal(t.exitPrice, 14);
+    assert.deepEqual(t.targets, [{ shares: 40, price: 12 }]);
+    assert.equal(calcPL({ ...t, t: t.targets }), 320,
+      '(12-10)*40 + (14-10)*60 — the final leg must still be priced');
+  });
+
+  test('fills are matched chronologically, not in file order', () => {
+    const trades = runTlg([
+      tlgFill('MU', 'SELL', 'C', '20260805', 10, 120, 0),
+      tlgFill('MU', 'BUY',  'O', '20260801', 10, 100, 0, '090000'),
+    ].join('\n'));
+    assert.equal(trades.length, 1, 'the out-of-order sell still closes the buy');
+    assert.equal(trades[0].closedShares, 10);
+  });
+
+  test('a partial close leaves the rest of the lot open', () => {
+    const trades = runTlg([
+      tlgFill('SOFI', 'BUY',  'O', '20260801', 90, 18, 0),
+      tlgFill('SOFI', 'SELL', 'C', '20260802', 25, 19, 0),
+    ].join('\n'));
+    assert.equal(trades.length, 1);
+    assert.equal(trades[0].shares, 90);
+    assert.equal(trades[0].closedShares, 25);
+    assert.equal(trades[0].targets.length, 0, 'a single leg belongs to exitPrice');
   });
 });
