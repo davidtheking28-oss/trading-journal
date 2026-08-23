@@ -241,3 +241,31 @@ unlike this one — push it manually).
 - **`6f73a6c3`'s sync has been dead since 2026-06-24** (last `fetched_at`; the
   other three refreshed 2026-08-21). Its last journal entry is 2026-06-23.
   Check the account's Flex token before assuming its data is merely quiet.
+
+## ⚠️ Don't reintroduce these regressions (fixed 2026-08-23, council review)
+
+- **Stage 3 of the holdings migration is done — `investments.holdings` (jsonb)
+  is retired.** `invLoadFromDB` reads only `investment_holdings`, no fallback
+  branch; `_invSaveWrite` no longer writes `holdings` onto the `investments`
+  row (it still writes `deposits`/`currency`/`alloc_targets` and carries the
+  optimistic-lock `updated_at` stamp — those were never part of the
+  migration). **Do not re-add a jsonb fallback** — the column is intentionally
+  frozen dead weight now, not a live rollback path; reviving it would silently
+  serve a stale snapshot to a genuine read error instead of surfacing it.
+  `data_health_check_core`'s `holdings_doc_row_drift` check was retired in the
+  same migration for the same reason: it would misfire on the first holding
+  edit anyone makes now that the jsonb side never updates again. Backups:
+  `investments_backup_20260823`, `investment_holdings_backup_20260823`.
+- **`data_health_check()` gained `ibkr_sync_stalled`.** `ibkr-alert` (the
+  existing Telegram alert) only ever looks at users who already have
+  `flex_sync_log` rows in its window — a user filtered out of `ibkr-cron`'s
+  `targets` before it logs anything (a wiped or never-set `flex_query_id`)
+  produces **zero** log rows, neither ok nor fail, and is invisible to it by
+  construction. This is exactly how `6f73a6c3` went undetected for two months.
+  The new check flags any account with a `flex_query_id` or a prior successful
+  fetch that has had none in 4+ days. **Do not key this off
+  `trades.ibkr_id is not null`** — `6f73a6c3` and `dcb5bdba` import untagged
+  rows (no Trade ID column configured in their Flex query), so that condition
+  silently excludes exactly the two accounts most prone to going stale; a
+  first draft of this check did exactly that and returned 0 live hits. Use
+  `flex_statement_cache` row existence instead — it doesn't depend on tagging.
