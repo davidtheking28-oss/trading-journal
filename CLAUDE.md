@@ -191,3 +191,53 @@ unlike this one — push it manually).
   drops that leg from P&L. The seeded demo data contained both conventions —
   RDDT correct, HIPPO wrong — and the HIPPO row had been persisted to a real
   account. Keep any new write path on the "total" convention.
+
+## ⚠️ Don't reintroduce these regressions (fixed 2026-08-23)
+
+- **The TLG (Interactive Israel) import fabricated P&L.** `tlgParse` bucketed a
+  symbol's fills into `buys`/`sells` and then, for **every** buy, scanned the
+  whole `sells` list for anything dated on or after it. Nothing was ever
+  consumed, so two buys of one symbol followed by a single sell closed **both**
+  buys against that same sell — the P&L and that sell's commission were counted
+  once per buy. `ls` was also hardcoded to `'L'`, so a short's opening SELL fell
+  into the sells bucket, disappeared as a position, and corrupted the matching
+  of the real buys around it. Replaced with FIFO lot matching that consumes
+  `lot.left`, honours the O/C column (`opensOnly`), sorts fills chronologically
+  (the export is not guaranteed ordered), splits each fill's commission across
+  only the lots it actually closed, and leaves the **final** leg to `exitPrice`
+  rather than listing it in `targets` — `calcPL` prices
+  `closedShares - sum(t[].shares)` at `exitPrice`, so listing every leg makes
+  the remainder zero and drops the last leg from P&L.
+  **Zero live rows ever came from this path** (`notes_keep = 'יובא מאינטראקטיב
+  ישראל'` returns nothing), so there was nothing to repair — the bug was latent
+  and would have hit on first real use.
+- **The orphan-close handler could only ever apply one close per row.**
+  Candidates were filtered on `!x.exitPrice`, so setting the exit from the first
+  orphan execution excluded that row from the second, which then found no
+  candidate and was silently dropped. ONDS (id 50, `6f73a6c3`) hit this and was
+  finished by hand. Candidates are now matched on **remaining volume**
+  (`room = shares - closedShares`), closed volume **accumulates**, and — this is
+  the subtle half — the exit already on the row is pushed into `t` as an
+  explicit leg *before* `exitPrice` is repointed at the new execution.
+  Without that, the earlier close silently reprices to the newer one, because
+  `calcPL` prices everything not covered by a leg at `exitPrice`.
+- **Two IBKR accounts have a 29-day Flex window, and they are exactly the two
+  that produce orphan closes.** Measured from the cached statements:
+
+  | account | window | days | orphans seen |
+  |---|---|---|---|
+  | `6f73a6c3` | 20260525-20260623 | 29 | yes (ONDS) |
+  | `dcb5bdba` | 20260722-20260820 | 29 | yes (POET, SOFI) |
+  | `9f9ffff4` | 20250821-20260820 | 364 | none |
+  | `5f72e0bb` | 20250821-20260820 | 364 | none |
+
+  An orphan close *is* the symptom of too short a window: the closing execution
+  is inside it while the opening one is not. **The fix is in IBKR, not in this
+  code** — Client Portal → Reports → Flex Queries → edit the Trades query →
+  Period = "Last 365 Days" (see the `ibkr_flex_period_1001` note: 30-day periods
+  also cause the 1001 error on `SendRequest`). Until those two queries are
+  changed, POET 101 @7.462 (2026-07-24) and SOFI 60 @16.552 (2026-07-23) stay
+  unapplied — do not guess them into a row.
+- **`6f73a6c3`'s sync has been dead since 2026-06-24** (last `fetched_at`; the
+  other three refreshed 2026-08-21). Its last journal entry is 2026-06-23.
+  Check the account's Flex token before assuming its data is merely quiet.
