@@ -15088,7 +15088,7 @@ async function invLoadFromDB() {
   // an empty portfolio over a real one — and now also deletes every row in
   // investment_holdings, destroying both copies at once.
   const { data, error: docErr } = await _sb.from('investments')
-    .select('holdings, deposits, currency, alloc_targets, updated_at')
+    .select('deposits, currency, alloc_targets, updated_at')
     .eq('user_id', _currentUser.id)
     .maybeSingle();
   if (docErr) {
@@ -15101,24 +15101,24 @@ async function invLoadFromDB() {
   }
   if (data) {
     _invUpdatedAt = data.updated_at || null;
-    // Stage 2: holdings come from their own table, one row each, carrying a
-    // real id instead of being identified by their index in an array.
+    // Stage 3 (2026-08-23): investment_holdings is now the only source — the
+    // jsonb `holdings` document on this row stopped being written the moment
+    // this shipped, so falling back to it here would silently freeze anyone
+    // whose read hits an error at whatever their portfolio looked like that
+    // day. A read error is surfaced instead, same as the docErr branch above.
     const { data: rows, error: rowsErr } = await _sb.from('investment_holdings')
       .select('id, symbol, cat, sector, entry_shares, entry_price, current_price, position')
       .eq('user_id', _currentUser.id)
       .order('position', { ascending: true });
-    // The jsonb document is still written on every save, so it is the fallback
-    // whenever the table cannot answer: a read error, or an account whose rows
-    // predate the backfill. Falling through to an empty portfolio instead would
-    // show the user nothing and then let the next autosave persist that.
-    const useRows = !rowsErr && rows && (rows.length > 0 || (data.holdings || []).length === 0);
-    const holdings = useRows
-      ? rows.map(r => ({ id: r.id, symbol: r.symbol || '', cat: r.cat || '', sector: r.sector || '',
-                         entryShares: +r.entry_shares || 0, entryPrice: +r.entry_price || 0,
-                         currentPrice: r.current_price == null ? undefined : +r.current_price,
-                         locked: true }))
-      : (data.holdings || []).map(h => ({ ...h, locked: h.locked !== false ? true : false }));
-    if (!useRows) console.warn('[investments] holdings table unavailable, using the jsonb document', rowsErr || '');
+    if (rowsErr) {
+      console.error('[invLoadFromDB] holdings', rowsErr);
+      toast('לא ניתן לטעון את ההשקעות — רענן את הדף', 'error');
+      return _invData || { portfolioTotal, holdings: [], deposits: [] };
+    }
+    const holdings = (rows || []).map(r => ({ id: r.id, symbol: r.symbol || '', cat: r.cat || '', sector: r.sector || '',
+                       entryShares: +r.entry_shares || 0, entryPrice: +r.entry_price || 0,
+                       currentPrice: r.current_price == null ? undefined : +r.current_price,
+                       locked: true }));
     invApplyTargets(data.alloc_targets);
     _invData = { portfolioTotal, holdings, deposits: data.deposits || [], allocTargets: invTargetsPayload() };
   } else {
@@ -15170,7 +15170,11 @@ async function _invSaveWrite(data, prev, gen) {
   // moment of the write, not when it was queued — a write that waited its turn
   // would otherwise burn part of its suppression window sitting in the queue.
   _rtSuppress('investments');
-  const row = { user_id: _currentUser.id, holdings: invStripBlank(data.holdings), deposits: data.deposits || [],
+  // Stage 3 (2026-08-23): holdings no longer written here at all — only to
+  // investment_holdings below, via _invSyncHoldingRows. This row now carries
+  // only what still genuinely lives on it: the optimistic-lock stamp,
+  // deposits, currency, and allocation targets.
+  const row = { user_id: _currentUser.id, deposits: data.deposits || [],
                 currency: invGetCurrency(), alloc_targets: data.allocTargets || invTargetsPayload() };
 
   // The save rewrites the whole holdings document, so without a guard the last
@@ -15218,10 +15222,11 @@ async function _invSaveWrite(data, prev, gen) {
   return true;
 }
 
-// Stage 2 dual-write. The jsonb document above stays the source of truth and
-// keeps carrying the optimistic-concurrency guard; this mirrors the same
-// holdings into their own rows and only ever runs after that guarded write has
-// already succeeded, so a conflict never reaches the table.
+// Stage 3 (2026-08-23): investment_holdings is the only place holdings are
+// persisted. It still only runs after the `investments` row's guarded write
+// succeeds above, so a lock conflict is caught there before this ever touches
+// the table — that row keeps the optimistic-concurrency stamp even though it
+// no longer carries the holdings themselves.
 //
 // Ids are preserved rather than delete-all/insert-all: reinserting would hand
 // every position a new identity on every keystroke, and a failed insert after a
