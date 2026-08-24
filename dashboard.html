@@ -10215,7 +10215,8 @@ const LANG_STRINGS = {
     kpi_with_stop:'trades with stop', kpi_add_stop:'Add stop',
     kpi_open_pos:'open positions', kpi_no_open:'No open positions',
     kpi_calculating:'Calculating...', kpi_vs_prev:'vs last month',
-    kpi_updated:'Updated now',
+    kpi_updated:'Updated',
+    kpi_no_quotes:'no live prices available', kpi_missing_quotes:'without a quote',
     tile_net_pl:'Net P&L', tile_return:'Return', tile_r_mult:'R Multiple',
     tile_risk:'Trade Risk', tile_stop_dist:'Stop Distance', tile_commission:'Commission',
     tile_entry:'Entry', tile_stop:'Stop', tile_exit:'Exit',
@@ -10345,7 +10346,8 @@ const LANG_STRINGS = {
     kpi_with_stop:'עסקאות עם סטופ', kpi_add_stop:'הוסף סטופ',
     kpi_open_pos:'פוזיציות פתוחות', kpi_no_open:'אין פוזיציות פתוחות',
     kpi_calculating:'מחשב...', kpi_vs_prev:'vs חודש קודם',
-    kpi_updated:'עודכן עכשיו',
+    kpi_updated:'עודכן',
+    kpi_no_quotes:'אין מחירים זמינים', kpi_missing_quotes:'ללא מחיר',
     tile_net_pl:'P&L נטו', tile_return:'תשואה', tile_r_mult:'R Multiple',
     tile_risk:'סיכון בעסקה', tile_stop_dist:'מרחק סטופ', tile_commission:'עמלה',
     tile_entry:'כניסה', tile_stop:'סטופ', tile_exit:'יציאה',
@@ -10718,7 +10720,7 @@ function renderOverview() {
     </div>
     <div class="kpi-card c-yellow" id="kpi-live-card">
       <div class="kpi-label">${t('kpi_live')}</div>
-      <div class="kpi-value" id="kpi-live-pl">${t('kpi_calculating')}</div>
+      <div class="kpi-value sensitive" id="kpi-live-pl">${t('kpi_calculating')}</div>
       <div class="kpi-sub" id="kpi-live-sub">${openTrades.length} ${t('kpi_open_pos')}</div>
     </div>
     <div class="kpi-card c-blue">
@@ -10780,6 +10782,11 @@ async function _updateLivePL() {
   const token = await _getToken();
   const symbols = [...new Set(open.map(t => t.symbol.toUpperCase()))];
   let totalUnreal = 0;
+  // A symbol with no quote used to contribute 0 silently, so a fully failed
+  // refresh (rate limit, network, or a symbol the feed doesn't carry — every
+  // Bybit perp such as XRPUSDT.P) rendered a confident green "+$0.00" that was
+  // indistinguishable from genuinely flat positions. Count what resolved.
+  let priced = 0;
   await Promise.all(symbols.map(async sym => {
     try {
       const r = await fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=quote&symbol=${encodeURIComponent(sym)}`,
@@ -10787,6 +10794,7 @@ async function _updateLivePL() {
       const data = await r.json();
       const price = data.c;
       if (!price) return;
+      priced++;
       open.filter(t => t.symbol.toUpperCase() === sym).forEach(t => {
         const shares = (t.shares || 0) - (t.closedShares || 0);
         const side = t.ls === 'S' ? -1 : 1;
@@ -10795,11 +10803,37 @@ async function _updateLivePL() {
     } catch {}
   }));
   if (myToken !== _livePLToken) return;
+  // className was assigned, not amended, which dropped `kpi-value` (26px/800)
+  // and `sensitive` off the element the first time it refreshed — the figure
+  // shrank to body text and privacy mode stopped hiding it.
+  const setCls = extra => { el.className = 'kpi-value sensitive' + (extra ? ' ' + extra : ''); };
+  if (!priced) {
+    el.textContent = '—';
+    setCls('');
+    if (sub) sub.textContent = `${open.length} ${t('kpi_open_pos')} · ${t('kpi_no_quotes')}`;
+    return;
+  }
   const sign = totalUnreal >= 0 ? '+' : '';
   el.textContent = sign + '$' + Math.abs(totalUnreal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  el.className = totalUnreal >= 0 ? 'num-green' : 'num-red';
-  if (sub) sub.textContent = `${open.length} ${t('kpi_open_pos')} · ${t('kpi_updated')}`;
+  setCls(totalUnreal >= 0 ? 'green' : 'red');
+  // A real clock time, not a fixed "updated now" that read the same whether the
+  // last refresh was 5 seconds or an hour ago.
+  const clock = new Date().toLocaleTimeString(_lang === 'he' ? 'he-IL' : 'en-US',
+    { hour: '2-digit', minute: '2-digit' });
+  const missing = symbols.length - priced;
+  if (sub) sub.textContent = `${open.length} ${t('kpi_open_pos')} · ${t('kpi_updated')} ${clock}`
+    + (missing ? ` · ${missing} ${t('kpi_missing_quotes')}` : '');
+  applyPrivacy();
 }
+
+// setInterval keeps firing while the tab is in the background, where
+// _updateLivePL returns early by design — so coming back to a tab that had been
+// hidden for an hour showed an hour-old figure until the next tick. Refresh the
+// moment it becomes visible again.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden || !_ovLiveTimer) return;
+  _updateLivePL();
+});
 
 function renderStatistics() {
   _restoreStatsState();
