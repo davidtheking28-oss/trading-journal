@@ -269,3 +269,38 @@ unlike this one — push it manually).
   silently excludes exactly the two accounts most prone to going stale; a
   first draft of this check did exactly that and returned 0 live hits. Use
   `flex_statement_cache` row existence instead — it doesn't depend on tagging.
+
+## ⚠️ Don't reintroduce these regressions (fixed 2026-08-25, council review)
+
+- **A pre-commit hook now runs `tests/logic.test.mjs` automatically** whenever
+  `dashboard.html` or the test files themselves are staged — `.githooks/pre-commit`,
+  wired via `git config core.hooksPath .githooks` (one-time per clone, see
+  `tests/README.md`). A council session found the same gap two sessions in a
+  row: every historical regression in this file was caught by CI *after* push,
+  never before, and "run the tests first" as a written instruction to an LLM
+  that writes every diff is a compliance ask that LLM can skip or claim was
+  done. **Do not replace this with an instruction in a commit-message template
+  or similar honor-system substitute** — the whole point is that the commit
+  cannot physically complete without a real, fresh pass. Verified live: a
+  deliberately broken `calcPL` (`let pl = 999999`) failed 6 tests and the
+  commit was refused with exit 1; reverting and re-running confirmed 102/102
+  and a clean commit goes through untouched.
+- **This hook only covers the journal's Node suite (Layer 1).** The screener's
+  `tests/run-tests.py` needs Playwright and a live browser — too slow/flaky
+  for a blocking local gate — so it stays CI-only, which was already a
+  required job before this change. Don't try to force it into this hook.
+- **The screener's `tests/assertions.js` suite (81→101 assertions this
+  session) is a separate repo with its own CI gate**, not covered by this
+  journal-repo hook. If a fix ever touches both repos in one sitting, run both
+  suites explicitly — this hook will not catch a screener regression.
+
+## Still needs the user, not code (as of 2026-08-25, second council session
+## in a row to flag this)
+
+- **IBKR Flex Query Period is still 29 days on `6f73a6c3` and `dcb5bdba`.**
+  Unchanged since the 2026-08-23 note below — a 5-minute click in Client
+  Portal → Reports → Flex Queries, not something an LLM can do from here.
+  Every orphan-close workaround in this codebase exists because of this one
+  setting. The 2026-08-25 council's literal top recommendation was "fix this
+  before writing another line of code" — flagging again because two straight
+  sessions haven't moved it, which is itself worth noticing.

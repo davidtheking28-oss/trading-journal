@@ -11,6 +11,20 @@ in `.github/workflows/deploy.yml` — a failure blocks Pages *and* the Edge
 Functions), and `data_health_check()` runs nightly at 03:45 UTC via the
 `data-health-alert` cron job, messaging Telegram only when a check fails.
 
+**A local pre-commit hook runs this suite automatically** whenever
+`dashboard.html` or the test files themselves are staged — see
+`.githooks/pre-commit`. One-time setup per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+This exists because CI catches a broken commit only *after* it's pushed —
+every regression documented in this project's CLAUDE.md was caught that way,
+never before. The hook makes "run the tests first" a gate the commit
+physically cannot get past, rather than a written instruction an LLM (which
+writes every diff to this file) could silently skip or claim was done.
+
 ## Layer 1 — logic (`logic.test.mjs`)
 
 `harness.mjs` reads `dashboard.html`, pulls individual functions out of the

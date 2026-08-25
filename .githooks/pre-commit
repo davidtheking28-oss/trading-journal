@@ -1,0 +1,31 @@
+#!/bin/sh
+# Runs automatically before every commit (git config core.hooksPath .githooks
+# points git at this tracked directory instead of the untracked .git/hooks —
+# see CLAUDE.md's "Tests" section for the one-time setup command).
+#
+# Why this exists: an LLM writes every diff to this file, every session, with
+# no second human reviewer. "Run the tests before committing" as a written
+# instruction is a compliance ask the same LLM can silently skip or claim was
+# done — a council session (2026-08-25) flagged exactly that gap. This hook
+# makes it a mechanical gate instead: if the diff touches the logic the suite
+# covers, the commit physically cannot complete without a real, fresh pass.
+#
+# Deliberately scoped to dashboard.html and the test files themselves, not
+# every commit — the suite is fast (~200ms) so there's no real cost to
+# running it whenever the file that holds every covered function changes.
+
+changed=$(git diff --cached --name-only)
+
+if echo "$changed" | grep -qE '^(dashboard\.html|tests/(logic\.test\.mjs|harness\.mjs))$'; then
+  echo "pre-commit: dashboard.html or the test harness changed — running tests/logic.test.mjs"
+  if ! node --test tests/logic.test.mjs; then
+    echo ""
+    echo "pre-commit: BLOCKED — tests/logic.test.mjs failed."
+    echo "Fix the failure or, if a test itself is wrong, fix the test — do not bypass with --no-verify"
+    echo "without the user's explicit say-so (see git-workflow.md: never skip hooks)."
+    exit 1
+  fi
+  echo "pre-commit: tests passed."
+fi
+
+exit 0
