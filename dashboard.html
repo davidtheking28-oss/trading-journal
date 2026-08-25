@@ -14911,20 +14911,37 @@ const SECTOR_TO_CAT = {
 // (leave it for the user) only when nothing matches at all — a wrong color
 // on someone's own risk view is worse than a blank one, so this is a
 // best-effort default, not a guarantee, and the select stays user-editable.
+// \b<word>\b for a short/whole-word keyword ('spac' must not match inside
+// "aerospace" — the exact false positive stress-testing against ~130
+// realistic Finnhub industry strings caught before this shipped); plain
+// prefix matching for the rest, which is intentional ('biotech' is meant to
+// catch "biotechnology" too).
+const _wholeWord = w => new RegExp(`\\b${w}\\b`);
 function _sectorRiskCat(sector) {
   if (!sector) return '';
   if (SECTOR_TO_CAT[sector]) return SECTOR_TO_CAT[sector];
   const s = sector.toLowerCase();
-  const yellow = ['biotech','pharma','drug','clinical','gene therap','crypto','bitcoin','leveraged',
-    'junior min','exploration','clean energy','solar','electric vehicle',' ev ','cannabis','spac'];
+  // Deliberately NOT 'drug' or 'pharma' — that also matches "Drug
+  // Manufacturers—General" and "Pharmaceutical Retailers", both established,
+  // revenue-generating businesses this app's own SECTOR_MAP already treats as
+  // blue (PFE/MRK/LLY/ABBV are 'Healthcare', not 'Biotech'). 'biotech' and
+  // 'clinical' are the actual pipeline-risk signal; a profitable drugmaker
+  // isn't the same bet as a clinical-stage biotech and must not read as one.
+  const yellow = ['biotech','clinical','gene therap','crypto','bitcoin','leveraged',
+    'exploration','clean energy','solar','electric vehicle',' ev ','cannabis', _wholeWord('spac')];
   const green = ['technology','software','internet','semiconductor','media','entertainment',
     'e-commerce','saas','cloud','gaming','robotic','quantum'];
-  if (yellow.some(k => s.includes(k))) return 'yellow';
-  if (green.some(k => s.includes(k))) return 'green';
+  const hit = k => k instanceof RegExp ? k.test(s) : s.includes(k);
+  // 'junior mining' in real feeds is usually phrased with the commodity in
+  // between ("Junior Gold Mining", "Junior Silver Mining"), so a single
+  // contiguous phrase misses it — an AND of the two tokens does not.
+  const juniorMining = s.includes('junior') && (s.includes('min')||s.includes('exploration'));
+  if (juniorMining || yellow.some(hit)) return 'yellow';
+  if (green.some(hit)) return 'green';
   // Everything else Finnhub actually returns for real holdings — banking,
   // insurance, aerospace & defense, real estate, utilities, machinery,
-  // construction, transportation, healthcare providers, retail, food — reads
-  // as the stable/blue-chip default rather than staying blank.
+  // construction, transportation, drug manufacturers, healthcare providers,
+  // retail, food — reads as the stable/blue-chip default rather than blank.
   return 'blue';
 }
 
