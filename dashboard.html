@@ -14840,7 +14840,7 @@ const SECTOR_MAP = {
   AIR:'Industrials',
   // Crypto
   BTC:'Crypto',ETH:'Crypto',SOL:'Crypto',XRP:'Crypto',BNB:'Crypto',DOGE:'Crypto',
-  HIPPO:'Crypto',BEAM:'Crypto',
+  HIPPO:'Crypto',
   // Materials / Mining
   GROY:'Materials',NEM:'Materials',GOLD:'Materials',WPM:'Materials',
   // Healthcare / Instruments
@@ -14878,16 +14878,21 @@ function missedAutoSector() {
 async function _missedFetchSector(sym, sectorEl) {
   try {
     const token = await _getToken();
-    if (!token) return;
+    if (!token) { console.warn(`[missedAutoSector] no session token — can't look up sector for ${sym}`); return; }
     const url = `${SUPABASE_URL}/functions/v1/finnhub?path=stock%2Fprofile2&symbol=${encodeURIComponent(sym)}`;
     const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
-    if (!res.ok) return;
+    if (!res.ok) {
+      console.warn(`[missedAutoSector] Finnhub lookup failed for ${sym}: HTTP ${res.status}`);
+      if (res.status === 429) toast('הגעת למגבלת הבקשות ל-Finnhub — נסה שוב בעוד דקה', 'error');
+      return;
+    }
     const data = await res.json();
     const sector = data.finnhubIndustry || '';
-    if (sector && document.getElementById('missed-sym')?.value.trim().toUpperCase().replace(/[^A-Z0-9._\-]/g,'') === sym) {
+    if (!sector) { console.warn(`[missedAutoSector] Finnhub has no sector data for ${sym}`); return; }
+    if (document.getElementById('missed-sym')?.value.trim().toUpperCase().replace(/[^A-Z0-9._\-]/g,'') === sym) {
       sectorEl.value = sector;
     }
-  } catch { /* silent fail */ }
+  } catch (e) { console.warn(`[missedAutoSector] network error looking up ${sym}:`, e); }
 }
 
 // In-memory cache for missed opportunities
