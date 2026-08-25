@@ -14846,11 +14846,50 @@ const SECTOR_MAP = {
   BTC:'Crypto',ETH:'Crypto',SOL:'Crypto',XRP:'Crypto',BNB:'Crypto',DOGE:'Crypto',
   HIPPO:'Crypto',
   // Materials / Mining
-  GROY:'Materials',NEM:'Materials',GOLD:'Materials',WPM:'Materials',
+  GROY:'Materials',NEM:'Materials',GOLD:'Materials',WPM:'Materials',MAG:'Materials',USAR:'Materials',
   // Healthcare / Instruments
   A:'Healthcare',SOLS:'Energy',
   // Misc
   NEGG:'Internet / E-Commerce',
+  // Leveraged single-stock / commodity ETFs — pulled from live trade symbols
+  // (2026-08-25 audit). These are the highest-value additions: Finnhub's
+  // profile2 is company fundamentals only and can NEVER return an industry
+  // for an ETF, so an unmapped one has no working fallback at all — it isn't
+  // "eventually resolves," it silently never does, which is what happened to
+  // IBIT before it was added.
+  MSTU:'Leveraged ETF',MSTZ:'Leveraged ETF',ETHU:'Leveraged ETF',AGQ:'Leveraged ETF',
+  SCO:'Leveraged ETF',UCO:'Leveraged ETF',
+  SLV:'ETF',USO:'ETF',VXUS:'ETF',
+  // Real stocks pulled from live trade symbols, added where the company is
+  // unambiguous. Deliberately NOT exhaustive: a wrong sector here is worse
+  // than falling through to Finnhub, so anything not confidently identifiable
+  // (AMDL, FGI, QTTB, SNDQ, SNDU, SPCX, EM as seen in the trades table) was
+  // left out rather than guessed.
+  AAOI:'Technology',GLW:'Technology',LAES:'Technology',NOK:'Technology',
+  ONDS:'Technology',OUST:'Technology',POET:'Technology',RGTI:'Technology',RR:'Technology',
+  SKYT:'Technology',TRMB:'Technology',CRWV:'Technology',
+  ABOS:'Biotech',IMTX:'Biotech',PTGX:'Biotech',
+  MD:'Healthcare',UNH:'Healthcare',STVN:'Healthcare',
+  BULL:'Financials',CRCL:'Financials',DLO:'Financials',IFS:'Financials',NDAQ:'Financials',PAYS:'Financials',
+  BATL:'Energy',EOSE:'Energy',NNE:'Energy',OKLO:'Energy',PLUG:'Energy',SEDG:'Energy',
+  CIFR:'Crypto / Bitcoin',
+  CR:'Industrials',DLX:'Industrials',SGBX:'Industrials',
+  AS:'Consumer',EAT:'Consumer',SGHC:'Consumer',
+  QTUM:'Growth ETF',   // Defiance Quantum ETF, not the Qtum coin — see collision note below
+  ZETA:'Technology',   // Zeta Global stock, not the ZetaChain coin — see collision note below
+  // Known ticker collisions between a stock/ETF above and an unrelated crypto
+  // token sharing the same symbol (audited against CRYPTO_SYMBOLS 2026-08-25
+  // — the class of bug that caused BEAM to silently read "Crypto" for anyone
+  // entering the biotech stock, fixed the same day). This map has exactly one
+  // entry per key, so it can only ever hold one meaning; each collision below
+  // was resolved to whichever meaning actually appears in this app's own
+  // trade history, not by ticker popularity in general:
+  //   DASH (line ~14801, Internet / E-Commerce) — DoorDash, not the DASH coin
+  //   CVX  (line ~14812, Energy)                — Chevron, not the Convex Finance token
+  //   DIA  (line ~14824, ETF)                    — SPDR Dow Jones ETF, not the Diadata token
+  //   QTUM (above)                               — Defiance Quantum ETF, not the Qtum coin
+  //   ZETA (above)                               — Zeta Global, not the ZetaChain coin
+  // Verify a new addition against CRYPTO_SYMBOLS before assuming it's safe.
 };
 
 const SECTOR_TO_CAT = {
@@ -14858,45 +14897,87 @@ const SECTOR_TO_CAT = {
   'Media / Entertainment':'green','ETF':'blue','Growth ETF':'green',
   'Biotech':'yellow','EV / Auto':'yellow','Crypto':'yellow','Crypto / Bitcoin':'yellow','Leveraged ETF':'yellow',
   'Financials':'blue','Healthcare':'blue','Consumer':'blue','Industrials':'blue',
-  'Energy':'blue','Real Estate':'blue','Telecom':'blue',
+  'Energy':'blue','Real Estate':'blue','Telecom':'blue','Materials':'blue',
 };
 
-let _missedSectorTimer = null;
-
-function missedAutoSector() {
-  const raw = document.getElementById('missed-sym').value.trim().toUpperCase()
-    .replace(/[^A-Z0-9._\-]/g,'').replace(/USDT\.P|USDT|\.P$/,'');
-  const sectorEl = document.getElementById('missed-sector');
-  if (!sectorEl || !raw) return;
-
-  // Instant fill from local map
-  const local = SECTOR_MAP[raw];
-  if (local) { sectorEl.value = local; return; }
-
-  // Debounce Finnhub lookup — fires 600ms after user stops typing
-  clearTimeout(_missedSectorTimer);
-  if (raw.length < 2) return;
-  _missedSectorTimer = setTimeout(() => _missedFetchSector(raw, sectorEl), 600);
+// A plain SECTOR_TO_CAT[sector] lookup only matches the ~19 category names
+// SECTOR_MAP itself uses. Most rows get their sector from Finnhub instead
+// (finnhubIndustry — a much more granular string like "Biotechnology",
+// "Aerospace & Defense", "Banking") which never matches those exact keys, so
+// the risk-category select silently never auto-filled for anything not in
+// the local map. Audited against 12 real finnhubIndustry values pulled from
+// the live missed_opportunities table (2026-08-25): 0 of 12 matched.
+// Falls back to keyword matching on Finnhub's actual vocabulary; returns ''
+// (leave it for the user) only when nothing matches at all — a wrong color
+// on someone's own risk view is worse than a blank one, so this is a
+// best-effort default, not a guarantee, and the select stays user-editable.
+function _sectorRiskCat(sector) {
+  if (!sector) return '';
+  if (SECTOR_TO_CAT[sector]) return SECTOR_TO_CAT[sector];
+  const s = sector.toLowerCase();
+  const yellow = ['biotech','pharma','drug','clinical','gene therap','crypto','bitcoin','leveraged',
+    'junior min','exploration','clean energy','solar','electric vehicle',' ev ','cannabis','spac'];
+  const green = ['technology','software','internet','semiconductor','media','entertainment',
+    'e-commerce','saas','cloud','gaming','robotic','quantum'];
+  if (yellow.some(k => s.includes(k))) return 'yellow';
+  if (green.some(k => s.includes(k))) return 'green';
+  // Everything else Finnhub actually returns for real holdings — banking,
+  // insurance, aerospace & defense, real estate, utilities, machinery,
+  // construction, transportation, healthcare providers, retail, food — reads
+  // as the stable/blue-chip default rather than staying blank.
+  return 'blue';
 }
 
-async function _missedFetchSector(sym, sectorEl) {
-  try {
-    const token = await _getToken();
-    if (!token) { console.warn(`[missedAutoSector] no session token — can't look up sector for ${sym}`); return; }
-    const url = `${SUPABASE_URL}/functions/v1/finnhub?path=stock%2Fprofile2&symbol=${encodeURIComponent(sym)}`;
-    const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
-    if (!res.ok) {
-      console.warn(`[missedAutoSector] Finnhub lookup failed for ${sym}: HTTP ${res.status}`);
-      if (res.status === 429) toast('הגעת למגבלת הבקשות ל-Finnhub — נסה שוב בעוד דקה', 'error');
-      return;
-    }
-    const data = await res.json();
-    const sector = data.finnhubIndustry || '';
-    if (!sector) { console.warn(`[missedAutoSector] Finnhub has no sector data for ${sym}`); return; }
-    if (document.getElementById('missed-sym')?.value.trim().toUpperCase().replace(/[^A-Z0-9._\-]/g,'') === sym) {
-      sectorEl.value = sector;
-    }
-  } catch (e) { console.warn(`[missedAutoSector] network error looking up ${sym}:`, e); }
+// Cleans a raw symbol input the same way for both the initial lookup AND the
+// 600ms-later "did the user change it since?" re-check. Those two cleanings
+// used to be done separately per call site and drifted apart — the re-check
+// in the missed-opportunities form never stripped the USDT/.P perp suffix,
+// so a Bybit-style symbol like XRPUSDT.P (cleaned to XRP for the lookup)
+// could never match itself again and the Finnhub result was silently
+// dropped even though the user never touched the field.
+function _cleanSectorSym(raw) {
+  return (raw || '').trim().toUpperCase().replace(/[^A-Z0-9._\-]/g,'').replace(/USDT\.P|USDT|\.P$/,'');
+}
+
+const _sectorFillTimers = {};
+// Shared by missedAutoSector and invAutoSector. Split out 2026-08-25 after a
+// silent-failure bug (a swallowed Finnhub error/rate-limit, with nothing
+// shown to the user either way) was fixed in one copy and left live in the
+// other — one implementation now, so a future fix reaches both call sites.
+// `timerKey` debounces each caller independently (a per-row key for the
+// investments table, since several rows can be edited at once).
+function autoFillSector(timerKey, symEl, sectorEl, onFill) {
+  const sym = _cleanSectorSym(symEl?.value);
+  if (!sectorEl || !sym) return;
+
+  const local = SECTOR_MAP[sym];
+  if (local) { onFill(local); return; }
+
+  clearTimeout(_sectorFillTimers[timerKey]);
+  if (sym.length < 2) return;
+  _sectorFillTimers[timerKey] = setTimeout(async () => {
+    try {
+      const token = await _getToken();
+      if (!token) { console.warn(`[autoFillSector] no session token — can't look up sector for ${sym}`); return; }
+      const url = `${SUPABASE_URL}/functions/v1/finnhub?path=stock%2Fprofile2&symbol=${encodeURIComponent(sym)}`;
+      const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (!res.ok) {
+        console.warn(`[autoFillSector] Finnhub lookup failed for ${sym}: HTTP ${res.status}`);
+        if (res.status === 429) toast('הגעת למגבלת הבקשות ל-Finnhub — נסה שוב בעוד דקה', 'error');
+        return;
+      }
+      const data = await res.json();
+      const sector = data.finnhubIndustry || '';
+      if (!sector) { console.warn(`[autoFillSector] Finnhub has no sector data for ${sym}`); return; }
+      if (_cleanSectorSym(symEl?.value) === sym) onFill(sector);
+    } catch (e) { console.warn(`[autoFillSector] network error looking up ${sym}:`, e); }
+  }, 600);
+}
+
+function missedAutoSector() {
+  const symEl = document.getElementById('missed-sym');
+  const sectorEl = document.getElementById('missed-sector');
+  autoFillSector('missed', symEl, sectorEl, sector => { sectorEl.value = sector; });
 }
 
 // In-memory cache for missed opportunities
@@ -16432,40 +16513,18 @@ function invAutoSave() {
   }, 800);
 }
 
-const _invSectorTimers = {};
 function invAutoSector(idx) {
   const tbody = document.getElementById('inv-tbody');
   const row = tbody?.querySelector(`tr[data-idx="${idx}"]`);
   if (!row) return;
-  const sym = row.querySelector('.inv-sym-input')?.value.trim().toUpperCase().replace(/[^A-Z0-9._\-]/g,'') || '';
+  const symEl = row.querySelector('.inv-sym-input');
   const sectorEl = row.querySelector('.inv-sector-input');
-  if (!sectorEl || !sym) return;
-  const local = SECTOR_MAP[sym];
-  if (local) {
-    sectorEl.value = local;
+  autoFillSector('inv-' + idx, symEl, sectorEl, sector => {
+    sectorEl.value = sector;
     const catSel = row.querySelector('.inv-cat-sel');
-    if (catSel && !catSel.value) { catSel.value = SECTOR_TO_CAT[local] || ''; }
+    if (catSel && !catSel.value) catSel.value = _sectorRiskCat(sector);
     invRecalc();
-    return;
-  }
-  clearTimeout(_invSectorTimers[idx]);
-  if (sym.length < 2) return;
-  _invSectorTimers[idx] = setTimeout(async () => {
-    try {
-      const token = await _getToken();
-      if (!token) return;
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=stock%2Fprofile2&symbol=${encodeURIComponent(sym)}`, { headers: { Authorization: `Bearer ${token}` } });
-      if (!res.ok) return;
-      const data = await res.json();
-      const currentSym = row.querySelector('.inv-sym-input')?.value.trim().toUpperCase();
-      if (data.finnhubIndustry && currentSym === sym) {
-        sectorEl.value = data.finnhubIndustry;
-        const catSel = row.querySelector('.inv-cat-sel');
-        if (catSel && !catSel.value) { catSel.value = SECTOR_TO_CAT[data.finnhubIndustry] || ''; }
-        invRecalc();
-      }
-    } catch { /* silent */ }
-  }, 600);
+  });
 }
 
 let _invSaveTotalTimer = null;
