@@ -10787,12 +10787,15 @@ async function _updateLivePL() {
   // Bybit perp such as XRPUSDT.P) rendered a confident green "+$0.00" that was
   // indistinguishable from genuinely flat positions. Count what resolved.
   let priced = 0;
-  await Promise.all(symbols.map(async sym => {
-    try {
-      const r = await fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=quote&symbol=${encodeURIComponent(sym)}`,
-        { headers: { 'Authorization': `Bearer ${token}` } });
-      const data = await r.json();
-      const price = data.c;
+  // One batched call instead of one edge-function round trip per symbol — each
+  // round trip paid its own auth+rate-limit overhead, which dominated load time
+  // once there were more than a couple of open positions.
+  try {
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=quote&symbols=${encodeURIComponent(symbols.join(','))}`,
+      { headers: { 'Authorization': `Bearer ${token}` } });
+    const quotes = await r.json();
+    symbols.forEach(sym => {
+      const price = quotes?.[sym]?.c;
       if (!price) return;
       priced++;
       open.filter(t => t.symbol.toUpperCase() === sym).forEach(t => {
@@ -10800,8 +10803,8 @@ async function _updateLivePL() {
         const side = t.ls === 'S' ? -1 : 1;
         totalUnreal += side * shares * (price - t.entryPrice);
       });
-    } catch {}
-  }));
+    });
+  } catch {}
   if (myToken !== _livePLToken) return;
   // className was assigned, not amended, which dropped `kpi-value` (26px/800)
   // and `sensitive` off the element the first time it refreshed — the figure

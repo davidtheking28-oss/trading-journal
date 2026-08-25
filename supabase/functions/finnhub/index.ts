@@ -68,9 +68,32 @@ serve(async (req: Request) => {
   }
 
   const symbol    = url.searchParams.get('symbol') ?? '';
+  const symbols   = url.searchParams.get('symbols') ?? '';
   const metric    = url.searchParams.get('metric') ?? '';
   const freq      = url.searchParams.get('freq') ?? '';
   const exchange  = /^[A-Z]{1,4}$/.test(url.searchParams.get('exchange') ?? '') ? (url.searchParams.get('exchange') ?? 'US') : 'US';
+
+  // Batch quotes: the live P&L card was opening one edge-function call per
+  // symbol, each paying the full auth+settings+rate-limit round trip before
+  // ever reaching Finnhub. One call here does that overhead once and fans the
+  // Finnhub requests out server-side instead.
+  if (path === 'quote' && symbols) {
+    const list = [...new Set(symbols.split(',').map(s => s.trim().toUpperCase()).filter(Boolean))].slice(0, 50);
+    const results: Record<string, unknown> = {};
+    await Promise.all(list.map(async sym => {
+      try {
+        const r = await fetch(`https://finnhub.io/api/v1/quote?token=${encodeURIComponent(apiKey)}&symbol=${encodeURIComponent(sym)}`,
+          { headers: { 'User-Agent': 'trading-journal/2.0' } });
+        results[sym] = r.ok ? await r.json() : null;
+      } catch {
+        results[sym] = null;
+      }
+    }));
+    return new Response(JSON.stringify(results), {
+      headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+    });
+  }
+
   let finnhubUrl  = `https://finnhub.io/api/v1/${path}?token=${encodeURIComponent(apiKey)}`;
   if (path === 'stock/symbol') finnhubUrl += `&exchange=${exchange}`;
   if (symbol) finnhubUrl += `&symbol=${encodeURIComponent(symbol)}`;
