@@ -848,6 +848,25 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .fg-rating { font-size: 17px; font-weight: 800; line-height: 1.2; }
   .fg-source { font-size: 10px; color: var(--text2); margin-top: 2px; font-weight: 600; }
   .fg-updated { font-size: 11px; color: var(--text3); }
+  /* Statistics page: 4 hero metrics get weight, the rest are compact tiles —
+     see renderStatistics(). A flat grid of 15 identical cards is the tell. */
+  #stats-kpi-grid { display: block; }
+  .kpi-grid-hero { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
+  .kpi-card.hero .kpi-value { font-size: 32px; }
+  .kpi-grid-compact { display: grid; grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); gap: 8px; }
+  .kpi-tile { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; }
+  .kpi-tile-label { font-size: 9px; color: var(--text3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 5px; }
+  .kpi-tile-value { font-size: 15px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+  .kpi-tile-value.green { color: var(--green); }
+  .kpi-tile-value.red   { color: var(--red); }
+  @media (max-width: 640px) { .kpi-grid-hero { grid-template-columns: repeat(2, 1fr); } }
+  /* Crypto F&G uses a bar meter, not a second circular gauge — two identical
+     donut widgets side by side read as a templated dashboard, not a designed one. */
+  .fg-bar-wrap { width: 90px; flex-shrink: 0; }
+  .fg-bar-score { display: flex; align-items: baseline; gap: 3px; margin-bottom: 8px; }
+  .fg-bar-score .fg-score { font-size: 22px; }
+  .fg-bar-track { height: 5px; border-radius: 3px; background: rgba(255,255,255,0.06); overflow: hidden; }
+  .fg-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s var(--ease-out); }
 
   /* ── Motion Design System ── */
   @keyframes slide-up-fade {
@@ -2797,11 +2816,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     position: absolute; top: 0; left: 0; right: 0;
     height: 2px; border-radius: var(--r-lg) var(--r-lg) 0 0;
   }
-  .kpi-card.c-blue   { border-top: 2px solid rgba(129,140,248,0.5) !important; }
-  .kpi-card.c-green  { border-top: 2px solid rgba(52,211,153,0.5) !important; }
-  .kpi-card.c-red    { border-top: 2px solid rgba(248,113,113,0.5) !important; }
-  .kpi-card.c-yellow { border-top: 2px solid rgba(251,191,36,0.5) !important; }
-  .kpi-card.c-purple { border-top: 2px solid rgba(167,139,250,0.5) !important; }
+  /* Colored top border removed (2026-08-26) — the value/icon already carries
+     the color; a rainbow-striped card grid is generic dashboard-template
+     furniture. Do not re-add per-color border-top here. */
   .kpi-card:hover { transform: translateY(-3px) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.5), 0 12px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06) !important; }
   .kpi-card.c-blue:hover   { border-color: rgba(129,140,248,0.22) !important; }
   .kpi-card.c-green:hover  { border-color: rgba(52,211,153,0.22) !important; }
@@ -4443,11 +4460,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     border: 1px solid rgba(14,14,18,0.07) !important;
     box-shadow: 0 1px 4px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.8) !important;
   }
-  html[data-theme="light"] .kpi-card.c-blue   { border-top: 1.5px solid rgba(37,99,235,0.5) !important; }
-  html[data-theme="light"] .kpi-card.c-green  { border-top: 1.5px solid rgba(5,150,105,0.5) !important; }
-  html[data-theme="light"] .kpi-card.c-red    { border-top: 1.5px solid rgba(220,38,38,0.5) !important; }
-  html[data-theme="light"] .kpi-card.c-yellow { border-top: 1.5px solid rgba(180,83,9,0.5) !important; }
-  html[data-theme="light"] .kpi-card.c-purple { border-top: 1.5px solid rgba(124,58,237,0.5) !important; }
+  /* Colored top border removed (2026-08-26) — see the dark-mode note above. */
   html[data-theme="light"] .kpi-value         { color: #0f172a; }
   html[data-theme="light"] .kpi-label         { color: #475569 !important; }
   html[data-theme="light"] .kpi-sub           { color: #64748b; }
@@ -10611,8 +10624,7 @@ let _cfgTimer = null;
 async function loadCryptoFearGreed() {
   const el = document.getElementById('crypto-fear-greed-widget');
   if (!el) return;
-  const R = 33, C = 40, FULL = 2 * Math.PI * R;
-  el.innerHTML = `<div class="fg-gauge-wrap"><svg width="80" height="80" viewBox="0 0 80 80"><circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/></svg><div class="fg-gauge-text"><span class="fg-score" style="color:var(--text2)">…</span></div></div><div class="fg-info"><div class="fg-label">Crypto Fear & Greed</div><div class="fg-rating" style="color:var(--text2);font-size:13px;">Loading</div></div>`;
+  el.innerHTML = `<div class="fg-bar-wrap"><div class="fg-bar-score"><span class="fg-score" style="color:var(--text2)">…</span></div><div class="fg-bar-track"></div></div><div class="fg-info"><div class="fg-label">Crypto Fear & Greed</div><div class="fg-rating" style="color:var(--text2);font-size:13px;">Loading</div></div>`;
   try {
     const jwt = await _getToken();
     const res = await fetch(`${SUPABASE_URL}/functions/v1/crypto-fear-greed`,
@@ -10625,18 +10637,14 @@ async function loadCryptoFearGreed() {
     const colors = FG_COLORS[key] || ['#8faac8','#64748b'];
     const label  = FG_LABELS[key] || d.rating;
     const now    = new Date().toLocaleDateString('en-US', { month:'short', day:'numeric' });
-    const dash   = (score / 100) * FULL;
     el.innerHTML = `
-      <div class="fg-gauge-wrap">
-        <svg width="80" height="80" viewBox="0 0 80 80">
-          <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/>
-          <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="${colors[0]}" stroke-width="6"
-            stroke-dasharray="${dash} ${FULL}" stroke-linecap="round"
-            style="filter:drop-shadow(0 0 6px ${colors[0]}80)"/>
-        </svg>
-        <div class="fg-gauge-text">
+      <div class="fg-bar-wrap">
+        <div class="fg-bar-score">
           <span class="fg-score" style="color:${colors[0]}">${score}</span>
           <span class="fg-score-sub">/100</span>
+        </div>
+        <div class="fg-bar-track">
+          <div class="fg-bar-fill" style="width:${score}%;background:${colors[0]};box-shadow:0 0 6px ${colors[0]}80"></div>
         </div>
       </div>
       <div class="fg-info">
@@ -10645,7 +10653,7 @@ async function loadCryptoFearGreed() {
         <div class="fg-source">CoinMarketCap · ${now}</div>
       </div>`;
   } catch {
-    el.innerHTML = `<div class="fg-gauge-wrap"><svg width="80" height="80" viewBox="0 0 80 80"><circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/></svg><div class="fg-gauge-text"><span class="fg-score" style="color:var(--text2)">—</span></div></div><div class="fg-info"><div class="fg-label">Crypto Fear & Greed</div><div class="fg-rating" style="color:var(--text2);font-size:13px;">Unavailable</div></div>`;
+    el.innerHTML = `<div class="fg-bar-wrap"><div class="fg-bar-score"><span class="fg-score" style="color:var(--text2)">—</span></div><div class="fg-bar-track"></div></div><div class="fg-info"><div class="fg-label">Crypto Fear & Greed</div><div class="fg-rating" style="color:var(--text2);font-size:13px;">Unavailable</div></div>`;
   }
   clearTimeout(_cfgTimer);
   _cfgTimer = setTimeout(loadCryptoFearGreed, 24 * 60 * 60 * 1000);
@@ -10899,31 +10907,43 @@ function renderStatistics() {
   const fmt = v => (v >= 0 ? '+' : '-') + '$' + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const pct  = v => v.toFixed(1) + '%';
 
-  const kpis = [
+  // The 4 numbers that actually drive a go/no-go read on the book get their
+  // own row, larger; the other 11 are real but secondary — a flat grid of 15
+  // identical tiles gives "average holding days" the same visual weight as
+  // "profit factor", which is the tell that nothing here was prioritized.
+  const heroKpis = [
+    { label: t('st_win_rate'),   value: pct(st.wr),                        cls: st.wr >= 50 ? 'green' : 'red' },
+    { label: 'Profit Factor',    value: pf != null ? pf.toFixed(2) : '—',  cls: pf != null ? (pf >= 1 ? 'green' : 'red') : '' },
+    { label: t('st_expectancy'), value: fmt(expectancy),                   cls: expectancy >= 0 ? 'green' : 'red', sensitive: true },
+    { label: t('st_avg_r'),      value: rCount ? avgR.toFixed(2) + 'R' : '—', cls: avgR >= 1 ? 'green' : '' },
+  ];
+  const restKpis = [
     { label: t('st_best'),           value: fmt(st.best),                cls: st.best >= 0 ? 'green' : 'red', sensitive: true },
     { label: t('st_worst'),          value: fmt(st.worst),               cls: st.worst >= 0 ? 'green' : 'red', sensitive: true },
     { label: t('st_avg_trade'),      value: fmt(st.avg),                 cls: st.avg >= 0 ? 'green' : 'red', sensitive: true },
     { label: t('st_avg_win'),        value: fmt(adv.avgWin),             cls: 'green', sensitive: true },
     { label: t('st_avg_loss'),       value: fmt(adv.avgLoss),            cls: 'red', sensitive: true },
-    { label: t('st_expectancy'),     value: fmt(expectancy),             cls: expectancy >= 0 ? 'green' : 'red', sensitive: true },
-    { label: 'Profit Factor',        value: pf != null ? pf.toFixed(2) : '—', cls: pf != null ? (pf >= 1 ? 'green' : 'red') : '' },
     { label: t('st_wl_ratio'),       value: adv.avgLoss !== 0 ? Math.abs(adv.avgWin / adv.avgLoss).toFixed(2) + 'x' : '—', cls: '' },
     { label: t('st_max_win_streak'), value: maxW, cls: '' },
     { label: t('st_max_loss_streak'),value: maxL, cls: '' },
     { label: t('st_avg_hold_win'),   value: adv.avgWinDays.toFixed(1) + 'd', cls: '' },
     { label: t('st_avg_hold_loss'),  value: adv.avgLossDays.toFixed(1) + 'd', cls: '' },
-    { label: t('st_avg_r'),          value: rCount ? avgR.toFixed(2) + 'R' : '—', cls: avgR >= 1 ? 'green' : '' },
     { label: 'ירידה מקסימלית',        value: fmt(maxDD), cls: 'red', sensitive: true },
-    { label: t('st_win_rate'),       value: pct(st.wr),                  cls: st.wr >= 50 ? 'green' : 'red' },
   ];
 
   const grid = document.getElementById('stats-kpi-grid');
   if (grid) {
-    grid.innerHTML = kpis.map(k => `
-      <div class="kpi-card">
+    const heroHtml = heroKpis.map(k => `
+      <div class="kpi-card hero">
         <div class="kpi-label">${k.label}</div>
         <div class="kpi-value ${k.cls}${k.sensitive ? ' sensitive' : ''}">${k.value}</div>
       </div>`).join('');
+    const restHtml = restKpis.map(k => `
+      <div class="kpi-tile">
+        <div class="kpi-tile-label">${k.label}</div>
+        <div class="kpi-tile-value ${k.cls}${k.sensitive ? ' sensitive' : ''}">${k.value}</div>
+      </div>`).join('');
+    grid.innerHTML = `<div class="kpi-grid-hero">${heroHtml}</div><div class="kpi-grid-compact">${restHtml}</div>`;
   }
 
   renderDonut(st, adv, trades);
@@ -14449,11 +14469,7 @@ function _buildLightCSS() {
     /* Cards */
     .kpi-card { background:#f3f6fb !important; border:1px solid #e2e8f0 !important; box-shadow:0 1px 6px rgba(0,0,0,0.06) !important; }
     .kpi-card::before,.kpi-card::after { display:none !important; }
-    .kpi-card.c-green  { border-top:2px solid #059669 !important; }
-    .kpi-card.c-red    { border-top:2px solid #e11d48 !important; }
-    .kpi-card.c-blue   { border-top:2px solid #0ea5e9 !important; }
-    .kpi-card.c-yellow { border-top:2px solid #b45309 !important; }
-    .kpi-card.c-purple { border-top:2px solid #7c3aed !important; }
+    /* Colored top border removed (2026-08-26) — see the dark-mode note above. */
     .kpi-label { color:#64748b !important; }
     .kpi-value { color:#0f172a !important; }
     .kpi-value.green { color:#059669 !important; }
