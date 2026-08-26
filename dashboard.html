@@ -667,8 +667,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
   /* KPI GRID */
   .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 10px; width: 100%; }
-  /* P&L כולל — hero card spans 2 columns */
-  .kpi-grid .kpi-card:first-child .kpi-value { font-size: 38px; letter-spacing: -1.5px; }
+  /* P&L כולל used to get an oversized 38px value here; it now matches every
+     other KPI card in the row (2026-08-26, on request). Only the label keeps
+     its own tracking. */
   .kpi-grid .kpi-card:first-child .kpi-label { font-size: 10px; letter-spacing: 1px; }
   .kpi-card {
     background: linear-gradient(155deg, #131317 0%, #0e0e11 100%);
@@ -2848,7 +2849,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .kpi-value.green  { color: var(--green) !important; }
   .kpi-value.red    { color: var(--red) !important; }
   .kpi-value.yellow { color: #fbbf24 !important; }
-  .kpi-grid .kpi-card:first-child .kpi-value { font-size: 38px !important; }
+  /* first-child 38px override removed — see the note at the base .kpi-grid rule. */
   .kpi-sub {
     font-size: 11.5px !important;
     color: rgba(148,163,184,0.5) !important;
@@ -3919,7 +3920,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .kpi-value.green { color: #22d3a8; }
   .kpi-value.red   { color: #fb7185; }
   .kpi-value.yellow { color: #fbbf24; }
-  .kpi-grid .kpi-card:first-child .kpi-value { font-size: 38px; }
+  /* first-child 38px override removed — see the note at the base .kpi-grid rule. */
   .kpi-sub { font-size: 11.5px; color: var(--text3); margin-top: 7px; line-height: 1.5; }
   .kpi-progress-track { height: 2px; background: rgba(255,255,255,0.06); border-radius: var(--r-sm); margin-top: 12px; }
 
