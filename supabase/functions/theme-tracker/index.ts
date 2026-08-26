@@ -81,7 +81,16 @@ async function fetchTheme(theme: { name: string; ticker: string }) {
     for (const host of YF_HOSTS) {
       try {
         const url = `https://${host}/v8/finance/chart/${theme.ticker}?range=1y&interval=1d`;
-        const res = await fetch(url, { headers: YF_HEADERS });
+        // Neither host attempt had a timeout, so one slow/hung Yahoo response
+        // could block this ticker for the full request lifetime — and with 34
+        // tickers fetched in parallel on a cache miss, the slowest one set the
+        // floor for the whole Market Pulse tab's load time. 6s comfortably
+        // covers a normal Yahoo response; a timed-out ticker degrades to the
+        // null-fields fallback below, same as any other fetch failure.
+        const controller = new AbortController();
+        const tid = setTimeout(() => controller.abort(), 6000);
+        const res = await fetch(url, { headers: YF_HEADERS, signal: controller.signal });
+        clearTimeout(tid);
         if (!res.ok) continue;
         const json = await res.json();
         result = json?.chart?.result?.[0];
@@ -153,10 +162,16 @@ serve(async (req: Request) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   );
   const CACHE_KEY = 'theme-tracker';
-  const CACHE_TTL_MS = 60_000;
+  // Was 60s. This data is daily-bar sector performance (%today/1w/1m/3m/ytd),
+  // not a live quote — a 1-day bar doesn't move enough in a minute to justify
+  // a fresh 34-ticker Yahoo pull that often. Every cache miss pays the full
+  // fan-out cost (now bounded by the per-ticker timeout above, but still the
+  // slowest ticker's latency), so a shorter TTL mostly just means more users
+  // hit that slow path instead of the shared cache.
+  const CACHE_TTL_MS = 300_000;
   const { data: cached } = await admin
     .from('market_cache').select('payload, refreshed_at').eq('cache_key', CACHE_KEY).maybeSingle();
-  const jsonHeaders = { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'max-age=60' };
+  const jsonHeaders = { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'max-age=300' };
   if (cached && Date.now() - new Date(cached.refreshed_at).getTime() < CACHE_TTL_MS) {
     return new Response(JSON.stringify(cached.payload), { headers: jsonHeaders });
   }

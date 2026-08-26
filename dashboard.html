@@ -870,7 +870,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   /* Statistics page: 4 hero metrics get weight, the rest are compact tiles —
      see renderStatistics(). A flat grid of 15 identical cards is the tell. */
   #stats-kpi-grid { display: block; }
-  .kpi-grid-hero { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
+  /* auto-fit, not a fixed 4, because the broker-equity card is conditional
+     (only when a broker sync has reported a balance) — a fixed 4-column grid
+     left a 5th card alone and lopsided in its own row. minmax(160px,1fr) keeps
+     4-up at typical desktop widths, same look as before when there are 4. */
+  .kpi-grid-hero { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 12px; }
   .kpi-card.hero .kpi-value { font-size: 32px; }
   .kpi-grid-compact { display: grid; grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); gap: 8px; }
   .kpi-tile { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; }
@@ -11032,6 +11036,12 @@ function renderStatistics() {
     { label: t('st_expectancy'), value: fmt(expectancy),                   cls: expectancy >= 0 ? 'green' : 'red', sensitive: true },
     { label: t('st_avg_r'),      value: rCount ? avgR.toFixed(2) + 'R' : '—', cls: avgR >= 1 ? 'green' : '' },
   ];
+  // Broker-derived portfolio size leads the hero row, not the 15-tile compact
+  // grid — the user asked for it as prominent as win-rate/profit-factor, not
+  // filed alongside average-hold-days.
+  if (_brokerEquityUsd != null) {
+    heroKpis.unshift({ label: 'גודל תיק (ברוקר)', value: '$' + _brokerEquityUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), cls: '', sensitive: true });
+  }
   const restKpis = [
     { label: t('st_best'),           value: fmt(st.best),                cls: st.best >= 0 ? 'green' : 'red', sensitive: true },
     { label: t('st_worst'),          value: fmt(st.worst),               cls: st.worst >= 0 ? 'green' : 'red', sensitive: true },
@@ -11045,9 +11055,6 @@ function renderStatistics() {
     { label: t('st_avg_hold_loss'),  value: adv.avgLossDays.toFixed(1) + 'd', cls: '' },
     { label: 'ירידה מקסימלית מהשיא',  value: fmt(maxDD), cls: 'red', sensitive: true },
   ];
-  if (_brokerEquityUsd != null) {
-    restKpis.push({ label: 'גודל תיק (ברוקר)', value: '$' + _brokerEquityUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), cls: '', sensitive: true });
-  }
 
   const grid = document.getElementById('stats-kpi-grid');
   if (grid) {
@@ -16928,10 +16935,17 @@ async function ttLoad(force = false) {
   }
   try {
     const _ttToken = await _getToken();
+    // No timeout here meant a stalled theme-tracker response (cache miss,
+    // Yahoo slow) left the tab stuck on "Loading..." indefinitely. 15s covers
+    // the edge function's own worst case (a 6s-per-ticker timeout across two
+    // host attempts) plus network overhead.
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 15000);
     const res = await fetch(
       `${SUPABASE_URL}/functions/v1/theme-tracker`,
-      { headers: { 'Authorization': `Bearer ${_ttToken}` } }
+      { headers: { 'Authorization': `Bearer ${_ttToken}` }, signal: controller.signal }
     );
+    clearTimeout(tid);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const json = await res.json();
     _ttData = json.themes;
