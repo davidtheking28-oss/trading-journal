@@ -10447,8 +10447,8 @@ const LANG_STRINGS = {
     set_security_sub:'PIN, 2FA, סיסמה',
     set_avatar_label:'תמונת פרופיל', set_avatar_sub:'JPG או PNG, עד 2MB', set_avatar_btn:'שנה תמונה',
     set_grp_data:'מקורות נתונים ואבטחה', set_grp_import:'חיבור ברוקר',
-    st_best:'עסקה הטובה ביותר', st_worst:'עסקה הגרועה ביותר', st_avg_trade:'ממוצע לעסקה',
-    st_avg_win:'ממוצע רווח', st_avg_loss:'ממוצע הפסד', st_expectancy:'ציפיה (Expectancy)',
+    st_best:'עסקה הטובה ביותר', st_worst:'עסקה הגרועה ביותר', st_avg_trade:'רווח/הפסד ממוצע לעסקה',
+    st_avg_win:'ממוצע רווח', st_avg_loss:'ממוצע הפסד', st_expectancy:'ציפייה לעסקה (רווח צפוי בממוצע)',
     scope_all:'הכל',
     st_wl_ratio:'יחס W/L', st_max_win_streak:'רצף ניצחון מקסימלי', st_max_loss_streak:'רצף הפסד מקסימלי',
     st_avg_hold_win:'ימי החזקה ממוצע (זכייה)', st_avg_hold_loss:'ימי החזקה ממוצע (הפסד)',
@@ -10920,7 +10920,7 @@ function renderStatistics() {
     { label: t('st_max_loss_streak'),value: maxL, cls: '' },
     { label: t('st_avg_hold_win'),   value: adv.avgWinDays.toFixed(1) + 'd', cls: '' },
     { label: t('st_avg_hold_loss'),  value: adv.avgLossDays.toFixed(1) + 'd', cls: '' },
-    { label: 'ירידה מקסימלית',        value: fmt(maxDD), cls: 'red', sensitive: true },
+    { label: 'ירידה מקסימלית מהשיא',  value: fmt(maxDD), cls: 'red', sensitive: true },
   ];
 
   const grid = document.getElementById('stats-kpi-grid');
