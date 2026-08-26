@@ -832,7 +832,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     border: 1px solid rgba(255,255,255,0.07); border-radius: var(--r-lg);
     padding: 14px 20px; margin-bottom: 14px;
     transition: border-color 0.2s, box-shadow 0.2s;
-    position: relative; overflow: hidden;
+    position: relative;
   }
   .fg-widget::before {
     content: ''; position: absolute; inset: 0;
@@ -864,13 +864,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .kpi-tile-value.green { color: var(--green); }
   .kpi-tile-value.red   { color: var(--red); }
   @media (max-width: 640px) { .kpi-grid-hero { grid-template-columns: repeat(2, 1fr); } }
-  /* Crypto F&G uses a bar meter, not a second circular gauge — two identical
-     donut widgets side by side read as a templated dashboard, not a designed one. */
-  .fg-bar-wrap { width: 90px; flex-shrink: 0; }
-  .fg-bar-score { display: flex; align-items: baseline; gap: 3px; margin-bottom: 8px; }
-  .fg-bar-score .fg-score { font-size: 22px; }
-  .fg-bar-track { height: 5px; border-radius: 3px; background: rgba(255,255,255,0.06); overflow: hidden; }
-  .fg-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s var(--ease-out); }
 
   /* ── Motion Design System ── */
   @keyframes slide-up-fade {
@@ -10623,7 +10616,8 @@ let _cfgTimer = null;
 async function loadCryptoFearGreed() {
   const el = document.getElementById('crypto-fear-greed-widget');
   if (!el) return;
-  el.innerHTML = `<div class="fg-bar-wrap"><div class="fg-bar-score"><span class="fg-score" style="color:var(--text2)">…</span></div><div class="fg-bar-track"></div></div><div class="fg-info"><div class="fg-label">Crypto Fear & Greed</div><div class="fg-rating" style="color:var(--text2);font-size:13px;">Loading</div></div>`;
+  const R = 33, C = 40, FULL = 2 * Math.PI * R;
+  el.innerHTML = `<div class="fg-gauge-wrap"><svg width="80" height="80" viewBox="0 0 80 80"><circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/></svg><div class="fg-gauge-text"><span class="fg-score" style="color:var(--text2)">…</span></div></div><div class="fg-info"><div class="fg-label">Crypto Fear & Greed</div><div class="fg-rating" style="color:var(--text2);font-size:13px;">Loading</div></div>`;
   try {
     const jwt = await _getToken();
     const res = await fetch(`${SUPABASE_URL}/functions/v1/crypto-fear-greed`,
@@ -10636,14 +10630,18 @@ async function loadCryptoFearGreed() {
     const colors = FG_COLORS[key] || ['#8faac8','#64748b'];
     const label  = FG_LABELS[key] || d.rating;
     const now    = new Date().toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    const dash   = (score / 100) * FULL;
     el.innerHTML = `
-      <div class="fg-bar-wrap">
-        <div class="fg-bar-score">
+      <div class="fg-gauge-wrap">
+        <svg width="80" height="80" viewBox="0 0 80 80">
+          <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/>
+          <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="${colors[0]}" stroke-width="6"
+            stroke-dasharray="${dash} ${FULL}" stroke-linecap="round"
+            style="filter:drop-shadow(0 0 6px ${colors[0]}80)"/>
+        </svg>
+        <div class="fg-gauge-text">
           <span class="fg-score" style="color:${colors[0]}">${score}</span>
           <span class="fg-score-sub">/100</span>
-        </div>
-        <div class="fg-bar-track">
-          <div class="fg-bar-fill" style="width:${score}%;background:${colors[0]};box-shadow:0 0 6px ${colors[0]}80"></div>
         </div>
       </div>
       <div class="fg-info">
@@ -10652,7 +10650,7 @@ async function loadCryptoFearGreed() {
         <div class="fg-source">CoinMarketCap · ${now}</div>
       </div>`;
   } catch {
-    el.innerHTML = `<div class="fg-bar-wrap"><div class="fg-bar-score"><span class="fg-score" style="color:var(--text2)">—</span></div><div class="fg-bar-track"></div></div><div class="fg-info"><div class="fg-label">Crypto Fear & Greed</div><div class="fg-rating" style="color:var(--text2);font-size:13px;">Unavailable</div></div>`;
+    el.innerHTML = `<div class="fg-gauge-wrap"><svg width="80" height="80" viewBox="0 0 80 80"><circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/></svg><div class="fg-gauge-text"><span class="fg-score" style="color:var(--text2)">—</span></div></div><div class="fg-info"><div class="fg-label">Crypto Fear & Greed</div><div class="fg-rating" style="color:var(--text2);font-size:13px;">Unavailable</div></div>`;
   }
   clearTimeout(_cfgTimer);
   _cfgTimer = setTimeout(loadCryptoFearGreed, 24 * 60 * 60 * 1000);
