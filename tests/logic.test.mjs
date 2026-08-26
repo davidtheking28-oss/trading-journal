@@ -987,3 +987,32 @@ describe('Interactive Israel (TLG) file import', () => {
     assert.equal(trades[0].targets.length, 0, 'a single leg belongs to exitPrice');
   });
 });
+
+// The personal STEM model approximates Minervini's, whose public description
+// has two components: how many focus-list names closed down over the rolling
+// 5-day window, AND how they are cumulatively performing. The first version
+// shipped fetched the cumulative figure and then ignored it, so a book where
+// only a few names were down but those names were collapsing still read green.
+describe('personal STEM regime', () => {
+  const { computePersonalStemState } = load('computePersonalStemState');
+
+  test('a collapsing book is red even when few names are down', () => {
+    assert.equal(computePersonalStemState(25, -3), 'red',
+      'the cumulative-performance half must be able to force red on its own');
+  });
+
+  test('green needs both halves: few down AND the book up', () => {
+    assert.equal(computePersonalStemState(25, 1.5), 'green');
+    assert.equal(computePersonalStemState(25, 0), 'orange',
+      'a flat book is not the easy-dollar environment green is meant to mean');
+  });
+
+  test('the down-count threshold is the 60% the model actually cites', () => {
+    assert.equal(computePersonalStemState(60, 0.1), 'red');
+    assert.equal(computePersonalStemState(59, 0.1), 'orange');
+  });
+
+  test('no data reads as unknown rather than a regime', () => {
+    assert.equal(computePersonalStemState(null, null), null);
+  });
+});

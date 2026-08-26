@@ -11004,10 +11004,22 @@ document.addEventListener('visibilitychange', () => {
 // _updateLivePL already does.
 let _pstemState = null, _pstemDownRatio = null, _pstemAvgReturn = null, _lastPstemTs = 0, _lastPstemSymbols = '';
 const PSTEM_MIN_INTERVAL = 3600000;
-function computePersonalStemState(downRatio) {
+// Minervini's public description has TWO components: "how many of the Focus
+// List stocks are closing down for the 5 day period (e.g. less than 60%)"
+// AND "how they are all cumulatively performing". An earlier version here
+// used only the first — avgReturn was fetched and then ignored, so a book
+// where most names were barely green but the few red ones were collapsing
+// still read as healthy. Both halves now matter, and the down-count
+// threshold is the 60% the sources actually cite rather than an invented 55.
+//
+// Deliberately NOT a faithful clone: Minervini states his model is
+// subjective, and his Focus List is a forward-looking breakout watchlist
+// rather than positions already entered. This is the closest mechanical
+// approximation the available data allows.
+function computePersonalStemState(downRatio, avgReturn) {
   if (downRatio == null) return null;
-  if (downRatio >= 55) return 'red';
-  if (downRatio <= 30) return 'green';
+  if (downRatio >= 60 || (avgReturn != null && avgReturn <= -2)) return 'red';
+  if (downRatio <= 30 && (avgReturn == null || avgReturn > 0)) return 'green';
   return 'orange';
 }
 async function _loadPersonalStem(force = false) {
@@ -11030,7 +11042,7 @@ async function _loadPersonalStem(force = false) {
     const d = await res.json();
     _pstemDownRatio = typeof d.downRatio === 'number' ? d.downRatio : null;
     _pstemAvgReturn = typeof d.avgReturn === 'number' ? d.avgReturn : null;
-    _pstemState = computePersonalStemState(_pstemDownRatio);
+    _pstemState = computePersonalStemState(_pstemDownRatio, _pstemAvgReturn);
   } catch { /* keep last known state rather than flashing to unknown */ }
   renderPersonalStemBadge();
 }
