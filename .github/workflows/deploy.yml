@@ -121,3 +121,4 @@ jobs:
           supabase functions deploy ibkr-cron         --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
           supabase functions deploy ibkr-alert        --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
           supabase functions deploy push-daily        --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
+          supabase functions deploy personal-stem     --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt

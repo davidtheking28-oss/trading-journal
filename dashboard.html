@@ -5456,7 +5456,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div class="ov-bar-divider"></div>
         <div id="crypto-fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;border:none;background:transparent;box-shadow:none;padding:0;backdrop-filter:none;"></div>
         <div class="ov-bar-divider"></div>
-        <div id="stem-badge" class="stem-badge" style="display:none;" title="מצב שוק אוטומטי (STEM), מחושב מ-VIX ורוחב שוק"></div>
+        <div id="stem-badge" class="stem-badge" style="display:none;" title="סיכון שוק כללי, מחושב אוטומטית מ-VIX ורוחב שוק (לא STEM של מינרוויני — זה מדד מדדים, לא רשימת מניות אישית)"></div>
+        <div id="pstem-badge" class="stem-badge" style="display:none;" title="STEM אישי (בהשראת מינרוויני): הצלחת פריצות 5 הימים האחרונים בעסקאות הפתוחות שלך"></div>
       </div>
 
       <!-- Period filter -->
@@ -8256,7 +8257,7 @@ function renderStemBadge() {
   el.style.display = 'flex';
   el.style.setProperty('--stem-color', color);
   el.innerHTML = `
-    <span class="stem-pill-label">STEM</span>
+    <span class="stem-pill-label">סיכון שוק</span>
     <span class="stem-pill-state">${STEM_LABELS[_stemState]}</span>
     ${vixTxt ? `<span class="stem-pill-vix">${vixTxt}</span>` : ''}`;
 }
@@ -8276,7 +8277,7 @@ function _maybeShowStemMismatchNotice() {
   if (!pt || pt <= 0 || exposureCost <= 0) return;
   const pct = exposureCost / pt * 100;
   if (pct < 70) return;
-  toast(`מצב השוק (STEM) אוטומטי קרא אדום, והחשיפה הפתוחה שלך גבוהה (${pct.toFixed(0)}% מהתיק) — שווה לשקול לצמצם`, 'info');
+  toast(`סיכון השוק האוטומטי קרא אדום, והחשיפה הפתוחה שלך גבוהה (${pct.toFixed(0)}% מהתיק) — שווה לשקול לצמצם`, 'info');
   try { localStorage.setItem(key, today); } catch (e) {}
 }
 
@@ -10887,6 +10888,7 @@ function renderOverview() {
   if (_ovLiveTimer) clearInterval(_ovLiveTimer);
   _updateLivePL();
   _ovLiveTimer = setInterval(() => _updateLivePL(true), 60000);
+  _loadPersonalStem();
 
   applyPrivacy();
 }
@@ -10991,6 +10993,57 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden || !_ovLiveTimer) return;
   _updateLivePL(true);
 });
+
+// The real Minervini-style STEM: rolling 5-day breakout success of the
+// trader's OWN focus list (their open positions), not a market-wide index
+// gauge — see personal-stem edge function for the full rationale. Daily-bar
+// data, so a 1h guard is plenty; reuses the same open-symbol computation
+// _updateLivePL already does.
+let _pstemState = null, _pstemDownRatio = null, _lastPstemTs = 0, _lastPstemSymbols = '';
+const PSTEM_MIN_INTERVAL = 3600000;
+function computePersonalStemState(downRatio) {
+  if (downRatio == null) return null;
+  if (downRatio >= 55) return 'red';
+  if (downRatio <= 30) return 'green';
+  return 'orange';
+}
+async function _loadPersonalStem(force = false) {
+  const open = [...db.stocks, ...db.crypto].filter(t =>
+    !t.deleted && (!t.exitPrice || t.exitPrice === 0) && t.symbol && t.entryPrice > 0
+  );
+  const symbols = [...new Set(open.map(t => t.symbol.toUpperCase()))].sort();
+  const symKey = symbols.join(',');
+  if (!force && symKey === _lastPstemSymbols && Date.now() - _lastPstemTs < PSTEM_MIN_INTERVAL) return;
+  if (!symbols.length) { _pstemState = null; renderPersonalStemBadge(); return; }
+  _lastPstemTs = Date.now();
+  _lastPstemSymbols = symKey;
+  try {
+    const jwt = await _getToken();
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 15000);
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/personal-stem?symbols=${encodeURIComponent(symbols.join(','))}`,
+      { headers: { 'Authorization': `Bearer ${jwt}` }, signal: controller.signal });
+    clearTimeout(tid);
+    const d = await res.json();
+    _pstemDownRatio = typeof d.downRatio === 'number' ? d.downRatio : null;
+    _pstemState = computePersonalStemState(_pstemDownRatio);
+  } catch { /* keep last known state rather than flashing to unknown */ }
+  renderPersonalStemBadge();
+}
+const PSTEM_LABELS = { green: 'עובד', orange: 'סלקטיבי', red: 'לא עובד' };
+const PSTEM_COLORS = { green: 'var(--green)', orange: 'var(--yellow)', red: 'var(--red)' };
+function renderPersonalStemBadge() {
+  const el = document.getElementById('pstem-badge');
+  if (!el) return;
+  if (!_pstemState) { el.style.display = 'none'; return; }
+  const color = PSTEM_COLORS[_pstemState];
+  el.style.display = 'flex';
+  el.style.setProperty('--stem-color', color);
+  el.innerHTML = `
+    <span class="stem-pill-label">STEM</span>
+    <span class="stem-pill-state">${PSTEM_LABELS[_pstemState]}</span>
+    ${_pstemDownRatio != null ? `<span class="stem-pill-vix">${_pstemDownRatio.toFixed(0)}% ירידה</span>` : ''}`;
+}
 
 // Broker-derived portfolio equity (currently Bybit only — bybit-cron writes
 // broker_balances on each sync run). Cached client-side and refetched at most
