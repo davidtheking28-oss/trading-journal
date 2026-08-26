@@ -10800,13 +10800,22 @@ function renderOverview() {
   // Live P&L refresh
   if (_ovLiveTimer) clearInterval(_ovLiveTimer);
   _updateLivePL();
-  _ovLiveTimer = setInterval(_updateLivePL, 60000);
+  _ovLiveTimer = setInterval(() => _updateLivePL(true), 60000);
 
   applyPrivacy();
 }
 
 let _livePLToken = 0;
-async function _updateLivePL() {
+// renderOverview() re-runs on every filter change, tab switch back to Overview,
+// and trade CRUD — none of which mean the quotes themselves are stale. Without
+// this, picking a different month refetched live prices from the network on
+// every click even though the open-position set (and therefore the quotes)
+// hadn't changed. Skip the network round trip if the same symbol set was
+// priced within the last 20s; `force` (the 60s timer, visibilitychange) always
+// goes through.
+let _lastLivePLTs = 0, _lastLivePLSymbols = '';
+const _LIVE_PL_MIN_INTERVAL = 20000;
+async function _updateLivePL(force = false) {
   const el  = document.getElementById('kpi-live-pl');
   const sub = document.getElementById('kpi-live-sub');
   if (!el) return;
@@ -10817,6 +10826,10 @@ async function _updateLivePL() {
   const open = [...db.stocks, ...db.crypto].filter(t =>
     !t.deleted && (!t.exitPrice || t.exitPrice === 0) && t.symbol && t.entryPrice > 0
   );
+  if (!force) {
+    const symKey = [...new Set(open.map(t => t.symbol.toUpperCase()))].sort().join(',');
+    if (symKey === _lastLivePLSymbols && Date.now() - _lastLivePLTs < _LIVE_PL_MIN_INTERVAL) return;
+  }
   if (!open.length) {
     el.textContent = '$0.00';
     if (sub) sub.textContent = t('kpi_no_open');
@@ -10827,6 +10840,8 @@ async function _updateLivePL() {
   // every regular user. The JWT alone is enough.
   const token = await _getToken();
   const symbols = [...new Set(open.map(t => t.symbol.toUpperCase()))];
+  _lastLivePLTs = Date.now();
+  _lastLivePLSymbols = [...symbols].sort().join(',');
   let totalUnreal = 0;
   // A symbol with no quote used to contribute 0 silently, so a fully failed
   // refresh (rate limit, network, or a symbol the feed doesn't carry — every
@@ -10881,7 +10896,7 @@ async function _updateLivePL() {
 // moment it becomes visible again.
 document.addEventListener('visibilitychange', () => {
   if (document.hidden || !_ovLiveTimer) return;
-  _updateLivePL();
+  _updateLivePL(true);
 });
 
 function renderStatistics() {
