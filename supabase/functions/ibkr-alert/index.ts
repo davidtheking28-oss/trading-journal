@@ -31,22 +31,27 @@ Deno.serve(async (req: Request) => {
   const since = new Date(Date.now() - windowH * 3600 * 1000).toISOString();
   let logQuery = sb
     .from('flex_sync_log')
-    .select('user_id, status, error_msg, run_at, mode')
+    .select('user_id, status, error_msg, run_at, mode, broker')
     .gte('run_at', since);
   if (scope === 'confirm') logQuery = logQuery.eq('mode', 'confirm');
   const { data: logs } = await logQuery;
 
+  // Keyed on user AND broker. Grouping on user_id alone let a working broker
+  // mask a broken one on the same account: user 9f9ffff4's Bybit key expired
+  // 2026-08-22 and produced 183 consecutive failures over 4 days in total
+  // silence, because their IBKR sync kept succeeding and pushed ok above 0.
   type G = { ok: number; fail: number; lastErr: string | null; lastErrAt: number };
   const byUser = new Map<string, G>();
   for (const r of logs ?? []) {
-    const g = byUser.get(r.user_id) ?? { ok: 0, fail: 0, lastErr: null, lastErrAt: 0 };
+    const key = `${r.user_id}|${r.broker ?? 'ibkr'}`;
+    const g = byUser.get(key) ?? { ok: 0, fail: 0, lastErr: null, lastErrAt: 0 };
     if (r.status === 'ok') g.ok++;
     else {
       g.fail++;
       const t = new Date(r.run_at).getTime();
       if (t > g.lastErrAt) { g.lastErrAt = t; g.lastErr = r.error_msg; }
     }
-    byUser.set(r.user_id, g);
+    byUser.set(key, g);
   }
   const stuck = [...byUser.entries()].filter(([, g]) => g.ok === 0 && g.fail > 0);
   if (!stuck.length) return new Response(JSON.stringify({ stuck: 0 }), { headers: { 'Content-Type': 'application/json' } });
@@ -59,14 +64,15 @@ Deno.serve(async (req: Request) => {
   }
 
   const lines: string[] = [];
-  for (const [uid, g] of stuck) {
+  for (const [key, g] of stuck) {
+    const [uid, broker] = key.split('|');
     let email = uid.slice(0, 8);
     try { email = (await sb.auth.admin.getUserById(uid)).data.user?.email ?? email; } catch (_) { /* keep id prefix */ }
-    lines.push(`• ${email} — ${g.fail} fail(s), last: ${g.lastErr ?? 'unknown'}`);
+    lines.push(`• ${email} [${broker}] — ${g.fail} fail(s), last: ${g.lastErr ?? 'unknown'}`);
   }
   const label = scope === 'confirm'
     ? `IBKR confirm sync stuck (no confirm success in ${windowH}h)`
-    : `IBKR sync stuck (no success in ${windowH}h)`;
+    : `Broker sync stuck (no success in ${windowH}h)`;
   const text = `⚠️ ${label}:\n${lines.join('\n')}`;
 
   const r = await fetch(`https://api.telegram.org/bot${tok.value}/sendMessage`, {
