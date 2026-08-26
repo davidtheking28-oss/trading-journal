@@ -1488,15 +1488,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     box-shadow: 0 4px 22px rgba(0,0,0,0.28);
     transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
   }
-  /* Accent crown — always-on, colored per section (full-width, never a side stripe) */
-  .s-section::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, transparent, rgba(129,140,248,0.85), transparent);
-    opacity: 1; transition: opacity 0.25s; pointer-events: none; z-index: 1;
-  }
-  .s-section:has(.s-section-icon.green)::before  { background: linear-gradient(90deg, transparent, rgba(52,211,153,0.85), transparent); }
-  .s-section:has(.s-section-icon.red)::before    { background: linear-gradient(90deg, transparent, rgba(255,107,138,0.85), transparent); }
-  .s-section:has(.s-section-icon.yellow)::before { background: linear-gradient(90deg, transparent, rgba(251,191,36,0.85), transparent); }
+  /* The colored top-line "accent crown" was removed (2026-08-26) — same tell
+     as the KPI card top-border: a rainbow-striped card grid reads as a
+     dashboard template. The colored icon badge already carries identity;
+     do not re-add a full-width gradient line here. */
   .s-section:hover { border-color: var(--border2); box-shadow: 0 8px 30px rgba(0,0,0,0.36); transform: translateY(-2px); }
   html[data-theme="light"] .s-section { background: #ffffff; box-shadow: 0 2px 14px rgba(15,23,42,0.06); }
   html[data-theme="light"] .s-section:hover { box-shadow: 0 8px 26px rgba(15,23,42,0.10); }
