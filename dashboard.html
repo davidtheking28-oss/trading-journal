@@ -876,6 +876,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
      4-up at typical desktop widths, same look as before when there are 4. */
   .kpi-grid-hero { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 12px; }
   .kpi-card.hero .kpi-value { font-size: 32px; }
+  /* Broker-derived portfolio size: its own full-width row above the hero KPIs,
+     bigger than all of them — the user asked for it above everything else. */
+  .kpi-card.portfolio-hero { margin-bottom: 12px; text-align: center; padding: 20px; }
+  .kpi-card.portfolio-hero .kpi-value { font-size: 44px; }
   .kpi-grid-compact { display: grid; grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); gap: 8px; }
   .kpi-tile { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; }
   .kpi-tile-label { font-size: 9px; color: var(--text3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 5px; }
@@ -4384,6 +4388,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     width: 1px; height: 32px; flex-shrink: 0; margin: 0 6px;
     background: var(--border2);
   }
+  .stem-badge { align-items: center; gap: 6px; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .stem-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .ov-top-bar .fg-widget {
     background: transparent !important;
     border: none !important;
@@ -5443,6 +5449,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div id="fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;border:none;background:transparent;box-shadow:none;padding:0;backdrop-filter:none;"></div>
         <div class="ov-bar-divider"></div>
         <div id="crypto-fear-greed-widget" class="fg-widget" style="margin-bottom:0;flex-shrink:0;border:none;background:transparent;box-shadow:none;padding:0;backdrop-filter:none;"></div>
+        <div class="ov-bar-divider"></div>
+        <div id="stem-badge" class="stem-badge" style="display:none;" title="מצב שוק אוטומטי (STEM), מחושב מ-VIX ורוחב שוק"></div>
       </div>
 
       <!-- Period filter -->
@@ -8226,6 +8234,17 @@ function computeStemState(vix, breadthRating) {
 }
 let _stemState = null;
 
+const STEM_LABELS = { green: 'STEM: ירוק', orange: 'STEM: כתום', red: 'STEM: אדום' };
+const STEM_COLORS = { green: 'var(--green)', orange: 'var(--yellow)', red: 'var(--red)' };
+function renderStemBadge() {
+  const el = document.getElementById('stem-badge');
+  if (!el) return;
+  if (!_stemState) { el.style.display = 'none'; return; }
+  const color = STEM_COLORS[_stemState];
+  el.style.display = 'flex';
+  el.innerHTML = `<span class="stem-dot" style="background:${color};box-shadow:0 0 6px ${color}"></span><span style="color:${color}">${STEM_LABELS[_stemState]}</span>`;
+}
+
 // Warns once a day when the automatic regime reads red (stressed market) but
 // the account's own open exposure is still large relative to its portfolio
 // size — the portfolio↔STEM mismatch the council flagged. Cost-basis of open
@@ -10675,6 +10694,7 @@ async function loadFearGreed() {
     if (!d.score) throw new Error('no data');
     _stemState = computeStemState(d.vix, d.breadthRating);
     _maybeShowStemMismatchNotice();
+    renderStemBadge();
     const score  = Math.round(d.score);
     const key    = (d.rating || '').toLowerCase();
     const colors = FG_COLORS[key] || ['#8faac8','#64748b'];
@@ -11036,12 +11056,12 @@ function renderStatistics() {
     { label: t('st_expectancy'), value: fmt(expectancy),                   cls: expectancy >= 0 ? 'green' : 'red', sensitive: true },
     { label: t('st_avg_r'),      value: rCount ? avgR.toFixed(2) + 'R' : '—', cls: avgR >= 1 ? 'green' : '' },
   ];
-  // Broker-derived portfolio size leads the hero row, not the 15-tile compact
-  // grid — the user asked for it as prominent as win-rate/profit-factor, not
-  // filed alongside average-hold-days.
-  if (_brokerEquityUsd != null) {
-    heroKpis.unshift({ label: 'גודל תיק (ברוקר)', value: '$' + _brokerEquityUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), cls: '', sensitive: true });
-  }
+  // Broker-derived portfolio size gets its own full-width row above even the
+  // hero KPIs — the user asked for it above everything else, not just another
+  // card in the same row as win-rate/profit-factor.
+  const portfolioCard = _brokerEquityUsd != null
+    ? { label: 'גודל תיק (ברוקר)', value: '$' + _brokerEquityUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
+    : null;
   const restKpis = [
     { label: t('st_best'),           value: fmt(st.best),                cls: st.best >= 0 ? 'green' : 'red', sensitive: true },
     { label: t('st_worst'),          value: fmt(st.worst),               cls: st.worst >= 0 ? 'green' : 'red', sensitive: true },
@@ -11058,6 +11078,11 @@ function renderStatistics() {
 
   const grid = document.getElementById('stats-kpi-grid');
   if (grid) {
+    const portfolioHtml = portfolioCard ? `
+      <div class="kpi-card portfolio-hero">
+        <div class="kpi-label">${portfolioCard.label}</div>
+        <div class="kpi-value sensitive">${portfolioCard.value}</div>
+      </div>` : '';
     const heroHtml = heroKpis.map(k => `
       <div class="kpi-card hero">
         <div class="kpi-label">${k.label}</div>
@@ -11068,7 +11093,7 @@ function renderStatistics() {
         <div class="kpi-tile-label">${k.label}</div>
         <div class="kpi-tile-value ${k.cls}${k.sensitive ? ' sensitive' : ''}">${k.value}</div>
       </div>`).join('');
-    grid.innerHTML = `<div class="kpi-grid-hero">${heroHtml}</div><div class="kpi-grid-compact">${restHtml}</div>`;
+    grid.innerHTML = portfolioHtml + `<div class="kpi-grid-hero">${heroHtml}</div><div class="kpi-grid-compact">${restHtml}</div>`;
   }
 
   renderDonut(st, adv, trades);
