@@ -8207,6 +8207,39 @@ async function _maybeShowFlexWindowNotice() {
   try { localStorage.setItem(key, today); } catch (e) {}
 }
 
+// Automatic market-regime (STEM) classifier — reuses the VIX + breadth rating
+// already carried in the fear-greed edge function's CNN payload. Thresholds
+// are a standard/generic VIX+breadth reading, not tuned to this account:
+// green = calm (VIX<20 and breadth reads greed/extreme-greed), red = stressed
+// (VIX>30 or breadth reads extreme fear), everything else = caution.
+function computeStemState(vix, breadthRating) {
+  if (vix == null) return null;
+  const br = (breadthRating || '').toLowerCase();
+  if (vix > 30 || br === 'extreme fear') return 'red';
+  if (vix < 20 && (br === 'greed' || br === 'extreme greed')) return 'green';
+  return 'orange';
+}
+let _stemState = null;
+
+// Warns once a day when the automatic regime reads red (stressed market) but
+// the account's own open exposure is still large relative to its portfolio
+// size — the portfolio↔STEM mismatch the council flagged. Cost-basis of open
+// positions, not live mark, so it doesn't depend on a successful quote fetch.
+function _maybeShowStemMismatchNotice() {
+  if (!_currentUser || _stemState !== 'red') return;
+  const today = new Date().toISOString().slice(0, 10);
+  const key = 'stem_mismatch_notice_' + _currentUser.id;
+  try { if (localStorage.getItem(key) === today) return; } catch (e) {}
+  const open = [...db.stocks, ...db.crypto].filter(t => !t.deleted && (!t.exitPrice || t.exitPrice === 0) && t.symbol && t.entryPrice > 0);
+  const exposureCost = open.reduce((s, t) => s + ((t.shares || 0) - (t.closedShares || 0)) * (t.entryPrice || 0), 0);
+  const pt = portfolioTotal() || _brokerEquityUsd;
+  if (!pt || pt <= 0 || exposureCost <= 0) return;
+  const pct = exposureCost / pt * 100;
+  if (pct < 70) return;
+  toast(`מצב השוק (STEM) אוטומטי קרא אדום, והחשיפה הפתוחה שלך גבוהה (${pct.toFixed(0)}% מהתיק) — שווה לשקול לצמצם`, 'info');
+  try { localStorage.setItem(key, today); } catch (e) {}
+}
+
 // Restore the tab the user last viewed (set in switchTab). Falls back to the
 // default overview when nothing is saved or the target isn't navigable here.
 //
@@ -10635,6 +10668,8 @@ async function loadFearGreed() {
     );
     const d = await res.json();
     if (!d.score) throw new Error('no data');
+    _stemState = computeStemState(d.vix, d.breadthRating);
+    _maybeShowStemMismatchNotice();
     const score  = Math.round(d.score);
     const key    = (d.rating || '').toLowerCase();
     const colors = FG_COLORS[key] || ['#8faac8','#64748b'];

@@ -50,7 +50,14 @@ Deno.serve(async (req) => {
     const score = data?.fear_and_greed?.score;
     const rating = data?.fear_and_greed?.rating;
     if (score == null) throw new Error('no score in response');
-    const payload = { score, rating };
+    // Reused for the automatic STEM market-regime classifier (portfolio↔STEM
+    // mismatch alert) — same CNN payload already carries both a live VIX
+    // reading and a breadth rating (McClellan volume summation index), no
+    // second external call needed.
+    const vixSeries = data?.market_volatility_vix?.data;
+    const vix = Array.isArray(vixSeries) && vixSeries.length ? vixSeries[vixSeries.length - 1]?.y : null;
+    const breadthRating = data?.stock_price_breadth?.rating ?? null;
+    const payload = { score, rating, vix, breadthRating };
     await admin.from('market_cache').upsert({ cache_key: CACHE_KEY, payload, refreshed_at: new Date().toISOString() });
     return new Response(JSON.stringify(payload), { headers: jsonHeaders });
   } catch (e) {
