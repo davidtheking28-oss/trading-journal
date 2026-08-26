@@ -11042,7 +11042,7 @@ function renderPersonalStemBadge() {
   el.innerHTML = `
     <span class="stem-pill-label">STEM</span>
     <span class="stem-pill-state">${PSTEM_LABELS[_pstemState]}</span>
-    ${_pstemDownRatio != null ? `<span class="stem-pill-vix">${_pstemDownRatio.toFixed(0)}% ירידה</span>` : ''}`;
+    ${_pstemDownRatio != null ? `<span class="stem-pill-vix">${(100 - _pstemDownRatio).toFixed(0)}% ימים חיוביים</span>` : ''}`;
 }
 
 // Broker-derived portfolio equity (currently Bybit only — bybit-cron writes
