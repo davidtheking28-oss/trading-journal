@@ -55,10 +55,14 @@
 <!-- Permissions Policy: חסימת גישה לחומרה ומיקום -->
 <meta http-equiv="Permissions-Policy"
   content="camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=(), serial=(), nfc=(), accelerometer=(), gyroscope=(), magnetometer=(), ambient-light-sensor=(), battery=()">
-<!-- Google Fonts — Heebo (Hebrew+Latin), Plus Jakarta Sans, Inter -->
+<!-- Google Fonts — Heebo only (2026-08-26: Plus Jakarta Sans/Barlow Condensed/Inter
+     were loaded but never actually used as a first-choice font anywhere, only as
+     unused fallbacks after Heebo — pure wasted weight. One considered typeface
+     used consistently everywhere, not a font-stack grab-bag, is deliberate: do
+     not add another family back in as a "just for this one element" fallback. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script>
 const SUPABASE_URL = 'https://fnklrqxwyeibfptaxewf.supabase.co';
 const SUPABASE_ANON = '__SUPABASE_ANON__';
@@ -2240,7 +2244,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     margin-bottom: 12px;
   }
   .kpi-value {
-    font-family: 'Barlow Condensed', 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Heebo', 'Plus Jakarta Sans', sans-serif;
     font-size: 28px;
     font-weight: 700;
     letter-spacing: -0.5px;
@@ -2830,7 +2834,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     opacity: 1 !important;
   }
   .kpi-value {
-    font-family: 'Barlow Condensed', 'Plus Jakarta Sans', sans-serif !important;
+    font-family: 'Heebo', 'Plus Jakarta Sans', sans-serif !important;
     font-size: 30px !important;
     font-weight: 700 !important;
     letter-spacing: -0.5px !important;
