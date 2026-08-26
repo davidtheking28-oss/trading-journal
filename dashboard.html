@@ -11002,7 +11002,7 @@ document.addEventListener('visibilitychange', () => {
 // gauge — see personal-stem edge function for the full rationale. Daily-bar
 // data, so a 1h guard is plenty; reuses the same open-symbol computation
 // _updateLivePL already does.
-let _pstemState = null, _pstemDownRatio = null, _pstemAvgReturn = null, _lastPstemTs = 0, _lastPstemSymbols = '';
+let _pstemState = null, _pstemDownRatio = null, _pstemAvgReturn = null, _pstemResolved = null, _lastPstemTs = 0, _lastPstemSymbols = '';
 const PSTEM_MIN_INTERVAL = 3600000;
 // Minervini's public description has TWO components: "how many of the Focus
 // List stocks are closing down for the 5 day period (e.g. less than 60%)"
@@ -11016,8 +11016,15 @@ const PSTEM_MIN_INTERVAL = 3600000;
 // subjective, and his Focus List is a forward-looking breakout watchlist
 // rather than positions already entered. This is the closest mechanical
 // approximation the available data allows.
-function computePersonalStemState(downRatio, avgReturn) {
+// A market-environment read needs a real sample. Minervini reads a focus list
+// of dozens of names; with one or two symbols "100% positive" is just that one
+// stock's week restated as a market verdict, which is worse than showing
+// nothing. Below MIN a thin-sample state is returned so the badge can say why
+// instead of printing a confident-looking number off n=1.
+const PSTEM_MIN_SAMPLE = 5;
+function computePersonalStemState(downRatio, avgReturn, resolved) {
   if (downRatio == null) return null;
+  if (resolved != null && resolved < PSTEM_MIN_SAMPLE) return 'thin';
   if (downRatio >= 60 || (avgReturn != null && avgReturn <= -2)) return 'red';
   if (downRatio <= 30 && (avgReturn == null || avgReturn > 0)) return 'green';
   return 'orange';
@@ -11055,12 +11062,13 @@ async function _loadPersonalStem(force = false) {
     const d = await res.json();
     _pstemDownRatio = typeof d.downRatio === 'number' ? d.downRatio : null;
     _pstemAvgReturn = typeof d.avgReturn === 'number' ? d.avgReturn : null;
-    _pstemState = computePersonalStemState(_pstemDownRatio, _pstemAvgReturn);
+    _pstemResolved = typeof d.resolved === 'number' ? d.resolved : null;
+    _pstemState = computePersonalStemState(_pstemDownRatio, _pstemAvgReturn, _pstemResolved);
   } catch { /* keep last known state rather than flashing to unknown */ }
   renderPersonalStemBadge();
 }
-const PSTEM_LABELS = { green: 'עובד', orange: 'סלקטיבי', red: 'לא עובד' };
-const PSTEM_COLORS = { green: 'var(--green)', orange: 'var(--yellow)', red: 'var(--red)' };
+const PSTEM_LABELS = { green: 'עובד', orange: 'סלקטיבי', red: 'לא עובד', thin: 'אין מספיק מניות' };
+const PSTEM_COLORS = { green: 'var(--green)', orange: 'var(--yellow)', red: 'var(--red)', thin: 'var(--text3)' };
 function renderPersonalStemBadge() {
   const el = document.getElementById('pstem-badge');
   if (!el) return;
@@ -11068,11 +11076,22 @@ function renderPersonalStemBadge() {
   const color = PSTEM_COLORS[_pstemState];
   el.style.display = 'flex';
   el.style.setProperty('--stem-color', color);
+  // The sample size is always shown. Without it a reading off one or two
+  // symbols looks identical to one off thirty, and "100% positive" off a
+  // single stock reads as a market verdict it cannot support.
+  const n = _pstemResolved;
+  if (_pstemState === 'thin') {
+    el.innerHTML = `
+    <span class="stem-pill-label">STEM</span>
+    <span class="stem-pill-state">${PSTEM_LABELS.thin}</span>
+    <span class="stem-pill-vix">${n != null ? n : 0}/${PSTEM_MIN_SAMPLE} — הוסף מניות לרשימת המעקב</span>`;
+    return;
+  }
   const posPct = _pstemDownRatio != null ? (100 - _pstemDownRatio).toFixed(0) : null;
   el.innerHTML = `
     <span class="stem-pill-label">STEM</span>
     <span class="stem-pill-state">${PSTEM_LABELS[_pstemState]}</span>
-    ${posPct != null ? `<span class="stem-pill-vix">${posPct}% חיוביות ב-5 ימים${_pstemAvgReturn != null ? ` · ${_pstemAvgReturn >= 0 ? '+' : ''}${_pstemAvgReturn.toFixed(1)}%` : ''}</span>` : ''}`;
+    ${posPct != null ? `<span class="stem-pill-vix">${posPct}% חיוביות · ${_pstemAvgReturn != null ? `${_pstemAvgReturn >= 0 ? '+' : ''}${_pstemAvgReturn.toFixed(1)}% ` : ''}ב-5 ימים · ${n} מניות</span>` : ''}`;
 }
 
 // Broker-derived portfolio equity (currently Bybit only — bybit-cron writes

@@ -1016,3 +1016,26 @@ describe('personal STEM regime', () => {
     assert.equal(computePersonalStemState(null, null), null);
   });
 });
+
+// A market-environment model read off one or two symbols is that stock's week
+// restated as a market verdict. The watchlist is empty for most users and the
+// journal may hold a single open position, which is exactly the case that
+// produced a confident-looking "100% positive" off n=1 in production.
+describe('personal STEM sample size', () => {
+  const { computePersonalStemState, PSTEM_MIN_SAMPLE } = load('PSTEM_MIN_SAMPLE', 'computePersonalStemState');
+
+  test('a single-symbol focus list cannot produce a regime', () => {
+    assert.equal(computePersonalStemState(0, 2.4, 1), 'thin',
+      'n=1 at 100% positive is the exact case that shipped as a green "working" reading');
+  });
+
+  test('the guard lifts once the list is big enough', () => {
+    assert.equal(computePersonalStemState(0, 2.4, PSTEM_MIN_SAMPLE), 'green');
+    assert.equal(computePersonalStemState(0, 2.4, PSTEM_MIN_SAMPLE - 1), 'thin');
+  });
+
+  test('a thin sample outranks the regime thresholds', () => {
+    assert.equal(computePersonalStemState(100, -9, 2), 'thin',
+      'even an unambiguous red must not be reported off two symbols');
+  });
+});
