@@ -5,6 +5,48 @@ const CORS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Real market breadth for the STEM regime classifier, free: % of the 11 SPDR
+// sector ETFs trading above their own 50-day SMA. CNN's stock_price_breadth
+// is the McClellan Volume Summation Index — a different, unrelated metric —
+// so it was never actually "% above SMA50" despite being used as a stand-in
+// for that. This computes the real thing from the same free Yahoo chart
+// endpoint theme-tracker already relies on; no paid API, no new key.
+const SECTOR_ETFS = ['XLK', 'XLF', 'XLE', 'XLV', 'XLY', 'XLP', 'XLI', 'XLB', 'XLU', 'XLRE', 'XLC'];
+const YF_HOSTS = ['query1.finance.yahoo.com', 'query2.finance.yahoo.com'];
+const YF_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Accept': 'application/json,text/plain,*/*',
+};
+
+async function sectorAboveSma50(ticker: string): Promise<boolean | null> {
+  for (const host of YF_HOSTS) {
+    try {
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 6000);
+      const res = await fetch(`https://${host}/v8/finance/chart/${ticker}?range=6mo&interval=1d`,
+        { headers: YF_HEADERS, signal: controller.signal });
+      clearTimeout(tid);
+      if (!res.ok) continue;
+      const json = await res.json();
+      const closes: number[] = (json?.chart?.result?.[0]?.indicators?.quote?.[0]?.close ?? [])
+        .filter((c: number) => c != null && c > 0);
+      if (closes.length < 50) continue;
+      const last50 = closes.slice(-50);
+      const sma50 = last50.reduce((s, c) => s + c, 0) / 50;
+      return closes[closes.length - 1] > sma50;
+    } catch { /* try next host */ }
+  }
+  return null;
+}
+
+async function fetchSectorBreadthPct(): Promise<number | null> {
+  const results = await Promise.all(SECTOR_ETFS.map(sectorAboveSma50));
+  const resolved = results.filter((r): r is boolean => r !== null);
+  if (resolved.length < 6) return null; // too many failures to trust the ratio
+  const above = resolved.filter(Boolean).length;
+  return Math.round((above / resolved.length) * 1000) / 10;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
@@ -35,6 +77,22 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify(cached.payload), { headers: jsonHeaders });
   }
 
+  // Sector breadth is heavier (11 fetches) and doesn't move meaningfully
+  // within 5 minutes — cached separately with its own longer TTL so it isn't
+  // recomputed on every fear-greed cache miss.
+  const BREADTH_CACHE_KEY = 'sector-breadth';
+  const BREADTH_TTL_MS = 900_000;
+  const { data: cachedBreadth } = await admin
+    .from('market_cache').select('payload, refreshed_at').eq('cache_key', BREADTH_CACHE_KEY).maybeSingle();
+  let breadthPct: number | null = cachedBreadth?.payload?.breadthPct ?? null;
+  if (!cachedBreadth || Date.now() - new Date(cachedBreadth.refreshed_at).getTime() >= BREADTH_TTL_MS) {
+    const fresh = await fetchSectorBreadthPct();
+    if (fresh !== null) {
+      breadthPct = fresh;
+      await admin.from('market_cache').upsert({ cache_key: BREADTH_CACHE_KEY, payload: { breadthPct: fresh }, refreshed_at: new Date().toISOString() });
+    }
+  }
+
   try {
     const res = await fetch('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', {
       headers: {
@@ -56,8 +114,8 @@ Deno.serve(async (req) => {
     // second external call needed.
     const vixSeries = data?.market_volatility_vix?.data;
     const vix = Array.isArray(vixSeries) && vixSeries.length ? vixSeries[vixSeries.length - 1]?.y : null;
-    const breadthRating = data?.stock_price_breadth?.rating ?? null;
-    const payload = { score, rating, vix, breadthRating };
+    const breadthRating = data?.stock_price_breadth?.rating ?? null; // kept for reference only; STEM now uses breadthPct
+    const payload = { score, rating, vix, breadthRating, breadthPct };
     await admin.from('market_cache').upsert({ cache_key: CACHE_KEY, payload, refreshed_at: new Date().toISOString() });
     return new Response(JSON.stringify(payload), { headers: jsonHeaders });
   } catch (e) {

@@ -8231,11 +8231,13 @@ async function _maybeShowFlexWindowNotice() {
 // are a standard/generic VIX+breadth reading, not tuned to this account:
 // green = calm (VIX<20 and breadth reads greed/extreme-greed), red = stressed
 // (VIX>30 or breadth reads extreme fear), everything else = caution.
-function computeStemState(vix, breadthRating) {
+// breadthPct = % of the 11 SPDR sector ETFs above their own 50-day SMA,
+// computed server-side (fear-greed edge function) — real breadth, not CNN's
+// McClellan-based rating this used to read.
+function computeStemState(vix, breadthPct) {
   if (vix == null) return null;
-  const br = (breadthRating || '').toLowerCase();
-  if (vix > 30 || br === 'extreme fear') return 'red';
-  if (vix < 20 && (br === 'greed' || br === 'extreme greed')) return 'green';
+  if (vix > 30 || (breadthPct != null && breadthPct < 40)) return 'red';
+  if (vix < 20 && breadthPct != null && breadthPct >= 55) return 'green';
   return 'orange';
 }
 let _stemState = null, _stemVix = null;
@@ -10706,7 +10708,7 @@ async function loadFearGreed() {
     );
     const d = await res.json();
     if (!d.score) throw new Error('no data');
-    _stemState = computeStemState(d.vix, d.breadthRating);
+    _stemState = computeStemState(d.vix, d.breadthPct);
     _stemVix = typeof d.vix === 'number' ? d.vix : null;
     _maybeShowStemMismatchNotice();
     renderStemBadge();
