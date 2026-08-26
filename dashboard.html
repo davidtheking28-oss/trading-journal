@@ -3103,11 +3103,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   }
   html[data-theme="light"] .kpi-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.1); }
-  html[data-theme="light"] .kpi-card.c-green  { border-top: 2px solid #059669 !important; }
-  html[data-theme="light"] .kpi-card.c-red    { border-top: 2px solid #c0405c !important; }
-  html[data-theme="light"] .kpi-card.c-blue   { border-top: 2px solid #4f46e5 !important; }
-  html[data-theme="light"] .kpi-card.c-yellow { border-top: 2px solid #b45309 !important; }
-  html[data-theme="light"] .kpi-card.c-purple { border-top: 2px solid #7c3aed !important; }
+  /* Colored top border removed (2026-08-26) — these outranked the later
+     light-theme cleanup block on specificity, so light mode kept the stripes
+     after dark mode lost them. */
   html[data-theme="light"] .kpi-label         { color: rgba(71,85,105,0.75) !important; opacity: 1 !important; }
   html[data-theme="light"] .kpi-value         { color: #0f172a !important; opacity: 1 !important; }
   html[data-theme="light"] .kpi-value.green   { color: #059669 !important; text-shadow: none !important; }
