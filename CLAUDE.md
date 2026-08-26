@@ -304,3 +304,44 @@ unlike this one — push it manually).
   setting. The 2026-08-25 council's literal top recommendation was "fix this
   before writing another line of code" — flagging again because two straight
   sessions haven't moved it, which is itself worth noticing.
+
+## ⚠️ Don't reintroduce these regressions (fixed 2026-08-26, full health audit)
+
+- **Every `supabase/functions/*/` directory must have a deploy line in
+  `.github/workflows/deploy.yml`.** `ibkr-cron`, `ibkr-alert` and `push-daily`
+  were missing from that list and so had **never** been deployed by CI — a
+  green `deploy-functions` job meant nothing for them, and `ibkr-cron` (the
+  main IBKR sync) sat on a version from 2026-08-09 while commits kept landing.
+  A build step now fails when a directory has no deploy line; **do not replace
+  it with a comment or a checklist** — same honor-system objection as the
+  pre-commit hook above. Quick check on any Edge Function: `get_edge_function`'s
+  `entrypoint_path` shows `c:\home\runner\work\...` when CI deployed it and a
+  local temp path when someone deployed by hand.
+- **Broker health must be evaluated per `(user, broker)`, never per user.**
+  `ibkr-alert` grouped on `user_id` alone, so one working broker masked a
+  broken one on the same account: a Bybit key that expired 2026-08-22 failed
+  183 consecutive times over four days in complete silence because the same
+  user's IBKR sync kept succeeding and pushed `ok` above 0.
+- **A staleness window must match the job's cadence.** `bybit_sync_stalled`
+  uses **12 hours**, not the 4 days `ibkr_sync_stalled` uses, because
+  `bybit-sync` runs every 30 minutes — 4 days there is 192 failed runs before
+  anyone is told. Verified against live data: the 4-day form returned **0**
+  while the key had already been dead for most of four days. Don't copy the
+  interval across when adding a check for a new job.
+- **`data_health_check_core` is SECURITY INVOKER with `search_path=public`** —
+  it cannot read `vault.secrets`, so no check in it may key off Vault
+  credentials. `bybit_sync_stalled` uses "has bybit sync-log rows OR holds
+  bybit-tagged trades" instead; the trades half is what survives a credential
+  wipe, which is exactly how `6f73a6c3`'s dead sync stayed invisible (its
+  `flex_query_id` is NULL *and* it has zero Vault flex_token rows — the
+  credentials were wiped outright, it is not a bad token).
+- **`broker_balances` is read-only for users.** It was created with a `FOR ALL`
+  policy, which let the browser overwrite a *broker-derived* equity figure that
+  feeds the Kelly sizing suggestion and the STEM exposure alert — making it no
+  more trustworthy than the manual `user_settings.portfolio_total` it exists to
+  replace. Writes come only from `bybit-cron` / `ibkr-cron` under the service
+  role, which bypasses RLS.
+- **Applying a migration through the Supabase MCP does NOT create the file.**
+  `create_broker_balances` existed only in the database until it was caught in
+  this audit. Write the `supabase/migrations/*.sql` file in the same turn as
+  the `apply_migration` call, every time.
