@@ -4388,8 +4388,14 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     width: 1px; height: 32px; flex-shrink: 0; margin: 0 6px;
     background: var(--border2);
   }
-  .stem-badge { align-items: center; gap: 6px; font-size: 13px; font-weight: 700; flex-shrink: 0; }
-  .stem-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .stem-badge {
+    align-items: center; gap: 7px; flex-shrink: 0; padding: 6px 12px;
+    border-radius: 999px; background: color-mix(in srgb, var(--stem-color) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--stem-color) 35%, transparent);
+  }
+  .stem-pill-label { font-size: 10px; font-weight: 800; letter-spacing: 0.5px; color: var(--text3); }
+  .stem-pill-state { font-size: 13px; font-weight: 800; color: var(--stem-color); }
+  .stem-pill-vix { font-size: 11px; font-weight: 600; color: var(--text2); font-variant-numeric: tabular-nums; }
   .ov-top-bar .fg-widget {
     background: transparent !important;
     border: none !important;
@@ -8232,17 +8238,25 @@ function computeStemState(vix, breadthRating) {
   if (vix < 20 && (br === 'greed' || br === 'extreme greed')) return 'green';
   return 'orange';
 }
-let _stemState = null;
+let _stemState = null, _stemVix = null;
 
-const STEM_LABELS = { green: 'STEM: ירוק', orange: 'STEM: כתום', red: 'STEM: אדום' };
+const STEM_LABELS = { green: 'רגוע', orange: 'זהירות', red: 'לחוץ' };
 const STEM_COLORS = { green: 'var(--green)', orange: 'var(--yellow)', red: 'var(--red)' };
+// A pill (not just a dot) so the VIX number itself is visible, not only the
+// color — the color alone can't be told apart by anyone with color-vision
+// deficiency, and the number is what actually justifies the state.
 function renderStemBadge() {
   const el = document.getElementById('stem-badge');
   if (!el) return;
   if (!_stemState) { el.style.display = 'none'; return; }
   const color = STEM_COLORS[_stemState];
+  const vixTxt = _stemVix != null ? `VIX ${_stemVix.toFixed(1)}` : '';
   el.style.display = 'flex';
-  el.innerHTML = `<span class="stem-dot" style="background:${color};box-shadow:0 0 6px ${color}"></span><span style="color:${color}">${STEM_LABELS[_stemState]}</span>`;
+  el.style.setProperty('--stem-color', color);
+  el.innerHTML = `
+    <span class="stem-pill-label">STEM</span>
+    <span class="stem-pill-state">${STEM_LABELS[_stemState]}</span>
+    ${vixTxt ? `<span class="stem-pill-vix">${vixTxt}</span>` : ''}`;
 }
 
 // Warns once a day when the automatic regime reads red (stressed market) but
@@ -10693,6 +10707,7 @@ async function loadFearGreed() {
     const d = await res.json();
     if (!d.score) throw new Error('no data');
     _stemState = computeStemState(d.vix, d.breadthRating);
+    _stemVix = typeof d.vix === 'number' ? d.vix : null;
     _maybeShowStemMismatchNotice();
     renderStemBadge();
     const score  = Math.round(d.score);
@@ -10719,7 +10734,12 @@ async function loadFearGreed() {
     el.innerHTML = `<div class="fg-bar-wrap"><div class="fg-bar-score"><span class="fg-score" style="color:var(--text2)">—</span></div><div class="fg-bar-track"></div></div><div class="fg-info"><div class="fg-label">Fear & Greed</div><div class="fg-rating" style="color:var(--text2);font-size:13px;">Unavailable</div></div>`;
   }
   clearTimeout(_fgTimer);
-  _fgTimer = setTimeout(loadFearGreed, 24 * 60 * 60 * 1000);
+  // Was 24h — fine for the Fear & Greed score itself (CNN updates it once a
+  // day), but the STEM regime badge rides this same fetch, and a stressed-market
+  // alert that can lag a real VIX spike by up to a day defeats the point. The
+  // edge function still caches server-side for 5 min, so refreshing hourly here
+  // doesn't add real load — it just lets a genuine mid-day spike surface sooner.
+  _fgTimer = setTimeout(loadFearGreed, 60 * 60 * 1000);
 }
 
 let _cfgTimer = null;
