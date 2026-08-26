@@ -79,6 +79,16 @@ async function fetchExecutions(apiKey: string, apiSecret: string, days: number):
   return all;
 }
 
+// Total account equity in USD, for the broker-derived portfolio-size feature.
+// UNIFIED covers every account type Bybit currently issues; totalEquity is
+// already USD-denominated across all held coins.
+export async function fetchBybitEquity(apiKey: string, apiSecret: string): Promise<number | null> {
+  const json = await bybitGet(apiKey, apiSecret, '/v5/account/wallet-balance', { accountType: 'UNIFIED' });
+  if (json.retCode !== 0) return null;
+  const eq = parseFloat(json.result?.list?.[0]?.totalEquity ?? '');
+  return Number.isFinite(eq) ? eq : null;
+}
+
 export async function computeBybitTrades(apiKey: string, apiSecret: string, days: number): Promise<BybitTrade[]> {
   const allExecs = await fetchExecutions(apiKey, apiSecret, days);
   // Sort ascending so we can process FIFO

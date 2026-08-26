@@ -10910,8 +10910,23 @@ document.addEventListener('visibilitychange', () => {
   _updateLivePL(true);
 });
 
+// Broker-derived portfolio equity (currently Bybit only — bybit-cron writes
+// broker_balances on each sync run). Cached client-side and refetched at most
+// once every 60s, same guard shape as _updateLivePL's symbol-key guard.
+let _brokerEquityUsd = null, _brokerEquityTs = 0;
+async function _loadBrokerEquity() {
+  if (Date.now() - _brokerEquityTs < 60000) return;
+  _brokerEquityTs = Date.now();
+  const { data } = await _sb.from('broker_balances').select('equity_usd').eq('user_id', _currentUser.id);
+  if (!data) return;
+  const sum = data.reduce((s, r) => s + Number(r.equity_usd || 0), 0);
+  if (sum !== _brokerEquityUsd) { _brokerEquityUsd = sum; renderStatistics(); }
+  else _brokerEquityUsd = sum;
+}
+
 function renderStatistics() {
   _restoreStatsState();
+  _loadBrokerEquity();
   const { month, year } = getFilter('stats');
   let allTrades = [...db.stocks, ...db.crypto].filter(t => !t.deleted && t.entryDate);
   if (month) allTrades = allTrades.filter(t => +t.entryDate.slice(5, 7) === +month);
@@ -10994,6 +11009,9 @@ function renderStatistics() {
     { label: t('st_avg_hold_loss'),  value: adv.avgLossDays.toFixed(1) + 'd', cls: '' },
     { label: 'ירידה מקסימלית מהשיא',  value: fmt(maxDD), cls: 'red', sensitive: true },
   ];
+  if (_brokerEquityUsd != null) {
+    restKpis.push({ label: 'גודל תיק (ברוקר)', value: '$' + _brokerEquityUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), cls: '', sensitive: true });
+  }
 
   const grid = document.getElementById('stats-kpi-grid');
   if (grid) {

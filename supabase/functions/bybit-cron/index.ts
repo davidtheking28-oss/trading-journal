@@ -5,7 +5,7 @@
 //
 // Auth: same shared secret as ibkr-cron (x-cron-key vs app_secrets.cron_secret).
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
-import { computeBybitTrades } from '../_shared/bybit.ts';
+import { computeBybitTrades, fetchBybitEquity } from '../_shared/bybit.ts';
 
 // Wide enough to cover the entry leg of most swing holds — computeBybitTrades
 // silently skips (rather than mis-prices) a closing execution whose opening
@@ -46,6 +46,12 @@ Deno.serve(async (req: Request) => {
     await Promise.all(targets.slice(i, i + CONC).map(async (u: any) => {
       const who = u.user_id.slice(0, 8);
       try {
+        const equity = await fetchBybitEquity(u.bybit_api_key, u.bybit_api_secret);
+        if (equity !== null) {
+          const { error: eqErr } = await sb.from('broker_balances')
+            .upsert({ user_id: u.user_id, broker: 'bybit', equity_usd: equity, fetched_at: new Date().toISOString() }, { onConflict: 'user_id,broker' });
+          if (eqErr) console.log(`  equity upsert failed ${who}: ${eqErr.message}`);
+        }
         const trades = await computeBybitTrades(u.bybit_api_key, u.bybit_api_secret, RECENT_DAYS);
         if (trades.length) {
           const tradeRows = trades.map((t) => ({
