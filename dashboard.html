@@ -15340,8 +15340,13 @@ function missedRenderList(list) {
       </div>`;
 
   container.innerHTML = Object.entries(byYear).map(([year, yearItems]) => {
+    // Years stay newest-first (2025 lands below 2026 automatically), but
+    // inside a year the months and their cards read chronologically forward,
+    // oldest to newest — a calendar order, not the reverse-feed order the
+    // year-level sort uses.
     const byMonth = {};
-    yearItems.forEach(r => { const k = r.date.slice(0, 7); (byMonth[k] ??= []).push(r); });
+    [...yearItems].sort((a, b) => a.date.localeCompare(b.date))
+      .forEach(r => { const k = r.date.slice(0, 7); (byMonth[k] ??= []).push(r); });
     const monthsHtml = Object.entries(byMonth).map(([key, items]) => {
       const label = months()[+key.slice(5, 7) - 1];
       const cards = `<div class="missed-cards">${items.map(cardHtml).join('')}</div>`;
