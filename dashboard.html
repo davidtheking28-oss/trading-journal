@@ -10856,8 +10856,15 @@ async function _updateLivePL(force = false) {
   // round trip paid its own auth+rate-limit overhead, which dominated load time
   // once there were more than a couple of open positions.
   try {
+    // Neither this fetch nor the edge function's own per-symbol Finnhub calls
+    // had a timeout, so a single slow/hung upstream response could leave this
+    // card stuck on "מחשב..." indefinitely. 12s here comfortably covers the
+    // edge function's own 5s-per-symbol cap plus network overhead.
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 12000);
     const r = await fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=quote&symbols=${encodeURIComponent(symbols.join(','))}`,
-      { headers: { 'Authorization': `Bearer ${token}` } });
+      { headers: { 'Authorization': `Bearer ${token}` }, signal: controller.signal });
+    clearTimeout(tid);
     const quotes = await r.json();
     symbols.forEach(sym => {
       const price = quotes?.[sym]?.c;

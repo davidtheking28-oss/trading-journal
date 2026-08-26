@@ -80,10 +80,18 @@ serve(async (req: Request) => {
   if (path === 'quote' && symbols) {
     const list = [...new Set(symbols.split(',').map(s => s.trim().toUpperCase()).filter(Boolean))].slice(0, 50);
     const results: Record<string, unknown> = {};
+    // Promise.all had no per-symbol timeout, so one slow/hung Finnhub response
+    // (a symbol it barely serves, a transient stall) blocked the whole batch —
+    // every open position waited on the single worst one. 5s per symbol; a
+    // timed-out symbol comes back null like any other failed quote, same as
+    // the client already handles.
     await Promise.all(list.map(async sym => {
       try {
+        const controller = new AbortController();
+        const tid = setTimeout(() => controller.abort(), 5000);
         const r = await fetch(`https://finnhub.io/api/v1/quote?token=${encodeURIComponent(apiKey)}&symbol=${encodeURIComponent(sym)}`,
-          { headers: { 'User-Agent': 'trading-journal/2.0' } });
+          { headers: { 'User-Agent': 'trading-journal/2.0' }, signal: controller.signal });
+        clearTimeout(tid);
         results[sym] = r.ok ? await r.json() : null;
       } catch {
         results[sym] = null;
