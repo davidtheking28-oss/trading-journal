@@ -312,6 +312,15 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
         <div class="step-body">
           <div class="step-title">פתח את סעיף Trades</div>
           <div class="step-desc">לחץ על הסעיף <strong>Trades</strong>. בדרופדאון של רמת הפירוט בחר <strong>Execution</strong>.</div>
+          <div style="background:#0a1525;border:1px solid var(--border);border-radius:10px;padding:14px;margin:10px 0" aria-hidden="true">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Options</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:13px">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:6px;background:rgba(45,212,160,0.12);border:1px solid rgba(45,212,160,0.4);color:var(--green);font-weight:700">Execution ✓</div>
+              <div style="padding:8px 10px;border-radius:6px;background:rgba(255,255,255,0.03);color:var(--text3)">Closed Lots</div>
+              <div style="padding:8px 10px;border-radius:6px;background:rgba(255,255,255,0.03);color:var(--text3)">Symbol Summary</div>
+              <div style="padding:8px 10px;border-radius:6px;background:rgba(255,255,255,0.03);color:var(--text3)">Wash Sales</div>
+            </div>
+          </div>
           <div class="callout callout-warn" style="margin-top:10px">
             <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <div class="callout-text">אל תבחר <strong>Closed Lots</strong>. זה מחזיר נתונים מסוכמים במקום ביצועים בודדים, והיומן לא יוכל לזהות הזמנה שהתפצלה לכמה חלקים — כל חלק יופיע כעסקה נפרדת.</div>
@@ -324,6 +333,20 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
         <div class="step-body">
           <div class="step-title">סמן את 10 השדות</div>
           <div class="step-desc">בתוך סעיף Trades סמן בדיוק את השדות האלה:</div>
+          <div style="background:#0a1525;border:1px solid var(--border);border-radius:10px;padding:6px 4px;margin:10px 0" aria-hidden="true">
+            <div style="display:flex;flex-direction:column">
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:13px;color:var(--text)"><span style="width:16px;height:16px;border-radius:4px;background:#2dd4a0;color:#04140e;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">✓</span>Symbol</div>
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:13px;color:var(--text)"><span style="width:16px;height:16px;border-radius:4px;background:#2dd4a0;color:#04140e;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">✓</span>Buy/Sell</div>
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:13px;color:var(--text)"><span style="width:16px;height:16px;border-radius:4px;background:#2dd4a0;color:#04140e;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">✓</span>Quantity</div>
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:13px;color:var(--text)"><span style="width:16px;height:16px;border-radius:4px;background:#2dd4a0;color:#04140e;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">✓</span>Trade Price</div>
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:13px;color:var(--text)"><span style="width:16px;height:16px;border-radius:4px;background:#2dd4a0;color:#04140e;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">✓</span>Date/Time</div>
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:13px;color:var(--text)"><span style="width:16px;height:16px;border-radius:4px;background:#2dd4a0;color:#04140e;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">✓</span>IB Commission</div>
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:13px;color:var(--text)"><span style="width:16px;height:16px;border-radius:4px;background:#2dd4a0;color:#04140e;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">✓</span>Trade ID</div>
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:13px;background:rgba(96,165,250,0.08);border-radius:6px;color:var(--text)"><span style="width:16px;height:16px;border-radius:4px;background:#2dd4a0;color:#04140e;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">✓</span>IB Order ID</div>
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:13px;background:rgba(96,165,250,0.08);border-radius:6px;color:var(--text)"><span style="width:16px;height:16px;border-radius:4px;background:#2dd4a0;color:#04140e;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">✓</span>Open/Close Indicator</div>
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:13px;background:rgba(96,165,250,0.08);border-radius:6px;color:var(--text)"><span style="width:16px;height:16px;border-radius:4px;background:#2dd4a0;color:#04140e;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">✓</span>Asset Class</div>
+            </div>
+          </div>
           <ul style="margin-top:8px;padding-right:20px;color:var(--text2);font-size:14px;display:flex;flex-direction:column;gap:6px">
             <li><strong>Symbol</strong></li>
             <li><strong>Buy/Sell</strong></li>
@@ -377,6 +400,15 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
         <div class="step-body">
           <div class="step-title">העתק את ה-Query ID</div>
           <div class="step-desc">ליד שם השאילתה שיצרת לחץ על אייקון המידע <strong>ⓘ</strong> — יופיע מספר. העתק אותו.</div>
+          <div style="background:#0a1525;border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin:10px 0" aria-hidden="true">
+            <div style="display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--text2)">
+              <span>ChartRoom</span>
+              <span style="font-family:'IBM Plex Mono',monospace;color:var(--blue);display:flex;align-items:center;gap:10px">
+                <span style="border:1px solid rgba(96,165,250,0.5);border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:11px">ⓘ</span>
+                ✎ ▶
+              </span>
+            </div>
+          </div>
           <div class="field-row">
             <div class="field-label">Query ID — נראה כך</div>
             <div class="field-mock">1462900</div>
