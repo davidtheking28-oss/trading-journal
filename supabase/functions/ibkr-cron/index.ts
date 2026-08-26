@@ -20,6 +20,27 @@ const tag = (xml: string, t: string) => {
   return m ? m[1].trim() : '';
 };
 
+// Total account equity in base currency, for the broker-derived
+// portfolio-size feature — parsed only if the user has added the "Equity
+// Summary" section to their Flex Query (most accounts don't yet; this is a
+// no-op, not an error, until they do). Several <EquitySummaryByReportDateInBase>
+// rows can appear (one per day in the query's date range) — take the one
+// with the latest reportDate, since that's the current balance.
+function extractIBKREquity(xml: string): number | null {
+  const rowRe = /<EquitySummaryByReportDateInBase\b[^>]*\/>/g;
+  let best: { date: string; total: number } | null = null;
+  let row: RegExpExecArray | null;
+  while ((row = rowRe.exec(xml))) {
+    const date = row[0].match(/\breportDate="(\d{8})"/)?.[1];
+    const total = row[0].match(/\btotal="(-?[\d.]+)"/)?.[1];
+    if (!date || !total) continue;
+    const n = parseFloat(total);
+    if (!Number.isFinite(n)) continue;
+    if (!best || date > best.date) best = { date, total: n };
+  }
+  return best ? best.total : null;
+}
+
 async function fetchStatement(token: string, qid: string) {
   // Step 1: SendRequest — retry temporary errors (1001 = IBKR busy) with backoff.
   const SEND_DELAYS = [0, 8000, 16000, 24000];
@@ -117,6 +138,16 @@ async function runSync(sb: ReturnType<typeof createClient>, mode: string) {
         for (const u of users) {
           const { error: upErr } = await sb.from('flex_statement_cache').upsert({ user_id: u.user_id, ...patch });
           if (upErr) throw new Error('cache upsert: ' + upErr.message);
+        }
+        if (mode === 'full') {
+          const equity = extractIBKREquity(xml);
+          if (equity !== null) {
+            for (const u of users) {
+              const { error: eqErr } = await sb.from('broker_balances')
+                .upsert({ user_id: u.user_id, broker: 'ibkr', equity_usd: equity, fetched_at: now }, { onConflict: 'user_id,broker' });
+              if (eqErr) console.log(`  equity upsert failed ${u.user_id.slice(0, 8)}: ${eqErr.message}`);
+            }
+          }
         }
         ok += users.length;
         for (const u of users) logRows.push({ user_id: u.user_id, mode, status: 'ok' });
