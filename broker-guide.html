@@ -157,7 +157,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
   <!-- SUPER SIMPLE SUMMARY -->
   <div class="callout callout-tip" style="margin-bottom:32px">
     <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-    <div class="callout-text"><strong>במילים פשוטות:</strong> אתה הולך להעתיק 2-3 קודים מהאתר של הברוקר שלך (כמו סיסמה חד-פעמית), ולהדביק אותם ביומן. זהו. אחר כך היומן "רואה" את העסקאות שלך לבד, בלי שתצטרך להקליד אף עסקה בעצמך. לוקח בערך 5 דקות, וזה קורה פעם אחת בלבד.</div>
+    <div class="callout-text"><strong>במילים פשוטות:</strong> אתה הולך להעתיק 2-3 קודים מהאתר של הברוקר שלך (כמו סיסמה חד-פעמית), ולהדביק אותם ביומן. זהו. אחר כך היומן "רואה" את העסקאות שלך לבד, בלי שתצטרך להקליד אף עסקה בעצמך. לוקח 5–10 דקות, וזה קורה פעם אחת בלבד.</div>
   </div>
 
   <!-- TOC -->
@@ -188,7 +188,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
 
     <div class="callout callout-tip">
       <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-      <div class="callout-text"><strong>השורה התחתונה:</strong> הגדרה חד-פעמית של ~5 דקות (חינם). בסוף התהליך תעתיק <strong>2 דברים בלבד</strong> מ-IBKR — <strong>Token</strong> ו-<strong>Query ID</strong> — תדביק אותם ביומן, וזהו. מרגע זה העסקאות מסתנכרנות לבד.</div>
+      <div class="callout-text"><strong>השורה התחתונה:</strong> הגדרה חד-פעמית (חינם). בסוף התהליך תעתיק <strong>2 דברים בלבד</strong> מ-IBKR — <strong>Token</strong> ו-<strong>Query ID</strong> — תדביק אותם ביומן, וזהו. מרגע זה העסקאות מסתנכרנות לבד.</div>
     </div>
 
     <!-- MOCKUP: where the 2 values live -->
@@ -219,7 +219,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
       <div class="step">
         <div class="step-dot">1</div>
         <div class="step-body">
-          <div class="step-title">כנס לחשבון IBKR</div>
+          <div class="step-title">כנס לפורטל IBKR</div>
           <div class="step-desc">פתח <code>client.ibkr.com</code> והתחבר.</div>
         </div>
       </div>
@@ -227,16 +227,72 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
       <div class="step">
         <div class="step-dot">2</div>
         <div class="step-body">
-          <div class="step-title">פתח את Flex Queries</div>
-          <div class="step-desc">בתפריט העליון לחץ <code>Performance &amp; Reports</code> ← <code>Flex Queries</code>.</div>
+          <div class="step-title">סגור משימות פתוחות בחשבון</div>
+          <div class="step-desc">אם הפורטל מציג משימות ממתינות — אימות פרטים, מסמכים חסרים, אישור דרישות — סיים אותן <strong>לפני</strong> שתמשיך.</div>
+          <div class="callout callout-warn" style="margin-top:10px">
+            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div class="callout-text">כל עוד יש משימה פתוחה IBKR חוסם את שירות ה-Flex, והחיבור נתקע — בדרך כלל עם הודעת שגיאה מבלבלת על ה-Token.</div>
+          </div>
         </div>
       </div>
 
       <div class="step">
         <div class="step-dot">3</div>
         <div class="step-body">
+          <div class="step-title">פתח את Flex Queries</div>
+          <div class="step-desc">בתפריט העליון לחץ <code>Performance &amp; Reports</code> ← <code>Flex Queries</code>.</div>
+          <div class="callout callout-info" style="margin-top:10px">
+            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <div class="callout-text">בעמוד הזה יש <strong>שני אזורים</strong>, ותצטרך את שניהם: <strong>Flex Web Service</strong> (משם ה-Token, שלבים 4–6) ו-<strong>Activity Flex Query</strong> (משם ה-Query ID, שלבים 7–12).</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">4</div>
+        <div class="step-body">
+          <div class="step-title">הפעל את Flex Web Service</div>
+          <div class="step-desc">גלול לאזור <strong>Flex Web Service Configuration</strong>. אם השירות כבוי — לחץ על גלגל השיניים ⚙, סמן את התיבה שמפעילה אותו ולחץ <code>Save</code>.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">5</div>
+        <div class="step-body">
+          <div class="step-title">צור Token — ובחר תוקף לשנה</div>
+          <div class="step-desc">באותו אזור לחץ <code>Generate Token</code>. בתפריט התוקף שנה מ-<code>6 Hrs</code> ל-<strong>Year 1</strong>, ולחץ <code>Save</code>.</div>
+          <div class="callout callout-tip" style="margin-top:10px">
+            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <div class="callout-text">ברירת המחדל היא 6 שעות בלבד — אם תשאיר אותה, החיבור יפסיק לעבוד עוד באותו יום. <strong>Year 1</strong> חוסך לך את זה.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">6</div>
+        <div class="step-body">
+          <div class="step-title">העתק ושמור את ה-Token</div>
+          <div class="step-desc">יופיע מספר ארוך בכחול. העתק אותו לפנקס או לכל מקום זמני.</div>
+          <div class="callout callout-warn" style="margin-top:10px">
+            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div class="callout-text"><strong>העתק אותו עכשיו!</strong> IBKR מציג את ה-Token פעם אחת בלבד.</div>
+          </div>
+          <div class="field-row">
+            <div class="field-label">Token — נראה כך</div>
+            <div class="field-mock">12345678901234567890123456789012</div>
+          </div>
+          <div class="callout callout-info" style="margin-top:10px">
+            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <div class="callout-text">ה-Token הוא מפתח <strong>קריאה בלבד</strong> — הוא מאפשר ליומן רק למשוך את דוח העסקאות, ולא לבצע שום פעולה בחשבון.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">7</div>
+        <div class="step-body">
           <div class="step-title">צור Activity Flex Query</div>
-          <div class="step-desc">לחץ <code>Create</code> ← בחר <strong>Activity Flex Query</strong> ← תן שם (למשל <code>ChartRoom</code>).</div>
+          <div class="step-desc">חזור לראש העמוד, ליד <strong>Activity Flex Query</strong> לחץ על הפלוס <code>+</code>. בשדה <code>Query Name</code> תן שם לזיהוי — למשל <code>ChartRoom</code>.</div>
           <div class="callout callout-warn" style="margin-top:10px">
             <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <div class="callout-text">חובה <strong>Activity</strong> — לא Trade Confirmation (זה סוג אחר ברשימה).</div>
@@ -245,11 +301,23 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
       </div>
 
       <div class="step">
-        <div class="step-dot">4</div>
+        <div class="step-dot">8</div>
         <div class="step-body">
-          <div class="step-title">בחר את השדות הדרושים</div>
-          <div class="step-desc">פתח <code>Sections</code> ← <code>Trades</code>, וסמן את 8 השדות האלה:</div>
-          <ul style="margin-top:8px;padding-right:20px;color:var(--text2);font-size:14px;display:flex;flex-direction:column;gap:4px">
+          <div class="step-title">פתח את סעיף Trades</div>
+          <div class="step-desc">לחץ על הסעיף <strong>Trades</strong>. בדרופדאון של רמת הפירוט בחר <strong>Execution</strong>.</div>
+          <div class="callout callout-warn" style="margin-top:10px">
+            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div class="callout-text">אל תבחר <strong>Closed Lots</strong>. זה מחזיר נתונים מסוכמים במקום ביצועים בודדים, והיומן לא יוכל לזהות הזמנה שהתפצלה לכמה חלקים — כל חלק יופיע כעסקה נפרדת.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">9</div>
+        <div class="step-body">
+          <div class="step-title">סמן את 10 השדות</div>
+          <div class="step-desc">בתוך סעיף Trades סמן בדיוק את השדות האלה:</div>
+          <ul style="margin-top:8px;padding-right:20px;color:var(--text2);font-size:14px;display:flex;flex-direction:column;gap:6px">
             <li><strong>Symbol</strong></li>
             <li><strong>Buy/Sell</strong></li>
             <li><strong>Quantity</strong></li>
@@ -257,32 +325,51 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
             <li><strong>Date/Time</strong></li>
             <li><strong>IB Commission</strong></li>
             <li><strong>Trade ID</strong> — מונע כפילויות</li>
-            <li><strong>IB Order ID</strong> — מזהה שמאחד ביצועים ששייכים לאותה הזמנה (כשההזמנה שלך מתמלאת בכמה חלקים, השדה הזה עוזר ליומן להציג אותה כעסקה אחת ולא כמה)</li>
+            <li><strong>IB Order ID</strong> — מאחד הזמנה שהתמלאה בכמה חלקים לעסקה אחת ביומן, במקום כמה שורות</li>
+            <li><strong>Open/Close Indicator</strong> — אומר ליומן אם הביצוע פותח או סוגר פוזיציה. בלעדיו היומן מנחש, ובשורטים הניחוש נוטה להיות שגוי</li>
+            <li><strong>Asset Class</strong> — מסנן החוצה מט"ח, אופציות וחוזים. בלעדיו המרות מטבע ואופציות עלולות להיכנס ליומן כאילו היו מניות</li>
+          </ul>
+          <div class="callout callout-tip" style="margin-top:10px">
+            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <div class="callout-text">אפשר גם ללחוץ <code>Select All</code> ולסמן הכל — היומן מתעלם משדות מיותרים. רק ודא ש-10 האלה מסומנים. בסיום לחץ <code>Save</code>.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">10</div>
+        <div class="step-body">
+          <div class="step-title">בחר חשבון (אם יש לך כמה)</div>
+          <div class="step-desc">אם מוצגת רשימת חשבונות, סמן את החשבון שאתה רוצה לעקוב אחריו — או את כולם, אם תרצה את כל העסקאות ביומן. אם יש לך חשבון אחד בלבד, דלג על השלב הזה.</div>
+          <div class="callout callout-warn" style="margin-top:10px">
+            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div class="callout-text">חשבון שלא סימנת פשוט לא ישלח עסקאות — בלי שום הודעת שגיאה. זו הסיבה הנפוצה ל"חלק מהעסקאות שלי חסרות".</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-dot">11</div>
+        <div class="step-body">
+          <div class="step-title">הגדר פורמט ותקופה</div>
+          <div class="step-desc">גלול להגדרות הפלט וקבע:</div>
+          <ul style="margin-top:8px;padding-right:20px;color:var(--text2);font-size:14px;display:flex;flex-direction:column;gap:4px">
+            <li><strong>Format</strong> ← <code>XML</code></li>
+            <li><strong>Period</strong> ← <code>Last 365 Calendar Days</code></li>
+            <li><strong>Date/Time Separator</strong> ← השאר על <code>semi-colon (;)</code></li>
           </ul>
           <div class="callout callout-warn" style="margin-top:10px">
             <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <div class="callout-text">ליד סעיף Trades יש דרופדאון של רמת הפירוט — חובה להשאיר אותו על <strong>Execution</strong>. אם תבחר <strong>Closed Lots</strong> היומן יראה נתונים מסוכמים במקום ביצועים בודדים, וזה שובר את לוגיקת המיזוג של הזמנות מפוצלות.</div>
+            <div class="callout-text">שלושתם חשובים: <strong>CSV</strong> במקום XML לא ייקרא בכלל; תקופה קצרה מ-365 יום גורמת לעסקאות ישנות להיעלם ולסגירות "מיותמות"; ושינוי המפריד ל-<strong>single-space</strong> גורם לכך ש<strong>אף עסקה</strong> לא תיובא. בסיום לחץ <code>Save</code>.</div>
           </div>
         </div>
       </div>
 
       <div class="step">
-        <div class="step-dot">5</div>
-        <div class="step-body">
-          <div class="step-title">הגדר פורמט ושמור</div>
-          <div class="step-desc">פורמט: <strong>XML</strong> · טווח: <strong>Last 365 Calendar Days</strong> ← לחץ <code>Save</code>.</div>
-          <div class="callout callout-warn" style="margin-top:10px">
-            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <div class="callout-text">אם יש הגדרה של <strong>Date/Time Separator</strong> — השאר אותה על <strong>semi-colon (;)</strong>, ברירת המחדל. אל תשנה ל-single-space, זה שובר את קריאת השעה של כל עסקה.</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-dot">6</div>
+        <div class="step-dot">12</div>
         <div class="step-body">
           <div class="step-title">העתק את ה-Query ID</div>
-          <div class="step-desc">לחץ על האייקון <strong>ⓘ</strong> ליד שם ה-Query — יופיע מספר. העתק אותו.</div>
+          <div class="step-desc">ליד שם השאילתה שיצרת לחץ על אייקון המידע <strong>ⓘ</strong> — יופיע מספר. העתק אותו.</div>
           <div class="field-row">
             <div class="field-label">Query ID — נראה כך</div>
             <div class="field-mock">1462900</div>
@@ -291,27 +378,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
       </div>
 
       <div class="step">
-        <div class="step-dot">7</div>
-        <div class="step-body">
-          <div class="step-title">צור Token</div>
-          <div class="step-desc">באותו עמוד, באזור <strong>Flex Web Service Configuration</strong> ← גלגל שיניים ⚙ ← <code>Generate Token</code>. (אם השירות כבוי — הפעל אותו קודם.)</div>
-          <div class="callout callout-warn" style="margin-top:10px">
-            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <div class="callout-text"><strong>שמור את ה-Token מיד!</strong> IBKR מציג אותו פעם אחת בלבד.</div>
-          </div>
-          <div class="callout callout-tip" style="margin-top:10px">
-            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            <div class="callout-text">בתפריט תוקף ה-Token בחר <strong>Year 1</strong> (במקום ברירת המחדל 6 שעות) — כדי שלא תצטרך ליצור Token חדש כל יום.</div>
-          </div>
-          <div class="field-row">
-            <div class="field-label">Token — נראה כך</div>
-            <div class="field-mock">12345678901234567890123456789012</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-dot">8</div>
+        <div class="step-dot">13</div>
         <div class="step-body">
           <div class="step-title">הדבק ביומן — וסיימת</div>
           <div class="step-desc">ביומן: <code>הגדרות</code> ← <code>חיבור לברוקר (IBKR)</code> ← הדבק <strong>Token</strong> + <strong>Query ID</strong> ← <code>שמור</code> ← <code>סנכרן</code>.</div>
@@ -468,7 +535,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
 
       <div class="trouble-item">
         <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>"Token לא תקין" או "Unauthorized"</div>
-        <div class="trouble-a">ב-IBKR, בעמוד <code>Flex Queries</code> → אזור <strong>Flex Web Service Configuration</strong> — ודא שהשירות מופעל, ואם צריך לחץ <code>Generate Token</code> מחדש והדבק את החדש ביומן.</div>
+        <div class="trouble-a">שלוש בדיקות לפי הסדר: (1) <strong>יש לך משימות פתוחות בפורטל?</strong> אימות פרטים או מסמכים חסרים חוסמים את שירות ה-Flex וזו התקלה שנראית כמו Token שגוי — סגור אותן קודם. (2) בעמוד <code>Flex Queries</code> → אזור <strong>Flex Web Service Configuration</strong> ודא שהשירות מופעל. (3) אם ה-Token נוצר עם תוקף <code>6 Hrs</code> הוא כבר פג — לחץ <code>Generate Token</code> מחדש, בחר <strong>Year 1</strong>, והדבק את החדש ביומן.</div>
       </div>
       <div class="trouble-item">
         <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>"Query ID לא נמצא"</div>
@@ -476,7 +543,19 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
       </div>
       <div class="trouble-item">
         <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>"0 עסקאות נמצאו" למרות שיש עסקאות</div>
-        <div class="trouble-a">פתח את ה-Flex Query ב-IBKR ובדוק שהטווח הוא <code>Last 365 Calendar Days</code> — אחרת עסקאות ישנות לא יופיעו.</div>
+        <div class="trouble-a">פתח את ה-Flex Query ב-IBKR ובדוק שלושה דברים: הטווח הוא <code>Last 365 Calendar Days</code>, ה-<code>Format</code> הוא <strong>XML</strong> (לא CSV), וה-<code>Date/Time Separator</code> הוא <strong>semi-colon (;)</strong>. מפריד single-space גורם לכך שאף עסקה לא תיובא — בלי הודעת שגיאה.</div>
+      </div>
+      <div class="trouble-item">
+        <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>חלק מהעסקאות מיובאות וחלק חסרות</div>
+        <div class="trouble-a">אם יש לך יותר מחשבון IBKR אחד — פתח את ה-Flex Query ובדוק ברשימת החשבונות שכל החשבונות שאתה רוצה לעקוב אחריהם מסומנים. חשבון שלא סומן לא שולח עסקאות, בשקט.</div>
+      </div>
+      <div class="trouble-item">
+        <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>עסקה אחת מופיעה ביומן כמה פעמים</div>
+        <div class="trouble-a">כשהזמנה מתמלאת בכמה חלקים, היומן מאחד אותם לעסקה אחת — אבל רק אם ה-Flex Query כולל את השדה <strong>IB Order ID</strong>, ורמת הפירוט היא <strong>Execution</strong>. פתח את סעיף <code>Trades</code> ובדוק את שניהם.</div>
+      </div>
+      <div class="trouble-item">
+        <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>המרות מטבע או אופציות נכנסו כאילו היו מניות</div>
+        <div class="trouble-a">חסר השדה <strong>Asset Class</strong> בסעיף <code>Trades</code>. בלעדיו היומן לא יכול להבחין בין מניה לבין המרת מט"ח או אופציה. סמן אותו, שמור, וסנכרן שוב.</div>
       </div>
       <div class="trouble-item">
         <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>עסקאות מופיעות ב-Stocks אבל ללא Stop Loss</div>
