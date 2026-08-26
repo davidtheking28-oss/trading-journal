@@ -62,6 +62,11 @@
      not add another family back in as a "just for this one element" fallback. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- The two CDN scripts and the Supabase host are both on the critical path but
+     aren't discovered until ~7000 lines in; warming DNS+TLS here takes that
+     handshake off the path entirely. -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://fnklrqxwyeibfptaxewf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script>
 const SUPABASE_URL = 'https://fnklrqxwyeibfptaxewf.supabase.co';
@@ -7010,6 +7015,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         integrity="sha384-iWpUQPQzWsFiosLgsS8o+e6E8y3Gm+EW2m/vAAo7A2H3fuc4KOKEx+5CAord2H2z"
         crossorigin="anonymous"></script>
 <!-- SRI — chart.js 4.4.4 מוצמד לגרסה עם hash מאומת -->
+<!-- Neither of these may get `defer` (checked 2026-08-26): the inline script
+     below runs `supabase.createClient()` at parse time, and renderOverview()
+     reaches `new Chart()` via renderCumChart() on the boot path — initApp can
+     resolve getSession() before the parser finishes this 900KB document, so a
+     deferred Chart.js races the first overview render. -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"
         integrity="sha384-NrKB+u6Ts6AtkIhwPixiKTzgSKNblyhlk0Sohlgar9UHUBzai/sgnNNWWd291xqt"
         crossorigin="anonymous"></script>
@@ -7369,7 +7379,11 @@ async function _onAuthSuccess(user) {
   window._bybitSyncTimer = setInterval(() => { _autoBybitSync(); }, 30 * 60 * 1000);
   loadFearGreed();
   loadCryptoFearGreed();
-  ttLoad(false);
+  // ttLoad() is NOT called here on purpose (2026-08-26). Measured at boot it was
+  // the single slowest request on the page — 2.3s — fetching Market Pulse data
+  // for a tab the user is almost never on at login. switchTab('themes') already
+  // loads it on demand, and _restoreLastTab() goes through switchTab, so a user
+  // whose last tab really was Market Pulse still gets it.
   langInit();
   // Offer localStorage migration on first login
   await offerMigration();
@@ -8034,10 +8048,19 @@ function switchTab(name, btn) {
 
 // Mobile bottom-nav: route a tap to the real sidebar tab button (keeps the
 // drawer's highlight in sync too), then highlight the matching bar item.
-window.addEventListener('load', () => setTimeout(() => {
-  const f = document.getElementById('screener-frame');
-  if (f && !f.src) f.src = 'https://davidtheking28-oss.github.io/stock-screener/?theme=' + (document.documentElement.getAttribute('data-theme')==='light' ? 'tj-light' : 'tj');
-}, 1500));
+// Warm the screener iframe so opening that tab feels instant — but only once the
+// main thread is genuinely idle. On a fixed 1.5s timer it landed at ~2.2s into
+// boot, in the middle of the trades/settings/quote burst, and paid for a whole
+// extra page load nobody had asked for yet. requestIdleCallback keeps the warm
+// start without competing with the data the user is actually waiting on.
+window.addEventListener('load', () => {
+  const warm = () => {
+    const f = document.getElementById('screener-frame');
+    if (f && !f.src) f.src = 'https://davidtheking28-oss.github.io/stock-screener/?theme=' + (document.documentElement.getAttribute('data-theme')==='light' ? 'tj-light' : 'tj');
+  };
+  if (window.requestIdleCallback) requestIdleCallback(warm, { timeout: 10000 });
+  else setTimeout(warm, 5000);
+});
 
 // The screener iframe can hand a setup over to be logged. Only messages from
 // the screener's own origin AND from that frame's window are honoured — origin
@@ -9519,8 +9542,12 @@ async function loadCryptoSymbolsFromCoinGecko() {
     }
   } catch(e) {}
 
-  // 2. Always fetch fresh on every session (background). CoinGecko's free API
-  //    throttles server IPs intermittently, so retry a few times with backoff.
+  // 2. Refetch only once the cache has actually gone stale. CGECKO_TTL_MS was
+  //    declared but never read, so every single page load re-fetched the whole
+  //    CoinGecko coin list (~1.1MB upstream) for data that changes weekly.
+  if (cachedCount && Date.now() - cachedTs < CGECKO_TTL_MS) return;
+  //    CoinGecko's free API throttles server IPs intermittently, so retry a few
+  //    times with backoff.
   updateCryptoStatus('loading', cachedCount, cachedTs);
   const DELAYS = [0, 2000, 5000];
   for (let i = 0; i < DELAYS.length; i++) {
@@ -9729,7 +9756,9 @@ async function loadFromFinnhub() {
     }
   } catch(e) {}
 
-  // 2. Always fetch fresh on every session
+  // 2. Refetch only past the TTL — FINNHUB_TTL_MS was declared but never read,
+  //    so the full US ticker list was re-pulled on every single page load.
+  if (cachedCount && Date.now() - cachedTs < FINNHUB_TTL_MS) return;
   updateStockStatus('loading', cachedCount, cachedTs, 'Finnhub');
   try {
     const controller = new AbortController();
@@ -9772,7 +9801,9 @@ async function loadFromSEC() {
     }
   } catch(e) {}
 
-  // 2. Always fetch fresh via Edge Function (avoids browser CORS on SEC.gov)
+  // 2. Refetch via the Edge Function (avoids browser CORS on SEC.gov) only past
+  //    the TTL — SEC_TTL_MS was declared but never read.
+  if (cachedCount && Date.now() - cachedTs < SEC_TTL_MS) return;
   updateStockStatus('loading', cachedCount, cachedTs);
   try {
     const controller = new AbortController();
