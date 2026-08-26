@@ -5459,7 +5459,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div class="ov-bar-divider"></div>
         <div class="stem-badge-stack">
           <div id="stem-badge" class="stem-badge" style="display:none;" title="סיכון שוק כללי, מחושב אוטומטית מ-VIX ורוחב שוק (לא STEM של מינרוויני — זה מדד מדדים, לא רשימת מניות אישית)"></div>
-          <div id="pstem-badge" class="stem-badge" style="display:none;" title="STEM אישי (בהשראת מינרוויני): % מהעסקאות הפתוחות שלך עם תשואה שלילית ב-5 ימי המסחר האחרונים"></div>
+          <div id="pstem-badge" class="stem-badge" style="display:none;" title="STEM אישי (בהשראת מינרוויני): איך רשימת המעקב שלך במסנן + העסקאות הפתוחות ביומן מתפקדות ב-5 ימי המסחר האחרונים"></div>
         </div>
       </div>
 
@@ -11023,10 +11023,23 @@ function computePersonalStemState(downRatio, avgReturn) {
   return 'orange';
 }
 async function _loadPersonalStem(force = false) {
+  // The focus list is the screener watchlist UNION the journal's open
+  // positions. Minervini's own focus list is forward-looking (breakout
+  // candidates he is watching, not positions already entered), so the
+  // watchlist half is the closer analogue; open positions are included
+  // because the model is meant to describe the environment the trader is
+  // actually operating in. Either half alone is a valid list — the watchlist
+  // starts empty for most users, and a user with no open trades still gets a
+  // reading from their watchlist.
   const open = [...db.stocks, ...db.crypto].filter(t =>
     !t.deleted && (!t.exitPrice || t.exitPrice === 0) && t.symbol && t.entryPrice > 0
   );
-  const symbols = [...new Set(open.map(t => t.symbol.toUpperCase()))].sort();
+  let watchlist = [];
+  try {
+    const { data } = await _sb.from('screener_watchlist').select('ticker').eq('user_id', _currentUser.id);
+    watchlist = (data || []).map(r => r.ticker).filter(Boolean);
+  } catch { /* a watchlist read failure must not blank out the journal half */ }
+  const symbols = [...new Set([...open.map(t => t.symbol), ...watchlist].map(s => String(s).toUpperCase()))].sort();
   const symKey = symbols.join(',');
   if (!force && symKey === _lastPstemSymbols && Date.now() - _lastPstemTs < PSTEM_MIN_INTERVAL) return;
   if (!symbols.length) { _pstemState = null; renderPersonalStemBadge(); return; }

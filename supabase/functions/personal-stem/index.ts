@@ -28,7 +28,10 @@ const YF_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
   'Accept': 'application/json,text/plain,*/*',
 };
-const MAX_SYMBOLS = 30;
+// The focus list is the screener watchlist plus open journal positions, so it
+// can be considerably larger than the open-positions-only list this started
+// as. Each symbol is one Yahoo fetch, all issued in parallel with a 6s cap.
+const MAX_SYMBOLS = 60;
 
 async function fetch5dReturn(ticker: string): Promise<number | null> {
   for (const host of YF_HOSTS) {
