@@ -1,17 +1,20 @@
 // A real STEM (Stock Trading Environment Model), Minervini-style: not a
 // market-wide index gauge, but a rolling read on how the trader's OWN focus
 // list is actually behaving. Real Minervini STEM tracks his personal Focus
-// List's breakout success over a trailing 5-day window (see WebSearch notes
-// in the 2026-08-26 conversation for the public description); this uses the
-// trader's own open positions as that list, since we have no access to
-// Minervini's actual list and it wouldn't be this trader's positions anyway.
+// List, counting "how many of the Focus List stocks are closing down for the
+// 5-day period" (public description, WebSearch'd 2026-08-26) — that phrasing
+// is a net 5-day return per stock, NOT a day-by-day up/down tally. An earlier
+// version of this counted daily direction flips instead, which is a
+// meaningfully different (noisier) signal than what's actually described;
+// switched to match. Uses the trader's own open positions as the focus list,
+// since we have no access to Minervini's real list and it wouldn't be this
+// trader's positions anyway.
 //
 // For each open-position symbol: pull the last ~6 daily closes (free Yahoo
-// chart endpoint, same one theme-tracker already relies on) and count how
-// many of the last 5 sessions closed down vs up. Aggregated down-ratio across
-// every resolved symbol is the signal — a high down-ratio means the trader's
-// own book is struggling regardless of what the index is doing, which is
-// closer to what Minervini's model is actually for than a VIX/breadth gauge.
+// chart endpoint, same one theme-tracker already relies on) and compute the
+// net % change from 5 sessions ago to today. % of resolved symbols with a
+// negative 5-day return is the signal — a high ratio means the trader's own
+// book is struggling regardless of what the index is doing.
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
 
 const CORS = {
@@ -27,7 +30,7 @@ const YF_HEADERS = {
 };
 const MAX_SYMBOLS = 30;
 
-async function fetchDailyDirections(ticker: string): Promise<{ up: number; down: number } | null> {
+async function fetch5dReturn(ticker: string): Promise<number | null> {
   for (const host of YF_HOSTS) {
     try {
       const controller = new AbortController();
@@ -41,12 +44,9 @@ async function fetchDailyDirections(ticker: string): Promise<{ up: number; down:
         .filter((c: number) => c != null && c > 0);
       if (closes.length < 6) continue;
       const last6 = closes.slice(-6);
-      let up = 0, down = 0;
-      for (let i = 1; i < last6.length; i++) {
-        if (last6[i] > last6[i - 1]) up++;
-        else if (last6[i] < last6[i - 1]) down++;
-      }
-      return { up, down };
+      const start = last6[0];
+      if (!start) continue;
+      return ((last6[5] - start) / start) * 100;
     } catch { /* try next host */ }
   }
   return null;
@@ -89,14 +89,13 @@ Deno.serve(async (req: Request) => {
       { headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 
-  const results = await Promise.all(symbols.map(fetchDailyDirections));
-  const resolved = results.filter((r): r is { up: number; down: number } => r !== null);
-  const totalUp = resolved.reduce((s, r) => s + r.up, 0);
-  const totalDown = resolved.reduce((s, r) => s + r.down, 0);
-  const totalDays = totalUp + totalDown;
-  const downRatio = resolved.length && totalDays ? Math.round((totalDown / totalDays) * 1000) / 10 : null;
+  const results = await Promise.all(symbols.map(fetch5dReturn));
+  const resolved = results.filter((r): r is number => r !== null);
+  const downCount = resolved.filter(r => r < 0).length;
+  const downRatio = resolved.length ? Math.round((downCount / resolved.length) * 1000) / 10 : null;
+  const avgReturn = resolved.length ? Math.round((resolved.reduce((s, r) => s + r, 0) / resolved.length) * 100) / 100 : null;
 
-  return new Response(JSON.stringify({ downRatio, resolved: resolved.length, total: symbols.length }), {
+  return new Response(JSON.stringify({ downRatio, avgReturn, resolved: resolved.length, total: symbols.length }), {
     headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
   });
 });
