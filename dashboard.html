@@ -3735,14 +3735,23 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .missed-add-form .form-group { margin: 0; flex: 1; min-width: 130px; }
   .missed-add-form .form-label { font-size: 11px; font-weight: 700; color: var(--text3); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
   .missed-list { padding-top: 4px; }
-  .missed-month-section { margin-bottom: 28px; }
-  .missed-month-label {
+  /* Two collapsible levels: year (the archive) wraps its months, each month
+     wraps its cards. Same label/chevron/collapse styling at both levels. */
+  .missed-year-section { margin-bottom: 28px; }
+  .missed-month-section { margin-bottom: 20px; }
+  .missed-year-label, .missed-month-label {
     font-size: 11px; font-weight: 700; color: var(--text3);
     text-transform: uppercase; letter-spacing: 1px;
     display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+    cursor: pointer; user-select: none;
   }
-  .missed-month-label::before { content: ''; flex: 0 0 3px; height: 3px; width: 3px; border-radius: 50%; background: var(--accent); }
-  .missed-month-label::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.06); }
+  .missed-year-label { font-size: 12px; color: var(--text2); }
+  .missed-year-label::after, .missed-month-label::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.06); }
+  .missed-month-chevron { flex: 0 0 auto; display: inline-flex; transition: transform 0.15s; }
+  .missed-year-section.collapsed .missed-month-chevron,
+  .missed-month-section.collapsed .missed-month-chevron { transform: rotate(-90deg); }
+  .missed-year-section.collapsed .missed-year-body,
+  .missed-month-section.collapsed .missed-month-body { display: none; }
   .missed-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
   .missed-card {
     background: linear-gradient(145deg, #141418 0%, #0f0f12 100%);
@@ -15118,6 +15127,25 @@ async function missedDelete(id) {
   toast('נמחק ✓','success');
 }
 
+// Collapse state (both year and month sections) is a single set of keys the
+// user has explicitly toggled AWAY from their default — remembered per user
+// so it survives a reload. Default state is computed fresh on every render
+// (see _missedDefaultCollapsed), so a toggle just flips it once.
+const _MISSED_COLLAPSE_KEY = () => 'missed_toggled_' + (_currentUser?.id || 'anon');
+const _MISSED_MONTH_THRESHOLD = 8; // a month with fewer cards than this always starts open
+function _missedLoadToggled() {
+  try { return new Set(JSON.parse(localStorage.getItem(_MISSED_COLLAPSE_KEY())) || []); } catch { return new Set(); }
+}
+function _missedSaveToggled(set) {
+  try { localStorage.setItem(_MISSED_COLLAPSE_KEY(), JSON.stringify([...set])); } catch {}
+}
+function missedToggleSection(key) {
+  const toggled = _missedLoadToggled();
+  if (toggled.has(key)) toggled.delete(key); else toggled.add(key);
+  _missedSaveToggled(toggled);
+  document.getElementById('missed-section-' + key)?.classList.toggle('collapsed');
+}
+
 function missedRenderList(list) {
   const container = document.getElementById('missed-tbody');
   if (!container) return;
@@ -15126,16 +15154,28 @@ function missedRenderList(list) {
     return;
   }
   const sorted = [...list].sort((a, b) => b.date.localeCompare(a.date));
-  const byMonth = {};
+  // Two-level grouping: year (the archive — every past year starts collapsed
+  // so old history doesn't dominate the page but is always one click away)
+  // then month within the year (the current month always starts open; a
+  // heavy past month inside the current year also starts collapsed).
+  const byYear = {};
   sorted.forEach(r => {
-    const key = r.date.slice(0, 7); // YYYY-MM
-    if (!byMonth[key]) byMonth[key] = [];
-    byMonth[key].push(r);
+    const y = r.date.slice(0, 4);
+    (byYear[y] ??= []).push(r);
   });
-  container.innerHTML = Object.entries(byMonth).map(([key, items]) => {
-    const [y, m] = key.split('-');
-    const label = `${months()[+m-1]} ${y}`;
-    const cards = items.map(r => `
+  const thisYear = String(new Date().getFullYear());
+  const thisMonthKey = new Date().toISOString().slice(0, 7);
+  const toggled = _missedLoadToggled();
+  const byMonthCount = {};
+  sorted.forEach(r => { const k = r.date.slice(0, 7); byMonthCount[k] = (byMonthCount[k] || 0) + 1; });
+  const collapsed = key => {
+    const defaultCollapsed = key.length === 4
+      ? key !== thisYear                                                    // year key
+      : key !== thisMonthKey && byMonthCount[key] >= _MISSED_MONTH_THRESHOLD; // month key
+    return toggled.has(key) ? !defaultCollapsed : defaultCollapsed;
+  };
+
+  const cardHtml = r => `
       <div class="missed-card" id="missed-row-${r.id}">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
           <div class="missed-card-sym">${esc(r.sym)}</div>
@@ -15148,13 +15188,28 @@ function missedRenderList(list) {
         <div class="missed-card-meta">${r.sector ? esc(r.sector)+' · ' : ''}${fmtDate(r.date)}</div>
         <div class="missed-since sensitive" id="missed-since-${r.id}"></div>
         ${r.note ? `<div class="missed-card-note">${esc(r.note)}</div>` : ''}
-      </div>`).join('');
-    return `
-      <div class="missed-month-section">
-        <div class="missed-month-label">${label} <span style="color:var(--accent);font-size:10px;font-weight:800">${items.length}</span></div>
-        <div class="missed-cards">${cards}</div>
       </div>`;
+
+  const sectionHtml = (key, label, count, depth, innerHtml) => `
+      <div class="missed-${depth}-section${collapsed(key) ? ' collapsed' : ''}" id="missed-section-${key}">
+        <div class="missed-${depth}-label" onclick="missedToggleSection('${key}')">
+          <svg class="missed-month-chevron" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
+          ${label} <span style="color:var(--accent);font-size:10px;font-weight:800">${count}</span>
+        </div>
+        <div class="missed-${depth}-body">${innerHtml}</div>
+      </div>`;
+
+  container.innerHTML = Object.entries(byYear).map(([year, yearItems]) => {
+    const byMonth = {};
+    yearItems.forEach(r => { const k = r.date.slice(0, 7); (byMonth[k] ??= []).push(r); });
+    const monthsHtml = Object.entries(byMonth).map(([key, items]) => {
+      const label = months()[+key.slice(5, 7) - 1];
+      const cards = `<div class="missed-cards">${items.map(cardHtml).join('')}</div>`;
+      return sectionHtml(key, label, items.length, 'month', cards);
+    }).join('');
+    return sectionHtml(year, year, yearItems.length, 'year', monthsHtml);
   }).join('');
+
   container.querySelectorAll('.missed-card').forEach((el, i) => {
     el.style.setProperty('--i', i);
     el.classList.add('animate-in');
