@@ -7366,6 +7366,13 @@ async function _onAuthSuccess(user) {
   // users to do (keys are centralized, data loads in the background). Hide it.
   const dataSec = document.getElementById('s-data-sources');
   if (dataSec) dataSec.style.display = isAdmin ? '' : 'none';
+  // Trade Confirmation Query ID (near-real-time IBKR sync) is a real, working
+  // field — but it adds a second query ID + a cron track a regular user has no
+  // reason to configure. Keep it admin-only so the broker section stays simple
+  // for everyone else; the daily Activity sync already covers them.
+  const flexAdvToggle = document.getElementById('flex-advanced-toggle');
+  if (flexAdvToggle) flexAdvToggle.style.display = isAdmin ? '' : 'none';
+  if (!isAdmin) { const fa = document.getElementById('flex-advanced'); if (fa) fa.style.display = 'none'; }
   const syncBtn = document.getElementById('flex-sync-btn');
   if (syncBtn) syncBtn.style.display = '';
   // Post-load UI setup
