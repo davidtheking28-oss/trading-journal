@@ -1039,3 +1039,38 @@ describe('personal STEM sample size', () => {
       'even an unambiguous red must not be reported off two symbols');
   });
 });
+
+// The live P&L card refetched quotes every 60s around the clock, including all
+// night and all weekend when a US equity quote cannot move. The closed-market
+// shortcut depends entirely on this predicate being right, including across the
+// EST/EDT switch — a hardcoded UTC offset would silently drift by an hour.
+describe('US market hours', () => {
+  const { _isUSMarketOpen } = load('_isUSMarketOpen');
+  const at = iso => _isUSMarketOpen(new Date(iso));
+
+  test('the session opens at 09:30 ET, not before', () => {
+    assert.equal(at('2026-08-26T13:25:00Z'), false, '09:25 ET is pre-market');
+    assert.equal(at('2026-08-26T13:35:00Z'), true,  '09:35 ET is open');
+  });
+
+  test('the session closes at 16:00 ET', () => {
+    assert.equal(at('2026-08-26T19:59:00Z'), true);
+    assert.equal(at('2026-08-26T20:01:00Z'), false);
+  });
+
+  test('weekends are closed', () => {
+    assert.equal(at('2026-08-29T15:00:00Z'), false, 'Saturday');
+    assert.equal(at('2026-08-30T15:00:00Z'), false, 'Sunday');
+  });
+
+  test('daylight saving is handled by the timezone, not an offset', () => {
+    assert.equal(at('2026-01-14T15:00:00Z'), true,
+      '10:00 ET in January (EST) — a fixed EDT offset would read this as 11:00 and still pass, ' +
+      'so pair it with the pre-open case below');
+    assert.equal(at('2026-01-14T14:25:00Z'), false, '09:25 EST is pre-market');
+  });
+
+  test('midnight does not read as hour 24', () => {
+    assert.equal(at('2026-08-26T04:00:00Z'), false);
+  });
+});
