@@ -7859,6 +7859,16 @@ function calcPct(tr) {
 // Single definition of "closed", so stats() and advancedStats() can't disagree
 // about which trades they are averaging over.
 function isClosed(t) { return !!(t.closeDate || (+t.exitPrice > 0) || (t.t && t.t.length > 0)); }
+// Shares still held on a row. A partial close leaves the rest of the lot open,
+// so a row can be BOTH closed (it has realised P&L) and open (it still holds
+// stock) at once — isClosed() answers the first question, this one the second.
+function openShares(t) { return (+t.shares || 0) - (+t.closedShares || 0); }
+// The open-position views used to test `!exitPrice`, which silently dropped
+// every partially-closed row: setting any exit price at all made the still-held
+// remainder invisible to live P&L, the STEM focus list and the exposure alert.
+// Verified against raw IBKR Flex XML on 2026-08-27 — CRWV held 20 shares while
+// the journal's open-position views could only see 12.
+function isOpenPosition(t) { return !t.deleted && openShares(t) > 0 && !!t.symbol && +t.entryPrice > 0; }
 
 function stats(trades) {
   const closed = trades.filter(isClosed);
@@ -8274,7 +8284,7 @@ function _maybeShowStemMismatchNotice() {
   const today = new Date().toISOString().slice(0, 10);
   const key = 'stem_mismatch_notice_' + _currentUser.id;
   try { if (localStorage.getItem(key) === today) return; } catch (e) {}
-  const open = [...db.stocks, ...db.crypto].filter(t => !t.deleted && (!t.exitPrice || t.exitPrice === 0) && t.symbol && t.entryPrice > 0);
+  const open = [...db.stocks, ...db.crypto].filter(t => isOpenPosition(t));
   const exposureCost = open.reduce((s, t) => s + ((t.shares || 0) - (t.closedShares || 0)) * (t.entryPrice || 0), 0);
   const pt = portfolioTotal() || _brokerEquityUsd;
   if (!pt || pt <= 0 || exposureCost <= 0) return;
@@ -10941,7 +10951,7 @@ async function _updateLivePL(force = false) {
   if (ovTab && !ovTab.classList.contains('active')) return;
   const myToken = ++_livePLToken;
   const open = [...db.stocks, ...db.crypto].filter(t =>
-    !t.deleted && (!t.exitPrice || t.exitPrice === 0) && t.symbol && t.entryPrice > 0
+    isOpenPosition(t)
   );
   const symKey = [...new Set(open.map(t => t.symbol.toUpperCase()))].sort().join(',');
   // Crypto trades around the clock, so the closed-market shortcut only applies
@@ -11092,7 +11102,7 @@ async function _loadPersonalStem(force = false) {
   // starts empty for most users, and a user with no open trades still gets a
   // reading from their watchlist.
   const open = [...db.stocks, ...db.crypto].filter(t =>
-    !t.deleted && (!t.exitPrice || t.exitPrice === 0) && t.symbol && t.entryPrice > 0
+    isOpenPosition(t)
   );
   let watchlist = [];
   try {

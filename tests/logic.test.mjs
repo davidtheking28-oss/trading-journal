@@ -1074,3 +1074,40 @@ describe('US market hours', () => {
     assert.equal(at('2026-08-26T04:00:00Z'), false);
   });
 });
+
+// A partial close leaves the rest of the lot open, so a row can be closed (it
+// has realised P&L) and open (it still holds stock) at the same time. The
+// open-position views tested `!exitPrice`, so setting any exit price at all made
+// the still-held remainder invisible to live P&L, the STEM focus list and the
+// exposure alert. Verified against raw IBKR Flex XML 2026-08-27: CRWV held 20
+// shares while the journal's open-position views could only see 12.
+describe('open positions include partial closes', () => {
+  const { openShares, isOpenPosition } = load('openShares', 'isOpenPosition');
+  const row = o => ({ symbol: 'CRWV', entryPrice: 99.77, shares: 15, ...o });
+
+  test('a partially closed row is still an open position', () => {
+    const t = row({ closedShares: 7, exitPrice: 102.82 });
+    assert.equal(openShares(t), 8);
+    assert.equal(isOpenPosition(t), true,
+      'an exit price on a partial close must not hide the 8 shares still held');
+  });
+
+  test('a fully closed row is not an open position', () => {
+    assert.equal(isOpenPosition(row({ closedShares: 15, exitPrice: 102.82 })), false);
+  });
+
+  test('an untouched position is open, with no closedShares recorded', () => {
+    assert.equal(openShares(row({})), 15);
+    assert.equal(isOpenPosition(row({})), true);
+  });
+
+  test('deleted, unnamed and zero-price rows are never open positions', () => {
+    assert.equal(isOpenPosition(row({ deleted: true })), false);
+    assert.equal(isOpenPosition(row({ symbol: '' })), false);
+    assert.equal(isOpenPosition(row({ entryPrice: 0 })), false);
+  });
+
+  test('closing more than was bought does not read as a negative open position', () => {
+    assert.equal(isOpenPosition(row({ closedShares: 20 })), false);
+  });
+});
