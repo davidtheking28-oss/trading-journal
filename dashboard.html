@@ -7442,6 +7442,7 @@ async function _onAuthSuccess(user) {
   if (_activeTabEl) _maybeShowTabIntro(_activeTabEl.id.replace('tab-', ''), _activeTabEl);
   _maybeShowOrderIdNotice();
   _maybeShowFlexWindowNotice();
+  _maybeShowBrokerSyncNotice();
   console.log('%c ChartRoom ','background:#818cf8;color:#fff;font-weight:700;font-size:13px;border-radius:var(--r-sm);padding:2px 6px');
   console.log('%cRunning in the browser — treat other users\' data with respect.','color:#8896a8;font-size:11px');
 }
@@ -8237,6 +8238,34 @@ async function _maybeShowFlexWindowNotice() {
   const days = Math.round((asDate(to) - asDate(from)) / 86400000);
   if (days >= 90) return; // healthy window — 365 is the target, but nothing this short of it is the bug
   toast(`חלון הדוח מ-IBKR קצר מדי (${days} ימים) — עלול לגרום לעסקאות "יתומות" עם נתונים חסרים. ב-Client Portal: Reports ← Flex Queries ← ערוך את שאילתת Trades ← Period = Last 365 Days`, 'info');
+  try { localStorage.setItem(key, today); } catch (e) {}
+}
+
+// Tells the user, in the app, when one of their brokers has stopped syncing.
+// Until now the only signal was a nightly Telegram alert: user 9f9ffff4's Bybit
+// key expired and failed 215 consecutive times over five days with nothing on
+// screen. That matters more than it used to, because broker_balances now feeds
+// the Kelly sizing suggestion and the STEM exposure alert — a silent broker
+// means those numbers are computed off incomplete data.
+//
+// flex_sync_log itself stays RLS-locked; my_broker_sync_health() is a narrow
+// SECURITY DEFINER view of the caller's own per-broker health.
+const BROKER_FAIL_STREAK_ALERT = 3; // below this it is a transient blip, not a dead connection
+async function _maybeShowBrokerSyncNotice() {
+  if (!_currentUser) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const key = 'broker_sync_notice_' + _currentUser.id;
+  try { if (localStorage.getItem(key) === today) return; } catch (e) {}
+  const { data, error } = await _sb.rpc('my_broker_sync_health');
+  if (error || !Array.isArray(data)) return;
+  const broken = data.filter(r => (r.fails_since_ok || 0) >= BROKER_FAIL_STREAK_ALERT);
+  if (!broken.length) return;
+  for (const b of broken) {
+    const since = b.last_ok
+      ? `מאז ${new Date(b.last_ok).toLocaleDateString('he-IL')}`
+      : 'מעולם לא הצליח';
+    toast(`הסנכרון מ-${b.broker.toUpperCase()} לא עובד ${since} (${b.fails_since_ok} כשלונות): ${b.last_error || 'שגיאה לא ידועה'}. גודל התיק ו-Kelly מחושבים כרגע על נתונים חלקיים.`, 'error');
+  }
   try { localStorage.setItem(key, today); } catch (e) {}
 }
 
