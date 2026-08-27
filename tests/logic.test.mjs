@@ -1111,3 +1111,77 @@ describe('open positions include partial closes', () => {
     assert.equal(isOpenPosition(row({ closedShares: 20 })), false);
   });
 });
+
+// The Kelly suggestion writes straight into the position sizer, so an inverted
+// or mis-signed result recommends a LARGER position off a worse edge — the one
+// failure mode here that costs real money. f* = W - (1-W)/R, halved.
+describe('Kelly position sizing', () => {
+  const { kellyHalfPct } = load('kellyHalfPct');
+
+  test('reproduces the textbook fraction, halved', () => {
+    // W=0.6, R=2 -> f* = 0.6 - 0.4/2 = 0.4 -> half-Kelly 20% -> capped at 10%
+    assert.equal(kellyHalfPct(60, 200, -100), 10);
+    // W=0.5, R=2 -> f* = 0.5 - 0.5/2 = 0.25 -> half-Kelly 12.5% -> capped
+    assert.equal(kellyHalfPct(50, 200, -100), 10);
+    // W=0.4, R=2 -> f* = 0.4 - 0.6/2 = 0.10 -> half-Kelly 5%, under the cap
+    assert.ok(Math.abs(kellyHalfPct(40, 200, -100) - 5) < 1e-9);
+  });
+
+  test('a losing edge suggests nothing rather than the floor', () => {
+    // W=0.3, R=1 -> f* = 0.3 - 0.7 = -0.4. Returning the 0.1% floor here would
+    // recommend sizing into a system with negative expectancy.
+    assert.equal(kellyHalfPct(30, 100, -100), null);
+    assert.equal(kellyHalfPct(50, 100, -300), null, 'break-even-or-worse R');
+  });
+
+  test('a better edge never suggests a smaller size', () => {
+    const worse = kellyHalfPct(45, 150, -100);
+    const better = kellyHalfPct(55, 150, -100);
+    assert.ok(better > worse, `${better} should exceed ${worse} — an inversion would flip these`);
+  });
+
+  test('the suggestion is always inside the sizer input range', () => {
+    for (const [w, win, loss] of [[41, 110, -100], [70, 400, -100], [50, 101, -100]]) {
+      const p = kellyHalfPct(w, win, loss);
+      if (p === null) continue;
+      assert.ok(p >= 0.1 && p <= 10, `${p}% is outside the 0.1-10 the input accepts`);
+    }
+  });
+
+  test('missing or nonsense inputs yield nothing, never NaN', () => {
+    assert.equal(kellyHalfPct(50, 100, 0), null, 'no losses recorded yet');
+    assert.equal(kellyHalfPct(NaN, 100, -100), null);
+    assert.equal(kellyHalfPct(150, 100, -100), null, 'a win rate over 100%');
+  });
+});
+
+// The market-wide risk gauge (VIX + % of the 11 SPDR sectors above their own
+// 50-day SMA). Distinct from the personal STEM above: this one reads indices,
+// not the trader's focus list. breadthPct replaced CNN's McClellan-based rating
+// on 2026-08-26 — the old field was a different metric wearing the same name.
+describe('market risk regime', () => {
+  const { computeStemState } = load('computeStemState');
+
+  test('a VIX spike is red on its own', () => {
+    assert.equal(computeStemState(35, 80), 'red', 'high VIX outranks healthy breadth');
+  });
+
+  test('collapsing breadth is red even with a calm VIX', () => {
+    assert.equal(computeStemState(14, 35), 'red');
+  });
+
+  test('green needs calm VIX and broad participation together', () => {
+    assert.equal(computeStemState(15, 72), 'green');
+    assert.equal(computeStemState(15, 50), 'orange', 'calm but narrow is not green');
+    assert.equal(computeStemState(25, 72), 'orange', 'broad but jumpy is not green');
+  });
+
+  test('no VIX reading means no regime at all', () => {
+    assert.equal(computeStemState(null, 72), null);
+  });
+
+  test('a missing breadth reading never fabricates green', () => {
+    assert.equal(computeStemState(15, null), 'orange',
+      'without breadth the calm-VIX half alone must not clear the bar');
+  });
+});

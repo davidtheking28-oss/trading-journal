@@ -11918,17 +11918,31 @@ function sizerCalc() {
 // overbet in practice under real (non-stationary) win-rate estimates, so this
 // suggests half of it, same convention as most retail Kelly calculators.
 // Below 10 closed trades the win-rate estimate is too noisy to act on.
-function kellySuggestPct() {
-  const trades = [...db.stocks, ...db.crypto].filter(t => !t.deleted && isClosed(t));
-  if (trades.length < 10) return null;
-  const st = stats(trades);
-  const adv = advancedStats(trades);
-  const w = st.wr / 100;
-  const r = adv.avgLoss !== 0 ? Math.abs(adv.avgWin / adv.avgLoss) : null;
+// Half-Kelly as a risk percentage, split out from the journal lookup below so
+// the sizing maths is testable on its own — this number goes straight into the
+// position sizer, so a sign or inversion error silently suggests a LARGER
+// position, which is the one failure mode that costs real money.
+// f* = W - (1-W)/R, where W is the win rate and R the win/loss ratio; halved,
+// because full Kelly is a known overbet under an estimated (non-stationary) W.
+const KELLY_MIN_TRADES = 10;
+function kellyHalfPct(winRatePct, avgWin, avgLoss) {
+  const w = winRatePct / 100;
+  if (!(w >= 0 && w <= 1)) return null;
+  const r = avgLoss !== 0 ? Math.abs(avgWin / avgLoss) : null;
   if (!r || !Number.isFinite(r)) return null;
   const kelly = w - (1 - w) / r;
+  // A negative edge has no Kelly fraction — suggesting the 0.1% floor here
+  // would quietly recommend sizing INTO a losing system.
   if (!(kelly > 0)) return null;
   return Math.min(10, Math.max(0.1, kelly / 2 * 100));
+}
+
+function kellySuggestPct() {
+  const trades = [...db.stocks, ...db.crypto].filter(t => !t.deleted && isClosed(t));
+  if (trades.length < KELLY_MIN_TRADES) return null;
+  const st = stats(trades);
+  const adv = advancedStats(trades);
+  return kellyHalfPct(st.wr, adv.avgWin, adv.avgLoss);
 }
 
 function applyKellySizing() {
