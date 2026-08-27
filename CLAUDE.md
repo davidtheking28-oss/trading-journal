@@ -345,3 +345,43 @@ unlike this one — push it manually).
   `create_broker_balances` existed only in the database until it was caught in
   this audit. Write the `supabase/migrations/*.sql` file in the same turn as
   the `apply_migration` call, every time.
+
+## ⚠️ Don't reintroduce these regressions (fixed 2026-08-27)
+
+- **A partially-closed row is BOTH closed and open.** The open-position views
+  (`_updateLivePL`, the STEM focus list, the exposure alert) filtered on
+  `!t.exitPrice`, so setting any exit price at all hid the shares still held.
+  Verified fill-by-fill against raw Flex XML: CRWV held 20 shares while the
+  journal's open-position views could only see 12. Use **`isOpenPosition(t)`**
+  (`openShares(t) > 0`), never an exit-price test — `isClosed()` answers "does
+  this row have realised P&L", which is a different question and both can be
+  true at once.
+- **`close_date` must not be set on a row that still holds stock.** Five rows
+  (CRWV/RDDT/ONDS/ORCL/HOOD) had it, which is what
+  `closed_row_unexplained_volume` was flagging. **`shares` and `closed_shares`
+  were both correct** — the reflex of "cap closed_shares" would have destroyed
+  good data. Confirmed against the raw XML for every verifiable row before
+  touching anything (ORCL: bought 12, sold 2, 10 genuinely still open).
+  Backup: `trades_backup_20260827_partial_close`.
+- **`half_closed_row` used to flag legitimate partial closes.** Clearing the
+  five `close_date`s sent `closed_row_unexplained_volume` to 0 and immediately
+  sent `half_closed_row` to 5 — the two checks disagreed about which state is
+  correct. Only a row that has closed its *full* size is actually missing a
+  close_date; the check now says `closed_shares >= shares`. If you add a check
+  about close_date/exit_price, make sure it agrees with the partial-close shape
+  in the SOFI test (shares 90 / closedShares 25 / no targets / no close date).
+- **The Kelly maths lives in `kellyHalfPct(winRate, avgWin, avgLoss)`**, split
+  out from the journal lookup so it is testable. It feeds the position sizer
+  directly, so an inversion suggests a *larger* position off a *worse* edge. A
+  negative edge must return `null`, never the 0.1% floor — that would recommend
+  sizing into a losing system.
+- **CI now asks Supabase what is actually deployed.** The older guard only
+  greps `deploy.yml`, so it can prove a deploy line exists but not that the
+  function reached the server. The new step lists ACTIVE functions via the
+  Management API and fails when a repo directory is missing from it. It checks
+  existence, **not freshness** — the CLI skips redeploying an unchanged
+  function, so asserting a recent `updated_at` would fail on every untouched one.
+- **`my_broker_sync_health()`** (SECURITY DEFINER, `auth.uid()`-scoped) is how
+  the browser learns a broker went silent; `flex_sync_log` itself stays
+  RLS-locked with zero policies. Don't open that table up to add a UI signal —
+  extend the RPC instead.
