@@ -16,6 +16,7 @@
 // negative 5-day return is the signal — a high ratio means the trader's own
 // book is struggling regardless of what the index is doing.
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
+import { partitionByAge, pruneMap, type StemMap } from '../_shared/stem_cache.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -92,8 +93,53 @@ Deno.serve(async (req: Request) => {
       { headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 
-  const results = await Promise.all(symbols.map(fetch5dReturn));
-  const resolved = results.filter((r): r is number => r !== null);
+  // A 5-day return for AAPL is the same number for every user, so it is cached
+  // per SYMBOL rather than per request. The old code re-fetched the whole focus
+  // list from Yahoo on every single page load — up to 60 requests, with the STEM
+  // badge hidden until the slowest one landed. One row holds the whole map, so
+  // a warm list costs exactly one indexed select and zero upstream calls.
+  //
+  // market_cache is RLS-locked with no policies, so this needs the service role.
+  const admin = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+  );
+  const MAP_KEY = 'stem-5d-returns';
+  const SYM_TTL_MS = 15 * 60_000;
+  // Past a day the bar is genuinely wrong, so such a symbol is refetched in the
+  // foreground rather than served. Between the two bounds it is served stale and
+  // refreshed behind the response.
+  const SYM_MAX_STALE_MS = 24 * 60 * 60_000;
+
+  const { data: row } = await admin
+    .from('market_cache').select('payload').eq('cache_key', MAP_KEY).maybeSingle();
+  const map: StemMap = { ...((row?.payload as StemMap) ?? {}) };
+
+  const { missing, stale } = partitionByAge(map, symbols, SYM_TTL_MS, SYM_MAX_STALE_MS);
+
+  const fetchInto = async (list: string[]) => {
+    if (!list.length) return;
+    const rs = await Promise.all(list.map(fetch5dReturn));
+    const patch: StemMap = {};
+    list.forEach((s, i) => { const v = rs[i]; if (v !== null) patch[s] = { r: v, ts: Date.now() }; });
+    if (!Object.keys(patch).length) return;
+    Object.assign(map, patch);
+    // Re-read before writing: this row is shared by every user, and a plain
+    // overwrite of the copy read at the top of the request would silently drop
+    // symbols another request cached in the meantime.
+    const { data: cur } = await admin
+      .from('market_cache').select('payload').eq('cache_key', MAP_KEY).maybeSingle();
+    const merged = pruneMap({ ...((cur?.payload as StemMap) ?? {}), ...patch }, SYM_MAX_STALE_MS);
+    await admin.from('market_cache').upsert({ cache_key: MAP_KEY, payload: merged, refreshed_at: new Date().toISOString() });
+  };
+
+  await fetchInto(missing);
+  if (stale.length) {
+    const p = fetchInto(stale).catch((e) => { console.error('[personal-stem] background refresh failed:', e); });
+    (globalThis as any).EdgeRuntime?.waitUntil?.(p);
+  }
+
+  const resolved = symbols.map(s => map[s]?.r).filter((r): r is number => typeof r === 'number');
   const downCount = resolved.filter(r => r < 0).length;
   const downRatio = resolved.length ? Math.round((downCount / resolved.length) * 1000) / 10 : null;
   const avgReturn = resolved.length ? Math.round((resolved.reduce((s, r) => s + r, 0) / resolved.length) * 100) / 100 : null;

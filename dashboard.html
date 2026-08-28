@@ -11170,6 +11170,17 @@ async function _loadPersonalStem(force = false) {
   const symKey = symbols.join(',');
   if (!force && symKey === _lastPstemSymbols && Date.now() - _lastPstemTs < PSTEM_MIN_INTERVAL) return;
   if (!symbols.length) { _pstemState = null; renderPersonalStemBadge(); return; }
+  // The badge used to stay hidden until the network answered, which meant a
+  // cold fan-out over the whole focus list on every page load. Keyed on the
+  // symbol set, since a different focus list is a different reading.
+  const cachedPS = _pulseCacheRead('personal-stem', 24 * 60 * 60 * 1000);
+  if (cachedPS && cachedPS.payload.symKey === symKey) {
+    _pstemDownRatio = cachedPS.payload.downRatio;
+    _pstemAvgReturn = cachedPS.payload.avgReturn;
+    _pstemResolved  = cachedPS.payload.resolved;
+    _pstemState = computePersonalStemState(_pstemDownRatio, _pstemAvgReturn, _pstemResolved);
+    renderPersonalStemBadge();
+  }
   _lastPstemTs = Date.now();
   _lastPstemSymbols = symKey;
   try {
@@ -11184,6 +11195,7 @@ async function _loadPersonalStem(force = false) {
     _pstemAvgReturn = typeof d.avgReturn === 'number' ? d.avgReturn : null;
     _pstemResolved = typeof d.resolved === 'number' ? d.resolved : null;
     _pstemState = computePersonalStemState(_pstemDownRatio, _pstemAvgReturn, _pstemResolved);
+    _pulseCacheWrite('personal-stem', { symKey, downRatio: _pstemDownRatio, avgReturn: _pstemAvgReturn, resolved: _pstemResolved });
   } catch { /* keep last known state rather than flashing to unknown */ }
   renderPersonalStemBadge();
 }
