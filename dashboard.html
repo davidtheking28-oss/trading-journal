@@ -9631,10 +9631,6 @@ async function _renderTradeChart(tr) {
       placers.push(() => _placeAbove(tag, toTime(exitTime), exitBar ? exitBar.h : tr.exitPrice));
     }
     const newestBar = bars[bars.length - 1];
-    {
-      const tag = _mkTag(toTime(newestBar.t).slice(5).split('-').reverse().join('.'), barCol, bgCol);
-      placers.push(() => _placeBelow(tag, toTime(newestBar.t), newestBar.l));
-    }
     const placeDateTag = () => placers.forEach(p => p());
     // The pills are plain HTML, positioned from timeToCoordinate/priceToCoordinate
     // at creation and on our own re-fit pump — but a user panning or zooming the

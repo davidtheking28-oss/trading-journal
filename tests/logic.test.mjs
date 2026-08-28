@@ -1327,7 +1327,7 @@ describe('trade chart symbol and marker placement', () => {
   // are unmissable at any zoom, and every one is repositioned each time the
   // chart itself re-fits — same cadence as _watchTradeChart's own re-anchoring,
   // so a resize cannot leave one stranded relative to the bar it labels.
-  test('entry, exit and the newest-bar date are real HTML pills, not library markers', () => {
+  test('entry and exit are real HTML pills, not library markers', () => {
     assert.doesNotMatch(SOURCE, /series\.setMarkers\(/,
       'no chart-native marker may be relied on for anything that must be readable');
     assert.match(SOURCE, /const _mkTag = \(text, bg, fg\) => \{/,
