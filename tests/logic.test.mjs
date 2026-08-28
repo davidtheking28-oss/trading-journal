@@ -1298,6 +1298,19 @@ describe('trade chart symbol and marker placement', () => {
       'the global td padding must not apply inside the chart');
   });
 
+  // The ohlc endpoint sends no Cache-Control at all, which leaves any layer
+  // between the browser and the function free to keep a copy. One did: this
+  // browser drew MD ending 2026-08-19 (58 bars) while the identical request from
+  // elsewhere returned 65 bars ending 2026-08-28 — the seven "missing" sessions.
+  // The cache-buster changes nothing server-side, since the function keys its own
+  // cache on symbol+range only.
+  test('the bars request is not served from an intermediate cache', () => {
+    assert.match(SOURCE, /ohlc\?symbol=\$\{encodeURIComponent\(sym\)\}&range=\$\{range\}&_=\$\{Date\.now\(\)\}/,
+      'the request must carry a cache-buster');
+    assert.match(SOURCE, /cache: 'no-store'/,
+      "and opt out of the browser's own HTTP cache");
+  });
+
   // Lightweight Charts spaces the time axis by available room. On a ~45-bar
   // window it drew exactly two date labels — measured at x=45 and x=306 with the
   // newest bar at x=527 — so the rightmost date on the axis sat about eighteen

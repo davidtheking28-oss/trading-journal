@@ -9466,9 +9466,17 @@ async function _renderTradeChart(tr) {
     const controller = new AbortController();
     const tid = setTimeout(() => controller.abort(), 12000);
     const sym = _ohlcSymbol(tr);
+    // `_` busts every cache between here and the function, and changes nothing
+    // server-side: the function keys its own cache on symbol+range only, so the
+    // shared market_cache row is still hit. The endpoint sends no Cache-Control
+    // at all, which leaves any intermediary free to hold a copy — and one did:
+    // this browser was drawing MD's series ending 2026-08-19, 58 bars, while the
+    // same request from elsewhere returned 65 bars ending 2026-08-28. Exactly the
+    // seven "missing" sessions that were reported. cache:'no-store' covers the
+    // browser's own HTTP cache for the same reason.
     const getBars = async (range) => {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/ohlc?symbol=${encodeURIComponent(sym)}&range=${range}`,
-        { headers: { 'Authorization': `Bearer ${jwt}` }, signal: controller.signal });
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/ohlc?symbol=${encodeURIComponent(sym)}&range=${range}&_=${Date.now()}`,
+        { headers: { 'Authorization': `Bearer ${jwt}` }, cache: 'no-store', signal: controller.signal });
       return (await res.json()).bars || [];
     };
     // The shared ohlc function caches a 1y series for 6h but a 3mo series for
