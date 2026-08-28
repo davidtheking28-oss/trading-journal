@@ -1370,8 +1370,10 @@ describe('trade chart symbol and marker placement', () => {
   // was the only thing that made the paint catch up; nothing else in the flow
   // forces a repaint the same way.
   test('the fit forces a repaint, not just a state change', () => {
-    assert.match(SOURCE, /chart\.resize\(w, _CHART_H, true\)/,
-      'setVisibleLogicalRange alone was proven to leave the canvas painted on a stale range');
+    assert.doesNotMatch(SOURCE, /function _fitTradeChart[\s\S]{0,1100}?chart\.resize\(/,
+      'resize(w,h,true) was tried live and confirmed NOT to force the repaint — do not reintroduce it here');
+    assert.match(SOURCE, /chart\.applyOptions\(\{ layout: \{ background: \{ color: layout\.background\.color \} \} \}\)/,
+      'setVisibleLogicalRange alone was proven to leave the canvas painted on a stale range — reapplying layout options is what forced the repaint live');
   });
 
   // The ohlc endpoint sends no Cache-Control at all, which leaves any layer

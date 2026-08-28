@@ -9406,11 +9406,13 @@ function _fitTradeChart(chart, barCount) {
   // Proven live: the state above is already correct the instant it's set —
   // getVisibleRange() reported the newest bar in view — but the canvas itself
   // stayed painted on an older, narrower range regardless, through every re-fit
-  // frame of the pump. autoSize's own internal resize does not force a repaint,
-  // and nothing else in this flow does either; a manual chart.resize(w, h, true)
-  // was the only thing that made the paint catch up to the state that was
-  // already there. Force one every time this runs.
-  chart.resize(w, _CHART_H, true);
+  // frame of the pump. A manual chart.resize(w, h, true) alone did NOT fix it
+  // (confirmed live: "nothing happened") — what did was re-applying the chart's
+  // own layout options, which forces a full model update, not just a resize.
+  // Reapplying the chart's own current background is a no-op visually and
+  // proven live to make the paint catch up to the state that was already there.
+  const layout = chart.options().layout;
+  chart.applyOptions({ layout: { background: { color: layout.background.color } } });
 }
 
 // Loaded lazily on first chart render, not at boot — same reasoning as
