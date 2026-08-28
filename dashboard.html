@@ -10724,6 +10724,29 @@ function advancedStats(trades) {
   return { avgWin, avgLoss, avgWinDays, avgLossDays };
 }
 
+// Per-entryReason performance breakdown (Statistics tab). ER_OPTIONS is a
+// fixed 5-value taxonomy (LPS/Low Cheat/Cheat/Handle/Breakout, Minervini-style
+// pivots), not free text — so, unlike a tag system, this needs no grouping
+// logic, just a bucket per known value plus "no reason logged".
+function entryReasonStats(trades) {
+  const closed = trades.filter(isClosed);
+  const buckets = {};
+  for (const t of closed) {
+    const key = ER_OPTIONS.includes(t.entryReason) ? t.entryReason : '—';
+    (buckets[key] ??= { trades: 0, wins: 0, totalR: 0, rCount: 0 }).trades++;
+    const tot = calcTotal(t);
+    if (tot > 0) buckets[key].wins++;
+    const stopR = calcStopRisk(t);
+    if (stopR) { buckets[key].totalR += tot / stopR; buckets[key].rCount++; }
+  }
+  return Object.entries(buckets).map(([reason, b]) => ({
+    reason,
+    trades: b.trades,
+    winRate: b.trades ? b.wins / b.trades * 100 : 0,
+    avgR: b.rCount ? b.totalR / b.rCount : null,
+  }));
+}
+
 const MONTHS_SHORT = MONTHS_SHORT_HE;
 
 function _tradePct(t) {
