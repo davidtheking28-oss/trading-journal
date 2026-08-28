@@ -1340,14 +1340,25 @@ describe('trade chart symbol and marker placement', () => {
       'placement must run on every fit, not just once at creation');
   });
 
-  // Reported as "I have to move sideways to see the last trading day's candle":
-  // the newest bars sat outside the visible range and had to be scrolled to. The
-  // pad arithmetic says where the right edge should land; this checks where it
-  // actually landed and pins it to the last bar if not. Removing the check puts
-  // the guarantee back on the arithmetic being right, which is what failed.
-  test('the fit verifies the newest bar ended up inside the window', () => {
-    assert.match(SOURCE, /const lr = ts\.getVisibleLogicalRange\(\);\r?\n\s*if \(!lr \|\| lr\.to < barCount - 1\) ts\.scrollToPosition\(p, false\)/,
-      'the fit must check the applied range and correct it');
+  // Reported repeatedly as "the recent bars aren't there until I drag right
+  // myself". The fit used to call fitContent() and then read back its own
+  // barSpacing to compute a pixel pad — but fitContent() ALWAYS fits every bar
+  // into whatever width existed the instant it ran, so a "did the newest bar
+  // land in view" check on the result can never fail, whether that width was
+  // the modal's real final size or a transient one from mid-animation. The
+  // check was worthless by construction, which is why it kept passing while
+  // the report kept coming back. barSpacing is now solved directly from the
+  // container's own clientWidth — the actual laid-out box, synchronously, with
+  // no dependency on the chart library's internal state having caught up.
+  test('the fit is computed from clientWidth directly, not a fitContent readback', () => {
+    assert.doesNotMatch(SOURCE, /function _fitTradeChart[\s\S]{0,50}ts\.fitContent\(\)/,
+      'fitContent() must not be the source of truth for the width');
+    assert.match(SOURCE, /const w = el\.clientWidth;/,
+      'the container element must be measured directly');
+    assert.match(SOURCE, /const bs = Math\.max\(0\.5, \(w - _CHART_RIGHT_PAD_PX\) \/ barCount\)/,
+      'bar spacing must be solved from that width, not read back after the fact');
+    assert.match(SOURCE, /ts\.scrollToPosition\(_CHART_RIGHT_PAD_PX \/ bs, false\)/,
+      'the pixel pad must convert to the matching scroll position at that spacing');
   });
 
   // The ohlc endpoint sends no Cache-Control at all, which leaves any layer
@@ -1380,35 +1391,34 @@ describe('trade chart symbol and marker placement', () => {
       'the axis ticks must tie its few labels to real bars');
   });
 
-  // Lifted from the screener's _fitChart so the two charts agree. fitContent()
-  // alone pins the newest candle against the price scale; the air after it must
-  // be in PIXELS, not bars — a 2-bar pad measured 25px on a 40-bar chart and 8px
-  // on a 130-bar one, which is why the newest session looked missing on older
-  // trades and fine on fresh ones. Widening the range re-spaces the bars, so
-  // PAD/barSpacing undershoots; the closed form below is what lands the same gap
-  // at any bar count. Reverting any of this reintroduces the report.
+  // The pad after the newest bar is a pixel amount, not a bar count — a 2-bar
+  // pad measured 25px on a 40-bar chart and 8px on a 130-bar one, which is why
+  // the newest session looked missing on older trades and fine on fresh ones.
   test('the right-hand air is a pixel amount, not a bar count', () => {
     assert.match(SOURCE, /const _CHART_RIGHT_PAD_PX = 32/,
       'the pad is expressed in pixels');
-    assert.match(SOURCE, /function _fitTradeChart[\s\S]{0,600}?ts\.fitContent\(\)/,
-      'the fit starts from fitContent, like the screener');
-    assert.match(SOURCE, /_CHART_RIGHT_PAD_PX \* barCount \/ \(W - _CHART_RIGHT_PAD_PX\)/,
-      'the re-spacing must be solved for, not approximated as PAD/barSpacing');
     assert.match(SOURCE, /rightOffset: 0/,
       'a bar-based rightOffset would fight the pixel pad');
   });
 
-  // A fixed re-apply delay is a bet on how fast the machine finishes the modal
-  // animation and first layout — it wins on a fast desktop and loses elsewhere,
-  // which is how this measured correct here while still being wrong for the
-  // user. The observer also fires before autoSize has resized the time scale, so
-  // reading its width in the callback returns the pre-resize value; hence the
-  // following frame as well.
-  test('the fit re-runs on resize, not after a fixed delay', () => {
-    assert.match(SOURCE, /function _watchTradeChart[\s\S]{0,900}?new ResizeObserver\(\(\) => \{ fit\(\); schedule\(\); \}\)/,
-      'the fit must re-run from a ResizeObserver');
-    assert.match(SOURCE, /requestAnimationFrame\(\(\) => \{ _chartViewRaf = 0; fit\(\); \}\)/,
-      'and again on the following frame, once the new width is in effect');
+  // A single guaranteed follow-up frame was tried and measured insufficient:
+  // reproduced live by repeatedly closing and reopening a trade chart (the
+  // library is already loaded by the second open, so creation lands mid the
+  // modal's 0.22s animation every time — unlike a session's very first open,
+  // which the script's own network fetch happens to mask). Some reopens
+  // self-corrected one frame later as designed; others stayed on the bad first
+  // frame indefinitely, which is exactly "the recent bars aren't there until I
+  // drag right myself" reported repeatedly. Re-applying the fit for a run of
+  // frames after every trigger — not a fixed delay, and not just one frame —
+  // is what converges regardless of how many frames autoSize's own internal
+  // resize happens to need that time.
+  test('the fit re-applies for a run of frames, not a fixed count or a timer', () => {
+    assert.match(SOURCE, /function _watchTradeChart[\s\S]{0,900}?let framesLeft = 0;/,
+      'the re-apply must be frame-driven, not a one-shot follow-up');
+    assert.match(SOURCE, /if \(_chartInstance === chart && framesLeft-- > 0\) _chartViewRaf = requestAnimationFrame\(pump\)/,
+      'it must keep re-applying across a run of frames, not stop after exactly one');
+    assert.match(SOURCE, /_chartResizeObs = new ResizeObserver\(kick\)/,
+      'a resize must restart the same run, not a single fit');
     assert.doesNotMatch(SOURCE, /_chartViewTimers/,
       'no timer may be left deciding when the layout is final');
     assert.match(SOURCE, /_disposeTradeChart[\s\S]{0,400}?_chartResizeObs[\s\S]{0,80}?disconnect\(\)/,

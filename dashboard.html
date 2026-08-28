@@ -9377,21 +9377,24 @@ function _tradeChartSlice(candles, entryTime, minN = _CHART_MIN_SESSIONS, maxN =
 // This is the label's own width, not decoration: shrinking it hides the tag.
 const _CHART_RIGHT_PAD_PX = 32;
 function _fitTradeChart(chart, barCount) {
+  const el = document.getElementById('cal-trade-chart');
   const ts = chart.timeScale();
-  ts.fitContent();
-  if (!barCount) return;
-  const bs = ts.options && ts.options().barSpacing;
-  if (!bs || !isFinite(bs) || bs <= 0) return;
-  const W = bs * barCount;
-  const p = W > _CHART_RIGHT_PAD_PX ? _CHART_RIGHT_PAD_PX * barCount / (W - _CHART_RIGHT_PAD_PX) : 0;
-  if (p) ts.setVisibleLogicalRange({ from: 0, to: (barCount - 1) + p });
-  // Guarantee rather than assumption. The line above computes where the right
-  // edge should land; this checks where it actually landed. Reported as "I have
-  // to move sideways to see the last trading day's candle" — the newest bars sat
-  // outside the visible range and had to be scrolled to. Pinning the right edge
-  // to the last bar is exact and needs no arithmetic to be correct.
-  const lr = ts.getVisibleLogicalRange();
-  if (!lr || lr.to < barCount - 1) ts.scrollToPosition(p, false);
+  if (!barCount || !el) return;
+  // Computed straight from the container's own clientWidth, not from a
+  // post-fitContent() readback of barSpacing. That readback was the actual bug
+  // behind "the recent bars aren't there until I drag right myself": fitContent()
+  // always fits every bar into whatever width existed at the instant it ran, so
+  // ts.getVisibleLogicalRange().to is ALWAYS >= barCount - 1 afterwards BY
+  // DEFINITION — the "verify the newest bar landed in view" check this replaces
+  // could never fail, whether or not the width it fit against was the modal's
+  // real final width or a transient one from mid-animation. clientWidth has no
+  // such ambiguity: it is the actual box the browser has laid out, synchronously,
+  // whether or not Lightweight Charts' own internal state has caught up yet.
+  const w = el.clientWidth;
+  if (!w) return;
+  const bs = Math.max(0.5, (w - _CHART_RIGHT_PAD_PX) / barCount);
+  ts.applyOptions({ barSpacing: bs });
+  ts.scrollToPosition(_CHART_RIGHT_PAD_PX / bs, false);
 }
 
 // Loaded lazily on first chart render, not at boot — same reasoning as
@@ -9433,22 +9436,38 @@ function _disposeTradeChart() {
   if (_chartInstance) { try { _chartInstance.remove(); } catch (e) {} _chartInstance = null; }
 }
 
-// Re-fit on every resize, not just once. The chart is built while the modal is
-// still animating open, so the width it fits against is not the final one; a
-// fixed delay is a bet on how fast the machine gets there and loses on slower
-// ones. The observer fires before autoSize has resized the time scale, hence the
-// following frame too.
+// Re-fit for a run of frames, not just once more. The chart is built while the
+// modal is still animating open, so the width it fits against on creation is
+// not the final one — autoSize resizes the time scale on its OWN internal
+// schedule, separate from ours, and how many frames that takes is not fixed.
+// A single guaranteed follow-up frame was tried and measured to be not enough:
+// reproduced live by closing and reopening a trade chart repeatedly (the
+// library is already loaded by then, so chart creation lands mid-animation
+// every time, unlike the very first open in a session which is masked by the
+// script's own network fetch) — some opens self-corrected one frame later as
+// designed, others stayed on the bad first frame indefinitely, which is
+// exactly "the recent bars aren't there until I drag right myself" reported
+// over and over. Re-applying the fit on every frame for a short run after each
+// trigger — creation or resize — converges regardless of how many frames
+// autoSize actually needs that time, instead of betting on a fixed count.
 function _watchTradeChart(chart, barCount, onFit) {
   const el = document.getElementById('cal-trade-chart');
   const fit = () => { if (_chartInstance === chart) { _fitTradeChart(chart, barCount); onFit && onFit(); } };
-  const schedule = () => {
-    if (_chartViewRaf) cancelAnimationFrame(_chartViewRaf);
-    _chartViewRaf = requestAnimationFrame(() => { _chartViewRaf = 0; fit(); });
+  let framesLeft = 0;
+  const pump = () => {
+    fit();
+    if (_chartInstance === chart && framesLeft-- > 0) _chartViewRaf = requestAnimationFrame(pump);
+    else _chartViewRaf = 0;
   };
-  fit();
-  schedule();
+  const kick = () => {
+    framesLeft = 20; // ~320ms at 60fps — comfortably outlasts the modal's 0.22s
+                      // open animation plus whatever slop is left over.
+    if (_chartViewRaf) cancelAnimationFrame(_chartViewRaf);
+    pump();
+  };
+  kick();
   if (el && window.ResizeObserver) {
-    _chartResizeObs = new ResizeObserver(() => { fit(); schedule(); });
+    _chartResizeObs = new ResizeObserver(kick);
     _chartResizeObs.observe(el);
   }
 }
