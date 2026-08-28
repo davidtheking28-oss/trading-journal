@@ -462,6 +462,18 @@ unlike this one — push it manually).
   animation (rAF + a 300ms timer, cleared by `_disposeTradeChart`).
   `_tradeChartRange` is still the single source of the window — the span and the
   right pad are derived from it, so its tests keep covering the geometry.
+- **The window has a CEILING of 60 sessions, and that was the real bug.**
+  For six rounds the window had a floor but no cap, so it stretched all the way
+  back to the entry — an older position squeezed every bar into a few pixels.
+  Found by counting painted pixels in the newest bar OWN column on the live
+  page: MD (entry 4 sessions back) 25px at x=511/548; ORCL (3 months) 8px at
+  533/552; AAOI (5.5 months) 5px at 540/552 — a sliver against the price scale.
+  Every check that asked *is the last bar inside the window* passed the whole
+  time, because it was; it was simply unreadable, which is why the console
+  numbers matched between machines while the user still could not see it. It is
+  also the literal complaint "you keep going backwards in trading days instead
+  of forwards". An entry older than the cap is now off-screen (its dashed price
+  line still shows) — recent sessions readable beats entry visible.
 - **The visible window is 40 sessions, and both directions have been wrong.**
   60 was rejected ("you keep going backwards in trading days instead of
   forwards"); a 1M/3M/6M/trade switcher built to let the number be chosen was
