@@ -1406,8 +1406,8 @@ describe('trade chart symbol and marker placement', () => {
   test('the fit is computed from clientWidth directly, not a fitContent readback', () => {
     assert.doesNotMatch(SOURCE, /function _fitTradeChart[\s\S]{0,50}ts\.fitContent\(\)/,
       'fitContent() must not be the source of truth for the width');
-    assert.match(SOURCE, /const w = el\.clientWidth;/,
-      'the container element must be measured directly');
+    assert.match(SOURCE, /const w = paneCanvas \? paneCanvas\.getBoundingClientRect\(\)\.width : el\.clientWidth;/,
+      'the candle PANE must be measured directly, not the whole container — el.clientWidth includes the price scale column and was proven live to overshoot the pane by ~60px, leaving the newest bar sitting in a gap short of the edge');
     assert.match(SOURCE, /const bs = Math\.max\(0\.5, \(w - _CHART_RIGHT_PAD_PX\) \/ barCount\)/,
       'bar spacing must be solved from that width, not read back after the fact');
     assert.doesNotMatch(SOURCE, /function _fitTradeChart[\s\S]{0,900}?ts\.scrollToPosition\(/,

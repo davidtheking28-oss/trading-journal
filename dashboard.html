@@ -9503,7 +9503,16 @@ function _fitTradeChart(chart, barCount) {
   // real final width or a transient one from mid-animation. clientWidth has no
   // such ambiguity: it is the actual box the browser has laid out, synchronously,
   // whether or not Lightweight Charts' own internal state has caught up yet.
-  const w = el.clientWidth;
+  // el.clientWidth is the WHOLE container, price scale column included — proven
+  // live to overshoot the actual candle pane by ~60px (measured: today's bar at
+  // x=512 of a 606px container, a ~94px gap before the price scale instead of
+  // the intended 32px). The bars only ever draw inside the first pane canvas,
+  // which is narrower than the container by exactly that price-scale width, so
+  // spacing solved from the container spreads every bar further apart than the
+  // pane can actually hold, pushing the whole run left of where it visually
+  // reads as "the edge". Measure the real pane canvas instead.
+  const paneCanvas = el.querySelector('canvas');
+  const w = paneCanvas ? paneCanvas.getBoundingClientRect().width : el.clientWidth;
   if (!w) return;
   const bs = Math.max(0.5, (w - _CHART_RIGHT_PAD_PX) / barCount);
   ts.applyOptions({ barSpacing: bs });
@@ -10722,29 +10731,6 @@ function advancedStats(trades) {
   const avgWinDays = winners.length ? winners.reduce((s,t) => s + tradeDays(t), 0) / winners.length : 0;
   const avgLossDays= losers.length  ? losers.reduce((s,t)  => s + tradeDays(t), 0) / losers.length  : 0;
   return { avgWin, avgLoss, avgWinDays, avgLossDays };
-}
-
-// Per-entryReason performance breakdown (Statistics tab). ER_OPTIONS is a
-// fixed 5-value taxonomy (LPS/Low Cheat/Cheat/Handle/Breakout, Minervini-style
-// pivots), not free text — so, unlike a tag system, this needs no grouping
-// logic, just a bucket per known value plus "no reason logged".
-function entryReasonStats(trades) {
-  const closed = trades.filter(isClosed);
-  const buckets = {};
-  for (const t of closed) {
-    const key = ER_OPTIONS.includes(t.entryReason) ? t.entryReason : '—';
-    (buckets[key] ??= { trades: 0, wins: 0, totalR: 0, rCount: 0 }).trades++;
-    const tot = calcTotal(t);
-    if (tot > 0) buckets[key].wins++;
-    const stopR = calcStopRisk(t);
-    if (stopR) { buckets[key].totalR += tot / stopR; buckets[key].rCount++; }
-  }
-  return Object.entries(buckets).map(([reason, b]) => ({
-    reason,
-    trades: b.trades,
-    winRate: b.trades ? b.wins / b.trades * 100 : 0,
-    avgR: b.rCount ? b.totalR / b.rCount : null,
-  }));
 }
 
 const MONTHS_SHORT = MONTHS_SHORT_HE;
