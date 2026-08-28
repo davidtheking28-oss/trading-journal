@@ -9377,9 +9377,15 @@ function _fitTradeChart(chart, barCount) {
   const bs = ts.options && ts.options().barSpacing;
   if (!bs || !isFinite(bs) || bs <= 0) return;
   const W = bs * barCount;
-  if (W <= _CHART_RIGHT_PAD_PX) return;
-  const p = _CHART_RIGHT_PAD_PX * barCount / (W - _CHART_RIGHT_PAD_PX);
-  ts.setVisibleLogicalRange({ from: 0, to: (barCount - 1) + p });
+  const p = W > _CHART_RIGHT_PAD_PX ? _CHART_RIGHT_PAD_PX * barCount / (W - _CHART_RIGHT_PAD_PX) : 0;
+  if (p) ts.setVisibleLogicalRange({ from: 0, to: (barCount - 1) + p });
+  // Guarantee rather than assumption. The line above computes where the right
+  // edge should land; this checks where it actually landed. Reported as "I have
+  // to move sideways to see the last trading day's candle" — the newest bars sat
+  // outside the visible range and had to be scrolled to. Pinning the right edge
+  // to the last bar is exact and needs no arithmetic to be correct.
+  const lr = ts.getVisibleLogicalRange();
+  if (!lr || lr.to < barCount - 1) ts.scrollToPosition(p, false);
 }
 
 // Loaded lazily on first chart render, not at boot — same reasoning as
@@ -9584,6 +9590,10 @@ async function _renderTradeChart(tr) {
       const hovered = param && param.seriesData && param.seriesData.get(series);
       showBar(hovered ? { ...hovered, time: param.time } : newestPoint);
     });
+    // crosshairMove does not always fire on the way out — leave the chart fast
+    // enough, or straight to another window, and the readout stays stuck on the
+    // last bar hovered, which reads as the chart being stuck on that day.
+    el.addEventListener('mouseleave', () => showBar(newestPoint));
 
     _watchTradeChart(chart, bars.length);
   } catch (e) {

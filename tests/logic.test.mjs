@@ -1313,6 +1313,18 @@ describe('trade chart symbol and marker placement', () => {
       'the default must come from the last bar actually drawn');
     assert.match(SOURCE, /position:relative;width:100%;height:\$\{_CHART_H\}px/,
       'the container must be a positioning context or the readout escapes it');
+    assert.match(SOURCE, /el\.addEventListener\('mouseleave', \(\) => showBar\(newestPoint\)\)/,
+      'crosshairMove does not always fire on the way out, so the readout would stick');
+  });
+
+  // Reported as "I have to move sideways to see the last trading day's candle":
+  // the newest bars sat outside the visible range and had to be scrolled to. The
+  // pad arithmetic says where the right edge should land; this checks where it
+  // actually landed and pins it to the last bar if not. Removing the check puts
+  // the guarantee back on the arithmetic being right, which is what failed.
+  test('the fit verifies the newest bar ended up inside the window', () => {
+    assert.match(SOURCE, /const lr = ts\.getVisibleLogicalRange\(\);\r?\n\s*if \(!lr \|\| lr\.to < barCount - 1\) ts\.scrollToPosition\(p, false\)/,
+      'the fit must check the applied range and correct it');
   });
 
   // The ohlc endpoint sends no Cache-Control at all, which leaves any layer
@@ -1357,7 +1369,7 @@ describe('trade chart symbol and marker placement', () => {
       'the pad is expressed in pixels');
     assert.match(SOURCE, /function _fitTradeChart[\s\S]{0,600}?ts\.fitContent\(\)/,
       'the fit starts from fitContent, like the screener');
-    assert.match(SOURCE, /const p = _CHART_RIGHT_PAD_PX \* barCount \/ \(W - _CHART_RIGHT_PAD_PX\)/,
+    assert.match(SOURCE, /_CHART_RIGHT_PAD_PX \* barCount \/ \(W - _CHART_RIGHT_PAD_PX\)/,
       'the re-spacing must be solved for, not approximated as PAD/barSpacing');
     assert.match(SOURCE, /rightOffset: 0/,
       'a bar-based rightOffset would fight the pixel pad');
