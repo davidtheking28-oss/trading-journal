@@ -1309,8 +1309,10 @@ describe('trade chart symbol and marker placement', () => {
       'the chart must report the hovered bar');
     assert.match(SOURCE, /showBar\(newestPoint\)/,
       'and fall back to the newest bar when nothing is hovered');
-    assert.match(SOURCE, /const newest = bars\[bars\.length - 1\]/,
+    assert.match(SOURCE, /const newestBar = bars\[bars\.length - 1\]/,
       'the default must come from the last bar actually drawn');
+    assert.match(SOURCE, /markers\.push\(\{ time: toTime\(newestBar\.t\), position: 'belowBar'/,
+      'and the newest bar must be labelled on the plot, not only beside it');
     assert.match(SOURCE, /position:relative;width:100%;height:\$\{_CHART_H\}px/,
       'the container must be a positioning context or the readout escapes it');
     assert.match(SOURCE, /el\.addEventListener\('mouseleave', \(\) => showBar\(newestPoint\)\)/,

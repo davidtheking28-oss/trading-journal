@@ -9562,6 +9562,13 @@ async function _renderTradeChart(tr) {
     const markers = [];
     if (entryTime) markers.push({ time: toTime(entryTime), position: 'belowBar', color: accent, shape: 'arrowUp', text: t('tile_entry') });
     if (exitTime) markers.push({ time: toTime(exitTime), position: 'aboveBar', color: calcTotal(tr) >= 0 ? green : red, shape: 'arrowDown', text: t('tile_exit') });
+    // Label the newest bar on the chart itself. Which candle is the last trading
+    // day was the whole dispute for ten rounds and nothing on the plot answered
+    // it — the time axis only had room for two date labels, neither near the
+    // right edge, so "is today's candle there" could not be settled by looking.
+    const newestBar = bars[bars.length - 1];
+    markers.push({ time: toTime(newestBar.t), position: 'belowBar', color: txtCol,
+                   shape: 'circle', text: toTime(newestBar.t).slice(5).split('-').reverse().join('.') });
     if (markers.length) series.setMarkers(markers);
 
     // A readout naming the bar under the pointer, defaulting to the newest one.
@@ -9583,7 +9590,7 @@ async function _renderTradeChart(tr) {
       const n = (v) => (v == null ? '—' : (+v).toFixed(2));
       legend.textContent = `${day}  O ${n(b.open)}  H ${n(b.high)}  L ${n(b.low)}  C ${n(b.close)}`;
     };
-    const newest = bars[bars.length - 1];
+    const newest = newestBar;
     const newestPoint = { time: toTime(newest.t), open: newest.o, high: newest.h, low: newest.l, close: newest.c };
     showBar(newestPoint);
     chart.subscribeCrosshairMove((param) => {
