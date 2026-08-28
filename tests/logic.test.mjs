@@ -1363,6 +1363,17 @@ describe('trade chart symbol and marker placement', () => {
       'the range must be set directly from the bar count and pixel pad, not reached incrementally');
   });
 
+  // Proven live, twice: setVisibleLogicalRange() makes getVisibleRange() report
+  // the newest bar correctly the instant it's called — but the canvas itself
+  // stayed painted on a narrower, older range regardless, through every re-fit
+  // frame of the pump, across a fresh page load. A manual chart.resize(w,h,true)
+  // was the only thing that made the paint catch up; nothing else in the flow
+  // forces a repaint the same way.
+  test('the fit forces a repaint, not just a state change', () => {
+    assert.match(SOURCE, /chart\.resize\(w, _CHART_H, true\)/,
+      'setVisibleLogicalRange alone was proven to leave the canvas painted on a stale range');
+  });
+
   // The ohlc endpoint sends no Cache-Control at all, which leaves any layer
   // between the browser and the function free to keep a copy. One did: this
   // browser drew MD ending 2026-08-19 (58 bars) while the identical request from

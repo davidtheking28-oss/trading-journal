@@ -9403,6 +9403,14 @@ function _fitTradeChart(chart, barCount) {
   // there is no accumulated/stale scroll state for it to disagree with.
   const pad = _CHART_RIGHT_PAD_PX / bs;
   ts.setVisibleLogicalRange({ from: 0, to: barCount - 1 + pad });
+  // Proven live: the state above is already correct the instant it's set —
+  // getVisibleRange() reported the newest bar in view — but the canvas itself
+  // stayed painted on an older, narrower range regardless, through every re-fit
+  // frame of the pump. autoSize's own internal resize does not force a repaint,
+  // and nothing else in this flow does either; a manual chart.resize(w, h, true)
+  // was the only thing that made the paint catch up to the state that was
+  // already there. Force one every time this runs.
+  chart.resize(w, _CHART_H, true);
 }
 
 // Loaded lazily on first chart render, not at boot — same reasoning as
