@@ -9488,16 +9488,18 @@ function _watchTradeChart(chart, barCount, onFit) {
     _chartResizeObs = new ResizeObserver(kick);
     _chartResizeObs.observe(el);
   }
-  // The modal's own open animation (`modalIn`, 0.22s) runs on `transform`,
-  // which promotes `.modal` to its own compositing layer for its duration —
-  // and a canvas inside an animating-transform ancestor can keep showing a
-  // cached raster of itself for a frame or two after the animation is
-  // reported done in JS, until Chrome flattens that layer back. The 20-frame
-  // pump above is sized off a frame COUNT, which is a guess; `animationend`
-  // is the real signal for when that layer actually settles, so fire one more
-  // guaranteed fit right on it rather than betting the guess always covers it.
-  const modalEl = el && el.closest('.modal');
-  if (modalEl) modalEl.addEventListener('animationend', kick, { once: true });
+  // `.modal`'s own open keyframe animation only plays once, the first time it
+  // is ever inserted — later opens just toggle `.open` on the overlay, which
+  // re-triggers ITS OWN opacity transition every single time. Either one can
+  // promote an animating ancestor to its own compositing layer, and a canvas
+  // inside can keep showing a cached raster of itself for a frame or two after
+  // the animation/transition is reported done in JS, until that layer
+  // flattens back — the 20-frame pump above is sized off a frame COUNT, a
+  // guess, while `transitionend` on the overlay is the real per-open signal,
+  // so fire one more guaranteed fit right on it instead of betting the guess
+  // always covers it.
+  const overlayEl = document.getElementById('cal-trade-modal');
+  if (overlayEl) overlayEl.addEventListener('transitionend', kick, { once: true });
 }
 
 // Replaces the earlier TradingView iframe embed: that widget's free tier cannot

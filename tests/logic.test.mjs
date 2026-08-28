@@ -1440,6 +1440,20 @@ describe('trade chart symbol and marker placement', () => {
       'the observer must be disconnected with the chart or it outlives the modal');
   });
 
+  // Reported live even after the clientWidth/frame-pump fix: getVisibleRange()
+  // and a diagnostic marker both said the newest bar was correctly in view, but
+  // the actual rightmost PAINTED candle was still a week old. The modal's own
+  // open animation/transition can promote it to its own compositing layer, and
+  // a canvas inside can keep showing a cached raster for a frame or two after
+  // JS reports the animation done — the 20-frame pump is a frame-count guess,
+  // not tied to that. transitionend on the overlay fires every single open
+  // (unlike the .modal keyframe, which only plays once ever), so it is the one
+  // real per-open signal for when that layer actually settles.
+  test('a fit is forced again on the overlay transition ending, not just the frame pump', () => {
+    assert.match(SOURCE, /overlayEl\.addEventListener\('transitionend', kick, \{ once: true \}\)/,
+      'transitionend must trigger the same kick() as a resize, not a separate one-off fit');
+  });
+
   // The entry/exit/date pills are plain HTML positioned via timeToCoordinate /
   // priceToCoordinate at creation and on the re-fit pump — but a user panning or
   // zooming the chart by hand moves the candles without touching either, so the
