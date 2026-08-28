@@ -8315,6 +8315,14 @@ let _stemState = null, _stemVix = null;
 
 const STEM_LABELS = { green: 'רגוע', orange: 'זהירות', red: 'לחוץ' };
 const STEM_COLORS = { green: 'var(--green)', orange: 'var(--yellow)', red: 'var(--red)' };
+// Plain-language action per state, not just the label — a color/word alone
+// answers "what is the market doing" but not "what should I do about it",
+// so it gets read once and then habituated-to like a favicon.
+const STEM_ACTIONS = {
+  green:  'סיכון שוק נמוך — גודל פוזיציה רגיל תקין',
+  orange: 'סיכון שוק מוגבר — שווה לצמצם גודל פוזיציה',
+  red:    'סיכון שוק גבוה — זהירות מקסימלית, גודל פוזיציה מינימלי',
+};
 // A pill (not just a dot) so the VIX number itself is visible, not only the
 // color — the color alone can't be told apart by anyone with color-vision
 // deficiency, and the number is what actually justifies the state.
@@ -8324,6 +8332,7 @@ function renderStemBadge() {
   if (!_stemState) { el.style.display = 'none'; return; }
   const color = STEM_COLORS[_stemState];
   const vixTxt = _stemVix != null ? `VIX ${_stemVix.toFixed(1)}` : '';
+  el.title = 'סיכון שוק כללי, מחושב אוטומטית מ-VIX ורוחב שוק (לא STEM של מינרוויני — זה מדד מדדים, לא רשימת מניות אישית). ' + STEM_ACTIONS[_stemState];
   el.style.display = 'flex';
   el.style.setProperty('--stem-color', color);
   el.innerHTML = `
