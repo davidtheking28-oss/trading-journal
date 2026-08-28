@@ -474,6 +474,24 @@ unlike this one — push it manually).
   also the literal complaint "you keep going backwards in trading days instead
   of forwards". An entry older than the cap is now off-screen (its dashed price
   line still shows) — recent sessions readable beats entry visible.
+- **THE ROOT CAUSE was an intermediate HTTP cache, not the chart.** Nine rounds
+  of window tuning chased a rendering bug that did not exist. The user browser
+  was receiving MD as 58 bars ending 2026-08-19 while the identical request
+  from anywhere else returned 65 bars ending 2026-08-28 — the seven "missing"
+  sessions, exactly. The ohlc endpoint sends **no Cache-Control header at all**,
+  which leaves every layer between the browser and the function free to hold a
+  copy. The bars request now carries `&_=${Date.now()}` and `cache:no-store`;
+  neither changes anything server-side, since the function keys its own cache
+  on symbol+range only. **Do not remove them.**
+- **What finally exposed it: printing the last drawn bar date in the UI.**
+  Every measurement of position ("is the newest bar inside the visible range")
+  came back correct on both machines for nine rounds, because it was. The
+  question that separated the two machines was *which date* the last bar was,
+  and nothing on screen answered it: Lightweight Charts drew only two date
+  labels on a ~45-bar window (measured at x=45 and x=306 with the newest bar at
+  x=527), so the axis stopped ~18 sessions short of the right edge. The
+  `#cal-chart-last` span next to the chart label names it. Keep it — it is the
+  only thing that makes a stale-data report distinguishable from a layout one.
 - **The visible window is 40 sessions, and both directions have been wrong.**
   60 was rejected ("you keep going backwards in trading days instead of
   forwards"); a 1M/3M/6M/trade switcher built to let the number be chosen was
