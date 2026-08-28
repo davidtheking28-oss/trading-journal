@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
+import { serveCached } from '../_shared/swr.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -164,32 +165,33 @@ serve(async (req: Request) => {
   const CACHE_KEY = 'theme-tracker';
   // Was 60s. This data is daily-bar sector performance (%today/1w/1m/3m/ytd),
   // not a live quote — a 1-day bar doesn't move enough in a minute to justify
-  // a fresh 34-ticker Yahoo pull that often. Every cache miss pays the full
-  // fan-out cost (now bounded by the per-ticker timeout above, but still the
-  // slowest ticker's latency), so a shorter TTL mostly just means more users
-  // hit that slow path instead of the shared cache.
+  // a fresh 37-ticker Yahoo pull that often.
   const CACHE_TTL_MS = 300_000;
-  const { data: cached } = await admin
-    .from('market_cache').select('payload, refreshed_at').eq('cache_key', CACHE_KEY).maybeSingle();
+  // A stale row inside this window is served immediately and refreshed behind
+  // the response, so the fan-out cost is never paid in the foreground. Past a
+  // day the bars are genuinely wrong, so we block on a real fetch.
+  const MAX_STALE_MS = 24 * 60 * 60 * 1000;
   const jsonHeaders = { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'max-age=300' };
-  if (cached && Date.now() - new Date(cached.refreshed_at).getTime() < CACHE_TTL_MS) {
-    return new Response(JSON.stringify(cached.payload), { headers: jsonHeaders });
-  }
 
-  try {
-    const [results, indices] = await Promise.all([
-      Promise.all(THEMES.map(fetchTheme)),
-      Promise.all(INDICES.map(fetchTheme)),
-    ]);
-    const payload = { themes: results, indices, ts: Date.now() };
-    await admin.from('market_cache').upsert({ cache_key: CACHE_KEY, payload, refreshed_at: new Date().toISOString() });
-    return new Response(JSON.stringify(payload), { headers: jsonHeaders });
-  } catch (e) {
-    console.error('[theme-tracker] error:', e);
-    if (cached) return new Response(JSON.stringify(cached.payload), { headers: jsonHeaders });
-    return new Response(JSON.stringify({ error: 'Failed to fetch data' }), {
-      status: 500,
-      headers: { ...CORS, 'Content-Type': 'application/json' },
-    });
-  }
+  const refresh = async () => {
+    try {
+      const [results, indices] = await Promise.all([
+        Promise.all(THEMES.map(fetchTheme)),
+        Promise.all(INDICES.map(fetchTheme)),
+      ]);
+      const payload = { themes: results, indices, ts: Date.now() };
+      await admin.from('market_cache').upsert({ cache_key: CACHE_KEY, payload, refreshed_at: new Date().toISOString() });
+      return payload;
+    } catch (e) {
+      console.error('[theme-tracker] error:', e);
+      return null;
+    }
+  };
+
+  const { payload } = await serveCached(admin, CACHE_KEY, CACHE_TTL_MS, MAX_STALE_MS, refresh);
+  if (payload) return new Response(JSON.stringify(payload), { headers: jsonHeaders });
+  return new Response(JSON.stringify({ error: 'Failed to fetch data' }), {
+    status: 500,
+    headers: { ...CORS, 'Content-Type': 'application/json' },
+  });
 });

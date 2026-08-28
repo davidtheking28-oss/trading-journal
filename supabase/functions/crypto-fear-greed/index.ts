@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
+import { serveCached } from '../_shared/swr.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -28,29 +29,33 @@ Deno.serve(async (req) => {
   );
   const CACHE_KEY = 'crypto-fear-greed';
   const CACHE_TTL_MS = 3_600_000;
+  // alternative.me publishes one value per day, so a stale row inside 48h is
+  // still the current reading often enough to paint immediately and refresh
+  // behind the response.
+  const MAX_STALE_MS = 48 * 60 * 60 * 1000;
   const jsonHeaders = { ...CORS, 'Content-Type': 'application/json' };
-  const { data: cached } = await admin
-    .from('market_cache').select('payload, refreshed_at').eq('cache_key', CACHE_KEY).maybeSingle();
-  if (cached && Date.now() - new Date(cached.refreshed_at).getTime() < CACHE_TTL_MS) {
-    return new Response(JSON.stringify(cached.payload), { headers: jsonHeaders });
-  }
 
-  try {
-    const res = await fetch('https://api.alternative.me/fng/?limit=1', {
-      headers: { 'Accept': 'application/json' }
-    });
-    if (!res.ok) throw new Error(`alternative.me returned ${res.status}`);
-    const data = await res.json();
-    const entry = data?.data?.[0];
-    if (!entry) throw new Error('no data in response');
-    const payload = { score: parseInt(entry.value), rating: entry.value_classification };
-    await admin.from('market_cache').upsert({ cache_key: CACHE_KEY, payload, refreshed_at: new Date().toISOString() });
-    return new Response(JSON.stringify(payload), { headers: jsonHeaders });
-  } catch (e) {
-    console.error('[crypto-fear-greed] error:', e);
-    if (cached) return new Response(JSON.stringify(cached.payload), { headers: jsonHeaders });
-    return new Response(JSON.stringify({ error: 'Failed to fetch data' }), {
-      status: 500, headers: { ...CORS, 'Content-Type': 'application/json' }
-    });
-  }
+  const refresh = async () => {
+    try {
+      const res = await fetch('https://api.alternative.me/fng/?limit=1', {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!res.ok) throw new Error(`alternative.me returned ${res.status}`);
+      const data = await res.json();
+      const entry = data?.data?.[0];
+      if (!entry) throw new Error('no data in response');
+      const payload = { score: parseInt(entry.value), rating: entry.value_classification };
+      await admin.from('market_cache').upsert({ cache_key: CACHE_KEY, payload, refreshed_at: new Date().toISOString() });
+      return payload;
+    } catch (e) {
+      console.error('[crypto-fear-greed] error:', e);
+      return null;
+    }
+  };
+
+  const { payload } = await serveCached(admin, CACHE_KEY, CACHE_TTL_MS, MAX_STALE_MS, refresh);
+  if (payload) return new Response(JSON.stringify(payload), { headers: jsonHeaders });
+  return new Response(JSON.stringify({ error: 'Failed to fetch data' }), {
+    status: 500, headers: jsonHeaders
+  });
 });

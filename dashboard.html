@@ -10740,27 +10740,34 @@ const FG_LABELS = {
   'extreme greed': 'Extreme Greed',
 };
 
-async function loadFearGreed() {
-  const el = document.getElementById('fear-greed-widget');
-  if (!el) return;
-  el.innerHTML = `<div class="fg-bar-wrap"><div class="fg-bar-score"><span class="fg-score" style="color:var(--text2)">…</span></div><div class="fg-bar-track"></div></div><div class="fg-info"><div class="fg-label">Fear & Greed</div><div class="fg-rating" style="color:var(--text2);font-size:13px;">Loading</div></div>`;
+// The two Fear & Greed widgets and Market Pulse all used to repaint from zero on
+// every page load. The edge functions cache server-side, but with this project's
+// traffic that cache is almost never warm — measured live on 2026-08-28, all four
+// market_cache rows were 30 minutes old against a 5-minute TTL — so the round
+// trip was reliably the slow path. Holding the last payload locally means the
+// widget shows a real number on the first frame and the network result just
+// replaces it.
+const _PULSE_CACHE_PREFIX = 'pulse_cache_';
+function _pulseCacheRead(key, maxAgeMs) {
   try {
-    const jwt = await _getToken();
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/fear-greed`,
-      jwt ? { headers: { 'Authorization': `Bearer ${jwt}` } } : {}
-    );
-    const d = await res.json();
-    if (!d.score) throw new Error('no data');
-    _stemState = computeStemState(d.vix, d.breadthPct);
-    _stemVix = typeof d.vix === 'number' ? d.vix : null;
-    _maybeShowStemMismatchNotice();
-    renderStemBadge();
-    const score  = Math.round(d.score);
-    const key    = (d.rating || '').toLowerCase();
-    const colors = FG_COLORS[key] || ['#8faac8','#64748b'];
-    const label  = FG_LABELS[key] || d.rating;
-    const now    = new Date().toLocaleDateString('en-US', { month:'short', day:'numeric' });
-    el.innerHTML = `
+    const raw = JSON.parse(localStorage.getItem(_PULSE_CACHE_PREFIX + key) || 'null');
+    if (!raw || !raw.ts || Date.now() - raw.ts > maxAgeMs) return null;
+    return raw;
+  } catch (e) { return null; }
+}
+function _pulseCacheWrite(key, payload) {
+  try { localStorage.setItem(_PULSE_CACHE_PREFIX + key, JSON.stringify({ ts: Date.now(), payload })); } catch (e) {}
+}
+
+// Shared by the cached repaint and the fresh one so a cached reading is rendered
+// identically rather than drifting into its own slightly-different markup.
+function _renderFGWidget(el, d, label, source, ts) {
+  const score  = Math.round(d.score);
+  const key    = (d.rating || '').toLowerCase();
+  const colors = FG_COLORS[key] || ['#8faac8','#64748b'];
+  const rating = FG_LABELS[key] || d.rating;
+  const when   = new Date(ts || Date.now()).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  el.innerHTML = `
       <div class="fg-bar-wrap">
         <div class="fg-bar-score">
           <span class="fg-score" style="color:${colors[0]}">${score}</span>
@@ -10771,12 +10778,49 @@ async function loadFearGreed() {
         </div>
       </div>
       <div class="fg-info">
-        <div class="fg-label">Fear & Greed Index</div>
-        <div class="fg-rating" style="color:${colors[0]}">${label}</div>
-        <div class="fg-source">CNN · Updated ${now}</div>
+        <div class="fg-label">${label}</div>
+        <div class="fg-rating" style="color:${colors[0]}">${rating}</div>
+        <div class="fg-source">${source} · ${when}</div>
       </div>`;
+}
+function _fgPlaceholder(el, label) {
+  el.innerHTML = `<div class="fg-bar-wrap"><div class="fg-bar-score"><span class="fg-score" style="color:var(--text2)">…</span></div><div class="fg-bar-track"></div></div><div class="fg-info"><div class="fg-label">${label}</div><div class="fg-rating" style="color:var(--text2);font-size:13px;">Loading</div></div>`;
+}
+function _fgUnavailable(el, label) {
+  el.innerHTML = `<div class="fg-bar-wrap"><div class="fg-bar-score"><span class="fg-score" style="color:var(--text2)">—</span></div><div class="fg-bar-track"></div></div><div class="fg-info"><div class="fg-label">${label}</div><div class="fg-rating" style="color:var(--text2);font-size:13px;">Unavailable</div></div>`;
+}
+
+async function loadFearGreed() {
+  const el = document.getElementById('fear-greed-widget');
+  if (!el) return;
+  const cachedFG = _pulseCacheRead('fear-greed', 6 * 60 * 60 * 1000);
+  if (cachedFG) {
+    _renderFGWidget(el, cachedFG.payload, 'Fear & Greed Index', 'CNN', cachedFG.ts);
+    // The STEM badge rides this same payload, so it too paints from cache
+    // instead of sitting blank until the network answers.
+    _stemState = computeStemState(cachedFG.payload.vix, cachedFG.payload.breadthPct);
+    _stemVix = typeof cachedFG.payload.vix === 'number' ? cachedFG.payload.vix : null;
+    renderStemBadge();
+  } else {
+    _fgPlaceholder(el, 'Fear & Greed');
+  }
+  try {
+    const jwt = await _getToken();
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/fear-greed`,
+      jwt ? { headers: { 'Authorization': `Bearer ${jwt}` } } : {}
+    );
+    const d = await res.json();
+    if (!d.score) throw new Error('no data');
+    _pulseCacheWrite('fear-greed', d);
+    _stemState = computeStemState(d.vix, d.breadthPct);
+    _stemVix = typeof d.vix === 'number' ? d.vix : null;
+    _maybeShowStemMismatchNotice();
+    renderStemBadge();
+    _renderFGWidget(el, d, 'Fear & Greed Index', 'CNN', Date.now());
   } catch {
-    el.innerHTML = `<div class="fg-bar-wrap"><div class="fg-bar-score"><span class="fg-score" style="color:var(--text2)">—</span></div><div class="fg-bar-track"></div></div><div class="fg-info"><div class="fg-label">Fear & Greed</div><div class="fg-rating" style="color:var(--text2);font-size:13px;">Unavailable</div></div>`;
+    // A cached reading on screen is better than replacing it with "Unavailable"
+    // because one refresh failed.
+    if (!cachedFG) _fgUnavailable(el, 'Fear & Greed');
   }
   clearTimeout(_fgTimer);
   // Was 24h — fine for the Fear & Greed score itself (CNN updates it once a
@@ -10791,7 +10835,9 @@ let _cfgTimer = null;
 async function loadCryptoFearGreed() {
   const el = document.getElementById('crypto-fear-greed-widget');
   if (!el) return;
-  el.innerHTML = `<div class="fg-bar-wrap"><div class="fg-bar-score"><span class="fg-score" style="color:var(--text2)">…</span></div><div class="fg-bar-track"></div></div><div class="fg-info"><div class="fg-label">Crypto Fear & Greed</div><div class="fg-rating" style="color:var(--text2);font-size:13px;">Loading</div></div>`;
+  const cachedCFG = _pulseCacheRead('crypto-fear-greed', 48 * 60 * 60 * 1000);
+  if (cachedCFG) _renderFGWidget(el, cachedCFG.payload, 'Crypto Fear & Greed', 'CoinMarketCap', cachedCFG.ts);
+  else _fgPlaceholder(el, 'Crypto Fear & Greed');
   try {
     const jwt = await _getToken();
     const res = await fetch(`${SUPABASE_URL}/functions/v1/crypto-fear-greed`,
@@ -10799,28 +10845,10 @@ async function loadCryptoFearGreed() {
     );
     const d = await res.json();
     if (!d.score) throw new Error('no data');
-    const score  = Math.round(d.score);
-    const key    = (d.rating || '').toLowerCase();
-    const colors = FG_COLORS[key] || ['#8faac8','#64748b'];
-    const label  = FG_LABELS[key] || d.rating;
-    const now    = new Date().toLocaleDateString('en-US', { month:'short', day:'numeric' });
-    el.innerHTML = `
-      <div class="fg-bar-wrap">
-        <div class="fg-bar-score">
-          <span class="fg-score" style="color:${colors[0]}">${score}</span>
-          <span class="fg-score-sub">/100</span>
-        </div>
-        <div class="fg-bar-track">
-          <div class="fg-bar-fill" style="width:${score}%;background:${colors[0]};box-shadow:0 0 6px ${colors[0]}80"></div>
-        </div>
-      </div>
-      <div class="fg-info">
-        <div class="fg-label">Crypto Fear & Greed</div>
-        <div class="fg-rating" style="color:${colors[0]}">${label}</div>
-        <div class="fg-source">CoinMarketCap · ${now}</div>
-      </div>`;
+    _pulseCacheWrite('crypto-fear-greed', d);
+    _renderFGWidget(el, d, 'Crypto Fear & Greed', 'CoinMarketCap', Date.now());
   } catch {
-    el.innerHTML = `<div class="fg-bar-wrap"><div class="fg-bar-score"><span class="fg-score" style="color:var(--text2)">—</span></div><div class="fg-bar-track"></div></div><div class="fg-info"><div class="fg-label">Crypto Fear & Greed</div><div class="fg-rating" style="color:var(--text2);font-size:13px;">Unavailable</div></div>`;
+    if (!cachedCFG) _fgUnavailable(el, 'Crypto Fear & Greed');
   }
   clearTimeout(_cfgTimer);
   _cfgTimer = setTimeout(loadCryptoFearGreed, 24 * 60 * 60 * 1000);
@@ -17188,7 +17216,21 @@ async function ttLoad(force = false) {
   if (_ttLoading) return;
   if (_ttData && !force) { ttRender(_ttData, _ttIndices); return; }
   _ttLoading = true;
-  const silent = !!_ttData;
+  let silent = !!_ttData;
+  // Paint the last payload from localStorage first. _ttData is in-memory only,
+  // so every page reload previously sat on "Loading..." for the length of a
+  // cold 37-ticker Yahoo fan-out.
+  if (!silent) {
+    const cachedTT = _pulseCacheRead('theme-tracker', 24 * 60 * 60 * 1000);
+    if (cachedTT?.payload?.themes) {
+      _ttData = cachedTT.payload.themes;
+      _ttIndices = cachedTT.payload.indices || [];
+      const _ttU = document.getElementById('tt-updated');
+      if (_ttU) _ttU.textContent = 'עודכן: ' + new Date(cachedTT.payload.ts || cachedTT.ts).toLocaleTimeString('he-IL', { hour:'2-digit', minute:'2-digit' });
+      ttRender(_ttData, _ttIndices);
+      silent = true;
+    }
+  }
   if (!silent) {
     document.getElementById('tt-grid').innerHTML = '<div class="tt-loading">Loading...</div>';
     const _idxEl = document.getElementById('tt-indices');
@@ -17211,6 +17253,7 @@ async function ttLoad(force = false) {
     clearTimeout(tid);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const json = await res.json();
+    _pulseCacheWrite('theme-tracker', json);
     _ttData = json.themes;
     _ttIndices = json.indices || [];
     const ts = new Date(json.ts);

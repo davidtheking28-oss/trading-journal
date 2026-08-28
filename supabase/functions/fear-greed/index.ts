@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
+import { serveCached } from '../_shared/swr.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -70,59 +71,63 @@ Deno.serve(async (req) => {
   );
   const CACHE_KEY = 'fear-greed';
   const CACHE_TTL_MS = 300_000;
+  // Past six hours the score is too old to put on screen, so we block on a real
+  // fetch instead of serving it. Inside that window the caller gets the cached
+  // payload immediately and the refresh runs behind the response.
+  const MAX_STALE_MS = 6 * 60 * 60 * 1000;
   const jsonHeaders = { ...CORS, 'Content-Type': 'application/json' };
-  const { data: cached } = await admin
-    .from('market_cache').select('payload, refreshed_at').eq('cache_key', CACHE_KEY).maybeSingle();
-  if (cached && Date.now() - new Date(cached.refreshed_at).getTime() < CACHE_TTL_MS) {
-    return new Response(JSON.stringify(cached.payload), { headers: jsonHeaders });
-  }
 
-  // Sector breadth is heavier (11 fetches) and doesn't move meaningfully
-  // within 5 minutes — cached separately with its own longer TTL so it isn't
-  // recomputed on every fear-greed cache miss.
-  const BREADTH_CACHE_KEY = 'sector-breadth';
-  const BREADTH_TTL_MS = 900_000;
-  const { data: cachedBreadth } = await admin
-    .from('market_cache').select('payload, refreshed_at').eq('cache_key', BREADTH_CACHE_KEY).maybeSingle();
-  let breadthPct: number | null = cachedBreadth?.payload?.breadthPct ?? null;
-  if (!cachedBreadth || Date.now() - new Date(cachedBreadth.refreshed_at).getTime() >= BREADTH_TTL_MS) {
-    const fresh = await fetchSectorBreadthPct();
-    if (fresh !== null) {
-      breadthPct = fresh;
-      await admin.from('market_cache').upsert({ cache_key: BREADTH_CACHE_KEY, payload: { breadthPct: fresh }, refreshed_at: new Date().toISOString() });
-    }
-  }
-
-  try {
-    const res = await fetch('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        'Accept': 'application/json, text/plain, */*',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Referer': 'https://edition.cnn.com/markets/fear-and-greed',
-        'Origin': 'https://edition.cnn.com',
+  const refresh = async () => {
+    // Sector breadth is heavier (11 fetches) and doesn't move meaningfully
+    // within 5 minutes — cached separately with its own longer TTL so it isn't
+    // recomputed on every fear-greed cache miss.
+    const BREADTH_CACHE_KEY = 'sector-breadth';
+    const BREADTH_TTL_MS = 900_000;
+    const { data: cachedBreadth } = await admin
+      .from('market_cache').select('payload, refreshed_at').eq('cache_key', BREADTH_CACHE_KEY).maybeSingle();
+    let breadthPct: number | null = cachedBreadth?.payload?.breadthPct ?? null;
+    if (!cachedBreadth || Date.now() - new Date(cachedBreadth.refreshed_at).getTime() >= BREADTH_TTL_MS) {
+      const freshBreadth = await fetchSectorBreadthPct();
+      if (freshBreadth !== null) {
+        breadthPct = freshBreadth;
+        await admin.from('market_cache').upsert({ cache_key: BREADTH_CACHE_KEY, payload: { breadthPct: freshBreadth }, refreshed_at: new Date().toISOString() });
       }
-    });
-    if (!res.ok) throw new Error(`CNN returned ${res.status}`);
-    const data = await res.json();
-    const score = data?.fear_and_greed?.score;
-    const rating = data?.fear_and_greed?.rating;
-    if (score == null) throw new Error('no score in response');
-    // Reused for the automatic STEM market-regime classifier (portfolio↔STEM
-    // mismatch alert) — same CNN payload already carries both a live VIX
-    // reading and a breadth rating (McClellan volume summation index), no
-    // second external call needed.
-    const vixSeries = data?.market_volatility_vix?.data;
-    const vix = Array.isArray(vixSeries) && vixSeries.length ? vixSeries[vixSeries.length - 1]?.y : null;
-    const breadthRating = data?.stock_price_breadth?.rating ?? null; // kept for reference only; STEM now uses breadthPct
-    const payload = { score, rating, vix, breadthRating, breadthPct };
-    await admin.from('market_cache').upsert({ cache_key: CACHE_KEY, payload, refreshed_at: new Date().toISOString() });
-    return new Response(JSON.stringify(payload), { headers: jsonHeaders });
-  } catch (e) {
-    console.error('[fear-greed] error:', e);
-    if (cached) return new Response(JSON.stringify(cached.payload), { headers: jsonHeaders });
-    return new Response(JSON.stringify({ error: 'Failed to fetch data' }), {
-      status: 500, headers: { ...CORS, 'Content-Type': 'application/json' }
-    });
-  }
+    }
+
+    try {
+      const res = await fetch('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Accept': 'application/json, text/plain, */*',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Referer': 'https://edition.cnn.com/markets/fear-and-greed',
+          'Origin': 'https://edition.cnn.com',
+        }
+      });
+      if (!res.ok) throw new Error(`CNN returned ${res.status}`);
+      const data = await res.json();
+      const score = data?.fear_and_greed?.score;
+      const rating = data?.fear_and_greed?.rating;
+      if (score == null) throw new Error('no score in response');
+      // Reused for the automatic STEM market-regime classifier (portfolio/STEM
+      // mismatch alert) — the same CNN payload already carries both a live VIX
+      // reading and a breadth rating (McClellan volume summation index), so no
+      // second external call is needed.
+      const vixSeries = data?.market_volatility_vix?.data;
+      const vix = Array.isArray(vixSeries) && vixSeries.length ? vixSeries[vixSeries.length - 1]?.y : null;
+      const breadthRating = data?.stock_price_breadth?.rating ?? null; // kept for reference only; STEM now uses breadthPct
+      const payload = { score, rating, vix, breadthRating, breadthPct };
+      await admin.from('market_cache').upsert({ cache_key: CACHE_KEY, payload, refreshed_at: new Date().toISOString() });
+      return payload;
+    } catch (e) {
+      console.error('[fear-greed] error:', e);
+      return null;
+    }
+  };
+
+  const { payload } = await serveCached(admin, CACHE_KEY, CACHE_TTL_MS, MAX_STALE_MS, refresh);
+  if (payload) return new Response(JSON.stringify(payload), { headers: jsonHeaders });
+  return new Response(JSON.stringify({ error: 'Failed to fetch data' }), {
+    status: 500, headers: jsonHeaders
+  });
 });
