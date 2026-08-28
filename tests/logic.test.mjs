@@ -1367,7 +1367,7 @@ describe('trade chart symbol and marker placement', () => {
   // PAD/barSpacing undershoots; the closed form below is what lands the same gap
   // at any bar count. Reverting any of this reintroduces the report.
   test('the right-hand air is a pixel amount, not a bar count', () => {
-    assert.match(SOURCE, /const _CHART_RIGHT_PAD_PX = 14/,
+    assert.match(SOURCE, /const _CHART_RIGHT_PAD_PX = 32/,
       'the pad is expressed in pixels');
     assert.match(SOURCE, /function _fitTradeChart[\s\S]{0,600}?ts\.fitContent\(\)/,
       'the fit starts from fitContent, like the screener');

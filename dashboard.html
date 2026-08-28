@@ -9369,7 +9369,13 @@ function _tradeChartSlice(candles, entryTime, minN = _CHART_MIN_SESSIONS, maxN =
 // Widening the range re-spaces the bars, so PAD/bs undershoots: after the fit
 // the plot is bs*count wide, asking for p extra units re-spaces to W/(count+p),
 // and we want p*that == PAD. Solving gives the line below.
-const _CHART_RIGHT_PAD_PX = 14;
+// 14px is the screener's value, and it is right for a card that carries no
+// label on its last bar. Here the newest bar is tagged with its date, and that
+// text is centred on the bar — half of it fell outside the plot, so Lightweight
+// Charts dropped it and the date only appeared once the chart was dragged right
+// to make room. Reported as "there's a date only if I move the chart myself".
+// This is the label's own width, not decoration: shrinking it hides the tag.
+const _CHART_RIGHT_PAD_PX = 32;
 function _fitTradeChart(chart, barCount) {
   const ts = chart.timeScale();
   ts.fitContent();
@@ -9567,7 +9573,10 @@ async function _renderTradeChart(tr) {
     // it — the time axis only had room for two date labels, neither near the
     // right edge, so "is today's candle there" could not be settled by looking.
     const newestBar = bars[bars.length - 1];
-    markers.push({ time: toTime(newestBar.t), position: 'belowBar', color: txtCol,
+    // barCol, not txtCol: the tag is drawn at 10px against the chart background,
+    // and --chart-txt (#5b6b85) is close enough to it to disappear — it was
+    // being rendered and still reported as missing.
+    markers.push({ time: toTime(newestBar.t), position: 'belowBar', color: barCol,
                    shape: 'circle', text: toTime(newestBar.t).slice(5).split('-').reverse().join('.') });
     if (markers.length) series.setMarkers(markers);
 
