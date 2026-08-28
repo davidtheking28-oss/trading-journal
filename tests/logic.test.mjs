@@ -1298,6 +1298,23 @@ describe('trade chart symbol and marker placement', () => {
       'the global td padding must not apply inside the chart');
   });
 
+  // Lightweight Charts spaces the time axis by available room. On a ~45-bar
+  // window it drew exactly two date labels — measured at x=45 and x=306 with the
+  // newest bar at x=527 — so the rightmost date on the axis sat about eighteen
+  // sessions before the last candle and nothing said the right edge was today.
+  // Reading the axis, the chart looks like it ends a week or two ago, which is
+  // what "I can't see the last trading day" meant while every measurement of the
+  // bar's position kept coming back correct. Naming the date in text is the part
+  // that cannot be misread.
+  test('the newest session is named in text, not left to the time axis', () => {
+    assert.match(SOURCE, /<span id="cal-chart-last"/,
+      'the chart label must carry a slot for the newest session date');
+    assert.match(SOURCE, /lastEl\.textContent = ' · ' \+ fmtDate\(new Date\(bars\[bars\.length - 1\]\.t \* 1000\)/,
+      'and it must be filled from the last bar actually drawn');
+    assert.match(SOURCE, /ticksVisible: true/,
+      'the axis ticks must tie its few labels to real bars');
+  });
+
   // Lifted from the screener's _fitChart so the two charts agree. fitContent()
   // alone pins the newest candle against the price scale; the air after it must
   // be in PIXELS, not bars — a 2-bar pad measured 25px on a 40-bar chart and 8px

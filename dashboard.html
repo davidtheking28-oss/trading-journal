@@ -9486,6 +9486,19 @@ async function _renderTradeChart(tr) {
     const all = _mergeBars(history, recent);
     if (!all.length) throw new Error('no bars');
     const bars = _tradeChartSlice(all, _nearestCandleTime(all, tr.entryDate));
+    // Name the newest session in text, next to the chart's own label.
+    // Lightweight Charts spaces the time axis by available room, and on a
+    // ~45-bar window it drew exactly two date labels — measured at x=45 and
+    // x=306 with the newest bar at x=527. So the rightmost date on the axis sat
+    // roughly eighteen sessions before the last candle, and nothing on screen
+    // said the right edge was today. Reading the axis, the chart looks like it
+    // ends a week or two ago — which is what "I can't see the last trading day"
+    // and "you keep going backwards" were describing all along, while every
+    // measurement of the bar's position kept coming back correct.
+    const lastEl = document.getElementById('cal-chart-last');
+    if (lastEl && bars.length) {
+      lastEl.textContent = ' · ' + fmtDate(new Date(bars[bars.length - 1].t * 1000).toISOString().slice(0, 10));
+    }
 
     el.textContent = '';
     el.style.cssText = `width:100%;height:${_CHART_H}px;border-radius:var(--r-md);margin-top:4px;background:var(--chart-bg);overflow:hidden;`;
@@ -9510,7 +9523,9 @@ async function _renderTradeChart(tr) {
       // rightOffset stays 0 like the screener's: the air after the newest bar is
       // added in pixels by _fitTradeChart, and a bar-based offset here would
       // fight it — the two disagree by bar width, which changes with the range.
-      timeScale: { borderColor: axisCol, rightOffset: 0, fixLeftEdge: false, fixRightEdge: false },
+      // ticksVisible draws the marks under the axis labels, so the few dates the
+      // axis has room for are actually tied to a bar instead of floating.
+      timeScale: { borderColor: axisCol, rightOffset: 0, fixLeftEdge: false, fixRightEdge: false, ticksVisible: true },
     });
     _chartInstance = chart;
 
@@ -9606,7 +9621,7 @@ function showCalTradeModal(type, id) {
       </div>
     </div>
     <div>
-      <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);">${t('chart_label')}</span>
+      <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);">${t('chart_label')}<span id="cal-chart-last" style="font-weight:600;color:var(--text2);letter-spacing:0;"></span></span>
       <div id="cal-trade-chart"></div>
     </div>
     ${tr.t&&tr.t.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.06);border-radius:var(--r-md);">
