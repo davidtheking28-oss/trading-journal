@@ -1246,30 +1246,21 @@ describe('trade chart symbol and marker placement', () => {
   test('the window runs past the newest candle so it is not clipped', () => {
     assert.equal(_tradeChartRange(yearCandles, yearCandles[100].t, 10, 40, 2).to, LAST + 2,
       'a trade opened mid-year still shows up to the present, with a gap');
-    assert.ok(_tradeChartRange(yearCandles, yearCandles[LAST - 2].t, 10, 40, 2).to >= LAST + 2,
+    assert.equal(_tradeChartRange(yearCandles, yearCandles[LAST - 2].t, 10, 40, 2).to, LAST + 2,
       'and so does one opened two days ago');
   });
 
-  // A position opened this week has almost no sessions after the entry, so the
-  // arrow and its label landed on the price scale and were clipped to a few
-  // unreadable pixels — reported as "I can't see the entry". Reported against a
-  // real MD trade entered three sessions before the screenshot.
-  test('a just-opened position keeps the entry clear of the right edge', () => {
-    const r = _tradeChartRange(yearCandles, yearCandles[LAST - 3].t, 10, 40, 2, 10);
-    assert.equal(r.to, LAST + 7, 'empty slots are added so the entry has room after it');
-    assert.ok(r.to - (LAST - 3) >= 10, 'at least ten slots must follow the entry');
-    assert.ok(r.to > LAST, 'and the newest bar stays inside the window, not scrolled off');
-  });
-
-  test('room for the entry is never taken from a trade that already has it', () => {
-    const r = _tradeChartRange(yearCandles, yearCandles[100].t, 10, 40, 2, 10);
-    assert.equal(r.to, LAST + 2, 'an older entry gets the plain gap, not a wide empty margin');
-  });
-
-  // Two empty slots still read as the newest bar being part of the price scale
-  // rather than a bar of its own; four is what it took to see it, checked live.
-  test('the default gap after the newest bar is four slots wide', () => {
-    assert.equal(_tradeChartRange(yearCandles, yearCandles[100].t).to, LAST + 4);
+  // A wider gap was tried and rejected. Reserving ten slots after the entry kept
+  // a days-old trade's arrow off the price scale, but it pushed the newest bar
+  // 79px clear of the scale — measured in the user's own browser — and a chart
+  // whose bars stop well before the edge reads as ending before today even
+  // though the bar is drawn there. Asked directly, the user chose the newest bar
+  // against the scale. Widening this again reintroduces that report.
+  test('the gap after the newest bar stays two slots, however recent the entry', () => {
+    assert.equal(_tradeChartRange(yearCandles, yearCandles[100].t).to, LAST + 2,
+      'an old entry: two slots');
+    assert.equal(_tradeChartRange(yearCandles, yearCandles[LAST - 3].t).to, LAST + 2,
+      'a three-session-old entry gets the same two slots, not a wide margin');
   });
 
   test('the window starts before the entry so the setup is visible', () => {
@@ -1280,13 +1271,13 @@ describe('trade chart symbol and marker placement', () => {
   test('a recent entry still gets the full minimum span', () => {
     // Only 5 bars exist after the entry, so padding alone would leave almost no
     // chart. The window has to extend backwards instead.
-    const r = _tradeChartRange(yearCandles, yearCandles[LAST - 5].t, 10, 40, 0, 0);
+    const r = _tradeChartRange(yearCandles, yearCandles[LAST - 5].t, 10, 40, 0);
     assert.equal(r.to, LAST);
     assert.equal(r.to - r.from, 40, 'it widens leftwards rather than shrinking');
   });
 
   test('an entry near the start of the data does not run off the left edge', () => {
-    const r = _tradeChartRange(yearCandles, yearCandles[2].t, 10, 40, 0, 0);
+    const r = _tradeChartRange(yearCandles, yearCandles[2].t, 10, 40, 0);
     assert.equal(r.from, 0, 'padding must not go negative');
     assert.equal(r.to, LAST);
   });

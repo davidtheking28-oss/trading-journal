@@ -9354,7 +9354,7 @@ function _nearestCandleTime(candles, dateStr) {
 // exit (for a closed one), which is what hid the right-hand side of the chart.
 // An exit is by definition not in the future, so it is always inside this
 // window too; there is nothing left to special-case.
-function _tradeChartRange(candles, entryTime, padBars = 10, minBars = 40, rightPad = 4, minAfterEntry = 10) {
+function _tradeChartRange(candles, entryTime, padBars = 10, minBars = 40, rightPad = 2) {
   if (!candles || !candles.length) return null;
   const entryIdx = _nearestCandleIndex(candles, entryTime);
   if (entryIdx == null) return null;
@@ -9362,22 +9362,20 @@ function _tradeChartRange(candles, entryTime, padBars = 10, minBars = 40, rightP
   let lo = entryIdx - padBars;
   // A trade entered a few days ago would otherwise show a handful of bars.
   if (lastIdx - lo < minBars) lo = lastIdx - minBars;
-  // `to` deliberately overshoots the data. At exactly lastIdx the newest bar is
-  // centred on the right edge and gets drawn half-clipped, which reads as "the
-  // last session is missing" — empty slots put it fully on screen with a gap,
-  // the way the screener's cards do. Two slots were still not enough to read it
-  // as a distinct bar rather than part of the price scale; four is what the
-  // user asked for after seeing it live.
+  // `to` overshoots the data by exactly two slots. At lastIdx the newest bar is
+  // centred on the right edge and drawn half-clipped, which reads as "the last
+  // session is missing"; two slots put it fully on screen while keeping it up
+  // against the price scale, the way the screener's cards do.
   //
-  // A position opened in the last few days needs more than that gap: with only
-  // three sessions after the entry, the entry arrow and its label land on top
-  // of the price scale and are clipped to a couple of unreadable pixels — which
-  // is the "I can't see the entry" half of the report. Reserving `minAfterEntry`
-  // slots after the entry pushes it back to roughly two thirds across, and the
-  // extra slots are empty space to the RIGHT of the newest bar, so that bar
-  // stays on screen rather than being scrolled off to make room.
-  const pad = Math.max(rightPad, minAfterEntry - (lastIdx - entryIdx));
-  return { from: Math.max(0, lo), to: lastIdx + pad };
+  // A wider gap was tried and rejected. An earlier version reserved ten slots
+  // after the entry so a position opened three sessions ago would not have its
+  // arrow on top of the price scale — but that pushed the newest bar 79px clear
+  // of the scale, and a chart whose bars stop well before the edge reads as
+  // ending before today even though the bar is drawn. Asked directly, the user
+  // chose the newest bar against the scale over a roomier entry marker; on a
+  // days-old trade the entry arrow does sit close to the right edge, and that is
+  // the accepted trade-off, not an oversight.
+  return { from: Math.max(0, lo), to: lastIdx + rightPad };
 }
 
 // Loaded lazily on first chart render, not at boot — same reasoning as
