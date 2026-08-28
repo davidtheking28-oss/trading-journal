@@ -5490,8 +5490,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         </div>
       </div>
 
-      <div id="vix-stem-insight" style="display:none;"></div>
-
       <!-- Period filter -->
       <div class="month-filter" style="margin-bottom:16px;">
         <label data-i18n="filter_label">סינון:</label>
@@ -8314,53 +8312,6 @@ function computeStemState(vix, breadthPct) {
   return 'orange';
 }
 let _stemState = null, _stemVix = null;
-let _vixSeries = [];
-
-// Historical win-rate-by-market-regime insight (Overview tab). There is no
-// stored history of the real STEM state (computeStemState above only ever
-// runs on today's live VIX+breadth) — breadth has never been logged per day.
-// This is a deliberate, disclosed approximation: VIX alone, against the CNN
-// graphdata endpoint's own ~1-year daily series (already fetched by
-// fear-greed/index.ts for the live reading, extended to return the whole
-// series). Thresholds mirror computeStemState's VIX-only fallback, so a day
-// this bucket calls "orange" is exactly a day the live badge would also have
-// called "orange" without a breadth reading.
-function vixApproxStemBucket(vix) {
-  if (vix == null) return null;
-  if (vix > 30) return 'red';
-  if (vix < 20) return 'green';
-  return 'orange';
-}
-
-// Nearest trading-day VIX close on or before dateMs. The series is daily and
-// sparse on weekends/holidays, so an entry on a day the series has no point
-// for (or before the series starts) reads from the most recent prior close —
-// never from a later one, which would leak future information into the bucket.
-function _nearestVixOnOrBefore(dateMs, vixSeries) {
-  let best = null;
-  for (const p of vixSeries) {
-    if (p.x <= dateMs && (best === null || p.x > best.x)) best = p;
-  }
-  return best ? best.y : null;
-}
-
-// trades: [{entryDate:'YYYY-MM-DD', win:boolean}, ...] — already filtered to
-// closed trades and win-flagged by the caller (calcTotal is DOM/Supabase-free
-// but this stays a pure function so it's testable without pulling that in).
-function vixApproxStemStats(trades, vixSeries) {
-  const buckets = { green: { trades: 0, wins: 0 }, orange: { trades: 0, wins: 0 }, red: { trades: 0, wins: 0 } };
-  if (!Array.isArray(vixSeries) || !vixSeries.length) return buckets;
-  for (const tr of trades) {
-    if (!tr.entryDate) continue;
-    const dateMs = new Date(tr.entryDate + 'T00:00:00Z').getTime();
-    const vix = _nearestVixOnOrBefore(dateMs, vixSeries);
-    const b = vixApproxStemBucket(vix);
-    if (!b) continue;
-    buckets[b].trades++;
-    if (tr.win) buckets[b].wins++;
-  }
-  return buckets;
-}
 
 const STEM_LABELS = { green: 'רגוע', orange: 'זהירות', red: 'לחוץ' };
 const STEM_COLORS = { green: 'var(--green)', orange: 'var(--yellow)', red: 'var(--red)' };
@@ -8388,41 +8339,6 @@ function renderStemBadge() {
     <span class="stem-pill-label">סיכון שוק</span>
     <span class="stem-pill-state">${STEM_LABELS[_stemState]}</span>
     ${vixTxt ? `<span class="stem-pill-vix">${vixTxt}</span>` : ''}`;
-}
-
-// Overview-tab card: win rate by (approximated) market regime at entry —
-// see vixApproxStemStats above for why this is VIX-only, not real STEM.
-// Hidden below a minimum sample per bucket rather than shown with a
-// misleadingly precise win rate off 2 trades.
-const VIX_STEM_MIN_SAMPLE = 5;
-function renderVixStemInsight() {
-  const el = document.getElementById('vix-stem-insight');
-  if (!el) return;
-  if (!_vixSeries.length) { el.style.display = 'none'; return; }
-  const closed = [...db.stocks, ...db.crypto]
-    .filter(t => !t.deleted && isClosed(t) && t.entryDate)
-    .map(t => ({ entryDate: t.entryDate, win: calcTotal(t) > 0 }));
-  const buckets = vixApproxStemStats(closed, _vixSeries);
-  const order = ['green', 'orange', 'red'];
-  const shown = order.filter(k => buckets[k].trades >= VIX_STEM_MIN_SAMPLE);
-  if (!shown.length) { el.style.display = 'none'; return; }
-  const cellHtml = k => {
-    const b = buckets[k];
-    const wr = b.trades ? (b.wins / b.trades * 100) : 0;
-    return `<div style="text-align:center;flex:1">
-      <div style="font-size:11px;font-weight:700;color:${STEM_COLORS[k]}">${STEM_LABELS[k]}</div>
-      <div style="font-size:20px;font-weight:800;color:var(--text)">${wr.toFixed(0)}%</div>
-      <div style="font-size:11px;color:var(--text3)">${b.trades} עסקאות</div>
-    </div>`;
-  };
-  el.style.display = 'block';
-  el.innerHTML = `
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 18px;margin-bottom:16px;">
-      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px;">Win rate לפי סיכון שוק בכניסה
-        <span style="color:var(--text3);font-weight:400;"> — קירוב מ-VIX היסטורי בלבד, לא STEM האמיתי (אין רוחב שוק היסטורי)</span>
-      </div>
-      <div style="display:flex;gap:8px;">${order.map(k => buckets[k].trades >= VIX_STEM_MIN_SAMPLE ? cellHtml(k) : '').join('')}</div>
-    </div>`;
 }
 
 // Warns once a day when the automatic regime reads red (stressed market) but
@@ -9636,6 +9552,24 @@ function _watchTradeChart(chart, barCount, onFit) {
 // share one Supabase project, and this repo briefly shipped a duplicate that
 // overwrote theirs.
 const _CHART_H = 400;
+
+// Resolves once the modal-overlay's own open transition (opacity 0->1,
+// `.modal-overlay.open`, 0.22s) has actually finished, or immediately if it
+// already has (opacity already reads '1' — true for every open after the
+// first modal-body re-render, and for a modal that was already open). The
+// timeout is a safety net only, not the mechanism: `transitionend` not firing
+// at all (element hidden mid-transition, a browser that coalesces it away)
+// must not hang the chart open forever.
+function _waitModalSettled() {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('cal-trade-modal');
+    if (!overlay || getComputedStyle(overlay).opacity === '1') { resolve(); return; }
+    const done = () => { overlay.removeEventListener('transitionend', done); resolve(); };
+    overlay.addEventListener('transitionend', done);
+    setTimeout(done, 300);
+  });
+}
+
 async function _renderTradeChart(tr) {
   const el = document.getElementById('cal-trade-chart');
   if (!el) return;
@@ -9690,6 +9624,23 @@ async function _renderTradeChart(tr) {
     if (lastEl && bars.length) {
       lastEl.textContent = ' · ' + fmtDate(new Date(bars[bars.length - 1].t * 1000).toISOString().slice(0, 10));
     }
+
+    // Every JS-readable signal (getVisibleRange, timeToCoordinate, raw canvas
+    // pixel scans) kept confirming the newest bar was correctly drawn, in
+    // exactly the case where it visually was not — on the user's own screen,
+    // never in a screenshot of it (a screenshot forces a fresh composite; the
+    // live display does not). That combination points at the GPU compositor
+    // showing a stale raster of the canvas from while `.modal`/the overlay was
+    // still mid open-transition, not at anything this script's state can see
+    // or fix after the fact. So don't create the chart until there is no
+    // transition left to be mid of — build it once, already final, instead of
+    // building it early and chasing a repaint.
+    await _waitModalSettled();
+    // The wait can outlast the modal being closed and a different trade's
+    // chart being opened in its place — showCalTradeModal rebuilds
+    // modal-body.innerHTML per open, so a stale render finding a NEW
+    // #cal-trade-chart in the DOM under the same id is exactly that race.
+    if (document.getElementById('cal-trade-chart') !== el) return;
 
     el.textContent = '';
     el.style.cssText = `position:relative;width:100%;height:${_CHART_H}px;border-radius:var(--r-md);margin-top:4px;background:var(--chart-bg);overflow:hidden;`;
@@ -11357,7 +11308,6 @@ async function loadFearGreed() {
     _stemState = computeStemState(cachedFG.payload.vix, cachedFG.payload.breadthPct);
     _stemVix = typeof cachedFG.payload.vix === 'number' ? cachedFG.payload.vix : null;
     renderStemBadge();
-    if (Array.isArray(cachedFG.payload.vixSeries)) { _vixSeries = cachedFG.payload.vixSeries; renderVixStemInsight(); }
   } else {
     _fgPlaceholder(el, 'Fear & Greed');
   }
@@ -11373,7 +11323,6 @@ async function loadFearGreed() {
     _stemVix = typeof d.vix === 'number' ? d.vix : null;
     _maybeShowStemMismatchNotice();
     renderStemBadge();
-    if (Array.isArray(d.vixSeries)) { _vixSeries = d.vixSeries; renderVixStemInsight(); }
     _renderFGWidget(el, d, 'Fear & Greed Index', 'CNN', Date.now());
   } catch {
     // A cached reading on screen is better than replacing it with "Unavailable"
@@ -11517,7 +11466,6 @@ function renderOverview() {
   _updateLivePL();
   _ovLiveTimer = setInterval(() => _updateLivePL(true), 60000);
   _loadPersonalStem();
-  renderVixStemInsight();
 
   applyPrivacy();
 }

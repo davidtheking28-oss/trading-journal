@@ -1186,58 +1186,6 @@ describe('market risk regime', () => {
   });
 });
 
-// Historical win-rate-by-regime insight (Overview tab). There is no stored
-// history of the real STEM state (breadth was never logged per day), so this
-// is a disclosed VIX-only approximation against CNN's own ~1-year daily VIX
-// series — not the same classifier as computeStemState above.
-describe('VIX-only historical regime approximation', () => {
-  const { vixApproxStemBucket, _nearestVixOnOrBefore, vixApproxStemStats } =
-    load('vixApproxStemBucket', '_nearestVixOnOrBefore', 'vixApproxStemStats');
-
-  test('buckets mirror computeStemState\'s VIX-only fallback thresholds', () => {
-    assert.equal(vixApproxStemBucket(35), 'red');
-    assert.equal(vixApproxStemBucket(30.1), 'red');
-    assert.equal(vixApproxStemBucket(15), 'green');
-    assert.equal(vixApproxStemBucket(19.9), 'green');
-    assert.equal(vixApproxStemBucket(25), 'orange');
-    assert.equal(vixApproxStemBucket(null), null);
-  });
-
-  const day = (y, m, d) => Date.UTC(y, m - 1, d);
-  const series = [
-    { x: day(2026, 1, 5), y: 15 },
-    { x: day(2026, 1, 12), y: 32 },
-    { x: day(2026, 1, 20), y: 18 },
-  ];
-
-  test('reads the most recent prior close, never a later one', () => {
-    assert.equal(_nearestVixOnOrBefore(day(2026, 1, 8), series), 15, 'between two points reads the earlier');
-    assert.equal(_nearestVixOnOrBefore(day(2026, 1, 12), series), 32, 'exact match reads its own point');
-    assert.equal(_nearestVixOnOrBefore(day(2026, 1, 1), series), null, 'before the series starts has no reading');
-  });
-
-  test('stats bucket trades by the VIX reading on their entry date and count wins', () => {
-    const trades = [
-      { entryDate: '2026-01-06', win: true },  // reads Jan-5 close (15) -> green
-      { entryDate: '2026-01-07', win: false }, // reads Jan-5 close (15) -> green
-      { entryDate: '2026-01-13', win: true },  // reads Jan-12 close (32) -> red
-    ];
-    const out = vixApproxStemStats(trades, series);
-    assert.deepEqual(out.green, { trades: 2, wins: 1 });
-    assert.deepEqual(out.red, { trades: 1, wins: 1 });
-    assert.deepEqual(out.orange, { trades: 0, wins: 0 });
-  });
-
-  test('a trade with no VIX reading available is skipped, not misbucketed', () => {
-    const out = vixApproxStemStats([{ entryDate: '2020-01-01', win: true }], series);
-    assert.deepEqual(out, { green: { trades: 0, wins: 0 }, orange: { trades: 0, wins: 0 }, red: { trades: 0, wins: 0 } });
-  });
-
-  test('no VIX series at all yields empty buckets rather than throwing', () => {
-    const out = vixApproxStemStats([{ entryDate: '2026-01-06', win: true }], []);
-    assert.deepEqual(out, { green: { trades: 0, wins: 0 }, orange: { trades: 0, wins: 0 }, red: { trades: 0, wins: 0 } });
-  });
-});
 
 // The custom trade-review chart (replaced a TradingView iframe embed whose
 // free tier cannot mark a custom entry/stop/exit price at all). Symbols are
@@ -1427,6 +1375,26 @@ describe('trade chart symbol and marker placement', () => {
       'resize(w,h,true) was tried live and confirmed NOT to force the repaint — do not reintroduce it here');
     assert.match(SOURCE, /chart\.applyOptions\(\{ layout: \{ background: \{ color: layout\.background\.color \} \} \}\)/,
       'setVisibleLogicalRange alone was proven to leave the canvas painted on a stale range — reapplying layout options is what forced the repaint live');
+  });
+
+  // Every JS-readable check — getVisibleRange, timeToCoordinate, a diagnostic
+  // marker, a precise measured click, even the raw pixel table of every recent
+  // bar's own coordinate — kept confirming the newest bar was correctly placed,
+  // in exactly the case where the user's own screen still showed it short of
+  // the edge. A screenshot of the same chart at the same moment always showed
+  // it correctly placed, because capturing a screenshot forces a fresh GPU
+  // composite; the live display does not. That combination is a stale
+  // compositor raster of the canvas from mid the modal's own open transition,
+  // which no post-hoc repaint trick this file tried could reach from script.
+  // The only fix left is to never show a stale frame to begin with: don't
+  // create the chart until the transition has nothing left to be mid of.
+  test('the chart is not created until the modal transition has settled', () => {
+    assert.match(SOURCE, /function _waitModalSettled\(\)/,
+      'creation must wait on the real transition, not a frame-count guess');
+    assert.match(SOURCE, /await _waitModalSettled\(\);/,
+      '_renderTradeChart must await the settle before building anything visual');
+    assert.match(SOURCE, /if \(document\.getElementById\('cal-trade-chart'\) !== el\) return;/,
+      'a stale render outlived by a reopen for a different trade must bail, not paint into a detached element');
   });
 
   // The ohlc endpoint sends no Cache-Control at all, which leaves any layer
