@@ -9354,7 +9354,7 @@ function _nearestCandleTime(candles, dateStr) {
 // exit (for a closed one), which is what hid the right-hand side of the chart.
 // An exit is by definition not in the future, so it is always inside this
 // window too; there is nothing left to special-case.
-function _tradeChartRange(candles, entryTime, padBars = 10, minBars = 40, rightPad = 2) {
+function _tradeChartRange(candles, entryTime, padBars = 10, minBars = 40, rightPad = 2, minAfterEntry = 10) {
   if (!candles || !candles.length) return null;
   const entryIdx = _nearestCandleIndex(candles, entryTime);
   if (entryIdx == null) return null;
@@ -9366,7 +9366,16 @@ function _tradeChartRange(candles, entryTime, padBars = 10, minBars = 40, rightP
   // centred on the right edge and gets drawn half-clipped, which reads as "the
   // last session is missing" — a couple of empty slots put it fully on screen
   // with a gap, the way the screener's cards do.
-  return { from: Math.max(0, lo), to: lastIdx + rightPad };
+  //
+  // A position opened in the last few days needs more than that gap: with only
+  // three sessions after the entry, the entry arrow and its label land on top
+  // of the price scale and are clipped to a couple of unreadable pixels — which
+  // is the "I can't see the entry" half of the report. Reserving `minAfterEntry`
+  // slots after the entry pushes it back to roughly two thirds across, and the
+  // extra slots are empty space to the RIGHT of the newest bar, so that bar
+  // stays on screen rather than being scrolled off to make room.
+  const pad = Math.max(rightPad, minAfterEntry - (lastIdx - entryIdx));
+  return { from: Math.max(0, lo), to: lastIdx + pad };
 }
 
 // Loaded lazily on first chart render, not at boot — same reasoning as
@@ -9383,6 +9392,18 @@ function _loadLightweightCharts() {
     document.head.appendChild(s);
   });
   return _lwcLoadPromise;
+}
+
+// Splices a fresh short series onto a longer, staler one. The two come from the
+// same endpoint at different cache ages, so wherever they overlap the newer one
+// is the correct reading — including the last session, which is the whole point.
+// Keyed on the bar's own timestamp, not on position: the two series start at
+// different dates and a holiday can leave a gap in either.
+function _mergeBars(older, newer) {
+  const by = new Map();
+  (older || []).forEach(b => by.set(b.t, b));
+  (newer || []).forEach(b => by.set(b.t, b));
+  return [...by.values()].sort((a, b) => a.t - b.t);
 }
 
 let _chartInstance = null;
@@ -9449,17 +9470,25 @@ async function _renderTradeChart(tr) {
     const jwt = await _getToken();
     const controller = new AbortController();
     const tid = setTimeout(() => controller.abort(), 12000);
-    // The shared ohlc function holds a 1y series for 6h but a 3mo series for
-    // 45min, so asking for a year leaves today's bar missing for hours after
-    // the open — which reads as the chart being a day behind. Only reach for
-    // 1y when the entry is genuinely older than the 3mo window.
+    const sym = _ohlcSymbol(tr);
+    const getBars = async (range) => {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/ohlc?symbol=${encodeURIComponent(sym)}&range=${range}`,
+        { headers: { 'Authorization': `Bearer ${jwt}` }, signal: controller.signal });
+      return (await res.json()).bars || [];
+    };
+    // The shared ohlc function caches a 1y series for 6h but a 3mo series for
+    // 45min, so the year-long series is routinely a whole session behind:
+    // measured against the live function at 14:00 UTC on 2026-08-28, 1y ended
+    // 08-27 while 3mo ended 08-28. An entry older than the 3mo window still
+    // needs the year of history, so fetch BOTH and let the fresh tail win —
+    // asking for one or the other means either no history or no last session.
     const entryAgeDays = (Date.now() - new Date(tr.entryDate + 'T00:00:00Z').getTime()) / 86400000;
-    const histRange = entryAgeDays > 75 ? '1y' : '3mo';
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/ohlc?symbol=${encodeURIComponent(_ohlcSymbol(tr))}&range=${histRange}`,
-      { headers: { 'Authorization': `Bearer ${jwt}` }, signal: controller.signal });
+    const [recent, history] = await Promise.all([
+      getBars('3mo'),
+      entryAgeDays > 75 ? getBars('1y').catch(() => []) : Promise.resolve([]),
+    ]);
     clearTimeout(tid);
-    const d = await res.json();
-    const bars = d.bars || [];
+    const bars = _mergeBars(history, recent);
     if (!bars.length) throw new Error('no bars');
 
     el.textContent = '';

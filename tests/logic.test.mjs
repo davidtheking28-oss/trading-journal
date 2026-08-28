@@ -1194,6 +1194,7 @@ describe('trade chart symbol and marker placement', () => {
   const { _ohlcSymbol } = load('_ohlcSymbol');
   const { _nearestCandleTime } = load('_nearestCandleTime', '_nearestCandleIndex');
   const { _tradeChartRange } = load('_tradeChartRange', '_nearestCandleIndex');
+  const { _mergeBars } = load('_mergeBars');
 
   test('a stock symbol passes through unchanged', () => {
     assert.equal(_ohlcSymbol({ type: 'stock', symbol: 'aapl' }), 'AAPL');
@@ -1245,8 +1246,24 @@ describe('trade chart symbol and marker placement', () => {
   test('the window runs past the newest candle so it is not clipped', () => {
     assert.equal(_tradeChartRange(yearCandles, yearCandles[100].t, 10, 40, 2).to, LAST + 2,
       'a trade opened mid-year still shows up to the present, with a gap');
-    assert.equal(_tradeChartRange(yearCandles, yearCandles[LAST - 2].t, 10, 40, 2).to, LAST + 2,
+    assert.ok(_tradeChartRange(yearCandles, yearCandles[LAST - 2].t, 10, 40, 2).to >= LAST + 2,
       'and so does one opened two days ago');
+  });
+
+  // A position opened this week has almost no sessions after the entry, so the
+  // arrow and its label landed on the price scale and were clipped to a few
+  // unreadable pixels — reported as "I can't see the entry". Reported against a
+  // real MD trade entered three sessions before the screenshot.
+  test('a just-opened position keeps the entry clear of the right edge', () => {
+    const r = _tradeChartRange(yearCandles, yearCandles[LAST - 3].t, 10, 40, 2, 10);
+    assert.equal(r.to, LAST + 7, 'empty slots are added so the entry has room after it');
+    assert.ok(r.to - (LAST - 3) >= 10, 'at least ten slots must follow the entry');
+    assert.ok(r.to > LAST, 'and the newest bar stays inside the window, not scrolled off');
+  });
+
+  test('room for the entry is never taken from a trade that already has it', () => {
+    const r = _tradeChartRange(yearCandles, yearCandles[100].t, 10, 40, 2, 10);
+    assert.equal(r.to, LAST + 2, 'an older entry gets the plain gap, not a wide empty margin');
   });
 
   test('the window starts before the entry so the setup is visible', () => {
@@ -1257,13 +1274,13 @@ describe('trade chart symbol and marker placement', () => {
   test('a recent entry still gets the full minimum span', () => {
     // Only 5 bars exist after the entry, so padding alone would leave almost no
     // chart. The window has to extend backwards instead.
-    const r = _tradeChartRange(yearCandles, yearCandles[LAST - 5].t, 10, 40, 0);
+    const r = _tradeChartRange(yearCandles, yearCandles[LAST - 5].t, 10, 40, 0, 0);
     assert.equal(r.to, LAST);
     assert.equal(r.to - r.from, 40, 'it widens leftwards rather than shrinking');
   });
 
   test('an entry near the start of the data does not run off the left edge', () => {
-    const r = _tradeChartRange(yearCandles, yearCandles[2].t, 10, 40, 0);
+    const r = _tradeChartRange(yearCandles, yearCandles[2].t, 10, 40, 0, 0);
     assert.equal(r.from, 0, 'padding must not go negative');
     assert.equal(r.to, LAST);
   });
@@ -1299,6 +1316,39 @@ describe('trade chart symbol and marker placement', () => {
   // report. Anchoring from the right (barSpacing + scrollToPosition) instead
   // survives the resize. Reverting to setVisibleLogicalRange brings it back
   // silently: the chart still draws, just at the wrong place.
+  // The shared ohlc function caches a 1y series for 6h and a 3mo series for
+  // 45min, so the long series is routinely a full session behind: measured
+  // against the live function at 14:00 UTC on 2026-08-28, 1y ended 08-27 while
+  // 3mo ended 08-28. A trade opened more than 3 months ago needs the year of
+  // history AND the current session, so the two series are spliced.
+  describe('splicing the fresh tail onto the stale history', () => {
+    const bar = (day, c) => ({ t: Date.UTC(2026, 7, day) / 1000, o: c, h: c, l: c, c, v: 1 });
+
+    test('the fresh series supplies the sessions the stale one is missing', () => {
+      const merged = _mergeBars([bar(24, 1), bar(25, 1), bar(26, 1)], [bar(25, 9), bar(26, 9), bar(27, 9), bar(28, 9)]);
+      assert.equal(merged.length, 5);
+      assert.equal(merged[merged.length - 1].t, bar(28).t, 'the newest session must survive the merge');
+    });
+
+    test('where they overlap the fresher reading wins', () => {
+      const merged = _mergeBars([bar(25, 1)], [bar(25, 9)]);
+      assert.deepEqual(merged.map(b => b.c), [9]);
+    });
+
+    test('the result is ordered by time whatever order the series arrive in', () => {
+      const merged = _mergeBars([bar(27, 1), bar(24, 1)], [bar(26, 9), bar(25, 9)]);
+      assert.deepEqual(merged.map(b => b.t), [bar(24).t, bar(25).t, bar(26).t, bar(27).t]);
+    });
+
+    test('a failed history fetch still yields the recent series', () => {
+      assert.equal(_mergeBars([], [bar(27, 9), bar(28, 9)]).length, 2);
+    });
+
+    test('no bars at all merges to nothing rather than throwing', () => {
+      assert.deepEqual(_mergeBars(null, undefined), []);
+    });
+  });
+
   test('the chart view is anchored to the newest bar, not to a logical range', () => {
     assert.doesNotMatch(SOURCE, /\.setVisibleLogicalRange\(/,
       'the trade chart must not position itself with setVisibleLogicalRange');

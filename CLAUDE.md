@@ -462,6 +462,22 @@ unlike this one — push it manually).
   animation (rAF + a 300ms timer, cleared by `_disposeTradeChart`).
   `_tradeChartRange` is still the single source of the window — the span and the
   right pad are derived from it, so its tests keep covering the geometry.
+- **A just-opened position needs empty slots reserved AFTER the entry.** With
+  only three sessions between the entry and the newest bar, the entry arrow and
+  its label landed on top of the price scale and were clipped to a few
+  unreadable pixels — the "I can't see the entry" half of the report, seen on a
+  real MD trade entered 2026-08-24. `_tradeChartRange`'s `minAfterEntry` widens
+  the window to the RIGHT (past the last bar, into whitespace) rather than
+  scrolling the newest bar off to make room. Measured after the fix: entry at
+  78% across, newest bar at 87%, both clear of the scale.
+- **Both `3mo` and `1y` are fetched for an old entry, and spliced.** The shared
+  `ohlc` caches 1y for 6h and 3mo for 45min, so the year-long series is
+  routinely a whole session behind — measured live at 14:00 UTC on 2026-08-28,
+  1y ended 08-27 while 3mo ended 08-28. Picking one range means either no
+  history or no current session; `_mergeBars` keys on the bar timestamp and lets
+  the fresher series win on overlap. **Don't "simplify" this back to a single
+  request** — and don't fix it by shortening the screener's 1y TTL either, that
+  function serves the screener's own traffic.
 - **The failure is silent** — the chart still draws, just at the wrong place —
   so the guard test asserts on the source: no `.setVisibleLogicalRange(` call
   anywhere. Verified it drops the suite to 141/1 when reverted.
