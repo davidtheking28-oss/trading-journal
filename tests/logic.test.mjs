@@ -11,7 +11,7 @@
 //                   prove the behaviour, only that the guard was not deleted.
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { load, extractFunction } from './harness.mjs';
+import { load, extractFunction, SOURCE } from './harness.mjs';
 
 const { flexParseXML } = load('flexParseXML');
 const { calcPL, calcTotal } = load('calcPL', 'calcTotal');
@@ -1262,5 +1262,22 @@ describe('trade chart symbol and marker placement', () => {
 
   test('no candles yields no range rather than a bogus one', () => {
     assert.equal(_tradeChartRange([], 1_700_000_000, null), null);
+  });
+
+  // Guard, not behavioural: CSS layout cannot be exercised headless. Lightweight
+  // Charts lays itself out with a <table>, and this sheet has a global
+  // `table { width:100%; min-width:1600px }` for the journal's wide data tables.
+  // Without a reset scoped to the chart container, that rule stretched the
+  // chart's internal table to 1600px inside a ~600px container (measured live:
+  // cells of 276/548/776px) and .modal's overflow:hidden clipped the rest, so
+  // the chart rendered at roughly half width. Deleting this reset brings that
+  // back with no error anywhere.
+  test('the chart container resets the global table rules', () => {
+    assert.match(SOURCE, /#cal-trade-chart table\s*\{[^}]*min-width:\s*0/,
+      'the chart table must opt out of the global min-width:1600px');
+    assert.match(SOURCE, /#cal-trade-chart table\s*\{[^}]*width:\s*auto/,
+      'the chart table must opt out of the global width:100%');
+    assert.match(SOURCE, /#cal-trade-chart td[^{]*\{[^}]*padding:\s*0/,
+      'the global td padding must not apply inside the chart');
   });
 });

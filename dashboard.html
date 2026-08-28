@@ -368,6 +368,18 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .expanded-row td { padding: 0 !important; }
   .expanded-inner { padding: 16px 20px; background: rgba(129,140,248,0.03); border-top: 1px solid var(--border2); }
 
+  /* Lightweight Charts builds its whole layout out of a <table>, so the global
+     `table { width:100%; min-width:1600px }` rule near the top of this sheet —
+     written for the journal's wide data tables — was hitting it too. That
+     forced the chart's internal table to 1600px inside a ~600px container:
+     measured live as cells of 276px / 548px / 776px, with .modal's
+     overflow:hidden clipping the excess. The visible result was the chart
+     rendering at roughly half width, pushed to one side. The global td/th
+     padding and border rules land on it as well. Reset all of it here — this
+     is the container the chart is mounted into. */
+  #cal-trade-chart table { width: auto; min-width: 0; border-collapse: separate; border-spacing: 0; font-size: inherit; }
+  #cal-trade-chart td, #cal-trade-chart th { padding: 0; border: 0; }
+
   /* Trade review panel */
   .tr-review {
     padding: 20px 22px;
