@@ -5490,6 +5490,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         </div>
       </div>
 
+      <div id="vix-stem-insight" style="display:none;"></div>
+
       <!-- Period filter -->
       <div class="month-filter" style="margin-bottom:16px;">
         <label data-i18n="filter_label">סינון:</label>
@@ -8312,6 +8314,7 @@ function computeStemState(vix, breadthPct) {
   return 'orange';
 }
 let _stemState = null, _stemVix = null;
+let _vixSeries = [];
 
 // Historical win-rate-by-market-regime insight (Overview tab). There is no
 // stored history of the real STEM state (computeStemState above only ever
@@ -8385,6 +8388,41 @@ function renderStemBadge() {
     <span class="stem-pill-label">סיכון שוק</span>
     <span class="stem-pill-state">${STEM_LABELS[_stemState]}</span>
     ${vixTxt ? `<span class="stem-pill-vix">${vixTxt}</span>` : ''}`;
+}
+
+// Overview-tab card: win rate by (approximated) market regime at entry —
+// see vixApproxStemStats above for why this is VIX-only, not real STEM.
+// Hidden below a minimum sample per bucket rather than shown with a
+// misleadingly precise win rate off 2 trades.
+const VIX_STEM_MIN_SAMPLE = 5;
+function renderVixStemInsight() {
+  const el = document.getElementById('vix-stem-insight');
+  if (!el) return;
+  if (!_vixSeries.length) { el.style.display = 'none'; return; }
+  const closed = [...db.stocks, ...db.crypto]
+    .filter(t => !t.deleted && isClosed(t) && t.entryDate)
+    .map(t => ({ entryDate: t.entryDate, win: calcTotal(t) > 0 }));
+  const buckets = vixApproxStemStats(closed, _vixSeries);
+  const order = ['green', 'orange', 'red'];
+  const shown = order.filter(k => buckets[k].trades >= VIX_STEM_MIN_SAMPLE);
+  if (!shown.length) { el.style.display = 'none'; return; }
+  const cellHtml = k => {
+    const b = buckets[k];
+    const wr = b.trades ? (b.wins / b.trades * 100) : 0;
+    return `<div style="text-align:center;flex:1">
+      <div style="font-size:11px;font-weight:700;color:${STEM_COLORS[k]}">${STEM_LABELS[k]}</div>
+      <div style="font-size:20px;font-weight:800;color:var(--text)">${wr.toFixed(0)}%</div>
+      <div style="font-size:11px;color:var(--text3)">${b.trades} עסקאות</div>
+    </div>`;
+  };
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 18px;margin-bottom:16px;">
+      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px;">Win rate לפי סיכון שוק בכניסה
+        <span style="color:var(--text3);font-weight:400;"> — קירוב מ-VIX היסטורי בלבד, לא STEM האמיתי (אין רוחב שוק היסטורי)</span>
+      </div>
+      <div style="display:flex;gap:8px;">${order.map(k => buckets[k].trades >= VIX_STEM_MIN_SAMPLE ? cellHtml(k) : '').join('')}</div>
+    </div>`;
 }
 
 // Warns once a day when the automatic regime reads red (stressed market) but
@@ -11310,6 +11348,7 @@ async function loadFearGreed() {
     _stemState = computeStemState(cachedFG.payload.vix, cachedFG.payload.breadthPct);
     _stemVix = typeof cachedFG.payload.vix === 'number' ? cachedFG.payload.vix : null;
     renderStemBadge();
+    if (Array.isArray(cachedFG.payload.vixSeries)) { _vixSeries = cachedFG.payload.vixSeries; renderVixStemInsight(); }
   } else {
     _fgPlaceholder(el, 'Fear & Greed');
   }
@@ -11325,6 +11364,7 @@ async function loadFearGreed() {
     _stemVix = typeof d.vix === 'number' ? d.vix : null;
     _maybeShowStemMismatchNotice();
     renderStemBadge();
+    if (Array.isArray(d.vixSeries)) { _vixSeries = d.vixSeries; renderVixStemInsight(); }
     _renderFGWidget(el, d, 'Fear & Greed Index', 'CNN', Date.now());
   } catch {
     // A cached reading on screen is better than replacing it with "Unavailable"
@@ -11468,6 +11508,7 @@ function renderOverview() {
   _updateLivePL();
   _ovLiveTimer = setInterval(() => _updateLivePL(true), 60000);
   _loadPersonalStem();
+  renderVixStemInsight();
 
   applyPrivacy();
 }
