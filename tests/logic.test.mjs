@@ -1530,3 +1530,29 @@ describe('trade chart symbol and marker placement', () => {
   });
 
 });
+
+// Missed-opportunities × trades cross-check — no new field needed, symbol+date
+// is already on both sides.
+describe('missedFollowThrough', () => {
+  const { missedFollowThrough } = load('missedFollowThrough');
+
+  test('finds the earliest trade on the same symbol after the missed date', () => {
+    const missed = { sym: 'AAPL', date: '2026-01-05' };
+    const trades = [
+      { symbol: 'AAPL', entryDate: '2026-02-10' },
+      { symbol: 'AAPL', entryDate: '2026-01-20' },
+      { symbol: 'MSFT', entryDate: '2026-01-10' },
+    ];
+    assert.deepEqual(missedFollowThrough(missed, trades), { symbol: 'AAPL', entryDate: '2026-01-20' });
+  });
+
+  test('a trade on or before the missed date does not count as follow-through', () => {
+    const missed = { sym: 'AAPL', date: '2026-01-05' };
+    const trades = [{ symbol: 'AAPL', entryDate: '2026-01-05' }, { symbol: 'AAPL', entryDate: '2025-12-01' }];
+    assert.equal(missedFollowThrough(missed, trades), null);
+  });
+
+  test('no matching symbol at all returns null', () => {
+    assert.equal(missedFollowThrough({ sym: 'NVDA', date: '2026-01-05' }, [{ symbol: 'AAPL', entryDate: '2026-02-01' }]), null);
+  });
+});

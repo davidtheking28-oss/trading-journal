@@ -16119,6 +16119,17 @@ function missedToggleSection(key) {
   document.getElementById('missed-section-' + key)?.classList.toggle('collapsed');
 }
 
+// Cross-check: was a symbol logged as a missed opportunity eventually traded?
+// Matches by symbol against every entry strictly after the missed date and
+// returns the earliest such trade — a later re-entry doesn't change the
+// answer to "did this ever get acted on". No new field needed: symbol+date
+// is already on both sides.
+function missedFollowThrough(missedItem, trades) {
+  const later = trades.filter(t => t.symbol === missedItem.sym && t.entryDate && t.entryDate > missedItem.date);
+  if (!later.length) return null;
+  return later.reduce((a, b) => a.entryDate < b.entryDate ? a : b);
+}
+
 function missedRenderList(list) {
   const container = document.getElementById('missed-tbody');
   if (!container) return;
@@ -16126,6 +16137,7 @@ function missedRenderList(list) {
     container.innerHTML = `<div class="missed-empty">${t('missed_empty')}</div>`;
     return;
   }
+  const allTrades = [...db.stocks, ...db.crypto].filter(t => !t.deleted);
   const sorted = [...list].sort((a, b) => b.date.localeCompare(a.date));
   // Two-level grouping: year (the archive — every past year starts collapsed
   // so old history doesn't dominate the page but is always one click away)
@@ -16160,6 +16172,8 @@ function missedRenderList(list) {
         <div class="missed-card-price sensitive">$${fmtPrice(r.price)}</div>
         <div class="missed-card-meta">${r.sector ? esc(r.sector)+' · ' : ''}${fmtDate(r.date)}</div>
         <div class="missed-since sensitive" id="missed-since-${r.id}"></div>
+        ${(() => { const ft = missedFollowThrough(r, allTrades); return ft
+          ? `<div class="missed-card-meta" style="color:var(--green)">✓ בסוף נסחר ב-${fmtDate(ft.entryDate)}</div>` : ''; })()}
         ${r.note ? `<div class="missed-card-note">${esc(r.note)}</div>` : ''}
       </div>`;
 
