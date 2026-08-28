@@ -1266,6 +1266,12 @@ describe('trade chart symbol and marker placement', () => {
     assert.equal(r.to, LAST + 2, 'an older entry gets the plain gap, not a wide empty margin');
   });
 
+  // Two empty slots still read as the newest bar being part of the price scale
+  // rather than a bar of its own; four is what it took to see it, checked live.
+  test('the default gap after the newest bar is four slots wide', () => {
+    assert.equal(_tradeChartRange(yearCandles, yearCandles[100].t).to, LAST + 4);
+  });
+
   test('the window starts before the entry so the setup is visible', () => {
     const r = _tradeChartRange(yearCandles, yearCandles[100].t, 10, 40);
     assert.equal(r.from, 90, 'ten bars of context ahead of the entry');

@@ -9354,7 +9354,7 @@ function _nearestCandleTime(candles, dateStr) {
 // exit (for a closed one), which is what hid the right-hand side of the chart.
 // An exit is by definition not in the future, so it is always inside this
 // window too; there is nothing left to special-case.
-function _tradeChartRange(candles, entryTime, padBars = 10, minBars = 40, rightPad = 2, minAfterEntry = 10) {
+function _tradeChartRange(candles, entryTime, padBars = 10, minBars = 40, rightPad = 4, minAfterEntry = 10) {
   if (!candles || !candles.length) return null;
   const entryIdx = _nearestCandleIndex(candles, entryTime);
   if (entryIdx == null) return null;
@@ -9364,8 +9364,10 @@ function _tradeChartRange(candles, entryTime, padBars = 10, minBars = 40, rightP
   if (lastIdx - lo < minBars) lo = lastIdx - minBars;
   // `to` deliberately overshoots the data. At exactly lastIdx the newest bar is
   // centred on the right edge and gets drawn half-clipped, which reads as "the
-  // last session is missing" — a couple of empty slots put it fully on screen
-  // with a gap, the way the screener's cards do.
+  // last session is missing" — empty slots put it fully on screen with a gap,
+  // the way the screener's cards do. Two slots were still not enough to read it
+  // as a distinct bar rather than part of the price scale; four is what the
+  // user asked for after seeing it live.
   //
   // A position opened in the last few days needs more than that gap: with only
   // three sessions after the entry, the entry arrow and its label land on top
