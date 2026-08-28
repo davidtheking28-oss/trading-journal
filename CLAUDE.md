@@ -385,3 +385,41 @@ unlike this one — push it manually).
   the browser learns a broker went silent; `flex_sync_log` itself stays
   RLS-locked with zero policies. Don't open that table up to add a UI signal —
   extend the RPC instead.
+
+## ⚠️ Don't reintroduce these regressions (fixed 2026-08-28, Market Pulse latency)
+
+- **A TTL-only cache is not a cache at this traffic level.** `market_cache` rows
+  were measured **30 minutes old against a 5-minute TTL** — all four of them, at
+  the same time. With a handful of users nobody arrives inside the TTL window, so
+  the row is essentially always expired and *the user* pays the cold path in the
+  foreground: 37 Yahoo tickers for `theme-tracker`, CNN plus 11 sector ETFs for
+  `fear-greed`. **Shortening the TTL makes this worse, not better** — it only
+  widens the window in which a visitor is the one doing the fetching. The fix is
+  `_shared/swr.ts`: a stale row is returned immediately and refreshed via
+  `EdgeRuntime.waitUntil` behind the response.
+- **Every SWR cache needs a `maxStaleMs`, not just a TTL.** Past that bound the
+  data is too old to put on screen and the request blocks on a real fetch. This
+  is also the safety net for a background refresh that gets killed by the
+  runtime's wall-clock/CPU cap (documented Supabase behaviour): the row keeps
+  aging until it crosses the bound and someone refetches in the foreground.
+  Current bounds: fear-greed 6h, theme-tracker 24h, crypto-fear-greed 48h.
+- **`EdgeRuntime.waitUntil` is optional-chained on purpose** —
+  `(globalThis as any).EdgeRuntime?.waitUntil?.(p)`. It exists in hosted Edge
+  Functions, but if it ever doesn't, the absence must degrade to "cache never
+  refreshes in the background", not to a thrown ReferenceError on every request.
+- **`supabase/functions/_shared/*_test.ts` runs as a required CI job** (a
+  `deno test` step next to the Node suite, since the Node suite cannot reach Deno
+  TypeScript). The SWR failure mode is *silent* — flip a comparison or drop the
+  waitUntil and the page still works, it just quietly returns to fetching in the
+  foreground. The "did not wait on the refresh" test holds the refresh promise
+  open and **deadlocks rather than passes** if `serveCached` ever awaits it;
+  don't weaken it to a call-count assertion — `refresh()` is invoked
+  synchronously up to its first await, so a count of 0 is simply wrong (this was
+  caught by the test failing on its first run).
+- **The client keeps the last payload in localStorage** (`_pulseCacheRead` /
+  `_pulseCacheWrite`, prefix `pulse_cache_`) so the two Fear & Greed widgets,
+  the STEM badge that rides the fear-greed payload, and the Market Pulse tab all
+  paint a real number on the first frame. `_ttData` alone was in-memory only, so
+  every page reload sat on "Loading..." for a full cold fan-out. **A failed
+  refresh must not overwrite a cached reading with "Unavailable"** — the catch
+  blocks are conditional on there being no cache.
