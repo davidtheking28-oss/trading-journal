@@ -1357,8 +1357,10 @@ describe('trade chart symbol and marker placement', () => {
       'the container element must be measured directly');
     assert.match(SOURCE, /const bs = Math\.max\(0\.5, \(w - _CHART_RIGHT_PAD_PX\) \/ barCount\)/,
       'bar spacing must be solved from that width, not read back after the fact');
-    assert.match(SOURCE, /ts\.scrollToPosition\(_CHART_RIGHT_PAD_PX \/ bs, false\)/,
-      'the pixel pad must convert to the matching scroll position at that spacing');
+    assert.doesNotMatch(SOURCE, /function _fitTradeChart[\s\S]{0,900}?ts\.scrollToPosition\(/,
+      'scrollToPosition, spammed every pump frame, was proven live to leave the painted canvas disagreeing with the reported range — use a direct setVisibleLogicalRange instead');
+    assert.match(SOURCE, /ts\.setVisibleLogicalRange\(\{ from: 0, to: barCount - 1 \+ pad \}\)/,
+      'the range must be set directly from the bar count and pixel pad, not reached incrementally');
   });
 
   // The ohlc endpoint sends no Cache-Control at all, which leaves any layer

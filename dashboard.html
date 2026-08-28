@@ -9394,7 +9394,15 @@ function _fitTradeChart(chart, barCount) {
   if (!w) return;
   const bs = Math.max(0.5, (w - _CHART_RIGHT_PAD_PX) / barCount);
   ts.applyOptions({ barSpacing: bs });
-  ts.scrollToPosition(_CHART_RIGHT_PAD_PX / bs, false);
+  // scrollToPosition, called every frame of the re-fit pump, was proven live to
+  // leave the reported state and the painted canvas disagreeing: getVisibleLogicalRange()
+  // said the newest bar was in view with proper padding while the rightmost
+  // candle actually on screen was a full week older — repeated non-animated
+  // scrollToPosition calls do not reliably snap synchronously. setVisibleLogicalRange
+  // is a direct, single authoritative call instead of an incremental scroll, so
+  // there is no accumulated/stale scroll state for it to disagree with.
+  const pad = _CHART_RIGHT_PAD_PX / bs;
+  ts.setVisibleLogicalRange({ from: 0, to: barCount - 1 + pad });
 }
 
 // Loaded lazily on first chart render, not at boot — same reasoning as
