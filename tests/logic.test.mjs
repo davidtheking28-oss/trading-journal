@@ -1288,4 +1288,25 @@ describe('trade chart symbol and marker placement', () => {
     assert.match(SOURCE, /#cal-trade-chart td[^{]*\{[^}]*padding:\s*0/,
       'the global td padding must not apply inside the chart');
   });
+
+  // setVisibleLogicalRange resolves both edges against the container width at
+  // the moment it is called and does not re-anchor when that width changes. The
+  // chart is created while the modal is still running its open animation, so it
+  // does change — and the library holds the LEFT edge on resize, letting the
+  // right one drift inward. Measured live on a 252-bar series: asked for
+  // {120, 253} with the last bar at 251, settled on {78, 211} — the newest
+  // session and the entry marker both off screen, which is the exact bug
+  // report. Anchoring from the right (barSpacing + scrollToPosition) instead
+  // survives the resize. Reverting to setVisibleLogicalRange brings it back
+  // silently: the chart still draws, just at the wrong place.
+  test('the chart view is anchored to the newest bar, not to a logical range', () => {
+    assert.doesNotMatch(SOURCE, /\.setVisibleLogicalRange\(/,
+      'the trade chart must not position itself with setVisibleLogicalRange');
+    assert.match(SOURCE, /function _applyChartView[\s\S]{0,600}?scrollToPosition\(rightPad, false\)/,
+      'the view must pin the right edge rightPad slots past the last bar');
+    assert.match(SOURCE, /function _applyChartView[\s\S]{0,600}?barSpacing:\s*Math\.max\(0\.5,\s*w \/ span\)/,
+      'the left edge must come from bar spacing sized to the container');
+    assert.match(SOURCE, /_applyChartView\(chart, range\.to - range\.from, range\.to - \(bars\.length - 1\)\)/,
+      '_tradeChartRange must still be the single source of the window');
+  });
 });

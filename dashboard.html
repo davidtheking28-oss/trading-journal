@@ -9386,10 +9386,43 @@ function _loadLightweightCharts() {
 }
 
 let _chartInstance = null;
+let _chartViewTimers = [];
 function _disposeTradeChart() {
   // autoSize (below) owns its own ResizeObserver internally; chart.remove()
   // tears that down too, nothing left for us to disconnect.
+  _chartViewTimers.forEach(clearTimeout);
+  _chartViewTimers = [];
   if (_chartInstance) { try { _chartInstance.remove(); } catch (e) {} _chartInstance = null; }
+}
+
+// Anchors the view to the NEWEST bar and works backwards, instead of asking for
+// a logical range by index.
+//
+// setVisibleLogicalRange resolves its two edges against the container width at
+// the instant it is called, and then does NOT re-anchor when that width changes
+// (lockVisibleTimeRangeOnResize is off, and on resize the library holds the
+// LEFT edge and lets the right one move). The chart is created while the modal
+// is still running its 0.22s open animation, so the width does change
+// underneath it — and the right edge drifts inward, taking the newest bar and
+// often the entry marker off screen. Measured on a 252-bar series: asked for
+// {120, 253}, settled on {78, 211} with the last bar at 251, which is exactly
+// the "it opens in the middle and I can't see the last session" report.
+//
+// barSpacing + scrollToPosition express the same window from the other side:
+// the right edge is pinned `rightPad` slots past the last bar and the left edge
+// falls where it falls. Re-applied across the animation so the final width wins.
+function _applyChartView(chart, span, rightPad) {
+  const ts = chart.timeScale();
+  const apply = () => {
+    if (_chartInstance !== chart) return;
+    const w = ts.width();
+    if (!w || !span) return;
+    ts.applyOptions({ barSpacing: Math.max(0.5, w / span) });
+    ts.scrollToPosition(rightPad, false);
+  };
+  apply();
+  requestAnimationFrame(apply);
+  _chartViewTimers.push(setTimeout(apply, 300));
 }
 
 // Replaces the earlier TradingView iframe embed: that widget's free tier cannot
@@ -9477,7 +9510,7 @@ async function _renderTradeChart(tr) {
     if (markers.length) series.setMarkers(markers);
 
     const range = _tradeChartRange(bars, entryTime);
-    if (range) chart.timeScale().setVisibleLogicalRange(range);
+    if (range) _applyChartView(chart, range.to - range.from, range.to - (bars.length - 1));
     else chart.timeScale().fitContent();
   } catch (e) {
     el.style.cssText = msgStyle;
