@@ -1195,6 +1195,7 @@ describe('trade chart symbol and marker placement', () => {
   const { _nearestCandleTime } = load('_nearestCandleTime', '_nearestCandleIndex');
   const { _tradeChartRange } = load('_tradeChartRange', '_nearestCandleIndex');
   const { _mergeBars } = load('_mergeBars');
+  const { _tradeChartWindow } = load('_tradeChartWindow', '_tradeChartRange', '_nearestCandleIndex', '_CHART_SESSIONS');
 
   test('a stock symbol passes through unchanged', () => {
     assert.equal(_ohlcSymbol({ type: 'stock', symbol: 'aapl' }), 'AAPL');
@@ -1353,6 +1354,52 @@ describe('trade chart symbol and marker placement', () => {
 
     test('no bars at all merges to nothing rather than throwing', () => {
       assert.deepEqual(_mergeBars(null, undefined), []);
+    });
+  });
+
+  // Every hard-coded window was wrong for somebody: 40 sessions read as "I see
+  // fewer trading days", 60 as "you keep going backwards instead of forwards".
+  // Those pull in opposite directions because it is a preference. The one
+  // invariant across all of them is that the newest session stays on screen.
+  describe('the user-chosen chart window', () => {
+    test('every choice still ends past the newest bar', () => {
+      for (const choice of ['1M', '3M', '6M', 'trade']) {
+        const r = _tradeChartWindow(yearCandles, yearCandles[100].t, choice);
+        assert.equal(r.to, LAST + 2, `${choice} must end two slots past today`);
+      }
+    });
+
+    test('a shorter choice starts later, never earlier', () => {
+      const m1 = _tradeChartWindow(yearCandles, yearCandles[LAST - 3].t, '1M');
+      const m3 = _tradeChartWindow(yearCandles, yearCandles[LAST - 3].t, '3M');
+      const m6 = _tradeChartWindow(yearCandles, yearCandles[LAST - 3].t, '6M');
+      assert.ok(m1.from > m3.from && m3.from > m6.from, 'the windows must nest');
+      assert.equal(m1.from, LAST - 21);
+      assert.equal(m3.from, LAST - 63);
+    });
+
+    test('a fixed choice does not stretch back to an old entry', () => {
+      const r = _tradeChartWindow(yearCandles, yearCandles[10].t, '1M');
+      assert.equal(r.from, LAST - 21, 'picking 1M means 1M, entry or no entry');
+    });
+
+    test("'trade' still spans the entry through today", () => {
+      const r = _tradeChartWindow(yearCandles, yearCandles[100].t, 'trade');
+      assert.equal(r.from, 90, 'ten sessions of context before the entry');
+    });
+
+    test('an unknown or missing choice falls back to 3M, never to nothing', () => {
+      // `lastIdx - undefined` is NaN and every comparison against NaN is false,
+      // so an unknown key would sail through as a window and draw nothing.
+      const r = _tradeChartWindow(yearCandles, yearCandles[100].t, 'nonsense');
+      assert.ok(Number.isFinite(r.from), 'an unknown key must not produce NaN');
+      assert.equal(r.from, LAST - 63, 'it falls back to the 3M window');
+      assert.match(SOURCE, /return \(v === 'trade' \|\| _CHART_SESSIONS\[v\]\) \? v : '3M'/,
+        'the stored choice is validated before use');
+    });
+
+    test('no candles yields no window rather than a bogus one', () => {
+      assert.equal(_tradeChartWindow([], 1_700_000_000, '3M'), null);
     });
   });
 

@@ -9384,6 +9384,34 @@ function _tradeChartRange(candles, entryTime, padBars = 10, minBars = 60, rightP
   return { from: Math.max(0, lo), to: lastIdx + rightPad };
 }
 
+// How far back the chart window reaches, in trading sessions. Every version of
+// this that hard-coded one number was wrong for somebody: 40 sessions read as
+// "I see fewer trading days", 60 read as "you keep going backwards in trading
+// days instead of forwards". The two complaints pull in opposite directions
+// because they are a preference, not a bug, so the number belongs to the user.
+// 'trade' is the original behaviour — entry through today, whatever that spans.
+const _CHART_SESSIONS = { '1M': 21, '3M': 63, '6M': 126 };
+const _CHART_RANGE_KEY = 'tj_chart_range';
+function _chartRangeChoice() {
+  let v; try { v = localStorage.getItem(_CHART_RANGE_KEY); } catch (e) {}
+  return (v === 'trade' || _CHART_SESSIONS[v]) ? v : '3M';
+}
+
+// The window for a given choice. Always ends `rightPad` slots past the newest
+// bar — the newest session stays against the price scale in every mode, which
+// is the one thing that was never in question.
+function _tradeChartWindow(candles, entryTime, choice, rightPad = 2) {
+  if (!candles || !candles.length) return null;
+  if (choice === 'trade') return _tradeChartRange(candles, entryTime, 10, 60, rightPad);
+  // An unknown key would make this `lastIdx - undefined` — NaN, and every
+  // comparison against NaN is false, so it would sail through as a window and
+  // draw nothing. Same failure mode as the malformed cache entries in
+  // partitionByAge; fall back rather than trust the caller.
+  const n = _CHART_SESSIONS[choice] || _CHART_SESSIONS['3M'];
+  const lastIdx = candles.length - 1;
+  return { from: Math.max(0, lastIdx - n), to: lastIdx + rightPad };
+}
+
 // Loaded lazily on first chart render, not at boot — same reasoning as
 // ttLoad() not running on login: most sessions never open a trade review.
 let _lwcLoadPromise = null;
@@ -9516,10 +9544,14 @@ async function _renderTradeChart(tr) {
     // 08-27 while 3mo ended 08-28. An entry older than the 3mo window still
     // needs the year of history, so fetch BOTH and let the fresh tail win —
     // asking for one or the other means either no history or no last session.
+    // The 6M window also needs more than the 3mo series holds, so it pulls the
+    // year too — otherwise picking 6M would silently show three months.
+    const choice = _chartRangeChoice();
     const entryAgeDays = (Date.now() - new Date(tr.entryDate + 'T00:00:00Z').getTime()) / 86400000;
+    const needYear = entryAgeDays > 75 || choice === '6M' || choice === 'trade';
     const [recent, history] = await Promise.all([
       getBars('3mo'),
-      entryAgeDays > 75 ? getBars('1y').catch(() => []) : Promise.resolve([]),
+      needYear ? getBars('1y').catch(() => []) : Promise.resolve([]),
     ]);
     clearTimeout(tid);
     const bars = _mergeBars(history, recent);
@@ -9572,13 +9604,36 @@ async function _renderTradeChart(tr) {
     if (exitTime) markers.push({ time: toTime(exitTime), position: 'aboveBar', color: calcTotal(tr) >= 0 ? green : red, shape: 'arrowDown', text: t('tile_exit') });
     if (markers.length) series.setMarkers(markers);
 
-    const range = _tradeChartRange(bars, entryTime);
+    const range = _tradeChartWindow(bars, entryTime, choice);
     if (range) _applyChartView(chart, range.to - range.from, range.to - (bars.length - 1));
     else chart.timeScale().fitContent();
   } catch (e) {
     el.style.cssText = msgStyle;
     el.textContent = t('chart_unavailable');
   }
+}
+
+// The switcher above the chart. Re-renders rather than just re-zooming, because
+// 6M and 'trade' may need the year-long series that a 1M/3M render never asked
+// for.
+function _renderChartRanges(tr) {
+  const box = document.getElementById('cal-chart-ranges');
+  if (!box) return;
+  const active = _chartRangeChoice();
+  box.innerHTML = '';
+  [['1M', '1M'], ['3M', '3M'], ['6M', '6M'], ['trade', t('chart_range_trade')]].forEach(([key, label]) => {
+    const b = document.createElement('button');
+    b.textContent = label;
+    b.style.cssText = `font:inherit;font-size:10px;font-weight:700;letter-spacing:0.4px;padding:3px 8px;cursor:pointer;`
+      + `border-radius:var(--r-pill);border:1px solid ${key === active ? 'var(--accent)' : 'var(--border2)'};`
+      + `background:${key === active ? 'var(--accent-glow)' : 'transparent'};color:${key === active ? 'var(--accent)' : 'var(--text3)'};`;
+    b.onclick = () => {
+      try { localStorage.setItem(_CHART_RANGE_KEY, key); } catch (e) {}
+      _renderChartRanges(tr);
+      _renderTradeChart(tr);
+    };
+    box.appendChild(b);
+  });
 }
 
 function showCalTradeModal(type, id) {
@@ -9645,7 +9700,10 @@ function showCalTradeModal(type, id) {
       </div>
     </div>
     <div>
-      <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);">${t('chart_label')}</span>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);">${t('chart_label')}</span>
+        <div id="cal-chart-ranges" style="display:flex;gap:4px;"></div>
+      </div>
       <div id="cal-trade-chart"></div>
     </div>
     ${tr.t&&tr.t.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.06);border-radius:var(--r-md);">
@@ -9663,6 +9721,7 @@ function showCalTradeModal(type, id) {
   // The chart container is display:none until the .open class is applied
   // above, so its width is 0 until this line runs - rendering earlier would
   // size the chart to nothing.
+  _renderChartRanges(tr);
   _renderTradeChart(tr);
 }
 
@@ -10702,7 +10761,7 @@ const LANG_STRINGS = {
     tile_entry:'Entry', tile_stop:'Stop', tile_exit:'Exit',
     tile_partial_tgt:'Partial Targets', tile_market_cond:'Market Condition',
     tile_no_targets:'No targets', tile_from_entry:'% from entry',
-    chart_label:'Chart', chart_loading:'Loading chart...', chart_unavailable:'Chart unavailable',
+    chart_label:'Chart', chart_loading:'Loading chart...', chart_unavailable:'Chart unavailable', chart_range_trade:'Trade',
     tile_keep:'What to keep', tile_improve:'What to improve',
     tile_no_notes:'No notes recorded',
     trades:'trades', no_trades:'No trades for this period',
@@ -10834,7 +10893,7 @@ const LANG_STRINGS = {
     tile_entry:'כניסה', tile_stop:'סטופ', tile_exit:'יציאה',
     tile_partial_tgt:'יעדים חלקיים', tile_market_cond:'תנאי שוק',
     tile_no_targets:'אין יעדים', tile_from_entry:'% מהכניסה',
-    chart_label:'גרף', chart_loading:'טוען גרף...', chart_unavailable:'לא ניתן לטעון את הגרף',
+    chart_label:'גרף', chart_loading:'טוען גרף...', chart_unavailable:'לא ניתן לטעון את הגרף', chart_range_trade:'עסקה',
     tile_keep:'מה לשמר', tile_improve:'מה לשפר',
     tile_no_notes:'לא נרשמו הערות',
     trades:'עסקאות', no_trades:'אין עסקאות להצגה בתקופה זו',
