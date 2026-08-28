@@ -1185,3 +1185,46 @@ describe('market risk regime', () => {
       'without breadth the calm-VIX half alone must not clear the bar');
   });
 });
+
+// The custom trade-review chart (replaced a TradingView iframe embed whose
+// free tier cannot mark a custom entry/stop/exit price at all). Symbols are
+// mapped to Yahoo's ticker convention, and the entry/exit marker is placed on
+// the candle nearest the trade's date.
+describe('trade chart symbol and marker placement', () => {
+  const { _ohlcSymbol } = load('_ohlcSymbol');
+  const { _nearestCandleTime } = load('_nearestCandleTime');
+
+  test('a stock symbol passes through unchanged', () => {
+    assert.equal(_ohlcSymbol({ type: 'stock', symbol: 'aapl' }), 'AAPL');
+  });
+
+  test('a Bybit perp is rewritten to Yahoo -USD form', () => {
+    assert.equal(_ohlcSymbol({ type: 'crypto', symbol: 'XRPUSDT.P' }), 'XRP-USD');
+  });
+
+  test('a Bybit spot pair is rewritten the same way', () => {
+    assert.equal(_ohlcSymbol({ type: 'crypto', symbol: 'btcusdt' }), 'BTC-USD');
+  });
+
+  const candles = [
+    { t: Date.parse('2026-02-20T00:00:00Z') / 1000 },
+    { t: Date.parse('2026-02-23T00:00:00Z') / 1000 }, // a Monday after a weekend gap
+    { t: Date.parse('2026-02-24T00:00:00Z') / 1000 },
+  ];
+
+  test('an exact date match wins outright', () => {
+    assert.equal(_nearestCandleTime(candles, '2026-02-24'), candles[2].t);
+  });
+
+  test('a weekend trade date snaps to the nearest real trading day', () => {
+    // 2026-02-22 is a Sunday; no candle exists for it.
+    assert.equal(_nearestCandleTime(candles, '2026-02-22'), candles[1].t,
+      'Monday the 23rd is one day away; Friday the 20th is two');
+  });
+
+  test('no candles or no date yields nothing rather than a wrong guess', () => {
+    assert.equal(_nearestCandleTime([], '2026-02-24'), null);
+    assert.equal(_nearestCandleTime(candles, null), null);
+    assert.equal(_nearestCandleTime(candles, ''), null);
+  });
+});

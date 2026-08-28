@@ -48,7 +48,7 @@
            form-action 'none';
            base-uri    'none';
            object-src  'none';
-           frame-src   https://davidtheking28-oss.github.io https://s.tradingview.com;
+           frame-src   https://davidtheking28-oss.github.io;
            upgrade-insecure-requests;">
 <!-- Referrer Policy: לא לדלוף URL בבקשות -->
 <meta name="referrer" content="no-referrer">
@@ -9286,35 +9286,120 @@ function showCalDayModal(ds) {
   document.getElementById('cal-trade-modal').classList.add('open');
 }
 
-// Maps a trade to a TradingView symbol. Deliberately not an exchange-lookup
-// table — stocks pass the plain ticker through and let TradingView's own
-// resolution pick the primary listing. Crypto reconstructs the Bybit pair the
-// same way _cleanSectorSym already strips the USDT/.P perp suffix, since sync
-// trades in this app are Bybit.
-function _tvChartSymbol(tr) {
+// Maps a trade to a Yahoo chart ticker (the ohlc edge function's source).
+// Deliberately not an exchange-lookup table — stocks pass the plain ticker
+// through. Crypto is Bybit-style in this app (BTCUSDT, XRPUSDT.P); Yahoo uses
+// its own -USD convention, so the USDT/.P suffix is stripped the same way
+// _cleanSectorSym already does and -USD is appended.
+function _ohlcSymbol(tr) {
   const raw = (tr.symbol || '').trim().toUpperCase().replace(/[^A-Z0-9._\-]/g, '');
   if (tr.type !== 'crypto') return raw;
-  const isPerp = raw.endsWith('.P');
-  const base = raw.replace(/\.P$/, '');
-  const pair = base.endsWith('USDT') ? base : base + 'USDT';
-  return `BYBIT:${pair}${isPerp ? '.P' : ''}`;
+  const base = raw.replace(/\.P$/, '').replace(/USDT$/, '');
+  return `${base}-USD`;
 }
 
-// The widget reads its config from the URL FRAGMENT as JSON
-// (`JSON.parse(decodeURIComponent(location.hash.substring(1)))`), not from
-// query params — a query-string src loads the page with no config at all and
-// renders nothing.
-function _tvChartSrc(tr) {
-  const cfg = {
-    symbol: _tvChartSymbol(tr),
-    interval: 'D',
-    theme: document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark',
-    style: '1',
-    locale: 'he_IL',
-    hide_side_toolbar: true,
-    save_image: false,
-  };
-  return `https://s.tradingview.com/embed-widget/advanced-chart/#${encodeURIComponent(JSON.stringify(cfg))}`;
+// Finds the candle closest to a YYYY-MM-DD trade date, for placing the
+// entry/exit marker. Not an exact match on purpose — a trade date carries no
+// exchange time, and a weekend or market holiday can shift the nearest real
+// trading candle by a day or more.
+function _nearestCandleTime(candles, dateStr) {
+  if (!candles || !candles.length || !dateStr) return null;
+  const target = new Date(dateStr + 'T00:00:00Z').getTime() / 1000;
+  if (!Number.isFinite(target)) return null;
+  let best = candles[0].t, bestDiff = Math.abs(candles[0].t - target);
+  for (let i = 1; i < candles.length; i++) {
+    const diff = Math.abs(candles[i].t - target);
+    if (diff < bestDiff) { bestDiff = diff; best = candles[i].t; }
+  }
+  return best;
+}
+
+// Loaded lazily on first chart render, not at boot — same reasoning as
+// ttLoad() not running on login: most sessions never open a trade review.
+let _lwcLoadPromise = null;
+function _loadLightweightCharts() {
+  if (window.LightweightCharts) return Promise.resolve();
+  if (_lwcLoadPromise) return _lwcLoadPromise;
+  _lwcLoadPromise = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js';
+    s.onload = resolve;
+    s.onerror = () => { _lwcLoadPromise = null; reject(new Error('chart library failed to load')); };
+    document.head.appendChild(s);
+  });
+  return _lwcLoadPromise;
+}
+
+let _chartInstance = null, _chartResizeObs = null;
+function _disposeTradeChart() {
+  if (_chartResizeObs) { _chartResizeObs.disconnect(); _chartResizeObs = null; }
+  if (_chartInstance) { try { _chartInstance.remove(); } catch (e) {} _chartInstance = null; }
+}
+
+// Replaces the earlier TradingView iframe embed: that widget's free tier
+// cannot mark a custom entry/stop/exit price on the chart at all (only
+// TradingView's paid Charting Library supports that), which is the whole
+// point of showing a chart on a trade review. This builds the candles from
+// the ohlc edge function (free Yahoo data, cached) using TradingView's own
+// free, open-source Lightweight Charts library, so real price lines and
+// entry/exit markers are possible.
+async function _renderTradeChart(tr) {
+  const el = document.getElementById('cal-trade-chart');
+  if (!el) return;
+  _disposeTradeChart();
+  el.textContent = t('chart_loading');
+  el.style.cssText = 'width:100%;height:400px;border-radius:var(--r-md);margin-top:4px;background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px;';
+  try {
+    await _loadLightweightCharts();
+    const jwt = await _getToken();
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 12000);
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/ohlc?symbol=${encodeURIComponent(_ohlcSymbol(tr))}`,
+      { headers: { 'Authorization': `Bearer ${jwt}` }, signal: controller.signal });
+    clearTimeout(tid);
+    const d = await res.json();
+    const candles = d.candles || [];
+    if (!candles.length) throw new Error('no candles');
+
+    el.textContent = '';
+    el.style.cssText = 'width:100%;height:400px;border-radius:var(--r-md);margin-top:4px;';
+    const cs = getComputedStyle(document.documentElement);
+    const col = (name, fallback) => (cs.getPropertyValue(name) || fallback).trim();
+    const green = col('--green', '#2dd4a0'), red = col('--red', '#ff6b8a'),
+          accent = col('--accent', '#818cf8'), text3 = col('--text3', '#8896a8'),
+          gridColor = 'rgba(148,163,184,0.09)';
+
+    const chart = LightweightCharts.createChart(el, {
+      width: el.clientWidth, height: 400,
+      layout: { background: { color: 'transparent' }, textColor: text3 },
+      grid: { vertLines: { color: gridColor }, horzLines: { color: gridColor } },
+      rightPriceScale: { borderColor: gridColor },
+      timeScale: { borderColor: gridColor },
+    });
+    _chartInstance = chart;
+    const series = chart.addCandlestickSeries({
+      upColor: green, downColor: red, borderVisible: false, wickUpColor: green, wickDownColor: red,
+    });
+    series.setData(candles.map(c => ({ time: c.t, open: c.o, high: c.h, low: c.l, close: c.c })));
+
+    if (tr.entryPrice) series.createPriceLine({ price: +tr.entryPrice, color: accent, lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: t('tile_entry') });
+    if (tr.stop) series.createPriceLine({ price: +tr.stop, color: red, lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: t('tile_stop') });
+    if (tr.exitPrice) series.createPriceLine({ price: +tr.exitPrice, color: green, lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: t('tile_exit') });
+
+    const markers = [];
+    const entryTime = _nearestCandleTime(candles, tr.entryDate);
+    if (entryTime) markers.push({ time: entryTime, position: 'belowBar', color: accent, shape: 'arrowUp', text: t('tile_entry') });
+    const exitTime = tr.closeDate ? _nearestCandleTime(candles, tr.closeDate) : null;
+    if (exitTime) markers.push({ time: exitTime, position: 'aboveBar', color: calcTotal(tr) >= 0 ? green : red, shape: 'arrowDown', text: t('tile_exit') });
+    if (markers.length) series.setMarkers(markers.sort((a, b) => a.time - b.time));
+
+    chart.timeScale().fitContent();
+    _chartResizeObs = new ResizeObserver(() => chart.applyOptions({ width: el.clientWidth }));
+    _chartResizeObs.observe(el);
+  } catch (e) {
+    el.style.cssText = 'width:100%;height:400px;border-radius:var(--r-md);margin-top:4px;background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px;';
+    el.textContent = t('chart_unavailable');
+  }
 }
 
 function showCalTradeModal(type, id) {
@@ -9381,9 +9466,8 @@ function showCalTradeModal(type, id) {
       </div>
     </div>
     <div>
-      <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);">TradingView</span>
-      <iframe src="${_tvChartSrc(tr)}"
-        style="width:100%;height:400px;border:0;border-radius:var(--r-md);margin-top:4px;" loading="lazy"></iframe>
+      <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);">${t('chart_label')}</span>
+      <div id="cal-trade-chart"></div>
     </div>
     ${tr.t&&tr.t.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.06);border-radius:var(--r-md);">
       <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);width:100%;margin-bottom:4px;">${t('tile_partial_tgt')}</span>
@@ -9397,10 +9481,15 @@ function showCalTradeModal(type, id) {
   </div>`;
   document.getElementById('cal-trade-modal').classList.add('open');
   applyPrivacy();
+  // The chart container is display:none until the .open class is applied
+  // above, so its width is 0 until this line runs - rendering earlier would
+  // size the chart to nothing.
+  _renderTradeChart(tr);
 }
 
 function closeCalTradeModal() {
   document.getElementById('cal-trade-modal').classList.remove('open');
+  _disposeTradeChart();
 }
 
 // ══════════════════════════════════════════════
@@ -10434,6 +10523,7 @@ const LANG_STRINGS = {
     tile_entry:'Entry', tile_stop:'Stop', tile_exit:'Exit',
     tile_partial_tgt:'Partial Targets', tile_market_cond:'Market Condition',
     tile_no_targets:'No targets', tile_from_entry:'% from entry',
+    chart_label:'Chart', chart_loading:'Loading chart...', chart_unavailable:'Chart unavailable',
     tile_keep:'What to keep', tile_improve:'What to improve',
     tile_no_notes:'No notes recorded',
     trades:'trades', no_trades:'No trades for this period',
@@ -10565,6 +10655,7 @@ const LANG_STRINGS = {
     tile_entry:'כניסה', tile_stop:'סטופ', tile_exit:'יציאה',
     tile_partial_tgt:'יעדים חלקיים', tile_market_cond:'תנאי שוק',
     tile_no_targets:'אין יעדים', tile_from_entry:'% מהכניסה',
+    chart_label:'גרף', chart_loading:'טוען גרף...', chart_unavailable:'לא ניתן לטעון את הגרף',
     tile_keep:'מה לשמר', tile_improve:'מה לשפר',
     tile_no_notes:'לא נרשמו הערות',
     trades:'עסקאות', no_trades:'אין עסקאות להצגה בתקופה זו',

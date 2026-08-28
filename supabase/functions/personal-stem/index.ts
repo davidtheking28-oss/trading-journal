@@ -16,7 +16,9 @@
 // negative 5-day return is the signal — a high ratio means the trader's own
 // book is struggling regardless of what the index is doing.
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
-import { partitionByAge, pruneMap, type StemMap } from '../_shared/stem_cache.ts';
+import { partitionByAge, pruneMap, type SymCacheMap } from '../_shared/sym_cache.ts';
+
+const isNumEntry = (v: number) => typeof v === 'number';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -113,14 +115,14 @@ Deno.serve(async (req: Request) => {
 
   const { data: row } = await admin
     .from('market_cache').select('payload').eq('cache_key', MAP_KEY).maybeSingle();
-  const map: StemMap = { ...((row?.payload as StemMap) ?? {}) };
+  const map: SymCacheMap<number> = { ...((row?.payload as SymCacheMap<number>) ?? {}) };
 
-  const { missing, stale } = partitionByAge(map, symbols, SYM_TTL_MS, SYM_MAX_STALE_MS);
+  const { missing, stale } = partitionByAge(map, symbols, SYM_TTL_MS, SYM_MAX_STALE_MS, Date.now(), isNumEntry);
 
   const fetchInto = async (list: string[]) => {
     if (!list.length) return;
     const rs = await Promise.all(list.map(fetch5dReturn));
-    const patch: StemMap = {};
+    const patch: SymCacheMap<number> = {};
     list.forEach((s, i) => { const v = rs[i]; if (v !== null) patch[s] = { r: v, ts: Date.now() }; });
     if (!Object.keys(patch).length) return;
     Object.assign(map, patch);
@@ -129,7 +131,7 @@ Deno.serve(async (req: Request) => {
     // symbols another request cached in the meantime.
     const { data: cur } = await admin
       .from('market_cache').select('payload').eq('cache_key', MAP_KEY).maybeSingle();
-    const merged = pruneMap({ ...((cur?.payload as StemMap) ?? {}), ...patch }, SYM_MAX_STALE_MS);
+    const merged = pruneMap({ ...((cur?.payload as SymCacheMap<number>) ?? {}), ...patch }, SYM_MAX_STALE_MS);
     await admin.from('market_cache').upsert({ cache_key: MAP_KEY, payload: merged, refreshed_at: new Date().toISOString() });
   };
 

@@ -135,6 +135,7 @@ jobs:
           supabase functions deploy ibkr-alert        --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
           supabase functions deploy push-daily        --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
           supabase functions deploy personal-stem     --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
+          supabase functions deploy ohlc              --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
 
       # The step above greps this same file, so it can only prove the deploy
       # line was written — not that the function actually exists on the server.
