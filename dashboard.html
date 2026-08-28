@@ -9354,7 +9354,7 @@ function _nearestCandleTime(candles, dateStr) {
 // exit (for a closed one), which is what hid the right-hand side of the chart.
 // An exit is by definition not in the future, so it is always inside this
 // window too; there is nothing left to special-case.
-function _tradeChartRange(candles, entryTime, padBars = 10, minBars = 40) {
+function _tradeChartRange(candles, entryTime, padBars = 10, minBars = 40, rightPad = 2) {
   if (!candles || !candles.length) return null;
   const entryIdx = _nearestCandleIndex(candles, entryTime);
   if (entryIdx == null) return null;
@@ -9362,7 +9362,11 @@ function _tradeChartRange(candles, entryTime, padBars = 10, minBars = 40) {
   let lo = entryIdx - padBars;
   // A trade entered a few days ago would otherwise show a handful of bars.
   if (lastIdx - lo < minBars) lo = lastIdx - minBars;
-  return { from: Math.max(0, lo), to: lastIdx };
+  // `to` deliberately overshoots the data. At exactly lastIdx the newest bar is
+  // centred on the right edge and gets drawn half-clipped, which reads as "the
+  // last session is missing" — a couple of empty slots put it fully on screen
+  // with a gap, the way the screener's cards do.
+  return { from: Math.max(0, lo), to: lastIdx + rightPad };
 }
 
 // Loaded lazily on first chart render, not at boot — same reasoning as
@@ -9412,8 +9416,13 @@ async function _renderTradeChart(tr) {
     const jwt = await _getToken();
     const controller = new AbortController();
     const tid = setTimeout(() => controller.abort(), 12000);
-    // range=1y so a trade opened up to a year ago still has its entry candle.
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/ohlc?symbol=${encodeURIComponent(_ohlcSymbol(tr))}&range=1y`,
+    // The shared ohlc function holds a 1y series for 6h but a 3mo series for
+    // 45min, so asking for a year leaves today's bar missing for hours after
+    // the open — which reads as the chart being a day behind. Only reach for
+    // 1y when the entry is genuinely older than the 3mo window.
+    const entryAgeDays = (Date.now() - new Date(tr.entryDate + 'T00:00:00Z').getTime()) / 86400000;
+    const histRange = entryAgeDays > 75 ? '1y' : '3mo';
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/ohlc?symbol=${encodeURIComponent(_ohlcSymbol(tr))}&range=${histRange}`,
       { headers: { 'Authorization': `Bearer ${jwt}` }, signal: controller.signal });
     clearTimeout(tid);
     const d = await res.json();

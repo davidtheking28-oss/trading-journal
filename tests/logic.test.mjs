@@ -1239,10 +1239,13 @@ describe('trade chart symbol and marker placement', () => {
   // The reported bug, twice over: the window used to end at the entry (open
   // trade) or at the exit (closed trade), so the newest bars — where the
   // current price is — were off-screen. It must always end at the last candle.
-  test('the window always ends at the newest candle', () => {
-    assert.equal(_tradeChartRange(yearCandles, yearCandles[100].t).to, LAST,
-      'a trade opened mid-year still shows up to the present');
-    assert.equal(_tradeChartRange(yearCandles, yearCandles[LAST - 2].t).to, LAST,
+  // The newest bar must be fully drawn, not centred on the right edge where it
+  // gets half-clipped and reads as a missing session — so `to` overshoots the
+  // data by a couple of empty slots.
+  test('the window runs past the newest candle so it is not clipped', () => {
+    assert.equal(_tradeChartRange(yearCandles, yearCandles[100].t, 10, 40, 2).to, LAST + 2,
+      'a trade opened mid-year still shows up to the present, with a gap');
+    assert.equal(_tradeChartRange(yearCandles, yearCandles[LAST - 2].t, 10, 40, 2).to, LAST + 2,
       'and so does one opened two days ago');
   });
 
@@ -1254,13 +1257,13 @@ describe('trade chart symbol and marker placement', () => {
   test('a recent entry still gets the full minimum span', () => {
     // Only 5 bars exist after the entry, so padding alone would leave almost no
     // chart. The window has to extend backwards instead.
-    const r = _tradeChartRange(yearCandles, yearCandles[LAST - 5].t, 10, 40);
+    const r = _tradeChartRange(yearCandles, yearCandles[LAST - 5].t, 10, 40, 0);
     assert.equal(r.to, LAST);
     assert.equal(r.to - r.from, 40, 'it widens leftwards rather than shrinking');
   });
 
   test('an entry near the start of the data does not run off the left edge', () => {
-    const r = _tradeChartRange(yearCandles, yearCandles[2].t, 10, 40);
+    const r = _tradeChartRange(yearCandles, yearCandles[2].t, 10, 40, 0);
     assert.equal(r.from, 0, 'padding must not go negative');
     assert.equal(r.to, LAST);
   });
