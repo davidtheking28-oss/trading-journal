@@ -1311,12 +1311,29 @@ describe('trade chart symbol and marker placement', () => {
       'and fall back to the newest bar when nothing is hovered');
     assert.match(SOURCE, /const newestBar = bars\[bars\.length - 1\]/,
       'the default must come from the last bar actually drawn');
-    assert.match(SOURCE, /markers\.push\(\{ time: toTime\(newestBar\.t\), position: 'belowBar'/,
-      'and the newest bar must be labelled on the plot, not only beside it');
     assert.match(SOURCE, /position:relative;width:100%;height:\$\{_CHART_H\}px/,
       'the container must be a positioning context or the readout escapes it');
     assert.match(SOURCE, /el\.addEventListener\('mouseleave', \(\) => showBar\(newestPoint\)\)/,
       'crosshairMove does not always fire on the way out, so the readout would stick');
+  });
+
+  // A chart-native marker for the newest bar was tried first and technically
+  // rendered — confirmed live, magnified 3x, the dot and its text were both
+  // there — but Lightweight Charts draws marker text at the fixed 10px layout
+  // font, which was too faint to register at normal chart size. That is what a
+  // "nothing changed" report looks like when the pixels genuinely did. A real
+  // HTML pill sized like the price-scale badges already on the chart is
+  // unmissable at any zoom, and it is repositioned every time the chart itself
+  // re-fits — same cadence, so a resize cannot leave it stranded.
+  test("the newest bar's date tag is a real HTML pill, not a library marker", () => {
+    assert.match(SOURCE, /const dateTag = document\.createElement\('div'\)/,
+      'the tag must be a DOM element the browser sizes and renders like any other text');
+    assert.match(SOURCE, /el\.appendChild\(dateTag\)/,
+      'it must live inside the positioned chart container');
+    assert.match(SOURCE, /const y = series\.priceToCoordinate\(newestBar\.l\)/,
+      "it must track the newest bar's own low, the same reference belowBar markers use");
+    assert.match(SOURCE, /_watchTradeChart\(chart, bars\.length, placeDateTag\)/,
+      'placement must run on every fit, not just once at creation');
   });
 
   // Reported as "I have to move sideways to see the last trading day's candle":

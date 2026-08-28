@@ -9438,9 +9438,9 @@ function _disposeTradeChart() {
 // fixed delay is a bet on how fast the machine gets there and loses on slower
 // ones. The observer fires before autoSize has resized the time scale, hence the
 // following frame too.
-function _watchTradeChart(chart, barCount) {
+function _watchTradeChart(chart, barCount, onFit) {
   const el = document.getElementById('cal-trade-chart');
-  const fit = () => { if (_chartInstance === chart) _fitTradeChart(chart, barCount); };
+  const fit = () => { if (_chartInstance === chart) { _fitTradeChart(chart, barCount); onFit && onFit(); } };
   const schedule = () => {
     if (_chartViewRaf) cancelAnimationFrame(_chartViewRaf);
     _chartViewRaf = requestAnimationFrame(() => { _chartViewRaf = 0; fit(); });
@@ -9568,17 +9568,41 @@ async function _renderTradeChart(tr) {
     const markers = [];
     if (entryTime) markers.push({ time: toTime(entryTime), position: 'belowBar', color: accent, shape: 'arrowUp', text: t('tile_entry') });
     if (exitTime) markers.push({ time: toTime(exitTime), position: 'aboveBar', color: calcTotal(tr) >= 0 ? green : red, shape: 'arrowDown', text: t('tile_exit') });
-    // Label the newest bar on the chart itself. Which candle is the last trading
-    // day was the whole dispute for ten rounds and nothing on the plot answered
-    // it — the time axis only had room for two date labels, neither near the
-    // right edge, so "is today's candle there" could not be settled by looking.
-    const newestBar = bars[bars.length - 1];
-    // barCol, not txtCol: the tag is drawn at 10px against the chart background,
-    // and --chart-txt (#5b6b85) is close enough to it to disappear — it was
-    // being rendered and still reported as missing.
-    markers.push({ time: toTime(newestBar.t), position: 'belowBar', color: barCol,
-                   shape: 'circle', text: toTime(newestBar.t).slice(5).split('-').reverse().join('.') });
     if (markers.length) series.setMarkers(markers);
+
+    // Label the newest bar on the chart itself. Which candle is the last trading
+    // day was the whole dispute for ten-plus rounds and nothing on the plot
+    // answered it — the time axis only had room for two date labels, neither
+    // near the right edge, so "is today's candle there" could not be settled by
+    // looking. A chart marker WAS tried first (still a `series.setMarkers`
+    // entry further down in history) and technically rendered — confirmed live,
+    // zoomed 3x, the dot and text were there — but at the library's fixed 10px
+    // marker font it was too faint to register at normal chart size, which is
+    // exactly what a "nothing changed" report looks like when something did.
+    // A real HTML pill, sized and colored like the price-scale badges already
+    // on this chart, is unmissable at any zoom. It tracks the newest bar's own
+    // x position, recomputed by _watchTradeChart on every fit — same cadence as
+    // the chart's own re-anchoring, so it can't drift out of sync with a resize.
+    const newestBar = bars[bars.length - 1];
+    const dateTag = document.createElement('div');
+    dateTag.style.cssText = 'position:absolute;z-index:2;pointer-events:none;transform:translateX(-50%);'
+      + 'font-family:JetBrains Mono,ui-monospace,monospace;font-size:11px;font-weight:700;'
+      + 'color:var(--chart-bg);background:var(--chart-bar);padding:2px 6px;border-radius:5px;white-space:nowrap;';
+    dateTag.textContent = toTime(newestBar.t).slice(5).split('-').reverse().join('.');
+    el.appendChild(dateTag);
+    const placeDateTag = () => {
+      const ts = chart.timeScale();
+      const x = ts.timeToCoordinate(toTime(newestBar.t));
+      // Anchored to the bar's own low, the same reference the entry arrow uses
+      // for 'belowBar' — so the tag sits at the same visual height as the entry
+      // marker instead of floating at a fixed offset that only matches one
+      // price range.
+      const y = series.priceToCoordinate(newestBar.l);
+      if (x == null || y == null) { dateTag.style.display = 'none'; return; }
+      dateTag.style.display = '';
+      dateTag.style.left = x + 'px';
+      dateTag.style.top = (y + 14) + 'px';
+    };
 
     // A readout naming the bar under the pointer, defaulting to the newest one.
     // Nine rounds were spent on "I can't see the last trading day" while every
@@ -9611,7 +9635,7 @@ async function _renderTradeChart(tr) {
     // last bar hovered, which reads as the chart being stuck on that day.
     el.addEventListener('mouseleave', () => showBar(newestPoint));
 
-    _watchTradeChart(chart, bars.length);
+    _watchTradeChart(chart, bars.length, placeDateTag);
   } catch (e) {
     el.style.cssText = msgStyle;
     el.textContent = t('chart_unavailable');
