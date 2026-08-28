@@ -1192,7 +1192,8 @@ describe('market risk regime', () => {
 // the candle nearest the trade's date.
 describe('trade chart symbol and marker placement', () => {
   const { _ohlcSymbol } = load('_ohlcSymbol');
-  const { _nearestCandleTime } = load('_nearestCandleTime');
+  const { _nearestCandleTime } = load('_nearestCandleTime', '_nearestCandleIndex');
+  const { _tradeChartRange } = load('_tradeChartRange', '_nearestCandleIndex');
 
   test('a stock symbol passes through unchanged', () => {
     assert.equal(_ohlcSymbol({ type: 'stock', symbol: 'aapl' }), 'AAPL');
@@ -1226,5 +1227,40 @@ describe('trade chart symbol and marker placement', () => {
     assert.equal(_nearestCandleTime([], '2026-02-24'), null);
     assert.equal(_nearestCandleTime(candles, null), null);
     assert.equal(_nearestCandleTime(candles, ''), null);
+  });
+
+  // A year of daily candles fitted into one view squeezes the handful of bars
+  // around an actual trade into an illegible sliver — this zooms to the
+  // entry->exit window (with padding) instead.
+  const yearCandles = Array.from({ length: 250 }, (_, i) => ({ t: 1_700_000_000 + i * 86400 }));
+
+  test('the range brackets entry and exit with padding, not the whole year', () => {
+    const r = _tradeChartRange(yearCandles, yearCandles[100].t, yearCandles[110].t, 5, 15);
+    assert.equal(r.from, 95);
+    assert.equal(r.to, 115);
+  });
+
+  test('a same-day trade still gets a minimum visible span, not a 1-bar zoom', () => {
+    const r = _tradeChartRange(yearCandles, yearCandles[100].t, yearCandles[100].t, 0, 15);
+    assert.ok(r.to - r.from >= 15, 'a scalp must not zoom to nothing');
+  });
+
+  test('an open position (no exit yet) still centers on the entry', () => {
+    // pad alone gives a span of 10 (95..105), under the 15-bar minimum, so the
+    // minimum-span widening kicks in too: +3 each side.
+    const r = _tradeChartRange(yearCandles, yearCandles[100].t, null, 5, 15);
+    assert.equal(r.from, 92);
+    assert.equal(r.to, 108);
+  });
+
+  test('the window clamps to the data instead of running off either edge', () => {
+    const r = _tradeChartRange(yearCandles, yearCandles[2].t, yearCandles[5].t, 5, 15);
+    assert.equal(r.from, 0, 'padding must not go negative');
+    const r2 = _tradeChartRange(yearCandles, yearCandles[247].t, yearCandles[249].t, 5, 15);
+    assert.equal(r2.to, yearCandles.length - 1, 'padding must not exceed the last candle');
+  });
+
+  test('no candles yields no range rather than a bogus one', () => {
+    assert.equal(_tradeChartRange([], 1_700_000_000, null), null);
   });
 });

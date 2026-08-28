@@ -9298,6 +9298,19 @@ function _ohlcSymbol(tr) {
   return `${base}-USD`;
 }
 
+// Finds the candle index closest to a target unix time. Shared by the marker
+// placement below and by the visible-range zoom, so both agree on which
+// candle is "the entry" / "the exit".
+function _nearestCandleIndex(candles, targetTime) {
+  if (!candles || !candles.length || targetTime == null) return null;
+  let best = 0, bestDiff = Infinity;
+  for (let i = 0; i < candles.length; i++) {
+    const diff = Math.abs(candles[i].t - targetTime);
+    if (diff < bestDiff) { bestDiff = diff; best = i; }
+  }
+  return best;
+}
+
 // Finds the candle closest to a YYYY-MM-DD trade date, for placing the
 // entry/exit marker. Not an exact match on purpose — a trade date carries no
 // exchange time, and a weekend or market holiday can shift the nearest real
@@ -9306,12 +9319,30 @@ function _nearestCandleTime(candles, dateStr) {
   if (!candles || !candles.length || !dateStr) return null;
   const target = new Date(dateStr + 'T00:00:00Z').getTime() / 1000;
   if (!Number.isFinite(target)) return null;
-  let best = candles[0].t, bestDiff = Math.abs(candles[0].t - target);
-  for (let i = 1; i < candles.length; i++) {
-    const diff = Math.abs(candles[i].t - target);
-    if (diff < bestDiff) { bestDiff = diff; best = candles[i].t; }
+  const idx = _nearestCandleIndex(candles, target);
+  return idx == null ? null : candles[idx].t;
+}
+
+// A year of candles fitted into one view (the previous behaviour) squeezes a
+// handful of relevant bars around the trade into an illegible sliver. This
+// zooms to the entry->exit window instead, with padding on both sides — the
+// "right side" of a year of history is where a recent trade actually sits.
+function _tradeChartRange(candles, entryTime, exitTime, padBars = 5, minBars = 15) {
+  if (!candles || !candles.length) return null;
+  const entryIdx = _nearestCandleIndex(candles, entryTime);
+  if (entryIdx == null) return null;
+  const exitIdx = exitTime != null ? _nearestCandleIndex(candles, exitTime) : null;
+  let lo = exitIdx != null ? Math.min(entryIdx, exitIdx) : entryIdx;
+  let hi = exitIdx != null ? Math.max(entryIdx, exitIdx) : entryIdx;
+  lo -= padBars;
+  hi += padBars;
+  const span = hi - lo;
+  if (span < minBars) {
+    const extra = Math.ceil((minBars - span) / 2);
+    lo -= extra;
+    hi += extra;
   }
-  return best;
+  return { from: Math.max(0, lo), to: Math.min(candles.length - 1, hi) };
 }
 
 // Loaded lazily on first chart render, not at boot — same reasoning as
@@ -9368,6 +9399,10 @@ async function _renderTradeChart(tr) {
     const green = col('--green', '#2dd4a0'), red = col('--red', '#ff6b8a'),
           accent = col('--accent', '#818cf8'), text3 = col('--text3', '#8896a8'),
           gridColor = 'rgba(148,163,184,0.09)';
+    // White OHLC bars, matching the screener's chart card exactly (no left
+    // price scale either — that stays unconfigured, which is the library's
+    // default of hidden).
+    const barCol = '#ffffff';
 
     const chart = LightweightCharts.createChart(el, {
       width: el.clientWidth, height: 400,
@@ -9377,23 +9412,23 @@ async function _renderTradeChart(tr) {
       timeScale: { borderColor: gridColor },
     });
     _chartInstance = chart;
-    const series = chart.addCandlestickSeries({
-      upColor: green, downColor: red, borderVisible: false, wickUpColor: green, wickDownColor: red,
-    });
+    const series = chart.addBarSeries({ upColor: barCol, downColor: barCol });
     series.setData(candles.map(c => ({ time: c.t, open: c.o, high: c.h, low: c.l, close: c.c })));
 
     if (tr.entryPrice) series.createPriceLine({ price: +tr.entryPrice, color: accent, lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: t('tile_entry') });
     if (tr.stop) series.createPriceLine({ price: +tr.stop, color: red, lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: t('tile_stop') });
     if (tr.exitPrice) series.createPriceLine({ price: +tr.exitPrice, color: green, lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: t('tile_exit') });
 
-    const markers = [];
     const entryTime = _nearestCandleTime(candles, tr.entryDate);
-    if (entryTime) markers.push({ time: entryTime, position: 'belowBar', color: accent, shape: 'arrowUp', text: t('tile_entry') });
     const exitTime = tr.closeDate ? _nearestCandleTime(candles, tr.closeDate) : null;
+    const markers = [];
+    if (entryTime) markers.push({ time: entryTime, position: 'belowBar', color: accent, shape: 'arrowUp', text: t('tile_entry') });
     if (exitTime) markers.push({ time: exitTime, position: 'aboveBar', color: calcTotal(tr) >= 0 ? green : red, shape: 'arrowDown', text: t('tile_exit') });
     if (markers.length) series.setMarkers(markers.sort((a, b) => a.time - b.time));
 
-    chart.timeScale().fitContent();
+    const range = _tradeChartRange(candles, entryTime, exitTime);
+    if (range) chart.timeScale().setVisibleLogicalRange(range);
+    else chart.timeScale().fitContent();
     _chartResizeObs = new ResizeObserver(() => chart.applyOptions({ width: el.clientWidth }));
     _chartResizeObs.observe(el);
   } catch (e) {
