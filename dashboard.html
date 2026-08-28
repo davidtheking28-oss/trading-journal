@@ -8313,6 +8313,52 @@ function computeStemState(vix, breadthPct) {
 }
 let _stemState = null, _stemVix = null;
 
+// Historical win-rate-by-market-regime insight (Overview tab). There is no
+// stored history of the real STEM state (computeStemState above only ever
+// runs on today's live VIX+breadth) — breadth has never been logged per day.
+// This is a deliberate, disclosed approximation: VIX alone, against the CNN
+// graphdata endpoint's own ~1-year daily series (already fetched by
+// fear-greed/index.ts for the live reading, extended to return the whole
+// series). Thresholds mirror computeStemState's VIX-only fallback, so a day
+// this bucket calls "orange" is exactly a day the live badge would also have
+// called "orange" without a breadth reading.
+function vixApproxStemBucket(vix) {
+  if (vix == null) return null;
+  if (vix > 30) return 'red';
+  if (vix < 20) return 'green';
+  return 'orange';
+}
+
+// Nearest trading-day VIX close on or before dateMs. The series is daily and
+// sparse on weekends/holidays, so an entry on a day the series has no point
+// for (or before the series starts) reads from the most recent prior close —
+// never from a later one, which would leak future information into the bucket.
+function _nearestVixOnOrBefore(dateMs, vixSeries) {
+  let best = null;
+  for (const p of vixSeries) {
+    if (p.x <= dateMs && (best === null || p.x > best.x)) best = p;
+  }
+  return best ? best.y : null;
+}
+
+// trades: [{entryDate:'YYYY-MM-DD', win:boolean}, ...] — already filtered to
+// closed trades and win-flagged by the caller (calcTotal is DOM/Supabase-free
+// but this stays a pure function so it's testable without pulling that in).
+function vixApproxStemStats(trades, vixSeries) {
+  const buckets = { green: { trades: 0, wins: 0 }, orange: { trades: 0, wins: 0 }, red: { trades: 0, wins: 0 } };
+  if (!Array.isArray(vixSeries) || !vixSeries.length) return buckets;
+  for (const tr of trades) {
+    if (!tr.entryDate) continue;
+    const dateMs = new Date(tr.entryDate + 'T00:00:00Z').getTime();
+    const vix = _nearestVixOnOrBefore(dateMs, vixSeries);
+    const b = vixApproxStemBucket(vix);
+    if (!b) continue;
+    buckets[b].trades++;
+    if (tr.win) buckets[b].wins++;
+  }
+  return buckets;
+}
+
 const STEM_LABELS = { green: 'רגוע', orange: 'זהירות', red: 'לחוץ' };
 const STEM_COLORS = { green: 'var(--green)', orange: 'var(--yellow)', red: 'var(--red)' };
 // Plain-language action per state, not just the label — a color/word alone

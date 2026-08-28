@@ -113,10 +113,17 @@ Deno.serve(async (req) => {
       // mismatch alert) — the same CNN payload already carries both a live VIX
       // reading and a breadth rating (McClellan volume summation index), so no
       // second external call is needed.
-      const vixSeries = data?.market_volatility_vix?.data;
-      const vix = Array.isArray(vixSeries) && vixSeries.length ? vixSeries[vixSeries.length - 1]?.y : null;
+      const vixSeriesRaw = data?.market_volatility_vix?.data;
+      const vix = Array.isArray(vixSeriesRaw) && vixSeriesRaw.length ? vixSeriesRaw[vixSeriesRaw.length - 1]?.y : null;
       const breadthRating = data?.stock_price_breadth?.rating ?? null; // kept for reference only; STEM now uses breadthPct
-      const payload = { score, rating, vix, breadthRating, breadthPct };
+      // The same CNN response already carries ~1 year of daily VIX closes (used
+      // to draw their own historical chart line) — passed through as-is so the
+      // client can approximate the STEM regime for past trade dates (VIX-only,
+      // no historical breadth exists) without a second external data source.
+      const vixSeries = Array.isArray(vixSeriesRaw)
+        ? vixSeriesRaw.filter((p: any) => typeof p?.x === 'number' && typeof p?.y === 'number').map((p: any) => ({ x: p.x, y: p.y }))
+        : [];
+      const payload = { score, rating, vix, breadthRating, breadthPct, vixSeries };
       await admin.from('market_cache').upsert({ cache_key: CACHE_KEY, payload, refreshed_at: new Date().toISOString() });
       return payload;
     } catch (e) {
