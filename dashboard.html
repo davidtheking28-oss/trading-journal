@@ -9409,12 +9409,13 @@ function _mergeBars(older, newer) {
 }
 
 let _chartInstance = null;
-let _chartViewTimers = [];
+let _chartResizeObs = null;
+let _chartViewRaf = 0;
 function _disposeTradeChart() {
-  // autoSize (below) owns its own ResizeObserver internally; chart.remove()
-  // tears that down too, nothing left for us to disconnect.
-  _chartViewTimers.forEach(clearTimeout);
-  _chartViewTimers = [];
+  // autoSize (below) owns its own ResizeObserver for the canvas; this one is
+  // ours, for re-anchoring the view, and chart.remove() knows nothing about it.
+  if (_chartViewRaf) { cancelAnimationFrame(_chartViewRaf); _chartViewRaf = 0; }
+  if (_chartResizeObs) { try { _chartResizeObs.disconnect(); } catch (e) {} _chartResizeObs = null; }
   if (_chartInstance) { try { _chartInstance.remove(); } catch (e) {} _chartInstance = null; }
 }
 
@@ -9433,8 +9434,21 @@ function _disposeTradeChart() {
 //
 // barSpacing + scrollToPosition express the same window from the other side:
 // the right edge is pinned `rightPad` slots past the last bar and the left edge
-// falls where it falls. Re-applied across the animation so the final width wins.
+// falls where it falls.
+//
+// Re-anchoring is driven by a ResizeObserver, NOT by a timer. A fixed delay is a
+// bet on how long the modal's open animation, the web font and the first layout
+// take on the machine actually running it — win that bet on a fast desktop and
+// lose it on a phone or a loaded browser, and the view silently settles at the
+// pre-animation width with the newest bar off screen. That is why this looked
+// correct in every measurement here while still being wrong for the user. The
+// observer fires on the real event instead, however late it happens.
+//
+// Panning and zooming do not resize the container, so a user's own scroll is
+// never yanked back. A window resize does re-anchor — which is the wanted
+// behaviour anyway.
 function _applyChartView(chart, span, rightPad) {
+  const el = document.getElementById('cal-trade-chart');
   const ts = chart.timeScale();
   const apply = () => {
     if (_chartInstance !== chart) return;
@@ -9443,9 +9457,23 @@ function _applyChartView(chart, span, rightPad) {
     ts.applyOptions({ barSpacing: Math.max(0.5, w / span) });
     ts.scrollToPosition(rightPad, false);
   };
+  // The observer fires before the chart has taken the new width: autoSize owns
+  // its own observer and resizes the time scale on a later frame, so reading
+  // ts.width() inside the callback returns the OLD value and the bars keep the
+  // spacing they had at the narrow size. Measured: a container going 112px ->
+  // 558px left barSpacing at 2.6 instead of 12.1, showing 212 bars. Re-applying
+  // on the following frame is what makes the new width visible; scheduling only
+  // one keeps a resize drag from queueing a frame per pixel.
+  const schedule = () => {
+    if (_chartViewRaf) cancelAnimationFrame(_chartViewRaf);
+    _chartViewRaf = requestAnimationFrame(() => { _chartViewRaf = 0; apply(); });
+  };
   apply();
-  requestAnimationFrame(apply);
-  _chartViewTimers.push(setTimeout(apply, 300));
+  schedule();
+  if (el && window.ResizeObserver) {
+    _chartResizeObs = new ResizeObserver(() => { apply(); schedule(); });
+    _chartResizeObs.observe(el);
+  }
 }
 
 // Replaces the earlier TradingView iframe embed: that widget's free tier cannot

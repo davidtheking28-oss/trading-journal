@@ -1365,4 +1365,24 @@ describe('trade chart symbol and marker placement', () => {
     assert.match(SOURCE, /_applyChartView\(chart, range\.to - range\.from, range\.to - \(bars\.length - 1\)\)/,
       '_tradeChartRange must still be the single source of the window');
   });
+
+  // A fixed re-apply delay is a bet on how fast the machine running the page
+  // finishes the modal animation, the web font and the first layout. Winning
+  // that bet on a fast desktop and losing it on a slower device is exactly how
+  // this measured correct here while still being wrong for the user, three
+  // fixes running. The re-anchor must hang off the real resize event.
+  test('the view re-anchors on a resize event, not after a fixed delay', () => {
+    assert.match(SOURCE, /function _applyChartView[\s\S]{0,1600}?new ResizeObserver\(\(\) => \{ apply\(\); schedule\(\); \}\)/,
+      'the view must re-anchor from a ResizeObserver');
+    // The observer fires before autoSize has resized the time scale, so reading
+    // ts.width() in the callback returns the pre-resize value: measured, a
+    // 112px -> 558px container kept barSpacing at 2.6 instead of 12.1 and drew
+    // 212 bars instead of 46. The follow-up frame is what makes it take.
+    assert.match(SOURCE, /const schedule = \(\) => \{[\s\S]{0,300}?requestAnimationFrame\(\(\) => \{ _chartViewRaf = 0; apply\(\); \}\)/,
+      'a following frame must re-apply once the new width is in effect');
+    assert.doesNotMatch(SOURCE, /_chartViewTimers/,
+      'no timer may be left deciding when the layout is final');
+    assert.match(SOURCE, /_disposeTradeChart[\s\S]{0,400}?_chartResizeObs[\s\S]{0,80}?disconnect\(\)/,
+      'the observer must be disconnected with the chart or it outlives the modal');
+  });
 });
