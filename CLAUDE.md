@@ -443,3 +443,25 @@ unlike this one — push it manually).
   ~160 kB total. PITR is not enabled on this project (it needs a paid plan), so
   these are the sole means of undoing a bad data correction. Do not "tidy them
   up"; the storage argument for deleting them is worth nothing against that.
+
+## ⚠️ The screener shares this Supabase project — function names collide
+
+- **`supabase/functions/<name>` is a namespace shared with the sibling
+  `stock-screener` repo**, which deploys into the same project
+  (`fnklrqxwyeibfptaxewf`). On 2026-08-28 this repo added its own `ohlc` for the
+  trade-review chart and CI deployed it straight over the screener's `ohlc`.
+  Theirs returns `{symbol, bars:[{t,o,h,l,c,v}]}` and authenticates with the
+  anon key; the duplicate returned `{symbol, candles:[...]}` and required a user
+  JWT — so **every chart in the screener started returning 401**, and neither
+  repo's CI noticed, because each only checks that its *own* functions exist.
+  Restored by re-running the screener's `deploy-functions` workflow
+  (`workflow_dispatch`); the journal now calls the screener's `ohlc` instead of
+  keeping a second copy.
+- A CI step, **"No function name collides with the screener's"**, now fails the
+  build if a directory named `ohlc`, `scan-universe` or `daily-scan` appears
+  here. **Before adding any new edge function, check
+  `c:/Users/david/stock-screener/supabase/functions/` first** — and prefer
+  calling the existing function over writing a parallel one.
+- The screener's `ohlc` already does more than a fresh copy would: per-symbol
+  memory + `market_cache` caching, a `range` param (`3mo` / `1y`), gap-filling
+  from hourly bars, IP rate limiting, and `mapSymbol` (BRK.B -> BRK-B).

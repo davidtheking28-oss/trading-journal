@@ -108,6 +108,25 @@ jobs:
           done
           exit $missing
 
+      # The sibling stock-screener repo deploys into this SAME Supabase project,
+      # so a function name is a shared namespace across two repos. On 2026-08-28
+      # this repo added its own `ohlc` and deployed it straight over the
+      # screener's, which has a different response shape (`bars` vs `candles`,
+      # plus volume) and different auth (anon key, not a user JWT). Every chart
+      # in the screener started returning 401 and nothing in either repo's CI
+      # noticed. Adding a directory here whose name the screener already owns
+      # must fail the build, not silently take the name.
+      - name: No function name collides with the screener's
+        run: |
+          collision=0
+          for name in ohlc scan-universe daily-scan; do
+            if [ -d "supabase/functions/$name" ]; then
+              echo "::error::supabase/functions/$name collides with the stock-screener's function of the same name on the shared Supabase project — deploying it would overwrite theirs. Rename it, or call the existing function instead."
+              collision=1
+            fi
+          done
+          exit $collision
+
       - name: Deploy Edge Functions
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -135,7 +154,6 @@ jobs:
           supabase functions deploy ibkr-alert        --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
           supabase functions deploy push-daily        --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
           supabase functions deploy personal-stem     --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
-          supabase functions deploy ohlc              --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
 
       # The step above greps this same file, so it can only prove the deploy
       # line was written — not that the function actually exists on the server.

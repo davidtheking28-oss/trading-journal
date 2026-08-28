@@ -95,6 +95,12 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     --green-bg:  rgba(52,211,153,0.07);
     --red:       #ff6b8a;
     --red-bg:    rgba(248,113,113,0.07);
+    /* Trade-review chart — same values as the stock-screener's chart cards, so
+       the two read as one product rather than two different charting styles. */
+    --chart-bg:  #0a1120;
+    --chart-bar: #ffffff;
+    --chart-vol: rgba(255,255,255,0.25);
+    --chart-txt: #5b6b85;
     --yellow:    #fbbf24;
     --yellow-bg: rgba(251,191,36,0.08);
     --purple:    #b59cf8;
@@ -4468,6 +4474,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
   /* ── Light mode: override the new vars ── */
   html[data-theme="light"] {
+    --chart-bg:  #fdfdfe;
+    --chart-bar: #334155;
+    --chart-vol: rgba(51,65,85,0.22);
+    --chart-txt: #64748b;
     --bg:    #f0f4f9;
     --bg2:   #e8edf5;
     --card:  #ffffff;
@@ -9335,35 +9345,24 @@ function _nearestCandleTime(candles, dateStr) {
   return idx == null ? null : candles[idx].t;
 }
 
-// A year of candles fitted into one view squeezes the handful of bars around
-// the trade into an illegible sliver, so the chart zooms to the trade's own
-// window instead.
+// The visible window for a trade's chart. It ALWAYS ends at the newest candle
+// — the right edge is where the current price is, and it has to stay on screen
+// whether the trade is open or closed, exactly like the screener's cards. Only
+// the left edge moves, back far enough to include the entry plus context.
 //
-// An OPEN position (no exitTime) runs to the most recent candle, not to the
-// entry: the trade is still live, so every trading day since entry is part of
-// it and is what the trader is still deciding on. Ending the window at the
-// entry — what this did before — hid exactly that.
-function _tradeChartRange(candles, entryTime, exitTime, padBars = 15, minBars = 60) {
+// Earlier versions ended the window at the entry (for an open trade) or at the
+// exit (for a closed one), which is what hid the right-hand side of the chart.
+// An exit is by definition not in the future, so it is always inside this
+// window too; there is nothing left to special-case.
+function _tradeChartRange(candles, entryTime, padBars = 10, minBars = 40) {
   if (!candles || !candles.length) return null;
   const entryIdx = _nearestCandleIndex(candles, entryTime);
   if (entryIdx == null) return null;
   const lastIdx = candles.length - 1;
-  const exitIdx = exitTime != null ? _nearestCandleIndex(candles, exitTime) : null;
-  let lo = exitIdx != null ? Math.min(entryIdx, exitIdx) : entryIdx;
-  let hi = exitIdx != null ? Math.max(entryIdx, exitIdx) : lastIdx;
-  lo -= padBars;
-  hi += padBars;
-  if (hi - lo < minBars) {
-    const extra = minBars - (hi - lo);
-    lo -= Math.ceil(extra / 2);
-    hi += Math.floor(extra / 2);
-  }
-  // Slide the window back inside the data rather than clipping one end:
-  // clamping alone would silently hand back a narrower view than minBars asks
-  // for, which is how a recent entry ended up showing barely any chart at all.
-  if (hi > lastIdx) { lo -= hi - lastIdx; hi = lastIdx; }
-  if (lo < 0) { hi = Math.min(lastIdx, hi - lo); lo = 0; }
-  return { from: lo, to: hi };
+  let lo = entryIdx - padBars;
+  // A trade entered a few days ago would otherwise show a handful of bars.
+  if (lastIdx - lo < minBars) lo = lastIdx - minBars;
+  return { from: Math.max(0, lo), to: lastIdx };
 }
 
 // Loaded lazily on first chart render, not at boot — same reasoning as
@@ -9389,76 +9388,90 @@ function _disposeTradeChart() {
   if (_chartInstance) { try { _chartInstance.remove(); } catch (e) {} _chartInstance = null; }
 }
 
-// Replaces the earlier TradingView iframe embed: that widget's free tier
-// cannot mark a custom entry/stop/exit price on the chart at all (only
-// TradingView's paid Charting Library supports that), which is the whole
-// point of showing a chart on a trade review. This builds the candles from
-// the ohlc edge function (free Yahoo data, cached) using TradingView's own
-// free, open-source Lightweight Charts library, so real price lines and
-// entry/exit markers are possible.
+// Replaces the earlier TradingView iframe embed: that widget's free tier cannot
+// mark a custom entry/stop/exit price on the chart at all (only TradingView's
+// paid Charting Library supports that), which is the whole point of showing a
+// chart on a trade review.
+//
+// Presentation deliberately mirrors the stock-screener's chart cards — white
+// OHLC bars, a volume histogram in the bottom fifth, mono type, no attribution
+// logo, --chart-* colours — so the two apps read as one product. It also uses
+// the screener's OWN `ohlc` edge function rather than a second copy: both apps
+// share one Supabase project, and this repo briefly shipped a duplicate that
+// overwrote theirs.
+const _CHART_H = 400;
 async function _renderTradeChart(tr) {
   const el = document.getElementById('cal-trade-chart');
   if (!el) return;
+  const msgStyle = `width:100%;height:${_CHART_H}px;border-radius:var(--r-md);margin-top:4px;background:var(--chart-bg);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px;`;
   _disposeTradeChart();
   el.textContent = t('chart_loading');
-  el.style.cssText = 'width:100%;height:400px;border-radius:var(--r-md);margin-top:4px;background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px;';
+  el.style.cssText = msgStyle;
   try {
     await _loadLightweightCharts();
     const jwt = await _getToken();
     const controller = new AbortController();
     const tid = setTimeout(() => controller.abort(), 12000);
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/ohlc?symbol=${encodeURIComponent(_ohlcSymbol(tr))}`,
+    // range=1y so a trade opened up to a year ago still has its entry candle.
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/ohlc?symbol=${encodeURIComponent(_ohlcSymbol(tr))}&range=1y`,
       { headers: { 'Authorization': `Bearer ${jwt}` }, signal: controller.signal });
     clearTimeout(tid);
     const d = await res.json();
-    const candles = d.candles || [];
-    if (!candles.length) throw new Error('no candles');
+    const bars = d.bars || [];
+    if (!bars.length) throw new Error('no bars');
 
     el.textContent = '';
-    el.style.cssText = 'width:100%;height:400px;border-radius:var(--r-md);margin-top:4px;';
+    el.style.cssText = `width:100%;height:${_CHART_H}px;border-radius:var(--r-md);margin-top:4px;background:var(--chart-bg);overflow:hidden;`;
     const cs = getComputedStyle(document.documentElement);
-    const col = (name, fallback) => (cs.getPropertyValue(name) || fallback).trim();
+    const col = (name, fallback) => (cs.getPropertyValue(name) || '').trim() || fallback;
     const green = col('--green', '#2dd4a0'), red = col('--red', '#ff6b8a'),
-          accent = col('--accent', '#818cf8'), text3 = col('--text3', '#8896a8'),
-          gridColor = 'rgba(148,163,184,0.09)';
-    // White OHLC bars, matching the screener's chart card exactly (no left
-    // price scale either — that stays unconfigured, which is the library's
-    // default of hidden).
-    const barCol = '#ffffff';
+          accent = col('--accent', '#818cf8');
+    const barCol = col('--chart-bar', '#ffffff'), volCol = col('--chart-vol', 'rgba(255,255,255,0.25)'),
+          txtCol = col('--chart-txt', '#5b6b85'), bgCol = col('--chart-bg', '#0a1120');
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    const gridCol = isLight ? 'rgba(14,14,18,0.05)' : 'rgba(255,255,255,0.035)';
+    const axisCol = isLight ? 'rgba(14,14,18,0.10)' : 'rgba(255,255,255,0.06)';
 
     const chart = LightweightCharts.createChart(el, {
-      // autoSize keeps the chart matched to its container continuously via
-      // the library's own ResizeObserver, instead of a one-time el.clientWidth
-      // read at creation time — that one-time read landed the chart at half
-      // width inside this modal (RTL + the modal's open animation running at
-      // the exact moment the chart is created), while autoSize renders full
-      // width every time.
+      // autoSize keeps the chart matched to its container via the library's own
+      // ResizeObserver rather than a one-time clientWidth read at creation.
       autoSize: true,
-      layout: { background: { color: 'transparent' }, textColor: text3 },
-      grid: { vertLines: { color: gridColor }, horzLines: { color: gridColor } },
-      rightPriceScale: { borderColor: gridColor },
-      timeScale: { borderColor: gridColor },
+      layout: { background: { color: bgCol }, textColor: txtCol, fontSize: 10,
+                fontFamily: 'JetBrains Mono, ui-monospace, monospace', attributionLogo: false },
+      grid: { vertLines: { color: gridCol }, horzLines: { color: gridCol } },
+      rightPriceScale: { borderColor: axisCol },
+      // rightOffset is the gap after the newest bar. A few bars' worth keeps it
+      // clear of the price scale without pushing it off-screen.
+      timeScale: { borderColor: axisCol, rightOffset: 3 },
     });
     _chartInstance = chart;
+
+    // Daily bars keyed by calendar day, the same convention the screener uses —
+    // markers must use the identical format or they land on no bar at all.
+    const toTime = t => new Date(t * 1000).toISOString().slice(0, 10);
     const series = chart.addBarSeries({ upColor: barCol, downColor: barCol });
-    series.setData(candles.map(c => ({ time: c.t, open: c.o, high: c.h, low: c.l, close: c.c })));
+    series.setData(bars.map(b => ({ time: toTime(b.t), open: b.o, high: b.h, low: b.l, close: b.c })));
+
+    const vol = chart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: '' });
+    vol.priceScale().applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
+    vol.setData(bars.map(b => ({ time: toTime(b.t), value: b.v || 0, color: volCol })));
 
     if (tr.entryPrice) series.createPriceLine({ price: +tr.entryPrice, color: accent, lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: t('tile_entry') });
     if (tr.stop) series.createPriceLine({ price: +tr.stop, color: red, lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: t('tile_stop') });
     if (tr.exitPrice) series.createPriceLine({ price: +tr.exitPrice, color: green, lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: t('tile_exit') });
 
-    const entryTime = _nearestCandleTime(candles, tr.entryDate);
-    const exitTime = tr.closeDate ? _nearestCandleTime(candles, tr.closeDate) : null;
+    const entryTime = _nearestCandleTime(bars, tr.entryDate);
+    const exitTime = tr.closeDate ? _nearestCandleTime(bars, tr.closeDate) : null;
     const markers = [];
-    if (entryTime) markers.push({ time: entryTime, position: 'belowBar', color: accent, shape: 'arrowUp', text: t('tile_entry') });
-    if (exitTime) markers.push({ time: exitTime, position: 'aboveBar', color: calcTotal(tr) >= 0 ? green : red, shape: 'arrowDown', text: t('tile_exit') });
-    if (markers.length) series.setMarkers(markers.sort((a, b) => a.time - b.time));
+    if (entryTime) markers.push({ time: toTime(entryTime), position: 'belowBar', color: accent, shape: 'arrowUp', text: t('tile_entry') });
+    if (exitTime) markers.push({ time: toTime(exitTime), position: 'aboveBar', color: calcTotal(tr) >= 0 ? green : red, shape: 'arrowDown', text: t('tile_exit') });
+    if (markers.length) series.setMarkers(markers);
 
-    const range = _tradeChartRange(candles, entryTime, exitTime);
+    const range = _tradeChartRange(bars, entryTime);
     if (range) chart.timeScale().setVisibleLogicalRange(range);
     else chart.timeScale().fitContent();
   } catch (e) {
-    el.style.cssText = 'width:100%;height:400px;border-radius:var(--r-md);margin-top:4px;background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px;';
+    el.style.cssText = msgStyle;
     el.textContent = t('chart_unavailable');
   }
 }

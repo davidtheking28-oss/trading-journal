@@ -1234,50 +1234,39 @@ describe('trade chart symbol and marker placement', () => {
   // entry->exit window (with padding) instead.
   const yearCandles = Array.from({ length: 250 }, (_, i) => ({ t: 1_700_000_000 + i * 86400 }));
 
-  test('the range brackets entry and exit with padding, not the whole year', () => {
-    const r = _tradeChartRange(yearCandles, yearCandles[100].t, yearCandles[110].t, 5, 15);
-    assert.equal(r.from, 95);
-    assert.equal(r.to, 115);
+  const LAST = yearCandles.length - 1;
+
+  // The reported bug, twice over: the window used to end at the entry (open
+  // trade) or at the exit (closed trade), so the newest bars — where the
+  // current price is — were off-screen. It must always end at the last candle.
+  test('the window always ends at the newest candle', () => {
+    assert.equal(_tradeChartRange(yearCandles, yearCandles[100].t).to, LAST,
+      'a trade opened mid-year still shows up to the present');
+    assert.equal(_tradeChartRange(yearCandles, yearCandles[LAST - 2].t).to, LAST,
+      'and so does one opened two days ago');
   });
 
-  test('a same-day trade still gets a minimum visible span, not a 1-bar zoom', () => {
-    const r = _tradeChartRange(yearCandles, yearCandles[100].t, yearCandles[100].t, 0, 15);
-    assert.ok(r.to - r.from >= 15, 'a scalp must not zoom to nothing');
+  test('the window starts before the entry so the setup is visible', () => {
+    const r = _tradeChartRange(yearCandles, yearCandles[100].t, 10, 40);
+    assert.equal(r.from, 90, 'ten bars of context ahead of the entry');
   });
 
-  // The reported bug: an open trade's chart stopped at the entry candle, so the
-  // days the position was actually running were off-screen.
-  test('an open position runs to the most recent candle, not to the entry', () => {
-    const last = yearCandles.length - 1;
-    const r = _tradeChartRange(yearCandles, yearCandles[100].t, null, 5, 15);
-    assert.equal(r.to, last, 'an open trade is still live — it must reach today');
-    assert.ok(r.from <= 95, 'and still show context before the entry');
+  test('a recent entry still gets the full minimum span', () => {
+    // Only 5 bars exist after the entry, so padding alone would leave almost no
+    // chart. The window has to extend backwards instead.
+    const r = _tradeChartRange(yearCandles, yearCandles[LAST - 5].t, 10, 40);
+    assert.equal(r.to, LAST);
+    assert.equal(r.to - r.from, 40, 'it widens leftwards rather than shrinking');
   });
 
-  test('a recent entry on an open trade still gets the full minimum span', () => {
-    // Only 5 candles exist after the entry, so the window cannot be centred —
-    // it has to extend backwards instead of quietly returning a narrow view.
-    const last = yearCandles.length - 1;
-    const r = _tradeChartRange(yearCandles, yearCandles[last - 5].t, null, 15, 60);
-    assert.equal(r.to, last);
-    assert.equal(r.to - r.from, 60, 'the window slides back rather than shrinking');
-  });
-
-  test('a closed trade still ends at its exit, not at today', () => {
-    const r = _tradeChartRange(yearCandles, yearCandles[100].t, yearCandles[110].t, 5, 15);
-    assert.ok(r.to < yearCandles.length - 1,
-      'a finished trade must not stretch to the present');
-  });
-
-  test('the window clamps to the data instead of running off either edge', () => {
-    const r = _tradeChartRange(yearCandles, yearCandles[2].t, yearCandles[5].t, 5, 15);
+  test('an entry near the start of the data does not run off the left edge', () => {
+    const r = _tradeChartRange(yearCandles, yearCandles[2].t, 10, 40);
     assert.equal(r.from, 0, 'padding must not go negative');
-    const r2 = _tradeChartRange(yearCandles, yearCandles[247].t, yearCandles[249].t, 5, 15);
-    assert.equal(r2.to, yearCandles.length - 1, 'padding must not exceed the last candle');
+    assert.equal(r.to, LAST);
   });
 
   test('no candles yields no range rather than a bogus one', () => {
-    assert.equal(_tradeChartRange([], 1_700_000_000, null), null);
+    assert.equal(_tradeChartRange([], 1_700_000_000), null);
   });
 
   // Guard, not behavioural: CSS layout cannot be exercised headless. Lightweight
