@@ -423,3 +423,23 @@ unlike this one — push it manually).
   every page reload sat on "Loading..." for a full cold fan-out. **A failed
   refresh must not overwrite a cached reading with "Unavailable"** — the catch
   blocks are conditional on there being no cache.
+- **`personal-stem` caches per SYMBOL, not per request** (`stem-5d-returns`, one
+  row holding `{TICKER: {r, ts}}`). A 5-day return is the same number for every
+  user, but the function used to re-fetch the whole focus list from Yahoo on
+  every page load — up to 60 parallel calls with the badge hidden until the
+  slowest landed, and no cache at any layer. **Don't key this per user or per
+  request**: the whole saving comes from symbols being shared. The write
+  re-reads the row and merges rather than overwriting the copy read at the top
+  of the request, or a concurrent request's symbols are silently dropped; and it
+  prunes entries past the bound, or the row grows forever as symbols leave focus
+  lists.
+- **A malformed cache entry must count as missing, never fresh.**
+  `Date.now() - undefined` is `NaN` and *every* comparison against `NaN` is
+  false, so a naive age test (`age > ttl`) files a broken entry under "fresh"
+  and serves a reading that does not exist. `partitionByAge` checks the shape
+  before the age. Covered by a test that fails against the naive version.
+- **The backup tables are not dead weight — they are the only rollback path.**
+  `trades_backup_*`, `investments_backup_*`, `trades_restored_*`: nine tables,
+  ~160 kB total. PITR is not enabled on this project (it needs a paid plan), so
+  these are the sole means of undoing a bad data correction. Do not "tidy them
+  up"; the storage argument for deleting them is worth nothing against that.
