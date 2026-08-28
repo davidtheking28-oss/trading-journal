@@ -1268,6 +1268,16 @@ describe('trade chart symbol and marker placement', () => {
     assert.equal(r.from, 90, 'ten bars of context ahead of the entry');
   });
 
+  // The floor decides how many recent sessions are on screen at all. At 40 the
+  // chart showed about eight weeks and the report was "now I see fewer trading
+  // days, and the last ones matter to me"; 60 fills the 3mo series the endpoint
+  // returns. Lowering it reintroduces that report.
+  test('the default window holds sixty sessions of history', () => {
+    const r = _tradeChartRange(yearCandles, yearCandles[LAST - 3].t);
+    assert.equal(r.from, LAST - 60, 'a days-old trade still shows sixty sessions back');
+    assert.equal(r.to, LAST + 2, 'and still ends two slots past today');
+  });
+
   test('a recent entry still gets the full minimum span', () => {
     // Only 5 bars exist after the entry, so padding alone would leave almost no
     // chart. The window has to extend backwards instead.

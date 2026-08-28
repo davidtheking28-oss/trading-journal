@@ -9354,13 +9354,19 @@ function _nearestCandleTime(candles, dateStr) {
 // exit (for a closed one), which is what hid the right-hand side of the chart.
 // An exit is by definition not in the future, so it is always inside this
 // window too; there is nothing left to special-case.
-function _tradeChartRange(candles, entryTime, padBars = 10, minBars = 40, rightPad = 2) {
+function _tradeChartRange(candles, entryTime, padBars = 10, minBars = 60, rightPad = 2) {
   if (!candles || !candles.length) return null;
   const entryIdx = _nearestCandleIndex(candles, entryTime);
   if (entryIdx == null) return null;
   const lastIdx = candles.length - 1;
   let lo = entryIdx - padBars;
-  // A trade entered a few days ago would otherwise show a handful of bars.
+  // A trade entered a few days ago would otherwise show a handful of bars, so
+  // the window widens backwards to a floor. That floor is what decides how many
+  // recent sessions are on screen at all: at 40 it cut the chart down to about
+  // eight weeks and the report was "now I see fewer trading days, and the last
+  // ones matter to me". 60 fills the 3mo series the endpoint returns (65 bars),
+  // which is the density the user pointed at as the target. It is a floor, not a
+  // cap — a position held longer than that still shows entry through today.
   if (lastIdx - lo < minBars) lo = lastIdx - minBars;
   // `to` overshoots the data by exactly two slots. At lastIdx the newest bar is
   // centred on the right edge and drawn half-clipped, which reads as "the last
