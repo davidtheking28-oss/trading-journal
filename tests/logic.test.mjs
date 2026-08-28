@@ -1193,7 +1193,7 @@ describe('market risk regime', () => {
 describe('trade chart symbol and marker placement', () => {
   const { _ohlcSymbol } = load('_ohlcSymbol');
   const { _nearestCandleTime } = load('_nearestCandleTime', '_nearestCandleIndex');
-  const { _tradeChartRange } = load('_tradeChartRange', '_nearestCandleIndex');
+  const { _tradeChartSlice } = load('_tradeChartSlice', '_nearestCandleIndex', '_CHART_MIN_SESSIONS', '_CHART_MAX_SESSIONS');
   const { _mergeBars } = load('_mergeBars');
 
   test('a stock symbol passes through unchanged', () => {
@@ -1237,87 +1237,48 @@ describe('trade chart symbol and marker placement', () => {
 
   const LAST = yearCandles.length - 1;
 
-  // The reported bug, twice over: the window used to end at the entry (open
-  // trade) or at the exit (closed trade), so the newest bars — where the
-  // current price is — were off-screen. It must always end at the last candle.
-  // The newest bar must be fully drawn, not centred on the right edge where it
-  // gets half-clipped and reads as a missing session — so `to` overshoots the
-  // data by a couple of empty slots.
-  test('the window runs past the newest candle so it is not clipped', () => {
-    assert.equal(_tradeChartRange(yearCandles, yearCandles[100].t, 10, 40, 2).to, LAST + 2,
-      'a trade opened mid-year still shows up to the present, with a gap');
-    assert.equal(_tradeChartRange(yearCandles, yearCandles[LAST - 2].t, 10, 40, 2).to, LAST + 2,
-      'and so does one opened two days ago');
-  });
+  // The window is a SLICE of the series, not a logical range over it. Six
+  // rounds of "I still can't see the last trading day" were all range
+  // arithmetic that kept the newest bar inside the range and still unreadable:
+  // with no ceiling the window stretched back to the entry, and a 2-BAR right
+  // pad was 25px on a 40-bar chart but 8px on a 130-bar one. Slicing makes the
+  // newest bar the last element by construction, and the screener's pixel pad
+  // gives the same visual gap at any bar count.
+  describe('the chart window is a slice ending at the newest session', () => {
+    test('the newest session is always the last element', () => {
+      for (const back of [1, 3, 20, 60, 120, 200]) {
+        const out = _tradeChartSlice(yearCandles, yearCandles[LAST - back].t);
+        assert.equal(out[out.length - 1].t, yearCandles[LAST].t,
+          `entry ${back} sessions back must still end on today`);
+      }
+    });
 
-  // A wider gap was tried and rejected. Reserving ten slots after the entry kept
-  // a days-old trade's arrow off the price scale, but it pushed the newest bar
-  // 79px clear of the scale — measured in the user's own browser — and a chart
-  // whose bars stop well before the edge reads as ending before today even
-  // though the bar is drawn there. Asked directly, the user chose the newest bar
-  // against the scale. Widening this again reintroduces that report.
-  test('the gap after the newest bar stays two slots, however recent the entry', () => {
-    assert.equal(_tradeChartRange(yearCandles, yearCandles[100].t).to, LAST + 2,
-      'an old entry: two slots');
-    assert.equal(_tradeChartRange(yearCandles, yearCandles[LAST - 3].t).to, LAST + 2,
-      'a three-session-old entry gets the same two slots, not a wide margin');
-  });
+    test('a fresh entry still gets the full minimum span', () => {
+      assert.equal(_tradeChartSlice(yearCandles, yearCandles[LAST - 2].t).length, 46);
+    });
 
-  test('the window starts before the entry so the setup is visible', () => {
-    // An entry inside the sixty-session cap, so the padding is what decides the
-    // left edge rather than the cap.
-    const r = _tradeChartRange(yearCandles, yearCandles[LAST - 45].t, 10, 40);
-    assert.equal(r.from, LAST - 55, 'ten bars of context ahead of the entry');
-  });
+    test('an entry inside the ceiling pulls the window back to include it', () => {
+      const out = _tradeChartSlice(yearCandles, yearCandles[LAST - 50].t);
+      assert.equal(out.length, 57, 'fifty sessions plus six of context');
+      assert.equal(out[0].t, yearCandles[LAST - 56].t);
+    });
 
-  // The floor decides how many recent sessions are on screen at all. 60 was
-  // tried and rejected ("you keep going backwards in trading days instead of
-  // forwards"); so was a 1M/3M/6M switcher that let it be chosen — the buttons
-  // above the chart were unwanted. 40 is the density confirmed against a
-  // screenshot. Changing it has been wrong in both directions before.
-  test('the default window holds forty sessions of history', () => {
-    const r = _tradeChartRange(yearCandles, yearCandles[LAST - 3].t);
-    assert.equal(r.from, LAST - 40, 'a days-old trade shows forty sessions back');
-    assert.equal(r.to, LAST + 2, 'and still ends two slots past today');
-  });
+    test('an older entry is capped rather than squeezing every bar', () => {
+      // Without the cap this ran back to the entry: measured on the live page,
+      // an entry 5 1/2 months back left the newest bar five painted pixels wide,
+      // pinned against the price scale.
+      assert.equal(_tradeChartSlice(yearCandles, yearCandles[10].t).length, 61);
+    });
 
-  // The ceiling that was missing for six rounds of "I still can't see the last
-  // trading day". Without it the window ran all the way back to the entry, so an
-  // older position squeezed every bar into a few pixels. Counted on the live
-  // page, in the newest bar's own pixel column: entry 4 sessions back drew 25px;
-  // 3 months back, 8px; 5½ months back, 5px — a sliver against the price scale.
-  // Every "is the last bar inside the window" check passed throughout, because
-  // it was; it was simply unreadable.
-  test('an old entry does not stretch the window into a sliver', () => {
-    const r = _tradeChartRange(yearCandles, yearCandles[10].t);
-    assert.equal(r.from, LAST - 60, 'the window is capped at sixty sessions');
-    assert.equal(r.to, LAST + 2, 'and still ends two slots past today');
-  });
+    test('a series shorter than the window is kept whole', () => {
+      const short = yearCandles.slice(0, 12);
+      assert.equal(_tradeChartSlice(short, short[0].t).length, 12);
+    });
 
-  test('the cap never fires on a trade that fits inside it', () => {
-    const r = _tradeChartRange(yearCandles, yearCandles[LAST - 30].t);
-    assert.equal(r.from, LAST - 40, 'a month-old entry keeps the forty-session floor');
-  });
-
-  test('a recent entry still gets the full minimum span', () => {
-    // Only 5 bars exist after the entry, so padding alone would leave almost no
-    // chart. The window has to extend backwards instead.
-    const r = _tradeChartRange(yearCandles, yearCandles[LAST - 5].t, 10, 40, 0);
-    assert.equal(r.to, LAST);
-    assert.equal(r.to - r.from, 40, 'it widens leftwards rather than shrinking');
-  });
-
-  test('an entry near the start of the data does not run off the left edge', () => {
-    // A series shorter than the floor, so nothing but the clamp keeps `from`
-    // from going negative.
-    const short = yearCandles.slice(0, 30);
-    const r = _tradeChartRange(short, short[2].t, 10, 40, 0);
-    assert.equal(r.from, 0, 'padding must not go negative');
-    assert.equal(r.to, short.length - 1);
-  });
-
-  test('no candles yields no range rather than a bogus one', () => {
-    assert.equal(_tradeChartRange([], 1_700_000_000), null);
+    test('no candles yields nothing rather than throwing', () => {
+      assert.deepEqual(_tradeChartSlice([], 1_700_000_000), []);
+      assert.deepEqual(_tradeChartSlice(null, 1_700_000_000), []);
+    });
   });
 
   // Guard, not behavioural: CSS layout cannot be exercised headless. Lightweight
@@ -1337,65 +1298,41 @@ describe('trade chart symbol and marker placement', () => {
       'the global td padding must not apply inside the chart');
   });
 
-  // setVisibleLogicalRange resolves both edges against the container width at
-  // the moment it is called and does not re-anchor when that width changes. The
-  // chart is created while the modal is still running its open animation, so it
-  // does change — and the library holds the LEFT edge on resize, letting the
-  // right one drift inward. Measured live on a 252-bar series: asked for
-  // {120, 253} with the last bar at 251, settled on {78, 211} — the newest
-  // session and the entry marker both off screen, which is the exact bug
-  // report. Anchoring from the right (barSpacing + scrollToPosition) instead
-  // survives the resize. Reverting to setVisibleLogicalRange brings it back
-  // silently: the chart still draws, just at the wrong place.
-  // The shared ohlc function caches a 1y series for 6h and a 3mo series for
-  // 45min, so the long series is routinely a full session behind: measured
-  // against the live function at 14:00 UTC on 2026-08-28, 1y ended 08-27 while
-  // 3mo ended 08-28. A trade opened more than 3 months ago needs the year of
-  // history AND the current session, so the two series are spliced.
-  describe('splicing the fresh tail onto the stale history', () => {
-    const bar = (day, c) => ({ t: Date.UTC(2026, 7, day) / 1000, o: c, h: c, l: c, c, v: 1 });
-
-    test('the fresh series supplies the sessions the stale one is missing', () => {
-      const merged = _mergeBars([bar(24, 1), bar(25, 1), bar(26, 1)], [bar(25, 9), bar(26, 9), bar(27, 9), bar(28, 9)]);
-      assert.equal(merged.length, 5);
-      assert.equal(merged[merged.length - 1].t, bar(28).t, 'the newest session must survive the merge');
-    });
-
-    test('where they overlap the fresher reading wins', () => {
-      const merged = _mergeBars([bar(25, 1)], [bar(25, 9)]);
-      assert.deepEqual(merged.map(b => b.c), [9]);
-    });
-
-    test('the result is ordered by time whatever order the series arrive in', () => {
-      const merged = _mergeBars([bar(27, 1), bar(24, 1)], [bar(26, 9), bar(25, 9)]);
-      assert.deepEqual(merged.map(b => b.t), [bar(24).t, bar(25).t, bar(26).t, bar(27).t]);
-    });
-
-    test('a failed history fetch still yields the recent series', () => {
-      assert.equal(_mergeBars([], [bar(27, 9), bar(28, 9)]).length, 2);
-    });
-
-    test('no bars at all merges to nothing rather than throwing', () => {
-      assert.deepEqual(_mergeBars(null, undefined), []);
-    });
+  // Lifted from the screener's _fitChart so the two charts agree. fitContent()
+  // alone pins the newest candle against the price scale; the air after it must
+  // be in PIXELS, not bars — a 2-bar pad measured 25px on a 40-bar chart and 8px
+  // on a 130-bar one, which is why the newest session looked missing on older
+  // trades and fine on fresh ones. Widening the range re-spaces the bars, so
+  // PAD/barSpacing undershoots; the closed form below is what lands the same gap
+  // at any bar count. Reverting any of this reintroduces the report.
+  test('the right-hand air is a pixel amount, not a bar count', () => {
+    assert.match(SOURCE, /const _CHART_RIGHT_PAD_PX = 14/,
+      'the pad is expressed in pixels');
+    assert.match(SOURCE, /function _fitTradeChart[\s\S]{0,600}?ts\.fitContent\(\)/,
+      'the fit starts from fitContent, like the screener');
+    assert.match(SOURCE, /const p = _CHART_RIGHT_PAD_PX \* barCount \/ \(W - _CHART_RIGHT_PAD_PX\)/,
+      'the re-spacing must be solved for, not approximated as PAD/barSpacing');
+    assert.match(SOURCE, /rightOffset: 0/,
+      'a bar-based rightOffset would fight the pixel pad');
   });
 
-  test('the chart view is anchored to the newest bar, not to a logical range', () => {
-    assert.doesNotMatch(SOURCE, /\.setVisibleLogicalRange\(/,
-      'the trade chart must not position itself with setVisibleLogicalRange');
-    assert.match(SOURCE, /function _applyChartView[\s\S]{0,600}?scrollToPosition\(rightPad, false\)/,
-      'the view must pin the right edge rightPad slots past the last bar');
-    assert.match(SOURCE, /function _applyChartView[\s\S]{0,600}?barSpacing:\s*Math\.max\(0\.5,\s*w \/ span\)/,
-      'the left edge must come from bar spacing sized to the container');
-    assert.match(SOURCE, /_applyChartView\(chart, range\.to - range\.from, range\.to - \(bars\.length - 1\)\)/,
-      '_tradeChartRange must still be the single source of the window');
+  // A fixed re-apply delay is a bet on how fast the machine finishes the modal
+  // animation and first layout — it wins on a fast desktop and loses elsewhere,
+  // which is how this measured correct here while still being wrong for the
+  // user. The observer also fires before autoSize has resized the time scale, so
+  // reading its width in the callback returns the pre-resize value; hence the
+  // following frame as well.
+  test('the fit re-runs on resize, not after a fixed delay', () => {
+    assert.match(SOURCE, /function _watchTradeChart[\s\S]{0,900}?new ResizeObserver\(\(\) => \{ fit\(\); schedule\(\); \}\)/,
+      'the fit must re-run from a ResizeObserver');
+    assert.match(SOURCE, /requestAnimationFrame\(\(\) => \{ _chartViewRaf = 0; fit\(\); \}\)/,
+      'and again on the following frame, once the new width is in effect');
+    assert.doesNotMatch(SOURCE, /_chartViewTimers/,
+      'no timer may be left deciding when the layout is final');
+    assert.match(SOURCE, /_disposeTradeChart[\s\S]{0,400}?_chartResizeObs[\s\S]{0,80}?disconnect\(\)/,
+      'the observer must be disconnected with the chart or it outlives the modal');
   });
 
-  // A fixed re-apply delay is a bet on how fast the machine running the page
-  // finishes the modal animation, the web font and the first layout. Winning
-  // that bet on a fast desktop and losing it on a slower device is exactly how
-  // this measured correct here while still being wrong for the user, three
-  // fixes running. The re-anchor must hang off the real resize event.
   // `activeTab` is a const scoped inside another function; the visibilitychange
   // handler at top level called it and threw ReferenceError on every return to
   // the tab, so the catch-up repaint it guards never ran. Reported from the live
@@ -1407,18 +1344,4 @@ describe('trade chart symbol and marker placement', () => {
       'it must read the active tab off the DOM');
   });
 
-  test('the view re-anchors on a resize event, not after a fixed delay', () => {
-    assert.match(SOURCE, /function _applyChartView[\s\S]{0,1600}?new ResizeObserver\(\(\) => \{ apply\(\); schedule\(\); \}\)/,
-      'the view must re-anchor from a ResizeObserver');
-    // The observer fires before autoSize has resized the time scale, so reading
-    // ts.width() in the callback returns the pre-resize value: measured, a
-    // 112px -> 558px container kept barSpacing at 2.6 instead of 12.1 and drew
-    // 212 bars instead of 46. The follow-up frame is what makes it take.
-    assert.match(SOURCE, /const schedule = \(\) => \{[\s\S]{0,300}?requestAnimationFrame\(\(\) => \{ _chartViewRaf = 0; apply\(\); \}\)/,
-      'a following frame must re-apply once the new width is in effect');
-    assert.doesNotMatch(SOURCE, /_chartViewTimers/,
-      'no timer may be left deciding when the layout is final');
-    assert.match(SOURCE, /_disposeTradeChart[\s\S]{0,400}?_chartResizeObs[\s\S]{0,80}?disconnect\(\)/,
-      'the observer must be disconnected with the chart or it outlives the modal');
-  });
 });

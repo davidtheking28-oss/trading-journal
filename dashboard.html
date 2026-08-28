@@ -9345,56 +9345,41 @@ function _nearestCandleTime(candles, dateStr) {
   return idx == null ? null : candles[idx].t;
 }
 
-// The visible window for a trade's chart. It ALWAYS ends at the newest candle
-// — the right edge is where the current price is, and it has to stay on screen
-// whether the trade is open or closed, exactly like the screener's cards. Only
-// the left edge moves, back far enough to include the entry plus context.
-//
-// Earlier versions ended the window at the entry (for an open trade) or at the
-// exit (for a closed one), which is what hid the right-hand side of the chart.
-// An exit is by definition not in the future, so it is always inside this
-// window too; there is nothing left to special-case.
-function _tradeChartRange(candles, entryTime, padBars = 10, minBars = 40, rightPad = 2, maxBars = 60) {
-  if (!candles || !candles.length) return null;
-  const entryIdx = _nearestCandleIndex(candles, entryTime);
-  if (entryIdx == null) return null;
+// How many sessions the chart shows. The window is a SLICE of the series, not a
+// logical range over it — the newest bar is then inside by construction, which
+// is the whole reason the screener's cards never had this problem and this chart
+// did, six rounds running. An entry inside the ceiling pulls the slice back to
+// include it; an older one is off-screen with its dashed price line still drawn.
+const _CHART_MIN_SESSIONS = 45;
+const _CHART_MAX_SESSIONS = 60;
+function _tradeChartSlice(candles, entryTime, minN = _CHART_MIN_SESSIONS, maxN = _CHART_MAX_SESSIONS) {
+  if (!candles || !candles.length) return [];
   const lastIdx = candles.length - 1;
-  let lo = entryIdx - padBars;
-  // A trade entered a few days ago would otherwise show a handful of bars, so
-  // the window widens backwards to a floor of 40 sessions. That floor decides
-  // how many recent sessions are on screen, and 40 is the density the user
-  // confirmed against a screenshot after 60 was rejected as "going backwards in
-  // trading days". A switcher (1M/3M/6M/trade) was built to let it be chosen and
-  // was rejected too — the buttons above the chart were unwanted.
-  if (lastIdx - lo < minBars) lo = lastIdx - minBars;
-  // ...and a CEILING, which is what was missing for six rounds of "I still can't
-  // see the last trading day". Without it the window stretched all the way back
-  // to the entry, so an older position squeezed every bar into a few pixels.
-  // Measured on the live page by counting painted pixels in the newest bar's
-  // own column: MD (entry 4 sessions back) drew 25 px at x=511/548; ORCL (3
-  // months) 8 px at 533/552; AAOI (5½ months) **5 px at 540/552** — a sliver
-  // pinned against the price scale. Every check that asked "is the last bar
-  // inside the window" passed the whole time, because it was; it was just
-  // unreadable. That is also the literal complaint "you keep going backwards in
-  // trading days instead of forwards": the older the entry, the further back
-  // the left edge ran and the more the recent sessions were compressed.
-  // An entry older than this is off-screen — its price line still shows — and
-  // that is the deliberate trade: recent sessions readable beats entry visible.
-  if (lastIdx - lo > maxBars) lo = lastIdx - maxBars;
-  // `to` overshoots the data by exactly two slots. At lastIdx the newest bar is
-  // centred on the right edge and drawn half-clipped, which reads as "the last
-  // session is missing"; two slots put it fully on screen while keeping it up
-  // against the price scale, the way the screener's cards do.
-  //
-  // A wider gap was tried and rejected. An earlier version reserved ten slots
-  // after the entry so a position opened three sessions ago would not have its
-  // arrow on top of the price scale — but that pushed the newest bar 79px clear
-  // of the scale, and a chart whose bars stop well before the edge reads as
-  // ending before today even though the bar is drawn. Asked directly, the user
-  // chose the newest bar against the scale over a roomier entry marker; on a
-  // days-old trade the entry arrow does sit close to the right edge, and that is
-  // the accepted trade-off, not an oversight.
-  return { from: Math.max(0, lo), to: lastIdx + rightPad };
+  const entryIdx = _nearestCandleIndex(candles, entryTime);
+  let n = minN;
+  if (entryIdx != null) n = Math.max(n, Math.min(maxN, lastIdx - entryIdx + 6));
+  return candles.slice(Math.max(0, lastIdx - n));
+}
+
+// Lifted from the screener's _fitChart, deliberately, so the two charts agree.
+// fitContent() alone pins the newest candle hard against the price scale; the
+// air after it has to be expressed in PIXELS, not bars. A 2-bar pad was 25px on
+// a 40-bar chart and 8px on a 130-bar one — measured — which is exactly why the
+// newest session read as missing on older trades and fine on fresh ones.
+// Widening the range re-spaces the bars, so PAD/bs undershoots: after the fit
+// the plot is bs*count wide, asking for p extra units re-spaces to W/(count+p),
+// and we want p*that == PAD. Solving gives the line below.
+const _CHART_RIGHT_PAD_PX = 14;
+function _fitTradeChart(chart, barCount) {
+  const ts = chart.timeScale();
+  ts.fitContent();
+  if (!barCount) return;
+  const bs = ts.options && ts.options().barSpacing;
+  if (!bs || !isFinite(bs) || bs <= 0) return;
+  const W = bs * barCount;
+  if (W <= _CHART_RIGHT_PAD_PX) return;
+  const p = _CHART_RIGHT_PAD_PX * barCount / (W - _CHART_RIGHT_PAD_PX);
+  ts.setVisibleLogicalRange({ from: 0, to: (barCount - 1) + p });
 }
 
 // Loaded lazily on first chart render, not at boot — same reasoning as
@@ -9436,59 +9421,22 @@ function _disposeTradeChart() {
   if (_chartInstance) { try { _chartInstance.remove(); } catch (e) {} _chartInstance = null; }
 }
 
-// Anchors the view to the NEWEST bar and works backwards, instead of asking for
-// a logical range by index.
-//
-// setVisibleLogicalRange resolves its two edges against the container width at
-// the instant it is called, and then does NOT re-anchor when that width changes
-// (lockVisibleTimeRangeOnResize is off, and on resize the library holds the
-// LEFT edge and lets the right one move). The chart is created while the modal
-// is still running its 0.22s open animation, so the width does change
-// underneath it — and the right edge drifts inward, taking the newest bar and
-// often the entry marker off screen. Measured on a 252-bar series: asked for
-// {120, 253}, settled on {78, 211} with the last bar at 251, which is exactly
-// the "it opens in the middle and I can't see the last session" report.
-//
-// barSpacing + scrollToPosition express the same window from the other side:
-// the right edge is pinned `rightPad` slots past the last bar and the left edge
-// falls where it falls.
-//
-// Re-anchoring is driven by a ResizeObserver, NOT by a timer. A fixed delay is a
-// bet on how long the modal's open animation, the web font and the first layout
-// take on the machine actually running it — win that bet on a fast desktop and
-// lose it on a phone or a loaded browser, and the view silently settles at the
-// pre-animation width with the newest bar off screen. That is why this looked
-// correct in every measurement here while still being wrong for the user. The
-// observer fires on the real event instead, however late it happens.
-//
-// Panning and zooming do not resize the container, so a user's own scroll is
-// never yanked back. A window resize does re-anchor — which is the wanted
-// behaviour anyway.
-function _applyChartView(chart, span, rightPad) {
+// Re-fit on every resize, not just once. The chart is built while the modal is
+// still animating open, so the width it fits against is not the final one; a
+// fixed delay is a bet on how fast the machine gets there and loses on slower
+// ones. The observer fires before autoSize has resized the time scale, hence the
+// following frame too.
+function _watchTradeChart(chart, barCount) {
   const el = document.getElementById('cal-trade-chart');
-  const ts = chart.timeScale();
-  const apply = () => {
-    if (_chartInstance !== chart) return;
-    const w = ts.width();
-    if (!w || !span) return;
-    ts.applyOptions({ barSpacing: Math.max(0.5, w / span) });
-    ts.scrollToPosition(rightPad, false);
-  };
-  // The observer fires before the chart has taken the new width: autoSize owns
-  // its own observer and resizes the time scale on a later frame, so reading
-  // ts.width() inside the callback returns the OLD value and the bars keep the
-  // spacing they had at the narrow size. Measured: a container going 112px ->
-  // 558px left barSpacing at 2.6 instead of 12.1, showing 212 bars. Re-applying
-  // on the following frame is what makes the new width visible; scheduling only
-  // one keeps a resize drag from queueing a frame per pixel.
+  const fit = () => { if (_chartInstance === chart) _fitTradeChart(chart, barCount); };
   const schedule = () => {
     if (_chartViewRaf) cancelAnimationFrame(_chartViewRaf);
-    _chartViewRaf = requestAnimationFrame(() => { _chartViewRaf = 0; apply(); });
+    _chartViewRaf = requestAnimationFrame(() => { _chartViewRaf = 0; fit(); });
   };
-  apply();
+  fit();
   schedule();
   if (el && window.ResizeObserver) {
-    _chartResizeObs = new ResizeObserver(() => { apply(); schedule(); });
+    _chartResizeObs = new ResizeObserver(() => { fit(); schedule(); });
     _chartResizeObs.observe(el);
   }
 }
@@ -9535,8 +9483,9 @@ async function _renderTradeChart(tr) {
       entryAgeDays > 75 ? getBars('1y').catch(() => []) : Promise.resolve([]),
     ]);
     clearTimeout(tid);
-    const bars = _mergeBars(history, recent);
-    if (!bars.length) throw new Error('no bars');
+    const all = _mergeBars(history, recent);
+    if (!all.length) throw new Error('no bars');
+    const bars = _tradeChartSlice(all, _nearestCandleTime(all, tr.entryDate));
 
     el.textContent = '';
     el.style.cssText = `width:100%;height:${_CHART_H}px;border-radius:var(--r-md);margin-top:4px;background:var(--chart-bg);overflow:hidden;`;
@@ -9558,9 +9507,10 @@ async function _renderTradeChart(tr) {
                 fontFamily: 'JetBrains Mono, ui-monospace, monospace', attributionLogo: false },
       grid: { vertLines: { color: gridCol }, horzLines: { color: gridCol } },
       rightPriceScale: { borderColor: axisCol },
-      // rightOffset is the gap after the newest bar. A few bars' worth keeps it
-      // clear of the price scale without pushing it off-screen.
-      timeScale: { borderColor: axisCol, rightOffset: 3 },
+      // rightOffset stays 0 like the screener's: the air after the newest bar is
+      // added in pixels by _fitTradeChart, and a bar-based offset here would
+      // fight it — the two disagree by bar width, which changes with the range.
+      timeScale: { borderColor: axisCol, rightOffset: 0, fixLeftEdge: false, fixRightEdge: false },
     });
     _chartInstance = chart;
 
@@ -9585,9 +9535,7 @@ async function _renderTradeChart(tr) {
     if (exitTime) markers.push({ time: toTime(exitTime), position: 'aboveBar', color: calcTotal(tr) >= 0 ? green : red, shape: 'arrowDown', text: t('tile_exit') });
     if (markers.length) series.setMarkers(markers);
 
-    const range = _tradeChartRange(bars, entryTime);
-    if (range) _applyChartView(chart, range.to - range.from, range.to - (bars.length - 1));
-    else chart.timeScale().fitContent();
+    _watchTradeChart(chart, bars.length);
   } catch (e) {
     el.style.cssText = msgStyle;
     el.textContent = t('chart_unavailable');
