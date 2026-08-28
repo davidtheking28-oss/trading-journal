@@ -478,6 +478,18 @@ unlike this one — push it manually).
   the fresher series win on overlap. **Don't "simplify" this back to a single
   request** — and don't fix it by shortening the screener's 1y TTL either, that
   function serves the screener's own traffic.
+- **Re-anchoring is driven by a ResizeObserver, never by a timer.** The first
+  version re-applied the view after a fixed 300ms, which is a bet on how fast
+  the machine finishes the modal animation, the web font and the first layout.
+  That bet wins on the dev machine and loses elsewhere — which is why three
+  successive fixes measured correct here and were still wrong for the user.
+- **The observer fires BEFORE the chart has the new width.** `autoSize` owns its
+  own observer and resizes the time scale on a later frame, so `ts.width()`
+  inside the callback returns the pre-resize value. Measured: a container going
+  112px -> 558px kept `barSpacing` at 2.6 instead of 12.1 and drew 212 bars
+  instead of 46. `_applyChartView` therefore applies twice — immediately and on
+  the following animation frame (one frame, coalesced, so a resize drag does not
+  queue a frame per pixel). Dropping the second apply reintroduces this.
 - **The failure is silent** — the chart still draws, just at the wrong place —
   so the guard test asserts on the source: no `.setVisibleLogicalRange(` call
   anywhere. Verified it drops the suite to 141/1 when reverted.
