@@ -4746,6 +4746,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .cal-multi-pl { font-size:10px; font-weight:700; }
   .view-toggle-btn { padding: 5px 9px !important; display: inline-flex !important; align-items: center !important; gap: 5px !important; font-size: 11px !important; }
   .view-toggle-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+  /* Compact trades table: hides audit-trail columns (reason, stop, targets,
+     close date, closed shares, sector, commission) — all still available by
+     clicking a row open. Off by default; the user opts in via the toggle. */
+  .table-wrap.compact-cols table thead tr th.col-adv,
+  .table-wrap.compact-cols table tbody tr:not(.expanded-row):not(.year-group-row) > td.col-adv { display: none; }
   html[data-theme="light"] .cal-nav-btn { background: #f1f5f9 !important; border-color: #e2e8f0 !important; color: #64748b !important; }
   html[data-theme="light"] .cal-nav-btn:hover { background: #e2e8f0 !important; color: #334155 !important; }
   html[data-theme="light"] .cal-grid { background: rgba(14,14,18,0.08) !important; border-color: rgba(14,14,18,0.1) !important; }
@@ -5561,6 +5566,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <div class="table-toolbar">
         <button class="btn btn-primary" onclick="openModal('stock')" data-i18n="add_new_trade">+ Add New Trade</button>
         <button class="btn btn-export btn-sm view-toggle-btn" id="st-view-toggle" onclick="toggleTableView('stock')" title="החלף תצוגה"></button>
+        <button class="btn btn-export btn-sm view-toggle-btn" id="st-compact-toggle" onclick="toggleCompactCols()" title="הצג/הסתר עמודות מפורטות (סיבה, סטופ, מטרות, תאריך סגירה, כמות סגורה, סקטור, עמלה) — נשארות זמינות בלחיצה על השורה"></button>
         <button class="btn btn-danger btn-sm" onclick="deduplicateDB('stock')" title="מחק עסקאות כפולות (זהות בסימבול + תאריך + מחיר)" data-i18n="clean_dupes">🧹 Clean Duplicates</button>
         <button class="btn btn-secondary btn-sm" id="st-archive-btn" onclick="toggleInlineArchive('stock')" data-i18n="archive">📅 Archive</button>
         <span id="st-stats" style="color:var(--text2);font-size:12px;flex:1;text-align:center;direction:ltr;"></span>
@@ -8746,6 +8752,17 @@ let _ovLiveTimer = null;
 const CAL_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
 const TBL_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="0.5" fill="currentColor"/><circle cx="3" cy="12" r="0.5" fill="currentColor"/><circle cx="3" cy="18" r="0.5" fill="currentColor"/></svg>`;
 
+// Compact trades table (col-adv columns hidden) — off by default, opt-in,
+// persisted across reloads. Same table serves both stock and crypto scope.
+function _compactColsOn() {
+  try { return localStorage.getItem('tj_compact_cols') === '1'; } catch { return false; }
+}
+function toggleCompactCols() {
+  const next = !_compactColsOn();
+  try { localStorage.setItem('tj_compact_cols', next ? '1' : '0'); } catch {}
+  renderTable('stock');
+}
+
 function toggleTableView(type) {
   tableViewMode[type] = tableViewMode[type] === 'table' ? 'calendar' : 'table';
   if (tableViewMode[type] === 'table') { calendarNav[type] = null; renderTable(type); return; }
@@ -9038,6 +9055,8 @@ function renderTable(type) {
     const isCalMode = tableViewMode[type] === 'calendar';
     toggleBtn.innerHTML = isCalMode ? TBL_ICON + ' ' + t('view_table') : CAL_ICON + ' ' + t('view_calendar');
   }
+  const compactBtn = document.getElementById('st-compact-toggle');
+  if (compactBtn) compactBtn.textContent = _compactColsOn() ? 'עמודות מלאות' : 'עמודות בסיס';
 
   // Calendar mode
   if (tableViewMode[type] === 'calendar') { renderCalendar(type); return; }
@@ -9092,17 +9111,17 @@ function renderTable(type) {
     ${thSort(type,'entryDate',t('col_entry_date'),sc,sd)}
     <th>L/S</th>
     <th>${t('col_status')}</th>
-    <th>${t('col_reason')}</th>
+    <th class="col-adv">${t('col_reason')}</th>
     ${thSort(type,'symbol',t('col_symbol'),sc,sd)}
     <th>${t('col_entry')}</th>
     <th>${t('col_shares')}</th>
-    <th>${t('col_stop')}</th>
-    <th>${t('col_targets')}</th>
-    <th>${t('col_close_date')}</th>
-    <th>${t('col_closed_shares')}</th>
+    <th class="col-adv">${t('col_stop')}</th>
+    <th class="col-adv">${t('col_targets')}</th>
+    <th class="col-adv">${t('col_close_date')}</th>
+    <th class="col-adv">${t('col_closed_shares')}</th>
     <th>${t('col_exit')}</th>
-    <th>${t('col_sector')}</th>
-    <th>${t('col_commission')}</th>
+    <th class="col-adv">${t('col_sector')}</th>
+    <th class="col-adv">${t('col_commission')}</th>
     <th class="calc-cell">${thSort(type,'total',t('col_total'),sc,sd).replace('<th','<span').replace('</th>','</span>')}</th>
     <th class="calc-cell">${thSort(type,'pct','%',sc,sd).replace('<th','<span').replace('</th>','</span>')}</th>
     <th class="calc-cell">${thSort(type,'r','R',sc,sd).replace('<th','<span').replace('</th>','</span>')}</th>
@@ -9170,17 +9189,17 @@ function renderTable(type) {
       <td>${fmtDate(tr.entryDate)}</td>
       <td><span class="badge badge-${tr.ls}">${tr.ls}</span></td>
       <td>${tradeStatus(tr)}</td>
-      <td>${erBadge(tr.entryReason)}</td>
+      <td class="col-adv">${erBadge(tr.entryReason)}</td>
       <td><span style="display:flex;align-items:center;gap:6px"><img src="https://images.financialmodelingprep.com/symbol/${encodeURIComponent(tr.symbol)}.png" alt="" loading="lazy" style="width:18px;height:18px;border-radius:50%;object-fit:contain;flex-shrink:0" onerror="this.remove()"><strong>${esc(tr.symbol)}</strong></span></td>
       <td class="sensitive">$${fmtPrice(tr.entryPrice)}</td>
       <td>${tr.shares}</td>
-      <td class="sensitive">$${fmtPrice(tr.stop)}</td>
-      <td>${tr.t&&tr.t.length ? `<span style="color:var(--purple);font-weight:700;">T${tr.t.length}</span>` : '<span style="color:var(--text3)">—</span>'}</td>
-      <td>${fmtDate(tr.closeDate)}</td>
-      <td>${tr.closedShares||'—'}</td>
+      <td class="col-adv sensitive">$${fmtPrice(tr.stop)}</td>
+      <td class="col-adv">${tr.t&&tr.t.length ? `<span style="color:var(--purple);font-weight:700;">T${tr.t.length}</span>` : '<span style="color:var(--text3)">—</span>'}</td>
+      <td class="col-adv">${fmtDate(tr.closeDate)}</td>
+      <td class="col-adv">${tr.closedShares||'—'}</td>
       <td class="sensitive">$${fmtPrice(tr.exitPrice)}</td>
-      <td>${tradeSector(tr)}</td>
-      <td class="sensitive">$${fmt(tr.commission)}</td>
+      <td class="col-adv">${tradeSector(tr)}</td>
+      <td class="col-adv sensitive">$${fmt(tr.commission)}</td>
       <td class="calc-cell"><span class="${clr(tot)} sensitive">${fmtUSD(tot)}</span></td>
       <td class="calc-cell"><span class="${clr(pct)} sensitive">${fmtPct(pct)}</span></td>
       <td class="calc-cell sensitive">${fmtR(tot,calcStopRisk(tr))}</td>
@@ -9199,6 +9218,7 @@ function renderTable(type) {
   h += '</tbody></table>';
   _prevTradeIds[type] = _fullIds;
   wrap.innerHTML = h;
+  wrap.classList.toggle('compact-cols', _compactColsOn());
   wrap.querySelectorAll('tr.data-row').forEach((row, i) => {
     row.style.setProperty('--i', Math.min(i, 14));
     row.classList.add('animate-in');
