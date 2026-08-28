@@ -9354,7 +9354,7 @@ function _nearestCandleTime(candles, dateStr) {
 // exit (for a closed one), which is what hid the right-hand side of the chart.
 // An exit is by definition not in the future, so it is always inside this
 // window too; there is nothing left to special-case.
-function _tradeChartRange(candles, entryTime, padBars = 10, minBars = 40, rightPad = 2) {
+function _tradeChartRange(candles, entryTime, padBars = 10, minBars = 40, rightPad = 2, maxBars = 60) {
   if (!candles || !candles.length) return null;
   const entryIdx = _nearestCandleIndex(candles, entryTime);
   if (entryIdx == null) return null;
@@ -9365,9 +9365,22 @@ function _tradeChartRange(candles, entryTime, padBars = 10, minBars = 40, rightP
   // how many recent sessions are on screen, and 40 is the density the user
   // confirmed against a screenshot after 60 was rejected as "going backwards in
   // trading days". A switcher (1M/3M/6M/trade) was built to let it be chosen and
-  // was rejected too — the buttons above the chart were unwanted. It is a floor,
-  // not a cap: a position held longer still shows entry through today.
+  // was rejected too — the buttons above the chart were unwanted.
   if (lastIdx - lo < minBars) lo = lastIdx - minBars;
+  // ...and a CEILING, which is what was missing for six rounds of "I still can't
+  // see the last trading day". Without it the window stretched all the way back
+  // to the entry, so an older position squeezed every bar into a few pixels.
+  // Measured on the live page by counting painted pixels in the newest bar's
+  // own column: MD (entry 4 sessions back) drew 25 px at x=511/548; ORCL (3
+  // months) 8 px at 533/552; AAOI (5½ months) **5 px at 540/552** — a sliver
+  // pinned against the price scale. Every check that asked "is the last bar
+  // inside the window" passed the whole time, because it was; it was just
+  // unreadable. That is also the literal complaint "you keep going backwards in
+  // trading days instead of forwards": the older the entry, the further back
+  // the left edge ran and the more the recent sessions were compressed.
+  // An entry older than this is off-screen — its price line still shows — and
+  // that is the deliberate trade: recent sessions readable beats entry visible.
+  if (lastIdx - lo > maxBars) lo = lastIdx - maxBars;
   // `to` overshoots the data by exactly two slots. At lastIdx the newest bar is
   // centred on the right edge and drawn half-clipped, which reads as "the last
   // session is missing"; two slots put it fully on screen while keeping it up

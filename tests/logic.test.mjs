@@ -1264,8 +1264,10 @@ describe('trade chart symbol and marker placement', () => {
   });
 
   test('the window starts before the entry so the setup is visible', () => {
-    const r = _tradeChartRange(yearCandles, yearCandles[100].t, 10, 40);
-    assert.equal(r.from, 90, 'ten bars of context ahead of the entry');
+    // An entry inside the sixty-session cap, so the padding is what decides the
+    // left edge rather than the cap.
+    const r = _tradeChartRange(yearCandles, yearCandles[LAST - 45].t, 10, 40);
+    assert.equal(r.from, LAST - 55, 'ten bars of context ahead of the entry');
   });
 
   // The floor decides how many recent sessions are on screen at all. 60 was
@@ -1279,6 +1281,24 @@ describe('trade chart symbol and marker placement', () => {
     assert.equal(r.to, LAST + 2, 'and still ends two slots past today');
   });
 
+  // The ceiling that was missing for six rounds of "I still can't see the last
+  // trading day". Without it the window ran all the way back to the entry, so an
+  // older position squeezed every bar into a few pixels. Counted on the live
+  // page, in the newest bar's own pixel column: entry 4 sessions back drew 25px;
+  // 3 months back, 8px; 5½ months back, 5px — a sliver against the price scale.
+  // Every "is the last bar inside the window" check passed throughout, because
+  // it was; it was simply unreadable.
+  test('an old entry does not stretch the window into a sliver', () => {
+    const r = _tradeChartRange(yearCandles, yearCandles[10].t);
+    assert.equal(r.from, LAST - 60, 'the window is capped at sixty sessions');
+    assert.equal(r.to, LAST + 2, 'and still ends two slots past today');
+  });
+
+  test('the cap never fires on a trade that fits inside it', () => {
+    const r = _tradeChartRange(yearCandles, yearCandles[LAST - 30].t);
+    assert.equal(r.from, LAST - 40, 'a month-old entry keeps the forty-session floor');
+  });
+
   test('a recent entry still gets the full minimum span', () => {
     // Only 5 bars exist after the entry, so padding alone would leave almost no
     // chart. The window has to extend backwards instead.
@@ -1288,9 +1308,12 @@ describe('trade chart symbol and marker placement', () => {
   });
 
   test('an entry near the start of the data does not run off the left edge', () => {
-    const r = _tradeChartRange(yearCandles, yearCandles[2].t, 10, 40, 0);
+    // A series shorter than the floor, so nothing but the clamp keeps `from`
+    // from going negative.
+    const short = yearCandles.slice(0, 30);
+    const r = _tradeChartRange(short, short[2].t, 10, 40, 0);
     assert.equal(r.from, 0, 'padding must not go negative');
-    assert.equal(r.to, LAST);
+    assert.equal(r.to, short.length - 1);
   });
 
   test('no candles yields no range rather than a bogus one', () => {
