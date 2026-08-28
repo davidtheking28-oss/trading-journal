@@ -462,14 +462,20 @@ unlike this one — push it manually).
   animation (rAF + a 300ms timer, cleared by `_disposeTradeChart`).
   `_tradeChartRange` is still the single source of the window — the span and the
   right pad are derived from it, so its tests keep covering the geometry.
-- **A just-opened position needs empty slots reserved AFTER the entry.** With
-  only three sessions between the entry and the newest bar, the entry arrow and
-  its label landed on top of the price scale and were clipped to a few
-  unreadable pixels — the "I can't see the entry" half of the report, seen on a
-  real MD trade entered 2026-08-24. `_tradeChartRange`'s `minAfterEntry` widens
-  the window to the RIGHT (past the last bar, into whitespace) rather than
-  scrolling the newest bar off to make room. Measured after the fix: entry at
-  78% across, newest bar at 87%, both clear of the scale.
+- **The gap after the newest bar is two slots, and must stay two.** A version
+  that reserved ten slots after the entry (so a days-old trade's arrow would not
+  sit on the price scale) pushed the newest bar 79px clear of the scale — and a
+  chart whose bars stop well before the edge reads as ending before today even
+  though the bar is drawn there. That is what four rounds of "I still can't see
+  the last session" turned out to be: the bar was always rendered, just detached
+  from the edge. Asked directly, the user chose the newest bar against the scale
+  over a roomier entry marker. On a days-old trade the entry arrow does land
+  close to the right edge — accepted trade-off, not an oversight.
+- **A console reading from the user's own browser is what settled it.** Their
+  numbers came back byte-identical to the dev machine's
+  (`lastBar 2026-08-28`, `xLast 473`, `plotW 552`), which proved the remaining
+  gap was presentational, not positional, and stopped a fifth speculative fix.
+  Reach for that earlier when a visual report will not reproduce.
 - **Both `3mo` and `1y` are fetched for an old entry, and spliced.** The shared
   `ohlc` caches 1y for 6h and 3mo for 45min, so the year-long series is
   routinely a whole session behind — measured live at 14:00 UTC on 2026-08-28,
