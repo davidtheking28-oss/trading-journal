@@ -9565,44 +9565,58 @@ async function _renderTradeChart(tr) {
 
     const entryTime = _nearestCandleTime(bars, tr.entryDate);
     const exitTime = tr.closeDate ? _nearestCandleTime(bars, tr.closeDate) : null;
-    const markers = [];
-    if (entryTime) markers.push({ time: toTime(entryTime), position: 'belowBar', color: accent, shape: 'arrowUp', text: t('tile_entry') });
-    if (exitTime) markers.push({ time: toTime(exitTime), position: 'aboveBar', color: calcTotal(tr) >= 0 ? green : red, shape: 'arrowDown', text: t('tile_exit') });
-    if (markers.length) series.setMarkers(markers);
 
-    // Label the newest bar on the chart itself. Which candle is the last trading
-    // day was the whole dispute for ten-plus rounds and nothing on the plot
-    // answered it — the time axis only had room for two date labels, neither
-    // near the right edge, so "is today's candle there" could not be settled by
-    // looking. A chart marker WAS tried first (still a `series.setMarkers`
-    // entry further down in history) and technically rendered — confirmed live,
-    // zoomed 3x, the dot and text were there — but at the library's fixed 10px
-    // marker font it was too faint to register at normal chart size, which is
-    // exactly what a "nothing changed" report looks like when something did.
-    // A real HTML pill, sized and colored like the price-scale badges already
-    // on this chart, is unmissable at any zoom. It tracks the newest bar's own
-    // x position, recomputed by _watchTradeChart on every fit — same cadence as
-    // the chart's own re-anchoring, so it can't drift out of sync with a resize.
-    const newestBar = bars[bars.length - 1];
-    const dateTag = document.createElement('div');
-    dateTag.style.cssText = 'position:absolute;z-index:2;pointer-events:none;transform:translateX(-50%);'
-      + 'font-family:JetBrains Mono,ui-monospace,monospace;font-size:11px;font-weight:700;'
-      + 'color:var(--chart-bg);background:var(--chart-bar);padding:2px 6px;border-radius:5px;white-space:nowrap;';
-    dateTag.textContent = toTime(newestBar.t).slice(5).split('-').reverse().join('.');
-    el.appendChild(dateTag);
-    const placeDateTag = () => {
-      const ts = chart.timeScale();
-      const x = ts.timeToCoordinate(toTime(newestBar.t));
-      // Anchored to the bar's own low, the same reference the entry arrow uses
-      // for 'belowBar' — so the tag sits at the same visual height as the entry
-      // marker instead of floating at a fixed offset that only matches one
-      // price range.
-      const y = series.priceToCoordinate(newestBar.l);
-      if (x == null || y == null) { dateTag.style.display = 'none'; return; }
-      dateTag.style.display = '';
-      dateTag.style.left = x + 'px';
-      dateTag.style.top = (y + 14) + 'px';
+    // Every one of these used to be a `series.setMarkers` chart-native marker.
+    // They technically rendered — confirmed live, zoomed 3x, the arrows and the
+    // date dot were all there — but Lightweight Charts draws marker text at its
+    // own small fixed library font, which was too faint to register at normal
+    // chart size against the busy candle/grid background. That is what a
+    // "nothing changed, I still can't see my entry" report looks like when the
+    // pixels genuinely did change. Real HTML pills, sized and colored like the
+    // price-scale badges already on this chart, are unmissable at any zoom.
+    // Each is repositioned every time the chart re-fits — same cadence as the
+    // chart's own re-anchoring in _watchTradeChart, so a resize can't leave one
+    // stranded relative to the bar it's supposed to label.
+    const _mkTag = (text, bg, fg) => {
+      const tag = document.createElement('div');
+      tag.style.cssText = 'position:absolute;z-index:2;pointer-events:none;transform:translateX(-50%);'
+        + 'font-family:JetBrains Mono,ui-monospace,monospace;font-size:11px;font-weight:700;'
+        + `color:${fg};background:${bg};padding:2px 6px;border-radius:5px;white-space:nowrap;`;
+      tag.textContent = text;
+      el.appendChild(tag);
+      return tag;
     };
+    const _placeBelow = (tag, time, price) => {
+      const x = chart.timeScale().timeToCoordinate(time);
+      const y = series.priceToCoordinate(price);
+      if (x == null || y == null) { tag.style.display = 'none'; return; }
+      tag.style.display = ''; tag.style.left = x + 'px'; tag.style.top = (y + 14) + 'px';
+    };
+    const _placeAbove = (tag, time, price) => {
+      const x = chart.timeScale().timeToCoordinate(time);
+      const y = series.priceToCoordinate(price);
+      if (x == null || y == null) { tag.style.display = 'none'; return; }
+      tag.style.display = ''; tag.style.left = x + 'px'; tag.style.top = (y - 26) + 'px';
+    };
+
+    const placers = [];
+    if (entryTime) {
+      const entryBar = bars.find(b => b.t === entryTime);
+      const tag = _mkTag('↑ ' + t('tile_entry'), accent, '#ffffff');
+      placers.push(() => _placeBelow(tag, toTime(entryTime), entryBar ? entryBar.l : tr.entryPrice));
+    }
+    if (exitTime) {
+      const exitBar = bars.find(b => b.t === exitTime);
+      const exitCol = calcTotal(tr) >= 0 ? green : red;
+      const tag = _mkTag('↓ ' + t('tile_exit'), exitCol, '#ffffff');
+      placers.push(() => _placeAbove(tag, toTime(exitTime), exitBar ? exitBar.h : tr.exitPrice));
+    }
+    const newestBar = bars[bars.length - 1];
+    {
+      const tag = _mkTag(toTime(newestBar.t).slice(5).split('-').reverse().join('.'), barCol, bgCol);
+      placers.push(() => _placeBelow(tag, toTime(newestBar.t), newestBar.l));
+    }
+    const placeDateTag = () => placers.forEach(p => p());
 
     // A readout naming the bar under the pointer, defaulting to the newest one.
     // Nine rounds were spent on "I can't see the last trading day" while every

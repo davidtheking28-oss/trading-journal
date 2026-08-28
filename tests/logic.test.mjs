@@ -1317,21 +1317,25 @@ describe('trade chart symbol and marker placement', () => {
       'crosshairMove does not always fire on the way out, so the readout would stick');
   });
 
-  // A chart-native marker for the newest bar was tried first and technically
-  // rendered — confirmed live, magnified 3x, the dot and its text were both
-  // there — but Lightweight Charts draws marker text at the fixed 10px layout
-  // font, which was too faint to register at normal chart size. That is what a
-  // "nothing changed" report looks like when the pixels genuinely did. A real
-  // HTML pill sized like the price-scale badges already on the chart is
-  // unmissable at any zoom, and it is repositioned every time the chart itself
-  // re-fits — same cadence, so a resize cannot leave it stranded.
-  test("the newest bar's date tag is a real HTML pill, not a library marker", () => {
-    assert.match(SOURCE, /const dateTag = document\.createElement\('div'\)/,
-      'the tag must be a DOM element the browser sizes and renders like any other text');
-    assert.match(SOURCE, /el\.appendChild\(dateTag\)/,
-      'it must live inside the positioned chart container');
-    assert.match(SOURCE, /const y = series\.priceToCoordinate\(newestBar\.l\)/,
-      "it must track the newest bar's own low, the same reference belowBar markers use");
+  // Chart-native `series.setMarkers` labels for entry/exit/date were tried
+  // first and technically rendered — confirmed live, magnified 3x, the arrows
+  // and the date dot were all there — but Lightweight Charts draws marker text
+  // at its own small fixed library font, too faint to register at normal chart
+  // size against the candle/grid background. That is what "nothing changed, I
+  // still can't see my entry" looks like when the pixels genuinely did change.
+  // Real HTML pills, sized like the price-scale badges already on the chart,
+  // are unmissable at any zoom, and every one is repositioned each time the
+  // chart itself re-fits — same cadence as _watchTradeChart's own re-anchoring,
+  // so a resize cannot leave one stranded relative to the bar it labels.
+  test('entry, exit and the newest-bar date are real HTML pills, not library markers', () => {
+    assert.doesNotMatch(SOURCE, /series\.setMarkers\(/,
+      'no chart-native marker may be relied on for anything that must be readable');
+    assert.match(SOURCE, /const _mkTag = \(text, bg, fg\) => \{/,
+      'a shared pill constructor must back entry, exit and the date tag alike');
+    assert.match(SOURCE, /_mkTag\('↑ ' \+ t\('tile_entry'\), accent, '#ffffff'\)/,
+      'the entry pill must exist and be colored with the accent, not left to a faint arrow');
+    assert.match(SOURCE, /_mkTag\('↓ ' \+ t\('tile_exit'\), exitCol, '#ffffff'\)/,
+      'the exit pill must exist, colored by win/loss like the arrow it replaces');
     assert.match(SOURCE, /_watchTradeChart\(chart, bars\.length, placeDateTag\)/,
       'placement must run on every fit, not just once at creation');
   });
