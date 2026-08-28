@@ -15092,7 +15092,11 @@ document.addEventListener('visibilitychange', () => {
     // reload. Both caches are dropped and the visible tab repaints itself.
     _missedLoaded = false;
     _invData = null;
-    const tab = activeTab();
+    // Read the tab straight off the DOM. The `activeTab` helper this used to
+    // call is a const scoped inside another function, so at top level it threw
+    // ReferenceError on every return to the tab — killing the repaint below and
+    // leaving exactly the stale view the comment above says it fixes.
+    const tab = (document.querySelector('.tab-content.active') || {}).id || '';
     if (tab === 'tab-missed') missedRender(true);
     else if (tab === 'tab-investments') invInit();
   }

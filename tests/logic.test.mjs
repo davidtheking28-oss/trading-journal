@@ -1371,6 +1371,17 @@ describe('trade chart symbol and marker placement', () => {
   // that bet on a fast desktop and losing it on a slower device is exactly how
   // this measured correct here while still being wrong for the user, three
   // fixes running. The re-anchor must hang off the real resize event.
+  // `activeTab` is a const scoped inside another function; the visibilitychange
+  // handler at top level called it and threw ReferenceError on every return to
+  // the tab, so the catch-up repaint it guards never ran. Reported from the live
+  // console, twice per return.
+  test('the visibility handler reads the active tab without a scoped helper', () => {
+    assert.doesNotMatch(SOURCE, /const tab = activeTab\(\)/,
+      'activeTab() is not in scope where the visibility handler runs');
+    assert.match(SOURCE, /const tab = \(document\.querySelector\('\.tab-content\.active'\) \|\| \{\}\)\.id \|\| ''/,
+      'it must read the active tab off the DOM');
+  });
+
   test('the view re-anchors on a resize event, not after a fixed delay', () => {
     assert.match(SOURCE, /function _applyChartView[\s\S]{0,1600}?new ResizeObserver\(\(\) => \{ apply\(\); schedule\(\); \}\)/,
       'the view must re-anchor from a ResizeObserver');
