@@ -1332,8 +1332,8 @@ describe('trade chart symbol and marker placement', () => {
       'no chart-native marker may be relied on for anything that must be readable');
     assert.match(SOURCE, /const _mkTag = \(text, bg, fg\) => \{/,
       'a shared pill constructor must back entry, exit and the date tag alike');
-    assert.match(SOURCE, /_mkTag\('↑ ' \+ t\('tile_entry'\), accent, '#ffffff'\)/,
-      'the entry pill must exist and be colored with the accent, not left to a faint arrow');
+    assert.match(SOURCE, /_mkTag\('↑', accent, '#ffffff'\)/,
+      'the entry pill must exist and be colored with the accent — arrow only, no label text, to stay narrow enough not to cover a nearby recent bar');
     assert.match(SOURCE, /_mkTag\('↓ ' \+ t\('tile_exit'\), exitCol, '#ffffff'\)/,
       'the exit pill must exist, colored by win/loss like the arrow it replaces');
     assert.match(SOURCE, /_watchTradeChart\(chart, bars\.length, placeDateTag\)/,

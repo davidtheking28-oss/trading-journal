@@ -9621,7 +9621,7 @@ async function _renderTradeChart(tr) {
     const placers = [];
     if (entryTime) {
       const entryBar = bars.find(b => b.t === entryTime);
-      const tag = _mkTag('↑ ' + t('tile_entry'), accent, '#ffffff');
+      const tag = _mkTag('↑', accent, '#ffffff');
       placers.push(() => _placeBelow(tag, toTime(entryTime), entryBar ? entryBar.l : tr.entryPrice));
     }
     if (exitTime) {
