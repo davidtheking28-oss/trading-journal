@@ -444,6 +444,28 @@ unlike this one — push it manually).
   these are the sole means of undoing a bad data correction. Do not "tidy them
   up"; the storage argument for deleting them is worth nothing against that.
 
+## ⚠️ Don't reintroduce these regressions (fixed 2026-08-28, trade-review chart)
+
+- **The trade chart must anchor to the NEWEST bar, never to a logical range.**
+  `setVisibleLogicalRange` resolves both edges against the container width at
+  the instant it is called and does not re-anchor afterwards
+  (`lockVisibleTimeRangeOnResize` is off, and on resize Lightweight Charts holds
+  the *left* edge and lets the right one move). The chart is created while the
+  modal is still running its 0.22s open animation, so the width does change
+  underneath it. Measured live on a 252-bar series: asked for `{120, 253}` with
+  the last bar at index 251, settled on `{78, 211}` — the newest session *and*
+  the entry marker both off screen. That is the "it opens in the middle of the
+  chart and I can't see the last trading day" report, and it reproduces reliably
+  when a second trade is opened without letting the first modal settle.
+  `_applyChartView` sets `barSpacing` from the container width and pins the
+  right edge with `scrollToPosition(rightPad, false)`; it re-applies across the
+  animation (rAF + a 300ms timer, cleared by `_disposeTradeChart`).
+  `_tradeChartRange` is still the single source of the window — the span and the
+  right pad are derived from it, so its tests keep covering the geometry.
+- **The failure is silent** — the chart still draws, just at the wrong place —
+  so the guard test asserts on the source: no `.setVisibleLogicalRange(` call
+  anywhere. Verified it drops the suite to 141/1 when reverted.
+
 ## ⚠️ The screener shares this Supabase project — function names collide
 
 - **`supabase/functions/<name>` is a namespace shared with the sibling
