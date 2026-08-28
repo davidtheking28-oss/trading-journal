@@ -1298,6 +1298,23 @@ describe('trade chart symbol and marker placement', () => {
       'the global td padding must not apply inside the chart');
   });
 
+  // Nine rounds went into "I can't see the last trading day" while every
+  // measurement of the bar's POSITION came back correct on both machines —
+  // because it was, and for most of them the only real defect was a cached
+  // response feeding the chart week-old bars. Neither side could tell those two
+  // apart, because nothing on screen said which day any candle was. The readout
+  // makes it answerable by pointing; deleting it takes that back.
+  test('a readout names the bar under the pointer, defaulting to the newest', () => {
+    assert.match(SOURCE, /chart\.subscribeCrosshairMove\(/,
+      'the chart must report the hovered bar');
+    assert.match(SOURCE, /showBar\(newestPoint\)/,
+      'and fall back to the newest bar when nothing is hovered');
+    assert.match(SOURCE, /const newest = bars\[bars\.length - 1\]/,
+      'the default must come from the last bar actually drawn');
+    assert.match(SOURCE, /position:relative;width:100%;height:\$\{_CHART_H\}px/,
+      'the container must be a positioning context or the readout escapes it');
+  });
+
   // The ohlc endpoint sends no Cache-Control at all, which leaves any layer
   // between the browser and the function free to keep a copy. One did: this
   // browser drew MD ending 2026-08-19 (58 bars) while the identical request from

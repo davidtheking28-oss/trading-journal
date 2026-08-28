@@ -9509,7 +9509,7 @@ async function _renderTradeChart(tr) {
     }
 
     el.textContent = '';
-    el.style.cssText = `width:100%;height:${_CHART_H}px;border-radius:var(--r-md);margin-top:4px;background:var(--chart-bg);overflow:hidden;`;
+    el.style.cssText = `position:relative;width:100%;height:${_CHART_H}px;border-radius:var(--r-md);margin-top:4px;background:var(--chart-bg);overflow:hidden;`;
     const cs = getComputedStyle(document.documentElement);
     const col = (name, fallback) => (cs.getPropertyValue(name) || '').trim() || fallback;
     const green = col('--green', '#2dd4a0'), red = col('--red', '#ff6b8a'),
@@ -9557,6 +9557,33 @@ async function _renderTradeChart(tr) {
     if (entryTime) markers.push({ time: toTime(entryTime), position: 'belowBar', color: accent, shape: 'arrowUp', text: t('tile_entry') });
     if (exitTime) markers.push({ time: toTime(exitTime), position: 'aboveBar', color: calcTotal(tr) >= 0 ? green : red, shape: 'arrowDown', text: t('tile_exit') });
     if (markers.length) series.setMarkers(markers);
+
+    // A readout naming the bar under the pointer, defaulting to the newest one.
+    // Nine rounds were spent on "I can't see the last trading day" while every
+    // measurement of the bar's position came back correct on both machines —
+    // because it was correct, and for most of those rounds the only real defect
+    // was a cached response feeding the chart week-old bars. Neither of us could
+    // tell those two apart, because nothing on screen said which day any candle
+    // was: Lightweight Charts fitted only two date labels on a 45-bar window.
+    // This makes the question answerable by pointing at a candle.
+    const legend = document.createElement('div');
+    legend.style.cssText = 'position:absolute;top:6px;inset-inline-start:8px;z-index:2;pointer-events:none;'
+      + 'font-family:JetBrains Mono,ui-monospace,monospace;font-size:10px;line-height:1.5;color:var(--text2);'
+      + 'background:rgba(0,0,0,0.30);padding:3px 7px;border-radius:6px;direction:ltr;text-align:left;';
+    el.appendChild(legend);
+    const showBar = (b) => {
+      if (!b) { legend.textContent = ''; return; }
+      const day = typeof b.time === 'string' ? b.time : '';
+      const n = (v) => (v == null ? '—' : (+v).toFixed(2));
+      legend.textContent = `${day}  O ${n(b.open)}  H ${n(b.high)}  L ${n(b.low)}  C ${n(b.close)}`;
+    };
+    const newest = bars[bars.length - 1];
+    const newestPoint = { time: toTime(newest.t), open: newest.o, high: newest.h, low: newest.l, close: newest.c };
+    showBar(newestPoint);
+    chart.subscribeCrosshairMove((param) => {
+      const hovered = param && param.seriesData && param.seriesData.get(series);
+      showBar(hovered ? { ...hovered, time: param.time } : newestPoint);
+    });
 
     _watchTradeChart(chart, bars.length);
   } catch (e) {
