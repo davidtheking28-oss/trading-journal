@@ -9171,7 +9171,7 @@ function renderTable(type) {
       <td><span class="badge badge-${tr.ls}">${tr.ls}</span></td>
       <td>${tradeStatus(tr)}</td>
       <td>${erBadge(tr.entryReason)}</td>
-      <td><strong>${esc(tr.symbol)}</strong></td>
+      <td><span style="display:flex;align-items:center;gap:6px"><img src="https://images.financialmodelingprep.com/symbol/${encodeURIComponent(tr.symbol)}.png" alt="" loading="lazy" style="width:18px;height:18px;border-radius:50%;object-fit:contain;flex-shrink:0" onerror="this.remove()"><strong>${esc(tr.symbol)}</strong></span></td>
       <td class="sensitive">$${fmtPrice(tr.entryPrice)}</td>
       <td>${tr.shares}</td>
       <td class="sensitive">$${fmtPrice(tr.stop)}</td>
