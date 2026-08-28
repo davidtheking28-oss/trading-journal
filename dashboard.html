@@ -9488,6 +9488,16 @@ function _watchTradeChart(chart, barCount, onFit) {
     _chartResizeObs = new ResizeObserver(kick);
     _chartResizeObs.observe(el);
   }
+  // The modal's own open animation (`modalIn`, 0.22s) runs on `transform`,
+  // which promotes `.modal` to its own compositing layer for its duration —
+  // and a canvas inside an animating-transform ancestor can keep showing a
+  // cached raster of itself for a frame or two after the animation is
+  // reported done in JS, until Chrome flattens that layer back. The 20-frame
+  // pump above is sized off a frame COUNT, which is a guess; `animationend`
+  // is the real signal for when that layer actually settles, so fire one more
+  // guaranteed fit right on it rather than betting the guess always covers it.
+  const modalEl = el && el.closest('.modal');
+  if (modalEl) modalEl.addEventListener('animationend', kick, { once: true });
 }
 
 // Replaces the earlier TradingView iframe embed: that widget's free tier cannot
