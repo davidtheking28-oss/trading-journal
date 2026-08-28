@@ -9335,26 +9335,35 @@ function _nearestCandleTime(candles, dateStr) {
   return idx == null ? null : candles[idx].t;
 }
 
-// A year of candles fitted into one view (the previous behaviour) squeezes a
-// handful of relevant bars around the trade into an illegible sliver. This
-// zooms to the entry->exit window instead, with padding on both sides — the
-// "right side" of a year of history is where a recent trade actually sits.
-function _tradeChartRange(candles, entryTime, exitTime, padBars = 5, minBars = 15) {
+// A year of candles fitted into one view squeezes the handful of bars around
+// the trade into an illegible sliver, so the chart zooms to the trade's own
+// window instead.
+//
+// An OPEN position (no exitTime) runs to the most recent candle, not to the
+// entry: the trade is still live, so every trading day since entry is part of
+// it and is what the trader is still deciding on. Ending the window at the
+// entry — what this did before — hid exactly that.
+function _tradeChartRange(candles, entryTime, exitTime, padBars = 15, minBars = 60) {
   if (!candles || !candles.length) return null;
   const entryIdx = _nearestCandleIndex(candles, entryTime);
   if (entryIdx == null) return null;
+  const lastIdx = candles.length - 1;
   const exitIdx = exitTime != null ? _nearestCandleIndex(candles, exitTime) : null;
   let lo = exitIdx != null ? Math.min(entryIdx, exitIdx) : entryIdx;
-  let hi = exitIdx != null ? Math.max(entryIdx, exitIdx) : entryIdx;
+  let hi = exitIdx != null ? Math.max(entryIdx, exitIdx) : lastIdx;
   lo -= padBars;
   hi += padBars;
-  const span = hi - lo;
-  if (span < minBars) {
-    const extra = Math.ceil((minBars - span) / 2);
-    lo -= extra;
-    hi += extra;
+  if (hi - lo < minBars) {
+    const extra = minBars - (hi - lo);
+    lo -= Math.ceil(extra / 2);
+    hi += Math.floor(extra / 2);
   }
-  return { from: Math.max(0, lo), to: Math.min(candles.length - 1, hi) };
+  // Slide the window back inside the data rather than clipping one end:
+  // clamping alone would silently hand back a narrower view than minBars asks
+  // for, which is how a recent entry ended up showing barely any chart at all.
+  if (hi > lastIdx) { lo -= hi - lastIdx; hi = lastIdx; }
+  if (lo < 0) { hi = Math.min(lastIdx, hi - lo); lo = 0; }
+  return { from: lo, to: hi };
 }
 
 // Loaded lazily on first chart render, not at boot — same reasoning as
@@ -9445,7 +9454,7 @@ async function _renderTradeChart(tr) {
     if (exitTime) markers.push({ time: exitTime, position: 'aboveBar', color: calcTotal(tr) >= 0 ? green : red, shape: 'arrowDown', text: t('tile_exit') });
     if (markers.length) series.setMarkers(markers.sort((a, b) => a.time - b.time));
 
-    const range = _tradeChartRange(candles, entryTime, exitTime, 10, 30);
+    const range = _tradeChartRange(candles, entryTime, exitTime);
     if (range) chart.timeScale().setVisibleLogicalRange(range);
     else chart.timeScale().fitContent();
   } catch (e) {

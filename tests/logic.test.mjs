@@ -1245,12 +1245,28 @@ describe('trade chart symbol and marker placement', () => {
     assert.ok(r.to - r.from >= 15, 'a scalp must not zoom to nothing');
   });
 
-  test('an open position (no exit yet) still centers on the entry', () => {
-    // pad alone gives a span of 10 (95..105), under the 15-bar minimum, so the
-    // minimum-span widening kicks in too: +3 each side.
+  // The reported bug: an open trade's chart stopped at the entry candle, so the
+  // days the position was actually running were off-screen.
+  test('an open position runs to the most recent candle, not to the entry', () => {
+    const last = yearCandles.length - 1;
     const r = _tradeChartRange(yearCandles, yearCandles[100].t, null, 5, 15);
-    assert.equal(r.from, 92);
-    assert.equal(r.to, 108);
+    assert.equal(r.to, last, 'an open trade is still live — it must reach today');
+    assert.ok(r.from <= 95, 'and still show context before the entry');
+  });
+
+  test('a recent entry on an open trade still gets the full minimum span', () => {
+    // Only 5 candles exist after the entry, so the window cannot be centred —
+    // it has to extend backwards instead of quietly returning a narrow view.
+    const last = yearCandles.length - 1;
+    const r = _tradeChartRange(yearCandles, yearCandles[last - 5].t, null, 15, 60);
+    assert.equal(r.to, last);
+    assert.equal(r.to - r.from, 60, 'the window slides back rather than shrinking');
+  });
+
+  test('a closed trade still ends at its exit, not at today', () => {
+    const r = _tradeChartRange(yearCandles, yearCandles[100].t, yearCandles[110].t, 5, 15);
+    assert.ok(r.to < yearCandles.length - 1,
+      'a finished trade must not stretch to the present');
   });
 
   test('the window clamps to the data instead of running off either edge', () => {
