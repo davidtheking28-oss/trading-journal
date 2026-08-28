@@ -1425,6 +1425,17 @@ describe('trade chart symbol and marker placement', () => {
       'the observer must be disconnected with the chart or it outlives the modal');
   });
 
+  // The entry/exit/date pills are plain HTML positioned via timeToCoordinate /
+  // priceToCoordinate at creation and on the re-fit pump — but a user panning or
+  // zooming the chart by hand moves the candles without touching either, so the
+  // pills stayed frozen at their pre-drag pixel position while the candles slid
+  // underneath. Reported live: the entry pill did not sit on the real entry
+  // candle after dragging right to find the newest bars.
+  test('the pills re-place themselves on every visible-range change, not just the fit pump', () => {
+    assert.match(SOURCE, /chart\.timeScale\(\)\.subscribeVisibleLogicalRangeChange\(placeDateTag\)/,
+      'a user pan/zoom must re-run the same placer used by the fit pump');
+  });
+
   // `activeTab` is a const scoped inside another function; the visibilitychange
   // handler at top level called it and threw ReferenceError on every return to
   // the tab, so the catch-up repaint it guards never ran. Reported from the live

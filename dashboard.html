@@ -9636,6 +9636,14 @@ async function _renderTradeChart(tr) {
       placers.push(() => _placeBelow(tag, toTime(newestBar.t), newestBar.l));
     }
     const placeDateTag = () => placers.forEach(p => p());
+    // The pills are plain HTML, positioned from timeToCoordinate/priceToCoordinate
+    // at creation and on our own re-fit pump — but a user panning or zooming the
+    // chart by hand moves the candles without touching either of those, so the
+    // entry/exit/date pills stayed frozen at their pre-drag pixel position while
+    // the candles slid underneath. Re-placing them on every visible-range change
+    // (ours or the user's) keeps them glued to their actual bar regardless of who
+    // moved the view.
+    chart.timeScale().subscribeVisibleLogicalRangeChange(placeDateTag);
 
     // A readout naming the bar under the pointer, defaulting to the newest one.
     // Nine rounds were spent on "I can't see the last trading day" while every
