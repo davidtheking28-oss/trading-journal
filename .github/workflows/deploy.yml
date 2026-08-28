@@ -26,6 +26,19 @@ jobs:
       - name: Run logic regression suite
         run: node --test tests/logic.test.mjs
 
+      # The edge functions are TypeScript on Deno, so the Node suite above cannot
+      # reach them. This covers the stale-while-revalidate contract the market
+      # pulse widgets depend on: its failure mode is silent — the page still
+      # works, it just goes back to paying the cold upstream fetch in the
+      # foreground on every visit, which is exactly what it was built to stop.
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v2.x
+
+      - name: Run edge function unit tests
+        run: deno test --allow-net supabase/functions/_shared/
+
   deploy:
     needs: test
     concurrency:
