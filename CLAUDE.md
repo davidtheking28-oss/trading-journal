@@ -462,6 +462,18 @@ unlike this one — push it manually).
   animation (rAF + a 300ms timer, cleared by `_disposeTradeChart`).
   `_tradeChartRange` is still the single source of the window — the span and the
   right pad are derived from it, so its tests keep covering the geometry.
+- **The chart window is the USER'S choice, not a constant.** Every hard-coded
+  value was wrong for someone: 40 sessions came back as "now I see fewer trading
+  days", 60 as "you keep going backwards in trading days instead of forwards".
+  Those two pull in opposite directions, which is the signature of a preference
+  rather than a bug — six rounds of tuning one number never converged. There is
+  now a 1M / 3M / 6M / עסקה switcher above the chart (`_chartRangeChoice`,
+  `_tradeChartWindow`, stored in `localStorage` under `tj_chart_range`, default
+  3M). **Do not replace it with a smarter default.** Picking 6M or עסקה also
+  pulls the 1y series, or the choice would silently show three months.
+  `_CHART_SESSIONS[unknown]` would be `lastIdx - undefined` = NaN and every
+  comparison against NaN is false, so an unknown key must fall back, never pass
+  through — same failure mode as `partitionByAge`.
 - **The gap after the newest bar is two slots, and must stay two.** A version
   that reserved ten slots after the entry (so a days-old trade's arrow would not
   sit on the price scale) pushed the newest bar 79px clear of the scale — and a
