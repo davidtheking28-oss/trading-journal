@@ -9722,7 +9722,7 @@ async function _renderTradeChart(tr) {
       const x = chart.timeScale().timeToCoordinate(time);
       const y = series.priceToCoordinate(price);
       if (x == null || y == null) { tag.style.display = 'none'; return; }
-      tag.style.display = ''; tag.style.left = x + 'px'; tag.style.top = (y + 14) + 'px';
+      tag.style.display = ''; tag.style.left = x + 'px'; tag.style.top = (y + 6) + 'px';
     };
     const _placeAbove = (tag, time, price) => {
       const x = chart.timeScale().timeToCoordinate(time);
