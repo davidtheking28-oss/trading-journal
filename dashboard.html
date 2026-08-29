@@ -9551,7 +9551,7 @@ function _watchTradeChart(chart, barCount, onFit) {
 // the screener's OWN `ohlc` edge function rather than a second copy: both apps
 // share one Supabase project, and this repo briefly shipped a duplicate that
 // overwrote theirs.
-const _CHART_H = 400;
+const _CHART_H = 220; // matches the screener's card chart height (200px) plus a little for the volume pane
 
 // Resolves once the modal-overlay's own open transition (opacity 0->1,
 // `.modal-overlay.open`, 0.22s) has actually finished, or immediately if it
