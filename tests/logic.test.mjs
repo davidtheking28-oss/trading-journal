@@ -1328,13 +1328,15 @@ describe('trade chart symbol and marker placement', () => {
   // are unmissable at any zoom, and every one is repositioned each time the
   // chart itself re-fits — same cadence as _watchTradeChart's own re-anchoring,
   // so a resize cannot leave one stranded relative to the bar it labels.
-  test('entry and exit are real HTML pills, not library markers', () => {
+  test('entry and exit are real HTML markers, not library markers', () => {
     assert.doesNotMatch(SOURCE, /series\.setMarkers\(/,
       'no chart-native marker may be relied on for anything that must be readable');
     assert.match(SOURCE, /const _mkTag = \(text, bg, fg\) => \{/,
-      'a shared pill constructor must back entry, exit and the date tag alike');
-    assert.match(SOURCE, /_mkTag\('↑', accent, '#ffffff'\)/,
-      'the entry pill must exist and be colored with the accent — arrow only, no label text, to stay narrow enough not to cover a nearby recent bar');
+      'a shared pill constructor must back the exit and date tags');
+    assert.match(SOURCE, /const _mkGlyph = \(text, fg\) => \{/,
+      'the entry marker must be a bare glyph, no pill background, per explicit request — a wide box visually bridged neighbouring bars');
+    assert.match(SOURCE, /_mkGlyph\('↑', accent\)/,
+      'the entry marker must exist and be colored with the accent — arrow only, no box, no label text');
     assert.match(SOURCE, /_mkTag\('↓ ' \+ t\('tile_exit'\), exitCol, '#ffffff'\)/,
       'the exit pill must exist, colored by win/loss like the arrow it replaces');
     assert.match(SOURCE, /_watchTradeChart\(chart, bars\.length, placeDateTag\)/,

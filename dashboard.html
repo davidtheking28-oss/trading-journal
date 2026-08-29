@@ -9708,6 +9708,16 @@ async function _renderTradeChart(tr) {
       el.appendChild(tag);
       return tag;
     };
+    // A bare glyph, no pill background — for the entry marker, which the user
+    // asked to be just an arrow, not a labeled box.
+    const _mkGlyph = (text, fg) => {
+      const tag = document.createElement('div');
+      tag.style.cssText = 'position:absolute;z-index:2;pointer-events:none;transform:translateX(-50%);'
+        + `color:${fg};font-size:15px;font-weight:900;line-height:1;text-shadow:0 0 3px rgba(0,0,0,0.9);`;
+      tag.textContent = text;
+      el.appendChild(tag);
+      return tag;
+    };
     const _placeBelow = (tag, time, price) => {
       const x = chart.timeScale().timeToCoordinate(time);
       const y = series.priceToCoordinate(price);
@@ -9724,7 +9734,7 @@ async function _renderTradeChart(tr) {
     const placers = [];
     if (entryTime) {
       const entryBar = bars.find(b => b.t === entryTime);
-      const tag = _mkTag('↑', accent, '#ffffff');
+      const tag = _mkGlyph('↑', accent);
       placers.push(() => _placeBelow(tag, toTime(entryTime), entryBar ? entryBar.l : tr.entryPrice));
     }
     if (exitTime) {
