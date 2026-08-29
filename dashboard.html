@@ -9710,11 +9710,17 @@ async function _renderTradeChart(tr) {
     };
     // A bare glyph, no pill background — for the entry marker, which the user
     // asked to be just an arrow, not a labeled box.
+    // A text glyph like '↑' is not visually centered within its own character
+    // box in most fonts — extra side-bearing left the arrow's actual ink a few
+    // pixels off from the mathematically-exact x it was translateX(-50%)'d to,
+    // which is what "the arrow sits between candles" was seeing even though the
+    // coordinate itself measured exact to a fraction of a pixel. A CSS-drawn
+    // triangle has no such ambiguity — its own box IS its visible shape.
     const _mkGlyph = (text, fg) => {
       const tag = document.createElement('div');
       tag.style.cssText = 'position:absolute;z-index:2;pointer-events:none;transform:translateX(-50%);'
-        + `color:${fg};font-size:15px;font-weight:900;line-height:1;text-shadow:0 0 3px rgba(0,0,0,0.9);`;
-      tag.textContent = text;
+        + `width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:9px solid ${fg};`
+        + 'filter:drop-shadow(0 0 2px rgba(0,0,0,0.9));';
       el.appendChild(tag);
       return tag;
     };
