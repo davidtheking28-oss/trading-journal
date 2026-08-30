@@ -319,6 +319,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   tr:last-child td { border-bottom: none; }
   tbody tr.data-row { transition: background 0.12s; cursor: pointer; }
   @media (hover: hover) and (pointer: fine) { tbody tr.data-row:hover td { background: rgba(129,140,248,0.05) !important; } }
+  /* Persistent expand/collapse affordance — hover alone doesn't reach a
+     keyboard/touch user, so this can't be the only cue the row opens. */
+  .row-expand-chevron { flex-shrink: 0; color: var(--text3); transition: transform 0.15s; transform: rotate(-90deg); }
+  tr.data-row[aria-expanded="true"] .row-expand-chevron { transform: rotate(0deg); }
   /* New-row flash — briefly highlights trades added since the last render (e.g. broker sync) */
   @keyframes rowFlash {
     0%, 12% { box-shadow: inset 0 0 0 9999px rgba(52,211,153,0.20); }
@@ -9409,7 +9413,7 @@ function renderTable(type) {
     const trNum = yearTradeNum[tr._tt || type]?.[trYear]?.[tr.id] ?? '—';
     const _flash = _prevIds && !_prevIds.has(tr.id) ? ' row-flash' : '';
     h += `<tr class="data-row ${rowCls}${_flash}" data-rowkey="${key}" role="button" tabindex="0" aria-expanded="${isExp?'true':'false'}" onclick="toggleTradeRow('${type}',${tr.id})" onkeydown="if((event.key==='Enter'||event.key===' ')&&event.target===this){event.preventDefault();toggleTradeRow('${type}',${tr.id})}">
-      <td style="color:var(--text);font-size:12px;font-weight:600;">${trNum}</td>
+      <td style="color:var(--text);font-size:12px;font-weight:600;"><span style="display:flex;align-items:center;gap:4px"><svg class="row-expand-chevron" width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3.5L5 6.5L8 3.5"/></svg>${trNum}</span></td>
       <td>${fmtDate(tr.entryDate)}</td>
       <td><span class="badge badge-${tr.ls}">${tr.ls}</span></td>
       <td>${tradeStatus(tr)}</td>
