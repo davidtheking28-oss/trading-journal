@@ -674,6 +674,20 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   color: var(--text); letter-spacing: -0.3px; margin-bottom: 8px;
 }
 .value-desc { font-size: 13px; color: var(--text2); line-height: 1.65; }
+
+.broker-badges { display: flex; gap: 8px; margin-top: 16px; }
+.broker-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 11px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border2);
+  border-radius: 100px;
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  color: var(--text2); letter-spacing: 0.3px;
+}
+.broker-badge-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.broker-badge-dot.ibkr { background: #d3212c; box-shadow: 0 0 5px rgba(211,33,44,0.5); }
+.broker-badge-dot.bybit { background: #f7a600; box-shadow: 0 0 5px rgba(247,166,0,0.5); }
 @media (max-width: 900px) { .value-grid { grid-template-columns: 1fr 1fr; grid-template-rows: auto; } }
 @media (max-width: 480px) { .value-grid { grid-template-columns: 1fr; } }
 
@@ -920,7 +934,11 @@ footer {
 @media (max-width: 768px) {
   .step { grid-template-columns: 44px 1fr; gap: 14px; }
   .hero-wrap { grid-template-columns: 1fr; gap: 40px; }
-  .hero-visual-wrap { display: none; }
+  .hero-visual-wrap { max-width: 460px; margin: 0 auto; }
+  .d-kpi { padding: 10px 10px; }
+  .d-kpi-lbl { font-size: 8px; }
+  .d-kpi-val { font-size: 16px; letter-spacing: -0.3px; }
+  .d-kpi-sub { font-size: 9px; }
   .hero-actions { flex-direction: column; }
   .btn-hero-primary, .btn-hero-ghost { justify-content: center; }
   .hero-stats { width: 100%; }
@@ -1458,6 +1476,10 @@ html.a11y-underline a { text-decoration: underline !important; }
         <div class="value-icon" aria-hidden="true"><svg width="20" height="20"><use href="#i-link"/></svg></div>
         <h3 class="value-title">חיבור אוטומטי לברוקר</h3>
         <p class="value-desc">אתה לא צריך לזכור לתעד. מחברים IBKR או Bybit פעם אחת, וכל עסקה נכנסת ליומן לבד — גם ביום עמוס, גם כשהתעייפת.</p>
+        <div class="broker-badges" aria-hidden="true">
+          <span class="broker-badge"><span class="broker-badge-dot ibkr"></span>Interactive Brokers</span>
+          <span class="broker-badge"><span class="broker-badge-dot bybit"></span>Bybit</span>
+        </div>
       </div>
     </div>
     <div class="value-card reveal">
@@ -1697,7 +1719,7 @@ html.a11y-underline a { text-decoration: underline !important; }
     <h2 class="cta-title">הסוחרים שמפסיקים לחזור על אותה טעות — הם אלה שסוף סוף רואים אותה.</h2>
     <p class="cta-sub">הצטרף לסוחרים שכבר לא מנחשים למה הם מפסידים. זה לוקח פחות זמן מלפתוח את האקסל שהזנחת.</p>
     <a href="dashboard.html" class="btn-cta-dark">
-      התחל לבנות את התיק שלך — חינם
+      תפסיק לנחש. תתחיל לראות — חינם
       <svg width="15" height="15" aria-hidden="true"><use href="#i-arr"/></svg>
     </a>
     <p style="margin-top:16px;font-size:12px;color:var(--text3);">ללא כרטיס אשראי · הרשמה בפחות מדקה · לא ייעוץ פיננסי, המסחר כרוך בסיכון</p>
