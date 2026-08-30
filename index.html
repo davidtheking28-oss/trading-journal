@@ -199,7 +199,7 @@ nav {
   font-family: var(--body);
   white-space: nowrap;
 }
-.nav-link:hover { color: var(--text); }
+@media (hover: hover) and (pointer: fine) { .nav-link:hover { color: var(--text); } }
 
 .nav-cta {
   padding: 8px 18px;
@@ -212,7 +212,7 @@ nav {
   box-shadow: 0 3px 16px rgba(79,127,255,0.3);
   white-space: nowrap;
 }
-.nav-cta:hover { opacity: .88; transform: translateY(-1px); box-shadow: 0 5px 22px rgba(79,127,255,0.4); }
+@media (hover: hover) and (pointer: fine) { .nav-cta:hover { opacity: .88; transform: translateY(-1px); box-shadow: 0 5px 22px rgba(79,127,255,0.4); } }
 
 /* ── SECTION BASE ── */
 section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
@@ -307,9 +307,9 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   background: var(--accent);
   color: #fff; border: none; font-family: var(--body);
   box-shadow: 0 4px 20px rgba(79,127,255,0.3);
-  transition: all .2s;
+  transition: background-color .2s, transform .2s, box-shadow .2s;
 }
-.btn-hero-primary:hover { background: #3d6ef2; transform: translateY(-2px); box-shadow: 0 8px 26px rgba(79,127,255,0.4); }
+@media (hover: hover) and (pointer: fine) { .btn-hero-primary:hover { background: #3d6ef2; transform: translateY(-2px); box-shadow: 0 8px 26px rgba(79,127,255,0.4); } }
 
 .btn-hero-ghost {
   padding: 13px 22px; font-size: 15px; font-weight: 500;
@@ -317,9 +317,9 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   display: inline-flex; align-items: center; gap: 8px;
   background: rgba(255,255,255,0.04); color: var(--text2);
   border: 1px solid var(--border2); font-family: var(--body);
-  transition: all .2s;
+  transition: background-color .2s, color .2s, border-color .2s;
 }
-.btn-hero-ghost:hover { background: rgba(255,255,255,0.07); color: var(--text); border-color: var(--border); }
+@media (hover: hover) and (pointer: fine) { .btn-hero-ghost:hover { background: rgba(255,255,255,0.07); color: var(--text); border-color: var(--border); } }
 
 .btn-solid {
   padding: 13px 26px; font-size: 15px; font-weight: 600;
@@ -329,7 +329,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   color: #fff; border: none; font-family: var(--body);
   transition: opacity .2s, transform .15s;
 }
-.btn-solid:hover { opacity: .88; transform: translateY(-1px); }
+@media (hover: hover) and (pointer: fine) { .btn-solid:hover { opacity: .88; transform: translateY(-1px); } }
 
 .btn-cta-dark {
   padding: 15px 32px; font-size: 16px; font-weight: 600;
@@ -337,9 +337,9 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   display: inline-flex; align-items: center; gap: 8px;
   background: var(--bg2); color: var(--text);
   border: 1px solid rgba(79,127,255,0.3); font-family: var(--body);
-  transition: all .2s;
+  transition: background-color .2s, border-color .2s, transform .2s;
 }
-.btn-cta-dark:hover { background: #010509; border-color: rgba(79,127,255,0.5); transform: translateY(-1px); }
+@media (hover: hover) and (pointer: fine) { .btn-cta-dark:hover { background: #010509; border-color: rgba(79,127,255,0.5); transform: translateY(-1px); } }
 
 /* Hero stats */
 .hero-stats {
@@ -488,12 +488,12 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   background: none; border: none;
   border-bottom: 2px solid transparent;
   color: #8896a8; font-size: 10.5px; font-weight: 500;
-  cursor: pointer; transition: all .18s; white-space: nowrap;
+  cursor: pointer; transition: color .18s, border-color .18s; white-space: nowrap;
   font-family: inherit;
 }
 .demo-tab.active { color: #818cf8; border-bottom-color: #818cf8; font-weight: 600; }
 .demo-body { padding: 14px; height: 400px; overflow: hidden; box-sizing: border-box; }
-.demo-screen { display: none; animation: scrIn .28s ease; }
+.demo-screen { display: none; animation: scrIn .28s ease-out; }
 .demo-screen.active { display: block; }
 @keyframes scrIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
 
@@ -638,7 +638,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   padding: 24px 20px;
   transition: border-color .2s, transform .2s;
 }
-.value-card:hover { border-color: rgba(79,127,255,0.25); transform: translateY(-3px); }
+@media (hover: hover) and (pointer: fine) { .value-card:hover { border-color: rgba(79,127,255,0.25); transform: translateY(-3px); } }
 .value-card.lead {
   grid-row: span 2;
   padding: 28px 24px;
@@ -817,7 +817,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   font-family: var(--body); letter-spacing: -0.2px;
   transition: color .2s;
 }
-.faq-q:hover { color: var(--accent); }
+@media (hover: hover) and (pointer: fine) { .faq-q:hover { color: var(--accent); } }
 
 .faq-arrow {
   flex-shrink: 0; color: var(--text3); display: flex;
@@ -894,7 +894,7 @@ footer {
   font-size: 13px; color: var(--text3);
   text-decoration: none; transition: color .2s;
 }
-.footer-links a:hover { color: var(--text); }
+@media (hover: hover) and (pointer: fine) { .footer-links a:hover { color: var(--text); } }
 
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
@@ -947,10 +947,12 @@ footer {
   position: relative;
 }
 .feat-row:first-child { border-top: 1px solid var(--border2); }
+@media (hover: hover) and (pointer: fine) {
 .feat-row:hover {
   border-bottom-color: rgba(79,127,255,0.22);
   background: rgba(79,127,255,0.03);
   transform: translateX(-4px);
+}
 }
 
 .feat-row-title .feat-row-badge {
@@ -1011,7 +1013,7 @@ footer {
   transition: background .15s;
 }
 .comp-row:first-of-type { border-top: none; }
-.comp-row:hover { background: rgba(255,255,255,0.015); }
+@media (hover: hover) and (pointer: fine) { .comp-row:hover { background: rgba(255,255,255,0.015); } }
 .comp-label { padding: 13px 20px; font-size: 13px; color: var(--text2); }
 .comp-cell { padding: 13px 16px; text-align: center; font-size: 12px; }
 .comp-cell.bad { color: var(--text3); }
@@ -1021,7 +1023,7 @@ footer {
 /* ── ANIMATIONS ── */
 .reveal {
   opacity: 0; transform: translateY(22px);
-  transition: opacity .6s ease, transform .6s ease;
+  transition: opacity .6s ease-out, transform .6s ease-out;
 }
 .reveal.in { opacity: 1; transform: translateY(0); }
 
@@ -1045,7 +1047,7 @@ footer {
   cursor: pointer; box-shadow: 0 4px 18px rgba(0,0,0,0.4);
   transition: transform .2s;
 }
-.a11y-btn:hover { transform: scale(1.06); }
+@media (hover: hover) and (pointer: fine) { .a11y-btn:hover { transform: scale(1.06); } }
 .a11y-panel {
   position: fixed; bottom: 78px; left: 20px; z-index: 500;
   width: 230px; background: var(--card); border: 1px solid var(--border2);
