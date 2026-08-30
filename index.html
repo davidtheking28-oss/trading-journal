@@ -91,8 +91,8 @@
 <link rel="alternate" hreflang="x-default" href="https://davidtheking28-oss.github.io/trading-journal/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&family=Rubik:wght@600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&family=Rubik:wght@600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&family=Rubik:wght@500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&family=Rubik:wght@500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -112,7 +112,7 @@
   --text3:    #6b8398;
   --border:   rgba(79,127,255,0.1);
   --border2:  rgba(255,255,255,0.05);
-  --mono:     'IBM Plex Mono', monospace;
+  --mono:     'JetBrains Mono', monospace;
   --display:  'Rubik', 'Heebo', sans-serif;
   --body:     'Heebo', sans-serif;
   --r-sm:     14px;
@@ -234,15 +234,15 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 
 .section-title {
   font-family: var(--display);
-  font-size: clamp(30px, 4vw, 48px);
-  font-weight: 800; letter-spacing: -1.5px;
-  color: var(--text); line-height: 1.08;
-  margin-bottom: 14px;
+  font-size: clamp(32px, 4.4vw, 54px);
+  font-weight: 800; letter-spacing: -1.8px;
+  color: var(--text); line-height: 1.05;
+  margin-bottom: 16px;
 }
 
 .section-sub {
-  font-size: 17px; color: var(--text2);
-  line-height: 1.8; max-width: 540px;
+  font-size: 16px; color: var(--text2);
+  line-height: 1.85; max-width: 520px;
 }
 .centered { text-align: center; }
 .centered .section-sub { margin: 0 auto; }
@@ -256,7 +256,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 }
 
 .hero-wrap {
-  max-width: 760px; margin: 0 auto; width: 100%;
+  max-width: 860px; margin: 0 auto; width: 100%;
 }
 
 /* Beta chip */
@@ -278,9 +278,9 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 
 .hero-title {
   font-family: var(--display);
-  font-size: clamp(36px, 5vw, 62px);
-  font-weight: 900; letter-spacing: -2.2px;
-  line-height: 1.04; margin-bottom: 22px;
+  font-size: clamp(38px, 5.4vw, 64px);
+  font-weight: 900; letter-spacing: -2.6px;
+  line-height: 1.02; margin-bottom: 24px;
   color: var(--text);
 }
 
@@ -288,11 +288,12 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 
 .hero-title .hl {
   display: block;
-  font-size: 0.62em;
+  font-size: 0.44em;
   font-weight: 400;
   color: var(--text2);
-  margin-top: 0.25em;
+  margin-top: 0.4em;
   letter-spacing: -0.2px;
+  line-height: 1.5;
 }
 
 .hero-sub {
@@ -346,26 +347,27 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   transform: scale(0.97); transition: transform 120ms ease-out;
 }
 
-/* Hero stats */
+/* Hero stats — a quiet inline reading, not boxed metric cards */
 .hero-stats {
-  display: flex; gap: 0; margin-top: 40px;
-  border: 1px solid var(--border2); border-radius: var(--r-md);
-  overflow: hidden; width: fit-content;
+  display: flex; align-items: baseline; gap: 26px; margin-top: 38px;
+  flex-wrap: wrap;
 }
 
 .hero-stat {
-  padding: 12px 22px;
+  display: flex; align-items: baseline; gap: 8px;
+  padding-right: 26px;
   border-right: 1px solid var(--border2);
 }
-.hero-stat:first-child { border-right: none; }
+.hero-stat:first-child { padding-right: 0; }
+.hero-stat:last-child { border-right: none; }
 
 .stat-num {
-  font-family: var(--mono); font-size: 20px; font-weight: 600;
-  color: var(--text); letter-spacing: -0.5px;
-  line-height: 1;
+  font-family: var(--mono); font-size: 19px; font-weight: 600;
+  color: var(--text); letter-spacing: -0.3px;
+  line-height: 1; font-variant-numeric: tabular-nums;
 }
 .stat-num .unit { font-family: var(--body); font-size: 13px; color: var(--text3); margin-right: 2px; }
-.stat-label { font-size: 12px; color: var(--text3); margin-top: 3px; }
+.stat-label { font-size: 12.5px; color: var(--text3); }
 
 /* Hero trust bar */
 .hero-trust {
@@ -598,30 +600,32 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 .d-s-bf     { height: 100%; border-radius: 2px; }
 .d-s-pct    { font-size: 10px; width: 34px; font-variant-numeric: tabular-nums; }
 
-/* ── FEATURES GRID ── */
-.feat-grid {
-  max-width: 1180px; margin: 0 auto;
-  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+/* ── FEATURES: numbered rows, not a card grid ── */
+.feat-list {
+  max-width: 860px; margin: 56px auto 0;
+  display: flex; flex-direction: column;
 }
-.value-card {
-  background: var(--card);
-  border: 1px solid var(--border2);
-  border-radius: var(--r-md);
-  padding: 24px 20px;
-  transition: border-color .2s, transform .2s;
+.feat-row {
+  display: grid; grid-template-columns: 84px 1fr;
+  gap: 24px; align-items: baseline;
+  padding: 32px 0;
+  border-bottom: 1px solid var(--border2);
 }
-@media (hover: hover) and (pointer: fine) { .value-card:hover { border-color: rgba(79,127,255,0.25); transform: translateY(-3px); } }
-.value-icon {
-  width: 40px; height: 40px; border-radius: var(--r-sm);
-  background: rgba(79,127,255,0.08); border: 1px solid rgba(79,127,255,0.18);
-  display: flex; align-items: center; justify-content: center;
-  color: var(--accent); margin-bottom: 16px;
+.feat-row:first-child { border-top: 1px solid var(--border2); }
+@media (hover: hover) and (pointer: fine) {
+  .feat-row:hover .feat-num { color: rgba(79,127,255,0.55); }
 }
-.value-title {
-  font-family: var(--display); font-size: 15.5px; font-weight: 700;
-  color: var(--text); letter-spacing: -0.3px; margin-bottom: 8px;
+.feat-num {
+  font-family: var(--mono); font-size: 38px; font-weight: 700;
+  color: rgba(79,127,255,0.22); letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums; line-height: 1;
+  transition: color .25s;
 }
-.value-desc { font-size: 13px; color: var(--text2); line-height: 1.65; }
+.feat-row-title {
+  font-family: var(--display); font-size: 19px; font-weight: 700;
+  color: var(--text); letter-spacing: -0.4px; margin-bottom: 9px;
+}
+.feat-row-desc { font-size: 14px; color: var(--text2); line-height: 1.75; max-width: 58ch; }
 
 .broker-badge {
   display: inline-flex; align-items: center; gap: 6px;
@@ -652,7 +656,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 }
 .broker-strip-badges { display: flex; gap: 10px; flex-wrap: wrap; }
 .broker-badge.lg { padding: 7px 16px; font-size: 13px; }
-@media (max-width: 700px) { .feat-grid { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .feat-row { grid-template-columns: 1fr; gap: 10px; } .feat-num { font-size: 28px; } }
 
 /* ── STEPS ── */
 #how { text-align: center; }
@@ -1374,26 +1378,34 @@ html.a11y-underline a { text-decoration: underline !important; }
     <p class="section-sub">כל מה שאתה צריך כדי לנתח, להבין ולשפר את המסחר שלך</p>
   </div>
 
-  <div class="feat-grid">
-    <div class="value-card reveal">
-      <div class="value-icon" aria-hidden="true"><svg width="18" height="18"><use href="#i-link"/></svg></div>
-      <h3 class="value-title">שכח מטבלאות</h3>
-      <p class="value-desc">חבר את <span class="kw">Interactive Brokers</span> או <span class="kw">Bybit</span> פעם אחת — חיבור קורא-בלבד, ללא גישה לביצוע פעולות — וכל עסקה נכנסת לבד.</p>
+  <div class="feat-list">
+    <div class="feat-row reveal">
+      <span class="feat-num" aria-hidden="true">01</span>
+      <div>
+        <h3 class="feat-row-title">שכח מטבלאות</h3>
+        <p class="feat-row-desc">חבר את <span class="kw">Interactive Brokers</span> או <span class="kw">Bybit</span> פעם אחת — חיבור קורא-בלבד, ללא גישה לביצוע פעולות — וכל עסקה נכנסת לבד.</p>
+      </div>
     </div>
-    <div class="value-card reveal">
-      <div class="value-icon" aria-hidden="true"><svg width="18" height="18"><use href="#i-globe"/></svg></div>
-      <h3 class="value-title">דופק השוק בזמן אמת</h3>
-      <p class="value-desc">ביצועי סקטורים, <span class="kw">Fear &amp; Greed Index</span> ומניות מובילות — במקום אחד, כדי שתדע לאן הכסף זורם לפני שאתה נכנס לפוזיציה.</p>
+    <div class="feat-row reveal">
+      <span class="feat-num" aria-hidden="true">02</span>
+      <div>
+        <h3 class="feat-row-title">דופק השוק בזמן אמת</h3>
+        <p class="feat-row-desc">ביצועי סקטורים, <span class="kw">Fear &amp; Greed Index</span> ומניות מובילות — במקום אחד, כדי שתדע לאן הכסף זורם לפני שאתה נכנס לפוזיציה.</p>
+      </div>
     </div>
-    <div class="value-card reveal">
-      <div class="value-icon" aria-hidden="true"><svg width="18" height="18"><use href="#i-tgt"/></svg></div>
-      <h3 class="value-title">מסנן מניות מובנה</h3>
-      <p class="value-desc">הסורק סורק את כל השוק ומציג רק מניות עם מבנה טכני חזק (<span class="kw">Trend Template</span>) — ישר בתוך היומן.</p>
+    <div class="feat-row reveal">
+      <span class="feat-num" aria-hidden="true">03</span>
+      <div>
+        <h3 class="feat-row-title">מסנן מניות מובנה</h3>
+        <p class="feat-row-desc">הסורק סורק את כל השוק ומציג רק מניות עם מבנה טכני חזק (<span class="kw">Trend Template</span>) — ישר בתוך היומן.</p>
+      </div>
     </div>
-    <div class="value-card reveal">
-      <div class="value-icon" aria-hidden="true"><svg width="18" height="18"><use href="#i-bars"/></svg></div>
-      <h3 class="value-title">בניית תיק השקעות</h3>
-      <p class="value-desc">הקצאת הון בין מניות, קריפטו ו-ETFs, תשואה כוללת וחשיפת סיכון — במבט אחד, לפני שהשוק מזכיר לך את זה.</p>
+    <div class="feat-row reveal">
+      <span class="feat-num" aria-hidden="true">04</span>
+      <div>
+        <h3 class="feat-row-title">בניית תיק השקעות</h3>
+        <p class="feat-row-desc">הקצאת הון בין מניות, קריפטו ו-ETFs, תשואה כוללת וחשיפת סיכון — במבט אחד, לפני שהשוק מזכיר לך את זה.</p>
+      </div>
     </div>
   </div>
 </section>

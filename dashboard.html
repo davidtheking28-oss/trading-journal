@@ -995,13 +995,14 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   @media (hover: hover) and (pointer: fine) { .pd-month-btn:hover { background: rgba(255,255,255,0.07); color: var(--text); } }
   .pd-month-btn.active { background: rgba(99,102,241,0.18); color: #818cf8; font-weight: 700; }
   .scope-dd-menu button {
-    display: block; width: 100%; padding: 7px 12px; border: none; border-radius: var(--r-sm);
+    display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 7px 12px; border: none; border-radius: var(--r-sm);
     background: transparent; color: var(--text2); text-align: right;
     cursor: pointer; font-size: 12px; font-weight: 600; font-family: inherit;
     transition: background 0.12s, color 0.12s;
   }
   @media (hover: hover) and (pointer: fine) { .scope-dd-menu button:hover { background: rgba(99,102,241,0.1); color: var(--text); } }
   .scope-dd-menu button.active { background: rgba(99,102,241,0.14); color: #818cf8; }
+  .scope-dd-menu button.active::after { content: '✓'; margin-right: 6px; }
 
   /* DONUT STATS PANEL */
   .donut-stats {
@@ -3589,10 +3590,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   /* Table */
   .inv-table-wrap {
     background: var(--card); border: 1px solid var(--border);
-    border-radius: var(--r-lg); overflow: hidden;
+    border-radius: var(--r-lg); overflow-x: auto;
     box-shadow: 0 4px 24px rgba(0,0,0,0.25);
   }
-  .inv-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; min-width: 0; }
+  .inv-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; min-width: 700px; }
   .inv-table th {
     padding: 10px 8px; text-align: right; color: var(--text3); font-weight: 700;
     font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px;
@@ -3836,7 +3837,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .missed-card-note { font-size: 11px; color: var(--text2); margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); font-style: italic; }
   .missed-card-actions { display: flex; gap: 4px; justify-content: flex-end; margin-top: 10px; }
   .missed-empty { text-align: center; color: var(--text3); padding: 50px; font-size: 13px; }
-  .missed-del-btn { background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer; font-size: 13px; padding: 4px 7px; border-radius: var(--r-sm); transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s; }
+  .missed-del-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 13px; padding: 4px 7px; border-radius: var(--r-sm); transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s; }
   @media (hover: hover) and (pointer: fine) { .missed-del-btn:hover { color: var(--red); background: rgba(255,107,138,0.12); } }
   @media (hover: hover) and (pointer: fine) { .missed-del-btn.edit:hover { color: var(--accent); background: rgba(129,140,248,0.1); } }
 
@@ -5355,6 +5356,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
      the top/bottom movers (the full sector list is hidden on small screens). */
   @media (max-width: 768px) {
     .stats-secondary { display: none; }
+    .stats-secondary.stats-secondary-open { display: block; }
+    #stats-secondary-toggle { display: block; }
     #tt-grid { display: none; }
     /* Keep Market Pulse to indices + the 3/3 podium — drop the full chip list */
     .tt-breadth-chips { display: none; }
@@ -5620,7 +5623,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
           </button>
           <div class="scope-dd-menu" id="ov-scope-menu">
-            <button class="active" onclick="setOvScope('stock',this,'ov-scope-dd')">📈 מניות</button>
+            <button class="active" aria-current="true" onclick="setOvScope('stock',this,'ov-scope-dd')">📈 מניות</button>
             <button onclick="setOvScope('crypto',this,'ov-scope-dd')">₿ קריפטו</button>
             <button onclick="setOvScope('all',this,'ov-scope-dd')">הכל</button>
           </div>
@@ -5669,7 +5672,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
           </button>
           <div class="scope-dd-menu" id="trades-scope-menu">
-            <button class="active" onclick="setTradesScope('stock',this,'trades-scope-dd')">📈 מניות</button>
+            <button class="active" aria-current="true" onclick="setTradesScope('stock',this,'trades-scope-dd')">📈 מניות</button>
             <button onclick="setTradesScope('crypto',this,'trades-scope-dd')">₿ קריפטו</button>
             <button onclick="setTradesScope('all',this,'trades-scope-dd')">הכל</button>
           </div>
@@ -5712,7 +5715,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           </button>
           <div class="scope-dd-menu" id="stats-scope-menu">
             <button onclick="setStatsScope('all',this,'stats-scope-dd')">הכל</button>
-            <button class="active" onclick="setStatsScope('stock',this,'stats-scope-dd')">📈 מניות</button>
+            <button class="active" aria-current="true" onclick="setStatsScope('stock',this,'stats-scope-dd')">📈 מניות</button>
             <button onclick="setStatsScope('crypto',this,'stats-scope-dd')">₿ קריפטו</button>
           </div>
         </div>
@@ -5725,7 +5728,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div style="height:200px;position:relative;width:100%;"><canvas id="chart-donut" style="display:none"></canvas></div>
         <div id="donut-stats" class="donut-stats" style="flex:1;margin-top:8px;"></div>
       </div>
-      <!-- Secondary stats — hidden on mobile to keep the view to the essentials -->
+      <!-- Secondary stats — collapsed on mobile to keep the view to the essentials;
+           #stats-secondary-toggle (mobile-only, display:none on desktop) gives a
+           visible way back in instead of silently dropping the content. -->
+      <button id="stats-secondary-toggle" style="display:none;width:100%;margin-bottom:16px;padding:10px;background:var(--card2,rgba(255,255,255,0.04));border:1px solid var(--border);border-radius:var(--r-md);color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;" onclick="const el=document.querySelector('.stats-secondary');const open=el.classList.toggle('stats-secondary-open');this.setAttribute('aria-expanded',String(open));this.textContent=open?'הסתר סטטיסטיקות נוספות ▴':'הצג סטטיסטיקות נוספות ▾'" aria-expanded="false">הצג סטטיסטיקות נוספות ▾</button>
       <div class="stats-secondary">
       <div id="skel-monthly" style="display:none"></div>
       <canvas id="chart-monthly" style="display:none"></canvas>
@@ -6024,7 +6030,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           <div class="s-section-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
           <div><div class="s-section-title" data-i18n="set_grp_import">Import</div><div class="s-section-sub">Broker connection &amp; file import</div></div>
         </div>
-        <div class="s-row s-expandable" id="s-ibkr-row" onclick="toggleExpand('s-ibkr-body','s-ibkr-row')">
+        <div class="s-row s-expandable" id="s-ibkr-row" role="button" tabindex="0" aria-expanded="false" onclick="toggleExpand('s-ibkr-body','s-ibkr-row')" onkeydown="if((event.key==='Enter'||event.key===' ')&&event.target===this){event.preventDefault();toggleExpand('s-ibkr-body','s-ibkr-row')}">
           <div class="s-row-left" style="display:flex;align-items:center;gap:12px;">
             <div style="width:38px;height:38px;border-radius:var(--r-md);background:#c8102e;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(200,16,46,0.4);">
               <svg width="26" height="26" viewBox="0 0 40 40" fill="none"><path d="M9 33 L9 10 L20 10 L9 22" fill="white"/><path d="M15 22 L28 10 L28 10 L20 22 L28 33 L17 33 Z" fill="white"/><circle cx="26" cy="29" r="4.5" fill="white"/></svg>
@@ -6048,7 +6054,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
               <div>
                 <div class="ibkr-field-label">Token</div>
                 <div style="position:relative;">
-                  <input id="flex-token" class="form-control" type="password" placeholder="••••••••" autocomplete="off" style="font-size:12px;padding:6px 36px 6px 10px;" onkeydown="if(event.key==='Enter')flexSave()">
+                  <input id="flex-token" class="form-control" type="password" placeholder="••••••••" autocomplete="off" aria-label="IBKR Token" style="font-size:12px;padding:6px 36px 6px 10px;" onkeydown="if(event.key==='Enter')flexSave()">
                   <button type="button" onclick="toggleReveal('flex-token',this)" tabindex="-1" aria-label="הצג/הסתר טוקן" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:2px;color:var(--text3);line-height:0;">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
@@ -6056,7 +6062,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
               </div>
               <div>
                 <div class="ibkr-field-label">Query ID</div>
-                <input id="flex-query-id" class="form-control" type="text" placeholder="1462900" autocomplete="off" style="font-size:12px;padding:6px 10px;" onkeydown="if(event.key==='Enter')flexSave()" onblur="if(document.getElementById('flex-token').value&&this.value)flexSave()">
+                <input id="flex-query-id" class="form-control" type="text" placeholder="1462900" autocomplete="off" aria-label="IBKR Query ID" style="font-size:12px;padding:6px 10px;" onkeydown="if(event.key==='Enter')flexSave()" onblur="if(document.getElementById('flex-token').value&&this.value)flexSave()">
               </div>
               <div class="ibkr-actions" style="margin-bottom:0;">
                 <button class="btn btn-secondary btn-sm" onclick="flexSave()" data-i18n="m_save_short">Save</button>
@@ -6072,7 +6078,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             <div id="flex-preview" class="ibkr-trades-list"></div>
           </div>
         </div>
-        <div class="s-row s-expandable" id="s-bybit-row" onclick="toggleExpand('s-bybit-body','s-bybit-row')">
+        <div class="s-row s-expandable" id="s-bybit-row" role="button" tabindex="0" aria-expanded="false" onclick="toggleExpand('s-bybit-body','s-bybit-row')" onkeydown="if((event.key==='Enter'||event.key===' ')&&event.target===this){event.preventDefault();toggleExpand('s-bybit-body','s-bybit-row')}">
           <div class="s-row-left" style="display:flex;align-items:center;gap:12px;">
             <div style="width:38px;height:38px;border-radius:var(--r-md);background:#1a1a1a;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.5);">
               <svg width="30" height="12" viewBox="0 0 80 28" fill="none" style="direction:ltr;overflow:visible;">
@@ -6100,7 +6106,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
               <div>
                 <div class="ibkr-field-label">API Key</div>
                 <div style="position:relative;">
-                  <input id="bybit-api-key" class="form-control" type="password" placeholder="••••••••" autocomplete="off" style="font-size:12px;padding:6px 36px 6px 10px;" onkeydown="if(event.key==='Enter')bybitSave()">
+                  <input id="bybit-api-key" class="form-control" type="password" placeholder="••••••••" autocomplete="off" aria-label="Bybit API Key" style="font-size:12px;padding:6px 36px 6px 10px;" onkeydown="if(event.key==='Enter')bybitSave()">
                   <button type="button" onclick="toggleReveal('bybit-api-key',this)" tabindex="-1" aria-label="הצג/הסתר מפתח API" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:2px;color:var(--text3);line-height:0;">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
@@ -6109,7 +6115,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
               <div>
                 <div class="ibkr-field-label">API Secret</div>
                 <div style="position:relative;">
-                  <input id="bybit-api-secret" class="form-control" type="password" placeholder="••••••••" autocomplete="off" style="font-size:12px;padding:6px 36px 6px 10px;" onkeydown="if(event.key==='Enter')bybitSave()" onblur="if(document.getElementById('bybit-api-key').value&&this.value)bybitSave()">
+                  <input id="bybit-api-secret" class="form-control" type="password" placeholder="••••••••" autocomplete="off" aria-label="Bybit API Secret" style="font-size:12px;padding:6px 36px 6px 10px;" onkeydown="if(event.key==='Enter')bybitSave()" onblur="if(document.getElementById('bybit-api-key').value&&this.value)bybitSave()">
                   <button type="button" onclick="toggleReveal('bybit-api-secret',this)" tabindex="-1" aria-label="הצג/הסתר סוד API" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:2px;color:var(--text3);line-height:0;">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
@@ -6124,7 +6130,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             <div id="bybit-preview" class="ibkr-trades-list"></div>
           </div>
         </div>
-        <div class="s-row s-expandable" id="s-tlg-row" onclick="toggleExpand('s-tlg-body','s-tlg-row')">
+        <div class="s-row s-expandable" id="s-tlg-row" role="button" tabindex="0" aria-expanded="false" onclick="toggleExpand('s-tlg-body','s-tlg-row')" onkeydown="if((event.key==='Enter'||event.key===' ')&&event.target===this){event.preventDefault();toggleExpand('s-tlg-body','s-tlg-row')}">
           <div class="s-row-left">
             <div class="s-row-label" data-i18n="set_file_import">File Import</div>
             <div class="s-row-desc">.tlg</div>
@@ -6148,7 +6154,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             <div id="tlg-preview" class="ibkr-trades-list"></div>
           </div>
         </div>
-        <div class="s-row s-expandable" id="s-bi-row" onclick="toggleExpand('s-bi-body','s-bi-row')">
+        <div class="s-row s-expandable" id="s-bi-row" role="button" tabindex="0" aria-expanded="false" onclick="toggleExpand('s-bi-body','s-bi-row')" onkeydown="if((event.key==='Enter'||event.key===' ')&&event.target===this){event.preventDefault();toggleExpand('s-bi-body','s-bi-row')}">
           <div class="s-row-left">
             <div class="s-row-label" data-i18n="set_broker_import">Broker Import</div>
             <div class="s-row-desc">CSV</div>
@@ -8293,8 +8299,8 @@ let _tradesScope = 'stock';
 function setTradesScope(s, btn, ddId) {
   _tradesScope = s;
   document.getElementById('trades-scope-lbl').textContent = _scopeLabels[s];
-  document.querySelectorAll('#trades-scope-menu button').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
+  document.querySelectorAll('#trades-scope-menu button').forEach(b => { b.classList.remove('active'); b.removeAttribute('aria-current'); });
+  if (btn) { btn.classList.add('active'); btn.setAttribute('aria-current', 'true'); }
   _closeAllDDs();
   renderTable('stock');
 }
@@ -8734,8 +8740,8 @@ function toggleScopeDD(id) {
 function setOvScope(s, btn, ddId) {
   ovScope = s;
   document.getElementById('ov-scope-lbl').textContent = _scopeLabels[s];
-  document.querySelectorAll('#ov-scope-menu button').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
+  document.querySelectorAll('#ov-scope-menu button').forEach(b => { b.classList.remove('active'); b.removeAttribute('aria-current'); });
+  if (btn) { btn.classList.add('active'); btn.setAttribute('aria-current', 'true'); }
   _closeAllDDs();
   renderOverview();
 }
@@ -8782,8 +8788,8 @@ function _restoreStatsState() {
 function setStatsScope(s, btn, ddId) {
   statsScope = s;
   document.getElementById('stats-scope-lbl').textContent = _scopeLabels[s];
-  document.querySelectorAll('#stats-scope-menu button').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
+  document.querySelectorAll('#stats-scope-menu button').forEach(b => { b.classList.remove('active'); b.removeAttribute('aria-current'); });
+  if (btn) { btn.classList.add('active'); btn.setAttribute('aria-current', 'true'); }
   _closeAllDDs();
   _saveStatsState();
   renderStatistics();
@@ -9144,9 +9150,9 @@ function renderCalendar(type) {
         ].filter(Boolean).join(' ');
         const dtStyle = dayTotal >= 0 ? 'color:var(--green)' : 'color:var(--red)';
         const plStr1 = dt.length === 1 ? fmtUSD(calcTotal(dt[0])) : '';
-        html += `<div class="${cls}" ${dt.length > 1 ? `onclick="showCalDayModal('${ds}')" style="cursor:pointer"` : ''}>
+        html += `<div class="${cls}" ${dt.length > 1 ? `onclick="showCalDayModal('${ds}')" onkeydown="if((event.key==='Enter'||event.key===' ')&&event.target===this){event.preventDefault();showCalDayModal('${ds}')}" role="button" tabindex="0" style="cursor:pointer"` : ''}>
           <div class="cal-date">${day}</div>
-          ${dt.length === 1 ? `<div class="cal-chip ${calcPL(dt[0])>=0?'win':'loss'}" onclick="event.stopPropagation();showCalTradeModal('${dt[0].type}','${dt[0].id}')">
+          ${dt.length === 1 ? `<div class="cal-chip ${calcPL(dt[0])>=0?'win':'loss'}" onclick="event.stopPropagation();showCalTradeModal('${dt[0].type}','${dt[0].id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();showCalTradeModal('${dt[0].type}','${dt[0].id}')}" role="button" tabindex="0">
               <span class="cal-chip-sym">${esc(dt[0].symbol)}</span>
               <span class="cal-chip-pl sensitive">${plStr1}</span>
             </div>` : ''}
@@ -9543,7 +9549,7 @@ function showCalDayModal(ds) {
   document.getElementById('cal-trade-modal-body').innerHTML = all.map(tr => {
     const pl = calcTotal(tr); const pct = calcPct(tr);
     const plStyle = pl >= 0 ? 'color:var(--green)' : 'color:var(--red)';
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;" onclick="closeCalTradeModal();setTimeout(()=>showCalTradeModal('${tr.type}','${tr.id}'),120)">
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;" role="button" tabindex="0" onclick="closeCalTradeModal();setTimeout(()=>showCalTradeModal('${tr.type}','${tr.id}'),120)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();closeCalTradeModal();setTimeout(()=>showCalTradeModal('${tr.type}','${tr.id}'),120)}">
       <div style="display:flex;align-items:center;gap:10px;">
         <span style="font-size:14px;font-weight:700;color:var(--text)">${esc(tr.symbol)}</span>
         <span style="font-size:11px;color:var(--text3)">${tr.ls === 'L' ? 'Long' : 'Short'}</span>
@@ -11036,12 +11042,17 @@ function _renderFGWidget(el, d, label, source, ts) {
   const score  = Math.round(d.score);
   const key    = (d.rating || '').toLowerCase();
   const colors = FG_COLORS[key] || ['#8faac8','#64748b'];
+  // colors[0] is tuned for a dark background — on the light theme it fails text
+  // contrast (e.g. the yellow/lime ratings run ~1.9-2.8:1 on white), so text uses
+  // colors[1] (the darker variant) there while the bar fill keeps colors[0].
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  const textColor = isLight ? colors[1] : colors[0];
   const rating = FG_LABELS[key] || d.rating;
   const when   = new Date(ts || Date.now()).toLocaleDateString('en-US', { month:'short', day:'numeric' });
   el.innerHTML = `
       <div class="fg-bar-wrap">
         <div class="fg-bar-score">
-          <span class="fg-score" style="color:${colors[0]}">${score}</span>
+          <span class="fg-score" style="color:${textColor}">${score}</span>
           <span class="fg-score-sub">/100</span>
         </div>
         <div class="fg-bar-track">
@@ -11050,7 +11061,7 @@ function _renderFGWidget(el, d, label, source, ts) {
       </div>
       <div class="fg-info">
         <div class="fg-label">${label}</div>
-        <div class="fg-rating" style="color:${colors[0]}">${rating}</div>
+        <div class="fg-rating" style="color:${textColor}">${rating}</div>
         <div class="fg-source">${source} · ${when}</div>
       </div>`;
 }
@@ -11939,7 +11950,7 @@ function renderDonut(st, adv, trades) {
         }
       },
       cutout: '70%',
-      animation: { duration: 300 }
+      animation: { duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 300 }
     }
   });
 
@@ -14379,6 +14390,7 @@ function toggleExpand(bodyId, rowId) {
   if (!body || !row) return;
   const isOpen = body.classList.toggle('open');
   row.classList.toggle('open', isOpen);
+  row.setAttribute('aria-expanded', String(isOpen));
 }
 
 async function flexSave() {
@@ -16352,7 +16364,7 @@ function invRenderRows(holdings) {
              had been saved, i.e. you had to commit to a quantity before the
              tool that computes the quantity became available. -->
         <button class="inv-buy-btn" onclick="invToggleBuyRow(${i})" title="קנייה/מכירה + מחשבון כמות וסיכון">+</button>
-        <button class="inv-del-btn" onclick="invDeleteRow(${i})">×</button>
+        <button class="inv-del-btn" onclick="invDeleteRow(${i})" aria-label="מחק ${esc(h.symbol||'החזקה')}" title="מחק">×</button>
       </td>
     </tr>`;
   }).join('');
@@ -17300,6 +17312,8 @@ function invConfirmPositionModal() {
 
 function invDeleteRow(i) {
   const data = invGetCurrentData();
+  const sym = data.holdings[i]?.symbol || 'החזקה זו';
+  if (!confirm(`למחוק את ${sym}?`)) return;
   data.holdings.splice(i, 1);
   invRenderRows(data.holdings);
   // invRenderRows only paints rows. Without this the summary, allocation bars,
@@ -17563,7 +17577,7 @@ async function ttLoad(force = false) {
     if (el) el.textContent = 'עודכן: ' + ts.toLocaleTimeString('he-IL', { hour:'2-digit', minute:'2-digit' });
     ttRender(_ttData, _ttIndices);
   } catch(e) {
-    if (!silent) document.getElementById('tt-grid').innerHTML = '<div class="tt-loading">שגיאה בטעינת נתונים — נסה שוב</div>';
+    if (!silent) document.getElementById('tt-grid').innerHTML = '<div class="tt-loading">שגיאה בטעינת נתונים — <button onclick="ttLoad(true)" style="background:none;border:none;color:var(--accent);text-decoration:underline;cursor:pointer;font:inherit;padding:0;">נסה שוב</button></div>';
   } finally {
     _ttLoading = false;
   }
@@ -17658,10 +17672,10 @@ function ttRender(themes, indices) {
       for (let i = 0; i < rows; i++) {
         const g = greens[i], r = reds[i];
         chipsHtml += r
-          ? `<div class="tt-chip red" style="cursor:pointer" onclick="sectorModalOpen('${esc(r.ticker)}','${esc(r.name)}')"><span>${esc(r.name)}</span><span>${r[pKey].toFixed(1)}%</span></div>`
+          ? `<div class="tt-chip red" role="button" tabindex="0" style="cursor:pointer" onclick="sectorModalOpen('${esc(r.ticker)}','${esc(r.name)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sectorModalOpen('${esc(r.ticker)}','${esc(r.name)}')}"><span>${esc(r.name)}</span><span>${r[pKey].toFixed(1)}%</span></div>`
           : '<div></div>';
         chipsHtml += g
-          ? `<div class="tt-chip green" style="cursor:pointer" onclick="sectorModalOpen('${esc(g.ticker)}','${esc(g.name)}')"><span>${esc(g.name)}</span><span>+${g[pKey].toFixed(1)}%</span></div>`
+          ? `<div class="tt-chip green" role="button" tabindex="0" style="cursor:pointer" onclick="sectorModalOpen('${esc(g.ticker)}','${esc(g.name)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sectorModalOpen('${esc(g.ticker)}','${esc(g.name)}')}"><span>${esc(g.name)}</span><span>+${g[pKey].toFixed(1)}%</span></div>`
           : '<div></div>';
       }
       chipsEl.innerHTML = chipsHtml;
@@ -17674,7 +17688,7 @@ function ttRender(themes, indices) {
     const pos = pct >= 0;
     const barW = Math.min((Math.abs(pct) / maxAbs) * 48, 48);
     const sign = pos ? '+' : '';
-    return `<div class="tt-row" onclick="sectorModalOpen('${esc(t.ticker)}','${esc(t.name)}')">
+    return `<div class="tt-row" role="button" tabindex="0" onclick="sectorModalOpen('${esc(t.ticker)}','${esc(t.name)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sectorModalOpen('${esc(t.ticker)}','${esc(t.name)}')}">
       <div class="tt-name">${esc(t.name)}</div>
       <div class="tt-bar-wrap">
         <div class="tt-bar-bg"></div>
