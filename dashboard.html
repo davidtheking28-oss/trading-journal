@@ -4225,17 +4225,54 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
                 #070c19 !important;
   }
   #auth-layout { display: flex; width: 100%; height: 100%; }
-  #auth-card-col { flex: 0 0 460px; display: flex; align-items: center; justify-content: center; padding: 20px; }
-  #auth-showcase {
-    flex: 1 1 auto; display: flex; align-items: center; justify-content: center;
-    padding: 40px; position: relative; overflow: hidden;
-    border-inline-start: 1px solid rgba(129,140,248,0.1);
+  #auth-card-col { flex: 1 1 auto; width: 100%; display: flex; align-items: center; justify-content: center; padding: 20px; position: relative; z-index: 2; }
+  #auth-showcase { display: none !important; }
+
+  /* ── Auth background: dark field + animated wave streams (mockup match) ── */
+  html[data-theme="dark"] #auth-overlay,
+  html:not([data-theme]) #auth-overlay {
+    background:
+      radial-gradient(ellipse 60% 40% at 80% 15%, rgba(56,189,248,0.10) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 35% at 15% 85%, rgba(79,127,255,0.10) 0%, transparent 60%),
+      #05070f !important;
+    overflow: hidden;
   }
-  html[data-theme="light"] #auth-showcase { border-inline-start-color: rgba(14,14,18,0.08); }
+  .auth-bg-wave { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.65; }
+  .auth-bg-wave path { animation: authWaveDrift 22s ease-in-out infinite; }
+  .auth-bg-wave path:nth-child(2) { animation-duration: 28s; animation-delay: -6s; }
+  .auth-bg-wave path:nth-child(3) { animation-duration: 34s; animation-delay: -14s; }
+  @keyframes authWaveDrift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-2%, 1.5%) scale(1.02); }
+  }
+  @media (prefers-reduced-motion: reduce) { .auth-bg-wave path { animation: none; } }
+  html[data-theme="light"] .auth-bg-wave { display: none; }
+
+  /* ── Auth card: glass + glow border (mockup match) ── */
+  .auth-card {
+    box-shadow: 0 24px 80px rgba(0,0,0,.8), 0 0 40px rgba(45,212,191,0.12), 0 0 0 1px rgba(45,212,191,0.18) !important;
+    border-color: rgba(45,212,191,0.35) !important;
+  }
+  .auth-card::after {
+    content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 30%);
+  }
+  html[data-theme="light"] .auth-card { box-shadow: 0 24px 80px rgba(0,0,0,.15), 0 0 0 1px rgba(45,212,191,0.25) !important; border-color: rgba(45,212,191,0.4) !important; }
+
+  /* ── Auth inputs: icon slot ── */
+  .auth-input-wrap { position: relative; }
+  .auth-input-wrap input { padding-inline-start: 40px !important; }
+  .auth-input-wrap .auth-input-icon {
+    position: absolute; inset-inline-start: 13px; top: 50%; transform: translateY(-50%);
+    color: var(--text3); pointer-events: none; display: flex;
+  }
+
+  /* ── Pill-shaped auth buttons (mockup match) ── */
+  #auth-submit-btn, #auth-tab-login, #auth-tab-register { border-radius: var(--r-pill, 100px) !important; }
+  #auth-overlay button[onclick="authGoogle()"] { border-radius: var(--r-pill, 100px) !important; }
+
   @media (max-width: 767px) {
-    #auth-layout { flex-direction: column; }
-    #auth-card-col { flex: 1 1 auto; width: 100%; padding: 20px; }
-    #auth-showcase { display: none; }
+    #auth-card-col { padding: 20px; }
   }
 
   /* ── Scrollbar on main ── */
@@ -6887,9 +6924,18 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
 <!-- AUTH OVERLAY -->
 <div id="auth-overlay" style="display:none;position:fixed;inset:0;z-index:9999;">
+ <svg class="auth-bg-wave" viewBox="0 0 1400 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+   <defs>
+     <linearGradient id="authWaveG1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#22d3ee" stop-opacity="0"/><stop offset="50%" stop-color="#38bdf8" stop-opacity="0.9"/><stop offset="100%" stop-color="#4f7fff" stop-opacity="0"/></linearGradient>
+     <linearGradient id="authWaveG2" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4f7fff" stop-opacity="0"/><stop offset="50%" stop-color="#22d3ee" stop-opacity="0.7"/><stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/></linearGradient>
+   </defs>
+   <path d="M-100,150 C250,50 450,300 750,180 C1050,60 1250,250 1500,150" fill="none" stroke="url(#authWaveG1)" stroke-width="2.5"/>
+   <path d="M-100,500 C250,650 500,380 800,520 C1100,660 1300,420 1500,500" fill="none" stroke="url(#authWaveG2)" stroke-width="2"/>
+   <path d="M-100,750 C300,600 600,850 900,700 C1150,580 1350,720 1500,680" fill="none" stroke="url(#authWaveG1)" stroke-width="1.5"/>
+ </svg>
  <div id="auth-layout">
   <div id="auth-card-col">
-   <div style="background:rgba(14,20,34,0.92);border:1px solid rgba(129,140,248,0.14);border-radius:var(--r-lg);padding:38px 36px 34px;width:100%;max-width:400px;box-shadow:0 24px 80px rgba(0,0,0,.8),0 0 0 1px rgba(129,140,248,0.06);backdrop-filter:blur(24px);position:relative;overflow:hidden;">
+   <div class="auth-card" style="background:rgba(14,20,34,0.92);border:1px solid rgba(129,140,248,0.14);border-radius:var(--r-lg);padding:38px 36px 34px;width:100%;max-width:400px;box-shadow:0 24px 80px rgba(0,0,0,.8),0 0 0 1px rgba(129,140,248,0.06);backdrop-filter:blur(24px);position:relative;overflow:hidden;">
     <!-- Subtle top glow line -->
     <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(129,140,248,0.5),transparent);"></div>
 
@@ -6929,14 +6975,20 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <input id="auth-first" class="form-control" type="text" placeholder="שם פרטי" autocomplete="given-name"
         style="display:none;background:rgba(10,10,10,0.95);border:1px solid rgba(148,163,184,0.12);border-radius:var(--r-md);padding:12px 14px;font-size:14px;color:#f1f5f9;"
         onkeydown="if(event.key==='Enter')document.getElementById('auth-email').focus()">
+      <div class="auth-input-wrap">
       <input id="auth-email" class="form-control" type="email" placeholder="אימייל" autocomplete="email"
-        style="background:rgba(10,10,10,0.95);border:1px solid rgba(148,163,184,0.12);border-radius:var(--r-md);padding:12px 14px;font-size:14px;color:#f1f5f9;"
+        style="background:rgba(10,10,10,0.95);border:1px solid rgba(148,163,184,0.12);border-radius:var(--r-md);padding:12px 14px;font-size:14px;color:#f1f5f9;width:100%;"
         onkeydown="if(event.key==='Enter')document.getElementById('auth-pass').focus()">
+      <span class="auth-input-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z" opacity="0"/><path d="M22 6l-10 7L2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg></span>
+      </div>
+      <div class="auth-input-wrap">
       <input id="auth-pass" class="form-control" type="password" placeholder="סיסמה (מינ׳ 8 תווים)"
-        style="background:rgba(10,10,10,0.95);border:1px solid rgba(148,163,184,0.12);border-radius:var(--r-md);padding:12px 14px;font-size:14px;color:#f1f5f9;"
+        style="background:rgba(10,10,10,0.95);border:1px solid rgba(148,163,184,0.12);border-radius:var(--r-md);padding:12px 14px;font-size:14px;color:#f1f5f9;width:100%;"
         autocomplete="current-password"
         oninput="authPasswordStrength(this.value)"
         onkeydown="if(event.key==='Enter')authSubmit()">
+      <span class="auth-input-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+      </div>
       <div id="auth-strength" style="display:none;margin-top:-4px;">
         <div style="height:3px;border-radius:var(--r-sm);background:rgba(148,163,184,0.1);overflow:hidden;">
           <div id="auth-strength-bar" style="height:100%;width:0;border-radius:var(--r-sm);transition:width .3s,background .3s;"></div>
