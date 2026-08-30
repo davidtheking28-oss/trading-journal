@@ -380,8 +380,10 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 .trust-sep { color: var(--text3); opacity: 0.4; }
 
 /* Hero visual */
-.hero-visual-wrap {
+.hero-visual-wrap,
+.demo-showcase-wrap {
   position: relative;
+  max-width: 780px; margin: 52px auto 0;
 }
 
 .hero-visual-glow {
@@ -595,51 +597,6 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 .d-s-bw     { flex: 1; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
 .d-s-bf     { height: 100%; border-radius: 2px; }
 .d-s-pct    { font-size: 10px; width: 34px; font-variant-numeric: tabular-nums; }
-
-/* ── TICKER ── */
-.ticker-wrap {
-  position: relative; z-index: 1;
-  border-top: 1px solid var(--border2);
-  border-bottom: 1px solid var(--border2);
-  background: rgba(7,16,31,0.8);
-  backdrop-filter: blur(8px);
-  overflow: hidden; padding: 10px 0;
-  margin-top: -1px;
-}
-
-.ticker-label {
-  position: absolute; top: 50%; left: 16px; transform: translateY(-50%);
-  z-index: 2;
-  display: flex; align-items: center; gap: 5px;
-  padding: 3px 10px;
-  background: var(--surface);
-  border: 1px solid var(--border2);
-  border-radius: 100px;
-  font-family: var(--mono); font-size: 9px; font-weight: 600;
-  color: var(--text3); letter-spacing: 0.5px; white-space: nowrap;
-}
-
-.ticker-track {
-  display: flex; gap: 48px;
-  width: max-content;
-  animation: ticker 60s linear infinite;
-  opacity: 0.55;
-}
-
-@keyframes ticker {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
-}
-
-.ticker-item {
-  display: flex; align-items: center; gap: 8px;
-  font-family: var(--mono); font-size: 12px;
-  white-space: nowrap; color: var(--text3);
-}
-.ticker-sym { color: var(--text2); font-weight: 600; }
-.ticker-val { color: var(--text); }
-.ticker-chg.pos { color: var(--green); }
-.ticker-chg.neg { color: var(--red); }
 
 /* ── VALUE BAR ── */
 #value { padding-top: 64px; padding-bottom: 64px; }
@@ -960,8 +917,7 @@ footer {
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
   .step { grid-template-columns: 44px 1fr; gap: 14px; }
-  .hero-wrap { grid-template-columns: 1fr; gap: 40px; }
-  .hero-visual-wrap { max-width: 460px; margin: 0 auto; }
+  .demo-showcase-wrap { max-width: 460px; margin: 40px auto 0; }
   .d-kpi { padding: 10px 10px; }
   .d-kpi-lbl { font-size: 8px; }
   .d-kpi-val { font-size: 16px; letter-spacing: -0.3px; }
@@ -1484,44 +1440,6 @@ html.a11y-underline a { text-decoration: underline !important; }
     </div>
   </div>
 </section>
-
-<!-- BROKER TRUST STRIP -->
-<div class="broker-strip" aria-hidden="true">
-  <span class="broker-strip-label">מתחברים לברוקרים המובילים</span>
-  <div class="broker-strip-badges">
-    <span class="broker-badge lg"><span class="broker-badge-dot ibkr"></span>Interactive Brokers</span>
-    <span class="broker-badge lg"><span class="broker-badge-dot bybit"></span>Bybit</span>
-  </div>
-</div>
-
-<!-- TICKER -->
-<div class="ticker-wrap" aria-hidden="true">
-  <span class="ticker-label">לדוגמה</span>
-  <div class="ticker-track">
-    <!-- duplicated for seamless loop -->
-    <span class="ticker-item"><span class="ticker-sym">NVDA</span><span class="ticker-val">$875.40</span><span class="ticker-chg pos">▲ +2.4%</span></span>
-    <span class="ticker-item"><span class="ticker-sym">AAPL</span><span class="ticker-val">$192.30</span><span class="ticker-chg pos">▲ +0.8%</span></span>
-    <span class="ticker-item"><span class="ticker-sym">BTC</span><span class="ticker-val">$67,420</span><span class="ticker-chg pos">▲ +3.1%</span></span>
-    <span class="ticker-item"><span class="ticker-sym">TSLA</span><span class="ticker-val">$248.60</span><span class="ticker-chg neg">▼ -1.2%</span></span>
-    <span class="ticker-item"><span class="ticker-sym">MSFT</span><span class="ticker-val">$415.80</span><span class="ticker-chg pos">▲ +1.5%</span></span>
-    <span class="ticker-item"><span class="ticker-sym">ETH</span><span class="ticker-val">$3,580</span><span class="ticker-chg pos">▲ +4.2%</span></span>
-    <span class="ticker-item"><span class="ticker-sym">AMZN</span><span class="ticker-val">$185.20</span><span class="ticker-chg neg">▼ -0.4%</span></span>
-    <span class="ticker-item"><span class="ticker-sym">SOL</span><span class="ticker-val">$148.90</span><span class="ticker-chg pos">▲ +5.7%</span></span>
-    <span class="ticker-item"><span class="ticker-sym">META</span><span class="ticker-val">$522.40</span><span class="ticker-chg pos">▲ +2.1%</span></span>
-    <span class="ticker-item"><span class="ticker-sym">SPY</span><span class="ticker-val">$521.60</span><span class="ticker-chg pos">▲ +0.6%</span></span>
-    <!-- duplicate -->
-    <span class="ticker-item"><span class="ticker-sym">NVDA</span><span class="ticker-val">$875.40</span><span class="ticker-chg pos">▲ +2.4%</span></span>
-    <span class="ticker-item"><span class="ticker-sym">AAPL</span><span class="ticker-val">$192.30</span><span class="ticker-chg pos">▲ +0.8%</span></span>
-    <span class="ticker-item"><span class="ticker-sym">BTC</span><span class="ticker-val">$67,420</span><span class="ticker-chg pos">▲ +3.1%</span></span>
-    <span class="ticker-item"><span class="ticker-sym">TSLA</span><span class="ticker-val">$248.60</span><span class="ticker-chg neg">▼ -1.2%</span></span>
-    <span class="ticker-item"><span class="ticker-sym">MSFT</span><span class="ticker-val">$415.80</span><span class="ticker-chg pos">▲ +1.5%</span></span>
-    <span class="ticker-item"><span class="ticker-sym">ETH</span><span class="ticker-val">$3,580</span><span class="ticker-chg pos">▲ +4.2%</span></span>
-    <span class="ticker-item"><span class="ticker-sym">AMZN</span><span class="ticker-val">$185.20</span><span class="ticker-chg neg">▼ -0.4%</span></span>
-    <span class="ticker-item"><span class="ticker-sym">SOL</span><span class="ticker-val">$148.90</span><span class="ticker-chg pos">▲ +5.7%</span></span>
-    <span class="ticker-item"><span class="ticker-sym">META</span><span class="ticker-val">$522.40</span><span class="ticker-chg pos">▲ +2.1%</span></span>
-    <span class="ticker-item"><span class="ticker-sym">SPY</span><span class="ticker-val">$521.60</span><span class="ticker-chg pos">▲ +0.6%</span></span>
-  </div>
-</div>
 
 <!-- HOW -->
 <section id="how" aria-labelledby="how-heading">
