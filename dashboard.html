@@ -909,6 +909,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   }
   .btn:active, .btn-sm:active { transform: scale(0.94) !important; transition: transform 0.08s !important; }
   .btn-icon:active            { transform: scale(0.90) !important; transition: transform 0.08s !important; }
+  .sym-fill-btn:active, .inv-buy-mode:active, .inv-type-pill:active, .tt-period:active, .lang-opt:active,
+  #cum-mode-pct:active, #cum-mode-usd:active, #inv-pnl-toggle:active { transform: scale(0.95); transition: transform 0.08s; }
   .tab-btn .nav-icon          { transition: transform 0.25s var(--ease-out); display:flex; align-items:center; justify-content:center; }
   .tab-btn:hover .nav-icon    { transform: scale(1.2); }
   .tab-btn.active .nav-icon   { transform: scale(1.1); }
@@ -944,6 +946,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     box-shadow: 0 8px 28px rgba(0,0,0,0.6);
   }
   @keyframes ddSlide { from { opacity: 0; transform: translateY(-5px) scale(0.98); } to { opacity: 1; transform: none; } }
+  .scope-dd-menu, .period-dd-menu { transform-origin: var(--dd-origin, top right); }
   .scope-dd-menu.dd-open, .period-dd-menu.dd-open { display: block; animation: ddSlide 0.16s var(--ease-out) both; }
 
   /* Period picker menu */
@@ -1827,7 +1830,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     border-radius: var(--radius2);
     width: 100%; max-width: 860px;
     box-shadow: var(--shadow);
-    animation: modalIn 0.2s ease;
+    animation: modalIn 0.2s cubic-bezier(0.16,1,0.3,1);
     margin: auto 0;
   }
   .ss-grid {
@@ -8471,9 +8474,14 @@ function _openMenu(triggerBtn, menu) {
   if (left + mw > window.innerWidth - 8) left = window.innerWidth - mw - 8;
   // Open downward, flip upward if not enough space
   let top = rect.bottom + 5;
-  if (top + mh > window.innerHeight - 8) top = rect.top - mh - 5;
+  const flipped = top + mh > window.innerHeight - 8;
+  if (flipped) top = rect.top - mh - 5;
   menu.style.left = left + 'px';
   menu.style.top  = top  + 'px';
+  // Scale in from the corner nearest the trigger button, not the menu's
+  // own center — matches the right-aligned/flip logic above so the entrance
+  // always reads as growing out of the button that opened it.
+  menu.style.setProperty('--dd-origin', (flipped ? 'bottom' : 'top') + ' right');
   triggerBtn.closest('.scope-dd').classList.add('open');
 }
 document.addEventListener('click', function(e) {
@@ -12353,7 +12361,7 @@ function toast(msg, type='success') {
   el.appendChild(icon);
   el.appendChild(document.createTextNode(' ' + String(msg).slice(0, 100)));
   c.appendChild(el);
-  setTimeout(()=>{ el.style.transition='opacity 0.3s, transform 0.3s'; el.style.opacity='0'; el.style.transform='translateX(-16px)'; setTimeout(()=>el.remove(),300); }, 3000);
+  setTimeout(()=>{ el.style.transition='opacity 0.18s ease-out, transform 0.18s ease-out'; el.style.opacity='0'; el.style.transform='translateX(-16px)'; setTimeout(()=>el.remove(),180); }, 3000);
 }
 
 // ─────────────────────────────────────────────
