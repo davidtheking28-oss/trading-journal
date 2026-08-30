@@ -675,7 +675,13 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   @media (hover: hover) and (pointer: fine) { .sym-fill-btn:hover { background: rgba(63,185,80,0.15); } }
 
   /* EMPTY STATE */
-  .empty-state { text-align: center; padding: 60px 20px; color: var(--text2); }
+  /* Swapped in via innerHTML when a filter empties the table — @starting-style
+     bridges that teleport instead of the text just appearing mid-frame. */
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: var(--text2);
+    transition: opacity 200ms var(--ease-out), transform 200ms var(--ease-out);
+  }
+  @starting-style { .empty-state { opacity: 0; transform: scale(0.97); } }
   .empty-icon { font-size: 40px; margin-bottom: 14px; opacity: 0.3; }
 
   /* KPI GRID */
@@ -1573,11 +1579,24 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .s-row-desc  { font-size: 11px; color: var(--text3); margin-top: 2px; line-height: 1.4; }
   .s-row-ctrl  { flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
   .s-row.s-expandable { cursor: pointer; user-select: none; }
+  /* Broker connection badges (#ibkr-conn-dot, #bybit-conn-dot) start hidden
+     and flip to display:inline-block via JS once a sync status resolves —
+     @starting-style bridges that so the badge doesn't just teleport in. */
+  #ibkr-conn-dot, #bybit-conn-dot {
+    transition: opacity 160ms var(--ease-out), transform 160ms var(--ease-out);
+  }
+  @starting-style { #ibkr-conn-dot, #bybit-conn-dot { opacity: 0; transform: scale(0.9); } }
   .s-chevron { color: var(--text3); transition: transform 220ms ease; flex-shrink: 0; }
   .s-row.open .s-chevron { transform: rotate(180deg); }
-  .s-expand-body { overflow: hidden; max-height: 0; transition: max-height 280ms ease; }
-  .s-expand-body.open { max-height: 520px; }
+  /* grid-rows trick instead of a fixed max-height: the panel settles at its
+     REAL content height regardless of size, so the easing curve always lands
+     right at the edge instead of being solved against an arbitrary 520px cap
+     that most panels never reach. */
+  .s-expand-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 280ms var(--ease-out); }
+  .s-expand-body.open { grid-template-rows: 1fr; }
   .s-expand-inner {
+    overflow: hidden;
+    min-height: 0;
     padding: 14px 18px 16px;
     border-top: 1px solid var(--border);
   }
