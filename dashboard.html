@@ -11551,9 +11551,6 @@ function renderStatistics() {
   const winSum  = winners.reduce((s, t) => s + calcTotal(t), 0);
   const lossSum = Math.abs(losers.reduce((s, t) => s + calcTotal(t), 0));
   const pf      = lossSum > 0 ? winSum / lossSum : null;
-  const expectancy = closed.length
-    ? (st.wr / 100 * adv.avgWin) + ((1 - st.wr / 100) * adv.avgLoss)
-    : 0;
 
   let curW = 0, maxW = 0, curL = 0, maxL = 0;
   [...closed].sort((a, b) => a.entryDate.localeCompare(b.entryDate)).forEach(t => {
@@ -11570,69 +11567,59 @@ function renderStatistics() {
   });
   const avgR = rCount > 0 ? rSum / rCount : 0;
 
-  // Peak-to-trough on the realised equity curve. Cumulative P&L shows where you
-  // are; this shows how far down you had to sit to get there.
-  let eq = 0, peak = 0, maxDD = 0;
-  [...closed].sort((a, b) => (a.closeDate || a.entryDate || '').localeCompare(b.closeDate || b.entryDate || ''))
-    .forEach(t => {
-      eq += calcTotal(t);
-      if (eq > peak) peak = eq;
-      maxDD = Math.min(maxDD, eq - peak);
-    });
-
   // Negatives dropped their sign entirely and leaned on the red class alone, so
   // "הפסד ממוצע $44.00" read as a gain in any context where color is lost.
   const fmt = v => (v >= 0 ? '+' : '-') + '$' + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const pct  = v => v.toFixed(1) + '%';
 
-  // The 4 numbers that actually drive a go/no-go read on the book get their
-  // own row, larger; the other 11 are real but secondary — a flat grid of 15
-  // identical tiles gives "average holding days" the same visual weight as
-  // "profit factor", which is the tell that nothing here was prioritized.
-  const heroKpis = [
-    { label: t('st_win_rate'),   value: pct(st.wr),                        cls: st.wr >= 50 ? 'green' : 'red' },
-    { label: 'Profit Factor',    value: pf != null ? pf.toFixed(2) : '—',  cls: pf != null ? (pf >= 1 ? 'green' : 'red') : '' },
-    { label: t('st_expectancy'), value: fmt(expectancy),                   cls: expectancy >= 0 ? 'green' : 'red', sensitive: true },
-    { label: t('st_avg_r'),      value: rCount ? avgR.toFixed(2) + 'R' : '—', cls: avgR >= 1 ? 'green' : '' },
-  ];
-  // Broker-derived portfolio size gets its own full-width row above even the
-  // hero KPIs — the user asked for it above everything else, not just another
-  // card in the same row as win-rate/profit-factor.
+  // Broker-derived portfolio size gets its own full-width card above the grid.
   const portfolioCard = _brokerEquityUsd != null
     ? { label: 'גודל תיק (ברוקר)', value: '$' + _brokerEquityUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
     : null;
-  const restKpis = [
-    { label: t('st_best'),           value: fmt(st.best),                cls: st.best >= 0 ? 'green' : 'red', sensitive: true },
-    { label: t('st_worst'),          value: fmt(st.worst),               cls: st.worst >= 0 ? 'green' : 'red', sensitive: true },
-    { label: t('st_avg_trade'),      value: fmt(st.avg),                 cls: st.avg >= 0 ? 'green' : 'red', sensitive: true },
-    { label: t('st_avg_win'),        value: fmt(adv.avgWin),             cls: 'green', sensitive: true },
-    { label: t('st_avg_loss'),       value: fmt(adv.avgLoss),            cls: 'red', sensitive: true },
-    { label: t('st_wl_ratio'),       value: adv.avgLoss !== 0 ? Math.abs(adv.avgWin / adv.avgLoss).toFixed(2) + 'x' : '—', cls: '' },
-    { label: t('st_max_win_streak'), value: maxW, cls: '' },
-    { label: t('st_max_loss_streak'),value: maxL, cls: '' },
-    { label: t('st_avg_hold_win'),   value: adv.avgWinDays.toFixed(1) + 'd', cls: '' },
-    { label: t('st_avg_hold_loss'),  value: adv.avgLossDays.toFixed(1) + 'd', cls: '' },
-    { label: 'ירידה מקסימלית מהשיא',  value: fmt(maxDD), cls: 'red', sensitive: true },
+
+  // Curated down from 15 flat tiles to the 8 numbers that actually drive a
+  // go/no-go read on the book — best/worst trade, avg trade, hold-time and
+  // drawdown stayed available lower in the tab (Trading Summary) instead of
+  // repeating here, per the user's "too crowded" feedback.
+  const maxWin  = winners.length ? Math.max(...winners.map(t => calcTotal(t))) : 0;
+  const maxLoss = losers.length  ? Math.min(...losers.map(t => calcTotal(t)))  : 0;
+  const ICON_TARGET = '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/>';
+  const ICON_BARS   = '<line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>';
+  const ICON_PCT    = '<line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>';
+  const ICON_UP     = '<path d="M14 9V5a3 3 0 0 0-3-3L7 11v10h10.3a2 2 0 0 0 2-1.7l1.4-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>';
+  const ICON_DOWN   = '<path d="M10 15v4a3 3 0 0 0 3 3l4-8V4H6.7a2 2 0 0 0-2 1.7l-1.4 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/>';
+  const ICON_SWAP   = '<polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>';
+  const ICON_TROPHY = '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M5 4H3v2a4 4 0 0 0 4 4M19 4h2v2a4 4 0 0 1-4 4"/>';
+  const ICON_FROWN  = '<circle cx="12" cy="12" r="9"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>';
+  const kpiCards = [
+    { label: t('st_win_rate'), tip: 'אחוז העסקאות הסגורות שהסתיימו ברווח', value: pct(st.wr), sub: `${st.wins}W / ${losers.length}L`, cls: st.wr >= 50 ? 'c-green' : 'c-red', valCls: st.wr >= 50 ? 'green' : 'red', icon: ICON_TARGET },
+    { label: 'Profit Factor', tip: 'סך הרווחים חלקי סך ההפסדים — מעל 1 אומר שהמערכת רווחית', value: pf != null ? pf.toFixed(2) : '—', sub: pf != null ? (pf >= 1 ? 'רווחי' : 'לא רווחי') : '', cls: pf != null ? (pf >= 1 ? 'c-green' : 'c-red') : 'c-blue', valCls: pf != null ? (pf >= 1 ? 'green' : 'red') : '', icon: ICON_BARS },
+    { label: t('st_avg_r'), tip: 'רווח/הפסד ממוצע ביחס לסיכון המתוכנן (סטופ), לעסקאות עם סטופ מוגדר', value: rCount ? avgR.toFixed(2) + 'R' : '—', sub: rCount ? `${rCount} עסקאות עם סטופ` : '', cls: avgR >= 0 ? 'c-green' : 'c-red', valCls: rCount ? (avgR >= 0 ? 'green' : 'red') : '', icon: ICON_PCT },
+    { label: t('st_avg_win'), tip: 'רווח ממוצע בעסקה מנצחת', value: fmt(adv.avgWin), sub: winners.length ? `מקסימום: ${fmt(maxWin)}` : '', cls: 'c-green', valCls: 'green', sensitive: true, icon: ICON_UP },
+    { label: t('st_avg_loss'), tip: 'הפסד ממוצע בעסקה מפסידה', value: fmt(adv.avgLoss), sub: losers.length ? `מקסימום: ${fmt(maxLoss)}` : '', cls: 'c-red', valCls: 'red', sensitive: true, icon: ICON_DOWN },
+    { label: t('st_wl_ratio'), tip: 'רווח ממוצע חלקי הפסד ממוצע', value: adv.avgLoss !== 0 ? Math.abs(adv.avgWin / adv.avgLoss).toFixed(2) + 'x' : '—', sub: 'רווח / הפסד ממוצע', cls: 'c-blue', valCls: '', icon: ICON_SWAP },
+    { label: t('st_max_win_streak'), tip: 'הרצף הארוך ביותר של עסקאות מנצחות ברציפות', value: maxW, sub: 'עסקאות רצופות', cls: 'c-green', valCls: 'green', icon: ICON_TROPHY },
+    { label: t('st_max_loss_streak'), tip: 'הרצף הארוך ביותר של עסקאות מפסידות ברציפות', value: maxL, sub: 'עסקאות רצופות', cls: 'c-red', valCls: 'red', icon: ICON_FROWN },
   ];
 
   const grid = document.getElementById('stats-kpi-grid');
   if (grid) {
     const portfolioHtml = portfolioCard ? `
-      <div class="kpi-card portfolio-hero">
+      <div class="kpi-card portfolio-hero c-blue">
         <div class="kpi-label">${portfolioCard.label}</div>
         <div class="kpi-value sensitive">${portfolioCard.value}</div>
       </div>` : '';
-    const heroHtml = heroKpis.map(k => `
-      <div class="kpi-card hero">
+    const cardsHtml = kpiCards.map(k => `
+      <div class="kpi-card ${k.cls}">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text3);opacity:0.6" aria-hidden="true">${k.icon}</svg>
+          <span title="${k.tip}" aria-label="${k.tip}" style="width:15px;height:15px;border-radius:50%;border:1px solid var(--text3);color:var(--text3);opacity:0.6;font-size:10px;line-height:13px;text-align:center;cursor:help;flex-shrink:0;">?</span>
+        </div>
         <div class="kpi-label">${k.label}</div>
-        <div class="kpi-value ${k.cls}${k.sensitive ? ' sensitive' : ''}">${k.value}</div>
+        <div class="kpi-value ${k.valCls}${k.sensitive ? ' sensitive' : ''}">${k.value}</div>
+        ${k.sub ? `<div class="kpi-sub">${k.sub}</div>` : ''}
       </div>`).join('');
-    const restHtml = restKpis.map(k => `
-      <div class="kpi-tile">
-        <div class="kpi-tile-label">${k.label}</div>
-        <div class="kpi-tile-value ${k.cls}${k.sensitive ? ' sensitive' : ''}">${k.value}</div>
-      </div>`).join('');
-    grid.innerHTML = portfolioHtml + `<div class="kpi-grid-hero">${heroHtml}</div><div class="kpi-grid-compact">${restHtml}</div>`;
+    grid.innerHTML = portfolioHtml + `<div class="kpi-grid-hero">${cardsHtml}</div>`;
   }
 
   renderDonut(st, adv, trades);
