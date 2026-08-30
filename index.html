@@ -256,9 +256,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 }
 
 .hero-wrap {
-  max-width: 1320px; margin: 0 auto; width: 100%;
-  display: grid; grid-template-columns: 1fr 1.4fr;
-  gap: 52px; align-items: center;
+  max-width: 760px; margin: 0 auto; width: 100%;
 }
 
 /* Beta chip */
@@ -1282,25 +1280,42 @@ html.a11y-underline a { text-decoration: underline !important; }
         </div>
       </div>
     </div>
+  </div>
+</section>
 
-    <!-- Demo slideshow — mirrors real dashboard -->
-    <div class="hero-visual-wrap" aria-hidden="true" inert>
-      <div class="hero-visual-glow"></div>
-      <div class="hero-card" style="padding:0;overflow:hidden;">
-        <div class="card-topbar" style="padding:12px 14px 0;">
-          <span class="card-label">ChartRoom</span>
+<!-- BROKER TRUST STRIP -->
+<div class="broker-strip" aria-hidden="true">
+  <span class="broker-strip-label">מתחברים לברוקרים המובילים</span>
+  <div class="broker-strip-badges">
+    <span class="broker-badge lg"><span class="broker-badge-dot ibkr"></span>Interactive Brokers</span>
+    <span class="broker-badge lg"><span class="broker-badge-dot bybit"></span>Bybit</span>
+  </div>
+</div>
+
+<!-- DEMO SHOWCASE -->
+<section id="demo" aria-labelledby="demo-heading">
+  <div class="centered reveal">
+    <div class="section-pill">הדגמה חיה</div>
+    <h2 class="section-title" id="demo-heading">הצצה למערכת</h2>
+    <p class="section-sub" style="margin:0 auto;">גלה את הכלים שיעזרו לך להשתפר</p>
+  </div>
+  <div class="demo-showcase-wrap reveal">
+    <div class="hero-visual-glow"></div>
+    <div class="hero-card" style="padding:0;overflow:hidden;">
+      <div class="card-topbar" style="padding:12px 14px 0;">
+        <span class="card-label">ChartRoom</span>
+      </div>
+
+      <div class="demo-app">
+        <div class="demo-nav" role="tablist" aria-label="הדגמת מערכת">
+          <button class="demo-tab active" role="tab" aria-selected="true">סקירה</button>
+          <button class="demo-tab" role="tab" aria-selected="false">מניות/קריפטו</button>
+          <button class="demo-tab" role="tab" aria-selected="false">השקעות</button>
+          <button class="demo-tab" role="tab" aria-selected="false">שוק</button>
         </div>
 
-        <div class="demo-app">
-          <div class="demo-nav">
-            <button class="demo-tab active">סקירה</button>
-            <button class="demo-tab">מניות/קריפטו</button>
-            <button class="demo-tab">השקעות</button>
-            <button class="demo-tab">שוק</button>
-          </div>
-
-          <div class="demo-stage">
-          <!-- Screen 1: Overview / P&L -->
+        <div class="demo-stage">
+        <!-- Screen 1: Overview / P&L -->
           <div class="demo-body demo-screen active" id="ds0">
             <div class="d-kpi-row">
               <div class="d-kpi green">
@@ -1463,7 +1478,6 @@ html.a11y-underline a { text-decoration: underline !important; }
               <div class="d-sector"><div class="d-s-name" style="font-size:11px">Semi</div><div class="d-s-bw" style="height:5px"><div class="d-s-bf" style="width:68%;background:#2dd4a0"></div></div><div class="d-s-pct" style="font-size:11px;font-weight:700;color:#2dd4a0">+1.8%</div></div>
               <div class="d-sector" style="margin-bottom:0"><div class="d-s-name" style="font-size:11px">Utilities</div><div class="d-s-bw" style="height:5px"><div class="d-s-bf" style="width:18%;background:#ff6b8a"></div></div><div class="d-s-pct" style="font-size:11px;font-weight:700;color:#ff6b8a">-1.3%</div></div>
             </div>
-          </div>
           </div>
         </div>
       </div>
