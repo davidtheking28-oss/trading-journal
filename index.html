@@ -340,6 +340,9 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   transition: background-color .2s, border-color .2s, transform .2s;
 }
 @media (hover: hover) and (pointer: fine) { .btn-cta-dark:hover { background: #010509; border-color: rgba(79,127,255,0.5); transform: translateY(-1px); } }
+.nav-cta:active, .btn-hero-primary:active, .btn-hero-ghost:active, .btn-solid:active, .btn-cta-dark:active {
+  transform: scale(0.97); transition: transform 120ms ease-out;
+}
 
 /* Hero stats */
 .hero-stats {
@@ -493,9 +496,15 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 }
 .demo-tab.active { color: #818cf8; border-bottom-color: #818cf8; font-weight: 600; }
 .demo-body { padding: 14px; height: 400px; overflow: hidden; box-sizing: border-box; }
-.demo-screen { display: none; animation: scrIn .28s ease-out; }
-.demo-screen.active { display: block; }
-@keyframes scrIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+/* Transition instead of a keyframe entrance — demo-tab is a clickable toggle
+   a visitor can fire several times in a row, and transitions retarget from
+   wherever they currently are instead of restarting from opacity:0 each time. */
+.demo-screen {
+  display: none; opacity: 0; transform: translateY(4px);
+  transition: opacity .28s ease-out, transform .28s ease-out, display .28s allow-discrete;
+}
+.demo-screen.active { display: block; opacity: 1; transform: translateY(0); }
+@starting-style { .demo-screen.active { opacity: 0; transform: translateY(4px); } }
 
 /* KPI row */
 .d-kpi-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 12px; }
