@@ -137,7 +137,9 @@ body::before {
   content: '';
   position: fixed;
   inset: 0;
-  background: radial-gradient(ellipse 80% 55% at 105% -8%, rgba(79,127,255,0.16) 0%, transparent 55%);
+  background:
+    radial-gradient(ellipse 80% 55% at 105% -8%, rgba(79,127,255,0.2) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at -5% 25%, rgba(155,114,255,0.1) 0%, transparent 60%);
   pointer-events: none;
   z-index: 0;
 }
@@ -285,6 +287,17 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 }
 
 .hero-title-lead { display: block; }
+
+.hl-accent {
+  position: relative; color: var(--accent);
+  white-space: nowrap;
+}
+.hl-accent::after {
+  content: '';
+  position: absolute; right: -2%; left: -2%; bottom: 0.05em; height: 0.1em;
+  background: rgba(79,127,255,0.35);
+  border-radius: 2px; z-index: -1;
+}
 
 .hero-title .hl {
   display: block;
@@ -779,7 +792,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 
 .faq-arrow {
   flex-shrink: 0; color: var(--text3); display: flex;
-  transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+  transition: transform .35s cubic-bezier(.16,1,.3,1);
 }
 .faq-item.open .faq-arrow { transform: rotate(180deg); color: var(--accent); }
 
@@ -939,8 +952,8 @@ footer {
 
 /* ── ANIMATIONS ── */
 .reveal {
-  opacity: 0; transform: translateY(22px);
-  transition: opacity .6s ease-out, transform .6s ease-out;
+  opacity: 0; transform: translateY(24px);
+  transition: opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1);
 }
 .reveal.in { opacity: 1; transform: translateY(0); }
 
@@ -1099,7 +1112,7 @@ html.a11y-underline a { text-decoration: underline !important; }
   <div class="hero-wrap">
     <div>
       <h1 class="hero-title" id="hero-heading">
-        <span class="hero-title-lead">אתה לא מפסיד בגלל <span style="color:var(--accent)">שוק רע</span>.</span>
+        <span class="hero-title-lead">אתה לא מפסיד בגלל <span class="hl-accent">שוק רע</span>.</span>
         <span class="hl">אתה מפסיד כי אתה חוזר על אותה טעות — ולא יודע את זה, כי אף אחד לא ממשיך לעדכן אקסל אחרי שבועיים.</span>
       </h1>
       <p class="hero-sub">חבר את הברוקר פעם אחת. כל עסקה — טובה ורעה — נכנסת ליומן לבד, בזמן אמת. 100% חינם.</p>
