@@ -255,9 +255,19 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   display: flex; align-items: center;
   padding-top: calc(58px + 90px);
   padding-bottom: 110px;
+  overflow: hidden;
+}
+
+#hero-bg-3d {
+  position: absolute; inset: 0; z-index: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  mask-image: linear-gradient(to bottom, transparent, black 25%, black 80%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 25%, black 80%, transparent);
 }
 
 .hero-wrap {
+  position: relative; z-index: 1;
   max-width: 860px; margin: 0 auto; width: 100%;
   text-align: center;
   display: flex; flex-direction: column; align-items: center;
@@ -1111,6 +1121,7 @@ html.a11y-underline a { text-decoration: underline !important; }
 
 <!-- HERO -->
 <section id="hero" aria-labelledby="hero-heading">
+  <canvas id="hero-bg-3d" aria-hidden="true"></canvas>
   <div class="hero-wrap">
     <div>
       <h1 class="hero-title" id="hero-heading">
@@ -1647,6 +1658,90 @@ html.a11y-underline a { text-decoration: underline !important; }
     });
   }, { threshold: 0.5 });
   document.querySelectorAll('.hero-stats').forEach(el => statsObs.observe(el));
+</script>
+<!-- Three.js is ESM-only from r150+, so it can't carry the SRI-hash pattern used on
+     the classic-build <script src> tags elsewhere in this file (Chart.js etc). -->
+<script type="module">
+(function () {
+  const canvas = document.getElementById('hero-bg-3d');
+  if (!canvas) return;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js').then(THREE => {
+    const hero = document.getElementById('hero');
+    let w = hero.clientWidth, h = hero.clientHeight;
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x030912, 8, 32);
+
+    const camera = new THREE.PerspectiveCamera(55, w / h, 0.1, 100);
+    camera.position.set(0, 3.4, 9);
+    camera.lookAt(0, -1, -6);
+
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(w, h);
+
+    // An abstract "market surface" — a wireframe plane whose vertices ripple
+    // like overlapping price series, seen in perspective like a chart floor.
+    const SEG_X = 46, SEG_Z = 34;
+    const geo = new THREE.PlaneGeometry(26, 20, SEG_X, SEG_Z);
+    const base = geo.attributes.position.array.slice();
+    const mat = new THREE.MeshBasicMaterial({
+      color: 0x4f7fff, wireframe: true, transparent: true, opacity: 0.22
+    });
+    const grid = new THREE.Mesh(geo, mat);
+    grid.rotation.x = -Math.PI / 2.35;
+    grid.position.set(0, -2.6, -8);
+    scene.add(grid);
+
+    // A second, fainter layer offset in depth for parallax richness.
+    const mat2 = new THREE.MeshBasicMaterial({
+      color: 0x9b72ff, wireframe: true, transparent: true, opacity: 0.1
+    });
+    const grid2 = new THREE.Mesh(geo.clone(), mat2);
+    grid2.rotation.x = -Math.PI / 2.35;
+    grid2.position.set(0, -2.2, -13);
+    scene.add(grid2);
+
+    function ripple(mesh, t, amp, speed, seed) {
+      const pos = mesh.geometry.attributes.position;
+      const arr = pos.array;
+      for (let i = 0; i < arr.length; i += 3) {
+        const x = base[i], z = base[i + 1];
+        arr[i + 2] = Math.sin(x * 0.35 + t * speed + seed) * amp
+                   + Math.sin(z * 0.22 - t * speed * 0.7 + seed) * amp * 0.6;
+      }
+      pos.needsUpdate = true;
+    }
+
+    function resize() {
+      w = hero.clientWidth; h = hero.clientHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    }
+    new ResizeObserver(resize).observe(hero);
+
+    if (reduceMotion) {
+      ripple(grid, 0, 0.55, 1, 0);
+      ripple(grid2, 0, 0.55, 1, 10);
+      renderer.render(scene, camera);
+      return;
+    }
+
+    let raf;
+    function tick(t) {
+      const time = t * 0.001;
+      ripple(grid, time, 0.55, 1, 0);
+      ripple(grid2, time, 0.45, 0.8, 10);
+      camera.position.x = Math.sin(time * 0.08) * 0.6;
+      renderer.render(scene, camera);
+      raf = requestAnimationFrame(tick);
+    }
+    raf = requestAnimationFrame(tick);
+  }).catch(() => {});
+})();
 </script>
 <script type="application/ld+json">
 {
