@@ -356,7 +356,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .num-green, .num-red, .num-yellow,
   .kpi-value, .kpi-trend, .cp-value,
   .donut-stat-value, .comp-stat-val,
-  .mt-table td, .ts-table td,
+  .mt-table td,
   .cl-green, .cl-red {
     unicode-bidi: isolate;
     direction: ltr;
@@ -370,9 +370,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .kpi-value, .kpi-label, .kpi-sub { text-align: center; }
   /* Table cells keep their RTL alignment; only the run direction is isolated.
      The first column of each is a Hebrew label, not a figure — leave it RTL. */
-  .mt-table td, .ts-table td { text-align: center; }
-  .mt-table td:first-child,
-  .ts-table td:first-child { direction: rtl; text-align: right; }
+  .mt-table td { text-align: center; }
+  .mt-table td:first-child { direction: rtl; text-align: right; }
 
   /* EXPANDED ROW */
   .expanded-row td { padding: 0 !important; }
@@ -894,17 +893,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
      left a 5th card alone and lopsided in its own row. minmax(160px,1fr) keeps
      4-up at typical desktop widths, same look as before when there are 4. */
   .kpi-grid-hero { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 12px; }
-  .kpi-card.hero .kpi-value { font-size: 32px; }
   /* Broker-derived portfolio size: its own full-width row above the hero KPIs,
      bigger than all of them — the user asked for it above everything else. */
   .kpi-card.portfolio-hero { margin-bottom: 12px; text-align: center; padding: 20px; }
   .kpi-card.portfolio-hero .kpi-value { font-size: 44px; }
-  .kpi-grid-compact { display: grid; grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); gap: 8px; }
-  .kpi-tile { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; }
-  .kpi-tile-label { font-size: 9px; color: var(--text3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 5px; }
-  .kpi-tile-value { font-size: 15px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
-  .kpi-tile-value.green { color: var(--green); }
-  .kpi-tile-value.red   { color: var(--red); }
   @media (max-width: 640px) { .kpi-grid-hero { grid-template-columns: repeat(2, 1fr); } }
 
   /* ── Motion Design System ── */
@@ -1043,16 +1035,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .mt-table .mt-empty { color: var(--text3); }
   .mt-table td.cl-green { color: var(--green) !important; }
   .mt-table td.cl-red   { color: var(--red) !important; }
-  /* width:auto asks for a compact table, but the global `table` rule's
-     min-width:1600px (meant for the trades grid) still applied and stretched
-     this 196px summary across the page, forcing horizontal scroll. */
-  .ts-table { width: auto; min-width: 0; border-collapse: collapse; font-size: 13px; }
-  .ts-table td { padding: 9px 16px; border-bottom: 1px solid var(--border); color: var(--text); white-space: nowrap; }
-  .ts-table td.green { color: var(--green); }
-  .ts-table td.red   { color: var(--red); }
-  .ts-table td:first-child { color: var(--text2); font-size: 12px; }
-  .ts-table td:last-child { font-weight: 700; text-align: right; min-width: 80px; }
-  .ts-table tr:last-child td { border-bottom: none; }
   .comp-scope-pills { display: flex; gap: 6px; margin-bottom: 14px; }
   .comp-scope-pill {
     padding: 4px 12px; border-radius: var(--r-lg); font-size: 12px; font-weight: 600;
@@ -3332,10 +3314,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   html[data-theme="light"] .mt-table td:first-child { color: #475569 !important; }
   html[data-theme="light"] .mt-table tr:last-child td { background: #f8fafc !important; }
   @media (hover: hover) and (pointer: fine) { html[data-theme="light"] .mt-table tr:hover td { background: rgba(14,165,233,0.04) !important; } }
-  html[data-theme="light"] .ts-table td { border-color: #e2e8f0 !important; color: #0f172a !important; }
-  html[data-theme="light"] .ts-table td:first-child { color: #475569 !important; }
-  html[data-theme="light"] .ts-table td.green { color: var(--green) !important; }
-  html[data-theme="light"] .ts-table td.red   { color: var(--red)   !important; }
   html[data-theme="light"] .comp-card {
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
@@ -10743,9 +10721,6 @@ const LANG_STRINGS = {
     mt_avg_days_win:'Days (Win)', mt_avg_days_loss:'Days (Loss)', mt_avg_row:'Average',
     donut_win:'Win', donut_loss:'Loss', donut_best:'Best Trade', donut_worst:'Worst Trade',
     donut_win_streak:'Win Streak', donut_loss_streak:'Loss Streak',
-    ts_no_closed:'No closed trades', ts_win_rate:'Win Rate',
-    ts_avg_gain_pct:'Avg Gain %', ts_avg_loss_pct:'Avg Loss %',
-    ts_gl_ratio:'Gain/Loss Ratio', ts_adj_wl:'Adjusted W/L',
     comp_trades:'trades', comp_total_pl:'Total P&L',
     comp_avg_win:'Avg Win', comp_avg_loss:'Avg Loss',
     comp_best:'Best', comp_worst:'Worst', comp_avg_trade:'Avg per Trade',
@@ -10874,9 +10849,6 @@ const LANG_STRINGS = {
     mt_avg_days_win:'ימים ממוצע (רווח)', mt_avg_days_loss:'ימים ממוצע (הפסד)', mt_avg_row:'ממוצע',
     donut_win:'ניצחון', donut_loss:'הפסד', donut_best:'עסקה הטובה', donut_worst:'עסקה הגרועה',
     donut_win_streak:'רצף ניצחונות', donut_loss_streak:'רצף הפסדים',
-    ts_no_closed:'אין עסקאות סגורות להצגה', ts_win_rate:'אחוז ניצחון',
-    ts_avg_gain_pct:'ממוצע רווח %', ts_avg_loss_pct:'ממוצע הפסד %',
-    ts_gl_ratio:'יחס רווח/הפסד', ts_adj_wl:'יחס מותאם',
     comp_trades:'עסקאות', comp_total_pl:'P&L כולל',
     comp_avg_win:'ממוצע ניצחון', comp_avg_loss:'ממוצע הפסד',
     comp_best:'הטובה', comp_worst:'הגרועה', comp_avg_trade:'ממוצע לעסקה',
