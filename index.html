@@ -670,18 +670,18 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 /* ── BROKER TRUST STRIP ── */
 .broker-strip {
   position: relative; z-index: 1;
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
-  gap: 20px;
-  padding: 34px max(28px, 5vw);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 22px;
+  padding: 44px max(28px, 5vw);
   border-top: 1px solid var(--border2);
   border-bottom: 1px solid var(--border2);
   background: rgba(7,16,31,0.6);
 }
 .broker-strip-label {
-  font-family: var(--mono); font-size: 12px; font-weight: 600;
-  color: var(--text2); letter-spacing: 1.5px; text-transform: uppercase;
+  font-family: var(--display); font-size: clamp(20px, 2.4vw, 28px); font-weight: 700;
+  color: var(--text); letter-spacing: -0.3px;
 }
-.broker-strip-badges { display: flex; gap: 14px; flex-wrap: wrap; }
+.broker-strip-badges { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
 @media (max-width: 560px) { .feat-row { grid-template-columns: 1fr; gap: 10px; } .feat-num { font-size: 28px; } }
 
 /* ── STEPS ── */
