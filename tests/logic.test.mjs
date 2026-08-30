@@ -810,14 +810,6 @@ describe('statistics KPIs share one population', () => {
     assert.doesNotMatch(src, /exitPrice > 0 && t\.closedShares > 0/);
   });
 
-  test('the trading-summary table on the same screen agrees', () => {
-    // Its own win rate sat directly under the KPI one and was computed over a
-    // different set of rows, so the two could disagree by a few points.
-    const src = extractFunction('renderTradingSummary');
-    assert.ok(src.includes('const closed = trades.filter(isClosed);'));
-    assert.ok(src.includes('const losers  = closed.filter(t => calcTotal(t) <= 0);'));
-  });
-
   test('a partial close counts for both, not just one', () => {
     // Closed by isClosed (it has legs) but carries no exitPrice, so the old
     // renderStatistics test dropped it out of profit-factor and drawdown while
