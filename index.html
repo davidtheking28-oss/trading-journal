@@ -187,6 +187,9 @@ nav {
   letter-spacing: -0.3px;
 }
 
+.nav-links { display: flex; align-items: center; gap: 4px; }
+@media (max-width: 900px) { .nav-links { display: none; } }
+
 .nav-right { display: flex; align-items: center; gap: 8px; }
 
 .nav-link {
@@ -675,7 +678,6 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 }
 .value-desc { font-size: 13px; color: var(--text2); line-height: 1.65; }
 
-.broker-badges { display: flex; gap: 8px; margin-top: 16px; }
 .broker-badge {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 5px 11px;
@@ -688,6 +690,23 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 .broker-badge-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 .broker-badge-dot.ibkr { background: #d3212c; box-shadow: 0 0 5px rgba(211,33,44,0.5); }
 .broker-badge-dot.bybit { background: #f7a600; box-shadow: 0 0 5px rgba(247,166,0,0.5); }
+
+/* ── BROKER TRUST STRIP ── */
+.broker-strip {
+  position: relative; z-index: 1;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: 16px;
+  padding: 22px max(28px, 5vw);
+  border-top: 1px solid var(--border2);
+  border-bottom: 1px solid var(--border2);
+  background: rgba(7,16,31,0.5);
+}
+.broker-strip-label {
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase;
+}
+.broker-strip-badges { display: flex; gap: 10px; flex-wrap: wrap; }
+.broker-badge.lg { padding: 7px 16px; font-size: 13px; }
 @media (max-width: 900px) { .value-grid { grid-template-columns: 1fr 1fr; grid-template-rows: auto; } }
 @media (max-width: 480px) { .value-grid { grid-template-columns: 1fr; } }
 
@@ -1202,6 +1221,11 @@ html.a11y-underline a { text-decoration: underline !important; }
     </div>
     <span class="nav-logo-text">ChartRoom</span>
   </a>
+  <div class="nav-links">
+    <a href="#features" class="nav-link">תכונות</a>
+    <a href="#how" class="nav-link">איך זה עובד</a>
+    <a href="#faq" class="nav-link">שאלות</a>
+  </div>
   <div class="nav-right">
     <a href="dashboard.html" class="nav-link">כניסה</a>
     <a href="dashboard.html" class="nav-cta">הרשמה חינם</a>
@@ -1439,6 +1463,15 @@ html.a11y-underline a { text-decoration: underline !important; }
   </div>
 </section>
 
+<!-- BROKER TRUST STRIP -->
+<div class="broker-strip" aria-hidden="true">
+  <span class="broker-strip-label">מתחברים לברוקרים המובילים</span>
+  <div class="broker-strip-badges">
+    <span class="broker-badge lg"><span class="broker-badge-dot ibkr"></span>Interactive Brokers</span>
+    <span class="broker-badge lg"><span class="broker-badge-dot bybit"></span>Bybit</span>
+  </div>
+</div>
+
 <!-- TICKER -->
 <div class="ticker-wrap" aria-hidden="true">
   <span class="ticker-label">לדוגמה</span>
@@ -1476,10 +1509,6 @@ html.a11y-underline a { text-decoration: underline !important; }
         <div class="value-icon" aria-hidden="true"><svg width="20" height="20"><use href="#i-link"/></svg></div>
         <h3 class="value-title">חיבור אוטומטי לברוקר</h3>
         <p class="value-desc">אתה לא צריך לזכור לתעד. מחברים IBKR או Bybit פעם אחת, וכל עסקה נכנסת ליומן לבד — גם ביום עמוס, גם כשהתעייפת.</p>
-        <div class="broker-badges" aria-hidden="true">
-          <span class="broker-badge"><span class="broker-badge-dot ibkr"></span>Interactive Brokers</span>
-          <span class="broker-badge"><span class="broker-badge-dot bybit"></span>Bybit</span>
-        </div>
       </div>
     </div>
     <div class="value-card reveal">
@@ -1716,8 +1745,8 @@ html.a11y-underline a { text-decoration: underline !important; }
 <section id="cta">
   <div class="cta-inner reveal">
     <div class="cta-bg" aria-hidden="true"></div>
-    <h2 class="cta-title">הסוחרים שמפסיקים לחזור על אותה טעות — הם אלה שסוף סוף רואים אותה.</h2>
-    <p class="cta-sub">הצטרף לסוחרים שכבר לא מנחשים למה הם מפסידים. זה לוקח פחות זמן מלפתוח את האקסל שהזנחת.</p>
+    <h2 class="cta-title">בעוד חודש יהיו לך עוד עשרות עסקאות. תדע עליהן משהו?</h2>
+    <p class="cta-sub">כל יום שאתה ממשיך לסחור בלי לתעד הוא עוד יום שאתה לא רואה את הדפוסים האמיתיים שלך. זה לוקח פחות זמן מלפתוח את האקסל שהזנחת.</p>
     <a href="dashboard.html" class="btn-cta-dark">
       תפסיק לנחש. תתחיל לראות — חינם
       <svg width="15" height="15" aria-hidden="true"><use href="#i-arr"/></svg>
