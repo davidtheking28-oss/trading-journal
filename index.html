@@ -652,20 +652,20 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 }
 .feat-row-desc { font-size: 14px; color: var(--text2); line-height: 1.75; max-width: 58ch; }
 
-.broker-badge {
-  display: inline-flex; align-items: center; gap: 9px;
-  padding: 10px 20px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--border);
-  border-radius: 100px;
+.broker-card {
+  display: inline-flex; align-items: center; gap: 11px;
+  padding: 12px 22px;
+  background: #f4f6fa;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
   font-family: var(--display); font-size: 15px; font-weight: 700;
-  color: var(--text); letter-spacing: -0.2px;
-  transition: border-color .2s, background .2s, transform .2s;
+  color: #12141c; letter-spacing: -0.2px;
+  transition: transform .2s, box-shadow .2s;
 }
-@media (hover: hover) and (pointer: fine) { .broker-badge:hover { border-color: rgba(79,127,255,0.4); background: rgba(255,255,255,0.06); transform: translateY(-1px); } }
-.broker-badge-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-.broker-badge-dot.ibkr { background: #d3212c; box-shadow: 0 0 8px rgba(211,33,44,0.7); }
-.broker-badge-dot.bybit { background: #f7a600; box-shadow: 0 0 8px rgba(247,166,0,0.7); }
+@media (hover: hover) and (pointer: fine) { .broker-card:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(0,0,0,0.4); } }
+.broker-card-icon { display: flex; flex-shrink: 0; }
+.broker-card-icon.ibkr { color: #d3212c; }
+.broker-card-icon.bybit { color: #f7a600; }
 
 /* ── BROKER TRUST STRIP ── */
 .broker-strip {
@@ -682,7 +682,6 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   color: var(--text2); letter-spacing: 1.5px; text-transform: uppercase;
 }
 .broker-strip-badges { display: flex; gap: 14px; flex-wrap: wrap; }
-.broker-badge.lg { padding: 12px 24px; font-size: 16px; }
 @media (max-width: 560px) { .feat-row { grid-template-columns: 1fr; gap: 10px; } .feat-num { font-size: 28px; } }
 
 /* ── STEPS ── */
@@ -1145,8 +1144,25 @@ html.a11y-underline a { text-decoration: underline !important; }
 <div class="broker-strip">
   <span class="broker-strip-label">מתחברים לברוקרים המובילים</span>
   <div class="broker-strip-badges">
-    <span class="broker-badge lg"><span class="broker-badge-dot ibkr"></span>Interactive Brokers</span>
-    <span class="broker-badge lg"><span class="broker-badge-dot bybit"></span>Bybit</span>
+    <div class="broker-card">
+      <span class="broker-card-icon ibkr" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="12" width="4" height="9" rx="1" fill="currentColor"/>
+          <rect x="10" y="6" width="4" height="15" rx="1" fill="currentColor"/>
+          <rect x="17" y="9" width="4" height="12" rx="1" fill="currentColor"/>
+        </svg>
+      </span>
+      <span class="broker-card-name">Interactive Brokers</span>
+    </div>
+    <div class="broker-card">
+      <span class="broker-card-icon bybit" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" fill="currentColor"/>
+          <path d="M8 13.5L11 16.5L16 9.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span class="broker-card-name">Bybit</span>
+    </div>
   </div>
 </div>
 
