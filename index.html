@@ -834,11 +834,17 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 }
 .faq-item.open .faq-arrow { transform: rotate(180deg); }
 
+/* grid-rows trick: the arrow already rotates smoothly, this makes the answer
+   itself grow/shrink to match instead of snapping via display:none/block. */
 .faq-a {
-  display: none; padding: 0 18px 16px;
+  display: grid; grid-template-rows: 0fr;
+  transition: grid-template-rows .25s ease-out;
+}
+.faq-item.open .faq-a { grid-template-rows: 1fr; }
+.faq-a-inner {
+  overflow: hidden; min-height: 0; padding: 0 18px 16px;
   font-size: 13.5px; color: var(--text3); line-height: 1.75;
 }
-.faq-item.open .faq-a { display: block; }
 
 /* ── FINAL CTA ── */
 #cta {
@@ -1624,28 +1630,28 @@ html.a11y-underline a { text-decoration: underline !important; }
           האם החיבור לברוקר בטוח?
           <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
         </button>
-        <div class="faq-a" id="faq-a1" aria-hidden="true">לחלוטין. החיבור מתבצע באמצעות מפתח Read-Only (כמו Flex Query ב-Interactive Brokers או API Key בקריפטו). אין למערכת שום יכולת לבצע עסקאות או למשוך כספים. הנתונים מאובטחים בהצפנת RLS ו-HTTPS.</div>
+        <div class="faq-a" id="faq-a1" aria-hidden="true"><div class="faq-a-inner">לחלוטין. החיבור מתבצע באמצעות מפתח Read-Only (כמו Flex Query ב-Interactive Brokers או API Key בקריפטו). אין למערכת שום יכולת לבצע עסקאות או למשוך כספים. הנתונים מאובטחים בהצפנת RLS ו-HTTPS.</div></div>
       </div>
       <div class="faq-item reveal" role="listitem">
         <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a2">
           האם נתוני בזמן אמת ומסנן המניות באמת בחינם?
           <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
         </button>
-        <div class="faq-a" id="faq-a2" aria-hidden="true">כן! כל הכלים בפלטפורמה — כולל מסנן המניות, נתוני הסקטורים בזמן אמת וכלי בניית התיק — פתוחים לשימוש ללא עלות וללא צורך בהזנת כרטיס אשראי.</div>
+        <div class="faq-a" id="faq-a2" aria-hidden="true"><div class="faq-a-inner">כן! כל הכלים בפלטפורמה — כולל מסנן המניות, נתוני הסקטורים בזמן אמת וכלי בניית התיק — פתוחים לשימוש ללא עלות וללא צורך בהזנת כרטיס אשראי.</div></div>
       </div>
       <div class="faq-item reveal" role="listitem">
         <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a3">
           איך קטגוריית בניית התיק עוזרת לי ספציפית?
           <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
         </button>
-        <div class="faq-a" id="faq-a3" aria-hidden="true">היא מונעת חשיפת יתר לנכס יחיד, מראה לך את פיזור התיק בלייב, ועוזרת לך לתכנן פוזיציות חדשות בהתאם לגודל התיק ורמת הסיכון שהגדרת.</div>
+        <div class="faq-a" id="faq-a3" aria-hidden="true"><div class="faq-a-inner">היא מונעת חשיפת יתר לנכס יחיד, מראה לך את פיזור התיק בלייב, ועוזרת לך לתכנן פוזיציות חדשות בהתאם לגודל התיק ורמת הסיכון שהגדרת.</div></div>
       </div>
       <div class="faq-item reveal" role="listitem">
         <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a4">
           כמה זמן לוקח להגדיר?
           <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
         </button>
-        <div class="faq-a" id="faq-a4" aria-hidden="true">הרשמה — פחות מדקה. חיבור Interactive Brokers — כ-10 דקות בפעם הראשונה (יש מדריך מצורף). ברגע שהחיבור מוגדר, כל עסקה עתידית מיובאת אוטומטית.</div>
+        <div class="faq-a" id="faq-a4" aria-hidden="true"><div class="faq-a-inner">הרשמה — פחות מדקה. חיבור Interactive Brokers — כ-10 דקות בפעם הראשונה (יש מדריך מצורף). ברגע שהחיבור מוגדר, כל עסקה עתידית מיובאת אוטומטית.</div></div>
       </div>
     </div>
     <div class="faq-visual reveal" aria-hidden="true">
@@ -1792,6 +1798,11 @@ html.a11y-underline a { text-decoration: underline !important; }
 
   // Count-up for stats
   function countUp(el, target, duration) {
+    // Pure JS rAF loop — the CSS prefers-reduced-motion block never touches it.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.textContent = target;
+      return;
+    }
     const start = performance.now();
     const update = now => {
       const p = Math.min((now - start) / duration, 1);
