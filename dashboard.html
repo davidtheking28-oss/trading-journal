@@ -4234,11 +4234,20 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     background:
       radial-gradient(ellipse 60% 40% at 80% 15%, rgba(56,189,248,0.10) 0%, transparent 60%),
       radial-gradient(ellipse 50% 35% at 15% 85%, rgba(79,127,255,0.10) 0%, transparent 60%),
+      /* particle-dust layer */
+      radial-gradient(1.5px 1.5px at 10% 20%, rgba(255,255,255,0.5), transparent),
+      radial-gradient(1.5px 1.5px at 80% 10%, rgba(255,255,255,0.4), transparent),
+      radial-gradient(1px 1px at 25% 70%, rgba(255,255,255,0.4), transparent),
+      radial-gradient(1.5px 1.5px at 60% 85%, rgba(255,255,255,0.35), transparent),
+      radial-gradient(1px 1px at 90% 60%, rgba(255,255,255,0.4), transparent),
+      radial-gradient(1.5px 1.5px at 40% 35%, rgba(255,255,255,0.3), transparent),
+      radial-gradient(1px 1px at 70% 45%, rgba(255,255,255,0.3), transparent),
       #05070f !important;
+    background-size: 100% 100%, 100% 100%, 220px 220px, 260px 260px, 200px 200px, 240px 240px, 280px 280px, 230px 230px, 250px 250px;
     overflow: hidden;
   }
-  .auth-bg-wave { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.65; }
-  .auth-bg-wave path { animation: authWaveDrift 22s ease-in-out infinite; }
+  .auth-bg-wave { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.9; filter: blur(0.5px); }
+  .auth-bg-wave path { animation: authWaveDrift 22s ease-in-out infinite; filter: drop-shadow(0 0 6px currentColor); }
   .auth-bg-wave path:nth-child(2) { animation-duration: 28s; animation-delay: -6s; }
   .auth-bg-wave path:nth-child(3) { animation-duration: 34s; animation-delay: -14s; }
   @keyframes authWaveDrift {
@@ -4259,17 +4268,25 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   }
   html[data-theme="light"] .auth-card { box-shadow: 0 24px 80px rgba(0,0,0,.15), 0 0 0 1px rgba(45,212,191,0.25) !important; border-color: rgba(45,212,191,0.4) !important; }
 
-  /* ── Auth inputs: icon slot ── */
+  /* ── Auth inputs: icon slot + pill shape (mockup match) ── */
   .auth-input-wrap { position: relative; }
-  .auth-input-wrap input { padding-inline-start: 40px !important; }
+  .auth-input-wrap input { padding-inline-start: 40px !important; border-radius: var(--r-pill, 100px) !important; }
   .auth-input-wrap .auth-input-icon {
     position: absolute; inset-inline-start: 13px; top: 50%; transform: translateY(-50%);
     color: var(--text3); pointer-events: none; display: flex;
   }
 
   /* ── Pill-shaped auth buttons (mockup match) ── */
-  #auth-submit-btn, #auth-tab-login, #auth-tab-register { border-radius: var(--r-pill, 100px) !important; }
-  #auth-overlay button[onclick="authGoogle()"] { border-radius: var(--r-pill, 100px) !important; }
+  .auth-pill-btn { border-radius: var(--r-pill, 100px) !important; }
+
+  /* ── "כניסה" as a plain heading, not a tab pill (mockup match) — the button
+     stays functionally wired to authSetMode(); JS still sets its background/color
+     inline but these !important rules always win over that. ── */
+  #auth-tab-login {
+    background: none !important; border: none !important; padding: 0 !important;
+    font-size: 22px !important; font-weight: 800 !important; color: var(--text) !important;
+    cursor: default !important; font-family: inherit;
+  }
 
   @media (max-width: 767px) {
     #auth-card-col { padding: 20px; }
@@ -6928,14 +6945,18 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
    <defs>
      <linearGradient id="authWaveG1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#22d3ee" stop-opacity="0"/><stop offset="50%" stop-color="#38bdf8" stop-opacity="0.9"/><stop offset="100%" stop-color="#4f7fff" stop-opacity="0"/></linearGradient>
      <linearGradient id="authWaveG2" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4f7fff" stop-opacity="0"/><stop offset="50%" stop-color="#22d3ee" stop-opacity="0.7"/><stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/></linearGradient>
+     <filter id="authWaveGlow" x="-50%" y="-50%" width="200%" height="200%">
+       <feGaussianBlur stdDeviation="5" result="blur"/>
+       <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+     </filter>
    </defs>
-   <path d="M-100,150 C250,50 450,300 750,180 C1050,60 1250,250 1500,150" fill="none" stroke="url(#authWaveG1)" stroke-width="2.5"/>
-   <path d="M-100,500 C250,650 500,380 800,520 C1100,660 1300,420 1500,500" fill="none" stroke="url(#authWaveG2)" stroke-width="2"/>
-   <path d="M-100,750 C300,600 600,850 900,700 C1150,580 1350,720 1500,680" fill="none" stroke="url(#authWaveG1)" stroke-width="1.5"/>
+   <path d="M-100,150 C250,50 450,300 750,180 C1050,60 1250,250 1500,150" fill="none" stroke="url(#authWaveG1)" stroke-width="5" filter="url(#authWaveGlow)"/>
+   <path d="M-100,500 C250,650 500,380 800,520 C1100,660 1300,420 1500,500" fill="none" stroke="url(#authWaveG2)" stroke-width="4" filter="url(#authWaveGlow)"/>
+   <path d="M-100,750 C300,600 600,850 900,700 C1150,580 1350,720 1500,680" fill="none" stroke="url(#authWaveG1)" stroke-width="3" filter="url(#authWaveGlow)"/>
  </svg>
  <div id="auth-layout">
   <div id="auth-card-col">
-   <div class="auth-card" style="background:rgba(14,20,34,0.92);border:1px solid rgba(129,140,248,0.14);border-radius:var(--r-lg);padding:38px 36px 34px;width:100%;max-width:400px;box-shadow:0 24px 80px rgba(0,0,0,.8),0 0 0 1px rgba(129,140,248,0.06);backdrop-filter:blur(24px);position:relative;overflow:hidden;">
+   <div class="auth-card" style="background:rgba(14,20,34,0.75);border:1px solid rgba(129,140,248,0.14);border-radius:var(--r-lg);padding:38px 36px 34px;width:100%;max-width:400px;box-shadow:0 24px 80px rgba(0,0,0,.8),0 0 0 1px rgba(129,140,248,0.06);backdrop-filter:blur(20px);position:relative;overflow:hidden;">
     <!-- Subtle top glow line -->
     <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(129,140,248,0.5),transparent);"></div>
 
@@ -6956,19 +6977,13 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         </svg>
       </div>
       <div style="font-size:24px;font-weight:800;letter-spacing:-0.8px;color:var(--text);">ChartRoom</div>
-      <div style="font-size:13px;color:var(--text3);margin-top:5px;font-weight:500;">פלטפורמה לסוחרים</div>
     </div>
 
-    <!-- Tab switcher -->
-    <div style="display:flex;background:rgba(11,11,14,0.6);border-radius:var(--r-md);padding:3px;margin-bottom:22px;border:1px solid rgba(148,163,184,0.08);">
-      <button id="auth-tab-login" onclick="authSetMode('login')"
-        style="flex:1;padding:9px;border:none;border-radius:var(--r-md);cursor:pointer;font-size:13px;font-weight:700;background:#4f46e5;color:#fff;transition: background-color .2s, border-color .2s, color .2s, opacity .2s, transform .2s, box-shadow .2s;font-family:inherit;">
-        כניסה
-      </button>
-      <button id="auth-tab-register" onclick="authSetMode('register')"
-        style="flex:1;padding:9px;border:none;border-radius:var(--r-md);cursor:pointer;font-size:13px;font-weight:600;background:transparent;color:var(--text3);transition: background-color .2s, border-color .2s, color .2s, opacity .2s, transform .2s, box-shadow .2s;font-family:inherit;">
-        הרשמה
-      </button>
+    <!-- Mode heading (real toggle logic still lives on these two buttons; visually
+         they no longer look like a tab pill — see .auth-mode-title / .auth-switch-link) -->
+    <div style="text-align:center;margin-bottom:20px;">
+      <button id="auth-tab-login" onclick="authSetMode('login')" class="auth-mode-title">כניסה</button>
+      <button id="auth-tab-register" onclick="authSetMode('register')" style="display:none !important;">הרשמה</button>
     </div>
 
     <div style="display:flex;flex-direction:column;gap:10px;">
@@ -6989,6 +7004,12 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         onkeydown="if(event.key==='Enter')authSubmit()">
       <span class="auth-input-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
       </div>
+      <div style="text-align:right;margin-top:-4px;">
+        <button onclick="authForgotPassword()" id="auth-forgot-btn"
+          style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;text-decoration:underline;font-family:inherit;transition:color .15s;padding:0;">
+          שכחתי סיסמה
+        </button>
+      </div>
       <div id="auth-strength" style="display:none;margin-top:-4px;">
         <div style="height:3px;border-radius:var(--r-sm);background:rgba(148,163,184,0.1);overflow:hidden;">
           <div id="auth-strength-bar" style="height:100%;width:0;border-radius:var(--r-sm);transition:width .3s,background .3s;"></div>
@@ -7006,26 +7027,20 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
     <div id="auth-msg" style="display:none;margin-top:12px;padding:10px 12px;border-radius:var(--r-md);font-size:13px;text-align:center;"></div>
 
-    <button onclick="authSubmit()" id="auth-submit-btn"
-      style="width:100%;margin-top:14px;padding:13px;background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;border:none;border-radius:var(--r-md);font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.1px;font-family:inherit;box-shadow:0 4px 20px rgba(129,140,248,0.35);transition: background-color .2s, border-color .2s, color .2s, opacity .2s, transform .2s, box-shadow .2s;">
+    <button onclick="authSubmit()" id="auth-submit-btn" class="auth-pill-btn"
+      style="width:100%;margin-top:14px;padding:13px;background:linear-gradient(135deg,#2f6fed,#4f9eff);color:#fff;border:none;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.1px;font-family:inherit;box-shadow:0 4px 20px rgba(79,158,255,0.35);transition: background-color .2s, border-color .2s, color .2s, opacity .2s, transform .2s, box-shadow .2s;">
       כניסה
     </button>
 
-    <div style="text-align:center;margin-top:12px;">
-      <button onclick="authForgotPassword()" id="auth-forgot-btn"
-        style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;text-decoration:underline;font-family:inherit;transition:color .15s;">
-        שכחתי סיסמה
-      </button>
+    <div id="auth-switch-to-register" style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3);">
+      אין לך חשבון? <a onclick="authSetMode('register')" style="color:var(--accent);text-decoration:underline;cursor:pointer;">הרשמה</a>
+    </div>
+    <div id="auth-switch-to-login" style="display:none;text-align:center;margin-top:14px;font-size:13px;color:var(--text3);">
+      כבר יש לך חשבון? <a onclick="authSetMode('login')" style="color:var(--accent);text-decoration:underline;cursor:pointer;">כניסה</a>
     </div>
 
-    <div style="display:flex;align-items:center;gap:10px;margin-top:18px;">
-      <div style="flex:1;height:1px;background:rgba(148,163,184,0.08)"></div>
-      <span style="color:#4a4a65;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;">או</span>
-      <div style="flex:1;height:1px;background:rgba(148,163,184,0.08)"></div>
-    </div>
-
-    <button onclick="authGoogle()"
-      style="width:100%;margin-top:14px;padding:12px;background:rgba(255,255,255,0.05);color:#d0d4f0;border:1px solid rgba(148,163,184,0.12);border-radius:var(--r-md);font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-family:inherit;transition: background-color .2s, border-color .2s, color .2s, opacity .2s, transform .2s, box-shadow .2s;backdrop-filter:blur(8px);">
+    <button onclick="authGoogle()" class="auth-pill-btn"
+      style="width:100%;margin-top:14px;padding:12px;background:rgba(255,255,255,0.05);color:#d0d4f0;border:1px solid rgba(148,163,184,0.12);font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-family:inherit;transition: background-color .2s, border-color .2s, color .2s, opacity .2s, transform .2s, box-shadow .2s;backdrop-filter:blur(8px);">
       <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
       המשך עם Google
     </button>
@@ -7308,6 +7323,9 @@ function authSetMode(mode) {
   document.getElementById('auth-tab-login').style.color         = isReg ? 'var(--text2)' : '#fff';
   document.getElementById('auth-tab-register').style.background = isReg ? '#4f46e5' : 'transparent';
   document.getElementById('auth-tab-register').style.color      = isReg ? '#fff' : 'var(--text2)';
+  document.getElementById('auth-tab-login').textContent = isReg ? 'הרשמה' : 'כניסה';
+  document.getElementById('auth-switch-to-register').style.display = isReg ? 'none' : '';
+  document.getElementById('auth-switch-to-login').style.display    = isReg ? '' : 'none';
   document.getElementById('auth-strength').style.display = 'none';
   document.getElementById('auth-strength-bar').style.width = '0';
   _authMsg('', '');
