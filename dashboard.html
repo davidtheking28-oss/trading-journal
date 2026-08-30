@@ -4246,16 +4246,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     background-size: 100% 100%, 100% 100%, 220px 220px, 260px 260px, 200px 200px, 240px 240px, 280px 280px, 230px 230px, 250px 250px;
     overflow: hidden;
   }
-  .auth-bg-wave { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.9; filter: blur(0.5px); }
-  .auth-bg-wave path { animation: authWaveDrift 22s ease-in-out infinite; filter: drop-shadow(0 0 6px currentColor); }
-  .auth-bg-wave path:nth-child(2) { animation-duration: 28s; animation-delay: -6s; }
-  .auth-bg-wave path:nth-child(3) { animation-duration: 34s; animation-delay: -14s; }
-  @keyframes authWaveDrift {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(-2%, 1.5%) scale(1.02); }
-  }
-  @media (prefers-reduced-motion: reduce) { .auth-bg-wave path { animation: none; } }
-  html[data-theme="light"] .auth-bg-wave { display: none; }
+  #auth-bg-3d { pointer-events: none; }
+  html[data-theme="light"] #auth-bg-3d { display: none; }
 
   /* ── Auth card: glass + glow border (mockup match) ── */
   .auth-card {
@@ -6941,19 +6933,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
 <!-- AUTH OVERLAY -->
 <div id="auth-overlay" style="display:none;position:fixed;inset:0;z-index:9999;">
- <svg class="auth-bg-wave" viewBox="0 0 1400 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-   <defs>
-     <linearGradient id="authWaveG1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#22d3ee" stop-opacity="0"/><stop offset="50%" stop-color="#38bdf8" stop-opacity="0.9"/><stop offset="100%" stop-color="#4f7fff" stop-opacity="0"/></linearGradient>
-     <linearGradient id="authWaveG2" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4f7fff" stop-opacity="0"/><stop offset="50%" stop-color="#22d3ee" stop-opacity="0.7"/><stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/></linearGradient>
-     <filter id="authWaveGlow" x="-50%" y="-50%" width="200%" height="200%">
-       <feGaussianBlur stdDeviation="5" result="blur"/>
-       <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-     </filter>
-   </defs>
-   <path d="M-100,150 C250,50 450,300 750,180 C1050,60 1250,250 1500,150" fill="none" stroke="url(#authWaveG1)" stroke-width="5" filter="url(#authWaveGlow)"/>
-   <path d="M-100,500 C250,650 500,380 800,520 C1100,660 1300,420 1500,500" fill="none" stroke="url(#authWaveG2)" stroke-width="4" filter="url(#authWaveGlow)"/>
-   <path d="M-100,750 C300,600 600,850 900,700 C1150,580 1350,720 1500,680" fill="none" stroke="url(#authWaveG1)" stroke-width="3" filter="url(#authWaveGlow)"/>
- </svg>
+ <canvas id="auth-bg-3d" aria-hidden="true" style="position:absolute;inset:0;z-index:0;display:block;"></canvas>
  <div id="auth-layout">
   <div id="auth-card-col">
    <div class="auth-card" style="background:rgba(14,20,34,0.75);border:1px solid rgba(129,140,248,0.14);border-radius:var(--r-lg);padding:38px 36px 34px;width:100%;max-width:400px;box-shadow:0 24px 80px rgba(0,0,0,.8),0 0 0 1px rgba(129,140,248,0.06);backdrop-filter:blur(20px);position:relative;overflow:hidden;">
@@ -7218,6 +7198,103 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"
         integrity="sha384-NrKB+u6Ts6AtkIhwPixiKTzgSKNblyhlk0Sohlgar9UHUBzai/sgnNNWWd291xqt"
         crossorigin="anonymous"></script>
+<!-- Real 3D wave background behind the auth card (ES module import — three.js dropped its
+     global/UMD build at r150+, so this can't carry a <script src> SRI hash the way the two
+     libraries above do; the jsdelivr host itself is still the thing CSP script-src pins). -->
+<script type="module">
+(function () {
+  var canvas = document.getElementById('auth-bg-3d');
+  if (!canvas) return;
+  var overlay = canvas.parentElement;
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Three.js is a ~670KB module — most page loads are an already-signed-in user who
+  // never sees this overlay, so don't fetch it until the overlay is actually shown.
+  var started = false;
+  function maybeStart() {
+    if (started || getComputedStyle(overlay).display === 'none') return;
+    started = true;
+    startScene();
+  }
+  new MutationObserver(maybeStart).observe(overlay, { attributes: true, attributeFilter: ['style'] });
+  maybeStart();
+
+  function startScene() {
+  import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js').then(function (THREE) {
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+    camera.position.set(0, 0, 10);
+
+    var renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+    function resize() {
+      var w = canvas.parentElement.clientWidth || window.innerWidth;
+      var h = canvas.parentElement.clientHeight || window.innerHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h, false);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Three glowing ribbons, each an undulating 3D curve (x/y sine for the wave shape,
+    // z sine for genuine depth motion) rebuilt into a TubeGeometry every frame — cheap
+    // at this point/segment count, and what turns a 2D wave into an actual 3D one.
+    var ribbons = [
+      { baseY: 2.2, ampY: 1.0, freqY: 0.35, ampZ: 1.8, freqZ: 0.18, speed: 0.25, speed2: 0.17, phase: 0,   color: 0x38bdf8, radius: 0.028 },
+      { baseY: -0.3, ampY: 1.3, freqY: 0.3,  ampZ: 2.2, freqZ: 0.15, speed: 0.2,  speed2: 0.22, phase: 2.1, color: 0x22d3ee, radius: 0.024 },
+      { baseY: -2.6, ampY: 0.9, freqY: 0.4,  ampZ: 1.5, freqZ: 0.2,  speed: 0.3,  speed2: 0.13, phase: 4.2, color: 0x4f7fff, radius: 0.02 },
+    ].map(function (cfg) {
+      var group = new THREE.Group();
+      var glowMat = new THREE.MeshBasicMaterial({ color: cfg.color, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false });
+      var coreMat = new THREE.MeshBasicMaterial({ color: cfg.color, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false });
+      var glowMesh = new THREE.Mesh(new THREE.BufferGeometry(), glowMat);
+      var coreMesh = new THREE.Mesh(new THREE.BufferGeometry(), coreMat);
+      group.add(glowMesh, coreMesh);
+      scene.add(group);
+      return { cfg: cfg, glowMesh: glowMesh, coreMesh: coreMesh };
+    });
+
+    var SAMPLES = 48;
+    function updateRibbon(r, t) {
+      var cfg = r.cfg;
+      var pts = [];
+      for (var i = 0; i <= SAMPLES; i++) {
+        var x = -9 + (18 * i) / SAMPLES;
+        var y = cfg.baseY + cfg.ampY * Math.sin(x * cfg.freqY + t * cfg.speed + cfg.phase);
+        var z = cfg.ampZ * Math.sin(x * cfg.freqZ + t * cfg.speed2 + cfg.phase);
+        pts.push(new THREE.Vector3(x, y, z));
+      }
+      var curve = new THREE.CatmullRomCurve3(pts);
+      r.glowMesh.geometry.dispose();
+      r.coreMesh.geometry.dispose();
+      r.glowMesh.geometry = new THREE.TubeGeometry(curve, 64, cfg.radius * 3.2, 8, false);
+      r.coreMesh.geometry = new THREE.TubeGeometry(curve, 64, cfg.radius, 8, false);
+    }
+
+    var clock = new THREE.Clock();
+    function frame() {
+      requestAnimationFrame(frame);
+      if (getComputedStyle(canvas.parentElement).display === 'none') return;
+      var t = clock.getElapsedTime();
+      ribbons.forEach(function (r) { updateRibbon(r, t); });
+      // slow camera drift = the parallax that reads as real 3D depth, not a 2D pan
+      camera.position.x = Math.sin(t * 0.11) * 1.6;
+      camera.position.y = Math.cos(t * 0.09) * 0.9;
+      camera.lookAt(0, 0, 0);
+      renderer.render(scene, camera);
+    }
+    if (reduceMotion) {
+      updateRibbon(ribbons[0], 0); updateRibbon(ribbons[1], 0); updateRibbon(ribbons[2], 0);
+      renderer.render(scene, camera);
+    } else {
+      frame();
+    }
+  }).catch(function () { /* WebGL/module load failure: canvas stays empty, CSS gradient background still shows */ });
+  }
+})();
+</script>
 <script>
 // ─────────────────────────────────────────────
 // ACCESSIBILITY WIDGET
