@@ -807,45 +807,12 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 
 .faq-grid {
   max-width: 1080px; margin: 52px auto 0;
-  display: grid; grid-template-columns: 1.2fr 1fr;
-  gap: 56px; align-items: start; text-align: right;
+  display: grid; grid-template-columns: 1fr 1fr;
+  column-gap: 56px; text-align: right;
 }
 
-.faq-visual {
-  position: sticky; top: 90px;
-  background: var(--card);
-  border: 1px solid var(--border2);
-  border-radius: var(--r-lg);
-  padding: 22px;
-}
-
-.faq-visual-lbl {
-  font-family: var(--mono); font-size: 10px; font-weight: 600;
-  color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase;
-  margin-bottom: 14px;
-}
-
-.faq-visual-row {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 0; border-bottom: 1px solid var(--border2);
-}
-.faq-visual-row:last-child { border-bottom: none; }
-.faq-visual-ico {
-  width: 30px; height: 30px; border-radius: var(--r-sm); flex-shrink: 0;
-  background: rgba(79,127,255,0.08); border: 1px solid rgba(79,127,255,0.18);
-  display: flex; align-items: center; justify-content: center; color: var(--accent);
-}
-.faq-visual-txt strong { display: block; font-size: 13px; color: var(--text); font-weight: 600; }
-.faq-visual-txt span { font-size: 12px; color: var(--text3); }
-
-.faq-list {
-  display: flex; flex-direction: column; gap: 0;
-  text-align: right;
-}
-
-@media (max-width: 900px) {
+@media (max-width: 700px) {
   .faq-grid { grid-template-columns: 1fr; }
-  .faq-visual { display: none; }
 }
 
 .faq-item {
@@ -939,22 +906,58 @@ footer {
   position: relative; z-index: 1;
   border-top: 1px solid var(--border2);
   background: var(--bg2);
-  padding: 28px max(28px,5vw);
-  display: flex; justify-content: space-between; align-items: center;
-  flex-wrap: wrap; gap: 16px;
+  padding: 52px max(28px,5vw) 28px;
 }
 
+.footer-top {
+  max-width: 1180px; margin: 0 auto;
+  display: flex; justify-content: space-between; gap: 40px;
+  flex-wrap: wrap;
+  padding-bottom: 36px;
+}
+
+.footer-brand { max-width: 280px; }
+.footer-brand-row { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
 .footer-logo-text {
-  font-family: var(--display); font-size: 14px; font-weight: 700;
-  color: var(--text3);
+  font-family: var(--display); font-size: 15px; font-weight: 700;
+  color: var(--text);
 }
+.footer-brand-desc { font-size: 13px; color: var(--text3); line-height: 1.7; }
 
-.footer-links { display: flex; gap: 20px; }
-.footer-links a {
-  font-size: 13px; color: var(--text3);
+.footer-cols { display: flex; gap: 56px; flex-wrap: wrap; }
+.footer-col-title {
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  color: var(--text3); letter-spacing: 1px; text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.footer-col { display: flex; flex-direction: column; gap: 10px; }
+.footer-col a {
+  font-size: 13px; color: var(--text2);
   text-decoration: none; transition: color .2s;
 }
-@media (hover: hover) and (pointer: fine) { .footer-links a:hover { color: var(--text); } }
+@media (hover: hover) and (pointer: fine) { .footer-col a:hover { color: var(--text); } }
+
+.footer-contact-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 4px; padding: 7px 16px;
+  background: rgba(79,127,255,0.08); border: 1px solid rgba(79,127,255,0.25);
+  border-radius: var(--r-pill);
+  font-size: 12px; font-weight: 600; color: var(--accent);
+  text-decoration: none; width: fit-content;
+  transition: background-color .2s;
+}
+@media (hover: hover) and (pointer: fine) { .footer-contact-btn:hover { background: rgba(79,127,255,0.15); } }
+
+.footer-bottom {
+  max-width: 1180px; margin: 0 auto;
+  padding-top: 20px; border-top: 1px solid var(--border2);
+  font-size: 12px; color: var(--text3);
+}
+
+@media (max-width: 640px) {
+  .footer-top { flex-direction: column; gap: 32px; }
+  .footer-cols { gap: 32px; }
+}
 
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
@@ -974,8 +977,6 @@ footer {
   .comp-label { padding: 11px 14px; font-size: 13px; }
   .comp-cell { padding: 11px 8px; font-size: 12px; }
   .cta-inner { padding: 40px 24px; }
-  footer { flex-direction: column; text-align: center; }
-  .footer-links { justify-content: center; flex-wrap: wrap; }
   section { padding: 72px max(20px, 5vw); }
 }
 
@@ -1689,11 +1690,11 @@ html.a11y-underline a { text-decoration: underline !important; }
 
 <!-- FAQ -->
 <section id="faq" aria-labelledby="faq-heading">
-  <div class="reveal" style="max-width:1080px;margin:0 auto;text-align:right;">
+  <div class="centered reveal">
     <h2 class="section-title" id="faq-heading">שאלות נפוצות</h2>
+    <p class="section-sub">כל מה שרצית לדעת על המערכת</p>
   </div>
-  <div class="faq-grid">
-    <div class="faq-list" role="list">
+  <div class="faq-grid" role="list">
       <div class="faq-item reveal" role="listitem">
         <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a1">
           האם החיבור לברוקר בטוח?
@@ -1729,22 +1730,6 @@ html.a11y-underline a { text-decoration: underline !important; }
         </button>
         <div class="faq-a" id="faq-a5" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">הנתונים שלך — ההיסטוריה, העסקאות, כל מה שיובא מהברוקר — שייכים לך בלבד. אפשר לייצא את הכל ל-CSV בכל רגע מתוך ההגדרות, ולבקש מחיקה מלאה מהמערכת בפנייה ישירה אלינו. שום מידע לא נמכר או משותף עם צד שלישי.</div></div></div>
       </div>
-    </div>
-    <div class="faq-visual reveal" aria-hidden="true">
-      <div class="faq-visual-lbl">למה סוחרים עוברים ל-ChartRoom</div>
-      <div class="faq-visual-row">
-        <div class="faq-visual-ico"><svg width="15" height="15"><use href="#i-link"/></svg></div>
-        <div class="faq-visual-txt"><strong>חיבור ברוקר</strong><span>IBKR · Bybit — אוטומטי</span></div>
-      </div>
-      <div class="faq-visual-row">
-        <div class="faq-visual-ico"><svg width="15" height="15"><use href="#i-check"/></svg></div>
-        <div class="faq-visual-txt"><strong>אבטחה</strong><span>RLS + HTTPS מוצפן</span></div>
-      </div>
-      <div class="faq-visual-row">
-        <div class="faq-visual-ico"><svg width="15" height="15"><use href="#i-tgt"/></svg></div>
-        <div class="faq-visual-txt"><strong>עלות</strong><span>₪0 — לתמיד</span></div>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -1766,15 +1751,37 @@ html.a11y-underline a { text-decoration: underline !important; }
 
 <!-- FOOTER -->
 <footer>
-  <span class="footer-logo-text">ChartRoom &copy; 2026</span>
-  <nav class="footer-links" aria-label="קישורי תחתית">
-    <a href="dashboard.html">כניסה לאפליקציה</a>
-    <a href="terms.html">תנאי שימוש</a>
-    <a href="privacy.html">פרטיות</a>
-    <a href="accessibility.html">נגישות</a>
-    <a href="mailto:davidtheking27@gmail.com">צור קשר</a>
-    <a href="https://github.com/davidtheking28-oss/trading-journal" target="_blank" rel="noopener noreferrer">GitHub</a>
-  </nav>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <div class="footer-brand-row">
+        <svg width="24" height="24" viewBox="0 0 200 200" aria-hidden="true">
+          <circle cx="100" cy="100" r="96" fill="#0b0b0e" stroke="#1a3460" stroke-width="2"/>
+          <path d="M133 68C124 58 111 52 97 53C70 55 51 79 53 106C55 132 79 151 106 149C120 148 132 141 140 130" fill="none" stroke="#4f7fff" stroke-width="13" stroke-linecap="round"/>
+        </svg>
+        <span class="footer-logo-text">ChartRoom</span>
+      </div>
+      <p class="footer-brand-desc">יומן מסחר חינמי לסוחרים ישראלים. ייבוא אוטומטי מהברוקר, נתוני שוק בזמן אמת ומסנן מניות מובנה.</p>
+    </div>
+    <div class="footer-cols">
+      <div class="footer-col" role="navigation" aria-label="מוצר">
+        <span class="footer-col-title">מוצר</span>
+        <a href="dashboard.html">כניסה לאפליקציה</a>
+        <a href="https://github.com/davidtheking28-oss/trading-journal" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+      <div class="footer-col" role="navigation" aria-label="משפטי">
+        <span class="footer-col-title">משפטי</span>
+        <a href="terms.html">תנאי שימוש</a>
+        <a href="privacy.html">מדיניות פרטיות</a>
+        <a href="accessibility.html">נגישות</a>
+      </div>
+      <div class="footer-col" role="navigation" aria-label="תמיכה">
+        <span class="footer-col-title">תמיכה</span>
+        <a href="mailto:davidtheking27@gmail.com">davidtheking27@gmail.com</a>
+        <a href="mailto:davidtheking27@gmail.com" class="footer-contact-btn">דברו איתנו</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">ChartRoom &copy; 2026</div>
 </footer>
 
 <script>
