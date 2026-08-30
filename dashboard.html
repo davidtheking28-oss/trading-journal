@@ -11612,11 +11612,7 @@ function renderStatistics() {
         <div class="kpi-value sensitive">${portfolioCard.value}</div>
       </div>` : '';
     const cardsHtml = kpiCards.map(k => `
-      <div class="kpi-card ${k.cls}">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text3);opacity:0.6" aria-hidden="true">${k.icon}</svg>
-          <span title="${k.tip}" aria-label="${k.tip}" style="width:15px;height:15px;border-radius:50%;border:1px solid var(--text3);color:var(--text3);opacity:0.6;font-size:10px;line-height:13px;text-align:center;cursor:help;flex-shrink:0;">?</span>
-        </div>
+      <div class="kpi-card ${k.cls}" title="${k.tip}">
         <div class="kpi-label">${k.label}</div>
         <div class="kpi-value ${k.valCls}${k.sensitive ? ' sensitive' : ''}">${k.value}</div>
         ${k.sub ? `<div class="kpi-sub">${k.sub}</div>` : ''}
