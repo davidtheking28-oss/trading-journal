@@ -9408,7 +9408,7 @@ function renderTable(type) {
     const trYear = tr.entryDate ? tr.entryDate.slice(0,4) : '—';
     const trNum = yearTradeNum[tr._tt || type]?.[trYear]?.[tr.id] ?? '—';
     const _flash = _prevIds && !_prevIds.has(tr.id) ? ' row-flash' : '';
-    h += `<tr class="data-row ${rowCls}${_flash}" data-rowkey="${key}" onclick="toggleTradeRow('${type}',${tr.id})">
+    h += `<tr class="data-row ${rowCls}${_flash}" data-rowkey="${key}" role="button" tabindex="0" aria-expanded="${isExp?'true':'false'}" onclick="toggleTradeRow('${type}',${tr.id})" onkeydown="if((event.key==='Enter'||event.key===' ')&&event.target===this){event.preventDefault();toggleTradeRow('${type}',${tr.id})}">
       <td style="color:var(--text);font-size:12px;font-weight:600;">${trNum}</td>
       <td>${fmtDate(tr.entryDate)}</td>
       <td><span class="badge badge-${tr.ls}">${tr.ls}</span></td>
@@ -9509,6 +9509,7 @@ function toggleTradeRow(type, id) {
   // entrance animations / screenshot-count fetches) just to open one row.
   const rowEl = document.querySelector(`tr.data-row[data-rowkey="${key}"]`);
   if (!rowEl) { renderTable(type); return; }
+  rowEl.setAttribute('aria-expanded', String(!wasOpen));
 
   if (wasOpen) {
     const exp = rowEl.nextElementSibling;

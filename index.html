@@ -598,11 +598,10 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 .d-s-bf     { height: 100%; border-radius: 2px; }
 .d-s-pct    { font-size: 10px; width: 34px; font-variant-numeric: tabular-nums; }
 
-/* ── VALUE BAR ── */
-#value { padding-top: 64px; padding-bottom: 64px; }
-.value-grid {
+/* ── FEATURES GRID ── */
+.feat-grid {
   max-width: 1180px; margin: 0 auto;
-  display: grid; grid-template-columns: 1.6fr 1fr 1fr; grid-template-rows: auto auto; grid-auto-flow: dense; gap: 16px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
 }
 .value-card {
   background: var(--card);
@@ -612,16 +611,6 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   transition: border-color .2s, transform .2s;
 }
 @media (hover: hover) and (pointer: fine) { .value-card:hover { border-color: rgba(79,127,255,0.25); transform: translateY(-3px); } }
-.value-card.lead {
-  grid-row: span 2;
-  padding: 28px 24px;
-  background: linear-gradient(160deg, var(--card2) 0%, var(--card) 100%);
-  display: flex; flex-direction: column; justify-content: space-between;
-}
-.value-card.lead .value-icon { width: 46px; height: 46px; margin-bottom: 20px; }
-.value-card.lead .value-title { font-size: 19px; margin-bottom: 10px; }
-.value-card.lead .value-desc { font-size: 14px; max-width: 320px; }
-@media (max-width: 900px) { .value-card.lead { grid-row: auto; } }
 .value-icon {
   width: 40px; height: 40px; border-radius: var(--r-sm);
   background: rgba(79,127,255,0.08); border: 1px solid rgba(79,127,255,0.18);
@@ -663,11 +652,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 }
 .broker-strip-badges { display: flex; gap: 10px; flex-wrap: wrap; }
 .broker-badge.lg { padding: 7px 16px; font-size: 13px; }
-@media (max-width: 900px) { .value-grid { grid-template-columns: 1fr 1fr; grid-template-rows: auto; } }
-@media (max-width: 480px) { .value-grid { grid-template-columns: 1fr; } }
-
-/* ── FEATURES ── */
-#features { background: transparent; }
+@media (max-width: 700px) { .feat-grid { grid-template-columns: 1fr; } }
 
 /* ── STEPS ── */
 #how { text-align: center; }
@@ -926,10 +911,6 @@ footer {
   .btn-hero-primary, .btn-hero-ghost { justify-content: center; }
   .hero-stats { width: 100%; }
   .hero-stat { flex: 1; text-align: center; }
-  .feat-row { grid-template-columns: 1fr; gap: 10px; }
-  .comp-header, .comp-row { grid-template-columns: 1fr 110px 110px; }
-  .comp-label { padding: 11px 14px; font-size: 13px; }
-  .comp-cell { padding: 11px 8px; font-size: 12px; }
   .cta-inner { padding: 40px 24px; }
   section { padding: 72px max(20px, 5vw); }
 }
@@ -939,104 +920,17 @@ footer {
   .hero-stats { flex-direction: column; border-radius: var(--r-md); }
   .hero-stat { border-right: none !important; border-bottom: 1px solid var(--border2); padding: 10px 16px; }
   .hero-stat:last-child { border-bottom: none; }
-  .comp-header { display: none; }
-  .comp-row { grid-template-columns: 1fr 1fr; }
-  .comp-cell.bad { display: none; }
-  .comp-cell.good { text-align: right; }
   .cta-inner { padding: 32px 18px; }
   .price-amount { font-size: 48px; }
   .pricing-card { padding: 32px 24px; }
   section { padding: 60px max(16px, 4vw); }
 }
 
-/* ── FEAT ROWS ── */
-.feat-list {
-  max-width: 900px; margin: 52px auto 0;
-  display: flex; flex-direction: column;
-}
-
-.feat-row {
-  display: grid; grid-template-columns: 1fr 1.65fr;
-  gap: 52px; padding: 32px 24px;
-  margin: 0 -24px;
-  border-bottom: 1px solid var(--border2);
-  align-items: start;
-  border-radius: var(--r-md);
-  transition: border-color .25s, background .25s, transform .25s;
-  position: relative;
-}
-.feat-row:first-child { border-top: 1px solid var(--border2); }
-@media (hover: hover) and (pointer: fine) {
-.feat-row:hover {
-  border-bottom-color: rgba(79,127,255,0.22);
-  background: rgba(79,127,255,0.03);
-  transform: translateX(-4px);
-}
-}
-
-.feat-row-title .feat-row-badge {
-  margin-top: 0; margin-bottom: 10px;
-}
-
-.feat-row-title h3 {
-  font-family: var(--display); font-size: 19px; font-weight: 800;
-  color: var(--text); letter-spacing: -0.5px; line-height: 1.3;
-}
-
-.feat-row-desc p {
-  font-size: 14px; color: var(--text2); line-height: 1.75;
-}
-
-.feat-row-badge {
-  display: inline-block; margin-top: 12px;
-  padding: 3px 10px; border-radius: 4px;
-  font-family: var(--mono);
-  font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
-  background: rgba(79,127,255,0.08); color: var(--accent);
-  border: 1px solid rgba(79,127,255,0.15);
-}
 
 .kw {
   font-family: var(--mono); font-size: 0.93em;
   color: var(--text); font-weight: 500;
 }
-
-
-/* ── COMPARISON ── */
-#vs {
-  padding-top: 140px; padding-bottom: 140px;
-  position: relative;
-}
-#vs::before {
-  content: '';
-  position: absolute; inset: 0; z-index: -1;
-  background: radial-gradient(ellipse 55% 60% at 50% 30%, rgba(79,127,255,0.07) 0%, transparent 70%);
-}
-.comp-wrap {
-  max-width: 680px; margin: 52px auto 0;
-  border: 1px solid var(--border2);
-  border-radius: var(--r-md); overflow: hidden;
-  box-shadow: 0 30px 70px rgba(0,0,0,0.45);
-}
-.comp-header {
-  display: grid; grid-template-columns: 1fr 160px 160px;
-  border-bottom: 1px solid var(--border2);
-}
-.comp-header > div { padding: 14px 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; }
-.ch-label { color: var(--text3); }
-.ch-bad { text-align: center; color: var(--text3); background: rgba(255,255,255,0.02); }
-.ch-good { text-align: center; color: var(--accent); background: rgba(79,127,255,0.08); }
-.comp-row {
-  display: grid; grid-template-columns: 1fr 160px 160px;
-  border-top: 1px solid var(--border2); align-items: center;
-  transition: background .15s;
-}
-.comp-row:first-of-type { border-top: none; }
-@media (hover: hover) and (pointer: fine) { .comp-row:hover { background: rgba(255,255,255,0.015); } }
-.comp-label { padding: 13px 20px; font-size: 13px; color: var(--text2); }
-.comp-cell { padding: 13px 16px; text-align: center; font-size: 12px; }
-.comp-cell.bad { color: var(--text3); }
-.comp-cell.good { color: var(--green); font-weight: 600; background: rgba(79,127,255,0.04); }
 
 
 /* ── ANIMATIONS ── */
@@ -1472,123 +1366,34 @@ html.a11y-underline a { text-decoration: underline !important; }
   </div>
 </section>
 
-<!-- VALUE BAR -->
-<section id="value" aria-label="ארבעת עמודי התווך">
-  <div class="value-grid">
-    <div class="value-card lead reveal">
-      <div>
-        <div class="value-icon" aria-hidden="true"><svg width="20" height="20"><use href="#i-link"/></svg></div>
-        <h3 class="value-title">חיבור אוטומטי לברוקר</h3>
-        <p class="value-desc">אתה לא צריך לזכור לתעד. מחברים IBKR או Bybit פעם אחת, וכל עסקה נכנסת ליומן לבד — גם ביום עמוס, גם כשהתעייפת.</p>
-      </div>
-    </div>
-    <div class="value-card reveal">
-      <div class="value-icon" aria-hidden="true"><svg width="18" height="18"><use href="#i-globe"/></svg></div>
-      <h3 class="value-title">נתוני שוק בזמן אמת</h3>
-      <p class="value-desc">לדעת מה קורה בשוק לפני שהוא מפתיע אותך — סקטורים, סנטימנט ומניות מובילות, בלייב.</p>
-    </div>
-    <div class="value-card reveal">
-      <div class="value-icon" aria-hidden="true"><svg width="18" height="18"><use href="#i-tgt"/></svg></div>
-      <h3 class="value-title">מסנן מניות מובנה</h3>
-      <p class="value-desc">לא עוד שעה בגלילה בין מניות. הסורק מראה רק מה שבאמת נראה חזק (Trend Template).</p>
-    </div>
-    <div class="value-card reveal">
-      <div class="value-icon" aria-hidden="true"><svg width="18" height="18"><use href="#i-bars"/></svg></div>
-      <h3 class="value-title">בניית תיק השקעות</h3>
-      <p class="value-desc">לדעת כמה אתה חשוף — לפני שהשוק מזכיר לך את זה בדרך הכואבת.</p>
-    </div>
-  </div>
-</section>
-
 <!-- FEATURES -->
 <section id="features" aria-labelledby="features-heading">
   <div class="centered reveal">
     <div class="section-pill">למה זה עובד</div>
-    <h2 class="section-title" id="features-heading">הכלים שמפרידים בין ניחושים לנתונים</h2>
+    <h2 class="section-title" id="features-heading">כל מה שטבלה לא יכולה להראות לך</h2>
     <p class="section-sub">כל פיצ'ר כאן קיים כי שאלנו את עצמנו פעם אחת יותר מדי "רגע, למה זה קרה?" ולא הייתה תשובה.</p>
   </div>
 
-  <div class="feat-list">
-    <div class="feat-row reveal">
-      <div class="feat-row-title">
-        <span class="feat-row-badge">IBKR · Bybit</span>
-        <h3>יבוא עסקאות בלחיצת כפתור — כי אף אחד לא ממשיך לעדכן אקסל אחרי שבועיים</h3>
-      </div>
-      <div class="feat-row-desc">
-        <p>כולנו התחלנו עם טבלת אקסל יפה ומסודרת. ואז בא שבוע עמוס בשוק, ופתאום היא ריקה חודשיים. חבר את <span class="kw">Interactive Brokers</span> או <span class="kw">Bybit</span> פעם אחת — חיבור קורא-בלבד (<span class="kw">Read-Only</span>), ללא שום גישה לביצוע פעולות או משיכת כספים — וההיסטוריה שלך פשוט שם, גם כשלא היה לך כוח לתעד.</p>
-      </div>
+  <div class="feat-grid">
+    <div class="value-card reveal">
+      <div class="value-icon" aria-hidden="true"><svg width="18" height="18"><use href="#i-link"/></svg></div>
+      <h3 class="value-title">יבוא עסקאות בלחיצת כפתור</h3>
+      <p class="value-desc">כולנו התחלנו עם טבלת אקסל יפה ומסודרת. ואז בא שבוע עמוס בשוק, ופתאום היא ריקה חודשיים. חבר את <span class="kw">Interactive Brokers</span> או <span class="kw">Bybit</span> פעם אחת — חיבור קורא-בלבד (<span class="kw">Read-Only</span>), ללא שום גישה לביצוע פעולות או משיכת כספים — וההיסטוריה שלך פשוט שם, גם כשלא היה לך כוח לתעד.</p>
     </div>
-    <div class="feat-row reveal">
-      <div class="feat-row-title">
-        <span class="feat-row-badge">נתוני שוק</span>
-        <h3>דופק השוק בזמן אמת — כדי שלא תגלה בדיעבד שהחמצת את הכיוון</h3>
-      </div>
-      <div class="feat-row-desc">
-        <p>אין צורך לפתוח שבע לשוניות כדי להבין מה קורה בשוק. ביצועי סקטורים (Tech, Energy, Finance ועוד), מדדי סנטימנט (<span class="kw">Fear &amp; Greed Index</span>) ומניות מובילות — הכל במקום אחד, בזמן אמת, כדי שתדע לאן הכסף הגדול זורם לפני שאתה נכנס לפוזיציה, לא אחריה.</p>
-      </div>
+    <div class="value-card reveal">
+      <div class="value-icon" aria-hidden="true"><svg width="18" height="18"><use href="#i-globe"/></svg></div>
+      <h3 class="value-title">דופק השוק בזמן אמת</h3>
+      <p class="value-desc">אין צורך לפתוח שבע לשוניות כדי להבין מה קורה בשוק. ביצועי סקטורים (Tech, Energy, Finance ועוד), מדדי סנטימנט (<span class="kw">Fear &amp; Greed Index</span>) ומניות מובילות — הכל במקום אחד, בזמן אמת, כדי שתדע לאן הכסף הגדול זורם לפני שאתה נכנס לפוזיציה, לא אחריה.</p>
     </div>
-    <div class="feat-row reveal">
-      <div class="feat-row-title">
-        <span class="feat-row-badge">Trend Template</span>
-        <h3>לסנן את הרעש. למצוא רק את מה שבאמת שווה את הזמן שלך</h3>
-      </div>
-      <div class="feat-row-desc">
-        <p>יש לך מספיק דברים לדאוג להם בלי לחפש מניות ב-3 אתרים שונים ולאבד את החוט. מנגנון הסינון המובנה של ChartRoom סורק את כל השוק ומציג רק מניות בעלות מבנה טכני ומגמתי חזק (<span class="kw">Trend Template</span>) — ישר בתוך היומן, בלי לצאת ממנו.</p>
-      </div>
+    <div class="value-card reveal">
+      <div class="value-icon" aria-hidden="true"><svg width="18" height="18"><use href="#i-tgt"/></svg></div>
+      <h3 class="value-title">לסנן את הרעש, למצוא רק את מה ששווה</h3>
+      <p class="value-desc">יש לך מספיק דברים לדאוג להם בלי לחפש מניות ב-3 אתרים שונים ולאבד את החוט. מנגנון הסינון המובנה של ChartRoom סורק את כל השוק ומציג רק מניות בעלות מבנה טכני ומגמתי חזק (<span class="kw">Trend Template</span>) — ישר בתוך היומן, בלי לצאת ממנו.</p>
     </div>
-    <div class="feat-row reveal">
-      <div class="feat-row-title">
-        <span class="feat-row-badge">Portfolio Builder</span>
-        <h3>לבנות תיק שלא יפיל אותך כשעסקה אחת משתבשת</h3>
-      </div>
-      <div class="feat-row-desc">
-        <p>עסקה בודדת לא אמורה להרוס לך חודש שלם — וזה קורה בדיוק כשלא שמת לב כמה חשוף אתה לנייר אחד. הקטגוריה הייעודית לבניית תיק השקעות מראה לך הקצאת הון בין מניות, קריפטו ו-ETFs, ואת התשואה הכוללת (YTD), חשיפת הסיכון וחלוקת המזומן במבט אחד — לפני שהשוק מזכיר לך את זה בדרך הכואבת.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- COMPARISON -->
-<section id="vs" aria-labelledby="vs-heading">
-  <div class="centered reveal">
-    <h2 class="section-title" id="vs-heading">למה Excel לא מספיק</h2>
-    <p class="section-sub" style="margin:0 auto;">כולנו התחלנו שם. השאלה היא כמה זמן לוקח לך להבין שהוא אף פעם לא ענה על השאלה האמיתית — למה אני מפסיד?</p>
-  </div>
-  <div class="comp-wrap reveal">
-    <div class="comp-header">
-      <div class="ch-label"></div>
-      <div class="ch-bad">Excel</div>
-      <div class="ch-good">ChartRoom</div>
-    </div>
-    <div class="comp-row">
-      <div class="comp-label">חיבור לברוקר</div>
-      <div class="comp-cell bad">הזנה ידנית מעייפת (10–30 דק')</div>
-      <div class="comp-cell good">אוטומטי לחלוטין ב-0 שניות</div>
-    </div>
-    <div class="comp-row">
-      <div class="comp-label">נתוני שוק בזמן אמת</div>
-      <div class="comp-cell bad">ללא (דורש עדכון ידני)</div>
-      <div class="comp-cell good">מניות, סקטורים ומדדים בזמן אמת</div>
-    </div>
-    <div class="comp-row">
-      <div class="comp-label">מסנן מניות (Screener)</div>
-      <div class="comp-cell bad">לא קיים</div>
-      <div class="comp-cell good">סורק מורכב מובנה במערכת</div>
-    </div>
-    <div class="comp-row">
-      <div class="comp-label">כלי לבניית תיק השקעות</div>
-      <div class="comp-cell bad">נוסחאות מסובכות שנשברות</div>
-      <div class="comp-cell good">דשבורד הקצאת הון וניהול סיכונים מובנה</div>
-    </div>
-    <div class="comp-row">
-      <div class="comp-label">זיהוי דפוסים וסטטיסטיקות</div>
-      <div class="comp-cell bad">דרוש תכנון ידני מורכב</div>
-      <div class="comp-cell good">ניתוח אוטומטי לפי שעה, יום וסקטור</div>
-    </div>
-    <div class="comp-row">
-      <div class="comp-label">עלות</div>
-      <div class="comp-cell bad">עולה בזמן יקר וטעויות הקלדה</div>
-      <div class="comp-cell good">חינם לחלוטין (₪0)</div>
+    <div class="value-card reveal">
+      <div class="value-icon" aria-hidden="true"><svg width="18" height="18"><use href="#i-bars"/></svg></div>
+      <h3 class="value-title">תיק שלא יפיל אותך כשעסקה אחת משתבשת</h3>
+      <p class="value-desc">עסקה בודדת לא אמורה להרוס לך חודש שלם — וזה קורה בדיוק כשלא שמת לב כמה חשוף אתה לנייר אחד. הקטגוריה הייעודית לבניית תיק השקעות מראה לך הקצאת הון בין מניות, קריפטו ו-ETFs, ואת התשואה הכוללת (YTD), חשיפת הסיכון וחלוקת המזומן במבט אחד — לפני שהשוק מזכיר לך את זה בדרך הכואבת.</p>
     </div>
   </div>
 </section>
