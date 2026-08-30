@@ -10587,7 +10587,6 @@ function renderTradingSummary(trades) {
 
   wrap.innerHTML = `<table class="ts-table">
     <tbody>
-      ${row(t('ts_win_rate'), fmt(wr,2)+'%', wr>=50?'green':'red')}
       ${row(t('ts_avg_gain_pct'), '+'+fmt(avgGainPct,2)+'%', 'green')}
       ${row(t('ts_avg_loss_pct'), '-'+fmt(avgLossPct,2)+'%', 'red')}
       ${row(t('ts_gl_ratio'), wlRatio!==null?fmt(wlRatio,2)+'x':'—', wlRatio!==null&&wlRatio>=1?'green':'red')}
@@ -11968,38 +11967,15 @@ function renderDonut(st, adv, trades) {
   });
 
   // ── Compute extra stats ──────────────────────────
-  // Closed trades, net of commission — same basis as stats() and the statistics
-  // tab, which used calcTotal while this block used gross calcPL.
-  const sorted = [...(trades||[])].filter(isClosed).sort((a,b) => (a.entryDate||'').localeCompare(b.entryDate||''));
-  let maxWinStreak=0, maxLossStreak=0, curW=0, curL=0;
-  sorted.forEach(t => {
-    const pl = calcTotal(t);
-    if (pl > 0) { curW++; curL=0; maxWinStreak=Math.max(maxWinStreak,curW); }
-    else if (pl < 0) { curL++; curW=0; maxLossStreak=Math.max(maxLossStreak,curL); }
-  });
-  const winSum  = sorted.reduce((s,t)=>{ const v=calcTotal(t); return v>0?s+v:s; },0);
-  const lossSum = Math.abs(sorted.reduce((s,t)=>{ const v=calcTotal(t); return v<0?s+v:s; },0));
-  const pf = lossSum > 0 ? (winSum/lossSum) : null;
-  const wlRatio = adv && adv.avgLoss && adv.avgLoss !== 0 ? Math.abs(adv.avgWin / adv.avgLoss) : null;
-
+  // Profit Factor, W/L Ratio and the win/loss streaks now live in the KPI grid
+  // above — kept here would be the same numbers twice on one tab. Best/worst
+  // trade are the only donut-adjacent numbers not already shown elsewhere.
   const none = '—';
-  const pfStr  = pf    !== null ? pf.toFixed(2)    : none;
-  const pfCls  = pf    !== null ? (pf >= 1 ? 'green' : 'red') : '';
-  const wlStr  = wlRatio !== null ? wlRatio.toFixed(2)+'x' : none;
-  const wlCls  = wlRatio !== null ? (wlRatio >= 1 ? 'green' : 'red') : '';
   const bestStr  = st.n ? fmtUSD(st.best)  : none;
   const worstStr = st.n ? fmtUSD(st.worst) : none;
 
   const el = document.getElementById('donut-stats');
   if (el) el.innerHTML = `
-    <div class="donut-stat">
-      <div class="donut-stat-label">Profit Factor</div>
-      <div class="donut-stat-value ${pfCls} sensitive">${pfStr}</div>
-    </div>
-    <div class="donut-stat">
-      <div class="donut-stat-label">W/L Ratio</div>
-      <div class="donut-stat-value ${wlCls} sensitive">${wlStr}</div>
-    </div>
     <div class="donut-stat">
       <div class="donut-stat-label">${t('donut_best')}</div>
       <div class="donut-stat-value green sensitive">${bestStr}</div>
@@ -12007,14 +11983,6 @@ function renderDonut(st, adv, trades) {
     <div class="donut-stat">
       <div class="donut-stat-label">${t('donut_worst')}</div>
       <div class="donut-stat-value red sensitive">${worstStr}</div>
-    </div>
-    <div class="donut-stat">
-      <div class="donut-stat-label">${t('donut_win_streak')}</div>
-      <div class="donut-stat-value sky">${maxWinStreak || none}</div>
-    </div>
-    <div class="donut-stat">
-      <div class="donut-stat-label">${t('donut_loss_streak')}</div>
-      <div class="donut-stat-value gold">${maxLossStreak || none}</div>
     </div>`;
   applyPrivacy();
 }
