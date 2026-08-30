@@ -520,7 +520,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     color: #fff; border: none;
     border-radius: var(--r-md); padding: 8px 20px; font-size: 13px;
     font-weight: 700; cursor: pointer; white-space: nowrap;
-    transition: all 0.18s;
+    transition: background-color 0.18s, border-color 0.18s, color 0.18s, opacity 0.18s, transform 0.18s, box-shadow 0.18s;
     box-shadow: 0 2px 12px rgba(129,140,248,0.4);
     letter-spacing: 0.2px;
   }
@@ -605,7 +605,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .mood-pill {
     padding: 4px 10px; border-radius: var(--r-lg); font-size: 12px; font-weight: 600;
     border: 1px solid var(--border); color: var(--text2); background: var(--bg2);
-    cursor: pointer; transition: all .15s; user-select: none;
+    cursor: pointer; transition: background-color .15s, border-color .15s, color .15s, opacity .15s, transform .15s, box-shadow .15s; user-select: none;
   }
   .mood-pill:hover { border-color: var(--accent); color: var(--accent); }
   .mood-pill.active-focused   { background: rgba(129,140,248,0.18);  border-color: #818cf8; color: #818cf8; }
@@ -618,7 +618,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .er-pill {
     padding: 4px 10px; border-radius: var(--r-lg); font-size: 11px; font-weight: 700;
     border: 1px solid var(--border2); background: var(--card2);
-    color: var(--text2); cursor: pointer; transition: all 0.15s;
+    color: var(--text2); cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s;
     white-space: nowrap; user-select: none;
   }
   .er-pill:hover { border-color: var(--accent); color: var(--accent); }
@@ -668,7 +668,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   @keyframes symPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
   .broker-badge-syncing { animation: symPulse 1.2s ease-in-out infinite; }
   @keyframes dotGlow { 0%,100%{box-shadow:0 0 8px #818cf8, 0 0 16px rgba(129,140,248,0.4)} 50%{box-shadow:0 0 4px #818cf8, 0 0 8px rgba(129,140,248,0.2)} }
-  .sym-fill-btn { font-size: 10px; padding: 1px 7px; border-radius: var(--r-md); border: 1px solid var(--green); color: var(--green); background: transparent; cursor: pointer; margin-right: 5px; transition: all 0.15s; }
+  .sym-fill-btn { font-size: 10px; padding: 1px 7px; border-radius: var(--r-md); border: 1px solid var(--green); color: var(--green); background: transparent; cursor: pointer; margin-right: 5px; transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s; }
   .sym-fill-btn:hover { background: rgba(63,185,80,0.15); }
 
   /* EMPTY STATE */
@@ -1188,7 +1188,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .modal-close {
     background: rgba(255,255,255,0.04); border: 1px solid var(--border);
     color: var(--text2); cursor: pointer; font-size: 16px; line-height: 1;
-    padding: 5px 8px; border-radius: var(--r-sm); transition: all 0.2s; font-family: inherit;
+    padding: 5px 8px; border-radius: var(--r-sm); transition: background-color 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s, transform 0.2s, box-shadow 0.2s; font-family: inherit;
   }
   .modal-close:hover { color: var(--text); background: var(--border2); border-color: var(--border2); }
   .modal-body { padding: 20px 24px; }
@@ -1471,7 +1471,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .cg-refresh-btn {
     margin-right: auto; background: none; border: 1px solid var(--border);
     color: var(--text2); border-radius: var(--r-sm); padding: 2px 8px;
-    cursor: pointer; font-size: 13px; transition: all 0.2s;
+    cursor: pointer; font-size: 13px; transition: background-color 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s, transform 0.2s, box-shadow 0.2s;
   }
   .cg-refresh-btn:hover { color: var(--accent); border-color: var(--accent); }
 
@@ -1655,7 +1655,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .tt-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
   .tt-title { font-size:16px; font-weight:700; color:var(--text); }
   .tt-periods { display:flex; gap:4px; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:var(--r-md); padding:3px; }
-  .tt-period { background:none; border:none; color:var(--text3); font-size:12px; font-weight:600; padding:4px 12px; border-radius:var(--r-sm); cursor:pointer; transition:all 0.15s; }
+  .tt-period { background:none; border:none; color:var(--text3); font-size:12px; font-weight:600; padding:4px 12px; border-radius:var(--r-sm); cursor:pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s; }
   .tt-period:hover { color:var(--text); }
   .tt-period.active { background:var(--accent); color:#fff; }
   .tt-updated { font-size:11px; color:var(--text3); margin-right:auto; }
@@ -1756,7 +1756,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .profile-input:disabled { opacity:0.45; cursor:not-allowed; }
   .profile-email { font-size:12px; color:var(--text3); margin-top:2px; }
   .lang-seg { display:flex; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:var(--r-md); padding:2px; gap:2px; width:fit-content; flex-shrink:0; }
-  .lang-opt { background:none; border:none; padding:4px 7px; border-radius:var(--r-sm); cursor:pointer; transition:all 0.15s; opacity:0.45; display:flex; align-items:center; }
+  .lang-opt { background:none; border:none; padding:4px 7px; border-radius:var(--r-sm); cursor:pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s; opacity:0.45; display:flex; align-items:center; }
   .lang-opt:hover { opacity:0.85; }
   .lang-opt.active { background:var(--accent); opacity:1; }
   .lang-desc { font-size:11px; color:var(--text3); margin-top:8px; }
@@ -1766,7 +1766,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     border: 1.5px dashed var(--border);
     border-radius: var(--r-md); padding: 20px;
     text-align: center; cursor: pointer;
-    transition: all 0.2s; color: var(--text3); font-size: 13px;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s, transform 0.2s, box-shadow 0.2s; color: var(--text3); font-size: 13px;
   }
   .tlg-drop:hover, .tlg-drag-over { border-color: var(--accent); color: var(--text2); background: rgba(129,140,248,0.08); }
   .tlg-drag-over { border-style: solid; }
@@ -1788,7 +1788,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     color: var(--accent);
     border-radius: var(--radius);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s, transform 0.2s, box-shadow 0.2s;
     display: inline-flex;
     align-items: center;
     font-size: 12px;
@@ -1883,7 +1883,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     text-align: center;
     color: var(--text2);
     font-size: 13px;
-    transition: all 0.2s;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s, transform 0.2s, box-shadow 0.2s;
     cursor: pointer;
   }
   .ss-upload-area.drag-over {
@@ -2037,7 +2037,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     width: 14px; height: 14px; border-radius: 50%;
     border: 2px solid var(--border2);
     background: transparent;
-    transition: all 0.12s;
+    transition: background-color 0.12s, border-color 0.12s, color 0.12s, opacity 0.12s, transform 0.12s, box-shadow 0.12s;
   }
   .pin-dot.filled { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 10px rgba(129,140,248,0.5); }
   .pin-dot.error  { background: var(--red);   border-color: var(--red); }
@@ -2051,7 +2051,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     background: var(--bg2); border: 1px solid var(--border2);
     border-radius: var(--radius); color: var(--text);
     font-size: 20px; font-weight: 600;
-    padding: 14px; cursor: pointer; transition: all 0.12s;
+    padding: 14px; cursor: pointer; transition: background-color 0.12s, border-color 0.12s, color 0.12s, opacity 0.12s, transform 0.12s, box-shadow 0.12s;
     font-family: inherit; line-height: 1;
   }
   .pin-key:hover:not(:disabled) { background: var(--border2); border-color: var(--accent); }
@@ -2185,7 +2185,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     font-weight: 500;
     padding: 8px 16px;
     letter-spacing: 0;
-    transition: all 0.15s;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s;
   }
   .btn-primary {
     background: var(--accent);
@@ -2512,7 +2512,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     display: flex; align-items: center; justify-content: center;
     width: 32px; height: 32px; border-radius: var(--r-md);
     background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
-    cursor: pointer; color: var(--text3); transition: all 0.2s;
+    cursor: pointer; color: var(--text3); transition: background-color 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s, transform 0.2s, box-shadow 0.2s;
     flex-shrink: 0; align-self: flex-end;
   }
   .sidebar-collapse-btn:hover { background: rgba(129,140,248,0.1); color: var(--accent); border-color: rgba(129,140,248,0.3); }
@@ -2624,7 +2624,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     height: 2px;
     background: var(--text2);
     border-radius: var(--r-sm);
-    transition: all 0.22s;
+    transition: background-color 0.22s, border-color 0.22s, color 0.22s, opacity 0.22s, transform 0.22s, box-shadow 0.22s;
   }
 
   /* ── Sidebar overlay (mobile) ── */
@@ -2811,7 +2811,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     color: var(--text3) !important;
     border: 1px solid rgba(255,255,255,0.05) !important;
     background: rgba(255,255,255,0.025) !important;
-    transition: all var(--t-fast) !important;
+    transition: background-color var(--t-fast), border-color var(--t-fast), color var(--t-fast), opacity var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast) !important;
     width: calc(100% - 20px) !important;
     text-align: right !important;
   }
@@ -3594,7 +3594,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-calc-open {
     margin-right: auto; background: rgba(129,140,248,0.14); border: 1px solid rgba(129,140,248,0.35);
     color: var(--accent); font-size: 12.5px; font-weight: 700; padding: 7px 13px;
-    border-radius: var(--r-sm); cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    border-radius: var(--r-sm); cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s; white-space: nowrap;
   }
   .inv-calc-open:hover { background: rgba(129,140,248,0.26); border-color: rgba(129,140,248,0.6); }
   .inv-add-row {
@@ -3609,7 +3609,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-add-row:hover { background: rgba(129,140,248,0.08); color: #a5b4fc; }
   .inv-del-btn {
     background: none; border: none; color: rgba(255,107,138,0.5); cursor: pointer;
-    font-size: 14px; padding: 4px 6px; border-radius: var(--r-sm); transition: all 0.15s;
+    font-size: 14px; padding: 4px 6px; border-radius: var(--r-sm); transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s;
   }
   .inv-del-btn:hover { color: var(--red); background: rgba(255,107,138,0.12); }
   /* Was display:none, which hid the only obvious way into the buy modal and the
@@ -3618,19 +3618,19 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-buy-btn {
     background: rgba(52,211,153,0.13); border: 1px solid rgba(52,211,153,0.3);
     color: var(--green); cursor: pointer; font-size: 14px; font-weight: 800;
-    padding: 2px 7px; border-radius: var(--r-sm); transition: all 0.15s;
+    padding: 2px 7px; border-radius: var(--r-sm); transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s;
     vertical-align: middle; line-height: 1.35; white-space: nowrap;
   }
   .inv-buy-btn:hover { background: rgba(52,211,153,0.26); border-color: rgba(52,211,153,0.55); }
   html[data-theme="light"] .inv-buy-btn { color: #047857; border-color: rgba(5,150,105,0.35); }
   .inv-edit-btn {
     background: none; border: none; color: rgba(255,255,255,0.25); cursor: pointer;
-    padding: 4px 6px; border-radius: var(--r-sm); transition: all 0.15s; vertical-align: middle;
+    padding: 4px 6px; border-radius: var(--r-sm); transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s; vertical-align: middle;
   }
   .inv-edit-btn:hover { color: var(--accent); background: rgba(129,140,248,0.1); }
   .inv-lock-btn {
     background: none; border: none; color: var(--green); cursor: pointer;
-    padding: 4px 6px; border-radius: var(--r-sm); transition: all 0.15s; vertical-align: middle;
+    padding: 4px 6px; border-radius: var(--r-sm); transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s; vertical-align: middle;
   }
   .inv-lock-btn:hover { background: rgba(63,185,80,0.1); }
   .inv-row-edit td input:not([type=hidden]), .inv-row-edit td select { border-color: rgba(129,140,248,0.3) !important; }
@@ -3646,19 +3646,19 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-buy-form label { font-size: 11px; color: var(--text3); white-space: nowrap; }
   .inv-buy-form input { width: 90px; }
   .inv-buy-mode-toggle { display: flex; gap: 4px; }
-  .inv-buy-mode { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--text2); cursor: pointer; padding: 5px 14px; border-radius: var(--r-sm); font-size: 12px; font-weight: 600; transition: all 0.15s; }
+  .inv-buy-mode { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--text2); cursor: pointer; padding: 5px 14px; border-radius: var(--r-sm); font-size: 12px; font-weight: 600; transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s; }
   .inv-buy-mode.buy-active { background: rgba(52,211,153,0.15); border-color: rgba(52,211,153,0.4); color: #34d399; }
   .inv-buy-mode.sell-active { background: rgba(255,107,138,0.12); border-color: rgba(255,107,138,0.3); color: var(--red); }
-  .inv-buy-confirm { background: var(--accent); color: #fff; border: none; border-radius: var(--r-sm); padding: 5px 14px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .inv-buy-confirm { background: var(--accent); color: #fff; border: none; border-radius: var(--r-sm); padding: 5px 14px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s; }
   .inv-buy-confirm:hover { opacity: 0.85; }
-  .inv-buy-cancel { background: none; border: 1px solid rgba(255,255,255,0.1); color: var(--text3); border-radius: var(--r-sm); padding: 5px 10px; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+  .inv-buy-cancel { background: none; border: 1px solid rgba(255,255,255,0.1); color: var(--text3); border-radius: var(--r-sm); padding: 5px 10px; font-size: 12px; cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s; }
   .inv-buy-cancel:hover { border-color: rgba(255,255,255,0.25); color: var(--text2); }
   .inv-actions { display: flex; gap: 10px; justify-content: flex-end; }
   .inv-save-btn {
     background: linear-gradient(135deg, #818cf8, #6366f1);
     color: #fff; border: none; border-radius: var(--r-md); padding: 10px 28px;
     font-size: 13px; font-weight: 700; cursor: pointer;
-    box-shadow: 0 4px 16px rgba(129,140,248,0.3); transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(129,140,248,0.3); transition: background-color 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s, transform 0.2s, box-shadow 0.2s;
     letter-spacing: 0.3px;
   }
   .inv-save-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(129,140,248,0.4); }
@@ -3684,7 +3684,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     text-align: center; padding: 40px 28px; color: var(--text3); font-size: 13px;
   }
   .inv-type-pills { display: flex; gap: 6px; }
-  .inv-type-pill { padding: 6px 14px; border-radius: var(--r-lg); border: 1px solid var(--border); background: transparent; color: var(--text2); font-size: 12px; cursor: pointer; transition: all 0.2s; }
+  .inv-type-pill { padding: 6px 14px; border-radius: var(--r-lg); border: 1px solid var(--border); background: transparent; color: var(--text2); font-size: 12px; cursor: pointer; transition: background-color 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s, transform 0.2s, box-shadow 0.2s; }
   .inv-type-pill.active { background: rgba(129,140,248,0.15); border-color: var(--accent); color: var(--accent); font-weight: 700; }
   .inv-alloc-dashboard { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; }
   .inv-alloc-title { font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 2px; }
@@ -3788,7 +3788,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .missed-card-note { font-size: 11px; color: var(--text2); margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); font-style: italic; }
   .missed-card-actions { display: flex; gap: 4px; justify-content: flex-end; margin-top: 10px; }
   .missed-empty { text-align: center; color: var(--text3); padding: 50px; font-size: 13px; }
-  .missed-del-btn { background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer; font-size: 13px; padding: 4px 7px; border-radius: var(--r-sm); transition: all 0.15s; }
+  .missed-del-btn { background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer; font-size: 13px; padding: 4px 7px; border-radius: var(--r-sm); transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s; }
   .missed-del-btn:hover { color: var(--red); background: rgba(255,107,138,0.12); }
   .missed-del-btn.edit:hover { color: var(--accent); background: rgba(129,140,248,0.1); }
 
@@ -5516,8 +5516,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             <div class="chart-title" style="margin-bottom:0" data-i18n="chart_cum">Cumulative P&L</div>
             <div style="display:flex;align-items:center;gap:5px;">
               <div style="display:flex;background:rgba(255,255,255,0.05);border-radius:var(--r-sm);overflow:hidden;border:1px solid var(--border);">
-                <button id="cum-mode-pct" onclick="setCumMode('pct')" style="padding:2px 8px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:var(--accent);color:#fff;transition:all 0.15s;">%</button>
-                <button id="cum-mode-usd" onclick="setCumMode('usd')" style="padding:2px 8px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all 0.15s;">$</button>
+                <button id="cum-mode-pct" onclick="setCumMode('pct')" style="padding:2px 8px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:var(--accent);color:#fff;transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s;">%</button>
+                <button id="cum-mode-usd" onclick="setCumMode('usd')" style="padding:2px 8px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:transparent;color:var(--text3);transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s;">$</button>
               </div>
             </div>
           </div>
@@ -6230,11 +6230,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             <div class="inv-donut-wrap" style="align-self:center;">
               <svg width="160" height="160" viewBox="0 0 130 130">
                 <circle cx="65" cy="65" r="50" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="18"/>
-                <circle id="donut-cash"   cx="65" cy="65" r="50" fill="none" stroke="#2dd4bf" stroke-width="18" stroke-dasharray="314 314" stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
-                <circle id="donut-none"   cx="65" cy="65" r="50" fill="none" stroke="#94a3b8" stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
-                <circle id="donut-yellow" cx="65" cy="65" r="50" fill="none" stroke="#fbbf24" stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
-                <circle id="donut-green"  cx="65" cy="65" r="50" fill="none" stroke="#34d399" stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
-                <circle id="donut-blue"   cx="65" cy="65" r="50" fill="none" stroke="#818cf8" stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition:all 0.4s;"/>
+                <circle id="donut-cash"   cx="65" cy="65" r="50" fill="none" stroke="#2dd4bf" stroke-width="18" stroke-dasharray="314 314" stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition: stroke-dasharray 0.4s, stroke-dashoffset 0.4s;"/>
+                <circle id="donut-none"   cx="65" cy="65" r="50" fill="none" stroke="#94a3b8" stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition: stroke-dasharray 0.4s, stroke-dashoffset 0.4s;"/>
+                <circle id="donut-yellow" cx="65" cy="65" r="50" fill="none" stroke="#fbbf24" stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition: stroke-dasharray 0.4s, stroke-dashoffset 0.4s;"/>
+                <circle id="donut-green"  cx="65" cy="65" r="50" fill="none" stroke="#34d399" stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition: stroke-dasharray 0.4s, stroke-dashoffset 0.4s;"/>
+                <circle id="donut-blue"   cx="65" cy="65" r="50" fill="none" stroke="#818cf8" stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition: stroke-dasharray 0.4s, stroke-dashoffset 0.4s;"/>
                 <text x="65" y="58" text-anchor="middle" fill="var(--text)"  font-size="16" font-weight="700" id="donut-label-pct">0%</text>
                 <text x="65" y="74" text-anchor="middle" fill="var(--text3)" font-size="9"  id="donut-allocated-label">Allocated</text>
               </svg>
@@ -6254,7 +6254,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
                 <th style="width:85px" data-i18n="inv_col_cur_price">Current Price</th>
                 <th style="width:70px" data-i18n="inv_col_avg">Average</th>
                 <th style="width:75px" data-i18n="inv_col_value">Value</th>
-                <th style="width:100px"><span data-i18n="inv_col_pnl">P&L</span> <button id="inv-pnl-toggle" onclick="invTogglePnlMode()" style="font-size:11px;padding:4px 8px;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.07);color:var(--text2);cursor:pointer;margin-right:4px;vertical-align:middle;transition:all 0.15s;">$</button></th>
+                <th style="width:100px"><span data-i18n="inv_col_pnl">P&L</span> <button id="inv-pnl-toggle" onclick="invTogglePnlMode()" style="font-size:11px;padding:4px 8px;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.07);color:var(--text2);cursor:pointer;margin-right:4px;vertical-align:middle;transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s;">$</button></th>
                 <th style="width:75px" data-i18n="inv_col_portfolio_pct" title="חלק מהתיק לפי שווי נוכחי. לוח ההקצאה למטה מחושב לפי עלות, ולכן השורות לא יסתכמו בדיוק לאחוז שמוצג שם.">% Portfolio</th>
                 <th style="width:75px" data-i18n="inv_col_remaining">Remaining</th>
                 <!-- table-layout is fixed, so THIS is the only place the actions
@@ -6844,11 +6844,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     <!-- Tab switcher -->
     <div style="display:flex;background:rgba(11,11,14,0.6);border-radius:var(--r-md);padding:3px;margin-bottom:22px;border:1px solid rgba(148,163,184,0.08);">
       <button id="auth-tab-login" onclick="authSetMode('login')"
-        style="flex:1;padding:9px;border:none;border-radius:var(--r-md);cursor:pointer;font-size:13px;font-weight:700;background:#4f46e5;color:#fff;transition:all .2s;font-family:inherit;">
+        style="flex:1;padding:9px;border:none;border-radius:var(--r-md);cursor:pointer;font-size:13px;font-weight:700;background:#4f46e5;color:#fff;transition: background-color .2s, border-color .2s, color .2s, opacity .2s, transform .2s, box-shadow .2s;font-family:inherit;">
         כניסה
       </button>
       <button id="auth-tab-register" onclick="authSetMode('register')"
-        style="flex:1;padding:9px;border:none;border-radius:var(--r-md);cursor:pointer;font-size:13px;font-weight:600;background:transparent;color:var(--text3);transition:all .2s;font-family:inherit;">
+        style="flex:1;padding:9px;border:none;border-radius:var(--r-md);cursor:pointer;font-size:13px;font-weight:600;background:transparent;color:var(--text3);transition: background-color .2s, border-color .2s, color .2s, opacity .2s, transform .2s, box-shadow .2s;font-family:inherit;">
         הרשמה
       </button>
     </div>
@@ -6883,7 +6883,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     <div id="auth-msg" style="display:none;margin-top:12px;padding:10px 12px;border-radius:var(--r-md);font-size:13px;text-align:center;"></div>
 
     <button onclick="authSubmit()" id="auth-submit-btn"
-      style="width:100%;margin-top:14px;padding:13px;background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;border:none;border-radius:var(--r-md);font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.1px;font-family:inherit;box-shadow:0 4px 20px rgba(129,140,248,0.35);transition:all .2s;">
+      style="width:100%;margin-top:14px;padding:13px;background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;border:none;border-radius:var(--r-md);font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.1px;font-family:inherit;box-shadow:0 4px 20px rgba(129,140,248,0.35);transition: background-color .2s, border-color .2s, color .2s, opacity .2s, transform .2s, box-shadow .2s;">
       כניסה
     </button>
 
@@ -6901,7 +6901,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     </div>
 
     <button onclick="authGoogle()"
-      style="width:100%;margin-top:14px;padding:12px;background:rgba(255,255,255,0.05);color:#d0d4f0;border:1px solid rgba(148,163,184,0.12);border-radius:var(--r-md);font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-family:inherit;transition:all .2s;backdrop-filter:blur(8px);">
+      style="width:100%;margin-top:14px;padding:12px;background:rgba(255,255,255,0.05);color:#d0d4f0;border:1px solid rgba(148,163,184,0.12);border-radius:var(--r-md);font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-family:inherit;transition: background-color .2s, border-color .2s, color .2s, opacity .2s, transform .2s, box-shadow .2s;backdrop-filter:blur(8px);">
       <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
       המשך עם Google
     </button>
@@ -9098,7 +9098,7 @@ function renderTable(type) {
            <button onclick="openModal('${type}')" style="margin-top:20px;padding:9px 22px;background:var(--accent);color:#fff;border:none;border-radius:var(--r-md);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s;" onmouseenter="this.style.opacity='.85'" onmouseleave="this.style.opacity='1'">+ הוסף עסקה ראשונה</button>
          </div>`
       : `<div class="empty-state"><div class="empty-icon">${_emptyIcon}</div><p>${t('no_trades')}</p>
-           <button onclick="resetFilter('${p}')" style="margin-top:16px;padding:8px 18px;background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:var(--r-md);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;" onmouseenter="this.style.background='var(--accent)';this.style.color='#fff'" onmouseleave="this.style.background='transparent';this.style.color='var(--accent)'">${_lang==='he'?'נקה סינון':'Clear filter'}</button>
+           <button onclick="resetFilter('${p}')" style="margin-top:16px;padding:8px 18px;background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:var(--r-md);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition: background-color .15s, border-color .15s, color .15s, opacity .15s, transform .15s, box-shadow .15s;" onmouseenter="this.style.background='var(--accent)';this.style.color='#fff'" onmouseleave="this.style.background='transparent';this.style.color='var(--accent)'">${_lang==='he'?'נקה סינון':'Clear filter'}</button>
          </div>`;
     return;
   }
