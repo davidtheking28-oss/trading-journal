@@ -11583,6 +11583,7 @@ function renderStatistics() {
   // repeating here, per the user's "too crowded" feedback.
   const maxWin  = winners.length ? Math.max(...winners.map(t => calcTotal(t))) : 0;
   const maxLoss = losers.length  ? Math.min(...losers.map(t => calcTotal(t)))  : 0;
+  const ICON_DOLLAR = '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>';
   const ICON_TARGET = '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/>';
   const ICON_BARS   = '<line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>';
   const ICON_PCT    = '<line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>';
@@ -11592,6 +11593,7 @@ function renderStatistics() {
   const ICON_TROPHY = '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M5 4H3v2a4 4 0 0 0 4 4M19 4h2v2a4 4 0 0 1-4 4"/>';
   const ICON_FROWN  = '<circle cx="12" cy="12" r="9"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>';
   const kpiCards = [
+    { label: t('kpi_pnl'), tip: 'רווח/הפסד כולל בתקופה ובסקופ הנבחרים (עסקאות סגורות בלבד)', value: fmt(st.total), sub: `${st.nClosed} ${t('trades')}${st.nOpen ? ` · ${st.nOpen} פתוחות` : ''}`, cls: st.total >= 0 ? 'c-green' : 'c-red', valCls: st.total >= 0 ? 'green' : 'red', sensitive: true, icon: ICON_DOLLAR },
     { label: t('st_win_rate'), tip: 'אחוז העסקאות הסגורות שהסתיימו ברווח', value: pct(st.wr), sub: `${st.wins}W / ${losers.length}L`, cls: st.wr >= 50 ? 'c-green' : 'c-red', valCls: st.wr >= 50 ? 'green' : 'red', icon: ICON_TARGET },
     { label: 'Profit Factor', tip: 'סך הרווחים חלקי סך ההפסדים — מעל 1 אומר שהמערכת רווחית', value: pf != null ? pf.toFixed(2) : '—', sub: pf != null ? (pf >= 1 ? 'רווחי' : 'לא רווחי') : '', cls: pf != null ? (pf >= 1 ? 'c-green' : 'c-red') : 'c-blue', valCls: pf != null ? (pf >= 1 ? 'green' : 'red') : '', icon: ICON_BARS },
     { label: t('st_avg_r'), tip: 'רווח/הפסד ממוצע ביחס לסיכון המתוכנן (סטופ), לעסקאות עם סטופ מוגדר', value: rCount ? avgR.toFixed(2) + 'R' : '—', sub: rCount ? `${rCount} עסקאות עם סטופ` : '', cls: avgR >= 0 ? 'c-green' : 'c-red', valCls: rCount ? (avgR >= 0 ? 'green' : 'red') : '', icon: ICON_PCT },
