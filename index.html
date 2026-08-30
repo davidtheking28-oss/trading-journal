@@ -118,6 +118,7 @@
   --r-sm:     14px;
   --r-md:     14px;
   --r-lg:     24px;
+  --r-pill:   100px;
 }
 
 html { scroll-behavior: smooth; }
@@ -207,7 +208,7 @@ nav {
 .nav-cta {
   padding: 8px 18px;
   background: var(--accent);
-  border: none; border-radius: var(--r-sm);
+  border: none; border-radius: var(--r-pill);
   color: #fff; font-size: 13px; font-weight: 600;
   cursor: pointer; text-decoration: none;
   transition: opacity .2s, transform .15s, box-shadow .2s;
@@ -305,7 +306,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 
 .btn-hero-primary {
   padding: 13px 26px; font-size: 15px; font-weight: 700;
-  border-radius: var(--r-sm); cursor: pointer; text-decoration: none;
+  border-radius: var(--r-pill); cursor: pointer; text-decoration: none;
   display: inline-flex; align-items: center; gap: 8px;
   background: var(--accent);
   color: #fff; border: none; font-family: var(--body);
@@ -316,7 +317,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 
 .btn-hero-ghost {
   padding: 13px 22px; font-size: 15px; font-weight: 500;
-  border-radius: var(--r-sm); cursor: pointer; text-decoration: none;
+  border-radius: var(--r-pill); cursor: pointer; text-decoration: none;
   display: inline-flex; align-items: center; gap: 8px;
   background: rgba(255,255,255,0.04); color: var(--text2);
   border: 1px solid var(--border2); font-family: var(--body);
@@ -326,7 +327,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 
 .btn-solid {
   padding: 13px 26px; font-size: 15px; font-weight: 600;
-  border-radius: var(--r-sm); cursor: pointer; text-decoration: none;
+  border-radius: var(--r-pill); cursor: pointer; text-decoration: none;
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   background: var(--accent);
   color: #fff; border: none; font-family: var(--body);
@@ -336,7 +337,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 
 .btn-cta-dark {
   padding: 15px 32px; font-size: 16px; font-weight: 600;
-  border-radius: var(--r-sm); cursor: pointer; text-decoration: none;
+  border-radius: var(--r-pill); cursor: pointer; text-decoration: none;
   display: inline-flex; align-items: center; gap: 8px;
   background: var(--bg2); color: var(--text);
   border: 1px solid rgba(79,127,255,0.3); font-family: var(--body);
@@ -838,7 +839,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 .faq-visual-txt span { font-size: 12px; color: var(--text3); }
 
 .faq-list {
-  display: flex; flex-direction: column; gap: 8px;
+  display: flex; flex-direction: column; gap: 0;
   text-align: right;
 }
 
@@ -848,15 +849,13 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 }
 
 .faq-item {
-  background: var(--card);
-  border: 1px solid var(--border2);
-  border-radius: var(--r-md); overflow: hidden;
-  transition: border-color .2s;
+  background: none; overflow: hidden;
+  border: none; border-bottom: 1px solid var(--border2);
 }
-.faq-item.open { border-color: rgba(79,127,255,0.2); }
+.faq-item:last-child { border-bottom: none; }
 
 .faq-q {
-  width: 100%; padding: 16px 18px;
+  width: 100%; padding: 18px 2px;
   background: none; border: none; color: var(--text);
   font-size: 14px; font-weight: 600; cursor: pointer;
   text-align: right; display: flex;
@@ -864,13 +863,14 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   font-family: var(--body); letter-spacing: -0.2px;
   transition: color .2s;
 }
+.faq-item.open .faq-q { color: var(--accent); }
 @media (hover: hover) and (pointer: fine) { .faq-q:hover { color: var(--accent); } }
 
 .faq-arrow {
   flex-shrink: 0; color: var(--text3); display: flex;
   transition: transform .3s cubic-bezier(.34,1.56,.64,1);
 }
-.faq-item.open .faq-arrow { transform: rotate(180deg); }
+.faq-item.open .faq-arrow { transform: rotate(180deg); color: var(--accent); }
 
 /* grid-rows trick: the arrow already rotates smoothly, this makes the answer
    itself grow/shrink to match instead of snapping via display:none/block. */
@@ -879,8 +879,15 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   transition: grid-template-rows .25s ease-out;
 }
 .faq-item.open .faq-a { grid-template-rows: 1fr; }
-.faq-a-inner {
-  overflow: hidden; min-height: 0; padding: 0 18px 16px;
+/* overflow/min-height must live on this element (the direct grid item under
+   .faq-a) for the 0fr collapse to reach true 0 — padding does not belong here:
+   a border-box can never render shorter than its own padding, so any padding
+   placed on the shrinking grid item itself puts a floor under the "closed"
+   height no matter how small grid-template-rows goes. The padding lives one
+   level deeper, on .faq-a-pad, which isn't part of the sizing algorithm. */
+.faq-a-inner { overflow: hidden; min-height: 0; }
+.faq-a-pad {
+  padding: 0 2px 18px;
   font-size: 13.5px; color: var(--text3); line-height: 1.75;
 }
 
@@ -1692,35 +1699,35 @@ html.a11y-underline a { text-decoration: underline !important; }
           האם החיבור לברוקר בטוח?
           <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
         </button>
-        <div class="faq-a" id="faq-a1" aria-hidden="true"><div class="faq-a-inner">לחלוטין. החיבור מתבצע באמצעות מפתח Read-Only (כמו Flex Query ב-Interactive Brokers או API Key בקריפטו). אין למערכת שום יכולת לבצע עסקאות או למשוך כספים. הנתונים מאובטחים בהצפנת RLS ו-HTTPS.</div></div>
+        <div class="faq-a" id="faq-a1" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">לחלוטין. החיבור מתבצע באמצעות מפתח Read-Only (כמו Flex Query ב-Interactive Brokers או API Key בקריפטו). אין למערכת שום יכולת לבצע עסקאות או למשוך כספים. הנתונים מאובטחים בהצפנת RLS ו-HTTPS.</div></div></div>
       </div>
       <div class="faq-item reveal" role="listitem">
         <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a2">
           האם נתוני בזמן אמת ומסנן המניות באמת בחינם?
           <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
         </button>
-        <div class="faq-a" id="faq-a2" aria-hidden="true"><div class="faq-a-inner">כן! כל הכלים בפלטפורמה — כולל מסנן המניות, נתוני הסקטורים בזמן אמת וכלי בניית התיק — פתוחים לשימוש ללא עלות וללא צורך בהזנת כרטיס אשראי.</div></div>
+        <div class="faq-a" id="faq-a2" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">כן! כל הכלים בפלטפורמה — כולל מסנן המניות, נתוני הסקטורים בזמן אמת וכלי בניית התיק — פתוחים לשימוש ללא עלות וללא צורך בהזנת כרטיס אשראי.</div></div></div>
       </div>
       <div class="faq-item reveal" role="listitem">
         <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a3">
           איך קטגוריית בניית התיק עוזרת לי ספציפית?
           <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
         </button>
-        <div class="faq-a" id="faq-a3" aria-hidden="true"><div class="faq-a-inner">היא מונעת חשיפת יתר לנכס יחיד, מראה לך את פיזור התיק בלייב, ועוזרת לך לתכנן פוזיציות חדשות בהתאם לגודל התיק ורמת הסיכון שהגדרת.</div></div>
+        <div class="faq-a" id="faq-a3" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">היא מונעת חשיפת יתר לנכס יחיד, מראה לך את פיזור התיק בלייב, ועוזרת לך לתכנן פוזיציות חדשות בהתאם לגודל התיק ורמת הסיכון שהגדרת.</div></div></div>
       </div>
       <div class="faq-item reveal" role="listitem">
         <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a4">
           כמה זמן לוקח להגדיר?
           <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
         </button>
-        <div class="faq-a" id="faq-a4" aria-hidden="true"><div class="faq-a-inner">הרשמה — פחות מדקה. חיבור Interactive Brokers — כ-10 דקות בפעם הראשונה (יש מדריך מצורף). ברגע שהחיבור מוגדר, כל עסקה עתידית מיובאת אוטומטית.</div></div>
+        <div class="faq-a" id="faq-a4" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">הרשמה — פחות מדקה. חיבור Interactive Brokers — כ-10 דקות בפעם הראשונה (יש מדריך מצורף). ברגע שהחיבור מוגדר, כל עסקה עתידית מיובאת אוטומטית.</div></div></div>
       </div>
       <div class="faq-item reveal" role="listitem">
         <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a5">
           מה קורה לנתונים שלי אם אני רוצה למחוק את החשבון?
           <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
         </button>
-        <div class="faq-a" id="faq-a5" aria-hidden="true"><div class="faq-a-inner">הנתונים שלך — ההיסטוריה, העסקאות, כל מה שיובא מהברוקר — שייכים לך בלבד. אפשר לייצא את הכל ל-CSV בכל רגע מתוך ההגדרות, ולבקש מחיקה מלאה מהמערכת בפנייה ישירה אלינו. שום מידע לא נמכר או משותף עם צד שלישי.</div></div>
+        <div class="faq-a" id="faq-a5" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">הנתונים שלך — ההיסטוריה, העסקאות, כל מה שיובא מהברוקר — שייכים לך בלבד. אפשר לייצא את הכל ל-CSV בכל רגע מתוך ההגדרות, ולבקש מחיקה מלאה מהמערכת בפנייה ישירה אלינו. שום מידע לא נמכר או משותף עם צד שלישי.</div></div></div>
       </div>
     </div>
     <div class="faq-visual reveal" aria-hidden="true">
