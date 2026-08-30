@@ -653,34 +653,36 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 .feat-row-desc { font-size: 14px; color: var(--text2); line-height: 1.75; max-width: 58ch; }
 
 .broker-badge {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 5px 11px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid var(--border2);
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 10px 20px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
   border-radius: 100px;
-  font-family: var(--mono); font-size: 11px; font-weight: 600;
-  color: var(--text2); letter-spacing: 0.3px;
+  font-family: var(--display); font-size: 15px; font-weight: 700;
+  color: var(--text); letter-spacing: -0.2px;
+  transition: border-color .2s, background .2s, transform .2s;
 }
-.broker-badge-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-.broker-badge-dot.ibkr { background: #d3212c; box-shadow: 0 0 5px rgba(211,33,44,0.5); }
-.broker-badge-dot.bybit { background: #f7a600; box-shadow: 0 0 5px rgba(247,166,0,0.5); }
+@media (hover: hover) and (pointer: fine) { .broker-badge:hover { border-color: rgba(79,127,255,0.4); background: rgba(255,255,255,0.06); transform: translateY(-1px); } }
+.broker-badge-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.broker-badge-dot.ibkr { background: #d3212c; box-shadow: 0 0 8px rgba(211,33,44,0.7); }
+.broker-badge-dot.bybit { background: #f7a600; box-shadow: 0 0 8px rgba(247,166,0,0.7); }
 
 /* ── BROKER TRUST STRIP ── */
 .broker-strip {
   position: relative; z-index: 1;
   display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
-  gap: 16px;
-  padding: 22px max(28px, 5vw);
+  gap: 20px;
+  padding: 34px max(28px, 5vw);
   border-top: 1px solid var(--border2);
   border-bottom: 1px solid var(--border2);
-  background: rgba(7,16,31,0.5);
+  background: rgba(7,16,31,0.6);
 }
 .broker-strip-label {
-  font-family: var(--mono); font-size: 11px; font-weight: 600;
-  color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase;
+  font-family: var(--mono); font-size: 12px; font-weight: 600;
+  color: var(--text2); letter-spacing: 1.5px; text-transform: uppercase;
 }
-.broker-strip-badges { display: flex; gap: 10px; flex-wrap: wrap; }
-.broker-badge.lg { padding: 7px 16px; font-size: 13px; }
+.broker-strip-badges { display: flex; gap: 14px; flex-wrap: wrap; }
+.broker-badge.lg { padding: 12px 24px; font-size: 16px; }
 @media (max-width: 560px) { .feat-row { grid-template-columns: 1fr; gap: 10px; } .feat-num { font-size: 28px; } }
 
 /* ── STEPS ── */
@@ -1140,7 +1142,7 @@ html.a11y-underline a { text-decoration: underline !important; }
 </section>
 
 <!-- BROKER TRUST STRIP -->
-<div class="broker-strip" aria-hidden="true">
+<div class="broker-strip">
   <span class="broker-strip-label">מתחברים לברוקרים המובילים</span>
   <div class="broker-strip-badges">
     <span class="broker-badge lg"><span class="broker-badge-dot ibkr"></span>Interactive Brokers</span>
