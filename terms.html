@@ -8,47 +8,66 @@
 <link rel="canonical" href="https://davidtheking28-oss.github.io/trading-journal/terms.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0a0a0a;--card:#111;--border:rgba(255,255,255,0.07);
-  --text:#f1f5f9;--text2:#a8b8cc;--text3:#6b7f96;
-  --accent:#818cf8;
+  --bg:#0a0a0a;--card:#111;--card-low:#0d0d0d;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.10);
+  --text:#f1f5f9;--text2:#a8b8cc;--text3:#8896a8;
+  --accent:#818cf8;--accent-deep:#6366f1;
+  --loss:#ff6b8a;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.6),0 4px 16px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.04);
 }
 html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;line-height:1.6;min-height:100vh}
+body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',-apple-system,'Segoe UI',sans-serif;line-height:1.6;min-height:100vh;font-size:15px}
 :focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
 
 nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
 .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
-.nav-logo-icon{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center}
+.nav-logo-icon{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent-deep));display:flex;align-items:center;justify-content:center}
 .nav-logo-text{font-size:15px;font-weight:700;color:var(--text)}
 .nav-back{font-size:13px;color:var(--text2);text-decoration:none;display:flex;align-items:center;gap:5px;transition:color .2s}
 .nav-back:hover{color:var(--text)}
 
-.container{max-width:760px;margin:0 auto;padding:48px 24px 80px}
+.layout{max-width:1000px;margin:0 auto;padding:48px 24px 100px;display:grid;grid-template-columns:200px minmax(0,1fr);gap:56px;align-items:start}
+
+/* ── Table of contents (sticky, desktop only) ── */
+.toc{position:sticky;top:80px;display:flex;flex-direction:column;gap:1px;max-height:calc(100vh - 100px);overflow-y:auto}
+.toc-label{font-size:10.5px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;padding:0 10px}
+.toc a{display:block;font-size:12.5px;color:var(--text3);text-decoration:none;padding:6px 10px;border-radius:8px;line-height:1.4;transition:background-color .18s,color .18s}
+.toc a:hover{color:var(--text2);background:rgba(255,255,255,0.04)}
+.toc a.active{color:var(--accent);background:rgba(129,140,248,0.1);font-weight:600}
+
+.content{min-width:0}
 
 .page-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:rgba(129,140,248,0.1);border:1px solid rgba(129,140,248,0.25);border-radius:100px;font-size:11px;font-weight:600;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px}
-.page-title{font-size:clamp(26px,4vw,38px);font-weight:800;letter-spacing:-1px;line-height:1.1;margin-bottom:8px}
-.page-date{font-size:13px;color:var(--text3);margin-bottom:40px}
+.page-title{font-size:34px;font-weight:800;letter-spacing:-1px;line-height:1.15;margin-bottom:8px}
+.page-date{font-size:13px;color:var(--text3);margin-bottom:32px}
 
-.disclaimer-box{background:rgba(255,107,107,0.07);border:1px solid rgba(255,107,107,0.25);border-radius:14px;padding:20px 24px;margin-bottom:40px;display:flex;gap:14px;align-items:flex-start}
-.disclaimer-box svg{flex-shrink:0;margin-top:2px;color:#ff6b8a}
-.disclaimer-text{font-size:14px;line-height:1.7;color:var(--text2)}
+.disclaimer-box{background:rgba(255,107,138,0.07);border:1px solid rgba(255,107,138,0.22);border-radius:14px;padding:20px 24px;margin-bottom:44px;display:flex;gap:14px;align-items:flex-start;box-shadow:var(--shadow-sm)}
+.disclaimer-box svg{flex-shrink:0;margin-top:2px;color:var(--loss)}
+.disclaimer-text{font-size:14px;line-height:1.7;color:var(--text2);max-width:70ch}
 .disclaimer-text strong{color:var(--text);display:block;margin-bottom:4px;font-size:15px}
 
-h2{font-size:18px;font-weight:700;margin:36px 0 12px;color:var(--text);letter-spacing:-0.3px}
-h2:first-of-type{margin-top:0}
-p{font-size:14px;color:var(--text2);line-height:1.75;margin-bottom:12px}
-ul{padding-right:20px;margin-bottom:12px;display:flex;flex-direction:column;gap:6px}
+section{scroll-margin-top:76px;margin-bottom:38px;padding-bottom:38px;border-bottom:1px solid var(--border)}
+section:last-of-type{border-bottom:none;margin-bottom:0;padding-bottom:0}
+h2{display:flex;align-items:baseline;gap:10px;font-size:17px;font-weight:700;margin-bottom:14px;color:var(--text);letter-spacing:-0.2px}
+h2 .num{font-size:12px;font-weight:700;color:var(--accent);font-feature-settings:"tnum";flex-shrink:0}
+p{font-size:14px;color:var(--text2);line-height:1.75;margin-bottom:12px;max-width:70ch}
+p:last-child{margin-bottom:0}
+ul{padding-right:20px;margin-bottom:12px;display:flex;flex-direction:column;gap:7px;max-width:70ch}
+ul:last-child{margin-bottom:0}
 li{font-size:14px;color:var(--text2);line-height:1.7}
 a{color:var(--accent);text-decoration:none}
 a:hover{text-decoration:underline}
-.container p a,.container li a,.container td a{text-decoration:underline}
-hr{border:none;border-top:1px solid var(--border);margin:36px 0}
+.content p a,.content li a{text-decoration:underline}
 
-@media(max-width:600px){.container{padding:32px 16px 60px}}
+@media(max-width:860px){
+  .layout{grid-template-columns:1fr;padding:32px 16px 60px;gap:0}
+  .toc{display:none}
+  .page-title{font-size:28px}
+}
 </style>
 </head>
 <body>
@@ -75,7 +94,28 @@ hr{border:none;border-top:1px solid var(--border);margin:36px 0}
 </nav>
 
 <main>
-<div class="container">
+<div class="layout">
+
+  <nav class="toc" aria-label="ניווט בין סעיפים">
+    <div class="toc-label">בדף זה</div>
+    <a href="#s1">כשירות משפטית</a>
+    <a href="#s2">תיאור השירות</a>
+    <a href="#s3">אי-ייעוץ פיננסי</a>
+    <a href="#s4">ברוקרים ו-API</a>
+    <a href="#s5">נתוני שוק ומסנן</a>
+    <a href="#s6">אחריות המשתמש</a>
+    <a href="#s7">שיפוי</a>
+    <a href="#s8">הגבלת אחריות</a>
+    <a href="#s9">ביטול עסקה</a>
+    <a href="#s10">מידע ופרטיות</a>
+    <a href="#s11">קניין רוחני</a>
+    <a href="#s12">שינויים בתנאים</a>
+    <a href="#s13">סיום שירות</a>
+    <a href="#s14">דין וסמכות שיפוט</a>
+    <a href="#s15">יצירת קשר</a>
+  </nav>
+
+  <div class="content">
 
   <div class="page-badge">תנאי שימוש</div>
   <h1 class="page-title">תנאי שימוש</h1>
@@ -89,90 +129,141 @@ hr{border:none;border-top:1px solid var(--border);margin:36px 0}
     </div>
   </div>
 
-  <h2>1. קבלת התנאים וכשירות משפטית</h2>
-  <p>השימוש ב-ChartRoom ("השירות") כפוף לתנאים אלו. כניסה לאפליקציה או שימוש בה מהווה הסכמה מלאה לתנאים. אם אינך מסכים — אל תשתמש בשירות.</p>
-  <p>בשימוש בשירות אתה מצהיר ומאשר כי אתה בן 18 שנים לפחות, וכי אתה בעל כשירות משפטית מלאה להתקשר בהסכם מחייב זה ולבצע באופן עצמאי פעולות מסחר ופעולות פיננסיות אחרות. מפעיל השירות רשאי לחסום או לבטל חשבון של משתמש שאינו עומד בתנאי זה.</p>
+  <section id="s1">
+    <h2><span class="num">01</span>קבלת התנאים וכשירות משפטית</h2>
+    <p>השימוש ב-ChartRoom ("השירות") כפוף לתנאים אלו. כניסה לאפליקציה או שימוש בה מהווה הסכמה מלאה לתנאים. אם אינך מסכים — אל תשתמש בשירות.</p>
+    <p>בשימוש בשירות אתה מצהיר ומאשר כי אתה בן 18 שנים לפחות, וכי אתה בעל כשירות משפטית מלאה להתקשר בהסכם מחייב זה ולבצע באופן עצמאי פעולות מסחר ופעולות פיננסיות אחרות. מפעיל השירות רשאי לחסום או לבטל חשבון של משתמש שאינו עומד בתנאי זה.</p>
+  </section>
 
-  <h2>2. תיאור השירות, זמינות ותחזוקה</h2>
-  <p>ChartRoom הוא יומן מסחר דיגיטלי המאפשר תיעוד עסקאות, ניתוח ביצועים, שימוש במסנן מניות (Screener), וחיבור לברוקרים באמצעות API לצורך ייבוא אוטומטי של נתוני עסקאות. השירות מוצע כפי שהוא (as-is) ללא כל התחייבות לזמינות רציפה או לרמת שירות (SLA) של 100%.</p>
-  <p>ייתכנו השבתות זמניות של השירות, כולן או חלקן, עקב עבודות תחזוקה, שדרוגים ועדכוני שרת, תקלות תקשורת או גורמים אחרים שאינם בשליטת מפעיל השירות. ככל שניתן, ינקוט מפעיל השירות מאמץ סביר להודיע מראש על תחזוקה מתוכננת, אולם אין בכך כדי להטיל עליו חובה או אחריות בגין השבתה כאמור.</p>
+  <section id="s2">
+    <h2><span class="num">02</span>תיאור השירות, זמינות ותחזוקה</h2>
+    <p>ChartRoom הוא יומן מסחר דיגיטלי המאפשר תיעוד עסקאות, ניתוח ביצועים, שימוש במסנן מניות (Screener), וחיבור לברוקרים באמצעות API לצורך ייבוא אוטומטי של נתוני עסקאות. השירות מוצע כפי שהוא (as-is) ללא כל התחייבות לזמינות רציפה או לרמת שירות (SLA) של 100%.</p>
+    <p>ייתכנו השבתות זמניות של השירות, כולן או חלקן, עקב עבודות תחזוקה, שדרוגים ועדכוני שרת, תקלות תקשורת או גורמים אחרים שאינם בשליטת מפעיל השירות. ככל שניתן, ינקוט מפעיל השירות מאמץ סביר להודיע מראש על תחזוקה מתוכננת, אולם אין בכך כדי להטיל עליו חובה או אחריות בגין השבתה כאמור.</p>
+  </section>
 
-  <h2>3. הצהרת אי-ייעוץ פיננסי</h2>
-  <p>השירות אינו מהווה ואינו מיועד להוות:</p>
-  <ul>
-    <li>ייעוץ השקעות כמשמעותו בחוק הסדרת העיסוק בייעוץ השקעות, בשיווק השקעות ובניהול תיקי השקעות, תשנ"ה-1995</li>
-    <li>המלצה לרכישה או מכירה של ניירות ערך, מטבעות, נגזרים או כל מכשיר פיננסי</li>
-    <li>תחזית לגבי ביצועי השוק בעתיד</li>
-    <li>ייעוץ מס או חשבונאי</li>
-  </ul>
-  <p>ביצועי עסקאות בעבר אינם ערובה לתוצאות עתידיות. המסחר בשוק ההון כרוך בסיכון הפסד הון.</p>
+  <section id="s3">
+    <h2><span class="num">03</span>הצהרת אי-ייעוץ פיננסי</h2>
+    <p>השירות אינו מהווה ואינו מיועד להוות:</p>
+    <ul>
+      <li>ייעוץ השקעות כמשמעותו בחוק הסדרת העיסוק בייעוץ השקעות, בשיווק השקעות ובניהול תיקי השקעות, תשנ"ה-1995</li>
+      <li>המלצה לרכישה או מכירה של ניירות ערך, מטבעות, נגזרים או כל מכשיר פיננסי</li>
+      <li>תחזית לגבי ביצועי השוק בעתיד</li>
+      <li>ייעוץ מס או חשבונאי</li>
+    </ul>
+    <p>ביצועי עסקאות בעבר אינם ערובה לתוצאות עתידיות. המסחר בשוק ההון כרוך בסיכון הפסד הון.</p>
+  </section>
 
-  <h2>4. חיבור לברוקרים ומפתחות API</h2>
-  <p>השירות מאפשר חיבור לחשבונות ברוקר (כגון IBKR, Bybit) באמצעות מפתחות API שמוזנים על-ידי המשתמש. בנוגע לחיבור זה:</p>
-  <ul>
-    <li>המשתמש הוא האחראי הבלעדי לשמירה, לניהול ולהיקף ההרשאות (permissions/scopes) של מפתחות ה-API שלו. יש להקצות למפתח את מינימום ההרשאות הנדרש (במיוחד — לא הרשאת ביצוע פקודות, אם ניתן להימנע מכך) ולבטל מפתח שאינו בשימוש.</li>
-    <li>מפעיל השירות אינו צד לחשבון הברוקר ואינו שולט בתשתית הברוקר, בזמינותה או בביצועיה.</li>
-    <li>מפעיל השירות פטור מכל אחריות לנזק, ישיר או עקיף, הנובע מכשל, השבתה, עיכוב תקשורת (latency), שגיאה בשיגור פקודת מסחר, פקודה כפולה, פקודה שלא בוצעה או בוצעה באיחור, אובדן, דליפה או שימוש לרעה במפתח API שנגרמו שלא באשמת מפעיל השירות, או אובדן כספי כתוצאה מתקלה בתקשורת בין השירות לבין הברוקר או ספק החיבור.</li>
-    <li>ייבוא נתוני עסקאות מהברוקר הוא לצורך תיעוד ואנליזה בלבד, ואינו מהווה אישור, התחייבות או ערובה לנכונות הנתונים מול חשבון הברוקר בפועל.</li>
-  </ul>
+  <section id="s4">
+    <h2><span class="num">04</span>חיבור לברוקרים ומפתחות API</h2>
+    <p>השירות מאפשר חיבור לחשבונות ברוקר (כגון IBKR, Bybit) באמצעות מפתחות API שמוזנים על-ידי המשתמש. בנוגע לחיבור זה:</p>
+    <ul>
+      <li>המשתמש הוא האחראי הבלעדי לשמירה, לניהול ולהיקף ההרשאות (permissions/scopes) של מפתחות ה-API שלו. יש להקצות למפתח את מינימום ההרשאות הנדרש (במיוחד — לא הרשאת ביצוע פקודות, אם ניתן להימנע מכך) ולבטל מפתח שאינו בשימוש.</li>
+      <li>מפעיל השירות אינו צד לחשבון הברוקר ואינו שולט בתשתית הברוקר, בזמינותה או בביצועיה.</li>
+      <li>מפעיל השירות פטור מכל אחריות לנזק, ישיר או עקיף, הנובע מכשל, השבתה, עיכוב תקשורת (latency), שגיאה בשיגור פקודת מסחר, פקודה כפולה, פקודה שלא בוצעה או בוצעה באיחור, אובדן, דליפה או שימוש לרעה במפתח API שנגרמו שלא באשמת מפעיל השירות, או אובדן כספי כתוצאה מתקלה בתקשורת בין השירות לבין הברוקר או ספק החיבור.</li>
+      <li>ייבוא נתוני עסקאות מהברוקר הוא לצורך תיעוד ואנליזה בלבד, ואינו מהווה אישור, התחייבות או ערובה לנכונות הנתונים מול חשבון הברוקר בפועל.</li>
+    </ul>
+  </section>
 
-  <h2>5. נתוני שוק ומסנן המניות</h2>
-  <p>נתוני שוק, מחירים, סריקות ותוצאות מסנן המניות (Screener) מתקבלים מספקי מידע חיצוניים (צד-שלישי). בהתאם:</p>
-  <ul>
-    <li>מפעיל השירות אינו אחראי לדיוק, לשלמות, לזמינות הנתונים, לעיכוב בעדכונם (delay) או לשגיאות בפיד המידע המתקבל מהספקים החיצוניים.</li>
-    <li>חישובים אוטומטיים, סריקות, דירוגים ופרמטרים המוצגים במסנן המניות (לרבות אך לא רק ציוני RS, Trend Template ותנאי סינון אחרים) הם כלי עזר בלבד, אינם מבטיחים תוצאה מדויקת, ועשויים להכיל שגיאות חישוב או נתונים חסרים.</li>
-    <li>אין לראות בתוצאות המסנן או בנתוני השוק המוצגים באפליקציה המלצה, אישור או שלילה של השקעה כלשהי — ראו גם סעיף 3 לעיל.</li>
-  </ul>
+  <section id="s5">
+    <h2><span class="num">05</span>נתוני שוק ומסנן המניות</h2>
+    <p>נתוני שוק, מחירים, סריקות ותוצאות מסנן המניות (Screener) מתקבלים מספקי מידע חיצוניים (צד-שלישי). בהתאם:</p>
+    <ul>
+      <li>מפעיל השירות אינו אחראי לדיוק, לשלמות, לזמינות הנתונים, לעיכוב בעדכונם (delay) או לשגיאות בפיד המידע המתקבל מהספקים החיצוניים.</li>
+      <li>חישובים אוטומטיים, סריקות, דירוגים ופרמטרים המוצגים במסנן המניות (לרבות אך לא רק ציוני RS, Trend Template ותנאי סינון אחרים) הם כלי עזר בלבד, אינם מבטיחים תוצאה מדויקת, ועשויים להכיל שגיאות חישוב או נתונים חסרים.</li>
+      <li>אין לראות בתוצאות המסנן או בנתוני השוק המוצגים באפליקציה המלצה, אישור או שלילה של השקעה כלשהי — ראו גם סעיף 3 לעיל.</li>
+    </ul>
+  </section>
 
-  <h2>6. אחריות המשתמש</h2>
-  <p>המשתמש מתחייב:</p>
-  <ul>
-    <li>לא להעלות תוכן בלתי חוקי או פוגעני</li>
-    <li>לא לנסות לפרוץ, להעמיס או לשבש את השירות</li>
-    <li>לשמור בסודיות את פרטי הגישה לחשבון</li>
-    <li>לא לשתף מפתחות API של ברוקרים עם צדדים שלישיים</li>
-    <li>לא לבצע הנדסה לאחור (Reverse Engineering), פירוק או ניסיון לחשוף קוד מקור של השירות</li>
-    <li>לא לבצע סריקה אוטומטית (Scraping), שימוש בבוטים, או כל אמצעי אוטומטי אחר לכריית נתונים מתוך האפליקציה, אלא באמצעות ממשקים שהותרו לכך במפורש</li>
-    <li>לעשות שימוש בשירות בהתאם לדין הישראלי החל</li>
-  </ul>
+  <section id="s6">
+    <h2><span class="num">06</span>אחריות המשתמש</h2>
+    <p>המשתמש מתחייב:</p>
+    <ul>
+      <li>לא להעלות תוכן בלתי חוקי או פוגעני</li>
+      <li>לא לנסות לפרוץ, להעמיס או לשבש את השירות</li>
+      <li>לשמור בסודיות את פרטי הגישה לחשבון</li>
+      <li>לא לשתף מפתחות API של ברוקרים עם צדדים שלישיים</li>
+      <li>לא לבצע הנדסה לאחור (Reverse Engineering), פירוק או ניסיון לחשוף קוד מקור של השירות</li>
+      <li>לא לבצע סריקה אוטומטית (Scraping), שימוש בבוטים, או כל אמצעי אוטומטי אחר לכריית נתונים מתוך האפליקציה, אלא באמצעות ממשקים שהותרו לכך במפורש</li>
+      <li>לעשות שימוש בשירות בהתאם לדין הישראלי החל</li>
+    </ul>
+  </section>
 
-  <h2>7. שיפוי</h2>
-  <p>המשתמש מתחייב לשפות ולפצות את מפעיל השירות, עובדיו, ומי מטעמו, מיד עם דרישתם הראשונה, בגין כל נזק, הפסד, אובדן רווח, תביעה, דרישה או הוצאה (לרבות שכר טרחת עורכי דין והוצאות משפט כדין) שייגרמו להם עקב תביעה או דרישה של צד שלישי — לרבות ברוקר, רשות רגולטורית או משתמש אחר — כתוצאה משימוש לרעה של המשתמש בשירות, הפרת תנאי שימוש אלה על-ידו, או כל פעילות מסחר שביצע המשתמש באמצעות חשבונו.</p>
+  <section id="s7">
+    <h2><span class="num">07</span>שיפוי</h2>
+    <p>המשתמש מתחייב לשפות ולפצות את מפעיל השירות, עובדיו, ומי מטעמו, מיד עם דרישתם הראשונה, בגין כל נזק, הפסד, אובדן רווח, תביעה, דרישה או הוצאה (לרבות שכר טרחת עורכי דין והוצאות משפט כדין) שייגרמו להם עקב תביעה או דרישה של צד שלישי — לרבות ברוקר, רשות רגולטורית או משתמש אחר — כתוצאה משימוש לרעה של המשתמש בשירות, הפרת תנאי שימוש אלה על-ידו, או כל פעילות מסחר שביצע המשתמש באמצעות חשבונו.</p>
+  </section>
 
-  <h2>8. הגבלת אחריות</h2>
-  <p>השירות ניתן "כפי שהוא" (AS IS). לא תחול על מפעיל השירות כל אחריות לנזקים ישירים, עקיפים, מקריים או תוצאתיים הנובעים מ:</p>
-  <ul>
-    <li>שגיאות בנתונים המיובאים מהברוקר</li>
-    <li>החלטות מסחר שנעשו על בסיס מידע מהאפליקציה</li>
-    <li>אובדן גישה לחשבון או לנתונים</li>
-    <li>הפסקת שירות או תקלות טכניות</li>
-  </ul>
-  <p>בכל מקרה, ובכפוף לכל דין קוגנטי החל, החבות המצטברת המקסימלית של מפעיל השירות כלפי המשתמש בגין כל נזק — מכל עילה שהיא — לא תעלה על הסכום ששילם המשתמש בפועל עבור השירות ב-12 החודשים שקדמו לאירוע נשוא התביעה, ובכל מקרה לא תעלה על 100 ₪ ככל שהשירות ניתן למשתמש ללא תשלום.</p>
+  <section id="s8">
+    <h2><span class="num">08</span>הגבלת אחריות</h2>
+    <p>השירות ניתן "כפי שהוא" (AS IS). לא תחול על מפעיל השירות כל אחריות לנזקים ישירים, עקיפים, מקריים או תוצאתיים הנובעים מ:</p>
+    <ul>
+      <li>שגיאות בנתונים המיובאים מהברוקר</li>
+      <li>החלטות מסחר שנעשו על בסיס מידע מהאפליקציה</li>
+      <li>אובדן גישה לחשבון או לנתונים</li>
+      <li>הפסקת שירות או תקלות טכניות</li>
+    </ul>
+    <p>בכל מקרה, ובכפוף לכל דין קוגנטי החל, החבות המצטברת המקסימלית של מפעיל השירות כלפי המשתמש בגין כל נזק — מכל עילה שהיא — לא תעלה על הסכום ששילם המשתמש בפועל עבור השירות ב-12 החודשים שקדמו לאירוע נשוא התביעה, ובכל מקרה לא תעלה על 100 ₪ ככל שהשירות ניתן למשתמש ללא תשלום.</p>
+  </section>
 
-  <h2>9. ביטול עסקה</h2>
-  <p>ככל שהשירות, כולו או חלקו, ניתן במסגרת מנוי בתשלום, זכאי המשתמש לבטל את העסקה בהתאם להוראות חוק הגנת הצרכן, התשמ"א-1981, בתוך 14 ימים מיום עשיית העסקה או מיום קבלת מסמך הגילוי בנוגע לעסקה (לפי המאוחר מביניהם). הודעת ביטול תימסר בכתב למפעיל השירות בכתובת <a href="mailto:davidtheking27@gmail.com">davidtheking27@gmail.com</a>. במקרה של ביטול כאמור, יוחזר למשתמש חלק יחסי מהתשלום ששולם בעד התקופה שלאחר מועד הביטול, בכפוף לכל ניכוי המותר על-פי דין (לרבות דמי ביטול, ככל שיחולו). ביטול לאחר תחילת השימוש בפועל בתכונות בתשלום עשוי להיות כפוף למגבלות נוספות כאמור בחוק.</p>
+  <section id="s9">
+    <h2><span class="num">09</span>ביטול עסקה</h2>
+    <p>ככל שהשירות, כולו או חלקו, ניתן במסגרת מנוי בתשלום, זכאי המשתמש לבטל את העסקה בהתאם להוראות חוק הגנת הצרכן, התשמ"א-1981, בתוך 14 ימים מיום עשיית העסקה או מיום קבלת מסמך הגילוי בנוגע לעסקה (לפי המאוחר מביניהם). הודעת ביטול תימסר בכתב למפעיל השירות בכתובת <a href="mailto:davidtheking27@gmail.com">davidtheking27@gmail.com</a>. במקרה של ביטול כאמור, יוחזר למשתמש חלק יחסי מהתשלום ששולם בעד התקופה שלאחר מועד הביטול, בכפוף לכל ניכוי המותר על-פי דין (לרבות דמי ביטול, ככל שיחולו). ביטול לאחר תחילת השימוש בפועל בתכונות בתשלום עשוי להיות כפוף למגבלות נוספות כאמור בחוק.</p>
+  </section>
 
-  <h2>10. איסוף מידע, פרטיות ותקשורת</h2>
-  <p>איסוף, שימוש ואחסון מידע במסגרת השירות — לרבות מפתחות API (המאוחסנים מוצפנים), כתובות IP ויומני שימוש — מתבצעים בהתאם ל<a href="privacy.html">מדיניות הפרטיות</a> של השירות, המהווה חלק בלתי נפרד מתנאים אלו.</p>
-  <p>הודעות שנשלחות לכתובת הדוא"ל של המשתמש הן, ככלל, הודעות תפעוליות ומערכתיות בלבד (כגון אימות חשבון, שחזור סיסמה, התראות אבטחה ועדכוני שירות מהותיים), ואינן טעונות הסכמה מוקדמת בהתאם לסעיף 30א לחוק התקשורת (בזק ושידורים), התשמ"ב-1982. תוכן פרסומי או שיווקי יישלח למשתמש רק בכפוף לקבלת הסכמתו המפורשת מראש (Opt-in), ובכל הודעה פרסומית כאמור תינתן למשתמש אפשרות פשוטה וזמינה להסרה מרשימת התפוצה בכל עת.</p>
+  <section id="s10">
+    <h2><span class="num">10</span>איסוף מידע, פרטיות ותקשורת</h2>
+    <p>איסוף, שימוש ואחסון מידע במסגרת השירות — לרבות מפתחות API (המאוחסנים מוצפנים), כתובות IP ויומני שימוש — מתבצעים בהתאם ל<a href="privacy.html">מדיניות הפרטיות</a> של השירות, המהווה חלק בלתי נפרד מתנאים אלו.</p>
+    <p>הודעות שנשלחות לכתובת הדוא"ל של המשתמש הן, ככלל, הודעות תפעוליות ומערכתיות בלבד (כגון אימות חשבון, שחזור סיסמה, התראות אבטחה ועדכוני שירות מהותיים), ואינן טעונות הסכמה מוקדמת בהתאם לסעיף 30א לחוק התקשורת (בזק ושידורים), התשמ"ב-1982. תוכן פרסומי או שיווקי יישלח למשתמש רק בכפוף לקבלת הסכמתו המפורשת מראש (Opt-in), ובכל הודעה פרסומית כאמור תינתן למשתמש אפשרות פשוטה וזמינה להסרה מרשימת התפוצה בכל עת.</p>
+  </section>
 
-  <h2>11. קניין רוחני</h2>
-  <p>כל הקוד, העיצוב, הלוגו והתוכן של האפליקציה הם רכוש מפעיל השירות. חל איסור על שכפול, הפצה או שימוש מסחרי ללא אישור בכתב.</p>
+  <section id="s11">
+    <h2><span class="num">11</span>קניין רוחני</h2>
+    <p>כל הקוד, העיצוב, הלוגו והתוכן של האפליקציה הם רכוש מפעיל השירות. חל איסור על שכפול, הפצה או שימוש מסחרי ללא אישור בכתב.</p>
+  </section>
 
-  <h2>12. שינויים בתנאים</h2>
-  <p>מפעיל השירות רשאי לעדכן תנאים אלו בכל עת. עדכון מהותי יועבר בהתראה מוקדמת של 14 יום. המשך שימוש לאחר ההתראה מהווה הסכמה לתנאים החדשים.</p>
+  <section id="s12">
+    <h2><span class="num">12</span>שינויים בתנאים</h2>
+    <p>מפעיל השירות רשאי לעדכן תנאים אלו בכל עת. עדכון מהותי יועבר בהתראה מוקדמת של 14 יום. המשך שימוש לאחר ההתראה מהווה הסכמה לתנאים החדשים.</p>
+  </section>
 
-  <h2>13. סיום שירות</h2>
-  <p>מפעיל השירות רשאי להפסיק את פעילות השירות בכל עת, עם הודעה מוקדמת של 30 יום. במקרה כזה תינתן אפשרות לייצוא נתונים.</p>
+  <section id="s13">
+    <h2><span class="num">13</span>סיום שירות</h2>
+    <p>מפעיל השירות רשאי להפסיק את פעילות השירות בכל עת, עם הודעה מוקדמת של 30 יום. במקרה כזה תינתן אפשרות לייצוא נתונים.</p>
+  </section>
 
-  <h2>14. דין חל וסמכות שיפוט</h2>
-  <p>על תנאים אלו ועל כל עניין הנובע מהם או מהשימוש בשירות יחולו אך ורק דיני מדינת ישראל, מבלי ליתן תוקף לכללי ברירת הדין הבינלאומי הקבועים בהם. סמכות השיפוט הבלעדית והייחודית בכל מחלוקת או עניין הנובעים מהסכם זה או מהשימוש בשירות מסורה לבתי המשפט המוסמכים במחוז תל-אביב-יפו בלבד.</p>
+  <section id="s14">
+    <h2><span class="num">14</span>דין חל וסמכות שיפוט</h2>
+    <p>על תנאים אלו ועל כל עניין הנובע מהם או מהשימוש בשירות יחולו אך ורק דיני מדינת ישראל, מבלי ליתן תוקף לכללי ברירת הדין הבינלאומי הקבועים בהם. סמכות השיפוט הבלעדית והייחודית בכל מחלוקת או עניין הנובעים מהסכם זה או מהשימוש בשירות מסורה לבתי המשפט המוסמכים במחוז תל-אביב-יפו בלבד.</p>
+  </section>
 
-  <h2>15. יצירת קשר</h2>
-  <p>לשאלות בנוגע לתנאים אלו: <a href="mailto:davidtheking27@gmail.com">davidtheking27@gmail.com</a></p>
+  <section id="s15">
+    <h2><span class="num">15</span>יצירת קשר</h2>
+    <p>לשאלות בנוגע לתנאים אלו: <a href="mailto:davidtheking27@gmail.com">davidtheking27@gmail.com</a></p>
+  </section>
 
+  </div>
 </div>
 </main>
+
+<script>
+(function(){
+  var links = [].slice.call(document.querySelectorAll('.toc a'));
+  var sections = links.map(function(a){ return document.querySelector(a.getAttribute('href')); });
+  if (!links.length || !window.IntersectionObserver) return;
+  var current = null;
+  function setActive(id){
+    if (id === current) return;
+    current = id;
+    links.forEach(function(a){ a.classList.toggle('active', a.getAttribute('href') === '#' + id); });
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if (entry.isIntersecting) setActive(entry.target.id);
+    });
+  }, { rootMargin: '-80px 0px -70% 0px', threshold: 0 });
+  sections.forEach(function(s){ if (s) io.observe(s); });
+})();
+</script>
 
 </body>
 </html>
