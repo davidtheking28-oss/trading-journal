@@ -11552,21 +11552,26 @@ function renderStatistics() {
         <div class="kpi-label">${portfolioCard.label}</div>
         <div class="kpi-value sensitive">${portfolioCard.value}</div>
       </div>` : '';
-    const cardsHtml = kpiCards.map(k => `
+    const cardHtml = k => `
       <div class="kpi-card ${k.cls}" title="${k.tip}">
         <div class="kpi-label">${k.label}</div>
         <div class="kpi-value ${k.valCls}${k.sensitive ? ' sensitive' : ''}">${k.value}</div>
         ${k.sub ? `<div class="kpi-sub">${k.sub}</div>` : ''}
-      </div>`).join('');
-    // Inside the same grid as the KPI cards (not a separate section below),
-    // but spanning the full row — not squeezed into one card-sized cell —
-    // since a row of bars needs more width than a single stat needs.
-    const holdCompareHtml = `
-      <div style="grid-column:1/-1;padding:8px 4px 2px;">
+      </div>`;
+    // Spans every column except the last one, placed right before the final
+    // KPI card in DOM order — the grid's auto-placement then has no choice but
+    // to start it on a fresh row (an explicit column-1 start can't land
+    // mid-row) and drop the last card into the one column left beside it,
+    // exactly filling the gap a row of leftover cards would otherwise leave.
+    // Grid-line indices are relative, so this holds at any column count the
+    // responsive auto-fit grid resolves to, not just today's width.
+    const lastCard = kpiCards[kpiCards.length - 1];
+    const cardsHtml = kpiCards.slice(0, -1).map(cardHtml).join('') + `
+      <div style="grid-column:1/-2;padding:6px 2px;">
         <div class="kpi-label" style="text-align:right;margin-bottom:6px;">משך זמן ממוצע לפי סוג עסקה</div>
         <div id="hold-compare-wrap"></div>
-      </div>`;
-    grid.innerHTML = portfolioHtml + `<div class="kpi-grid-hero">${cardsHtml}${holdCompareHtml}</div>`;
+      </div>` + cardHtml(lastCard);
+    grid.innerHTML = portfolioHtml + `<div class="kpi-grid-hero">${cardsHtml}</div>`;
   }
 
   renderHoldCompare(adv);
