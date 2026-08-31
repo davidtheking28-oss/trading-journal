@@ -410,7 +410,7 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 .hero-visual-wrap,
 .demo-showcase-wrap {
   position: relative;
-  max-width: 780px; margin: 52px auto 0;
+  max-width: 980px; margin: 52px auto 0;
 }
 
 .hero-visual-glow {
@@ -530,8 +530,9 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
    the outgoing and incoming screen overlay instead of stacking in normal flow while
    both are briefly display:block during the crossfade — without this the card's
    height jumped (and kept growing) every time the demo switched categories. */
-.demo-stage { position: relative; height: 400px; }
+.demo-stage { position: relative; aspect-ratio: 1888 / 830; }
 .demo-body { position: absolute; inset: 0; padding: 14px; overflow: hidden; box-sizing: border-box; }
+.demo-body img { width: 100%; height: 100%; object-fit: contain; display: block; }
 /* Transition instead of a keyframe entrance — demo-tab is a clickable toggle
    a visitor can fire several times in a row, and transitions retarget from
    wherever they currently are instead of restarting from opacity:0 each time. */
@@ -963,7 +964,7 @@ footer {
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
   .step { grid-template-columns: 44px 1fr; gap: 14px; }
-  .demo-showcase-wrap { max-width: 460px; margin: 40px auto 0; }
+  .demo-showcase-wrap { max-width: 100%; margin: 40px auto 0; }
   .d-kpi { padding: 10px 10px; }
   .d-kpi-lbl { font-size: 8px; }
   .d-kpi-val { font-size: 16px; letter-spacing: -0.3px; }
@@ -1222,33 +1223,22 @@ html.a11y-underline a { text-decoration: underline !important; }
         <div class="demo-stage">
           <!-- Screen 1: Trades table -->
           <div class="demo-body demo-screen active" id="ds0" style="padding:0">
-            <img src="assets/demo/demo-trades.png" alt="טבלת עסקאות ביומן המסחר" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:top;display:block">
+            <img src="assets/demo/demo-trades.png" alt="טבלת עסקאות ביומן המסחר" loading="lazy">
           </div>
 
           <!-- Screen 2: Market Pulse -->
           <div class="demo-body demo-screen" id="ds1" style="padding:0">
-            <img src="assets/demo/demo-pulse.png" alt="Market Pulse — מדדים ורוחב שוק" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:top;display:block">
+            <img src="assets/demo/demo-pulse.png" alt="Market Pulse — מדדים ורוחב שוק" loading="lazy">
           </div>
 
           <!-- Screen 3: Stock screener -->
           <div class="demo-body demo-screen" id="ds2" style="padding:0">
-            <img src="assets/demo/demo-screener.png" alt="מסנן מניות — Trend Template + SEPA" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:top;display:block">
+            <img src="assets/demo/demo-screener.png" alt="מסנן מניות — Trend Template + SEPA" loading="lazy">
           </div>
 
           <!-- Screen 4: Statistics + calendar -->
-          <div class="demo-body demo-screen" id="ds3">
-            <div class="d-kpi-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:10px">
-              <div class="d-kpi blue"><div class="d-kpi-lbl">עסקאות</div><div class="d-kpi-val blue">24</div></div>
-              <div class="d-kpi green"><div class="d-kpi-lbl">הצלחה</div><div class="d-kpi-val green">70.8%</div></div>
-              <div class="d-kpi yel"><div class="d-kpi-lbl">P&amp;L כולל</div><div class="d-kpi-val yel">+$2.4K</div></div>
-            </div>
-            <div style="background:#111;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:10px">
-              <div style="font-size:9px;color:#8896a8;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.6px">אוגוסט 2026</div>
-              <div class="d-cal-grid">
-                <div class="d-cal-cell">1</div><div class="d-cal-cell pos">2</div><div class="d-cal-cell">3</div><div class="d-cal-cell neg">4</div><div class="d-cal-cell pos">5</div><div class="d-cal-cell">6</div><div class="d-cal-cell pos">7</div>
-                <div class="d-cal-cell pos">8</div><div class="d-cal-cell">9</div><div class="d-cal-cell neg">10</div><div class="d-cal-cell pos">11</div><div class="d-cal-cell">12</div><div class="d-cal-cell pos">13</div><div class="d-cal-cell">14</div>
-              </div>
-            </div>
+          <div class="demo-body demo-screen" id="ds3" style="padding:0">
+            <img src="assets/demo/demo-stats.png" alt="סטטיסטיקה ולוח שנה חודשי" loading="lazy">
           </div>
         </div>
       </div>
