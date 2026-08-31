@@ -556,3 +556,34 @@ unlike this one — push it manually).
 - The screener's `ohlc` already does more than a fresh copy would: per-symbol
   memory + `market_cache` caching, a `range` param (`3mo` / `1y`), gap-filling
   from hourly bars, IP rate limiting, and `mapSymbol` (BRK.B -> BRK-B).
+
+## ⚠️ Don't reintroduce these regressions (fixed 2026-08-31, no-indicator reversal)
+
+- **A no-indicator "new position" fill must be checked against an existing
+  opposite-direction open row before it is inserted.** MD, account
+  `9f9ffff4`: IBKR's Trade Confirmation feed (`period="Today"`, polled every
+  30 min by `ibkr-cron`'s `confirm` mode) never carries `openCloseIndicator`
+  and only covers one day, so a same-day SELL closing a long opened a week
+  earlier — invisible to that day-scoped statement — had nothing local to
+  close against. `flexParseXML` parses each statement in total isolation
+  (fresh `longLots`/`shortLots` every call), so its "infer" branch read the
+  leftover volume as a brand-new short. The real long sat open forever with
+  a fabricated short beside it — surfaced as "the trade closed and it's like
+  it entered again, but as a short." **A brokerage account can never hold a
+  long and a short in the same symbol at once**, so that collision is never
+  a coincidence — `_flexImportInner` now closes the existing opposite row
+  instead (only genuine excess beyond its room opens a real reversal
+  position), guarded against re-firing on resync the same way `_orphanClose`
+  already is. Verified via 4 behavioral tests that actually execute
+  `_flexImportInner` (not just source-regex guards) — confirmed failing
+  against the pre-fix source, passing post-fix.
+- **This is a DIFFERENT bug from the 29-day Flex window orphan-close issue**
+  ([ibkr_flex_window_orphans] in memory) — that one is a genuine gap where
+  IBKR's window doesn't cover the opening fill at all. This one is two
+  statements (Activity vs. Trade Confirmation) that both exist and both get
+  parsed, just never merged before FIFO matching. Don't conflate the fixes.
+- **`opposite_direction_open_same_symbol`** joins `data_health_check_core()`
+  (critical) — a live open long+short pair in one symbol, for any user, from
+  any import path. Swept all users when this was found: zero other accounts
+  were affected. The one live corruption (account `9f9ffff4`, MD) was
+  corrected by hand after backing up to `trades_backup_20260831_md_reversal`.
