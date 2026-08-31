@@ -11464,20 +11464,38 @@ function renderPersonalStemBadge() {
 // _updateLivePL's symbol-key guard.
 const _BROKER_NAMES = { ibkr: 'אינטראקטיב ברוקר', bybit: 'Bybit' };
 let _brokerEquityUsd = null, _brokerEquityTs = 0, _brokerEquityLabel = 'גודל תיק (ברוקר)';
+let _brokerEquityByBroker = {};
+// null = combined sum of every connected broker. Set by the card's own
+// dropdown when more than one broker is connected; a single broker never
+// shows the dropdown, since there is nothing to switch to.
+let _brokerEquitySelected = null;
 async function _loadBrokerEquity() {
   if (Date.now() - _brokerEquityTs < 60000) return;
   _brokerEquityTs = Date.now();
   const { data } = await _sb.from('broker_balances').select('equity_usd, broker').eq('user_id', _currentUser.id);
   if (!data) return;
   const sum = data.reduce((s, r) => s + Number(r.equity_usd || 0), 0);
-  // A single connected broker gets named outright; more than one stays generic
-  // rather than picking an arbitrary order to list them in.
-  const brokers = [...new Set(data.map(r => r.broker).filter(Boolean))];
-  _brokerEquityLabel = brokers.length === 1
-    ? `גודל תיק ${_BROKER_NAMES[brokers[0]] || brokers[0]}`
-    : 'גודל תיק (ברוקר)';
+  _brokerEquityByBroker = {};
+  data.forEach(r => { if (r.broker) _brokerEquityByBroker[r.broker] = Number(r.equity_usd || 0); });
+  // A single connected broker gets named outright; more than one offers a
+  // dropdown instead of picking an arbitrary order to list them in.
+  const brokers = Object.keys(_brokerEquityByBroker);
+  if (brokers.length === 1) {
+    _brokerEquitySelected = null;
+    _brokerEquityLabel = `גודל תיק ${_BROKER_NAMES[brokers[0]] || brokers[0]}`;
+  } else if (_brokerEquitySelected && !brokers.includes(_brokerEquitySelected)) {
+    _brokerEquitySelected = null; // a previously-selected broker got disconnected
+  }
   if (sum !== _brokerEquityUsd) { _brokerEquityUsd = sum; renderStatistics(); }
   else _brokerEquityUsd = sum;
+}
+
+function _setBrokerEquitySelected(broker, btn) {
+  _brokerEquitySelected = broker || null;
+  document.querySelectorAll('#port-equity-menu button').forEach(b => { b.classList.remove('active'); b.removeAttribute('aria-current'); });
+  if (btn) { btn.classList.add('active'); btn.setAttribute('aria-current', 'true'); }
+  _closeAllDDs();
+  renderStatistics();
 }
 
 function renderStatistics() {
@@ -11530,8 +11548,16 @@ function renderStatistics() {
   const pct  = v => v.toFixed(1) + '%';
 
   // Broker-derived portfolio size gets its own full-width card above the grid.
+  const brokerList = Object.keys(_brokerEquityByBroker);
+  const selectedEquity = _brokerEquitySelected != null ? _brokerEquityByBroker[_brokerEquitySelected] : _brokerEquityUsd;
   const portfolioCard = _brokerEquityUsd != null
-    ? { label: _brokerEquityLabel, value: '$' + _brokerEquityUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
+    ? {
+        label: _brokerEquitySelected != null
+          ? `גודל תיק ${_BROKER_NAMES[_brokerEquitySelected] || _brokerEquitySelected}`
+          : _brokerEquityLabel,
+        value: '$' + (selectedEquity ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+        brokerDD: brokerList.length > 1 ? brokerList : null,
+      }
     : null;
 
   // Curated down from 15 flat tiles to the 8 numbers that actually drive a
