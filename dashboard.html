@@ -11558,12 +11558,13 @@ function renderStatistics() {
         <div class="kpi-value ${k.valCls}${k.sensitive ? ' sensitive' : ''}">${k.value}</div>
         ${k.sub ? `<div class="kpi-sub">${k.sub}</div>` : ''}
       </div>`).join('');
-    // Placed as its own card in the same grid as the KPI cards, right beside
-    // them — not a separate full-width section above/below.
+    // Inside the same grid as the KPI cards (not a separate section below),
+    // but spanning the full row — not squeezed into one card-sized cell —
+    // since a row of bars needs more width than a single stat needs.
     const holdCompareHtml = `
-      <div class="kpi-card c-blue">
-        <div class="kpi-label">משך החזקה ממוצע</div>
-        <div id="hold-compare-wrap" style="margin-top:6px;"></div>
+      <div style="grid-column:1/-1;padding:8px 4px 2px;">
+        <div class="kpi-label" style="text-align:right;margin-bottom:6px;">משך זמן ממוצע לפי סוג עסקה</div>
+        <div id="hold-compare-wrap"></div>
       </div>`;
     grid.innerHTML = portfolioHtml + `<div class="kpi-grid-hero">${cardsHtml}${holdCompareHtml}</div>`;
   }
