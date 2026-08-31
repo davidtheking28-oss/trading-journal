@@ -230,6 +230,92 @@ describe('guards that cannot be exercised headless', () => {
   });
 });
 
+// ── A no-indicator fill that collides with an already-open opposite position
+// must close it, not open a phantom second position ─────────────────────────
+// MD, 2026-08-31: IBKR's Trade Confirmation feed (period="Today", no
+// openCloseIndicator) reported a same-day SELL with no visibility of the long
+// opened a week earlier in a different statement. flexParseXML, parsing that
+// feed alone, read it as a fresh short. A brokerage account can never hold a
+// long and a short in the same symbol at once, so _flexImportInner now closes
+// the existing opposite-direction row instead of inserting a new one.
+describe('_flexImportInner — a no-indicator fill against an open opposite position', () => {
+  function run(trades, { existing = [] } = {}) {
+    const src = 'async ' + extractFunction('_flexImportInner');
+    const updates = [];
+    const inserts = [];
+    let nextId = 100;
+    const db = { stocks: existing.map(t => ({ ...t })), crypto: [] };
+    const chain = table => ({
+      update: patch => ({
+        eq: () => ({ eq: () => { updates.push({ table, patch }); return Promise.resolve({ error: null }); } }),
+      }),
+      insert: row => ({
+        select: () => ({
+          single: () => { const withId = { ...row, id: nextId++ }; inserts.push(withId); return Promise.resolve({ data: withId, error: null }); },
+        }),
+      }),
+    });
+    const scope = {
+      db,
+      _sb: { from: chain },
+      _currentUser: { id: 'u1' },
+      _tradeToRow: t => ({ ...t }),
+      _rowToTrade: row => ({ ...row }),
+      _isDeletedImport: () => false,
+      _dedupeTrades: async () => {},
+      initFilters: () => {}, renderTable: () => {}, renderOverview: () => {}, renderStatistics: () => {},
+      toast: () => {},
+      document: { getElementById: () => null },
+    };
+    const names = Object.keys(scope);
+    const factory = new Function(...names, `${src}\nreturn _flexImportInner;`);
+    return { run: () => factory(...names.map(n => scope[n]))(trades), db, updates, inserts };
+  }
+
+  const openLong = { symbol: 'MD', type: 'stock', ls: 'L', shares: 30, closedShares: 0,
+    entryPrice: 26.71, entryDate: '2026-08-24', commission: 2.5, ibkr_id: '1554942974', deleted: false };
+  const confirmSell = { symbol: 'MD', type: 'stock', ls: 'S', shares: 30,
+    entryPrice: 25.9, entryDate: '2026-08-31', commission: 2.5, ibkr_id: '1562656936' };
+
+  test('closes the existing long instead of inserting a new short', async () => {
+    const h = run([confirmSell], { existing: [openLong] });
+    await h.run();
+    assert.equal(h.inserts.length, 0, 'a full close must not also insert a new row');
+    assert.equal(h.updates.length, 1);
+    assert.equal(h.updates[0].patch.exit_price, 25.9);
+    assert.equal(h.updates[0].patch.closed_shares, 30);
+    assert.equal(h.db.stocks[0].exitPrice, 25.9, 'the in-memory row must reflect the close too');
+  });
+
+  test('excess volume beyond the open position reverses into a new position', async () => {
+    const smallLong = { ...openLong, shares: 20, closedShares: 0 };
+    const h = run([{ ...confirmSell, shares: 30 }], { existing: [smallLong] });
+    await h.run();
+    assert.equal(h.updates[0].patch.closed_shares, 20, 'only the room that was open gets closed');
+    assert.equal(h.inserts.length, 1, 'the 10-share excess opens a real new position');
+    assert.equal(h.inserts[0].shares, 10);
+    assert.equal(h.inserts[0].ls, 'S');
+  });
+
+  test('a fresh position with nothing open in the opposite direction still inserts normally', async () => {
+    const h = run([confirmSell], { existing: [] });
+    await h.run();
+    assert.equal(h.updates.length, 0);
+    assert.equal(h.inserts.length, 1, 'no opposite position exists — this really is a new trade');
+    assert.equal(h.inserts[0].shares, 30);
+  });
+
+  test('a re-sync of an already-applied close does not re-fire', async () => {
+    const closedLong = { ...openLong, closedShares: 30, exitPrice: 25.9, closeDate: '2026-08-31' };
+    const alreadyImportedShort = { symbol: 'MD', type: 'stock', ls: 'S', shares: 30, closedShares: 0,
+      entryPrice: 25.9, entryDate: '2026-08-31', commission: 2.5, ibkr_id: '1562656936', deleted: false };
+    const h = run([confirmSell], { existing: [closedLong, alreadyImportedShort] });
+    await h.run();
+    assert.equal(h.inserts.length, 0, 'the short from the first sync must not be duplicated');
+    assert.equal(h.updates.length, 0, 'an already-closed row must not be re-closed');
+  });
+});
+
 // ── Investments tab ─────────────────────────────────────────────────────────
 // invRecalc reads its numbers straight out of the table inputs, so the
 // arithmetic was untestable until the accumulation was split into these two

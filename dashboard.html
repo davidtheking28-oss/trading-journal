@@ -12992,6 +12992,52 @@ async function _flexImportInner(trades) {
       return;
     }
 
+    // A same-direction-blind fill closing (or reversing) a position that this
+    // statement never saw opened. flexParseXML has no visibility outside the
+    // one XML it's parsing, so a fill with no openCloseIndicator that leaves
+    // leftover volume gets read as opening a brand-new position — correct when
+    // nothing else is open, wrong when a position in the opposite direction
+    // already is. A brokerage account can never hold both a long and a short
+    // in the same symbol at once, so that collision is never a coincidence:
+    // it is that position closing. Confirmed 2026-08-31 — the IBKR "Trade
+    // Confirmation" feed (period="Today", polled every 30 min) carries no
+    // openCloseIndicator at all, so a same-day SELL against a long opened on
+    // an earlier day — invisible to that day-scoped statement — read as a
+    // fresh short instead of closing the long, which then sat open forever
+    // while a phantom short appeared beside it.
+    if (!t._orphanClose && !t.exitPrice && !arr.some(x => !x.deleted && x.ibkr_id === t.ibkr_id)) {
+      const room = x => (x.shares || 0) - (x.closedShares || 0);
+      const opposite = arr.find(x => !x.deleted && x.symbol === t.symbol && x.ls !== t.ls && room(x) > 0.01);
+      if (opposite) {
+        const openShares = t.shares;
+        const closeQty = Math.min(room(opposite), openShares);
+        const prev = { exitPrice: opposite.exitPrice, closeDate: opposite.closeDate,
+                       closedShares: opposite.closedShares, t: opposite.t };
+        const legs = Array.isArray(opposite.t) ? opposite.t.slice() : [];
+        if (opposite.exitPrice && (opposite.closedShares || 0) > 0) {
+          const booked = legs.reduce((a, g) => a + (+g.shares || 0), 0);
+          const rem = (opposite.closedShares || 0) - booked;
+          if (rem > 0.01) legs.push({ shares: rem, price: opposite.exitPrice });
+        }
+        opposite.t            = legs;
+        opposite.exitPrice    = t.entryPrice;
+        opposite.closeDate    = t.entryDate;
+        opposite.closedShares = (opposite.closedShares || 0) + closeQty;
+        toUpdate.push({ row: opposite, prev, patch: {
+          exit_price:    t.entryPrice,
+          close_date:    t.entryDate,
+          closed_shares: opposite.closedShares,
+          targets:       legs,
+        } });
+        updated++;
+        const leftover = openShares - closeQty;
+        if (leftover <= 0.01) return; // fully absorbed by the existing position — no new row
+        // Reversal: volume beyond what the existing position could hold really
+        // does open a new position in this direction — carries on below as t.
+        t = { ...t, shares: leftover, commission: t.commission * (leftover / openShares) };
+      }
+    }
+
     // Find an already-imported copy of this trade. By IBKR's unique execution id
     // first (idempotent — re-syncs never duplicate, and scale-in lots stay
     // separate because each has its own id); else by entry (manual trades, or
