@@ -11591,7 +11591,19 @@ function renderStatistics() {
   if (grid) {
     const portfolioHtml = portfolioCard ? `
       <div class="kpi-card portfolio-hero c-blue">
-        <div class="kpi-label">${portfolioCard.label}</div>
+        <div class="kpi-label" style="display:flex;align-items:center;gap:6px;justify-content:flex-end;">
+          <span>${portfolioCard.label}</span>
+          ${portfolioCard.brokerDD ? `
+            <div id="port-equity-dd" class="scope-dd">
+              <button class="scope-dd-btn" onclick="toggleScopeDD('port-equity-dd')" aria-label="בחר ברוקר להצגה" title="בחר ברוקר להצגה">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="scope-dd-menu" id="port-equity-menu">
+                <button class="${_brokerEquitySelected == null ? 'active' : ''}" ${_brokerEquitySelected == null ? 'aria-current="true"' : ''} onclick="_setBrokerEquitySelected(null,this)">כל הברוקרים</button>
+                ${portfolioCard.brokerDD.map(b => `<button class="${_brokerEquitySelected === b ? 'active' : ''}" ${_brokerEquitySelected === b ? 'aria-current="true"' : ''} onclick="_setBrokerEquitySelected('${b}',this)">${_BROKER_NAMES[b] || b}</button>`).join('')}
+              </div>
+            </div>` : ''}
+        </div>
         <div class="kpi-value sensitive">${portfolioCard.value}</div>
       </div>` : '';
     const cardHtml = k => `
