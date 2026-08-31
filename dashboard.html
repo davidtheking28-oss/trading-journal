@@ -11830,9 +11830,12 @@ function setCumMode(mode) {
   renderCumChart(_cumTrades);
 }
 
+let _cumResizeObserver = null;
+
 function renderCumChart(trades) {
   _cumTrades = trades;
   destroyChart('cum');
+  if (_cumResizeObserver) { _cumResizeObserver.disconnect(); _cumResizeObserver = null; }
 
   const f = getFilter('ov');
   const useDaily = !!f.month;
@@ -11942,11 +11945,16 @@ function renderCumChart(trades) {
   // The dead space on the right wasn't padding — the gridlines themselves
   // stopped short of the card edge too, meaning Chart.js measured the
   // container BEFORE it reached its final width (KPI grid / fonts above it
-  // still settling) and never re-measured after. `responsive:true` only
-  // reacts to a later resize event; it does not repeat the initial read.
-  // One resize() after layout has actually settled corrects it without
-  // guessing at why the first read was short.
-  requestAnimationFrame(() => charts.cum?.resize());
+  // still settling) and never re-measured after. A single requestAnimationFrame
+  // shrank the gap but didn't clear it — whatever settles the layout (a web
+  // font swap can land well after the first frame) still lands after that one
+  // resize. A ResizeObserver on the wrapper catches every width change for as
+  // long as this chart instance exists, not just the first one.
+  const wrapEl = cumEl.parentElement;
+  if (wrapEl) {
+    _cumResizeObserver = new ResizeObserver(() => charts.cum?.resize());
+    _cumResizeObserver.observe(wrapEl);
+  }
 }
 
 // Horizontal bar comparison of avg holding time, winners vs losers — reads the

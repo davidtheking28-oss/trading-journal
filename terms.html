@@ -256,10 +256,16 @@ a:hover{text-decoration:underline}
     current = id;
     links.forEach(function(a){ a.classList.toggle('active', a.getAttribute('href') === '#' + id); });
   }
+  var visible = new Map();
   var io = new IntersectionObserver(function(entries){
     entries.forEach(function(entry){
-      if (entry.isIntersecting) setActive(entry.target.id);
+      if (entry.isIntersecting) visible.set(entry.target.id, entry.boundingClientRect.top);
+      else visible.delete(entry.target.id);
     });
+    if (!visible.size) return;
+    var topId = null, topY = Infinity;
+    visible.forEach(function(y, id){ if (y < topY) { topY = y; topId = id; } });
+    if (topId) setActive(topId);
   }, { rootMargin: '-80px 0px -70% 0px', threshold: 0 });
   sections.forEach(function(s){ if (s) io.observe(s); });
 })();
