@@ -771,6 +771,13 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     position: relative; overflow: hidden;
     box-shadow: var(--shadow-sm);
   }
+  /* Canvas 2D text direction defaults to "inherit" and this page is dir="rtl",
+     so Chart.js's own fillText calls for axis ticks and tooltips (it never sets
+     ctx.direction itself) picked up RTL bidi reordering — a negative value like
+     "-3.5%" rendered with the minus sign trailing the digits ("3.5%-"). Every
+     Chart.js canvas in this app only ever draws numbers, never Hebrew text, so
+     this is a blanket, not a per-chart, fix. */
+  canvas { direction: ltr; }
   .chart-card::before {
     content: '';
     position: absolute;
@@ -11872,10 +11879,12 @@ function renderCumChart(trades) {
   const cumEl = document.getElementById('chart-cum');
   if (!cumEl) return;
   const ctx2d = cumEl.getContext('2d');
+  // A fill this heavy read as a solid block rather than a trend — softened to
+  // the same light-to-nothing taper the rest of the app's charts use.
   const grad = ctx2d.createLinearGradient(0, 0, 0, cumEl.offsetHeight || 200);
-  grad.addColorStop(0,   `rgba(${colorRgb},0.35)`);
-  grad.addColorStop(0.5, `rgba(${colorRgb},0.12)`);
-  grad.addColorStop(1,   `rgba(${colorRgb},0.00)`);
+  grad.addColorStop(0,    `rgba(${colorRgb},0.22)`);
+  grad.addColorStop(0.55, `rgba(${colorRgb},0.06)`);
+  grad.addColorStop(1,    `rgba(${colorRgb},0.00)`);
 
   charts.cum = new Chart(ctx2d, {
     type: 'line',
@@ -11887,11 +11896,11 @@ function renderCumChart(trades) {
         borderColor: color,
         backgroundColor: grad,
         tension: 0.4, fill: true,
-        pointRadius: data.length > 20 ? 0 : 3,
+        pointRadius: data.length > 20 ? 0 : 4,
         pointBackgroundColor: color,
         pointBorderColor: 'rgba(255,255,255,0.6)',
         pointBorderWidth: 1.5,
-        pointHoverRadius: 7,
+        pointHoverRadius: 6,
         pointHoverBackgroundColor: color,
         pointHoverBorderColor: '#fff',
         pointHoverBorderWidth: 2,
