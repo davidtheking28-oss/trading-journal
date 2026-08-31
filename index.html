@@ -1214,31 +1214,31 @@ html.a11y-underline a { text-decoration: underline !important; }
 
       <div class="demo-app">
         <div class="demo-nav" role="tablist" aria-label="הדגמת מערכת">
-          <button class="demo-tab active" role="tab" aria-selected="true">עסקאות</button>
+          <button class="demo-tab active" role="tab" aria-selected="true">דשבורד</button>
+          <button class="demo-tab" role="tab" aria-selected="false">עסקאות</button>
           <button class="demo-tab" role="tab" aria-selected="false">Market Pulse</button>
           <button class="demo-tab" role="tab" aria-selected="false">מסנן מניות</button>
-          <button class="demo-tab" role="tab" aria-selected="false">סטטיסטיקה</button>
         </div>
 
         <div class="demo-stage">
-          <!-- Screen 1: Trades table -->
+          <!-- Screen 1: Dashboard overview -->
           <div class="demo-body demo-screen active" id="ds0" style="padding:0">
+            <img src="assets/demo/demo-stats.png" alt="דשבורד — סטטיסטיקה ולוח שנה חודשי" loading="lazy">
+          </div>
+
+          <!-- Screen 2: Trades table -->
+          <div class="demo-body demo-screen" id="ds1" style="padding:0">
             <img src="assets/demo/demo-trades.png" alt="טבלת עסקאות ביומן המסחר" loading="lazy">
           </div>
 
-          <!-- Screen 2: Market Pulse -->
-          <div class="demo-body demo-screen" id="ds1" style="padding:0">
+          <!-- Screen 3: Market Pulse -->
+          <div class="demo-body demo-screen" id="ds2" style="padding:0">
             <img src="assets/demo/demo-pulse.png" alt="Market Pulse — מדדים ורוחב שוק" loading="lazy">
           </div>
 
-          <!-- Screen 3: Stock screener -->
-          <div class="demo-body demo-screen" id="ds2" style="padding:0">
-            <img src="assets/demo/demo-screener.png" alt="מסנן מניות — Trend Template + SEPA" loading="lazy">
-          </div>
-
-          <!-- Screen 4: Statistics + calendar -->
+          <!-- Screen 4: Stock screener -->
           <div class="demo-body demo-screen" id="ds3" style="padding:0">
-            <img src="assets/demo/demo-stats.png" alt="סטטיסטיקה ולוח שנה חודשי" loading="lazy">
+            <img src="assets/demo/demo-screener.png" alt="מסנן מניות — Trend Template + SEPA" loading="lazy">
           </div>
         </div>
       </div>
