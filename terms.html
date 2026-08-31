@@ -256,18 +256,28 @@ a:hover{text-decoration:underline}
     current = id;
     links.forEach(function(a){ a.classList.toggle('active', a.getAttribute('href') === '#' + id); });
   }
+  function atBottom(){
+    return window.scrollY + window.innerHeight >= document.body.scrollHeight - 2;
+  }
   var visible = new Map();
   var io = new IntersectionObserver(function(entries){
     entries.forEach(function(entry){
       if (entry.isIntersecting) visible.set(entry.target.id, entry.boundingClientRect.top);
       else visible.delete(entry.target.id);
     });
-    if (!visible.size) return;
+    if (atBottom()) { setActive(sections[sections.length - 1].id); return; }
+    if (!visible.size) {
+      if (window.scrollY < (sections[0] ? sections[0].offsetTop : 0)) setActive(sections[0].id);
+      return;
+    }
     var topId = null, topY = Infinity;
     visible.forEach(function(y, id){ if (y < topY) { topY = y; topId = id; } });
     if (topId) setActive(topId);
   }, { rootMargin: '-80px 0px -70% 0px', threshold: 0 });
   sections.forEach(function(s){ if (s) io.observe(s); });
+  window.addEventListener('scroll', function(){
+    if (atBottom()) setActive(sections[sections.length - 1].id);
+  }, { passive: true });
 })();
 </script>
 
