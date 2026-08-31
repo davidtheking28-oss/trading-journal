@@ -93,6 +93,21 @@ serve(async (req: Request) => {
     });
   }
 
+  // Single-symbol quotes go through the same resolver as the batch above. The
+  // investments table, the position calculator and the missed-trades card all
+  // call this shape, and Finnhub's transient 503s are not specific to the batch
+  // path — leaving this as a raw passthrough left three surfaces exposed to the
+  // exact failure the batch was fixed for.
+  if (path === 'quote' && symbol) {
+    const q = await resolveQuote(symbol.trim().toUpperCase(), apiKey);
+    // `c: 0` is the shape every caller here already reads as "no price", so an
+    // unresolved symbol keeps answering 200 rather than becoming a new error
+    // case for four call sites to learn.
+    return new Response(JSON.stringify(q ?? { c: 0 }), {
+      headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+    });
+  }
+
   let finnhubUrl  = `https://finnhub.io/api/v1/${path}?token=${encodeURIComponent(apiKey)}`;
   if (path === 'stock/symbol') finnhubUrl += `&exchange=${exchange}`;
   if (symbol) finnhubUrl += `&symbol=${encodeURIComponent(symbol)}`;

@@ -1216,6 +1216,7 @@ html.a11y-underline a { text-decoration: underline !important; }
           <button class="demo-tab active" role="tab" aria-selected="true">עסקאות</button>
           <button class="demo-tab" role="tab" aria-selected="false">Market Pulse</button>
           <button class="demo-tab" role="tab" aria-selected="false">מסנן מניות</button>
+          <button class="demo-tab" role="tab" aria-selected="false">סטטיסטיקה</button>
         </div>
 
         <div class="demo-stage">
@@ -1232,6 +1233,22 @@ html.a11y-underline a { text-decoration: underline !important; }
           <!-- Screen 3: Stock screener -->
           <div class="demo-body demo-screen" id="ds2" style="padding:0">
             <img src="assets/demo/demo-screener.png" alt="מסנן מניות — Trend Template + SEPA" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:top;display:block">
+          </div>
+
+          <!-- Screen 4: Statistics + calendar -->
+          <div class="demo-body demo-screen" id="ds3">
+            <div class="d-kpi-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:10px">
+              <div class="d-kpi blue"><div class="d-kpi-lbl">עסקאות</div><div class="d-kpi-val blue">24</div></div>
+              <div class="d-kpi green"><div class="d-kpi-lbl">הצלחה</div><div class="d-kpi-val green">70.8%</div></div>
+              <div class="d-kpi yel"><div class="d-kpi-lbl">P&amp;L כולל</div><div class="d-kpi-val yel">+$2.4K</div></div>
+            </div>
+            <div style="background:#111;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:10px">
+              <div style="font-size:9px;color:#8896a8;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.6px">אוגוסט 2026</div>
+              <div class="d-cal-grid">
+                <div class="d-cal-cell">1</div><div class="d-cal-cell pos">2</div><div class="d-cal-cell">3</div><div class="d-cal-cell neg">4</div><div class="d-cal-cell pos">5</div><div class="d-cal-cell">6</div><div class="d-cal-cell pos">7</div>
+                <div class="d-cal-cell pos">8</div><div class="d-cal-cell">9</div><div class="d-cal-cell neg">10</div><div class="d-cal-cell pos">11</div><div class="d-cal-cell">12</div><div class="d-cal-cell pos">13</div><div class="d-cal-cell">14</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

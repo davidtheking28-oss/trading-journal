@@ -55,7 +55,15 @@ export async function finnhubQuote(sym: string, apiKey: string, f: Fetcher = fet
   });
 }
 
+// Yahoo spells a share class with a dash where Finnhub (and the journal's own
+// rows) use a dot: BRK.B is BRK-B there. Without this the fallback silently
+// misses exactly the symbols it exists to cover.
+export function mapSymbol(sym: string): string {
+  return sym.replace(/\./g, '-');
+}
+
 export async function yahooQuote(sym: string, f: Fetcher = fetch): Promise<number | null> {
+  sym = mapSymbol(sym);
   for (const host of YF_HOSTS) {
     const price = await withTimeout(5000, async signal => {
       const r = await f(`https://${host}/v8/finance/chart/${encodeURIComponent(sym)}?range=1d&interval=1d`,
