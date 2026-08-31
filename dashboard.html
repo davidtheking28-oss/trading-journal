@@ -996,6 +996,14 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .scope-dd-menu button.active { background: rgba(99,102,241,0.14); color: #818cf8; }
   .scope-dd-menu button.active::after { content: '✓'; margin-right: 6px; }
 
+  /* DONUT WIN/LOSS SIDE LEGEND */
+  .donut-row { display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .donut-legend { flex: 1; display: flex; flex-direction: column; gap: 4px; align-items: center; }
+  .donut-legend-lbl { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text2); }
+  .donut-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .donut-legend-val { font-size: 19px; font-weight: 800; }
+  .donut-canvas-wrap { position: relative; width: 130px; height: 130px; flex-shrink: 0; }
+
   /* DONUT STATS PANEL */
   .donut-stats {
     margin-top: 12px;
@@ -5703,7 +5711,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <div class="chart-card" style="display:flex;flex-direction:column;margin-bottom:16px;">
         <div class="chart-title">Win / Loss</div>
         <div class="chart-skeleton" id="skel-donut" style="height:130px;"></div>
-        <div style="height:200px;position:relative;width:100%;"><canvas id="chart-donut" style="display:none"></canvas></div>
+        <div class="donut-row" id="donut-row" style="display:none;">
+          <div class="donut-legend" id="donut-legend-win"></div>
+          <div class="donut-canvas-wrap"><canvas id="chart-donut"></canvas></div>
+          <div class="donut-legend" id="donut-legend-loss"></div>
+        </div>
         <div id="donut-stats" class="donut-stats" style="flex:1;margin-top:8px;"></div>
       </div>
       <!-- Secondary stats — collapsed on mobile to keep the view to the essentials;
@@ -10716,6 +10728,7 @@ const LANG_STRINGS = {
     mt_max_gain:'Max Gain', mt_max_loss:'Max Loss',
     mt_avg_days_win:'Days (Win)', mt_avg_days_loss:'Days (Loss)', mt_avg_row:'Average',
     donut_win:'Win', donut_loss:'Loss', donut_best:'Best Trade', donut_worst:'Worst Trade',
+    donut_wins:'Wins', donut_losses:'Losses',
     donut_win_streak:'Win Streak', donut_loss_streak:'Loss Streak',
     comp_trades:'trades', comp_total_pl:'Total P&L',
     comp_avg_win:'Avg Win', comp_avg_loss:'Avg Loss',
@@ -10844,6 +10857,7 @@ const LANG_STRINGS = {
     mt_max_gain:'רווח מקסימלי', mt_max_loss:'הפסד מקסימלי',
     mt_avg_days_win:'ימים ממוצע (רווח)', mt_avg_days_loss:'ימים ממוצע (הפסד)', mt_avg_row:'ממוצע',
     donut_win:'ניצחון', donut_loss:'הפסד', donut_best:'עסקה הטובה', donut_worst:'עסקה הגרועה',
+    donut_wins:'מנצחות', donut_losses:'הפסדים',
     donut_win_streak:'רצף ניצחונות', donut_loss_streak:'רצף הפסדים',
     comp_trades:'עסקאות', comp_total_pl:'P&L כולל',
     comp_avg_win:'ממוצע ניצחון', comp_avg_loss:'ממוצע הפסד',
@@ -11942,8 +11956,20 @@ function renderHoldCompare(adv) {
 function renderDonut(st, adv, trades) {
   destroyChart('donut');
   showChart('skel-donut', 'chart-donut');
+  const rowEl = document.getElementById('donut-row');
+  if (rowEl) rowEl.style.display = 'flex';
   const donutEl = document.getElementById('chart-donut'); if (!donutEl) return;
   const ctx = donutEl.getContext('2d');
+  const winPct  = st.n ? (st.wins / st.n * 100).toFixed(1)   : '0.0';
+  const lossPct = st.n ? (st.losses / st.n * 100).toFixed(1) : '0.0';
+  const winEl  = document.getElementById('donut-legend-win');
+  const lossEl = document.getElementById('donut-legend-loss');
+  if (winEl) winEl.innerHTML = `
+    <div class="donut-legend-lbl"><span class="donut-legend-dot" style="background:#2dd4a0;"></span>${t('donut_wins')}</div>
+    <div class="donut-legend-val" style="color:#2dd4a0;">${st.wins || 0} (${winPct}%)</div>`;
+  if (lossEl) lossEl.innerHTML = `
+    <div class="donut-legend-lbl"><span class="donut-legend-dot" style="background:#ff6b8a;"></span>${t('donut_losses')}</div>
+    <div class="donut-legend-val" style="color:#ff6b8a;">${st.losses || 0} (${lossPct}%)</div>`;
   charts.donut = new Chart(ctx, {
     type: 'doughnut',
     data: {
