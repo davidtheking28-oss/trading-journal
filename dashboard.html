@@ -11882,7 +11882,7 @@ function renderHoldCompare(adv) {
     ? (win >= loss ? `${(win / loss).toFixed(1)}:1` : `1:${(loss / win).toFixed(1)}`)
     : '—';
   wrap.innerHTML = row('מנצחת', win, '#2dd4a0') + row('הפסד', loss, '#ff6b8a')
-    + `<div style="text-align:center;font-size:11px;color:var(--text3);margin-top:1px;">יחס: ${ratio}</div>`;
+    + `<div style="text-align:center;font-size:13px;font-weight:700;color:var(--text);margin-top:2px;">יחס: ${ratio}</div>`;
 }
 
 function renderDonut(st, adv, trades) {
