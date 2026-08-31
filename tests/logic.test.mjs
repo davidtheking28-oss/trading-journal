@@ -364,6 +364,68 @@ describe('_flexImportInner — a no-indicator fill against an open opposite posi
     assert.equal(h.inserts[0].ls, 'L', 'the excess flips the position long');
     assert.equal(h.inserts[0].shares, 10);
   });
+
+  // The case a new user hits on their very first sync. _flexSyncFromCache parses
+  // BOTH statements into one array — `trades.push(...flexParseXML(row.xml))`
+  // then `...flexParseXML(row.xml_confirm)` — and hands them to one
+  // _flexImportInner call. So the activity statement's open long and the confirm
+  // feed's phantom short arrive in the SAME batch, and neither is in the journal
+  // yet: matching only against already-persisted rows misses it entirely and
+  // both get inserted. An empty journal is exactly the new-user case.
+  test('the collision is caught inside one batch, with nothing in the journal yet', async () => {
+    const h = run([
+      { ...openLong, closedShares: undefined, deleted: undefined },  // from row.xml
+      confirmSell,                                                    // from row.xml_confirm
+    ], { existing: [] });
+    await h.run();
+    assert.equal(h.inserts.length, 1, 'only the long may be inserted — the sell closes it, it is not a second position');
+    assert.equal(h.inserts[0].ls, 'L');
+    assert.equal(h.inserts[0].exitPrice, 25.9, 'the long must go in already closed');
+    assert.equal(h.inserts[0].closedShares, 30);
+    assert.equal(h.inserts[0].closeDate, '2026-08-31');
+  });
+
+  test('a batch-mate collision in the short direction is caught too', async () => {
+    const h = run([
+      { ...openShort, closedShares: undefined, deleted: undefined },
+      confirmBuy,
+    ], { existing: [] });
+    await h.run();
+    assert.equal(h.inserts.length, 1, 'covering a same-batch short must not insert a long');
+    assert.equal(h.inserts[0].ls, 'S');
+    assert.equal(h.inserts[0].exitPrice, 24);
+    assert.equal(h.inserts[0].closedShares, 30);
+  });
+
+  // The false positive to avoid. When one statement contains both sides,
+  // flexParseXML's own FIFO already resolved it: the long comes out CLOSED
+  // (room 0) and the short is a separate open lot. Neither may be touched
+  // again here, or a correctly-imported reversal gets closed a second time.
+  test('a reversal the statement already resolved is left alone', async () => {
+    const closedLong = { ...openLong, closedShares: 30, exitPrice: 25.9, closeDate: '2026-08-31',
+      deleted: undefined, ibkr_id: '1554942974' };
+    const newShort = { symbol: 'MD', type: 'stock', ls: 'S', shares: 10,
+      entryPrice: 25.9, entryDate: '2026-08-31', commission: 1, ibkr_id: '1562656937' };
+    const h = run([closedLong, newShort], { existing: [] });
+    await h.run();
+    assert.equal(h.updates.length, 0, 'a fully-closed row has no room and must not be re-closed');
+    assert.equal(h.inserts.length, 2, 'both the closed long and the real short belong in the journal');
+    assert.equal(h.inserts[1].ls, 'S');
+    assert.equal(h.inserts[1].shares, 10, 'the short keeps its own size');
+    assert.equal(h.inserts[1].exitPrice, undefined, 'the new short stays open');
+  });
+
+  test('a batch-mate reversal still opens the genuine excess', async () => {
+    const h = run([
+      { ...openLong, shares: 20, closedShares: undefined, deleted: undefined },
+      confirmSell,  // 30 shares against a 20-share long
+    ], { existing: [] });
+    await h.run();
+    assert.equal(h.inserts.length, 2, 'the closed long, plus a real 10-share short');
+    assert.equal(h.inserts[0].closedShares, 20);
+    assert.equal(h.inserts[1].ls, 'S');
+    assert.equal(h.inserts[1].shares, 10);
+  });
 });
 
 // ── Investments tab ─────────────────────────────────────────────────────────

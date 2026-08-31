@@ -582,6 +582,28 @@ unlike this one — push it manually).
   IBKR's window doesn't cover the opening fill at all. This one is two
   statements (Activity vs. Trade Confirmation) that both exist and both get
   parsed, just never merged before FIFO matching. Don't conflate the fixes.
+- **The opposite-position lookup must search `toInsert`, not just the journal.**
+  Caught while asking what a *new* user hits: `_flexSyncFromCache` parses the
+  activity statement AND the confirm feed into ONE array
+  (`trades.push(...flexParseXML(row.xml))` then `...flexParseXML(row.xml_confirm)`)
+  and imports them in a single `_flexImportInner` call. So on a first sync —
+  new user, empty journal — the open position and the fill that closes it are
+  **batch-mates**, and neither is persisted yet: matching only against saved
+  rows inserted both, exactly the bug the fix was meant to stop. A pending row
+  is closed by mutating it in place, NOT by queueing a `toUpdate` — it has no
+  id yet, so `.eq('id', undefined)` would silently match nothing and the
+  close would vanish.
+- **A statement that resolves a reversal on its own must be left alone.** When
+  one statement holds both sides, flexParseXML's FIFO already closed the long
+  (room 0) and opened the short as a separate lot. The `room(x) > 0.01` test is
+  what keeps this branch off it; without it a correctly-imported reversal gets
+  closed a second time. Covered by "a reversal the statement already resolved
+  is left alone".
+- **The setup instructions now ask for the "Open/Close Indicator" column**, not
+  just "Trade ID". With it IBKR states per fill whether it opens or closes, and
+  every heuristic in this file is bypassed at the source. `TradeConfirm` rows
+  never carry it, so the confirm feed still needs the fix above — but the
+  authoritative activity statement no longer has to guess.
 - **`opposite_direction_open_same_symbol`** joins `data_health_check_core()`
   (critical) — a live open long+short pair in one symbol, for any user, from
   any import path. Swept all users when this was found: zero other accounts

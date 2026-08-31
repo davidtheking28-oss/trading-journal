@@ -10698,7 +10698,7 @@ const LANG_STRINGS = {
     set_2fa:'Two-Factor Authentication',
     set_ibkr_desc:'Enables automatic trade import from Interactive Brokers.',
     set_ibkr_how:'How to configure:',
-    set_ibkr_steps:'In IBKR create an Activity Flex Query → Period: Last 365 Calendar Days, Format: XML, Trades section with the "Trade ID" field → paste the Token and Query ID. That\'s it — your trades sync automatically.',
+    set_ibkr_steps:'In IBKR create an Activity Flex Query → Period: Last 365 Calendar Days, Format: XML, Trades section with the "Trade ID" and "Open/Close Indicator" fields → paste the Token and Query ID. That\'s it — your trades sync automatically.',
     set_ibkr_advanced:'Advanced settings ▾',
     set_ibkr_confirm_label:'Trade Confirmation Query ID — for near-real-time updates (optional)',
     set_sync:'Sync', m_save_short:'Save',
@@ -10827,7 +10827,7 @@ const LANG_STRINGS = {
     set_2fa:'אימות דו-שלבי',
     set_ibkr_desc:'מאפשר ייבוא עסקאות אוטומטי מ-Interactive Brokers.',
     set_ibkr_how:'איך להגדיר:',
-    set_ibkr_steps:'ב-IBKR צור Activity Flex Query → Period: Last 365 Calendar Days, פורמט: XML, סעיף Trades עם השדה "Trade ID" → הדבק את ה-Token וה-Query ID. זהו — העסקאות מסתנכרנות אוטומטית.',
+    set_ibkr_steps:'ב-IBKR צור Activity Flex Query → Period: Last 365 Calendar Days, פורמט: XML, סעיף Trades עם השדות "Trade ID" ו-"Open/Close Indicator" → הדבק את ה-Token וה-Query ID. זהו — העסקאות מסתנכרנות אוטומטית.',
     set_ibkr_advanced:'הגדרות מתקדמות ▾',
     set_ibkr_confirm_label:'Trade Confirmation Query ID — לעדכון כמעט בזמן-אמת (אופציונלי)',
     set_sync:'סנכרן', m_save_short:'שמור',
@@ -13007,7 +13007,15 @@ async function _flexImportInner(trades) {
     // while a phantom short appeared beside it.
     if (!t._orphanClose && !t.exitPrice && !arr.some(x => !x.deleted && x.ibkr_id === t.ibkr_id)) {
       const room = x => (x.shares || 0) - (x.closedShares || 0);
-      const opposite = arr.find(x => !x.deleted && x.symbol === t.symbol && x.ls !== t.ls && room(x) > 0.01);
+      const isOpposite = x => x.symbol === t.symbol && x.ls !== t.ls && room(x) > 0.01;
+      // The journal first, then this same batch. _flexSyncFromCache parses the
+      // activity statement AND the confirm feed into ONE array and imports them
+      // in a single call, so on a first sync — a new user, an empty journal —
+      // the open position and the fill that closes it are batch-mates and
+      // neither is persisted yet. Matching only against saved rows inserts both.
+      const saved   = arr.find(x => !x.deleted && isOpposite(x));
+      const pending = saved ? null : toInsert.find(x => x.type === t.type && isOpposite(x));
+      const opposite = saved || pending;
       if (opposite) {
         const openShares = t.shares;
         const closeQty = Math.min(room(opposite), openShares);
@@ -13023,13 +13031,18 @@ async function _flexImportInner(trades) {
         opposite.exitPrice    = t.entryPrice;
         opposite.closeDate    = t.entryDate;
         opposite.closedShares = (opposite.closedShares || 0) + closeQty;
-        toUpdate.push({ row: opposite, prev, patch: {
-          exit_price:    t.entryPrice,
-          close_date:    t.entryDate,
-          closed_shares: opposite.closedShares,
-          targets:       legs,
-        } });
-        updated++;
+        // A pending row has not been written yet, so it just goes in already
+        // closed — queueing an update against a row with no id would target
+        // `.eq('id', undefined)` and silently match nothing.
+        if (saved) {
+          toUpdate.push({ row: opposite, prev, patch: {
+            exit_price:    t.entryPrice,
+            close_date:    t.entryDate,
+            closed_shares: opposite.closedShares,
+            targets:       legs,
+          } });
+          updated++;
+        }
         const leftover = openShares - closeQty;
         if (leftover <= 0.01) return; // fully absorbed by the existing position — no new row
         // Reversal: volume beyond what the existing position could hold really
