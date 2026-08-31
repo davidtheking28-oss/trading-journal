@@ -1215,72 +1215,23 @@ html.a11y-underline a { text-decoration: underline !important; }
         <div class="demo-nav" role="tablist" aria-label="הדגמת מערכת">
           <button class="demo-tab active" role="tab" aria-selected="true">עסקאות</button>
           <button class="demo-tab" role="tab" aria-selected="false">Market Pulse</button>
-          <button class="demo-tab" role="tab" aria-selected="false">סטטיסטיקה</button>
           <button class="demo-tab" role="tab" aria-selected="false">מסנן מניות</button>
         </div>
 
         <div class="demo-stage">
-        <!-- Screen 1: Trades table -->
-          <div class="demo-body demo-screen active" id="ds0">
-            <div class="d-toolbar">14 עסקאות · P&amp;L: <span style="color:#2dd4a0;font-weight:700">+$1,840</span> · Win: 64%</div>
-            <div class="d-trades-wrap">
-              <div class="d-trade-hdr"><span style="min-width:44px">נייר</span><span style="min-width:46px">כיוון</span><span style="flex:1">סטטוס</span><span>P&amp;L</span></div>
-              <div class="d-trade"><span class="d-trade-sym">AAPL</span><span class="d-badge L">Long</span><span class="d-trade-meta"><span class="d-pill closed">סגור</span></span><span class="d-trade-pnl pos">+$420</span></div>
-              <div class="d-trade"><span class="d-trade-sym">TSLA</span><span class="d-badge S">Short</span><span class="d-trade-meta"><span class="d-pill closed">סגור</span></span><span class="d-trade-pnl neg">-$180</span></div>
-              <div class="d-trade"><span class="d-trade-sym">SNOW</span><span class="d-badge L">Long</span><span class="d-trade-meta"><span class="d-pill open">פתוח</span></span><span class="d-trade-pnl pos">+$96</span></div>
-              <div class="d-trade"><span class="d-trade-sym">PLTR</span><span class="d-badge L">Long</span><span class="d-trade-meta"><span class="d-pill closed">סגור</span></span><span class="d-trade-pnl pos">+$310</span></div>
-              <div class="d-trade"><span class="d-trade-sym">AMD</span><span class="d-badge L">Long</span><span class="d-trade-meta"><span class="d-pill closed">סגור</span></span><span class="d-trade-pnl neg">-$65</span></div>
-            </div>
+          <!-- Screen 1: Trades table -->
+          <div class="demo-body demo-screen active" id="ds0" style="padding:0">
+            <img src="assets/demo/demo-trades.png" alt="טבלת עסקאות ביומן המסחר" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:top;display:block">
           </div>
 
           <!-- Screen 2: Market Pulse -->
-          <div class="demo-body demo-screen" id="ds1">
-            <div class="d-idx-row">
-              <div class="d-idx"><div class="d-idx-name">Russell 2000</div><div class="d-idx-val pos">+0.62%</div></div>
-              <div class="d-idx"><div class="d-idx-name">Nasdaq 100</div><div class="d-idx-val pos">+0.41%</div></div>
-              <div class="d-idx"><div class="d-idx-name">S&amp;P 500</div><div class="d-idx-val neg">-0.18%</div></div>
-            </div>
-            <div class="d-breadth">
-              <div class="d-breadth-lbl"><span>Market Breadth</span><span>31 themes</span></div>
-              <div class="d-breadth-bar"><div style="width:58%;background:#2dd4a0"></div><div style="width:42%;background:#ff6b8a"></div></div>
-              <div class="d-breadth-lbl"><span style="color:#2dd4a0">18 עולים</span><span style="color:#ff6b8a">13 יורדים</span></div>
-            </div>
-            <div class="d-sector"><div class="d-s-name" style="font-size:11px">Semiconductors</div><div class="d-s-bw" style="height:5px"><div class="d-s-bf" style="width:78%;background:#2dd4a0"></div></div><div class="d-s-pct" style="font-size:11px;font-weight:700;color:#2dd4a0">+1.9%</div></div>
-            <div class="d-sector"><div class="d-s-name" style="font-size:11px">Social Media</div><div class="d-s-bw" style="height:5px"><div class="d-s-bf" style="width:60%;background:#2dd4a0"></div></div><div class="d-s-pct" style="font-size:11px;font-weight:700;color:#2dd4a0">+1.1%</div></div>
-            <div class="d-sector" style="margin-bottom:0"><div class="d-s-name" style="font-size:11px">Biotech</div><div class="d-s-bw" style="height:5px"><div class="d-s-bf" style="width:35%;background:#ff6b8a"></div></div><div class="d-s-pct" style="font-size:11px;font-weight:700;color:#ff6b8a">-2.4%</div></div>
+          <div class="demo-body demo-screen" id="ds1" style="padding:0">
+            <img src="assets/demo/demo-pulse.png" alt="Market Pulse — מדדים ורוחב שוק" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:top;display:block">
           </div>
 
-          <!-- Screen 3: Statistics + calendar -->
-          <div class="demo-body demo-screen" id="ds2">
-            <div class="d-kpi-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:10px">
-              <div class="d-kpi blue"><div class="d-kpi-lbl">עסקאות</div><div class="d-kpi-val blue">18</div></div>
-              <div class="d-kpi green"><div class="d-kpi-lbl">הצלחה</div><div class="d-kpi-val green">66.7%</div></div>
-              <div class="d-kpi yel"><div class="d-kpi-lbl">P&amp;L</div><div class="d-kpi-val yel">+$1.8K</div></div>
-            </div>
-            <div style="background:#111;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:10px">
-              <div style="font-size:9px;color:#8896a8;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.6px">אוגוסט 2026</div>
-              <div class="d-cal-grid">
-                <div class="d-cal-cell">1</div><div class="d-cal-cell pos">2</div><div class="d-cal-cell">3</div><div class="d-cal-cell neg">4</div><div class="d-cal-cell pos">5</div><div class="d-cal-cell">6</div><div class="d-cal-cell pos">7</div>
-                <div class="d-cal-cell pos">8</div><div class="d-cal-cell">9</div><div class="d-cal-cell neg">10</div><div class="d-cal-cell pos">11</div><div class="d-cal-cell">12</div><div class="d-cal-cell pos">13</div><div class="d-cal-cell">14</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Screen 4: Stock screener -->
-          <div class="demo-body demo-screen" id="ds3">
-            <div class="d-fpills">
-              <span class="d-fpill active">Minervini SEPA</span>
-              <span class="d-fpill">Power Play</span>
-              <span class="d-fpill">VCP</span>
-              <span class="d-fpill">מומנטום</span>
-            </div>
-            <div class="d-crit-grid">
-              <div class="d-crit"><div class="d-crit-lbl">RS Rating מינ'</div><div class="d-crit-val">70</div></div>
-              <div class="d-crit"><div class="d-crit-lbl">מחיר מינ'</div><div class="d-crit-val">$10+</div></div>
-              <div class="d-crit"><div class="d-crit-lbl">שווי שוק מינ'</div><div class="d-crit-val">$2B+</div></div>
-              <div class="d-crit"><div class="d-crit-lbl">נזילות יומית מינ'</div><div class="d-crit-val">$20M+</div></div>
-            </div>
-            <div class="d-insight" style="margin-top:10px"><strong>4 מניות</strong> עומדות בקריטריונים כרגע</div>
+          <!-- Screen 3: Stock screener -->
+          <div class="demo-body demo-screen" id="ds2" style="padding:0">
+            <img src="assets/demo/demo-screener.png" alt="מסנן מניות — Trend Template + SEPA" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:top;display:block">
           </div>
         </div>
       </div>

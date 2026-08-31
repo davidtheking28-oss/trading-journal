@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
+import { resolveQuote } from '../_shared/quote.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -80,22 +81,12 @@ serve(async (req: Request) => {
   if (path === 'quote' && symbols) {
     const list = [...new Set(symbols.split(',').map(s => s.trim().toUpperCase()).filter(Boolean))].slice(0, 50);
     const results: Record<string, unknown> = {};
-    // Promise.all had no per-symbol timeout, so one slow/hung Finnhub response
-    // (a symbol it barely serves, a transient stall) blocked the whole batch —
-    // every open position waited on the single worst one. 5s per symbol; a
-    // timed-out symbol comes back null like any other failed quote, same as
-    // the client already handles.
+    // Each symbol is resolved independently and with its own timeout, so one
+    // slow or failing symbol can no longer hold up (or sink) the whole batch.
+    // resolveQuote retries Finnhub once and then falls back to Yahoo — see the
+    // measurements in _shared/quote.ts for why a single attempt is not enough.
     await Promise.all(list.map(async sym => {
-      try {
-        const controller = new AbortController();
-        const tid = setTimeout(() => controller.abort(), 5000);
-        const r = await fetch(`https://finnhub.io/api/v1/quote?token=${encodeURIComponent(apiKey)}&symbol=${encodeURIComponent(sym)}`,
-          { headers: { 'User-Agent': 'trading-journal/2.0' }, signal: controller.signal });
-        clearTimeout(tid);
-        results[sym] = r.ok ? await r.json() : null;
-      } catch {
-        results[sym] = null;
-      }
+      results[sym] = await resolveQuote(sym, apiKey);
     }));
     return new Response(JSON.stringify(results), {
       headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
