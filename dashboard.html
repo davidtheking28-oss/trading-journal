@@ -11229,7 +11229,6 @@ async function _updateLivePL(force = false) {
   if (document.hidden) return;
   const ovTab = document.getElementById('tab-overview');
   if (ovTab && !ovTab.classList.contains('active')) return;
-  const myToken = ++_livePLToken;
   const open = [...db.stocks, ...db.crypto].filter(t =>
     isOpenPosition(t)
   );
@@ -11256,6 +11255,15 @@ async function _updateLivePL(force = false) {
   // The finnhub edge function has a shared fallback key and the personal field is
   // hidden from non-admins, so gating on a personal key killed this card for
   // every regular user. The JWT alone is enough.
+  // Claimed here, not at the top of the function: the token exists to stop an
+  // older in-flight fetch from overwriting a newer one, so only a call that is
+  // actually going to fetch may claim it. Taking it before the guards above let
+  // a call that then bailed out ("same symbols, refreshed recently") cancel the
+  // one call that was going to paint — both returned without writing and the
+  // card sat on "מחשב..." forever. Worst while the US market is closed, where
+  // staleAfter is 15 min and ignores `force`, so every 60s tick re-bailed and
+  // nothing was ever cached to paint on the next visit either.
+  const myToken = ++_livePLToken;
   const token = await _getToken();
   const symbols = [...new Set(open.map(t => t.symbol.toUpperCase()))];
   _lastLivePLTs = Date.now();

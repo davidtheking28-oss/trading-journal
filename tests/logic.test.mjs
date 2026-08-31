@@ -1202,3 +1202,76 @@ describe('missedFollowThrough', () => {
     assert.equal(missedFollowThrough({ sym: 'NVDA', date: '2026-01-05' }, [{ symbol: 'AAPL', entryDate: '2026-02-01' }]), null);
   });
 });
+
+// ── The live P&L card must always end up with a value on screen ─────────────
+// Two calls that overlap (loadDB's renderOverview, then the broker auto-sync's
+// renderOverview a moment later) could cancel each other: the second bumped
+// _livePLToken and then bailed out at the freshness guard without writing, and
+// the first — the only one that was going to paint — saw its token had moved on
+// and returned silently. The card sat on "מחשב..." forever, and because the
+// cache is only written on a successful paint, every later session repeated it.
+describe('live P&L never leaves the card on its placeholder', () => {
+  const PLACEHOLDER = 'kpi_calculating';
+
+  function makeCard({ marketOpen = true } = {}) {
+    // extractFunction() slices from the `function` keyword, dropping the
+    // leading `async` — put it back or the body's awaits are a syntax error.
+    const src = 'async ' + extractFunction('_updateLivePL');
+    const el  = { textContent: PLACEHOLDER, className: '' };
+    const sub = { textContent: '' };
+    const els = { 'kpi-live-pl': el, 'kpi-live-sub': sub,
+                  'tab-overview': { classList: { contains: () => true } } };
+    let releaseFetch;
+    const gate = new Promise(r => { releaseFetch = r; });
+    const scope = {
+      document: { getElementById: id => els[id] || null, hidden: false },
+      db: { stocks: [{ symbol: 'AAPL', shares: 10, closedShares: 0, entryPrice: 100, ls: 'L', type: 'stock' }], crypto: [] },
+      isOpenPosition: () => true,
+      _isUSMarketOpen: () => marketOpen,
+      _readLivePLCache: () => null,
+      _writeLivePLCache: () => {},
+      _paintLivePL: (e, s, total) => { e.textContent = String(total); },
+      _getToken: async () => 'tok',
+      t: k => k,
+      SUPABASE_URL: 'https://example.test',
+      fetch: async () => { await gate; return { json: async () => ({ AAPL: { c: 110 } }) }; },
+      _LIVE_PL_MIN_INTERVAL: 20000,
+      _LIVE_PL_CLOSED_INTERVAL: 900000,
+    };
+    const names = Object.keys(scope);
+    const factory = new Function(...names,
+      `let _livePLToken = 0, _lastLivePLTs = 0, _lastLivePLSymbols = '';\n${src}\nreturn _updateLivePL;`);
+    return { update: factory(...names.map(n => scope[n])), el, sub, releaseFetch };
+  }
+
+  const settle = () => new Promise(r => setTimeout(r, 0));
+
+  test('a second overlapping call does not cancel the one that paints', async () => {
+    const { update, el, releaseFetch } = makeCard();
+    const first = update();          // loadDB's renderOverview
+    await settle();                  // it has stamped the freshness marker and is awaiting the quote
+    const second = update();         // the broker auto-sync's renderOverview
+    releaseFetch();
+    await Promise.all([first, second]);
+    assert.notEqual(el.textContent, PLACEHOLDER,
+      'card still shows the "calculating" placeholder — both calls returned without writing');
+    assert.equal(el.textContent, '100');   // 10 shares × (110 − 100)
+  });
+
+  test('a closed market does not keep the placeholder up either', async () => {
+    const { update, el, releaseFetch } = makeCard({ marketOpen: false });
+    const first = update();
+    await settle();
+    const second = update(true);
+    releaseFetch();
+    await Promise.all([first, second]);
+    assert.notEqual(el.textContent, PLACEHOLDER);
+  });
+
+  test('a single uncontested call still paints', async () => {
+    const { update, el, releaseFetch } = makeCard();
+    releaseFetch();
+    await update();
+    assert.equal(el.textContent, '100');
+  });
+});
