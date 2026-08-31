@@ -11458,16 +11458,24 @@ function renderPersonalStemBadge() {
     ${posPct != null ? `<span class="stem-pill-vix">${posPct}% חיוביות · ${_pstemAvgReturn != null ? `${_pstemAvgReturn >= 0 ? '+' : ''}${_pstemAvgReturn.toFixed(1)}% ` : ''}ב-5 ימים · ${n} מניות</span>` : ''}`;
 }
 
-// Broker-derived portfolio equity (currently Bybit only — bybit-cron writes
-// broker_balances on each sync run). Cached client-side and refetched at most
-// once every 60s, same guard shape as _updateLivePL's symbol-key guard.
-let _brokerEquityUsd = null, _brokerEquityTs = 0;
+// Broker-derived portfolio equity — ibkr-cron and bybit-cron both write
+// broker_balances on each sync run, one row per (user, broker). Cached
+// client-side and refetched at most once every 60s, same guard shape as
+// _updateLivePL's symbol-key guard.
+const _BROKER_NAMES = { ibkr: 'אינטראקטיב ברוקר', bybit: 'Bybit' };
+let _brokerEquityUsd = null, _brokerEquityTs = 0, _brokerEquityLabel = 'גודל תיק (ברוקר)';
 async function _loadBrokerEquity() {
   if (Date.now() - _brokerEquityTs < 60000) return;
   _brokerEquityTs = Date.now();
-  const { data } = await _sb.from('broker_balances').select('equity_usd').eq('user_id', _currentUser.id);
+  const { data } = await _sb.from('broker_balances').select('equity_usd, broker').eq('user_id', _currentUser.id);
   if (!data) return;
   const sum = data.reduce((s, r) => s + Number(r.equity_usd || 0), 0);
+  // A single connected broker gets named outright; more than one stays generic
+  // rather than picking an arbitrary order to list them in.
+  const brokers = [...new Set(data.map(r => r.broker).filter(Boolean))];
+  _brokerEquityLabel = brokers.length === 1
+    ? `גודל תיק ${_BROKER_NAMES[brokers[0]] || brokers[0]}`
+    : 'גודל תיק (ברוקר)';
   if (sum !== _brokerEquityUsd) { _brokerEquityUsd = sum; renderStatistics(); }
   else _brokerEquityUsd = sum;
 }
@@ -11523,7 +11531,7 @@ function renderStatistics() {
 
   // Broker-derived portfolio size gets its own full-width card above the grid.
   const portfolioCard = _brokerEquityUsd != null
-    ? { label: 'גודל תיק (ברוקר)', value: '$' + _brokerEquityUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
+    ? { label: _brokerEquityLabel, value: '$' + _brokerEquityUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
     : null;
 
   // Curated down from 15 flat tiles to the 8 numbers that actually drive a
