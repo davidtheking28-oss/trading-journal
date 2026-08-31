@@ -11862,18 +11862,18 @@ function renderHoldCompare(adv) {
   const win = adv.avgWinDays, loss = adv.avgLossDays;
   const max = Math.max(win, loss, 0.01);
   const row = (label, days, color) => `
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-      <div style="width:34px;flex-shrink:0;font-size:10px;color:var(--text2);">${label}</div>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+      <div style="width:40px;flex-shrink:0;font-size:13px;font-weight:600;color:var(--text2);">${label}</div>
       <div style="flex:1;height:4px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;">
         <div style="width:${Math.min(days / max * 100, 100)}%;height:100%;background:${color};border-radius:3px;"></div>
       </div>
-      <div style="width:30px;flex-shrink:0;font-size:10px;font-weight:700;color:var(--text);text-align:left;">${days.toFixed(1)}d</div>
+      <div style="width:36px;flex-shrink:0;font-size:13px;font-weight:700;color:var(--text);text-align:left;">${days.toFixed(1)}d</div>
     </div>`;
   const ratio = win > 0 && loss > 0
     ? (win >= loss ? `${(win / loss).toFixed(1)}:1` : `1:${(loss / win).toFixed(1)}`)
     : '—';
   wrap.innerHTML = row('מנצחת', win, '#2dd4a0') + row('הפסד', loss, '#ff6b8a')
-    + `<div style="text-align:center;font-size:9px;color:var(--text3);margin-top:1px;">יחס: ${ratio}</div>`;
+    + `<div style="text-align:center;font-size:11px;color:var(--text3);margin-top:1px;">יחס: ${ratio}</div>`;
 }
 
 function renderDonut(st, adv, trades) {
