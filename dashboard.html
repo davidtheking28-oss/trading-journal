@@ -5700,10 +5700,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div class="filter-stats" id="stats-filter-info"></div>
       </div>
       <div class="kpi-grid" id="stats-kpi-grid" style="margin-bottom:24px;"></div>
-      <div class="chart-card" style="padding:12px 16px;margin-bottom:12px;background:var(--card);border:1px solid var(--border2,rgba(255,255,255,0.12));">
-        <div class="chart-title" style="margin-bottom:8px;font-size:11px;">משך זמן ממוצע לפי סוג עסקה</div>
-        <div id="hold-compare-wrap" style="min-height:44px;"></div>
-      </div>
       <div class="chart-card" style="display:flex;flex-direction:column;margin-bottom:16px;">
         <div class="chart-title">Win / Loss</div>
         <div class="chart-skeleton" id="skel-donut" style="height:130px;"></div>
@@ -11562,7 +11558,14 @@ function renderStatistics() {
         <div class="kpi-value ${k.valCls}${k.sensitive ? ' sensitive' : ''}">${k.value}</div>
         ${k.sub ? `<div class="kpi-sub">${k.sub}</div>` : ''}
       </div>`).join('');
-    grid.innerHTML = portfolioHtml + `<div class="kpi-grid-hero">${cardsHtml}</div>`;
+    // Placed as its own card in the same grid as the KPI cards, right beside
+    // them — not a separate full-width section above/below.
+    const holdCompareHtml = `
+      <div class="kpi-card c-blue">
+        <div class="kpi-label">משך החזקה ממוצע</div>
+        <div id="hold-compare-wrap" style="margin-top:6px;"></div>
+      </div>`;
+    grid.innerHTML = portfolioHtml + `<div class="kpi-grid-hero">${cardsHtml}${holdCompareHtml}</div>`;
   }
 
   renderHoldCompare(adv);
