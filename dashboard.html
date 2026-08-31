@@ -5556,9 +5556,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     <div class="sidebar-footer">
       <div class="sidebar-footer-text">v2.0 · מאובטח</div>
       <div class="sidebar-footer-links">
-        <a onclick="openLegal('privacy')" tabindex="0" role="button">פרטיות</a>
-        <a onclick="openLegal('terms')" tabindex="0" role="button">תנאי שימוש</a>
-        <a onclick="openLegal('accessibility')" tabindex="0" role="button">נגישות</a>
+        <a href="privacy.html" target="_blank" rel="noopener">פרטיות</a>
+        <a href="terms.html" target="_blank" rel="noopener">תנאי שימוש</a>
+        <a href="accessibility.html" target="_blank" rel="noopener">נגישות</a>
       </div>
       <div class="sidebar-footer-text" style="margin-top:6px;">© 2026 ChartRoom</div>
     </div>
@@ -6999,7 +6999,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         onkeydown="if(event.key==='Enter')authSubmit()">
       <label id="auth-consent-row" style="display:none;align-items:flex-start;gap:8px;margin-top:4px;font-size:12px;color:var(--text3);line-height:1.5;cursor:pointer;">
         <input id="auth-consent" type="checkbox" style="margin-top:2px;flex-shrink:0;cursor:pointer;accent-color:var(--accent);">
-        <span>קראתי ואני מסכים/ה ל<a onclick="event.preventDefault();openLegal('terms')" style="color:var(--accent);text-decoration:underline;cursor:pointer;">תנאי השימוש</a> ול<a onclick="event.preventDefault();openLegal('privacy')" style="color:var(--accent);text-decoration:underline;cursor:pointer;">מדיניות הפרטיות</a></span>
+        <span>קראתי ואני מסכים/ה ל<a href="terms.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:underline;">תנאי השימוש</a> ול<a href="privacy.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:underline;">מדיניות הפרטיות</a></span>
       </label>
     </div>
 
@@ -7030,11 +7030,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
     <!-- Legal links -->
     <div style="text-align:center;margin-top:18px;font-size:11px;color:var(--text3);line-height:1.6;">
-      <a onclick="openLegal('terms')" style="color:var(--text3);cursor:pointer;text-decoration:underline;">תנאי שימוש</a>
+      <a href="terms.html" target="_blank" rel="noopener" style="color:var(--text3);text-decoration:underline;">תנאי שימוש</a>
       &nbsp;·&nbsp;
-      <a onclick="openLegal('privacy')" style="color:var(--text3);cursor:pointer;text-decoration:underline;">מדיניות פרטיות</a>
+      <a href="privacy.html" target="_blank" rel="noopener" style="color:var(--text3);text-decoration:underline;">מדיניות פרטיות</a>
       &nbsp;·&nbsp;
-      <a onclick="openLegal('accessibility')" style="color:var(--text3);cursor:pointer;text-decoration:underline;">הצהרת נגישות</a>
+      <a href="accessibility.html" target="_blank" rel="noopener" style="color:var(--text3);text-decoration:underline;">הצהרת נגישות</a>
     </div>
    </div>
   </div>

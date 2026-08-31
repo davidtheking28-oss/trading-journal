@@ -314,6 +314,56 @@ describe('_flexImportInner — a no-indicator fill against an open opposite posi
     assert.equal(h.inserts.length, 0, 'the short from the first sync must not be duplicated');
     assert.equal(h.updates.length, 0, 'an already-closed row must not be re-closed');
   });
+
+  // The mirror case. flexParseXML's BUY branch is the same shape as its SELL
+  // one — cover open shorts, then open a long with whatever is left — so a
+  // covering BUY seen only through the confirm feed reads as a fresh LONG
+  // beside the short it was actually closing. Nothing about the fix is
+  // direction-specific, and these prove it rather than assuming it.
+  const openShort = { symbol: 'MD', type: 'stock', ls: 'S', shares: 30, closedShares: 0,
+    entryPrice: 25.9, entryDate: '2026-08-31', commission: 2.5, ibkr_id: '1562656936', deleted: false };
+  const confirmBuy = { symbol: 'MD', type: 'stock', ls: 'L', shares: 30,
+    entryPrice: 24, entryDate: '2026-09-02', commission: 2.5, ibkr_id: '1571000001' };
+
+  test('a covering BUY closes the existing short instead of inserting a new long', async () => {
+    const h = run([confirmBuy], { existing: [openShort] });
+    await h.run();
+    assert.equal(h.inserts.length, 0, 'covering a short must not open a phantom long');
+    assert.equal(h.updates.length, 1);
+    assert.equal(h.updates[0].patch.exit_price, 24, 'a short exits at the price it was bought back at');
+    assert.equal(h.updates[0].patch.closed_shares, 30);
+    assert.equal(h.updates[0].patch.close_date, '2026-09-02');
+  });
+
+  test('the covered short books a profit, with the sign the right way round', async () => {
+    // The whole point of getting the direction right: sold at 25.9, covered at
+    // 24 — that is a gain on a short and a loss on a long, and the phantom-row
+    // bug hid it as two open positions with no realised P&L at all.
+    const h = run([confirmBuy], { existing: [openShort] });
+    await h.run();
+    const row = h.db.stocks[0];
+    assert.equal(row.ls, 'S');
+    assert.equal(calcPL(row), (25.9 - 24) * 30, 'a short gains when it covers lower');
+    assert.ok(calcPL(row) > 0);
+  });
+
+  test('a partial cover closes only what was bought back, and opens nothing', async () => {
+    const h = run([{ ...confirmBuy, shares: 10 }], { existing: [openShort] });
+    await h.run();
+    assert.equal(h.inserts.length, 0);
+    assert.equal(h.updates[0].patch.closed_shares, 10, 'the other 20 shares are still short');
+    assert.equal(h.db.stocks[0].shares - h.db.stocks[0].closedShares, 20);
+  });
+
+  test('buying back more than the short held reverses into a new long', async () => {
+    const smallShort = { ...openShort, shares: 20, closedShares: 0 };
+    const h = run([confirmBuy], { existing: [smallShort] });
+    await h.run();
+    assert.equal(h.updates[0].patch.closed_shares, 20, 'the short closes at its own size');
+    assert.equal(h.inserts.length, 1);
+    assert.equal(h.inserts[0].ls, 'L', 'the excess flips the position long');
+    assert.equal(h.inserts[0].shares, 10);
+  });
 });
 
 // ── Investments tab ─────────────────────────────────────────────────────────
