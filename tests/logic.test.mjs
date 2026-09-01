@@ -144,6 +144,16 @@ describe('P&L', () => {
     assert.equal(isClosed({}), false);
   });
 
+  test('calcStopRisk falls back to the exit price when no stop is set', () => {
+    const tr = { entryPrice: 10, exitPrice: 12, closedShares: 100, commission: 1 };
+    assert.equal(calcStopRisk(tr), (12 - 10) * 100);
+  });
+
+  test('calcStopRisk still prefers a real stop over the exit price', () => {
+    const tr = { entryPrice: 10, stop: 9, exitPrice: 12, closedShares: 100, commission: 1 };
+    assert.equal(calcStopRisk(tr), (10 - 9) * 100);
+  });
+
   test('stats over an empty journal is all zeros', () => {
     const s = stats([]);
     assert.deepEqual(

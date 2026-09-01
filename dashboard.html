@@ -8175,13 +8175,11 @@ function fmtPct(n) {
 function clr(v) { return v > 0 ? 'num-green' : v < 0 ? 'num-red' : ''; }
 // calcStopRisk — סיכון אמיתי: (מחיר כניסה - סטופ) × מניות
 function calcStopRisk(tr) {
-  // Risk reference is the stop, and only the stop. Falling back to the exit
-  // price made R come out at ±1 by construction on every stopless trade — the
-  // sign the P&L already carries — so the book's avgR was reporting the win
-  // rate dressed as a risk metric instead of admitting it did not know. Of 236
-  // closed trades, 215 have no stop; those now read "—" rather than a number
-  // that looks measured but is not.
-  const stop = +tr.stop || 0;
+  // No stop set: fall back to the actual exit price as the risk reference.
+  // User-confirmed tradeoff — this makes R come out at ±1 by construction
+  // on a stopless trade (no real planned-risk figure to divide by), but the
+  // user wants a number here rather than "—".
+  const stop = +tr.stop || (tr.exitPrice ? +tr.exitPrice : 0);
   if (!stop) return 0;
   const entry = +tr.entryPrice || 0;
   // Size the risk on the quantity the P&L is measured over. Using the full
