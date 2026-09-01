@@ -14374,6 +14374,18 @@ document.addEventListener('click', e => {
     if (event === 'TOKEN_REFRESHED' && session) {
       _currentSession = session;
     }
+    // A password-reset email link lands here as its own event, not SIGNED_IN —
+    // Supabase's client establishes the session automatically either way, but
+    // without this the user was dropped straight into the dashboard with no
+    // indication the reset link ever did anything: the old password stayed the
+    // password, since nothing ever asked for a new one.
+    if (event === 'PASSWORD_RECOVERY' && session?.user) {
+      if (!_currentUser) await _onAuthSuccess(session.user);
+      const settingsBtn = document.querySelector('.tab-btn[aria-label="Settings"]');
+      switchTab('ibkr', settingsBtn);
+      toast('הקישור אימת אותך — הזן סיסמה חדשה למטה', 'info');
+      document.getElementById('pw-new')?.focus();
+    }
     if (event === 'SIGNED_OUT') {
       _teardownRealtimeSync();
       _currentUser = null;
