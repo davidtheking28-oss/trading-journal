@@ -20,6 +20,8 @@ const { calcRisk } = load('calcRisk');
 const { tradeDays } = load('tradeDays');
 const { calcStopRisk } = load('calcStopRisk');
 const { stats } = load('calcPL', 'calcTotal', 'isClosed', 'stats');
+const { calcDrawdownSeries } = load('calcPL', 'calcTotal', 'isClosed', 'calcDrawdownSeries');
+const { calcRHistogram } = load('calcPL', 'calcTotal', 'isClosed', 'calcStopRisk', 'R_HIST_BUCKETS', 'calcRHistogram');
 
 const fill = (o = {}) => ({
   symbol: 'TST', tradeID: '1', dateTime: '20260806;100000', quantity: '100',
@@ -152,6 +154,73 @@ describe('P&L', () => {
   test('calcStopRisk still prefers a real stop over the exit price', () => {
     const tr = { entryPrice: 10, stop: 9, exitPrice: 12, closedShares: 100, commission: 1 };
     assert.equal(calcStopRisk(tr), (10 - 9) * 100);
+  });
+
+  test('calcDrawdownSeries: monotonically rising equity has zero drawdown throughout', () => {
+    const trades = [
+      { ls: 'L', entryPrice: 10, shares: 10, closedShares: 10, exitPrice: 12, commission: 0, ecn: 0, t: [], entryDate: '2026-01-01', closeDate: '2026-01-02' },
+      { ls: 'L', entryPrice: 10, shares: 10, closedShares: 10, exitPrice: 13, commission: 0, ecn: 0, t: [], entryDate: '2026-01-03', closeDate: '2026-01-04' },
+    ];
+    const { points, maxDrawdown, current } = calcDrawdownSeries(trades);
+    assert.equal(points.length, 2);
+    assert.equal(maxDrawdown, 0);
+    assert.equal(current, 0);
+  });
+
+  test('calcDrawdownSeries: a single big loss after a gain is the max drawdown', () => {
+    const trades = [
+      { ls: 'L', entryPrice: 10, shares: 10, closedShares: 10, exitPrice: 20, commission: 0, ecn: 0, t: [], entryDate: '2026-01-01', closeDate: '2026-01-02' }, // +100
+      { ls: 'L', entryPrice: 10, shares: 10, closedShares: 10, exitPrice: 5,  commission: 0, ecn: 0, t: [], entryDate: '2026-01-03', closeDate: '2026-01-04' }, // -50
+    ];
+    const { maxDrawdown, current, pctMode } = calcDrawdownSeries(trades);
+    // peak 100, equity 50 -> (50-100)/100 = -50%
+    assert.equal(pctMode, true);
+    assert.equal(+maxDrawdown.toFixed(2), -50);
+    assert.equal(+current.toFixed(2), -50);
+  });
+
+  test('calcDrawdownSeries: a book that never went net-positive falls back to $ terms', () => {
+    const trades = [
+      { ls: 'L', entryPrice: 10, shares: 10, closedShares: 10, exitPrice: 8, commission: 0, ecn: 0, t: [], entryDate: '2026-01-01', closeDate: '2026-01-02' }, // -20
+      { ls: 'L', entryPrice: 10, shares: 10, closedShares: 10, exitPrice: 9, commission: 0, ecn: 0, t: [], entryDate: '2026-01-03', closeDate: '2026-01-04' }, // -10, peak still 0
+    ];
+    const { pctMode, points } = calcDrawdownSeries(trades);
+    assert.equal(pctMode, true); // pctMode reflects "there is data", unit is decided per-point via peak<=0
+    assert.equal(points[0].drawdown, -20); // peak 0, equity -20 -> falls back to $ (equity - peak)
+  });
+
+  test('calcDrawdownSeries: no closed trades returns an empty series, not a fabricated one', () => {
+    const { points, maxDrawdown, current } = calcDrawdownSeries([]);
+    assert.deepEqual(points, []);
+    assert.equal(maxDrawdown, 0);
+    assert.equal(current, 0);
+  });
+
+  test('calcRHistogram: only trades with a measurable stop-risk are counted', () => {
+    const withStop = { ls: 'L', entryPrice: 10, stop: 9, shares: 10, closedShares: 10, exitPrice: 12, commission: 0, ecn: 0, t: [] }; // R = 20/10 = +2
+    // calcStopRisk falls back to the exit price when no stop is set, so this is
+    // still measurable — the real exclusion case is fee-dominated risk (calcStopRisk
+    // returns 0 when the planned risk is smaller than the trade's own commission).
+    const feeDominated = { ls: 'L', entryPrice: 10, shares: 1, closedShares: 1, exitPrice: 10.001, commission: 5, ecn: 0, t: [] };
+    const { buckets, counted } = calcRHistogram([withStop, feeDominated]);
+    assert.equal(counted, 1);
+    const hit = buckets.find(b => b.label === '1R..2R');
+    assert.equal(hit.count, 1);
+  });
+
+  test('calcRHistogram: a loss beyond -2R lands in the tail bucket, not zero-bucketed', () => {
+    const tr = { ls: 'L', entryPrice: 10, stop: 9, shares: 10, closedShares: 10, exitPrice: 1, commission: 0, ecn: 0, t: [] }; // R = -90/10 = -9
+    const { buckets, counted } = calcRHistogram([tr]);
+    assert.equal(counted, 1);
+    assert.equal(buckets.find(b => b.label === '<-2R').count, 1);
+  });
+
+  test('calcRHistogram: exactly on a bucket boundary goes to the lower bucket (<=)', () => {
+    // R exactly = 1.0 -> falls in '0R..1R' (max:1, r<=1)
+    const tr = { ls: 'L', entryPrice: 10, stop: 9, shares: 10, closedShares: 10, exitPrice: 11, commission: 0, ecn: 0, t: [] }; // R = 10/10 = 1
+    const { buckets } = calcRHistogram([tr]);
+    assert.equal(buckets.find(b => b.label === '0R..1R').count, 1);
+    assert.equal(buckets.find(b => b.label === '1R..2R').count, 0);
   });
 
   test('stats over an empty journal is all zeros', () => {
