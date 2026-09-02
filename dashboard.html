@@ -8417,6 +8417,12 @@ function switchTab(name, btn) {
     ?.classList.add('active');
   const tabEl = document.getElementById('tab-'+name);
   document.getElementById('main-content')?.classList.toggle('full-bleed', name==='screener');
+  // The a11y widget is fixed to the viewport, so on the Screener tab it floats
+  // on top of the embedded iframe's own content — the iframe can't see it to
+  // work around it (documented in the screener repo's own CSS comments).
+  // Hidden only here; every other tab keeps it.
+  const a11yBtn = document.getElementById('a11y-toggle');
+  if (a11yBtn) a11yBtn.style.display = name==='screener' ? 'none' : '';
   tabEl.classList.add('active');
   tabEl.classList.remove('tab-entering');
   void tabEl.offsetWidth;
