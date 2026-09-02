@@ -167,26 +167,30 @@ describe('P&L', () => {
     assert.equal(current, 0);
   });
 
-  test('calcDrawdownSeries: a single big loss after a gain is the max drawdown', () => {
+  test('calcDrawdownSeries: a single big loss after a gain is the max drawdown, denominated on deployed capital', () => {
     const trades = [
       { ls: 'L', entryPrice: 10, shares: 10, closedShares: 10, exitPrice: 20, commission: 0, ecn: 0, t: [], entryDate: '2026-01-01', closeDate: '2026-01-02' }, // +100
       { ls: 'L', entryPrice: 10, shares: 10, closedShares: 10, exitPrice: 5,  commission: 0, ecn: 0, t: [], entryDate: '2026-01-03', closeDate: '2026-01-04' }, // -50
     ];
     const { maxDrawdown, current, pctMode } = calcDrawdownSeries(trades);
-    // peak 100, equity 50 -> (50-100)/100 = -50%
+    // base = deployed capital = 10*10 + 10*10 = 200 (NOT the running peak of
+    // P&L, which crosses arbitrarily close to zero and blew up to -18982% on
+    // real seed data — verified live). peak 100, equity 50 -> (50-100)/200 = -25%
     assert.equal(pctMode, true);
-    assert.equal(+maxDrawdown.toFixed(2), -50);
-    assert.equal(+current.toFixed(2), -50);
+    assert.equal(+maxDrawdown.toFixed(2), -25);
+    assert.equal(+current.toFixed(2), -25);
   });
 
-  test('calcDrawdownSeries: a book that never went net-positive falls back to $ terms', () => {
+  test('calcDrawdownSeries: zero deployed capital falls back to $ terms', () => {
+    // entryPrice 0 (e.g. a data gap) means no capital base to denominate a
+    // percent against — the only real zero-base case, unlike "never went
+    // net-positive" which still has a real capital base and a real percent.
     const trades = [
-      { ls: 'L', entryPrice: 10, shares: 10, closedShares: 10, exitPrice: 8, commission: 0, ecn: 0, t: [], entryDate: '2026-01-01', closeDate: '2026-01-02' }, // -20
-      { ls: 'L', entryPrice: 10, shares: 10, closedShares: 10, exitPrice: 9, commission: 0, ecn: 0, t: [], entryDate: '2026-01-03', closeDate: '2026-01-04' }, // -10, peak still 0
+      { ls: 'S', entryPrice: 0, shares: 10, closedShares: 10, exitPrice: 8, commission: 0, ecn: 0, t: [], entryDate: '2026-01-01', closeDate: '2026-01-02' }, // (0-8)*10 = -80 ($ terms)
     ];
     const { pctMode, points } = calcDrawdownSeries(trades);
-    assert.equal(pctMode, true); // pctMode reflects "there is data", unit is decided per-point via peak<=0
-    assert.equal(points[0].drawdown, -20); // peak 0, equity -20 -> falls back to $ (equity - peak)
+    assert.equal(pctMode, false);
+    assert.equal(points[0].drawdown, -80); // peak 0, equity -80 -> falls back to $ (equity - peak)
   });
 
   test('calcDrawdownSeries: no closed trades returns an empty series, not a fabricated one', () => {

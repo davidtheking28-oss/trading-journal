@@ -8255,20 +8255,26 @@ function fmtR(tot, stopRisk) {
 }
 // calcDrawdownSeries — running equity curve + peak-to-trough drawdown, sorted
 // chronologically over closed trades only (an open position has no realised
-// equity to plot). Falls back to $ terms when the running peak is <= 0 — a
-// book that has never gone net-positive can't express a drawdown as a percent
-// of a non-positive peak, so pctMode says which unit the caller is getting
-// instead of silently dividing by something meaningless.
+// equity to plot).
+//
+// The percent denominator is the total capital deployed (sum of entry cost
+// basis across the closed trades), NOT the running peak of cumulative P&L —
+// peak crosses arbitrarily close to zero on a book whose equity oscillates
+// around its starting point, and dividing by a near-zero peak produced
+// drawdowns like -18982% on real seed data (verified live). renderCumChart's
+// own pct mode already denominates against deployed capital for the same
+// reason; this mirrors it instead of inventing a second convention.
 function calcDrawdownSeries(trades) {
   const closed = trades.filter(isClosed).slice()
     .sort((a, b) => (a.closeDate || a.entryDate).localeCompare(b.closeDate || b.entryDate));
+  const base = Math.abs(closed.reduce((s, t) => s + (t.entryPrice || 0) * (t.shares || 0), 0));
+  const pctMode = base > 0;
   let equity = 0, peak = 0;
-  const pctMode = closed.length > 0;
   const points = [];
   closed.forEach(t => {
     equity += calcTotal(t);
     peak = Math.max(peak, equity);
-    const dd = peak > 0 ? (equity - peak) / peak * 100 : (equity - peak);
+    const dd = pctMode ? (equity - peak) / base * 100 : (equity - peak);
     points.push({ date: t.closeDate || t.entryDate, equity, drawdown: dd });
   });
   const maxDrawdown = points.length ? Math.min(...points.map(p => p.drawdown)) : 0;
