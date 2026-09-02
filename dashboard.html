@@ -11172,12 +11172,12 @@ async function loadFearGreed() {
     if (!cachedFG) _fgUnavailable(el, 'Fear & Greed');
   }
   clearTimeout(_fgTimer);
-  // Was 24h — fine for the Fear & Greed score itself (CNN updates it once a
-  // day), but the STEM regime badge rides this same fetch, and a stressed-market
-  // alert that can lag a real VIX spike by up to a day defeats the point. The
-  // edge function still caches server-side for 5 min, so refreshing hourly here
-  // doesn't add real load — it just lets a genuine mid-day spike surface sooner.
-  _fgTimer = setTimeout(loadFearGreed, 60 * 60 * 1000);
+  // CNN's live score moves intraday (only the historical chart series is daily),
+  // confirmed live 2026-09-02: the widget showed 29 while CNN's own site showed
+  // 31 at the same moment, because the 60min client refresh let a real intraday
+  // move sit on screen for up to an hour. The edge function still caches
+  // server-side for 5 min, so a tighter client interval doesn't add real load.
+  _fgTimer = setTimeout(loadFearGreed, 15 * 60 * 1000);
 }
 
 let _cfgTimer = null;
