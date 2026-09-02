@@ -11185,7 +11185,7 @@ async function loadCryptoFearGreed() {
   const el = document.getElementById('crypto-fear-greed-widget');
   if (!el) return;
   const cachedCFG = _pulseCacheRead('crypto-fear-greed', 48 * 60 * 60 * 1000);
-  if (cachedCFG) _renderFGWidget(el, cachedCFG.payload, 'Crypto Fear & Greed', 'CoinMarketCap', cachedCFG.ts);
+  if (cachedCFG) _renderFGWidget(el, cachedCFG.payload, 'Crypto Fear & Greed', 'Alternative.me', cachedCFG.ts);
   else _fgPlaceholder(el, 'Crypto Fear & Greed');
   try {
     const jwt = await _getToken();
@@ -11195,7 +11195,7 @@ async function loadCryptoFearGreed() {
     const d = await res.json();
     if (!d.score) throw new Error('no data');
     _pulseCacheWrite('crypto-fear-greed', d);
-    _renderFGWidget(el, d, 'Crypto Fear & Greed', 'CoinMarketCap', Date.now());
+    _renderFGWidget(el, d, 'Crypto Fear & Greed', 'Alternative.me', Date.now());
   } catch {
     if (!cachedCFG) _fgUnavailable(el, 'Crypto Fear & Greed');
   }
