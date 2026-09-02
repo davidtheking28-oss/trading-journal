@@ -5739,7 +5739,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div style="min-height:150px;flex:1;position:relative;width:100%;"><canvas id="chart-dd" style="display:none"></canvas></div>
         <div id="dd-stats" class="donut-stats" style="margin-top:8px;"></div>
       </div>
-      <div class="chart-card" style="display:flex;flex-direction:column;margin-bottom:16px;" title="התפלגות עסקאות סגורות לפי כפולת R (רווח/הפסד חלקי הסיכון המתוכנן), עסקאות עם סטופ בלבד">
+      <div class="chart-card" style="display:flex;flex-direction:column;margin-bottom:16px;" title="התפלגות עסקאות סגורות לפי כפולת R (רווח/הפסד חלקי הסיכון המתוכנן) — כולל עסקאות ללא סטופ, שם הסיכון נמדד ממחיר היציאה בפועל">
         <div class="chart-title">R-Multiple</div>
         <div class="chart-skeleton" id="skel-rhist" style="height:150px;"></div>
         <div style="min-height:150px;flex:1;position:relative;width:100%;"><canvas id="chart-rhist" style="display:none"></canvas></div>
@@ -10736,7 +10736,7 @@ const LANG_STRINGS = {
     col_total:'Total', col_actions:'Actions',
     kpi_pnl:'Total P&L', kpi_winrate:'Win Rate', kpi_trades:"Trades",
     kpi_rr:'Risk/Reward', kpi_live:'Live P&L',
-    kpi_with_stop:'trades with stop', kpi_add_stop:'Add stop',
+    kpi_with_stop:'trades with measurable risk', kpi_add_stop:'Add stop',
     kpi_open_pos:'open positions', kpi_no_open:'No open positions',
     kpi_calculating:'Calculating...', kpi_vs_prev:'vs last month',
     kpi_updated:'Updated',
@@ -10865,7 +10865,7 @@ const LANG_STRINGS = {
     col_total:'סה"כ', col_actions:'פעולות',
     kpi_pnl:'P&L כולל', kpi_winrate:'אחוז הצלחה', kpi_trades:"מס' עסקאות",
     kpi_rr:'יחס סיכוי/סיכון', kpi_live:'רווח/הפסד בזמן אמת',
-    kpi_with_stop:'עסקאות עם סטופ', kpi_add_stop:'הוסף סטופ',
+    kpi_with_stop:'עסקאות עם סיכון מדיד', kpi_add_stop:'הוסף סטופ',
     kpi_open_pos:'פוזיציות פתוחות', kpi_no_open:'אין פוזיציות פתוחות',
     kpi_calculating:'מחשב...', kpi_vs_prev:'vs חודש קודם',
     kpi_updated:'עודכן',
@@ -11281,7 +11281,7 @@ function renderOverview() {
       <div class="kpi-sub">${st.wins}W / ${st.losses}L</div>
       <div class="kpi-progress-track"><div class="kpi-progress-bar" style="width:${Math.min(st.wr,100)}%;background:${st.wr>=50?'#2dd4a0':'#ff6b8a'}"></div></div>
     </div>
-    <div class="kpi-card ${avgR!==null&&avgR>=0?'c-green':'c-yellow'}" title="רווח/הפסד ממוצע ביחס לסיכון המתוכנן (סטופ), לעסקאות עם סטופ מוגדר">
+    <div class="kpi-card ${avgR!==null&&avgR>=0?'c-green':'c-yellow'}" title="רווח/הפסד ממוצע ביחס לסיכון המתוכנן — סטופ שהוגדר, או אם לא הוגדר סטופ, מרחק הכניסה ממחיר היציאה בפועל">
       <div class="kpi-label">${t('kpi_rr')}</div>
       <div class="kpi-value ${avgR!==null?(avgR>=0?'green':'red'):''} sensitive">${avgR!==null?avgR.toFixed(2)+'R':'—'}</div>
       <div class="kpi-sub">${withR.length ? withR.length+' '+t('kpi_with_stop') : ''}</div>
@@ -11711,7 +11711,7 @@ function renderStatistics() {
     { label: t('kpi_pnl'), tip: 'רווח/הפסד כולל בתקופה ובסקופ הנבחרים (עסקאות סגורות בלבד)', value: noDataYet ? '—' : fmt(st.total), sub: `${st.nClosed} ${t('trades')}${st.nOpen ? ` · ${st.nOpen} פתוחות` : ''}`, cls: st.total >= 0 ? 'c-green' : 'c-red', valCls: noDataYet ? '' : (st.total >= 0 ? 'green' : 'red'), sensitive: true, icon: ICON_DOLLAR },
     { label: t('st_win_rate'), tip: 'אחוז העסקאות הסגורות שהסתיימו ברווח', value: noDataYet ? '—' : pct(st.wr), sub: `${st.wins}W / ${losers.length}L`, cls: st.wr >= 50 ? 'c-green' : 'c-red', valCls: noDataYet ? '' : (st.wr >= 50 ? 'green' : 'red'), icon: ICON_TARGET },
     { label: 'Profit Factor', tip: 'סך הרווחים חלקי סך ההפסדים — מעל 1 אומר שהמערכת רווחית', value: pf != null ? pf.toFixed(2) : '—', sub: pf != null ? (pf >= 1 ? 'רווחי' : 'לא רווחי') : '', cls: pf != null ? (pf >= 1 ? 'c-green' : 'c-red') : 'c-blue', valCls: pf != null ? (pf >= 1 ? 'green' : 'red') : '', icon: ICON_BARS },
-    { label: t('st_avg_r'), tip: 'רווח/הפסד ממוצע ביחס לסיכון המתוכנן (סטופ), לעסקאות עם סטופ מוגדר', value: rCount ? avgR.toFixed(2) + 'R' : '—', sub: rCount ? `${rCount} עסקאות עם סטופ` : '', cls: avgR >= 0 ? 'c-green' : 'c-red', valCls: rCount ? (avgR >= 0 ? 'green' : 'red') : '', icon: ICON_PCT },
+    { label: t('st_avg_r'), tip: 'רווח/הפסד ממוצע ביחס לסיכון המתוכנן — סטופ שהוגדר, או אם לא הוגדר סטופ, מרחק הכניסה ממחיר היציאה בפועל', value: rCount ? avgR.toFixed(2) + 'R' : '—', sub: rCount ? `${rCount} עסקאות עם סיכון מדיד` : '', cls: avgR >= 0 ? 'c-green' : 'c-red', valCls: rCount ? (avgR >= 0 ? 'green' : 'red') : '', icon: ICON_PCT },
     { label: t('st_avg_win'), tip: 'רווח ממוצע בעסקה מנצחת', value: winners.length ? fmt(adv.avgWin) : '—', sub: winners.length ? `מקסימום: ${fmt(maxWin)}` : '', cls: 'c-green', valCls: winners.length ? 'green' : '', sensitive: true, icon: ICON_UP },
     { label: t('st_avg_loss'), tip: 'הפסד ממוצע בעסקה מפסידה', value: losers.length ? fmt(adv.avgLoss) : '—', sub: losers.length ? `מקסימום: ${fmt(maxLoss)}` : '', cls: 'c-red', valCls: losers.length ? 'red' : '', sensitive: true, icon: ICON_DOWN },
     { label: t('st_wl_ratio'), tip: 'רווח ממוצע חלקי הפסד ממוצע', value: adv.avgLoss !== 0 ? Math.abs(adv.avgWin / adv.avgLoss).toFixed(2) + 'x' : '—', sub: 'רווח / הפסד ממוצע', cls: 'c-blue', valCls: '', icon: ICON_SWAP },
@@ -12177,7 +12177,7 @@ function renderRHistogram(trades) {
   const { buckets, counted } = calcRHistogram(trades);
   const wrapEl = el.parentElement;
   if (!counted) {
-    _showChartEmpty(el, 'אין עדיין עסקאות סגורות עם סטופ מוגדר למדידת R');
+    _showChartEmpty(el, 'אין עדיין עסקאות סגורות עם סיכון מדיד למדידת R');
     if (statsEl) statsEl.innerHTML = '';
     return;
   }
@@ -12233,7 +12233,7 @@ function renderRHistogram(trades) {
     }
   });
   if (statsEl) {
-    statsEl.innerHTML = `<div style="text-align:center;font-size:12px;color:var(--text3)">${counted} עסקאות עם סטופ נספרו</div>`;
+    statsEl.innerHTML = `<div style="text-align:center;font-size:12px;color:var(--text3)">${counted} עסקאות עם סיכון מדיד נספרו</div>`;
   }
 }
 
