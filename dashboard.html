@@ -8471,6 +8471,30 @@ window.addEventListener('load', () => {
   else setTimeout(warm, 5000);
 });
 
+// Journal SSO for the screener — it has its own separate Supabase auth
+// (different origin storage), so without this "נוסף למעקב" never has
+// anything to show: checkAndSaveHistory bails out with no user, and nobody
+// had ever separately logged into the screener itself. Same github.io
+// account for both, so handing the session down is safe; the screener pings
+// tj:screener-ready once its own listener is armed (rather than this side
+// guessing a load-order-safe delay) and gets tj:session back.
+const SCREENER_ORIGIN = 'https://davidtheking28-oss.github.io';
+function _sendSessionToScreener() {
+  const frame = document.getElementById('screener-frame');
+  if (!frame?.contentWindow || !_currentSession?.access_token) return;
+  frame.contentWindow.postMessage({
+    type: 'tj:session',
+    accessToken: _currentSession.access_token,
+    refreshToken: _currentSession.refresh_token,
+  }, SCREENER_ORIGIN);
+}
+window.addEventListener('message', (e) => {
+  if (e.origin !== SCREENER_ORIGIN) return;
+  const frame = document.getElementById('screener-frame');
+  if (!frame || e.source !== frame.contentWindow) return;
+  if (e.data?.type === 'tj:screener-ready') _sendSessionToScreener();
+});
+
 function mNav(name) {
   const btn = document.querySelector(`.tab-btn[onclick*="switchTab('${name}'"]`)
            || document.querySelector(`.tnav-btn[onclick*="switchTab('${name}'"]`);
@@ -14626,6 +14650,7 @@ document.addEventListener('click', e => {
   if (session?.user) {
     _currentSession = session;
     await _onAuthSuccess(session.user);
+    _sendSessionToScreener();
   }
   // else auth overlay stays visible
 
@@ -14638,6 +14663,7 @@ document.addEventListener('click', e => {
     if (event === 'TOKEN_REFRESHED' && session) {
       _currentSession = session;
     }
+    if (session) _sendSessionToScreener();
     // A password-reset email link lands here as its own event, not SIGNED_IN —
     // Supabase's client establishes the session automatically either way, but
     // without this the user was dropped straight into the dashboard with no
