@@ -3,7 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
 import { resolveQuote } from '../_shared/quote.ts';
 
 const CORS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://davidtheking28-oss.github.io',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
 };
