@@ -11942,6 +11942,32 @@ function setCumMode(mode) {
   renderCumChart(_cumTrades);
 }
 
+// Toggle a chart canvas between "drawn" and "no data yet" WITHOUT ever
+// removing the canvas node from the DOM. An earlier version replaced
+// canvasEl.parentElement.innerHTML with the empty-state markup — that
+// destroys the <canvas> permanently, so the next render (even with real
+// data) can't find it via getElementById, bails out early, and the stale
+// empty message is stuck for the rest of the session. Reproduced live:
+// landing on an empty month first, then navigating to a month with a real
+// closed trade, left the chart showing "no closed trades" forever even
+// though the calendar right next to it correctly showed the trade.
+function _showChartEmpty(canvasEl, message) {
+  canvasEl.style.display = 'none';
+  let el = canvasEl.parentElement.querySelector(':scope > .chart-empty-state');
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'empty-state chart-empty-state';
+    canvasEl.parentElement.appendChild(el);
+  }
+  el.innerHTML = `<p>${message}</p>`;
+  el.style.display = '';
+}
+function _hideChartEmpty(canvasEl) {
+  canvasEl.style.display = '';
+  const el = canvasEl.parentElement.querySelector(':scope > .chart-empty-state');
+  if (el) el.style.display = 'none';
+}
+
 let _cumResizeObserver = null;
 
 function renderCumChart(trades) {
@@ -11996,12 +12022,13 @@ function renderCumChart(trades) {
   // No closed trades yet: nothing real to plot. A Chart.js instance still
   // draws an axis and gridlines even with all-zero data (labels=[''], data=[0]),
   // which reads as a real ±1% scale on an empty book — show the same empty-state
-  // pattern the rest of the app uses instead.
+  // pattern the rest of the app uses instead. Hides the canvas rather than
+  // destroying it — see _showChartEmpty.
   if (!keys.length) {
-    const wrapEl = cumEl.parentElement;
-    if (wrapEl) wrapEl.innerHTML = `<div class="empty-state"><p>אין עדיין עסקאות סגורות לגרף P&amp;L</p></div>`;
+    _showChartEmpty(cumEl, 'אין עדיין עסקאות סגורות לגרף P&amp;L');
     return;
   }
+  _hideChartEmpty(cumEl);
   const ctx2d = cumEl.getContext('2d');
   // A fill this heavy read as a solid block rather than a trend — softened to
   // the same light-to-nothing taper the rest of the app's charts use.
@@ -12089,10 +12116,11 @@ function renderDrawdownChart(trades) {
   const { points, maxDrawdown, current, pctMode } = calcDrawdownSeries(trades);
   const wrapEl = el.parentElement;
   if (!points.length) {
-    if (wrapEl) wrapEl.innerHTML = `<div class="empty-state"><p>אין עדיין עסקאות סגורות למדידת ירידת הון</p></div>`;
+    _showChartEmpty(el, 'אין עדיין עסקאות סגורות למדידת ירידת הון');
     if (statsEl) statsEl.innerHTML = '';
     return;
   }
+  _hideChartEmpty(el);
   const labels = ['', ...points.map(p => fmtDate ? p.date.slice(5) : p.date)];
   const data = [0, ...points.map(p => +p.drawdown.toFixed(2))];
   const ctx2d = el.getContext('2d');
@@ -12145,10 +12173,11 @@ function renderRHistogram(trades) {
   const { buckets, counted } = calcRHistogram(trades);
   const wrapEl = el.parentElement;
   if (!counted) {
-    if (wrapEl) wrapEl.innerHTML = `<div class="empty-state"><p>אין עדיין עסקאות סגורות עם סטופ מוגדר למדידת R</p></div>`;
+    _showChartEmpty(el, 'אין עדיין עסקאות סגורות עם סטופ מוגדר למדידת R');
     if (statsEl) statsEl.innerHTML = '';
     return;
   }
+  _hideChartEmpty(el);
   const ctx2d = el.getContext('2d');
   charts.rhist = new Chart(ctx2d, {
     type: 'bar',
