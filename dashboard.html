@@ -11596,6 +11596,7 @@ let _brokerEquityByBroker = {};
 // shows the dropdown, since there is nothing to switch to.
 let _brokerEquitySelected = null;
 async function _loadBrokerEquity() {
+  if (!_currentUser) return;
   if (Date.now() - _brokerEquityTs < 60000) return;
   _brokerEquityTs = Date.now();
   const { data } = await _sb.from('broker_balances').select('equity_usd, broker').eq('user_id', _currentUser.id);
@@ -12121,7 +12122,10 @@ function renderDrawdownChart(trades) {
     return;
   }
   _hideChartEmpty(el);
-  const labels = ['', ...points.map(p => fmtDate ? p.date.slice(5) : p.date)];
+  // MM-DD alone reads as nonsense once the series crosses a year boundary
+  // (07-11 ... 01-15 ... 08-31 looks like it goes backward in time) — fmtDate
+  // includes the 2-digit year so the axis stays chronological to the eye.
+  const labels = ['', ...points.map(p => fmtDate(p.date))];
   const data = [0, ...points.map(p => +p.drawdown.toFixed(2))];
   const ctx2d = el.getContext('2d');
   const grad = ctx2d.createLinearGradient(0, 0, 0, el.offsetHeight || 150);
@@ -12179,6 +12183,26 @@ function renderRHistogram(trades) {
   }
   _hideChartEmpty(el);
   const ctx2d = el.getContext('2d');
+  // A bucket with 1-2 trades renders a near-zero-height bar next to a bucket
+  // with 25 — the count is real but invisible next to the tall bars. Draw the
+  // count above every non-empty bar so a thin sliver still reads as data.
+  const rhistCountLabels = {
+    id: 'rhistCountLabels',
+    afterDatasetsDraw(chart) {
+      const { ctx, data } = chart;
+      const meta = chart.getDatasetMeta(0);
+      ctx.save();
+      ctx.fillStyle = TICK_COLOR;
+      ctx.font = CHART_FONT.weight + ' 11px ' + CHART_FONT.family;
+      ctx.textAlign = 'center';
+      meta.data.forEach((bar, i) => {
+        const count = data.datasets[0].data[i];
+        if (!count) return;
+        ctx.fillText(count, bar.x, bar.y - 6);
+      });
+      ctx.restore();
+    }
+  };
   charts.rhist = new Chart(ctx2d, {
     type: 'bar',
     data: {
@@ -12187,8 +12211,10 @@ function renderRHistogram(trades) {
         data: buckets.map(b => b.count),
         backgroundColor: buckets.map(b => b.max <= 0 ? 'rgba(225,29,72,0.65)' : 'rgba(45,212,160,0.65)'),
         borderRadius: 4, borderSkipped: false,
+        minBarLength: 3,
       }]
     },
+    plugins: [rhistCountLabels],
     options: {
       ...chartDefaults('bar'),
       plugins: {
@@ -12199,7 +12225,7 @@ function renderRHistogram(trades) {
           callbacks: { label: c => ` ${c.raw} עסקאות` }
         }
       },
-      layout: { padding: { top: 8, right: 12, bottom: 0, left: 0 } },
+      layout: { padding: { top: 20, right: 12, bottom: 0, left: 0 } },
       scales: {
         x: { ticks: { color: TICK_COLOR, font: CHART_FONT }, grid: { display: false } },
         y: { ticks: { color: TICK_COLOR, font: CHART_FONT, precision: 0 }, grid: { color: GRID_COLOR, drawBorder: false } }
