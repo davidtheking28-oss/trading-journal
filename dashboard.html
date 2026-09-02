@@ -895,17 +895,19 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   /* Statistics page: 4 hero metrics get weight, the rest are compact tiles —
      see renderStatistics(). A flat grid of 15 identical cards is the tell. */
   #stats-kpi-grid { display: block; }
-  /* auto-fit, not a fixed 4, because the broker-equity card is conditional
-     (only when a broker sync has reported a balance) — a fixed 4-column grid
-     left a 5th card alone and lopsided in its own row. minmax(160px,1fr) keeps
-     4-up at typical desktop widths, same look as before when there are 4. */
-  .kpi-grid-hero { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 12px; }
-  /* On a very wide screen auto-fit kept adding columns, so the hold-time
-     widget (spanning all-but-one column via grid-column:1/-2) grew huge next
-     to the one trailing KPI card it leaves room for — the two stopped looking
-     like they belonged in the same row. Capping the row's width holds the
-     column count, and therefore that ratio, closer to what it was tuned at. */
-  #stats-kpi-grid .kpi-grid-hero { max-width: 1500px; margin-inline: auto; }
+  /* Fixed 4 columns, not auto-fit: the broker-equity card renders as its own
+     separate full-width row (portfolioHtml, above this grid) and never joins
+     this grid, so there is no conditional card here to size around — this
+     grid always holds exactly 8 kpiCards + the hold-time widget row. auto-fit
+     grew to as many columns as a wide screen's width allowed (up to 9 at
+     1500px with minmax(160px,1fr)), which left the last row of 8 cards
+     ragged whenever the column count didn't divide 8 evenly. A fixed 4
+     divides 8 into exactly 2 full rows at any width, and the hold-time
+     widget's grid-column:1/-2 trick (spans all-but-last column, forcing the
+     final card into the one column beside it) still exactly fills its own
+     row on top of that. */
+  .kpi-grid-hero { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
+  @media (min-width: 641px) and (max-width: 1024px) { .kpi-grid-hero { grid-template-columns: repeat(2, 1fr); } }
   /* Broker-derived portfolio size: its own full-width row above the hero KPIs,
      bigger than all of them — the user asked for it above everything else. */
   .kpi-card.portfolio-hero { margin-bottom: 12px; text-align: center; padding: 20px; }
