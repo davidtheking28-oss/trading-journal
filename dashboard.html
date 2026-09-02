@@ -7362,6 +7362,39 @@ const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
 let _currentUser = null;
 let _currentSession = null;
 
+// Client-side error capture. The client_errors table already had the exact
+// shape this needs (kind, message, source, lineno, colno, stack, app, ua,
+// user_id) and an RLS policy that already allows an anonymous or
+// self-scoped insert — nothing existed on the client to actually write to
+// it, so every JS error a user hit was invisible unless they reported it
+// themselves. Throttled to one insert per distinct message per page load so
+// a loop of the same error doesn't spam the table.
+const _reportedErrors = new Set();
+function _reportClientError(kind, message, extra = {}) {
+  try {
+    const key = kind + ':' + String(message).slice(0, 200);
+    if (_reportedErrors.has(key)) return;
+    _reportedErrors.add(key);
+    _sb.from('client_errors').insert({
+      user_id: _currentUser?.id ?? null,
+      kind, message: String(message).slice(0, 2000), app: 'dashboard',
+      ua: navigator.userAgent, ...extra,
+    }).then(() => {}, () => {});
+  } catch {}
+}
+window.addEventListener('error', (e) => {
+  _reportClientError('error', e.message, {
+    source: e.filename || null, lineno: e.lineno || null, colno: e.colno || null,
+    stack: e.error?.stack ? String(e.error.stack).slice(0, 4000) : null,
+  });
+});
+window.addEventListener('unhandledrejection', (e) => {
+  const reason = e.reason;
+  _reportClientError('unhandledrejection', reason?.message || String(reason), {
+    stack: reason?.stack ? String(reason.stack).slice(0, 4000) : null,
+  });
+});
+
 // Helper — get current JWT access token.
 // Serve from the cached session on the hot path so concurrent startup calls don't
 // all hit getSession() at once (supabase-js v2's Web Locks can return a null
@@ -11225,29 +11258,29 @@ function renderOverview() {
       </div>`;
   } else {
     document.getElementById('kpi-grid').innerHTML = `
-    <div class="kpi-card ${st.total>=0?'c-green':'c-red'}">
+    <div class="kpi-card ${st.total>=0?'c-green':'c-red'}" title="רווח/הפסד כולל בתקופה ובסקופ הנבחרים (עסקאות סגורות בלבד)">
       <div class="kpi-label">${t('kpi_pnl')}</div>
       <div class="kpi-value ${st.total>=0?'green':'red'} sensitive">${fmtUSD(st.total)}</div>
       <div class="kpi-sub">${st.nClosed} ${t('trades')}${st.nOpen ? ` · ${st.nOpen} פתוחות` : ''}</div>
       ${monKeys.length>=2 ? `<div class="kpi-trend ${trendCls} sensitive">${trendLbl}</div>` : ''}
     </div>
-    <div class="kpi-card c-yellow" id="kpi-live-card">
+    <div class="kpi-card c-yellow" id="kpi-live-card" title="שווי הפוזיציות הפתוחות במחיר השוק הנוכחי, מתעדכן כל דקה">
       <div class="kpi-label">${t('kpi_live')}</div>
       <div class="kpi-value sensitive" id="kpi-live-pl">${t('kpi_calculating')}</div>
       <div class="kpi-sub" id="kpi-live-sub">${openTrades.length} ${t('kpi_open_pos')}</div>
     </div>
-    <div class="kpi-card c-blue">
+    <div class="kpi-card c-blue" title="אחוז העסקאות הסגורות שהסתיימו ברווח">
       <div class="kpi-label">${t('kpi_winrate')}</div>
       <div class="kpi-value ${st.wr>=50?'green':'red'} sensitive">${fmt(st.wr,1)}%</div>
       <div class="kpi-sub">${st.wins}W / ${st.losses}L</div>
       <div class="kpi-progress-track"><div class="kpi-progress-bar" style="width:${Math.min(st.wr,100)}%;background:${st.wr>=50?'#2dd4a0':'#ff6b8a'}"></div></div>
     </div>
-    <div class="kpi-card ${avgR!==null&&avgR>=0?'c-green':'c-yellow'}">
+    <div class="kpi-card ${avgR!==null&&avgR>=0?'c-green':'c-yellow'}" title="רווח/הפסד ממוצע ביחס לסיכון המתוכנן (סטופ), לעסקאות עם סטופ מוגדר">
       <div class="kpi-label">${t('kpi_rr')}</div>
       <div class="kpi-value ${avgR!==null?(avgR>=0?'green':'red'):''} sensitive">${avgR!==null?avgR.toFixed(2)+'R':'—'}</div>
       <div class="kpi-sub">${withR.length ? withR.length+' '+t('kpi_with_stop') : ''}</div>
     </div>
-    <div class="kpi-card c-blue">
+    <div class="kpi-card c-blue" title="סך העסקאות שנרשמו בתקופה ובסקופ הנבחרים, כולל פתוחות">
       <div class="kpi-label">${t('kpi_trades')}</div>
       <div class="kpi-value">${st.n}</div>
     </div>
@@ -11682,7 +11715,7 @@ function renderStatistics() {
   const grid = document.getElementById('stats-kpi-grid');
   if (grid) {
     const portfolioHtml = portfolioCard ? `
-      <div class="kpi-card portfolio-hero c-blue">
+      <div class="kpi-card portfolio-hero c-blue" title="שווי התיק כפי שדווח מהברוקר המחובר, לא ערך מוזן ידנית">
         <div class="kpi-label" style="display:flex;align-items:center;gap:6px;justify-content:center;">
           <span>${portfolioCard.label}</span>
           ${portfolioCard.brokerDD ? `
