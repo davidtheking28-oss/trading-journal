@@ -7573,6 +7573,13 @@ async function authSignOut() {
   Object.keys(_missedQuotes).forEach(k => delete _missedQuotes[k]);
   db = JSON.parse(JSON.stringify(SEED));
   _dbLoaded = false;
+  // The screener iframe is loaded once per page load and never touched again,
+  // so its document — its own Supabase client and its one-shot _ssoApplied flag
+  // — survived sign-out. Signing in as a different user then had its tj:session
+  // dropped by that flag, and the frame kept showing the previous user's
+  // watchlist. Dropping src makes the guarded `if (!f.src)` reload it fresh.
+  const _sf = document.getElementById('screener-frame');
+  if (_sf) _sf.removeAttribute('src');
   document.getElementById('auth-overlay').style.display = 'flex';
   toast('יצאת מהחשבון', 'info');
 }
