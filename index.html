@@ -28,16 +28,16 @@
 <link rel="canonical" href="https://davidtheking28-oss.github.io/trading-journal/">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://davidtheking28-oss.github.io/trading-journal/">
-<meta property="og:title" content="יומן מסחר מקצועי — עקוב, נתח ושפר את המסחר שלך">
-<meta property="og:description" content="ייבא עסקאות אוטומטית מהברוקר, עקוב אחרי ביצועים עם נתוני שוק בזמן אמת, וגלה את הדפוסים שמפרידים בין עסקאות רווחיות להפסדיות.">
+<meta property="og:title" content="תפסיק לנחש למה אתה מרוויח או מפסיד | ChartRoom">
+<meta property="og:description" content="ייבוא אוטומטי מ-IBKR ו-Bybit, Market Pulse בזמן אמת ומסנן מניות Trend Template — חינם לתמיד, בלי כרטיס אשראי.">
 <meta property="og:locale" content="he_IL">
 <meta property="og:site_name" content="ChartRoom">
 <meta property="og:image" content="https://davidtheking28-oss.github.io/trading-journal/assets/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="יומן מסחר מקצועי — עקוב, נתח ושפר את המסחר שלך">
-<meta name="twitter:description" content="ייבא עסקאות אוטומטית מהברוקר, עקוב אחרי ביצועים בזמן אמת, וגלה את הדפוסים שמשפרים את המסחר שלך.">
+<meta name="twitter:title" content="תפסיק לנחש למה אתה מרוויח או מפסיד | ChartRoom">
+<meta name="twitter:description" content="ייבוא אוטומטי מ-IBKR ו-Bybit, Market Pulse בזמן אמת ומסנן מניות Trend Template — חינם לתמיד, בלי כרטיס אשראי.">
 <meta name="twitter:image" content="https://davidtheking28-oss.github.io/trading-journal/assets/og-image.png">
 <meta name="theme-color" content="#0c1022">
 <meta name="author" content="ChartRoom">
@@ -195,6 +195,26 @@ nav {
 
 .nav-right { display: flex; align-items: center; gap: 8px; }
 
+.nav-menu-btn {
+  display: none; background: none; border: none; color: var(--text2);
+  cursor: pointer; padding: 6px; align-items: center; justify-content: center;
+  transition: color .2s;
+}
+@media (hover: hover) and (pointer: fine) { .nav-menu-btn:hover { color: var(--text); } }
+@media (max-width: 900px) { .nav-menu-btn { display: flex; } }
+
+.mobile-nav-panel {
+  position: fixed; top: 58px; right: 0; left: 0; z-index: 199;
+  background: var(--surface); border-bottom: 1px solid var(--border2);
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 8px max(18px, 5vw) 14px;
+  transform: translateY(-8px); opacity: 0; pointer-events: none; visibility: hidden;
+  transition: opacity .18s, transform .18s;
+}
+.mobile-nav-panel.open { transform: translateY(0); opacity: 1; pointer-events: auto; visibility: visible; }
+.mobile-nav-panel .nav-link { padding: 11px 10px; }
+@media (min-width: 901px) { .mobile-nav-panel { display: none; } }
+
 .nav-link {
   padding: 7px 10px;
   background: none; border: none;
@@ -221,7 +241,7 @@ nav {
 @media (hover: hover) and (pointer: fine) { .nav-cta:hover { opacity: .88; transform: translateY(-1px); box-shadow: 0 5px 22px rgba(79,127,255,0.4); } }
 
 /* ── SECTION BASE ── */
-section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
+section { padding: 72px max(28px, 5vw); position: relative; z-index: 1; }
 
 .section-pill {
   display: inline-flex; align-items: center; gap: 6px;
@@ -361,14 +381,15 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 @media (hover: hover) and (pointer: fine) { .btn-solid:hover { opacity: .88; transform: translateY(-1px); } }
 
 .btn-cta-dark {
-  padding: 15px 32px; font-size: 16px; font-weight: 600;
+  padding: 15px 32px; font-size: 16px; font-weight: 700;
   border-radius: var(--r-pill); cursor: pointer; text-decoration: none;
   display: inline-flex; align-items: center; gap: 8px;
-  background: var(--bg2); color: var(--text);
-  border: 1px solid rgba(79,127,255,0.3); font-family: var(--body);
-  transition: background-color .2s, border-color .2s, transform .2s;
+  background: var(--accent); color: #fff;
+  border: none; font-family: var(--body);
+  box-shadow: 0 4px 24px rgba(79,127,255,0.35);
+  transition: background-color .2s, transform .2s, box-shadow .2s;
 }
-@media (hover: hover) and (pointer: fine) { .btn-cta-dark:hover { background: #010509; border-color: rgba(79,127,255,0.5); transform: translateY(-1px); } }
+@media (hover: hover) and (pointer: fine) { .btn-cta-dark:hover { background: #3d6ef2; transform: translateY(-2px); box-shadow: 0 8px 30px rgba(79,127,255,0.45); } }
 .nav-cta:active, .btn-hero-primary:active, .btn-hero-ghost:active, .btn-solid:active, .btn-cta-dark:active {
   transform: scale(0.97); transition: transform 120ms ease-out;
 }
@@ -1006,7 +1027,8 @@ footer {
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
   .step { grid-template-columns: 44px 1fr; gap: 14px; }
-  .demo-showcase-wrap { max-width: 100%; margin: 40px auto 0; }
+  .demo-showcase-wrap { max-width: 100%; margin: 40px auto 0; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 6px; }
+  .demo-showcase-wrap .hero-card { min-width: 620px; }
   .d-kpi { padding: 10px 10px; }
   .d-kpi-lbl { font-size: 8px; }
   .d-kpi-val { font-size: 16px; letter-spacing: -0.3px; }
@@ -1016,7 +1038,7 @@ footer {
   .hero-stats { width: 100%; }
   .hero-stat { flex: 1; text-align: center; }
   .cta-inner { padding: 40px 24px; }
-  section { padding: 72px max(20px, 5vw); }
+  section { padding: 56px max(20px, 5vw); }
 }
 
 @media (max-width: 480px) {
@@ -1027,7 +1049,7 @@ footer {
   .cta-inner { padding: 32px 18px; }
   .price-amount { font-size: 48px; }
   .pricing-card { padding: 32px 24px; }
-  section { padding: 60px max(16px, 4vw); }
+  section { padding: 44px max(16px, 4vw); }
 }
 
 
@@ -1188,6 +1210,14 @@ html.a11y-underline a { text-decoration: underline !important; }
   <div class="nav-right">
     <a href="dashboard.html" class="nav-link">כניסה</a>
     <a href="dashboard.html" class="nav-cta">הרשמה חינם</a>
+    <button class="nav-menu-btn" onclick="toggleMobileNav()" aria-label="תפריט ניווט" aria-expanded="false" aria-controls="mobile-nav-panel">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+    </button>
+  </div>
+  <div class="mobile-nav-panel" id="mobile-nav-panel">
+    <a href="#features" class="nav-link" onclick="toggleMobileNav()">תכונות</a>
+    <a href="#how" class="nav-link" onclick="toggleMobileNav()">איך זה עובד</a>
+    <a href="#faq" class="nav-link" onclick="toggleMobileNav()">שאלות</a>
   </div>
 </nav>
 </header>
@@ -1210,7 +1240,7 @@ html.a11y-underline a { text-decoration: underline !important; }
         </a>
         <a href="#demo" class="btn-hero-ghost">צפה במערכת</a>
       </div>
-      <p class="hero-trust-line">ללא כרטיס אשראי · ביטול בכל עת</p>
+      <p class="hero-trust-line">ללא כרטיס אשראי · חינם לתמיד, לא רק בהרשמה</p>
     </div>
   </div>
 </section>
@@ -1335,7 +1365,7 @@ html.a11y-underline a { text-decoration: underline !important; }
   <div class="centered reveal">
     <div class="section-pill">למה זה עובד</div>
     <h2 class="section-title" id="features-heading">כל מה שטבלה לא יכולה להראות לך</h2>
-    <p class="section-sub">תראה למה אתה מפסיד, לא רק כמה — הכלים שהופכים דפוס לתובנה</p>
+    <p class="section-sub">ברוקר, שוק, סורק מניות ותיק השקעות — הכל במקום אחד, בלי לקפוץ בין עשר טאבים</p>
   </div>
 
   <div class="feat-list">
@@ -1378,7 +1408,7 @@ html.a11y-underline a { text-decoration: underline !important; }
   </div>
   <div class="testimonial-card reveal">
     <svg class="testimonial-quote-mark" width="34" height="26" viewBox="0 0 34 26" fill="none" aria-hidden="true"><path d="M14.5 0C7 2 0 8.5 0 17c0 5 3.3 9 8.3 9 4 0 7-3 7-7s-2.8-6.5-6.5-6.5c-.5 0-1 0-1.4.1C8.3 8.4 11.8 4 17 2.2L14.5 0zm17 0c-7.5 2-14.5 8.5-14.5 17 0 5 3.3 9 8.3 9 4 0 7-3 7-7s-2.8-6.5-6.5-6.5c-.5 0-1 0-1.4.1C25.3 8.4 28.8 4 34 2.2L31.5 0z" fill="#4f7fff"/></svg>
-    <p class="testimonial-text">הפלטפורמה החדשה באמת ברמה גבוהה. יומן מסחר מעולה ששדרג לי את העבודה. התחברתי אליו מאוד וקליל, ואני משתמש בו ברמה היומיומית. החיבור לברוקר נוח וקליל, והיכולת לנתח גרפים ולסנן מניות ישירות מתוך הפלטפורמה חוסכת לי המון זמן ומאפשרת התעסקות בקיצור — כלי חובה לכל אחד שעושה סדר.</p>
+    <p class="testimonial-text">יומן מסחר מעולה ששדרג לי את העבודה. החיבור לברוקר קליל, וזה שאני יכול לנתח גרפים ולסנן מניות ישירות מתוך הפלטפורמה חוסך לי המון זמן — משתמש בזה כל יום.</p>
     <div class="testimonial-author">
       <span class="testimonial-avatar" aria-hidden="true">ע</span>
       <div>
@@ -1458,6 +1488,13 @@ html.a11y-underline a { text-decoration: underline !important; }
         </button>
         <div class="faq-a" id="faq-a5" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">הנתונים שייכים לך. ייצוא ל-CSV בכל רגע, ומחיקה מלאה בפנייה אלינו. לא נמכר לצד שלישי.</div></div></div>
       </div>
+      <div class="faq-item reveal" role="listitem">
+        <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a6">
+          האם עובד בנייד?
+          <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
+        </button>
+        <div class="faq-a" id="faq-a6" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">כן, האפליקציה רספונסיבית ועובדת בדפדפן בנייד. אפשר להתקין כ-PWA ישירות מהדפדפן.</div></div></div>
+      </div>
   </div>
 </section>
 
@@ -1468,7 +1505,7 @@ html.a11y-underline a { text-decoration: underline !important; }
     <h2 class="cta-title">בעוד חודש יהיו לך עוד עשרות עסקאות. תדע עליהן משהו?</h2>
     <p class="cta-sub">כל יום בלי תיעוד הוא עוד יום שאתה לא רואה את הדפוסים האמיתיים שלך.</p>
     <a href="dashboard.html" class="btn-cta-dark">
-      תתחיל לראות — חינם
+      התחל לראות בחינם
       <svg width="15" height="15" aria-hidden="true"><use href="#i-arr"/></svg>
     </a>
     <p style="margin-top:16px;font-size:12px;color:var(--text3);">ללא כרטיס אשראי · הרשמה בפחות מדקה · לא ייעוץ פיננסי, המסחר כרוך בסיכון</p>
@@ -1559,6 +1596,13 @@ html.a11y-underline a { text-decoration: underline !important; }
   };
 
   // FAQ
+  function toggleMobileNav() {
+    const panel = document.getElementById('mobile-nav-panel');
+    const btn = document.querySelector('.nav-menu-btn');
+    const open = panel.classList.toggle('open');
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
   function toggleFaq(btn) {
     const item = btn.closest('.faq-item');
     const isOpen = item.classList.contains('open');
@@ -1585,6 +1629,11 @@ html.a11y-underline a { text-decoration: underline !important; }
     });
   }, { threshold: 0.08 });
   document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+  // Safety net for headless/no-scroll captures (link-preview bots, screenshot tools):
+  // force everything visible after a short delay even if nothing ever intersected.
+  setTimeout(() => {
+    document.querySelectorAll('.reveal:not(.in)').forEach(el => el.classList.add('in'));
+  }, 2500);
 
   // Demo slideshow
   (function() {
@@ -1727,6 +1776,7 @@ html.a11y-underline a { text-decoration: underline !important; }
     {"@type":"Question","name":"האם החיבור לברוקר בטוח?","acceptedAnswer":{"@type":"Answer","text":"כן. חיבור Read-Only בלבד — אין למערכת גישה לביצוע פעולות או משיכת כספים. הנתונים מוצפנים (RLS + HTTPS)."}},
     {"@type":"Question","name":"האם נתוני בזמן אמת ומסנן המניות באמת בחינם?","acceptedAnswer":{"@type":"Answer","text":"כן. כל הכלים פתוחים לגמרי, ללא כרטיס אשראי."}},
     {"@type":"Question","name":"איך קטגוריית בניית התיק עוזרת לי ספציפית?","acceptedAnswer":{"@type":"Answer","text":"מראה לך פיזור הון בלייב, כדי שלא תגלה חשיפת יתר לנכס אחד אחרי שכבר קרה."}},
+    {"@type":"Question","name":"כמה זמן לוקח להגדיר?","acceptedAnswer":{"@type":"Answer","text":"הרשמה — פחות מדקה. חיבור ברוקר — כ-10 דקות בפעם הראשונה, ואז זה אוטומטי."}},
     {"@type":"Question","name":"האם עובד בנייד?","acceptedAnswer":{"@type":"Answer","text":"כן, האפליקציה רספונסיבית ועובדת בדפדפן בנייד. אפשר להתקין כ-PWA ישירות מהדפדפן."}},
     {"@type":"Question","name":"מה קורה לנתונים שלי אם אני רוצה למחוק את החשבון?","acceptedAnswer":{"@type":"Answer","text":"הנתונים שייכים לך. ייצוא ל-CSV בכל רגע, ומחיקה מלאה בפנייה אלינו. לא נמכר לצד שלישי."}}
   ]
