@@ -437,6 +437,31 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
   background: linear-gradient(90deg, transparent, rgba(79,127,255,0.7) 40%, rgba(155,114,255,0.5) 60%, transparent);
 }
 
+/* ── TESTIMONIAL ── */
+.testimonial-card {
+  max-width: 680px; margin: 0 auto;
+  background: linear-gradient(160deg, #0c1830 0%, #08122a 100%);
+  border: 1px solid rgba(79,127,255,0.15);
+  border-radius: var(--r-lg);
+  padding: 44px 48px;
+  box-shadow: 0 20px 30px rgba(0,0,0,0.35), 0 0 0 1px rgba(79,127,255,0.06), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.testimonial-quote-mark { display: block; margin-bottom: 18px; transform: scaleX(-1); }
+.testimonial-text { font-size: 18px; line-height: 1.75; color: var(--text); font-weight: 500; letter-spacing: -0.1px; margin-bottom: 28px; }
+.testimonial-author { display: flex; align-items: center; gap: 12px; }
+.testimonial-avatar {
+  width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg,#818cf8,#6366f1);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 700; color: #fff;
+}
+.testimonial-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.testimonial-role { font-size: 12.5px; color: var(--text3); margin-top: 1px; }
+@media (max-width: 600px) {
+  .testimonial-card { padding: 32px 24px; }
+  .testimonial-text { font-size: 16px; }
+}
+
 .card-topbar {
   display: flex; justify-content: space-between; align-items: center;
   margin-bottom: 16px;
@@ -1319,6 +1344,25 @@ html.a11y-underline a { text-decoration: underline !important; }
       <div>
         <h3 class="feat-row-title">בניית תיק השקעות</h3>
         <p class="feat-row-desc">הקצאת הון בין מניות, קריפטו ו-ETFs, תשואה כוללת וחשיפת סיכון — במבט אחד, לפני שהשוק מזכיר לך את זה.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIAL -->
+<section id="testimonial" class="centered" aria-labelledby="testimonial-heading">
+  <div class="reveal">
+    <div class="section-pill">עדות</div>
+    <h2 class="section-title" id="testimonial-heading" style="margin-bottom:36px;">סוחרים כבר עובדים ככה</h2>
+  </div>
+  <div class="testimonial-card reveal">
+    <svg class="testimonial-quote-mark" width="34" height="26" viewBox="0 0 34 26" fill="none" aria-hidden="true"><path d="M14.5 0C7 2 0 8.5 0 17c0 5 3.3 9 8.3 9 4 0 7-3 7-7s-2.8-6.5-6.5-6.5c-.5 0-1 0-1.4.1C8.3 8.4 11.8 4 17 2.2L14.5 0zm17 0c-7.5 2-14.5 8.5-14.5 17 0 5 3.3 9 8.3 9 4 0 7-3 7-7s-2.8-6.5-6.5-6.5c-.5 0-1 0-1.4.1C25.3 8.4 28.8 4 34 2.2L31.5 0z" fill="#4f7fff"/></svg>
+    <p class="testimonial-text">הפלטפורמה החדשה באמת ברמה גבוהה. יומן מסחר מעולה ששדרג לי את העבודה. התחברתי אליו מאוד וקליל, ואני משתמש בו ברמה היומיומית. החיבור לברוקר נוח וקליל, והיכולת לנתח גרפים ולסנן מניות ישירות מתוך הפלטפורמה חוסכת לי המון זמן ומאפשרת התעסקות בקיצור — כלי חובה לכל אחד שעושה סדר.</p>
+    <div class="testimonial-author">
+      <span class="testimonial-avatar" aria-hidden="true">ע</span>
+      <div>
+        <div class="testimonial-name">עמית</div>
+        <div class="testimonial-role">משתמש ChartRoom</div>
       </div>
     </div>
   </div>
