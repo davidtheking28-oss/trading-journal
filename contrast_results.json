@@ -1,0 +1,353 @@
+[
+  {
+    "sel": "A.nav-link",
+    "text": "כניסה",
+    "color": "rgb(122, 156, 196)",
+    "bg": "rgb(7, 16, 31)",
+    "fontSize": "13px",
+    "fontWeight": "500",
+    "ratio": 6.69
+  },
+  {
+    "sel": "A.nav-cta",
+    "text": "הרשמה חינם",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(79, 131, 255)",
+    "fontSize": "13px",
+    "fontWeight": "600",
+    "ratio": 3.49
+  },
+  {
+    "sel": "P.hero-sub",
+    "text": "בפעם הבאה שתשאל את עצמך ל",
+    "color": "rgb(122, 156, 196)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "17px",
+    "fontWeight": "400",
+    "ratio": 6.4
+  },
+  {
+    "sel": "A.btn-hero-primary",
+    "text": "התחל בחינם",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(79, 131, 255)",
+    "fontSize": "15px",
+    "fontWeight": "700",
+    "ratio": 3.49
+  },
+  {
+    "sel": "P.hero-trust-line",
+    "text": "ללא כרטיס אשראי · חינם לת",
+    "color": "rgb(107, 131, 152)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "12.5px",
+    "fontWeight": "400",
+    "ratio": 4.62
+  },
+  {
+    "sel": "SPAN.broker-strip-label",
+    "text": "מתחברים לברוקרים המובילים",
+    "color": "rgb(228, 236, 248)",
+    "bg": "rgba(7, 16, 31, 0.6)",
+    "fontSize": "28px",
+    "fontWeight": "700",
+    "ratio": 16
+  },
+  {
+    "sel": "P.section-sub",
+    "text": "הכלים שיראו לך למה אתה בא",
+    "color": "rgb(122, 156, 196)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "ratio": 6.4
+  },
+  {
+    "sel": "P.section-sub",
+    "text": "ללא כרטיס אשראי",
+    "color": "rgb(122, 156, 196)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "ratio": 6.4
+  },
+  {
+    "sel": "H3.step-title",
+    "text": "הרשמה",
+    "color": "rgb(228, 236, 248)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "18px",
+    "fontWeight": "700",
+    "ratio": 15.32
+  },
+  {
+    "sel": "P.step-desc",
+    "text": "פחות מדקה. אימייל או Goog",
+    "color": "rgb(122, 156, 196)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "14px",
+    "fontWeight": "400",
+    "ratio": 6.4
+  },
+  {
+    "sel": "H3.step-title",
+    "text": "חבר את הברוקר שלך",
+    "color": "rgb(228, 236, 248)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "22px",
+    "fontWeight": "700",
+    "ratio": 15.32
+  },
+  {
+    "sel": "P.step-desc",
+    "text": "IBKR או Bybit, סנכרון מאו",
+    "color": "rgb(122, 156, 196)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "14px",
+    "fontWeight": "400",
+    "ratio": 6.4
+  },
+  {
+    "sel": "H3.step-title",
+    "text": "קבל תובנות מיידיות",
+    "color": "rgb(228, 236, 248)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "18px",
+    "fontWeight": "700",
+    "ratio": 15.32
+  },
+  {
+    "sel": "P.step-desc",
+    "text": "המערכת מנתחת הכל ומראה לך",
+    "color": "rgb(122, 156, 196)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "14px",
+    "fontWeight": "400",
+    "ratio": 6.4
+  },
+  {
+    "sel": "P.section-sub",
+    "text": "ברוקר, שוק, סורק מניות ות",
+    "color": "rgb(122, 156, 196)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "ratio": 6.4
+  },
+  {
+    "sel": "H3.feat-row-title",
+    "text": "שכח מטבלאות",
+    "color": "rgb(228, 236, 248)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "19px",
+    "fontWeight": "700",
+    "ratio": 15.32
+  },
+  {
+    "sel": "P.feat-row-desc",
+    "text": "חבר את Interactive Broker",
+    "color": "rgb(122, 156, 196)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "14px",
+    "fontWeight": "400",
+    "ratio": 6.4
+  },
+  {
+    "sel": "H3.feat-row-title",
+    "text": "דופק השוק בזמן אמת",
+    "color": "rgb(228, 236, 248)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "19px",
+    "fontWeight": "700",
+    "ratio": 15.32
+  },
+  {
+    "sel": "P.feat-row-desc",
+    "text": "ביצועי סקטורים, Fear & Gr",
+    "color": "rgb(122, 156, 196)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "14px",
+    "fontWeight": "400",
+    "ratio": 6.4
+  },
+  {
+    "sel": "H3.feat-row-title",
+    "text": "מסנן מניות מובנה",
+    "color": "rgb(228, 236, 248)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "19px",
+    "fontWeight": "700",
+    "ratio": 15.32
+  },
+  {
+    "sel": "P.feat-row-desc",
+    "text": "הסורק סורק את כל השוק ומצ",
+    "color": "rgb(122, 156, 196)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "14px",
+    "fontWeight": "400",
+    "ratio": 6.4
+  },
+  {
+    "sel": "H3.feat-row-title",
+    "text": "בניית תיק השקעות",
+    "color": "rgb(228, 236, 248)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "19px",
+    "fontWeight": "700",
+    "ratio": 15.32
+  },
+  {
+    "sel": "P.feat-row-desc",
+    "text": "הקצאת הון בין מניות, קריפ",
+    "color": "rgb(122, 156, 196)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "14px",
+    "fontWeight": "400",
+    "ratio": 6.4
+  },
+  {
+    "sel": "P.testimonial-text",
+    "text": "יומן מסחר מעולה ששדרג לי ",
+    "color": "rgb(228, 236, 248)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "18px",
+    "fontWeight": "500",
+    "ratio": 15.32
+  },
+  {
+    "sel": "P.section-sub",
+    "text": "בלי כרטיס אשראי, בלי תוכנ",
+    "color": "rgb(122, 156, 196)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "ratio": 6.4
+  },
+  {
+    "sel": "DIV.price-label",
+    "text": "FOREVER FREE",
+    "color": "rgb(107, 131, 152)",
+    "bg": "rgb(9, 21, 42)",
+    "fontSize": "10px",
+    "fontWeight": "500",
+    "ratio": 4.62
+  },
+  {
+    "sel": "A.btn-solid",
+    "text": "התחל בחינם",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(79, 131, 255)",
+    "fontSize": "15px",
+    "fontWeight": "600",
+    "ratio": 3.49
+  },
+  {
+    "sel": "P.section-sub",
+    "text": "כל מה שרצית לדעת על המערכ",
+    "color": "rgb(122, 156, 196)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "ratio": 6.4
+  },
+  {
+    "sel": "P.cta-sub",
+    "text": "כל יום בלי תיעוד הוא עוד ",
+    "color": "rgb(122, 156, 196)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "15px",
+    "fontWeight": "400",
+    "ratio": 6.4
+  },
+  {
+    "sel": "A.btn-cta-dark",
+    "text": "התחל לראות בחינם",
+    "color": "rgb(255, 255, 255)",
+    "bg": "rgb(79, 131, 255)",
+    "fontSize": "16px",
+    "fontWeight": "700",
+    "ratio": 3.49
+  },
+  {
+    "sel": "P.",
+    "text": "ללא כרטיס אשראי · הרשמה ב",
+    "color": "rgb(107, 131, 152)",
+    "bg": "rgb(13, 21, 38)",
+    "fontSize": "12px",
+    "fontWeight": "400",
+    "ratio": 4.62
+  },
+  {
+    "sel": "P.footer-brand-desc",
+    "text": "יומן מסחר חינמי לסוחרים י",
+    "color": "rgb(107, 131, 152)",
+    "bg": "rgb(11, 18, 32)",
+    "fontSize": "13px",
+    "fontWeight": "400",
+    "ratio": 4.75
+  },
+  {
+    "sel": "A.",
+    "text": "כניסה לאפליקציה",
+    "color": "rgb(122, 156, 196)",
+    "bg": "rgb(11, 18, 32)",
+    "fontSize": "13px",
+    "fontWeight": "400",
+    "ratio": 6.58
+  },
+  {
+    "sel": "A.",
+    "text": "GitHub",
+    "color": "rgb(122, 156, 196)",
+    "bg": "rgb(11, 18, 32)",
+    "fontSize": "13px",
+    "fontWeight": "400",
+    "ratio": 6.58
+  },
+  {
+    "sel": "A.",
+    "text": "תנאי שימוש",
+    "color": "rgb(122, 156, 196)",
+    "bg": "rgb(11, 18, 32)",
+    "fontSize": "13px",
+    "fontWeight": "400",
+    "ratio": 6.58
+  },
+  {
+    "sel": "A.",
+    "text": "מדיניות פרטיות",
+    "color": "rgb(122, 156, 196)",
+    "bg": "rgb(11, 18, 32)",
+    "fontSize": "13px",
+    "fontWeight": "400",
+    "ratio": 6.58
+  },
+  {
+    "sel": "A.",
+    "text": "נגישות",
+    "color": "rgb(122, 156, 196)",
+    "bg": "rgb(11, 18, 32)",
+    "fontSize": "13px",
+    "fontWeight": "400",
+    "ratio": 6.58
+  },
+  {
+    "sel": "A.",
+    "text": "davidtheking27@gmail.com",
+    "color": "rgb(122, 156, 196)",
+    "bg": "rgb(11, 18, 32)",
+    "fontSize": "13px",
+    "fontWeight": "400",
+    "ratio": 6.58
+  },
+  {
+    "sel": "A.footer-contact-btn",
+    "text": "דברו איתנו",
+    "color": "rgb(122, 156, 196)",
+    "bg": "rgba(79, 127, 255, 0.08)",
+    "fontSize": "13px",
+    "fontWeight": "600",
+    "ratio": 1.27
+  }
+]
