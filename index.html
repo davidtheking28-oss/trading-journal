@@ -417,26 +417,42 @@ section { padding: 96px max(28px, 5vw); position: relative; z-index: 1; }
 .hero-visual-glow {
   position: absolute;
   bottom: -40px; right: 50%; transform: translateX(50%);
-  width: 70%; height: 120px;
-  background: radial-gradient(ellipse, rgba(79,127,255,0.35) 0%, transparent 70%);
-  filter: blur(24px);
+  width: 78%; height: 150px;
+  background: radial-gradient(ellipse, rgba(79,127,255,0.5) 0%, transparent 70%);
+  filter: blur(28px);
   pointer-events: none;
 }
 
 .hero-card {
   background: linear-gradient(160deg, #0c1830 0%, #08122a 100%);
-  border: 1px solid rgba(79,127,255,0.15);
+  border: 1px solid rgba(79,127,255,0.28);
   border-radius: var(--r-lg);
   padding: 20px;
-  box-shadow: 0 20px 30px rgba(0,0,0,0.35), 0 0 0 1px rgba(79,127,255,0.06), inset 0 1px 0 rgba(255,255,255,0.06);
+  box-shadow: 0 24px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(79,127,255,0.1), 0 0 60px rgba(79,127,255,0.1), inset 0 1px 0 rgba(255,255,255,0.08);
   position: relative; overflow: hidden;
 }
 
 .hero-card::before {
   content: '';
   position: absolute; top: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(79,127,255,0.7) 40%, rgba(155,114,255,0.5) 60%, transparent);
+  background: linear-gradient(90deg, transparent, rgba(79,127,255,0.9) 40%, rgba(155,114,255,0.7) 60%, transparent);
 }
+
+/* ── Browser-chrome topbar for the demo showcase ── */
+.browser-topbar { gap: 10px; padding: 12px 14px 0; }
+.browser-dots { display: flex; gap: 6px; flex-shrink: 0; }
+.browser-dots span { width: 10px; height: 10px; border-radius: 50%; display: block; }
+.browser-dots span:nth-child(1) { background: #ff5f57; }
+.browser-dots span:nth-child(2) { background: #febc2e; }
+.browser-dots span:nth-child(3) { background: #28c840; }
+.browser-url {
+  flex: 1; text-align: center;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 100px; padding: 4px 14px;
+  font-family: var(--mono); font-size: 10.5px; color: var(--text3); letter-spacing: 0.2px;
+  direction: ltr;
+}
+.browser-topbar-spacer { width: 40px; flex-shrink: 0; }
 
 /* ── TESTIMONIAL ── */
 .testimonial-card {
@@ -1236,8 +1252,10 @@ html.a11y-underline a { text-decoration: underline !important; }
   <div class="demo-showcase-wrap reveal">
     <div class="hero-visual-glow"></div>
     <div class="hero-card" style="padding:0;overflow:hidden;">
-      <div class="card-topbar" style="padding:12px 14px 0;">
-        <span class="card-label">ChartRoom</span>
+      <div class="card-topbar browser-topbar">
+        <span class="browser-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span class="browser-url">chartroom.app/dashboard</span>
+        <span class="browser-topbar-spacer" aria-hidden="true"></span>
       </div>
 
       <div class="demo-app">
