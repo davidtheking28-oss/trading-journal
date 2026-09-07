@@ -478,39 +478,19 @@ section { padding: 72px max(28px, 5vw); position: relative; z-index: 1; }
 .browser-topbar-spacer { width: 40px; flex-shrink: 0; }
 
 /* ── TESTIMONIAL ── */
-.testimonial-card {
-  max-width: 680px; margin: 0 auto;
+.testimonial-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px; max-width: 900px; margin: 0 auto;
+}
+.testimonial-proof-card {
   background: linear-gradient(160deg, #0c1830 0%, #08122a 100%);
   border: 1px solid rgba(79,127,255,0.15);
   border-radius: var(--r-lg);
-  padding: 44px 48px;
+  padding: 14px;
   box-shadow: 0 20px 30px rgba(0,0,0,0.35), 0 0 0 1px rgba(79,127,255,0.06), inset 0 1px 0 rgba(255,255,255,0.06);
 }
-.testimonial-quote-mark { display: block; margin-bottom: 18px; transform: scaleX(-1); }
-.testimonial-text { font-size: 18px; line-height: 1.75; color: var(--text); font-weight: 500; letter-spacing: -0.1px; margin-bottom: 28px; }
-.testimonial-author { display: flex; align-items: center; gap: 12px; }
-.testimonial-avatar {
-  width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
-  background: linear-gradient(135deg,#818cf8,#6366f1);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 17px; font-weight: 700; color: #fff;
-}
-.testimonial-name { font-size: 14px; font-weight: 700; color: var(--text); }
-.testimonial-role { font-size: 12.5px; color: var(--text3); margin-top: 1px; }
-.testimonial-proof { margin-top: 28px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.06); }
-.testimonial-proof-label {
-  font-size: 11px; font-weight: 600; color: var(--text3);
-  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;
-}
-.testimonial-proof img {
-  display: block; width: 100%; max-width: 420px;
-  border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-}
-@media (max-width: 600px) {
-  .testimonial-card { padding: 32px 24px; }
-  .testimonial-text { font-size: 16px; }
-  .testimonial-proof img { max-width: 100%; }
+.testimonial-proof-img {
+  display: block; width: 100%; border-radius: 10px;
 }
 
 .card-topbar {
@@ -1420,19 +1400,9 @@ html.a11y-underline a { text-decoration: underline !important; }
     <div class="section-pill">עדות</div>
     <h2 class="section-title" id="testimonial-heading" style="margin-bottom:36px;">סוחרים כבר עובדים ככה</h2>
   </div>
-  <div class="testimonial-card reveal">
-    <svg class="testimonial-quote-mark" width="34" height="26" viewBox="0 0 34 26" fill="none" aria-hidden="true"><path d="M14.5 0C7 2 0 8.5 0 17c0 5 3.3 9 8.3 9 4 0 7-3 7-7s-2.8-6.5-6.5-6.5c-.5 0-1 0-1.4.1C8.3 8.4 11.8 4 17 2.2L14.5 0zm17 0c-7.5 2-14.5 8.5-14.5 17 0 5 3.3 9 8.3 9 4 0 7-3 7-7s-2.8-6.5-6.5-6.5c-.5 0-1 0-1.4.1C25.3 8.4 28.8 4 34 2.2L31.5 0z" fill="#4f7fff"/></svg>
-    <p class="testimonial-text">יומן מסחר מעולה ששדרג לי את העבודה. החיבור לברוקר קליל, וזה שאני יכול לנתח גרפים ולסנן מניות ישירות מתוך הפלטפורמה חוסך לי המון זמן — משתמש בזה כל יום.</p>
-    <div class="testimonial-author">
-      <span class="testimonial-avatar" aria-hidden="true">ע</span>
-      <div>
-        <div class="testimonial-name">עמית</div>
-        <div class="testimonial-role">סוחר ב-Interactive Brokers</div>
-      </div>
-    </div>
-    <div class="testimonial-proof">
-      <div class="testimonial-proof-label">ההודעה המקורית בוואטסאפ</div>
-      <img src="assets/demo/testimonial-amit.jpg" alt="הודעת וואטסאפ מעמית על ChartRoom: הפלטפורמה החדשה באמת ברמה גבוהה, יומן מסחר מעולה ששדרג לי את העבודה, משתמש בו ברמה יומיומית" loading="lazy">
+  <div class="testimonial-grid reveal">
+    <div class="testimonial-proof-card">
+      <img class="testimonial-proof-img" src="assets/demo/testimonial-amit.jpg" alt="הודעת וואטסאפ מעמית, סוחר ב-Interactive Brokers, על ChartRoom: הפלטפורמה החדשה באמת ברמה גבוהה, יומן מסחר מעולה ששדרג לי את העבודה, משתמש בו ברמה יומיומית" loading="lazy">
     </div>
   </div>
 </section>
