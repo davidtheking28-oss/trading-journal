@@ -713,32 +713,37 @@ section { padding: 72px max(28px, 5vw); position: relative; z-index: 1; }
 .d-s-bf     { height: 100%; border-radius: 2px; }
 .d-s-pct    { font-size: 10px; width: 34px; font-variant-numeric: tabular-nums; }
 
-/* ── FEATURES: numbered rows, not a card grid ── */
-.feat-list {
-  max-width: 860px; margin: 56px auto 0;
-  display: flex; flex-direction: column;
+/* ── FEATURES: card grid ── */
+.feat-grid {
+  max-width: 1000px; margin: 56px auto 0;
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
 }
-.feat-row {
-  display: grid; grid-template-columns: 84px 1fr;
-  gap: 24px; align-items: baseline;
-  padding: 32px 0;
-  border-bottom: 1px solid var(--border2);
+.feat-card {
+  background: linear-gradient(160deg, #0c1830 0%, #08122a 100%);
+  border: 1px solid var(--border2);
+  border-radius: var(--r-lg);
+  padding: 30px;
+  transition: border-color .25s, transform .25s;
 }
-.feat-row:first-child { border-top: 1px solid var(--border2); }
 @media (hover: hover) and (pointer: fine) {
-  .feat-row:hover .feat-num { color: rgba(79,127,255,0.55); }
+  .feat-card:hover { border-color: rgba(79,127,255,0.3); transform: translateY(-3px); }
+  .feat-card:hover .feat-num { color: rgba(79,127,255,0.6); }
 }
 .feat-num {
-  font-family: var(--mono); font-size: 38px; font-weight: 700;
-  color: rgba(79,127,255,0.22); letter-spacing: -0.5px;
+  display: block;
+  font-family: var(--mono); font-size: 30px; font-weight: 700;
+  color: rgba(79,127,255,0.3); letter-spacing: -0.5px;
   font-variant-numeric: tabular-nums; line-height: 1;
+  margin-bottom: 18px;
   transition: color .25s;
 }
 .feat-row-title {
   font-family: var(--display); font-size: 19px; font-weight: 700;
   color: var(--text); letter-spacing: -0.4px; margin-bottom: 9px;
 }
-.feat-row-desc { font-size: 14px; color: var(--text2); line-height: 1.75; max-width: 58ch; }
+.feat-row-desc { font-size: 14px; color: var(--text2); line-height: 1.75; }
+@media (max-width: 700px) { .feat-grid { grid-template-columns: 1fr; } }
 
 .broker-card {
   display: inline-flex; align-items: center; gap: 11px;
@@ -770,7 +775,7 @@ section { padding: 72px max(28px, 5vw); position: relative; z-index: 1; }
   color: var(--text); letter-spacing: -0.3px;
 }
 .broker-strip-badges { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
-@media (max-width: 560px) { .feat-row { grid-template-columns: 1fr; gap: 10px; } .feat-num { font-size: 28px; } }
+@media (max-width: 560px) { .feat-num { font-size: 26px; } }
 
 /* ── STEPS ── */
 #how { text-align: center; }
@@ -1362,34 +1367,26 @@ html.a11y-underline a { text-decoration: underline !important; }
     <p class="section-sub">ברוקר, שוק, סורק מניות ותיק השקעות — הכל במקום אחד, בלי לקפוץ בין עשר טאבים</p>
   </div>
 
-  <div class="feat-list">
-    <div class="feat-row reveal">
+  <div class="feat-grid">
+    <div class="feat-card reveal">
       <span class="feat-num" aria-hidden="true">01</span>
-      <div>
-        <h3 class="feat-row-title">שכח מטבלאות</h3>
-        <p class="feat-row-desc">חבר את <span class="kw">Interactive Brokers</span> או <span class="kw">Bybit</span> פעם אחת — חיבור קורא-בלבד, ללא גישה לביצוע פעולות — וכל עסקה נכנסת לבד.</p>
-      </div>
+      <h3 class="feat-row-title">שכח מטבלאות</h3>
+      <p class="feat-row-desc">חבר את <span class="kw">Interactive Brokers</span> או <span class="kw">Bybit</span> פעם אחת — חיבור קורא-בלבד, ללא גישה לביצוע פעולות — וכל עסקה נכנסת לבד.</p>
     </div>
-    <div class="feat-row reveal">
+    <div class="feat-card reveal">
       <span class="feat-num" aria-hidden="true">02</span>
-      <div>
-        <h3 class="feat-row-title">דופק השוק בזמן אמת</h3>
-        <p class="feat-row-desc">ביצועי סקטורים, <span class="kw">Fear &amp; Greed Index</span> ומניות מובילות — במקום אחד, כדי שתדע לאן הכסף זורם לפני שאתה נכנס לפוזיציה.</p>
-      </div>
+      <h3 class="feat-row-title">דופק השוק בזמן אמת</h3>
+      <p class="feat-row-desc">ביצועי סקטורים, <span class="kw">Fear &amp; Greed Index</span> ומניות מובילות — במקום אחד, כדי שתדע לאן הכסף זורם לפני שאתה נכנס לפוזיציה.</p>
     </div>
-    <div class="feat-row reveal">
+    <div class="feat-card reveal">
       <span class="feat-num" aria-hidden="true">03</span>
-      <div>
-        <h3 class="feat-row-title">מסנן מניות מובנה</h3>
-        <p class="feat-row-desc">הסורק סורק את כל השוק ומציג רק מניות עם מבנה טכני חזק (<span class="kw">Trend Template</span>) — ישר בתוך היומן.</p>
-      </div>
+      <h3 class="feat-row-title">מסנן מניות מובנה</h3>
+      <p class="feat-row-desc">הסורק סורק את כל השוק ומציג רק מניות עם מבנה טכני חזק (<span class="kw">Trend Template</span>) — ישר בתוך היומן.</p>
     </div>
-    <div class="feat-row reveal">
+    <div class="feat-card reveal">
       <span class="feat-num" aria-hidden="true">04</span>
-      <div>
-        <h3 class="feat-row-title">בניית תיק השקעות</h3>
-        <p class="feat-row-desc">הקצאת הון בין מניות, קריפטו ו-ETFs, תשואה כוללת וחשיפת סיכון — במבט אחד, לפני שהשוק מזכיר לך את זה.</p>
-      </div>
+      <h3 class="feat-row-title">בניית תיק השקעות</h3>
+      <p class="feat-row-desc">הקצאת הון בין מניות, קריפטו ו-ETFs, תשואה כוללת וחשיפת סיכון — במבט אחד, לפני שהשוק מזכיר לך את זה.</p>
     </div>
   </div>
 </section>
