@@ -1519,6 +1519,24 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .tab-intro-dismiss { flex-shrink: 0; align-self: center; background: var(--accent); color: #fff; border: none; border-radius: var(--r-md); padding: 7px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity 0.15s; }
   @media (hover: hover) and (pointer: fine) { .tab-intro-dismiss:hover { opacity: 0.88; } }
   @media (max-width: 600px) { .tab-intro { flex-wrap: wrap; } .tab-intro-dismiss { width: 100%; } }
+
+  /* Broker-sync stalled banner — same shape as .tab-intro but red-toned and
+     stays until dismissed, unlike the 3s auto-dismissing toast it replaced. */
+  #broker-sync-banners { max-width: 1400px; margin: 12px auto 0; padding: 0 20px; }
+  .broker-sync-banner {
+    display: flex; align-items: flex-start; gap: 12px;
+    background: linear-gradient(135deg, rgba(239,68,68,0.13), rgba(239,68,68,0.05));
+    border: 1px solid rgba(239,68,68,0.32);
+    border-radius: var(--r-lg); padding: 14px 16px; margin-bottom: 10px;
+    animation: introIn 0.35s cubic-bezier(0.16,1,0.3,1);
+  }
+  .broker-sync-banner-icon { width: 34px; height: 34px; border-radius: var(--r-md); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: rgba(239,68,68,0.18); color: var(--red); }
+  .broker-sync-banner-body { flex: 1; min-width: 0; }
+  .broker-sync-banner-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .broker-sync-banner-text { font-size: 12.5px; color: var(--text2); line-height: 1.55; }
+  .broker-sync-banner-dismiss { flex-shrink: 0; align-self: center; background: rgba(255,255,255,0.08); color: var(--text2); border: 1px solid var(--border2); border-radius: var(--r-md); padding: 7px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity 0.15s; }
+  @media (hover: hover) and (pointer: fine) { .broker-sync-banner-dismiss:hover { opacity: 0.8; } }
+  @media (max-width: 600px) { .broker-sync-banner { flex-wrap: wrap; } .broker-sync-banner-dismiss { width: 100%; } }
   .s-page-header { margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
   .s-page-header h2 { font-size: 23px; font-weight: 750; color: var(--text); margin: 0 0 5px; letter-spacing: -0.4px; }
   .s-page-header p  { font-size: 12.5px; color: var(--text3); margin: 0; }
@@ -5585,6 +5603,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     </button>
   </aside>
 
+  <div id="broker-sync-banners"></div>
+
   <main id="main-content">
 
     <!-- ===== OVERVIEW ===== -->
@@ -8614,22 +8634,40 @@ async function _maybeShowFlexWindowNotice() {
 // flex_sync_log itself stays RLS-locked; my_broker_sync_health() is a narrow
 // SECURITY DEFINER view of the caller's own per-broker health.
 const BROKER_FAIL_STREAK_ALERT = 3; // below this it is a transient blip, not a dead connection
+// A 3s auto-dismissing toast, shown at most once/day, meant a 9-day Bybit
+// outage got at most 9 independent 3-second chances to be seen — each
+// starting from zero, no escalation. A banner that stays until the user
+// dismisses THIS specific failure (keyed on last_ok, so a fresh failure
+// after a real recovery re-shows it) fixes that without adding a second
+// notification mechanism — same broken() check, just a persistent surface.
 async function _maybeShowBrokerSyncNotice() {
   if (!_currentUser) return;
-  const today = new Date().toISOString().slice(0, 10);
-  const key = 'broker_sync_notice_' + _currentUser.id;
-  try { if (localStorage.getItem(key) === today) return; } catch (e) {}
+  const wrap = document.getElementById('broker-sync-banners');
+  if (!wrap) return;
   const { data, error } = await _sb.rpc('my_broker_sync_health');
   if (error || !Array.isArray(data)) return;
   const broken = data.filter(r => (r.fails_since_ok || 0) >= BROKER_FAIL_STREAK_ALERT);
-  if (!broken.length) return;
-  for (const b of broken) {
+  wrap.innerHTML = broken.map(b => {
+    const dismissKey = 'broker_sync_dismissed_' + _currentUser.id + '_' + b.broker + '_' + (b.last_ok || 'never');
+    try { if (localStorage.getItem(dismissKey) === '1') return ''; } catch (e) {}
     const since = b.last_ok
       ? `מאז ${new Date(b.last_ok).toLocaleDateString('he-IL')}`
       : 'מעולם לא הצליח';
-    toast(`הסנכרון מ-${b.broker.toUpperCase()} לא עובד ${since} (${b.fails_since_ok} כשלונות): ${b.last_error || 'שגיאה לא ידועה'}. גודל התיק ו-Kelly מחושבים כרגע על נתונים חלקיים.`, 'error');
-  }
-  try { localStorage.setItem(key, today); } catch (e) {}
+    return `
+      <div class="broker-sync-banner" data-dismiss-key="${esc(dismissKey)}">
+        <div class="broker-sync-banner-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+        <div class="broker-sync-banner-body">
+          <div class="broker-sync-banner-title">הסנכרון מ-${esc(b.broker.toUpperCase())} לא עובד ${since}</div>
+          <div class="broker-sync-banner-text">${b.fails_since_ok} כשלונות: ${esc(b.last_error || 'שגיאה לא ידועה')}. גודל התיק ו-Kelly מחושבים כרגע על נתונים חלקיים.</div>
+        </div>
+        <button class="broker-sync-banner-dismiss" onclick="_dismissBrokerSyncBanner(this)">הבנתי</button>
+      </div>`;
+  }).join('');
+}
+function _dismissBrokerSyncBanner(btn) {
+  const el = btn.closest('.broker-sync-banner');
+  try { localStorage.setItem(el.dataset.dismissKey, '1'); } catch (e) {}
+  el.remove();
 }
 
 // Automatic market-regime (STEM) classifier — reuses the VIX + breadth rating
