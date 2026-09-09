@@ -1494,7 +1494,7 @@ describe('missedFollowThrough', () => {
 describe('live P&L never leaves the card on its placeholder', () => {
   const PLACEHOLDER = 'kpi_calculating';
 
-  function makeCard({ marketOpen = true } = {}) {
+  function makeCard({ marketOpen = true, ovScope = 'all', db, quotes, captureUrl } = {}) {
     // extractFunction() slices from the `function` keyword, dropping the
     // leading `async` — put it back or the body's awaits are a syntax error.
     const src = 'async ' + extractFunction('_updateLivePL');
@@ -1506,16 +1506,18 @@ describe('live P&L never leaves the card on its placeholder', () => {
     const gate = new Promise(r => { releaseFetch = r; });
     const scope = {
       document: { getElementById: id => els[id] || null, hidden: false },
-      db: { stocks: [{ symbol: 'AAPL', shares: 10, closedShares: 0, entryPrice: 100, ls: 'L', type: 'stock' }], crypto: [] },
+      db: db || { stocks: [{ symbol: 'AAPL', shares: 10, closedShares: 0, entryPrice: 100, ls: 'L', type: 'stock' }], crypto: [] },
+      ovScope,
       isOpenPosition: () => true,
       _isUSMarketOpen: () => marketOpen,
+      _cryptoBaseSymbol: sym => String(sym).replace(/\.P$/i, '').replace(/(USDT|USD|BUSD)$/i, ''),
       _readLivePLCache: () => null,
       _writeLivePLCache: () => {},
       _paintLivePL: (e, s, total) => { e.textContent = String(total); },
       _getToken: async () => 'tok',
       t: k => k,
       SUPABASE_URL: 'https://example.test',
-      fetch: async () => { await gate; return { json: async () => ({ AAPL: { c: 110 } }) }; },
+      fetch: async (url) => { if (captureUrl) captureUrl(url); await gate; return { json: async () => (quotes || { AAPL: { c: 110 } }) }; },
       _LIVE_PL_MIN_INTERVAL: 20000,
       _LIVE_PL_CLOSED_INTERVAL: 900000,
     };
@@ -1554,5 +1556,48 @@ describe('live P&L never leaves the card on its placeholder', () => {
     releaseFetch();
     await update();
     assert.equal(el.textContent, '100');
+  });
+
+  // The card used to always sum stock+crypto together, ignoring the ovScope
+  // selector every other Overview KPI card already respects.
+  const mixedDb = {
+    stocks: [{ symbol: 'AAPL', shares: 10, closedShares: 0, entryPrice: 100, ls: 'L', type: 'stock' }],
+    crypto: [{ symbol: 'BTC', shares: 1, closedShares: 0, entryPrice: 70000, ls: 'L', type: 'crypto' }],
+  };
+
+  test('ovScope "stock" excludes the crypto position entirely', async () => {
+    let requestedUrl = '';
+    const { update, el, releaseFetch } = makeCard({
+      ovScope: 'stock', db: mixedDb,
+      quotes: { AAPL: { c: 110 } },
+      captureUrl: url => { requestedUrl = url; },
+    });
+    releaseFetch();
+    await update();
+    assert.ok(!requestedUrl.includes('BTC'), `BTC should not be requested: ${requestedUrl}`);
+    assert.equal(el.textContent, '100');   // only the AAPL leg
+  });
+
+  test('ovScope "crypto" excludes the stock position entirely', async () => {
+    let requestedUrl = '';
+    const { update, el, releaseFetch } = makeCard({
+      ovScope: 'crypto', db: mixedDb,
+      quotes: { 'BTC-USD': { c: 75000} },
+      captureUrl: url => { requestedUrl = url; },
+    });
+    releaseFetch();
+    await update();
+    assert.ok(!requestedUrl.includes('AAPL'), `AAPL should not be requested: ${requestedUrl}`);
+    assert.equal(el.textContent, '5000');   // 1 × (75000 − 70000)
+  });
+
+  test('ovScope "all" still combines both, as before', async () => {
+    const { update, el, releaseFetch } = makeCard({
+      ovScope: 'all', db: mixedDb,
+      quotes: { AAPL: { c: 110 }, 'BTC-USD': { c: 75000 } },
+    });
+    releaseFetch();
+    await update();
+    assert.equal(el.textContent, '5100');   // 100 (stock) + 5000 (crypto)
   });
 });

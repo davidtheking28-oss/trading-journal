@@ -11314,8 +11314,11 @@ function renderOverview() {
   const withR = trades.filter(tr2 => isClosed(tr2) && calcStopRisk(tr2) > 0);
   const avgR  = withR.length ? withR.reduce((s,tr2) => s + calcTotal(tr2)/calcStopRisk(tr2), 0) / withR.length : null;
 
-  // Open positions
-  const openTrades = [...db.stocks, ...db.crypto].filter(tr2 => !tr2.deleted && !tr2.exitPrice);
+  // Open positions — same ovScope the other Overview cards already use, so
+  // the live P&L card doesn't keep combining stock+crypto after every other
+  // card on this tab has already been filtered down to one.
+  const openSource = ovScope==='stock' ? db.stocks : ovScope==='crypto' ? db.crypto : [...db.stocks, ...db.crypto];
+  const openTrades = openSource.filter(tr2 => !tr2.deleted && !tr2.exitPrice);
 
   // 5 KPI cards
   const _noTrades = db.stocks.filter(tr=>!tr.deleted).length + db.crypto.filter(tr=>!tr.deleted).length === 0;
@@ -11422,9 +11425,11 @@ async function _updateLivePL(force = false) {
   if (document.hidden) return;
   const ovTab = document.getElementById('tab-overview');
   if (ovTab && !ovTab.classList.contains('active')) return;
-  const open = [...db.stocks, ...db.crypto].filter(t =>
-    isOpenPosition(t)
-  );
+  // Same ovScope filter renderOverview's own openTrades count uses — the
+  // card otherwise kept summing stock+crypto together regardless of the
+  // scope selector every other KPI card on this tab already respects.
+  const openSource = ovScope==='stock' ? db.stocks : ovScope==='crypto' ? db.crypto : [...db.stocks, ...db.crypto];
+  const open = openSource.filter(t => isOpenPosition(t));
   const symKey = [...new Set(open.map(t => t.symbol.toUpperCase()))].sort().join(',');
   // Crypto trades around the clock, so the closed-market shortcut only applies
   // when every open position is an equity.
