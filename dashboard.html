@@ -8834,7 +8834,7 @@ document.addEventListener('click', function(e) {
 });
 // Move menus to body so they escape any parent overflow/stacking context
 document.addEventListener('DOMContentLoaded', function() {
-  ['ov-scope-menu','stats-scope-menu'].forEach(id => {
+  ['ov-scope-menu','stats-scope-menu','trades-scope-menu'].forEach(id => {
     const el = document.getElementById(id);
     if (el) document.body.appendChild(el);
   });
