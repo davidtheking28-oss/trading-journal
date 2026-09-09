@@ -7,6 +7,12 @@
 const BYBIT_BASE = 'https://api.bybit.com';
 const encoder = new TextEncoder();
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+// Bybit rejects /v5/execution/list outright when startTime reaches 2 years back
+// ("Can't query order earlier than 2 years, please check your params"). 730 days
+// IS exactly 2 years, so asking for it always fails — Bybit evaluates the limit
+// on its own clock, which is later than ours by at least the request latency.
+// Hold the floor a few days inside the limit for every caller.
+const MAX_LOOKBACK_MS = 725 * 24 * 60 * 60 * 1000;
 
 // Calendar date in the trader's local (Israel) timezone. This server has no
 // per-user timezone, and Date.toISOString() renders in UTC — which silently
@@ -58,7 +64,7 @@ export interface BybitTrade {
 async function fetchExecutions(apiKey: string, apiSecret: string, days: number): Promise<Record<string, string>[]> {
   const all: Record<string, string>[] = [];
   const now = Date.now();
-  const oldest = now - days * 24 * 60 * 60 * 1000;
+  const oldest = Math.max(now - days * 24 * 60 * 60 * 1000, now - MAX_LOOKBACK_MS);
   for (let winEnd = now; winEnd > oldest; winEnd -= WEEK_MS) {
     const winStart = Math.max(winEnd - WEEK_MS, oldest);
     let cursor = '';
