@@ -9428,10 +9428,15 @@ function _expandedRowHTML(tr, key) {
 // FMP's symbol-image endpoint serves crypto logos too, but only keyed as
 // base+USD (BTCUSD.png) — never the bare ticker, and never a broker's pair
 // suffix (BTCUSDT, BEAMUSDT.P). Stock tickers pass through unchanged.
+// A broker/CSV symbol stripped to its base asset — "BEAMUSDT.P" -> "BEAM",
+// "BTC" -> "BTC" unchanged. Shared by the logo lookup and the live-quote
+// symbol below so the two never drift on what "the base asset" means.
+function _cryptoBaseSymbol(sym) {
+  return String(sym || '').replace(/\.P$/i, '').replace(/(USDT|USD|BUSD)$/i, '');
+}
 function _symLogoUrl(tr, type) {
   if ((tr._tt || type) !== 'crypto') return `https://images.financialmodelingprep.com/symbol/${encodeURIComponent(tr.symbol)}.png`;
-  const base = String(tr.symbol || '').replace(/\.P$/i, '').replace(/(USDT|USD|BUSD)$/i, '');
-  return `https://images.financialmodelingprep.com/symbol/${encodeURIComponent(base)}USD.png`;
+  return `https://images.financialmodelingprep.com/symbol/${encodeURIComponent(_cryptoBaseSymbol(tr.symbol))}USD.png`;
 }
 
 function renderTable(type) {
@@ -11453,14 +11458,21 @@ async function _updateLivePL(force = false) {
   // nothing was ever cached to paint on the next visit either.
   const myToken = ++_livePLToken;
   const token = await _getToken();
-  const symbols = [...new Set(open.map(t => t.symbol.toUpperCase()))];
+  // Finnhub's /quote is a stock endpoint and Yahoo's chart endpoint needs a
+  // "-USD" suffix for crypto — a bare "BTC" doesn't fail loudly on Yahoo, it
+  // silently resolves to an unrelated ETF that happens to share the ticker
+  // ($34 vs. BTC's real ~$78,600), and Bybit's own pair names (XRPUSDT.P)
+  // resolve nowhere at all. quoteSym(t) is what actually goes to the feed;
+  // t.symbol is still what's shown and what positions are grouped by.
+  const quoteSym = t => t.type === 'crypto' ? _cryptoBaseSymbol(t.symbol).toUpperCase() + '-USD' : t.symbol.toUpperCase();
+  const symbols = [...new Set(open.map(quoteSym))];
   _lastLivePLTs = Date.now();
   _lastLivePLSymbols = [...symbols].sort().join(',');
   let totalUnreal = 0;
   // A symbol with no quote used to contribute 0 silently, so a fully failed
-  // refresh (rate limit, network, or a symbol the feed doesn't carry — every
-  // Bybit perp such as XRPUSDT.P) rendered a confident green "+$0.00" that was
-  // indistinguishable from genuinely flat positions. Count what resolved.
+  // refresh (rate limit, network, or a symbol the feed doesn't carry) rendered
+  // a confident green "+$0.00" that was indistinguishable from genuinely flat
+  // positions. Count what resolved.
   let priced = 0;
   // One batched call instead of one edge-function round trip per symbol — each
   // round trip paid its own auth+rate-limit overhead, which dominated load time
@@ -11480,7 +11492,7 @@ async function _updateLivePL(force = false) {
       const price = quotes?.[sym]?.c;
       if (!price) return;
       priced++;
-      open.filter(t => t.symbol.toUpperCase() === sym).forEach(t => {
+      open.filter(t => quoteSym(t) === sym).forEach(t => {
         const shares = (t.shares || 0) - (t.closedShares || 0);
         const side = t.ls === 'S' ? -1 : 1;
         totalUnreal += side * shares * (price - t.entryPrice);
