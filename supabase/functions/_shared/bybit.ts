@@ -57,6 +57,18 @@ export interface BybitTrade {
   stop: null; t: never[]; bybit_id: string;
 }
 
+// A lot still open when the window ends — no exitPrice/closeDate/pnl, since
+// none of those exist yet. bybit_id is 'open:'+symbol rather than an
+// execution id: unlike a closed trade (immutable once it happens), this
+// row's shares/entryPrice legitimately change on every cron run as more
+// fills land, so it needs a stable, reconstructable UPDATE key instead of an
+// insert-once one. One row per symbol — matches the one-way-mode assumption
+// already established for this sync (see bybit_two_year_limit memory note).
+export interface BybitOpenPosition {
+  type: 'crypto'; ls: 'L' | 'S'; symbol: string; entryDate: string;
+  entryPrice: number; shares: number; commission: number; bybit_id: string;
+}
+
 // Fetch every Linear Trade execution in the last `days`, paging backward in
 // 7-day windows and following the cursor within each window until Bybit
 // reports no more pages — no fixed page cap, so a very active window can't
@@ -95,7 +107,11 @@ export async function fetchBybitEquity(apiKey: string, apiSecret: string): Promi
   return Number.isFinite(eq) ? eq : null;
 }
 
-export async function computeBybitTrades(apiKey: string, apiSecret: string, days: number): Promise<BybitTrade[]> {
+// Shared FIFO core for both exported functions below — a second exported
+// function to also surface open positions must not mean a second network
+// fetch or a second copy of this matching logic.
+async function _runBybitFifo(apiKey: string, apiSecret: string, days: number):
+  Promise<{ trades: BybitTrade[]; openPositions: Map<string, OpenPos> }> {
   const allExecs = await fetchExecutions(apiKey, apiSecret, days);
   // Sort ascending so we can process FIFO
   allExecs.sort((a, b) => parseInt(a.execTime) - parseInt(b.execTime));
@@ -166,5 +182,29 @@ export async function computeBybitTrades(apiKey: string, apiSecret: string, days
       }
     }
   }
-  return trades;
+  return { trades, openPositions };
+}
+
+export async function computeBybitTrades(apiKey: string, apiSecret: string, days: number): Promise<BybitTrade[]> {
+  return (await _runBybitFifo(apiKey, apiSecret, days)).trades;
+}
+
+// bybit-cron only — computeBybitTrades (the manual "Sync" button's full-
+// history backfill) stays closed-trades-only on purpose, see bybit_test.ts's
+// header comment and CLAUDE.md.
+export async function computeBybitOpen(apiKey: string, apiSecret: string, days: number): Promise<BybitOpenPosition[]> {
+  const { openPositions } = await _runBybitFifo(apiKey, apiSecret, days);
+  return [...openPositions.entries()].map(([symbol, pos]) => {
+    const totalQty = pos.entries.reduce((s, e) => s + e.qty, 0);
+    const entryPrice = pos.entries.reduce((s, e) => s + e.price * e.qty, 0) / totalQty;
+    const commission = Math.round(pos.entries.reduce((s, e) => s + e.fee, 0) * 10000) / 10000;
+    const cleanSymbol = symbol.replace(/USDT$|USD$|BUSD$/, '');
+    return {
+      type: 'crypto', ls: pos.side === 'Long' ? 'L' : 'S',
+      symbol: cleanSymbol,
+      entryDate: localDateStr(pos.entries[0].time),
+      entryPrice, shares: totalQty, commission,
+      bybit_id: 'open:' + cleanSymbol,
+    };
+  });
 }

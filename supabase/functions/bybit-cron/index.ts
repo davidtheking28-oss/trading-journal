@@ -1,11 +1,14 @@
 // Server-side Bybit sync, triggered by pg_cron (via pg_net) so trades import even
 // when the app is closed — parity with ibkr-cron. Computes closed trades from the
 // recent execution window and inserts only new ones (dedup by the closing execId),
-// never overwriting a user's manual edits.
+// never overwriting a user's manual edits. Also upserts the currently-open
+// position per symbol (if any) under a 'open:'+symbol row, kept in sync (and
+// removed once the position closes) on every run — see computeBybitOpen in
+// _shared/bybit.ts. The manual "Sync" button stays closed-trades-only.
 //
 // Auth: same shared secret as ibkr-cron (x-cron-key vs app_secrets.cron_secret).
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
-import { computeBybitTrades, fetchBybitEquity } from '../_shared/bybit.ts';
+import { computeBybitTrades, computeBybitOpen, fetchBybitEquity } from '../_shared/bybit.ts';
 
 // Wide enough to cover the entry leg of most swing holds — computeBybitTrades
 // silently skips (rather than mis-prices) a closing execution whose opening
@@ -65,9 +68,42 @@ Deno.serve(async (req: Request) => {
           const { error: upErr } = await sb.from('trades').upsert(tradeRows, { onConflict: 'user_id,bybit_id', ignoreDuplicates: true });
           if (upErr) throw new Error('trades upsert: ' + upErr.message);
         }
+
+        // Unlike closed trades, an open position's shares/entryPrice
+        // legitimately changes run to run — 'open:'+symbol is a fixed,
+        // reconstructable key so this upserts IN PLACE rather than inserting
+        // once and ignoring. Never touches a bybit_id outside this
+        // mechanism's own 'open:' namespace, so a manually-entered or
+        // CSV-imported crypto row is never at risk.
+        const openPositions = await computeBybitOpen(u.bybit_api_key, u.bybit_api_secret, RECENT_DAYS);
+        if (openPositions.length) {
+          const openRows = openPositions.map((p) => ({
+            user_id: u.user_id, type: 'crypto', entry_date: p.entryDate, ls: p.ls,
+            symbol: p.symbol, entry_price: p.entryPrice, shares: p.shares,
+            closed_shares: 0, commission: p.commission, ecn: 0, deleted: false, bybit_id: p.bybit_id,
+          }));
+          const { error: openErr } = await sb.from('trades').upsert(openRows, { onConflict: 'user_id,bybit_id' });
+          if (openErr) throw new Error('open-position upsert: ' + openErr.message);
+        }
+        // A position that closed (or the account holding nothing open at
+        // all) leaves a stale 'open:SYMBOL' placeholder behind — the real
+        // closed trade already landed above under its own bybit_id, so an
+        // un-reconciled placeholder would double-count the position.
+        const stillOpenIds = new Set(openPositions.map((p) => p.bybit_id));
+        const { data: existingOpenRows } = await sb.from('trades')
+          .select('bybit_id').eq('user_id', u.user_id).like('bybit_id', 'open:%');
+        const staleIds = (existingOpenRows ?? [])
+          .map((r: any) => r.bybit_id as string)
+          .filter((id: string) => !stillOpenIds.has(id));
+        if (staleIds.length) {
+          const { error: delErr } = await sb.from('trades')
+            .delete().eq('user_id', u.user_id).in('bybit_id', staleIds);
+          if (delErr) throw new Error('stale open-position delete: ' + delErr.message);
+        }
+
         ok++;
         logRows.push({ user_id: u.user_id, broker: 'bybit', mode: 'sync', status: 'ok' });
-        console.log(`  ok ${who} bybit — ${trades.length} trades`);
+        console.log(`  ok ${who} bybit — ${trades.length} trades, ${openPositions.length} open`);
       } catch (e) {
         fail++;
         const msg = (e as Error).message;

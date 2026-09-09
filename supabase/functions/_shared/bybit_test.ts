@@ -7,7 +7,7 @@
 //
 // Run: deno test supabase/functions/_shared/bybit_test.ts
 import { assert, assertEquals } from 'https://deno.land/std@0.208.0/assert/mod.ts';
-import { computeBybitTrades } from './bybit.ts';
+import { computeBybitTrades, computeBybitOpen } from './bybit.ts';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -58,4 +58,97 @@ Deno.test('a short window is left exactly as asked', async () => {
   const oldest = Math.min(...starts);
   // The clamp must only ever bite at the 2-year end, never shorten a cron window.
   assertEquals(Math.round((before - oldest) / DAY_MS), 30);
+});
+
+// computeBybitOpen — the currently-open lot per symbol, which computeBybitTrades
+// (closed trades only) had been silently discarding. `days:5` keeps every
+// execution inside fetchExecutions' single most-recent 7-day window, so one
+// stubbed page is the whole answer — no pagination to simulate here.
+const HOUR_MS = 60 * 60 * 1000;
+function exec(overrides: Record<string, string>): Record<string, string> {
+  return {
+    symbol: 'BTCUSDT', side: 'Buy', execQty: '1', execPrice: '70000',
+    execFee: '0.5', execTime: String(Date.now() - HOUR_MS), closedSize: '0',
+    execId: 'e' + Math.random(),
+    ...overrides,
+  };
+}
+async function withExecs<T>(execs: Record<string, string>[], fn: () => Promise<T>): Promise<T> {
+  const realFetch = globalThis.fetch;
+  let answered = false;
+  globalThis.fetch = ((url: string | URL | Request) => {
+    const body = !answered ? { retCode: 0, result: { list: execs, nextPageCursor: '' } }
+                           : { retCode: 0, result: { list: [], nextPageCursor: '' } };
+    answered = true;
+    return Promise.resolve(new Response(JSON.stringify(body)));
+  }) as typeof fetch;
+  try {
+    return await fn();
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+}
+
+Deno.test('a lone open lot is surfaced with the right entry/qty, not discarded', async () => {
+  const open = await withExecs(
+    [exec({ execQty: '2', execPrice: '70000' })],
+    () => computeBybitOpen('k', 's', 5),
+  );
+  assertEquals(open.length, 1);
+  assertEquals(open[0].symbol, 'BTC');
+  assertEquals(open[0].ls, 'L');
+  assertEquals(open[0].shares, 2);
+  assertEquals(open[0].entryPrice, 70000);
+  assertEquals(open[0].bybit_id, 'open:BTC');
+});
+
+Deno.test('two fills average-weight into one open entry', async () => {
+  const open = await withExecs(
+    [
+      exec({ execTime: String(Date.now() - 2 * HOUR_MS), execQty: '1', execPrice: '70000' }),
+      exec({ execTime: String(Date.now() - HOUR_MS), execQty: '3', execPrice: '74000' }),
+    ],
+    () => computeBybitOpen('k', 's', 5),
+  );
+  assertEquals(open.length, 1);
+  assertEquals(open[0].shares, 4);
+  // (1*70000 + 3*74000) / 4 = 73000
+  assertEquals(open[0].entryPrice, 73000);
+});
+
+Deno.test('a partial close leaves the correct remainder as the open row', async () => {
+  const open = await withExecs(
+    [
+      exec({ execTime: String(Date.now() - 2 * HOUR_MS), execQty: '4', execPrice: '70000' }),
+      exec({ execTime: String(Date.now() - HOUR_MS), side: 'Sell', execQty: '1', execPrice: '75000', closedSize: '1' }),
+    ],
+    () => computeBybitOpen('k', 's', 5),
+  );
+  assertEquals(open.length, 1);
+  assertEquals(open[0].shares, 3);
+  assertEquals(open[0].entryPrice, 70000);
+});
+
+Deno.test('a fully closed position leaves no open row', async () => {
+  const open = await withExecs(
+    [
+      exec({ execTime: String(Date.now() - 2 * HOUR_MS), execQty: '1', execPrice: '70000' }),
+      exec({ execTime: String(Date.now() - HOUR_MS), side: 'Sell', execQty: '1', execPrice: '75000', closedSize: '1' }),
+    ],
+    () => computeBybitOpen('k', 's', 5),
+  );
+  assertEquals(open.length, 0);
+});
+
+Deno.test('computeBybitTrades on the same data still returns only the closed leg', async () => {
+  const trades = await withExecs(
+    [
+      exec({ execTime: String(Date.now() - 2 * HOUR_MS), execQty: '4', execPrice: '70000' }),
+      exec({ execTime: String(Date.now() - HOUR_MS), side: 'Sell', execQty: '1', execPrice: '75000', closedSize: '1' }),
+    ],
+    () => computeBybitTrades('k', 's', 5),
+  );
+  assertEquals(trades.length, 1);
+  assertEquals(trades[0].shares, 1);
+  assertEquals(trades[0].bybit_id.startsWith('open:'), false);
 });
