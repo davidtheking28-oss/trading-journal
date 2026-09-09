@@ -11782,6 +11782,13 @@ function renderStatistics() {
         <div id="hold-compare-wrap"></div>
       </div>` + cardHtml(lastCard);
     grid.innerHTML = portfolioHtml + `<div class="kpi-grid-hero">${cardsHtml}</div>`;
+    // Rebuilt fresh on every render, so it has to be reparented here every
+    // time (not just once at DOMContentLoaded like the other scope-dd-menus)
+    // — .kpi-card's fadeUp animation leaves a permanent (fill-mode: both)
+    // transform behind, which makes it a containing block for this
+    // position:fixed menu and detaches it from its trigger button otherwise.
+    const _peMenu = document.getElementById('port-equity-menu');
+    if (_peMenu) document.body.appendChild(_peMenu);
   }
 
   renderHoldCompare(adv);
