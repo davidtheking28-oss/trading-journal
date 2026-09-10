@@ -1136,15 +1136,14 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .calc-slider::-moz-range-thumb { width:18px; height:18px; border-radius:50%; background:var(--accent); cursor:pointer; border:none; }
 
   /* FORM */
-  /* Native spinner arrows on the sizer's number fields (0-100% stop, tranche
-     count, etc.) are too small to hit reliably and step by 1 regardless of
-     the field's actual unit — same fix already applied to .inv-table inputs. */
-  #inv-calc-modal input[type=number]::-webkit-outer-spin-button,
-  #inv-calc-modal input[type=number]::-webkit-inner-spin-button,
-  #inv-position-modal input[type=number]::-webkit-outer-spin-button,
-  #inv-position-modal input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  #inv-calc-modal input[type=number],
-  #inv-position-modal input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+  /* Native spinner arrows are too small to hit reliably and step by 1
+     regardless of the field's actual unit — removed platform-wide rather
+     than per-component (was previously scoped to a handful of modals/tables
+     one at a time, and kept missing new number inputs like the deposit
+     amount field). */
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; appearance: textfield; }
   .form-group { margin-bottom: 14px; }
   .form-label { display: block; font-size: 11px; font-weight: 700; color: var(--text3); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.3px; }
   .form-control {
