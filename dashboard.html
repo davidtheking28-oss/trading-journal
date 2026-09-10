@@ -11754,17 +11754,36 @@ function renderStatistics() {
   const pct  = v => v.toFixed(1) + '%';
 
   // Broker-derived portfolio size gets its own full-width card above the grid.
+  // Locked to the same מניות/קריפטו/הכל filter the KPIs below already use — it
+  // used to run its own independent broker pick, so picking "קריפטו" up top
+  // could still show the IBKR (stock) balance in this card, right above stats
+  // that were only ever measuring the crypto book.
+  const _SCOPE_BROKER = { stock: 'ibkr', crypto: 'bybit' };
+  const scopeBroker = _SCOPE_BROKER[statsScope] || null;
   const brokerList = Object.keys(_brokerEquityByBroker);
-  const selectedEquity = _brokerEquitySelected != null ? _brokerEquityByBroker[_brokerEquitySelected] : _brokerEquityUsd;
-  const portfolioCard = _brokerEquityUsd != null
-    ? {
-        label: _brokerEquitySelected != null
-          ? `גודל תיק ${_BROKER_NAMES[_brokerEquitySelected] || _brokerEquitySelected}`
-          : _brokerEquityLabel,
-        value: '$' + (selectedEquity ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-        brokerDD: brokerList.length > 1 ? brokerList : null,
-      }
-    : null;
+  let portfolioCard = null;
+  if (scopeBroker) {
+    // Single deterministic broker for this scope — no picker, same as the
+    // existing "only one broker connected" case never showing one either.
+    if (scopeBroker in _brokerEquityByBroker) {
+      portfolioCard = {
+        label: `גודל תיק ${_BROKER_NAMES[scopeBroker] || scopeBroker}`,
+        value: '$' + _brokerEquityByBroker[scopeBroker].toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+        brokerDD: null,
+      };
+    }
+  } else if (_brokerEquityUsd != null) {
+    // statsScope 'all' — combined by default, with the existing dropdown to
+    // peek at one connected broker without leaving the combined stats scope.
+    const selectedEquity = _brokerEquitySelected != null ? _brokerEquityByBroker[_brokerEquitySelected] : _brokerEquityUsd;
+    portfolioCard = {
+      label: _brokerEquitySelected != null
+        ? `גודל תיק ${_BROKER_NAMES[_brokerEquitySelected] || _brokerEquitySelected}`
+        : _brokerEquityLabel,
+      value: '$' + (selectedEquity ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      brokerDD: brokerList.length > 1 ? brokerList : null,
+    };
+  }
 
   // Curated down from 15 flat tiles to the 8 numbers that actually drive a
   // go/no-go read on the book — best/worst trade, avg trade, hold-time and
