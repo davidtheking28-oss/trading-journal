@@ -5640,12 +5640,12 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         </div>
         <div id="ov-scope-dd" class="scope-dd">
           <button class="scope-dd-btn" onclick="toggleScopeDD('ov-scope-dd')">
-            <span id="ov-scope-lbl">📈 מניות</span>
+            <span id="ov-scope-lbl">הכל</span>
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
           </button>
           <div class="scope-dd-menu" id="ov-scope-menu">
-            <button onclick="setOvScope('all',this,'ov-scope-dd')">הכל</button>
-            <button class="active" aria-current="true" onclick="setOvScope('stock',this,'ov-scope-dd')">📈 מניות</button>
+            <button class="active" aria-current="true" onclick="setOvScope('all',this,'ov-scope-dd')">הכל</button>
+            <button onclick="setOvScope('stock',this,'ov-scope-dd')">📈 מניות</button>
             <button onclick="setOvScope('crypto',this,'ov-scope-dd')">₿ קריפטו</button>
           </div>
         </div>
@@ -8421,7 +8421,7 @@ function resetFilter(p) {
 // ─────────────────────────────────────────────
 // TAB SWITCHING
 // ─────────────────────────────────────────────
-let ovScope = 'stock';
+let ovScope = 'all';
 let _tradesScope = 'stock';
 function setTradesScope(s, btn, ddId) {
   _tradesScope = s;
