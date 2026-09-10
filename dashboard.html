@@ -3629,6 +3629,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     .inv-portfolio-bar .inv-total-allocated { margin-right: 0; }
   }
 
+  .inv-scroll-hint { display: none; font-size: 11px; color: var(--text3); text-align: center; padding: 2px 0 4px; }
+  @media (max-width: 768px) { .inv-scroll-hint { display: block; } }
   /* Table */
   .inv-table-wrap {
     background: var(--card); border: 1px solid var(--border);
@@ -3664,7 +3666,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-table input[type=number]::-webkit-outer-spin-button,
   .inv-table input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .inv-table input[type=number] { -moz-appearance: textfield; appearance: textfield; }
-  .inv-table input:focus { border-color: var(--accent); outline: none; background: rgba(129,140,248,0.06); }
+  .inv-table input:focus { border-color: var(--accent); outline: none; background: rgba(129,140,248,0.06); box-shadow: 0 0 0 3px rgba(129,140,248,0.12); }
+  /* Sector holds Hebrew text, not a number — the shared ltr/right-align rule
+     above is for numeric fields and made a long sector name truncate from the
+     wrong end with no way to read the rest. */
+  .inv-table input.inv-sector-input { direction: rtl; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .inv-table input[readonly] { background: transparent; border-color: transparent; cursor: default; pointer-events: none; color: var(--text2); }
   .inv-table select:disabled { background: transparent; border-color: transparent; cursor: default; pointer-events: none; opacity: 1; color: var(--text2); -webkit-appearance: none; appearance: none; }
   .inv-table select {
@@ -3797,7 +3803,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   }
   .inv-target-input::-webkit-outer-spin-button, .inv-target-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   @media (hover: hover) and (pointer: fine) { .inv-target-input:hover { border-color: var(--border2); } }
-  .inv-target-input:focus { border-color: var(--accent); background: var(--accent-glow); }
+  .inv-target-input:focus { border-color: var(--accent); background: var(--accent-glow); box-shadow: 0 0 0 3px rgba(129,140,248,0.12); }
   html[data-theme="light"] .inv-target-input { background: #fff; border-color: #cbd5e1; color: #0f172a; }
   html[data-theme="light"] .inv-target-input:focus { border-color: var(--accent); }
   .inv-alloc-bar-wrap { flex: 1; max-width: 420px; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; }
@@ -3807,6 +3813,12 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-alloc-invested { width: 90px; flex: 0 0 90px; text-align: right; color: var(--text); font-weight: 600; font-size: 11px; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .inv-alloc-cur { width: 46px; flex: 0 0 46px; text-align: right; color: var(--text2); font-size: 11px; font-variant-numeric: tabular-nums; }
   .inv-alloc-remaining { width: 128px; flex: 0 0 128px; color: var(--text3); white-space: nowrap; font-size: 11px; text-align: right; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+  @media (max-width: 480px) {
+    .inv-alloc-row { flex-wrap: wrap; row-gap: 6px; }
+    .inv-alloc-label { width: auto; flex: 1 1 140px; min-width: 0; }
+    .inv-alloc-bar-wrap { flex: 1 1 100%; max-width: none; order: 3; }
+    .inv-alloc-invested, .inv-alloc-cur, .inv-alloc-remaining { width: auto; flex: 0 0 auto; order: 4; }
+  }
   .inv-cash-input { min-width: 80px; width: 80px; text-align: right; background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.18); color: var(--text); font-weight: 600; font-size: 11px; outline: none; padding: 1px 2px; }
   .inv-alloc-donut-row { display: flex; gap: 32px; align-items: center; flex-wrap: wrap; }
   .inv-alloc-bars { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: 4px; }
@@ -6439,6 +6451,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           </div>
         </div>
 
+        <div class="inv-scroll-hint">⟵ גלול לצפייה בכל העמודות</div>
         <div class="inv-table-wrap">
           <table class="inv-table">
             <thead>
@@ -6451,7 +6464,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
                 <th style="width:85px" data-i18n="inv_col_cur_price">Current Price</th>
                 <th style="width:70px;border-left:1px solid var(--border)" data-i18n="inv_col_avg">Average</th>
                 <th style="width:75px" data-i18n="inv_col_value">Value</th>
-                <th style="width:100px"><span data-i18n="inv_col_pnl">P&L</span> <button id="inv-pnl-toggle" onclick="invTogglePnlMode()" style="font-size:11px;padding:4px 8px;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.07);color:var(--text2);cursor:pointer;margin-right:4px;vertical-align:middle;transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s;">$</button></th>
+                <th style="width:100px"><span data-i18n="inv_col_pnl">P&L</span> <button id="inv-pnl-toggle" onclick="invTogglePnlMode()" aria-label="החלף תצוגת רווח/הפסד בין $ ל-%" style="font-size:11px;padding:4px 8px;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.07);color:var(--text2);cursor:pointer;margin-right:4px;vertical-align:middle;transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s;">$</button></th>
                 <th style="width:75px" data-i18n="inv_col_portfolio_pct" title="חלק מהתיק לפי שווי נוכחי. לוח ההקצאה למטה מחושב לפי עלות, ולכן השורות לא יסתכמו בדיוק לאחוז שמוצג שם.">% Portfolio</th>
                 <th style="width:75px" data-i18n="inv_col_remaining">Remaining</th>
                 <!-- table-layout is fixed, so THIS is the only place the actions
@@ -13064,6 +13077,7 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('ss-lightbox')?.classList.contains('open')) { closeLightbox(); return; }
   if (document.getElementById('sector-modal')?.style.display === 'block') { sectorModalClose(); return; }
   if (document.getElementById('inv-position-modal')?.classList.contains('open')) { invClosePositionModal(); return; }
+  if (document.getElementById('inv-calc-modal')?.classList.contains('open')) { invCalcClose(); return; }
   if (document.getElementById('cal-trade-modal')?.classList.contains('open')) { closeCalTradeModal(); return; }
   if (document.getElementById('ss-modal')?.classList.contains('open')) { closeSSModal(); return; }
   if (document.getElementById('qa-modal')?.classList.contains('open')) { fabToggle(); return; }
@@ -13072,7 +13086,7 @@ document.addEventListener('keydown', e => {
 
 // Focus trap (WCAG 2.4.3) — keep keyboard focus inside the open modal.
 function _topOpenModal() {
-  for (const id of ['trade-modal','qa-modal','cal-trade-modal','ss-modal','inv-position-modal']) {
+  for (const id of ['trade-modal','qa-modal','cal-trade-modal','ss-modal','inv-position-modal','inv-calc-modal']) {
     const el = document.getElementById(id);
     if (el && el.classList.contains('open')) return el;
   }
@@ -16944,7 +16958,7 @@ function invRenderRows(holdings) {
   const tbody = document.getElementById('inv-tbody');
   if (!tbody) return;
   if (!holdings.length) {
-    tbody.innerHTML = '';
+    tbody.innerHTML = `<tr><td colspan="12" class="inv-empty">אין עדיין אחזקות — לחץ על "+ הוסף אחזקה" כדי להתחיל</td></tr>`;
     return;
   }
   tbody.innerHTML = holdings.map((h, i) => {
@@ -16956,7 +16970,7 @@ function invRenderRows(holdings) {
     return `
     <tr data-idx="${i}" class="${locked?'inv-row-locked':'inv-row-edit'}">
       <td ${locked&&h.symbol?`onclick="invToggleBuyRow(${i})" style="cursor:pointer"`:''}>${symCell}</td>
-      <td><input class="inv-sector-input" type="text" value="${esc(h.sector||'')}" placeholder="טכנולוגיה" data-sector-idx="${i}" ${ro} ${locked?'':'oninput="invAutoSave()"'}></td>
+      <td><input class="inv-sector-input" type="text" value="${esc(h.sector||'')}" title="${esc(h.sector||'')}" placeholder="טכנולוגיה" data-sector-idx="${i}" ${ro} ${locked?'':'oninput="invAutoSave();this.title=this.value"'}></td>
       <td>
         <select class="inv-cat-sel" ${ro} onchange="invRecalc();${locked?'':'invAutoSave()'}">
           <option value="">—</option>
@@ -16982,7 +16996,7 @@ function invRenderRows(holdings) {
              brand-new holding had no way to reach the size calculator until it
              had been saved, i.e. you had to commit to a quantity before the
              tool that computes the quantity became available. -->
-        <button class="inv-buy-btn" onclick="invToggleBuyRow(${i})" title="קנייה/מכירה + מחשבון כמות וסיכון">+</button>
+        <button class="inv-buy-btn" onclick="invToggleBuyRow(${i})" aria-label="קנייה/מכירה עבור ${esc(h.symbol||'החזקה')}" title="קנייה/מכירה + מחשבון כמות וסיכון">+</button>
         <button class="inv-del-btn" onclick="invDeleteRow(${i})" aria-label="מחק ${esc(h.symbol||'החזקה')}" title="מחק">×</button>
       </td>
     </tr>`;
@@ -18066,6 +18080,7 @@ function invAddDeposit() {
 function invDeleteDeposit(idx) {
   const deposits = invLoad().deposits || [];
   if (!deposits.length) return;
+  if (!confirm('למחוק הפקדה זו?')) return;
   deposits.splice(idx, 1);
   // Holdings from the DOM (precise) — avoid clobbering DB with stale localStorage.
   const data = invGetCurrentData();
