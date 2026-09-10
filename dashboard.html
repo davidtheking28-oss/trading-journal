@@ -15564,7 +15564,13 @@ document.addEventListener('visibilitychange', () => {
 // and fully reloaded the app every single time — taking the embedded screener
 // iframe with it, so it looked like the screener was re-scanning from scratch.
 // Drop the socket while hidden so the page can be bfcached, and reconnect on
-// return; the catch-up reload covers any change that landed while disconnected.
+// return. Reconnecting does NOT replay events missed while disconnected —
+// Supabase Realtime only resubscribes going forward — so a change made
+// elsewhere in the exact window this tab was backgrounded stays unseen until
+// the next real event or a manual reload. Accepted tradeoff: a background
+// refetch-on-return would close that gap but reintroduces the every-alt-tab
+// reload this file has twice been fixed to stop doing (see the commit
+// removing that from Missed Opportunities/Investments).
 let _rtResumeTimer = null;
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
