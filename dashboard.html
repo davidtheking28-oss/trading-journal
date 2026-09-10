@@ -6721,8 +6721,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             <input type="number" id="ic-price" class="form-control" placeholder="0.00" min="0" step="any">
           </div>
           <div class="form-group">
-            <label class="form-label">סטופ (אופציונלי)</label>
-            <input type="number" id="ic-stop" class="form-control" placeholder="0.00" min="0" step="any">
+            <label class="form-label">סטופ % מהכניסה (אופציונלי)</label>
+            <input type="number" id="ic-stop" class="form-control" placeholder="8" min="0" max="100" step="0.1">
           </div>
         </div>
         <div class="form-group">
@@ -6797,8 +6797,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:end">
           <div class="form-group">
-            <label class="form-label">סטופ (אופציונלי)</label>
-            <input type="number" id="inv-sz-stop" class="form-control" placeholder="0.00" min="0" step="any">
+            <label class="form-label">סטופ % מהכניסה (אופציונלי)</label>
+            <input type="number" id="inv-sz-stop" class="form-control" placeholder="8" min="0" max="100" step="0.1">
           </div>
           <div class="form-group">
             <button class="btn btn-secondary btn-sm" onclick="invSizerApply()" style="width:100%;height:36px">✨ הצע לי כמות</button>
@@ -17446,13 +17446,17 @@ function invSizerInputs() {
   const price = +(document.getElementById('inv-pos-price')?.value) || 0;
   const fx = invFxLoad();
   const ctx = invSizerCtx();
+  // The field takes a % below entry, not a $ stop price — a fixed $ value
+  // meant nothing without also knowing the entry price it was measured
+  // against, and invPositionSize's own risk math already needs that price.
+  const stopPct = +(document.getElementById('inv-sz-stop')?.value) || 0;
   return {
     portfolioValue: +(document.getElementById('inv-sz-portfolio')?.value) || 0,
     portfolioCurrency: document.getElementById('inv-sz-currency')?.value || '$',
     fxRate: fx?.rate || 0,
     pctOfPortfolio: +(document.getElementById('inv-sz-pct')?.value) || 0,
     price,
-    stop: +(document.getElementById('inv-sz-stop')?.value) || 0,
+    stop: stopPct > 0 && price > 0 ? price * (1 - stopPct / 100) : 0,
     portfolioTotalUsd: ctx.portfolioTotal,
     catCostUsd: ctx.catCostUsd,
     catTargetFrac: ctx.catTargetFrac,
@@ -17486,7 +17490,7 @@ function invSizerPaint(out, inp) {
       <b style="color:var(--accent);font-size:15px">${r.shares}</b> מניות</div>
     <div class="sensitive">גודל בפועל $${r.positionUsd.toLocaleString('en-US',{maximumFractionDigits:0})}${
       r.actualPct !== null ? ` · <b>${r.actualPct.toFixed(1)}%</b> מהתיק בפועל` : ''}</div>
-    ${r.riskUsd !== null ? `<div class="sensitive">סיכון סטופ $${r.riskUsd.toLocaleString('en-US',{maximumFractionDigits:0})} · ${r.riskPct.toFixed(2)}% מהתיק</div>` : ''}
+    ${r.riskUsd !== null ? `<div class="sensitive">סיכון סטופ $${r.riskUsd.toLocaleString('en-US',{maximumFractionDigits:0})} · ${r.riskPct.toFixed(2)}% מהתיק · סטופ ב-$${fmtPrice(inp.stop)}</div>` : ''}
     <div>${cap('יעד קטגוריה', r.withinTarget, `נשאר $${r.catRoomUsd.toLocaleString('en-US',{maximumFractionDigits:0})} · עד ${r.maxSharesByTarget} מניות`)}</div>
     <div>${cap('מזומן פנוי', r.withinCash, `$${inp.cashUsd.toLocaleString('en-US',{maximumFractionDigits:0})} · עד ${r.maxSharesByCash} מניות`)}</div>`;
   applyPrivacy();
@@ -17519,11 +17523,14 @@ function invCalcInputs() {
     ? (fxRate > 0 ? portfolioValue / fxRate : 0)
     : portfolioValue;
 
+  // Same % stop — see invSizerInputs's comment.
+  const icPrice = +(document.getElementById('ic-price')?.value) || 0;
+  const icStopPct = +(document.getElementById('ic-stop')?.value) || 0;
   return {
     portfolioValue, portfolioCurrency: currency, fxRate,
     pctOfPortfolio: +(document.getElementById('ic-pct')?.value) || 0,
-    price: +(document.getElementById('ic-price')?.value) || 0,
-    stop: +(document.getElementById('ic-stop')?.value) || 0,
+    price: icPrice,
+    stop: icStopPct > 0 && icPrice > 0 ? icPrice * (1 - icStopPct / 100) : 0,
     portfolioTotalUsd: totalUsd,
     catCostUsd: ctx.catCostUsd,
     catTargetFrac: ctx.catTargetFrac,
