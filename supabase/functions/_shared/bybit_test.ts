@@ -7,7 +7,7 @@
 //
 // Run: deno test supabase/functions/_shared/bybit_test.ts
 import { assert, assertEquals } from 'https://deno.land/std@0.208.0/assert/mod.ts';
-import { computeBybitTrades, computeBybitOpen } from './bybit.ts';
+import { computeBybitTrades, computeBybitOpen, openPositionRow } from './bybit.ts';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -151,4 +151,12 @@ Deno.test('computeBybitTrades on the same data still returns only the closed leg
   assertEquals(trades.length, 1);
   assertEquals(trades[0].shares, 1);
   assertEquals(trades[0].bybit_id.startsWith('open:'), false);
+});
+
+Deno.test('openPositionRow sets close_date to null, not the table default', () => {
+  const row = openPositionRow('u1', {
+    type: 'crypto', ls: 'L', symbol: 'ETH', entryDate: '2026-09-09',
+    entryPrice: 4000, shares: 0.22, commission: 0, bybit_id: 'open:ETH',
+  });
+  assertEquals(row.close_date, null);
 });

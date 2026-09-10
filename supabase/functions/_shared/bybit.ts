@@ -69,6 +69,20 @@ export interface BybitOpenPosition {
   entryPrice: number; shares: number; commission: number; bybit_id: string;
 }
 
+// close_date defaults to ''::text on the trades table, not NULL — every
+// other open-row path (manual entry, IBKR) leaves it NULL, and
+// data_health_check()'s close_before_entry check only excludes NULL, not ''.
+// An open row that skips this field takes the '' default, which then sorts
+// before entry_date as a string and trips that check as a false positive.
+export function openPositionRow(userId: string, p: BybitOpenPosition) {
+  return {
+    user_id: userId, type: 'crypto', entry_date: p.entryDate, ls: p.ls,
+    symbol: p.symbol, entry_price: p.entryPrice, shares: p.shares,
+    closed_shares: 0, commission: p.commission, ecn: 0, deleted: false,
+    bybit_id: p.bybit_id, close_date: null,
+  };
+}
+
 // Fetch every Linear Trade execution in the last `days`, paging backward in
 // 7-day windows and following the cursor within each window until Bybit
 // reports no more pages — no fixed page cap, so a very active window can't

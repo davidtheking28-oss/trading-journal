@@ -8,7 +8,7 @@
 //
 // Auth: same shared secret as ibkr-cron (x-cron-key vs app_secrets.cron_secret).
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
-import { computeBybitTrades, computeBybitOpen, fetchBybitEquity } from '../_shared/bybit.ts';
+import { computeBybitTrades, computeBybitOpen, fetchBybitEquity, openPositionRow } from '../_shared/bybit.ts';
 
 // Wide enough to cover the entry leg of most swing holds — computeBybitTrades
 // silently skips (rather than mis-prices) a closing execution whose opening
@@ -77,11 +77,7 @@ Deno.serve(async (req: Request) => {
         // CSV-imported crypto row is never at risk.
         const openPositions = await computeBybitOpen(u.bybit_api_key, u.bybit_api_secret, RECENT_DAYS);
         if (openPositions.length) {
-          const openRows = openPositions.map((p) => ({
-            user_id: u.user_id, type: 'crypto', entry_date: p.entryDate, ls: p.ls,
-            symbol: p.symbol, entry_price: p.entryPrice, shares: p.shares,
-            closed_shares: 0, commission: p.commission, ecn: 0, deleted: false, bybit_id: p.bybit_id,
-          }));
+          const openRows = openPositions.map((p) => openPositionRow(u.user_id, p));
           const { error: openErr } = await sb.from('trades').upsert(openRows, { onConflict: 'user_id,bybit_id' });
           if (openErr) throw new Error('open-position upsert: ' + openErr.message);
         }
