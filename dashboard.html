@@ -3612,8 +3612,12 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-portfolio-bar input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(129,140,248,0.12); }
   #inv-portfolio-total::-webkit-outer-spin-button,
   #inv-portfolio-total::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  .inv-portfolio-bar .inv-total-allocated { font-size: 12px; color: var(--text3); margin-right: auto; }
-  .inv-portfolio-bar .inv-total-allocated span { color: var(--accent); font-weight: 700; font-size: 14px; }
+  .inv-portfolio-bar .inv-total-allocated { display: flex; align-items: center; gap: 18px; margin-right: auto; }
+  .inv-portfolio-bar .inv-stat { display: flex; flex-direction: column; gap: 2px; align-items: flex-end; }
+  .inv-portfolio-bar .inv-stat-lbl { font-size: 11px; color: var(--text3); font-weight: 500; }
+  .inv-portfolio-bar .inv-stat-val { font-size: 15px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+  .inv-portfolio-bar .inv-stat-val.accent { color: var(--accent); }
+  .inv-portfolio-bar .inv-stat-sep { width: 1px; height: 28px; background: var(--border); flex-shrink: 0; }
 
   /* Table */
   .inv-table-wrap {
@@ -3763,10 +3767,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-type-pills { display: flex; gap: 6px; }
   .inv-type-pill { padding: 6px 14px; border-radius: var(--r-lg); border: 1px solid var(--border); background: transparent; color: var(--text2); font-size: 12px; cursor: pointer; transition: background-color 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s, transform 0.2s, box-shadow 0.2s; }
   .inv-type-pill.active { background: rgba(129,140,248,0.15); border-color: var(--accent); color: var(--accent); font-weight: 700; }
-  .inv-alloc-dashboard { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; }
-  .inv-alloc-title { font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 2px; }
-  .inv-alloc-row { display: flex; align-items: center; gap: 10px; font-size: 12px; direction: ltr; }
-  .inv-alloc-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .inv-alloc-dashboard { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .inv-alloc-title { font-size: 13px; font-weight: 700; color: var(--text2); padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .inv-alloc-row { display: flex; align-items: center; gap: 10px; font-size: 12px; direction: ltr; padding: 5px 6px; border-radius: var(--r-sm); margin: 0 -6px; transition: background-color 0.15s; }
+  @media (hover: hover) and (pointer: fine) { .inv-alloc-row:hover { background: rgba(255,255,255,0.03); } }
+  .inv-alloc-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(255,255,255,0.05); }
   .inv-alloc-dot.blue { background: #818cf8; }
   .inv-alloc-dot.green { background: #34d399; }
   .inv-alloc-dot.yellow { background: #fbbf24; }
@@ -3783,16 +3788,16 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-target-input:focus { border-color: var(--accent); background: var(--accent-glow); }
   html[data-theme="light"] .inv-target-input { background: #fff; border-color: #cbd5e1; color: #0f172a; }
   html[data-theme="light"] .inv-target-input:focus { border-color: var(--accent); }
-  .inv-alloc-bar-wrap { flex: 1; height: 6px; background: rgba(255,255,255,0.08); border-radius: var(--r-sm); overflow: hidden; }
-  .inv-alloc-bar-fill { height: 100%; border-radius: var(--r-sm); transition: width 0.3s; }
+  .inv-alloc-bar-wrap { flex: 1; max-width: 420px; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; }
+  .inv-alloc-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
   /* Fixed, not min-, widths: these columns only line up across rows if every
      row reserves the same box regardless of how long its own text is. */
-  .inv-alloc-invested { width: 90px; flex: 0 0 90px; text-align: right; color: var(--text); font-weight: 600; font-size: 11px; white-space: nowrap; }
-  .inv-alloc-cur { width: 46px; flex: 0 0 46px; text-align: right; color: var(--text2); font-size: 11px; }
-  .inv-alloc-remaining { width: 128px; flex: 0 0 128px; color: var(--text3); white-space: nowrap; font-size: 11px; text-align: right; overflow: hidden; text-overflow: ellipsis; }
+  .inv-alloc-invested { width: 90px; flex: 0 0 90px; text-align: right; color: var(--text); font-weight: 600; font-size: 11px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .inv-alloc-cur { width: 46px; flex: 0 0 46px; text-align: right; color: var(--text2); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .inv-alloc-remaining { width: 128px; flex: 0 0 128px; color: var(--text3); white-space: nowrap; font-size: 11px; text-align: right; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
   .inv-cash-input { min-width: 80px; width: 80px; text-align: right; background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.18); color: var(--text); font-weight: 600; font-size: 11px; outline: none; padding: 1px 2px; }
-  .inv-alloc-donut-row { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
-  .inv-alloc-bars { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: 10px; }
+  .inv-alloc-donut-row { display: flex; gap: 32px; align-items: center; flex-wrap: wrap; }
+  .inv-alloc-bars { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: 4px; }
   .inv-donut-wrap { display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .inv-donut-legend { display: flex; flex-direction: column; gap: 10px; direction: ltr; }
   .inv-donut-leg-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text2); }
@@ -6352,7 +6357,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div class="inv-portfolio-bar">
           <label for="inv-portfolio-total" data-i18n="inv_portfolio_total">סך תיק</label>
           <input type="text" class="sensitive" inputmode="numeric" id="inv-portfolio-total" placeholder="100000" style="-moz-appearance:textfield;" oninput="invRecalc();invAutoSaveTotal()">
-          <div class="inv-total-allocated"><span data-i18n="inv_free_cash">מזומן פנוי</span>: <span class="sensitive" id="inv-cash-value">—</span> · <span data-i18n="inv_allocated">מושקע</span> <span id="inv-allocated-pct">0%</span></div>
+          <div class="inv-total-allocated">
+            <div class="inv-stat"><span class="inv-stat-lbl" data-i18n="inv_free_cash">מזומן פנוי</span><span class="inv-stat-val sensitive" id="inv-cash-value">—</span></div>
+            <span class="inv-stat-sep"></span>
+            <div class="inv-stat"><span class="inv-stat-lbl" data-i18n="inv_allocated">מושקע</span><span class="inv-stat-val accent" id="inv-allocated-pct">0%</span></div>
+          </div>
         </div>
 
         <div class="inv-alloc-dashboard">
