@@ -3765,19 +3765,17 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   @media (hover: hover) and (pointer: fine) { .inv-save-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(129,140,248,0.4); } }
   .inv-save-btn:active { transform: translateY(0); }
   .inv-summary-bar {
-    display: flex; gap: 0; background: linear-gradient(145deg, #091525, #0b1e38);
-    border: 1px solid rgba(255,255,255,0.07); border-radius: var(--r-md);
+    display: flex; gap: 0; background: var(--card);
+    border: 1px solid var(--border); border-radius: var(--r-md);
     overflow: hidden; margin-bottom: 4px;
   }
-  .inv-sum-stat { flex: 1; display: flex; flex-direction: column; gap: 3px; padding: 12px 18px; border-right: 1px solid rgba(255,255,255,0.06); }
+  .inv-sum-stat { flex: 1; display: flex; flex-direction: column; gap: 4px; padding: 14px 18px; border-right: 1px solid var(--border); }
   .inv-sum-stat:last-child { border-right: none; }
-  .inv-sum-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
-  .inv-sum-val { font-size: 15px; font-weight: 700; color: var(--text); }
+  .inv-sum-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+  .inv-sum-val { font-size: 16px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
   .inv-sum-val.pnl-pos { color: var(--green); }
   .inv-sum-val.pnl-neg { color: var(--red); }
   .inv-sum-updated .inv-sum-val { font-size: 12px; font-weight: 500; color: var(--text3); }
-  html[data-theme="light"] .inv-summary-bar { background: linear-gradient(145deg, #eef2f8, #f3f6fb); border: 1px solid #e2e8f0; }
-  html[data-theme="light"] .inv-sum-stat { border-right-color: #e2e8f0; }
   html[data-theme="light"] .inv-sum-label { color: #586475; }
   html[data-theme="light"] .inv-sum-val.pnl-pos { color: #047857; }
   html[data-theme="light"] .inv-sum-val.pnl-neg { color: #be123c; }
