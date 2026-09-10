@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
-import { resolveQuote } from '../_shared/quote.ts';
+import { resolveQuote, yahooHistoricalClose } from '../_shared/quote.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': 'https://davidtheking28-oss.github.io',
@@ -63,13 +63,14 @@ serve(async (req: Request) => {
   const url = new URL(req.url);
   const path = url.searchParams.get('path') ?? 'stock/symbol';
 
-  const ALLOWED_PATHS = ['stock/symbol', 'stock/profile2', 'stock/metric', 'quote', 'stock/earnings', 'stock/financials-reported'];
+  const ALLOWED_PATHS = ['stock/symbol', 'stock/profile2', 'stock/metric', 'quote', 'stock/earnings', 'stock/financials-reported', 'history'];
   if (!ALLOWED_PATHS.includes(path)) {
     return new Response(JSON.stringify({ error: 'Path not allowed' }), { status: 403, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 
   const symbol    = url.searchParams.get('symbol') ?? '';
   const symbols   = url.searchParams.get('symbols') ?? '';
+  const dateParam = url.searchParams.get('date') ?? '';
   const metric    = url.searchParams.get('metric') ?? '';
   const freq      = url.searchParams.get('freq') ?? '';
   const exchange  = /^[A-Z]{1,4}$/.test(url.searchParams.get('exchange') ?? '') ? (url.searchParams.get('exchange') ?? 'US') : 'US';
@@ -105,6 +106,17 @@ serve(async (req: Request) => {
     // case for four call sites to learn.
     return new Response(JSON.stringify(q ?? { c: 0 }), {
       headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+    });
+  }
+
+  // Missed Opportunities' "was this month actually good" summary — the close
+  // on or before a specific past date, not a live price. An immutable
+  // historical value, so this is safe to cache hard at the edge/browser
+  // level unlike every other path here.
+  if (path === 'history' && symbol && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+    const c = await yahooHistoricalClose(symbol.trim().toUpperCase(), dateParam);
+    return new Response(JSON.stringify(c !== null ? { c } : { c: null }), {
+      headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'max-age=86400' },
     });
   }
 

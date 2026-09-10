@@ -16303,6 +16303,7 @@ async function missedAdd() {
   // renderList rebuilds innerHTML, so every .missed-since is now an empty div —
   // adding one row used to wipe the "% since" off all the others until a reload.
   missedFollowUp(_missedList);
+  _fetchMissedMonthHistory(_missedList);
   toast('נוסף ✓','success');
 }
 
@@ -16450,11 +16451,31 @@ function missedRenderList(list) {
 // the average % move from the logged price to the latest quote, over every
 // row in the month that has both. No position size is recorded here (these
 // were never bought), so a dollar total isn't answerable — the average % is.
-function _missedMonthAvgPct(items) {
+// Last calendar day of a 'YYYY-MM' month key, as 'YYYY-MM-DD'. Day 0 of the
+// following month is the trick — Date normalizes a 0 day back into the last
+// day of the month before it.
+function _monthEndDate(monthKey) {
+  const [y, m] = monthKey.split('-').map(Number);
+  const d = new Date(Date.UTC(y, m, 0));
+  return d.toISOString().slice(0, 10);
+}
+function _missedIsCurrentMonth(monthKey) {
+  return monthKey === new Date().toISOString().slice(0, 7);
+}
+// The month's OWN move, not the drift since the user happened to log it — a
+// row from March read against today's price mixes six months of unrelated
+// market movement into "was March good". Past months compare against the
+// close on that month's last trading day (_missedHistClose, fetched once,
+// never stale — history doesn't change); the still-open current month has no
+// "end" yet, so it uses the same live quote the per-row "% since" already shows.
+function _missedMonthAvgPct(items, monthKey) {
+  const current = _missedIsCurrentMonth(monthKey);
   const pts = items.map(r => {
-    const q = _missedQuotes[(r.sym || '').toUpperCase()];
-    const price = q?.p, base = +r.price || 0;
-    return (price && base) ? (price - base) / base * 100 : null;
+    const sym = (r.sym || '').toUpperCase();
+    const base = +r.price || 0;
+    if (!base) return null;
+    const price = current ? _missedQuotes[sym]?.p : _missedHistClose[sym + '|' + monthKey];
+    return price ? (price - base) / base * 100 : null;
   }).filter(v => v !== null);
   return pts.length ? { avg: pts.reduce((a, b) => a + b, 0) / pts.length, n: pts.length, of: items.length } : null;
 }
@@ -16464,22 +16485,58 @@ function _paintMissedMonthSummaries(list) {
   Object.entries(byMonth).forEach(([key, items]) => {
     const el = document.getElementById('missed-month-pnl-' + key);
     if (!el) return;
-    const s = _missedMonthAvgPct(items);
+    const s = _missedMonthAvgPct(items, key);
     if (!s) { el.textContent = ''; el.title = ''; return; }
     const good = s.avg >= 0;
+    const scope = _missedIsCurrentMonth(key) ? 'עד היום' : 'במהלך החודש עצמו';
     el.innerHTML = `<span class="${good ? 'num-green' : 'num-red'}">${good ? '📈' : '📉'} ${fmtPct(s.avg)} בממוצע</span>`;
-    el.title = s.n < s.of ? `מבוסס על ${s.n} מתוך ${s.of} — לחלק אין ציטוט זמין` : `ממוצע השינוי מהמחיר שנרשם ועד היום, על ${s.n} עסקאות`;
+    el.title = (s.n < s.of ? `מבוסס על ${s.n} מתוך ${s.of} — לחלק אין מחיר זמין. ` : `על ${s.n} עסקאות. `)
+      + `שינוי ${scope}, לא מהיום שנרשם.`;
   });
   applyPrivacy();
 }
 
+// Historical closes are immutable once the month is over — no TTL, unlike
+// _missedQuotes. Keyed 'SYM|YYYY-MM' since the same symbol can appear in
+// several months.
+const _missedHistClose = {};
+async function _fetchMissedMonthHistory(list) {
+  const need = [];
+  const seen = new Set();
+  list.forEach(r => {
+    const monthKey = (r.date || '').slice(0, 7);
+    const sym = (r.sym || '').toUpperCase();
+    if (monthKey.length !== 7 || !sym || _missedIsCurrentMonth(monthKey) || symIsCrypto(sym)) return;
+    const key = sym + '|' + monthKey;
+    if (seen.has(key) || key in _missedHistClose) return;
+    seen.add(key);
+    need.push({ sym, monthKey, key });
+  });
+  if (!need.length) return;
+  const token = await _getToken();
+  await Promise.all(need.map(async ({ sym, monthKey, key }) => {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=history&symbol=${encodeURIComponent(sym)}&date=${_monthEndDate(monthKey)}`,
+        { headers: { 'Authorization': `Bearer ${token}` } });
+      if (res.ok) { const data = await res.json(); _missedHistClose[key] = data?.c || null; }
+    } catch { /* leaves the key unset — next visit retries rather than caching a failure */ }
+  }));
+  _paintMissedMonthSummaries(list);
+}
+
 async function missedRender(force = false) {
-  if (_missedLoaded && !force) { missedRenderList(_missedList); missedFollowUp(_missedList); return; }
+  if (_missedLoaded && !force) {
+    missedRenderList(_missedList);
+    missedFollowUp(_missedList);
+    _fetchMissedMonthHistory(_missedList);
+    return;
+  }
   const list = await missedLoad();
   _missedList = list;
   _missedLoaded = true;
   missedRenderList(list);
   missedFollowUp(list);
+  _fetchMissedMonthHistory(list);
 }
 
 // A missed-opportunity log without an outcome is a list of regrets. This says

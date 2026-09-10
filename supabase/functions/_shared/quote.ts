@@ -78,6 +78,39 @@ export async function yahooQuote(sym: string, f: Fetcher = fetch): Promise<numbe
   return null;
 }
 
+// The closing price on the last trading day on or before `dateStr`
+// (YYYY-MM-DD) — used for "what was this month's own move", not a live
+// price. Finnhub's free tier has no working history endpoint, so this goes
+// straight to Yahoo's chart data with a 5-year range (generous enough for
+// any date a user would plausibly have logged) and walks it forward,
+// keeping the last bar at or before the target — timestamps come back
+// ascending, so the final match is the most recent qualifying close.
+export async function yahooHistoricalClose(sym: string, dateStr: string, f: Fetcher = fetch): Promise<number | null> {
+  sym = mapSymbol(sym);
+  const targetMs = new Date(dateStr + 'T23:59:59Z').getTime();
+  if (!Number.isFinite(targetMs)) return null;
+  for (const host of YF_HOSTS) {
+    const price = await withTimeout(8000, async signal => {
+      const r = await f(`https://${host}/v8/finance/chart/${encodeURIComponent(sym)}?range=5y&interval=1d`,
+        { headers: YF_HEADERS, signal });
+      if (!r.ok) return null;
+      const json = await r.json();
+      const result = json?.chart?.result?.[0];
+      const closes: number[] = result?.indicators?.quote?.[0]?.close ?? [];
+      const timestamps: number[] = result?.timestamp ?? [];
+      let best: number | null = null;
+      for (let i = 0; i < timestamps.length; i++) {
+        const t = timestamps[i] * 1000;
+        const c = closes[i];
+        if (t <= targetMs && typeof c === 'number' && c > 0) best = c;
+      }
+      return best;
+    });
+    if (price !== null) return price;
+  }
+  return null;
+}
+
 // Finnhub first (it is the configured source and honours the user's own key),
 // retried once because the failures are transient, then Yahoo. Returns the
 // client's existing `{ c }` shape so nothing downstream has to change.

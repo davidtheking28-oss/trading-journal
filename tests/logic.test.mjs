@@ -1625,3 +1625,53 @@ describe('live P&L never leaves the card on its placeholder', () => {
     assert.equal(activeBtn[1], 'all');
   });
 });
+
+describe('_monthEndDate — last calendar day of a month key', () => {
+  const { _monthEndDate } = load('_monthEndDate');
+  test('a 31-day month', () => assert.equal(_monthEndDate('2026-12'), '2026-12-31'));
+  test('a 30-day month', () => assert.equal(_monthEndDate('2026-04'), '2026-04-30'));
+  test('February in a non-leap year', () => assert.equal(_monthEndDate('2026-02'), '2026-02-28'));
+  test('February in a leap year', () => assert.equal(_monthEndDate('2024-02'), '2024-02-29'));
+});
+
+describe('_missedMonthAvgPct — a missed month is judged on its OWN move, not the drift since logged', () => {
+  function build({ quotes = {}, hist = {} } = {}) {
+    const src = [extractFunction('_missedIsCurrentMonth'), extractFunction('_missedMonthAvgPct')].join('\n');
+    const factory = new Function('_missedQuotes', '_missedHistClose', `${src}\nreturn _missedMonthAvgPct;`);
+    return factory(quotes, hist);
+  }
+  const thisMonth = new Date().toISOString().slice(0, 7);
+
+  test('a past month uses that month\'s historical close, ignoring any live quote', () => {
+    const fn = build({
+      hist: { 'AAPL|2020-01': 220 },
+      quotes: { AAPL: { p: 9999 } }, // must never be read for a past month
+    });
+    const r = fn([{ sym: 'AAPL', price: 200, date: '2020-01-05' }], '2020-01');
+    assert.equal(r.avg, 10); // (220-200)/200*100
+    assert.equal(r.n, 1);
+  });
+
+  test('the current month uses the live quote, since it has no historical close yet', () => {
+    const fn = build({ hist: {}, quotes: { AAPL: { p: 250 } } });
+    const r = fn([{ sym: 'AAPL', price: 200, date: thisMonth + '-05' }], thisMonth);
+    assert.equal(r.avg, 25); // (250-200)/200*100
+  });
+
+  test('a row with no resolved price is excluded from the average, not counted as 0', () => {
+    const fn = build({ hist: { 'AAPL|2020-01': 220, 'MSFT|2020-01': null } });
+    const r = fn(
+      [{ sym: 'AAPL', price: 200, date: '2020-01-05' }, { sym: 'MSFT', price: 100, date: '2020-01-10' }],
+      '2020-01',
+    );
+    assert.equal(r.avg, 10);   // only AAPL counted
+    assert.equal(r.n, 1);
+    assert.equal(r.of, 2);    // but the total is still reported, for the "n of of" caveat
+  });
+
+  test('no priced rows at all returns null rather than a fabricated average', () => {
+    const fn = build({ hist: {} });
+    const r = fn([{ sym: 'AAPL', price: 200, date: '2020-01-05' }], '2020-01');
+    assert.equal(r, null);
+  });
+});
