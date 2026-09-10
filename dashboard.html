@@ -3612,6 +3612,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     transition: border-color 0.2s, box-shadow 0.2s;
   }
   .inv-portfolio-bar input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(129,140,248,0.12); }
+  .inv-portfolio-total-wrap { position: relative; display: flex; align-items: center; }
+  .inv-portfolio-currency { position: absolute; right: 12px; pointer-events: none; font-size: 15px; font-weight: 700; color: var(--accent); opacity: 0.7; }
+  .inv-portfolio-total-wrap input { padding-right: 26px; direction: ltr; text-align: right; }
   #inv-portfolio-total::-webkit-outer-spin-button,
   #inv-portfolio-total::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .inv-portfolio-bar .inv-total-allocated { display: flex; align-items: center; gap: 18px; }
@@ -6377,7 +6380,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div class="inv-portfolio-bar">
           <div class="inv-portfolio-center">
             <label for="inv-portfolio-total" data-i18n="inv_portfolio_total">סך תיק</label>
-            <input type="text" class="sensitive" inputmode="numeric" id="inv-portfolio-total" placeholder="100000" style="-moz-appearance:textfield;" oninput="invRecalc();invAutoSaveTotal()">
+            <div class="inv-portfolio-total-wrap">
+              <span class="inv-portfolio-currency" id="inv-portfolio-currency">$</span>
+              <input type="text" class="sensitive" inputmode="numeric" id="inv-portfolio-total" placeholder="100000" style="-moz-appearance:textfield;" oninput="invRecalc();invAutoSaveTotal()">
+            </div>
           </div>
           <div class="inv-total-allocated">
             <div class="inv-stat"><span class="inv-stat-lbl" data-i18n="inv_free_cash">מזומן פנוי</span><span class="inv-stat-val sensitive" id="inv-cash-value">—</span></div>
