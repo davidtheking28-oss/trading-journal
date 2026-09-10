@@ -9591,7 +9591,7 @@ function renderTable(type) {
       <td><span class="badge badge-${tr.ls}">${tr.ls}</span></td>
       <td>${tradeStatus(tr)}</td>
       <td class="col-adv">${erBadge(tr.entryReason)}</td>
-      <td><span style="display:flex;align-items:center;gap:6px"><img src="${_symLogoUrl(tr,type)}" alt="" loading="lazy" style="width:18px;height:18px;border-radius:50%;object-fit:cover;background:rgba(255,255,255,0.08);flex-shrink:0" onerror="this.style.visibility='hidden'"><strong>${esc(tr.symbol)}</strong></span></td>
+      <td><span style="display:flex;align-items:center;gap:6px;width:100%"><img src="${_symLogoUrl(tr,type)}" alt="" loading="lazy" style="width:18px;height:18px;border-radius:50%;object-fit:cover;background:rgba(255,255,255,0.08);flex-shrink:0" onerror="this.style.visibility='hidden'"><strong style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(tr.symbol)}</strong></span></td>
       <td class="sensitive">$${fmtPrice(tr.entryPrice)}</td>
       <td>${tr.shares}</td>
       <td class="col-adv sensitive">$${fmtPrice(tr.stop)}</td>
