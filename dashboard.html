@@ -6986,7 +6986,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           </div>
           <div class="form-group">
             <label class="form-label" data-i18n="m_exit_price">Exit Price</label>
-            <input type="number" class="form-control" id="m-exitPrice" step="0.0001" autocomplete="off" oninput="liveCalc()">
+            <input type="number" class="form-control" id="m-exitPrice" step="0.0001" autocomplete="off" oninput="mAutoFillStopFromExit();liveCalc()">
           </div>
         </div>
       </div>
@@ -12712,6 +12712,20 @@ function getFormTrade() {
     processScore: modalPS || 0,
     mood:          (document.getElementById('m-mood').value || '').trim().slice(0, 300)
   };
+}
+
+// Crypto trades are often closed without ever setting a stop — the exit price
+// IS where the position actually got out, so leaving stop blank makes the row
+// look like it has no risk defined even though it closed cleanly. Only fires
+// for crypto and only when stop is still empty, so it never overwrites a real
+// stop the user set on purpose.
+function mAutoFillStopFromExit() {
+  if (document.getElementById('m-type').value !== 'crypto') return;
+  const stopEl = document.getElementById('m-stop');
+  if (stopEl.value !== '') return;
+  const exit = document.getElementById('m-exitPrice').value;
+  if (exit === '') return;
+  stopEl.value = exit;
 }
 
 function liveCalc() {
