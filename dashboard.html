@@ -1136,6 +1136,15 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .calc-slider::-moz-range-thumb { width:18px; height:18px; border-radius:50%; background:var(--accent); cursor:pointer; border:none; }
 
   /* FORM */
+  /* Native spinner arrows on the sizer's number fields (0-100% stop, tranche
+     count, etc.) are too small to hit reliably and step by 1 regardless of
+     the field's actual unit — same fix already applied to .inv-table inputs. */
+  #inv-calc-modal input[type=number]::-webkit-outer-spin-button,
+  #inv-calc-modal input[type=number]::-webkit-inner-spin-button,
+  #inv-position-modal input[type=number]::-webkit-outer-spin-button,
+  #inv-position-modal input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  #inv-calc-modal input[type=number],
+  #inv-position-modal input[type=number] { -moz-appearance: textfield; appearance: textfield; }
   .form-group { margin-bottom: 14px; }
   .form-label { display: block; font-size: 11px; font-weight: 700; color: var(--text3); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.3px; }
   .form-control {
@@ -3782,8 +3791,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-alloc-cur { width: 46px; flex: 0 0 46px; text-align: right; color: var(--text2); font-size: 11px; }
   .inv-alloc-remaining { width: 128px; flex: 0 0 128px; color: var(--text3); white-space: nowrap; font-size: 11px; text-align: right; overflow: hidden; text-overflow: ellipsis; }
   .inv-cash-input { min-width: 80px; width: 80px; text-align: right; background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.18); color: var(--text); font-weight: 600; font-size: 11px; outline: none; padding: 1px 2px; }
-  .inv-alloc-donut-row { display: flex; gap: 24px; align-items: center; }
-  .inv-alloc-bars { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+  .inv-alloc-donut-row { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+  .inv-alloc-bars { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: 10px; }
   .inv-donut-wrap { display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .inv-donut-legend { display: flex; flex-direction: column; gap: 10px; direction: ltr; }
   .inv-donut-leg-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text2); }
@@ -6801,7 +6810,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             <input type="number" id="inv-sz-stop" class="form-control" placeholder="8" min="0" max="100" step="0.1">
           </div>
           <div class="form-group">
-            <button class="btn btn-secondary btn-sm" onclick="invSizerApply()" style="width:100%;height:36px">✨ הצע לי כמות</button>
+            <button class="btn btn-secondary btn-sm" onclick="invSizerApply()" style="width:100%;height:44px">✨ הצע לי כמות</button>
           </div>
         </div>
         <div id="inv-sz-out" style="display:none;font-size:12.5px;line-height:1.9;color:var(--text2)"></div>
