@@ -3617,6 +3617,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-portfolio-total-wrap { position: relative; display: flex; align-items: center; }
   .inv-portfolio-currency { position: absolute; right: 12px; pointer-events: none; font-size: 15px; font-weight: 700; color: var(--accent); opacity: 0.7; }
   .inv-portfolio-total-wrap input { padding-right: 26px; direction: ltr; text-align: right; }
+  .inv-portfolio-picker-row { display: flex; justify-content: center; margin-bottom: -6px; }
   #inv-portfolio-total::-webkit-outer-spin-button,
   #inv-portfolio-total::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .inv-portfolio-bar .inv-total-allocated { display: flex; align-items: center; gap: 18px; }
@@ -6376,6 +6377,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div class="inv-header">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           <h2 data-i18n="inv_title">Investment Portfolio</h2>
+          <button class="inv-calc-open" onclick="invCalcOpen()" title="חשב כמות וסיכון לפני קנייה — גם למניה שעדיין לא בתיק">🧮 מחשבון כמות</button>
+        </div>
+
+        <div class="inv-portfolio-picker-row">
           <div id="inv-portfolio-dd" class="scope-dd">
             <button class="scope-dd-btn" onclick="toggleScopeDD('inv-portfolio-dd')" aria-label="בחר תיק" title="בחר תיק">
               <span id="inv-portfolio-lbl"></span>
@@ -6383,8 +6388,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             </button>
             <div class="scope-dd-menu" id="inv-portfolio-menu"></div>
           </div>
-          <button class="inv-calc-open" onclick="invRenamePortfolio()" title="שנה שם תיק" style="padding:4px 8px;">✏</button>
-          <button class="inv-calc-open" onclick="invCalcOpen()" title="חשב כמות וסיכון לפני קנייה — גם למניה שעדיין לא בתיק">🧮 מחשבון כמות</button>
         </div>
 
         <div class="inv-portfolio-bar">
