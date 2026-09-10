@@ -3617,7 +3617,15 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-portfolio-total-wrap { position: relative; display: flex; align-items: center; }
   .inv-portfolio-currency { position: absolute; right: 12px; pointer-events: none; font-size: 15px; font-weight: 700; color: var(--accent); opacity: 0.7; }
   .inv-portfolio-total-wrap input { padding-right: 26px; direction: ltr; text-align: right; }
-  .inv-portfolio-picker-row { display: flex; justify-content: center; margin-bottom: -6px; }
+  .inv-portfolio-picker-row { display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: -6px; }
+  .inv-currency-toggle {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 30px; padding: 5px 10px; border: 1px solid var(--border2); border-radius: var(--radius);
+    background: rgba(255,255,255,0.06); color: var(--text2);
+    cursor: pointer; font-size: 13px; font-weight: 700; font-family: inherit;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  @media (hover: hover) and (pointer: fine) { .inv-currency-toggle:hover { background: rgba(255,255,255,0.09); color: var(--text); } }
   #inv-portfolio-total::-webkit-outer-spin-button,
   #inv-portfolio-total::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .inv-portfolio-bar .inv-total-allocated { display: flex; align-items: center; gap: 18px; }
@@ -6390,6 +6398,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             </button>
             <div class="scope-dd-menu" id="inv-portfolio-menu"></div>
           </div>
+          <button class="inv-currency-toggle" id="inv-currency-toggle" onclick="invSetCurrency(invGetCurrency()==='$'?'₪':'$')" aria-label="החלף מטבע תצוגה" title="החלף מטבע תצוגה (תווית בלבד — לא ממיר שערים)">$</button>
         </div>
 
         <div class="inv-portfolio-bar">
@@ -16718,6 +16727,7 @@ let _invData = null;
 let _invSaveTimer = null;
 let _invPortfolios = [];
 let _invActivePortfolioId = null;
+let _invCurrency = '$';
 // Same rationale as tj_active_tab (CLAUDE.md): a same-tab reload should keep
 // the portfolio the user was looking at, but a fresh login should default
 // back to their is_default portfolio — sessionStorage, not localStorage.
@@ -16821,13 +16831,22 @@ async function invPortfolioNameConfirm() {
   }
 }
 
-// Holdings are priced by Finnhub in USD and nothing converts them, so the
-// portfolio is USD-denominated, full stop. The old $/₪ toggle only relabelled
-// those same dollar figures as shekels, and per-deposit currencies were summed
-// into one mixed number that the "P&L vs deposits" % then divided by. No
-// account had ever used ₪, so the fix is to drop the claim, not to bolt on an
-// FX layer nobody asked for.
-function invGetCurrency() { return '$'; }
+// Display-only label, per portfolio. Holdings are still priced by Finnhub in
+// USD and nothing converts them — switching to ₪ here just relabels the same
+// dollar figures, it does not convert them. Reintroduced 2026-09-10 on
+// explicit request, aware of that limitation (see AskUserQuestion in the
+// session log) — a real FX-conversion layer was declined in favor of this.
+function invGetCurrency() { return _invCurrency === '₪' ? '₪' : '$'; }
+function invSetCurrency(cur) {
+  _invCurrency = cur === '₪' ? '₪' : '$';
+  const chip = document.getElementById('inv-currency-toggle');
+  if (chip) chip.textContent = _invCurrency;
+  const prefix = document.getElementById('inv-portfolio-currency');
+  if (prefix) prefix.textContent = _invCurrency;
+  invSyncPnlBtn();
+  invRecalc();
+  invAutoSaveTotal();
+}
 function invGetPnlMode() { return localStorage.getItem('inv_pnl_mode') || 'amount'; }
 function invSyncPnlBtn() {
   const btn = document.getElementById('inv-pnl-toggle');
@@ -16875,6 +16894,7 @@ async function invLoadFromDB() {
   }
   if (data) {
     _invUpdatedAt = data.updated_at || null;
+    _invCurrency = data.currency === '₪' ? '₪' : '$';
     const portfolioTotal = data.portfolio_total != null ? String(data.portfolio_total) : '';
     // Stage 3 (2026-08-23): investment_holdings is now the only source — the
     // jsonb `holdings` document on this row stopped being written the moment
@@ -16905,6 +16925,7 @@ async function invLoadFromDB() {
     // stale leftover.
     invApplyTargets(null);
     _invUpdatedAt = null;
+    _invCurrency = '$';
     _invData = { portfolioTotal: '', holdings: [], deposits: [] };
   }
   return _invData;
@@ -17094,6 +17115,10 @@ async function invInit() {
   invRenderPortfolioPicker();
   const data = _invData || await invLoadFromDB();
   invSyncPnlBtn();
+  const chip = document.getElementById('inv-currency-toggle');
+  if (chip) chip.textContent = invGetCurrency();
+  const prefix = document.getElementById('inv-portfolio-currency');
+  if (prefix) prefix.textContent = invGetCurrency();
   const totalEl = document.getElementById('inv-portfolio-total');
   if (totalEl) totalEl.value = data.portfolioTotal || '';
   const dl = document.getElementById('inv-sym-list');
