@@ -6878,6 +6878,26 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   </div>
 </div>
 
+<!-- PORTFOLIO NAME MODAL (add / rename) -->
+<div class="modal-overlay" id="inv-portfolio-name-modal" onclick="if(event.target===this)invPortfolioNameClose()">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:380px;">
+    <div class="modal-header">
+      <div class="modal-title" id="inv-pf-name-title">שם התיק החדש</div>
+      <button class="modal-close" onclick="invPortfolioNameClose()" aria-label="סגור">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label" for="inv-pf-name-input" id="inv-pf-name-label">שם התיק</label>
+        <input type="text" id="inv-pf-name-input" class="form-control" maxlength="60" placeholder="שם התיק" onkeydown="if(event.key==='Enter')invPortfolioNameConfirm()">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="invPortfolioNameClose()">ביטול</button>
+      <button class="btn btn-primary" onclick="invPortfolioNameConfirm()">✓ אישור</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL -->
 <div class="modal-overlay" id="trade-modal" onclick="onOverlayClick(event)">
   <div class="modal" onclick="event.stopPropagation()">
@@ -13092,6 +13112,7 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('sector-modal')?.style.display === 'block') { sectorModalClose(); return; }
   if (document.getElementById('inv-position-modal')?.classList.contains('open')) { invClosePositionModal(); return; }
   if (document.getElementById('inv-calc-modal')?.classList.contains('open')) { invCalcClose(); return; }
+  if (document.getElementById('inv-portfolio-name-modal')?.classList.contains('open')) { invPortfolioNameClose(); return; }
   if (document.getElementById('cal-trade-modal')?.classList.contains('open')) { closeCalTradeModal(); return; }
   if (document.getElementById('ss-modal')?.classList.contains('open')) { closeSSModal(); return; }
   if (document.getElementById('qa-modal')?.classList.contains('open')) { fabToggle(); return; }
@@ -13100,7 +13121,7 @@ document.addEventListener('keydown', e => {
 
 // Focus trap (WCAG 2.4.3) — keep keyboard focus inside the open modal.
 function _topOpenModal() {
-  for (const id of ['trade-modal','qa-modal','cal-trade-modal','ss-modal','inv-position-modal','inv-calc-modal']) {
+  for (const id of ['trade-modal','qa-modal','cal-trade-modal','ss-modal','inv-position-modal','inv-calc-modal','inv-portfolio-name-modal']) {
     const el = document.getElementById(id);
     if (el && el.classList.contains('open')) return el;
   }
@@ -16740,30 +16761,59 @@ async function invSwitchPortfolio(id) {
   await invInit();
 }
 
-async function invAddPortfolio() {
+let _invPfNameMode = null;
+
+function invAddPortfolio() {
   _closeAllDDs();
   if (!_currentUser) return;
-  const name = (prompt('שם התיק החדש:') || '').trim().slice(0, 60);
-  if (!name) return;
-  const { data, error } = await _sb.from('portfolios')
-    .insert({ user_id: _currentUser.id, name, is_default: false })
-    .select('id, name, is_default').single();
-  if (error) { toast('שגיאה בהוספת תיק: ' + error.message, 'error'); console.error('[invAddPortfolio]', error); return; }
-  _invPortfolios.push(data);
-  await invSwitchPortfolio(data.id);
-  toast('תיק נוסף ✓', 'success');
+  _invPfNameMode = 'add';
+  document.getElementById('inv-pf-name-title').textContent = 'שם התיק החדש';
+  const input = document.getElementById('inv-pf-name-input');
+  input.value = '';
+  document.getElementById('inv-portfolio-name-modal').classList.add('open');
+  setTimeout(() => input.focus(), 80);
 }
 
-async function invRenamePortfolio() {
+function invRenamePortfolio() {
   const active = _invPortfolios.find(p => p.id === _invActivePortfolioId);
   if (!active || !_currentUser) return;
-  const name = (prompt('שם חדש לתיק:', active.name) || '').trim().slice(0, 60);
-  if (!name || name === active.name) return;
-  const { error } = await _sb.from('portfolios').update({ name }).eq('id', active.id).eq('user_id', _currentUser.id);
-  if (error) { toast('שגיאה בשינוי שם: ' + error.message, 'error'); console.error('[invRenamePortfolio]', error); return; }
-  active.name = name;
-  invRenderPortfolioPicker();
-  toast('שם התיק עודכן ✓', 'success');
+  _invPfNameMode = 'rename';
+  document.getElementById('inv-pf-name-title').textContent = 'שינוי שם התיק';
+  const input = document.getElementById('inv-pf-name-input');
+  input.value = active.name;
+  document.getElementById('inv-portfolio-name-modal').classList.add('open');
+  setTimeout(() => { input.focus(); input.select(); }, 80);
+}
+
+function invPortfolioNameClose() {
+  document.getElementById('inv-portfolio-name-modal')?.classList.remove('open');
+  _invPfNameMode = null;
+}
+
+async function invPortfolioNameConfirm() {
+  const mode = _invPfNameMode;
+  const name = (document.getElementById('inv-pf-name-input').value || '').trim().slice(0, 60);
+  if (!name) return;
+  if (mode === 'add') {
+    const { data, error } = await _sb.from('portfolios')
+      .insert({ user_id: _currentUser.id, name, is_default: false })
+      .select('id, name, is_default').single();
+    if (error) { toast('שגיאה בהוספת תיק: ' + error.message, 'error'); console.error('[invAddPortfolio]', error); return; }
+    invPortfolioNameClose();
+    _invPortfolios.push(data);
+    await invSwitchPortfolio(data.id);
+    toast('תיק נוסף ✓', 'success');
+  } else if (mode === 'rename') {
+    const active = _invPortfolios.find(p => p.id === _invActivePortfolioId);
+    if (!active) return;
+    if (name === active.name) { invPortfolioNameClose(); return; }
+    const { error } = await _sb.from('portfolios').update({ name }).eq('id', active.id).eq('user_id', _currentUser.id);
+    if (error) { toast('שגיאה בשינוי שם: ' + error.message, 'error'); console.error('[invRenamePortfolio]', error); return; }
+    invPortfolioNameClose();
+    active.name = name;
+    invRenderPortfolioPicker();
+    toast('שם התיק עודכן ✓', 'success');
+  }
 }
 
 // Holdings are priced by Finnhub in USD and nothing converts them, so the
