@@ -3688,6 +3688,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     border-radius: var(--r-sm); cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s; white-space: nowrap;
   }
   @media (hover: hover) and (pointer: fine) { .inv-calc-open:hover { background: rgba(129,140,248,0.26); border-color: rgba(129,140,248,0.6); } }
+  .inv-calc-open:active { transform: scale(0.96); }
   .inv-add-row {
     width: 100%; padding: 13px; background: none; border: none;
     border-top: 1px dashed rgba(129,140,248,0.28); color: var(--accent);
@@ -3698,6 +3699,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   /* No ::before "+" here — the label text already starts with one, and adding a
      second rendered "Add Holding + ⊕". */
   @media (hover: hover) and (pointer: fine) { .inv-add-row:hover { background: rgba(129,140,248,0.08); color: #a5b4fc; } }
+  .inv-add-row:active { background: rgba(129,140,248,0.14); }
   .inv-del-btn {
     background: none; border: none; color: rgba(255,107,138,0.5); cursor: pointer;
     font-size: 14px; padding: 4px 6px; border-radius: var(--r-sm); transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s;
@@ -3815,12 +3817,13 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-donut-leg-row .inv-leg-label { flex: 1; white-space: nowrap; }
   .inv-donut-leg-row b { color: var(--text); font-size: 13px; min-width: 38px; text-align: right; }
   .inv-cat-sel { background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 4px 6px; font-size: 11px; color: var(--text); cursor: pointer; }
-  .inv-deposits-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
-  .inv-deposits-header { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text); }
+  .inv-deposits-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .inv-deposits-header { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text); padding-bottom: 12px; border-bottom: 1px solid var(--border); }
   .inv-deposits-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .inv-deposits-form input { background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 7px 10px; font-size: 13px; color: var(--text); }
-  .inv-deposits-add-btn { background: var(--accent); color: #fff; border: none; border-radius: var(--r-sm); padding: 7px 16px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .inv-deposits-add-btn { background: var(--accent); color: #fff; border: none; border-radius: var(--r-sm); padding: 7px 16px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: opacity 0.15s, transform 0.1s; }
   @media (hover: hover) and (pointer: fine) { .inv-deposits-add-btn:hover { opacity: 0.85; } }
+  .inv-deposits-add-btn:active { transform: scale(0.96); }
   .inv-deposits-stats { display: flex; gap: 24px; padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: var(--r-md); flex-wrap: wrap; }
   .inv-dep-stat { display: flex; flex-direction: column; gap: 2px; }
   .inv-dep-stat-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.4px; }
@@ -6446,7 +6449,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
                 <th style="width:82px" data-i18n="inv_col_qty">Qty</th>
                 <th style="width:80px" data-i18n="inv_col_entry_price">Entry Price</th>
                 <th style="width:85px" data-i18n="inv_col_cur_price">Current Price</th>
-                <th style="width:70px" data-i18n="inv_col_avg">Average</th>
+                <th style="width:70px;border-left:1px solid var(--border)" data-i18n="inv_col_avg">Average</th>
                 <th style="width:75px" data-i18n="inv_col_value">Value</th>
                 <th style="width:100px"><span data-i18n="inv_col_pnl">P&L</span> <button id="inv-pnl-toggle" onclick="invTogglePnlMode()" style="font-size:11px;padding:4px 8px;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.07);color:var(--text2);cursor:pointer;margin-right:4px;vertical-align:middle;transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s;">$</button></th>
                 <th style="width:75px" data-i18n="inv_col_portfolio_pct" title="חלק מהתיק לפי שווי נוכחי. לוח ההקצאה למטה מחושב לפי עלות, ולכן השורות לא יסתכמו בדיוק לאחוז שמוצג שם.">% Portfolio</th>
