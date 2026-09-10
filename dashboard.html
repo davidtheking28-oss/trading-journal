@@ -3777,7 +3777,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-type-pills { display: flex; gap: 6px; }
   .inv-type-pill { padding: 6px 14px; border-radius: var(--r-lg); border: 1px solid var(--border); background: transparent; color: var(--text2); font-size: 12px; cursor: pointer; transition: background-color 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s, transform 0.2s, box-shadow 0.2s; }
   .inv-type-pill.active { background: rgba(129,140,248,0.15); border-color: var(--accent); color: var(--accent); font-weight: 700; }
-  .inv-alloc-dashboard { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; width: fit-content; max-width: min(100%, 1000px); margin-inline: auto; }
+  .inv-config-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  @media (max-width: 900px) { .inv-config-grid { grid-template-columns: 1fr; } }
+  .inv-alloc-dashboard { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; width: 100%; }
   .inv-alloc-title { font-size: 13px; font-weight: 700; color: var(--text2); padding-bottom: 12px; border-bottom: 1px solid var(--border); }
   .inv-alloc-row { display: flex; align-items: center; gap: 10px; font-size: 12px; direction: ltr; padding: 5px 6px; border-radius: var(--r-sm); margin: 0 -6px; transition: background-color 0.15s; }
   @media (hover: hover) and (pointer: fine) { .inv-alloc-row:hover { background: rgba(255,255,255,0.03); } }
@@ -3821,7 +3823,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-donut-leg-row .inv-leg-label { flex: 1; white-space: nowrap; }
   .inv-donut-leg-row b { color: var(--text); font-size: 13px; min-width: 38px; text-align: right; }
   .inv-cat-sel { background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 4px 6px; font-size: 11px; color: var(--text); cursor: pointer; }
-  .inv-deposits-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; width: fit-content; max-width: min(100%, 800px); margin-inline: auto; }
+  .inv-deposits-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; width: 100%; box-sizing: border-box; }
   .inv-deposits-header { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text); padding-bottom: 12px; border-bottom: 1px solid var(--border); }
   .inv-deposits-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .inv-deposits-form input { background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 7px 10px; font-size: 13px; color: var(--text); }
@@ -6383,6 +6385,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           </div>
         </div>
 
+        <div class="inv-config-grid">
         <div class="inv-alloc-dashboard">
           <div class="inv-alloc-title" data-i18n="inv_alloc_title" title="מחושב לפי שווי נוכחי — זו החשיפה האמיתית של התיק, ולכן מושקע + מזומן מסתכמים ל-100%.">Portfolio Allocation — Target</div>
           <div class="inv-alloc-donut-row">
@@ -6443,6 +6446,25 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           </div>
         </div>
 
+        <!-- MONTHLY DEPOSITS -->
+        <div class="inv-deposits-card">
+          <div class="inv-deposits-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span data-i18n="inv_deposits">Monthly Deposits</span>
+          </div>
+          <div class="inv-deposits-form">
+            <input type="month" id="inv-dep-month">
+            <input type="number" id="inv-dep-amount" placeholder="סכום" style="width:130px;" min="0" step="any">
+            <button class="inv-deposits-add-btn" onclick="invAddDeposit()" data-i18n="inv_add_deposit">+ Add Deposit</button>
+          </div>
+          <div class="inv-deposits-stats">
+            <div class="inv-dep-stat"><span class="inv-dep-stat-label" data-i18n="inv_total_dep">Total Deposited</span><span class="inv-dep-stat-val sensitive" id="dep-total-val">$0</span></div>
+            <div class="inv-dep-stat"><span class="inv-dep-stat-label" data-i18n="inv_pnl">P&L vs Deposits</span><span class="inv-dep-stat-val sensitive" id="dep-pnl-val">—</span></div>
+          </div>
+          <div id="dep-list"></div>
+        </div>
+        </div>
+
         <div class="inv-scroll-hint">⟵ גלול לצפייה בכל העמודות</div>
         <div class="inv-table-wrap">
           <table class="inv-table">
@@ -6488,24 +6510,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             <span class="inv-sum-label" data-i18n="inv_sum_updated">Prices updated</span>
             <span class="inv-sum-val" id="inv-prices-updated">—</span>
           </div>
-        </div>
-
-        <!-- MONTHLY DEPOSITS -->
-        <div class="inv-deposits-card">
-          <div class="inv-deposits-header">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            <span data-i18n="inv_deposits">Monthly Deposits</span>
-          </div>
-          <div class="inv-deposits-form">
-            <input type="month" id="inv-dep-month">
-            <input type="number" id="inv-dep-amount" placeholder="סכום" style="width:130px;" min="0" step="any">
-            <button class="inv-deposits-add-btn" onclick="invAddDeposit()" data-i18n="inv_add_deposit">+ Add Deposit</button>
-          </div>
-          <div class="inv-deposits-stats">
-            <div class="inv-dep-stat"><span class="inv-dep-stat-label" data-i18n="inv_total_dep">Total Deposited</span><span class="inv-dep-stat-val sensitive" id="dep-total-val">$0</span></div>
-            <div class="inv-dep-stat"><span class="inv-dep-stat-label" data-i18n="inv_pnl">P&L vs Deposits</span><span class="inv-dep-stat-val sensitive" id="dep-pnl-val">—</span></div>
-          </div>
-          <div id="dep-list"></div>
         </div>
 
       </div>
