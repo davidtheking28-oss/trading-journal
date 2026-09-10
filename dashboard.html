@@ -3777,7 +3777,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-type-pills { display: flex; gap: 6px; }
   .inv-type-pill { padding: 6px 14px; border-radius: var(--r-lg); border: 1px solid var(--border); background: transparent; color: var(--text2); font-size: 12px; cursor: pointer; transition: background-color 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s, transform 0.2s, box-shadow 0.2s; }
   .inv-type-pill.active { background: rgba(129,140,248,0.15); border-color: var(--accent); color: var(--accent); font-weight: 700; }
-  .inv-config-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .inv-config-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px; align-items: stretch; }
+  #dep-list { flex: 1; }
   @media (max-width: 900px) { .inv-config-grid { grid-template-columns: 1fr; } }
   .inv-alloc-dashboard { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; width: 100%; }
   .inv-alloc-title { font-size: 13px; font-weight: 700; color: var(--text2); padding-bottom: 12px; border-bottom: 1px solid var(--border); }
