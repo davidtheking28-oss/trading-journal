@@ -1400,7 +1400,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
     /* KPI grid — 2 cols */
     .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .kpi-value { font-size: 19px; }
+    .kpi-value { font-size: 19px !important; }
     .kpi-card { padding: 14px 14px; }
 
     /* Charts */
@@ -1451,7 +1451,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
      RESPONSIVE — Small phone (≤ 400px)
   ══════════════════════════════════════════ */
   @media (max-width: 400px) {
-    .kpi-value { font-size: 17px; }
+    .kpi-value { font-size: 17px !important; }
     main { padding: 10px; }
   }
 
@@ -2940,6 +2940,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     color: #e8eaf8 !important;
     opacity: 1 !important;
   }
+  @media (max-width: 640px) { .kpi-value { font-size: 19px !important; } }
+  @media (max-width: 400px) { .kpi-value { font-size: 17px !important; } }
   .kpi-value.green  { color: var(--green) !important; }
   .kpi-value.red    { color: var(--red) !important; }
   .kpi-value.yellow { color: #fbbf24 !important; }
@@ -3879,7 +3881,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .missed-month-section.collapsed .missed-month-chevron { transform: rotate(-90deg); }
   .missed-year-section.collapsed .missed-year-body,
   .missed-month-section.collapsed .missed-month-body { display: none; }
-  .missed-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .missed-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
   .missed-card {
     background: linear-gradient(145deg, #141418 0%, #0f0f12 100%);
     border: 1px solid rgba(255,255,255,0.07); border-radius: var(--r-lg);
@@ -4904,7 +4906,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .cal-chip-pl { font-size: 13px; font-weight: 800; line-height: 1.1; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
   .cal-chip.win .cal-chip-pl { color: #6ee7b7; }
   .cal-chip.loss .cal-chip-pl { color: #fca5a5; }
-  .cal-day-pl { font-size: 10px; font-weight: 700; margin-top: auto; padding-top: 3px; border-top: 1px solid rgba(255,255,255,0.05); }
+  .cal-day-pl { font-size: 10px; font-weight: 700; margin-top: auto; padding-top: 3px; border-top: 1px solid rgba(255,255,255,0.05); font-variant-numeric: tabular-nums; }
   .cal-week-sum { background: #111111 !important; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 8px 6px; min-height: 96px; gap: 3px; border-right: 1px solid rgba(255,255,255,0.08); }
   .cal-week-pl { font-size: 12px; font-weight: 700; }
   .cal-week-count { font-size: 11px; color: var(--text3); font-weight: 500; margin-top: 1px; }
