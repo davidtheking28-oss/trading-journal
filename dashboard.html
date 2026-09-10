@@ -6768,9 +6768,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           <div class="form-group">
             <label class="form-label">קטגוריה</label>
             <select id="ic-cat" class="form-control">
-              <option value="blue">🔵 Blue Chip</option>
-              <option value="green">🟢 Growth</option>
-              <option value="yellow">🟡 Speculative</option>
+              <option value="blue" data-i18n="inv_cat_blue">🔵 Value</option>
+              <option value="green" data-i18n="inv_cat_green">🟢 Growth</option>
+              <option value="yellow" data-i18n="inv_cat_yellow">🟡 Speculative</option>
             </select>
           </div>
         </div>
@@ -10932,8 +10932,9 @@ const LANG_STRINGS = {
     inv_free_cash:'Free Cash', inv_total_value:'Total',
     inv_allocated:'Invested', inv_alloc_title:'Portfolio Allocation — Target',
     inv_available:'Available:', inv_donut_allocated:'Allocated',
-    inv_blue:'🔵 Blue Chips — Target', inv_green:'🟢 Growth — Target',
+    inv_blue:'🔵 Value — Target', inv_green:'🟢 Growth — Target',
     inv_yellow:'🟡 Speculative — Target',
+    inv_cat_blue:'🔵 Value', inv_cat_green:'🟢 Growth', inv_cat_yellow:'🟡 Speculative',
     inv_col_symbol:'Symbol', inv_col_sector:'Sector', inv_col_category:'Category',
     inv_col_qty:'Qty', inv_col_entry_price:'Entry Price', inv_col_cur_price:'Current Price',
     inv_col_avg:'Average', inv_col_value:'Value',
@@ -10943,7 +10944,7 @@ const LANG_STRINGS = {
     inv_total_dep:'Total Deposited', inv_portfolio_now:'Portfolio Value Now',
     inv_pnl:'P&L vs Deposits', inv_unrealized:'Unrealized P&L', inv_refresh_prices:'Refresh Prices', inv_over:'Exceeded', inv_overby:'Exceeded by', inv_free:'Available', inv_saved:'Portfolio saved ✓', inv_cash_label:'Cash', inv_sum_invested:'Total Invested', inv_sum_value:'Current Value', inv_sum_pnl:'Unrealized P&L', inv_sum_updated:'Prices updated', inv_just_now:'just now', inv_dep_month:'Month', inv_dep_amount:'Deposit',
     inv_dep_cumulative:'Cumulative', inv_cash:'Cash',
-    inv_legend_blue:'Blue Chips', inv_legend_green:'Growth', inv_legend_yellow:'Speculative',
+    inv_legend_blue:'Value', inv_legend_green:'Growth', inv_legend_yellow:'Speculative',
     missed_title:'Missed Opportunities', missed_symbol:'Symbol',
     missed_date:'Date', missed_price:'Price ($)', missed_sector:'Sector',
     missed_note:'Note (optional)', missed_add:'+ Add',
@@ -11061,8 +11062,9 @@ const LANG_STRINGS = {
     inv_free_cash:'מזומן פנוי', inv_total_value:'סך התיק',
     inv_allocated:'מושקע', inv_alloc_title:'הקצאת תיק — יעד',
     inv_available:'זמין:', inv_donut_allocated:'מוקצה',
-    inv_blue:'🔵 כחולות — יעד', inv_green:'🟢 ירוקות — יעד',
-    inv_yellow:'🟡 צהובות — יעד',
+    inv_blue:'🔵 מניות ערך — יעד', inv_green:'🟢 צמיחה — יעד',
+    inv_yellow:'🟡 ספקולציה — יעד',
+    inv_cat_blue:'🔵 מניות ערך', inv_cat_green:'🟢 צמיחה', inv_cat_yellow:'🟡 ספקולציה',
     inv_col_symbol:'סימבול', inv_col_sector:'סקטור', inv_col_category:'קטגוריה',
     inv_col_qty:'כמות', inv_col_entry_price:'מחיר כניסה', inv_col_cur_price:'מחיר נוכחי',
     inv_col_avg:'ממוצע', inv_col_value:'שווי',
@@ -11072,7 +11074,7 @@ const LANG_STRINGS = {
     inv_total_dep:'סה"כ הופקד', inv_portfolio_now:'שווי תיק כעת',
     inv_pnl:'רווח/הפסד vs הפקדות', inv_unrealized:'רווח לא ממומש', inv_refresh_prices:'רענן מחירים', inv_over:'חרגת', inv_overby:'חרגת ב-', inv_free:'פנוי', inv_saved:'תיק ההשקעות נשמר ✓', inv_cash_label:'מזומן', inv_sum_invested:'סה"כ הושקע', inv_sum_value:'שווי נוכחי', inv_sum_pnl:'רווח לא ממומש', inv_sum_updated:'מחירים עודכנו', inv_just_now:'הרגע', inv_dep_month:'חודש', inv_dep_amount:'הפקדה',
     inv_dep_cumulative:'מצטבר', inv_cash:'מזומן',
-    inv_legend_blue:'כחולות', inv_legend_green:'ירוקות', inv_legend_yellow:'צהובות',
+    inv_legend_blue:'מניות ערך', inv_legend_green:'צמיחה', inv_legend_yellow:'ספקולציה',
     missed_title:'הזדמנויות שפוספסו', missed_symbol:'סימבול',
     missed_date:'תאריך', missed_price:'מחיר ($)', missed_sector:'סקטור',
     missed_note:'הערה (אופציונלי)', missed_add:'+ הוסף',
@@ -17169,9 +17171,9 @@ function invRenderRows(holdings) {
       <td>
         <select class="inv-cat-sel" ${ro} onchange="invRecalc();${locked?'':'invAutoSave()'}">
           <option value="">—</option>
-          <option value="blue" ${h.cat==='blue'?'selected':''}>🔵 Blue Chip</option>
-          <option value="green" ${h.cat==='green'?'selected':''}>🟢 Growth</option>
-          <option value="yellow" ${h.cat==='yellow'?'selected':''}>🟡 Speculative</option>
+          <option value="blue" ${h.cat==='blue'?'selected':''}>${t('inv_cat_blue')}</option>
+          <option value="green" ${h.cat==='green'?'selected':''}>${t('inv_cat_green')}</option>
+          <option value="yellow" ${h.cat==='yellow'?'selected':''}>${t('inv_cat_yellow')}</option>
         </select>
       </td>
       <td><input class="sensitive" type="number" value="${+h.entryShares || ''}" placeholder="0" min="0" step="any" ${ro} ${locked?'':'oninput="invRecalc();invAutoSave()"'}></td>
