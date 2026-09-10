@@ -3846,6 +3846,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .missed-year-label { font-size: 12px; color: var(--text2); }
   .missed-year-label::after, .missed-month-label::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.06); }
   .missed-month-chevron { flex: 0 0 auto; display: inline-flex; transition: transform 0.15s; }
+  .missed-month-pnl { font-size: 10.5px; font-weight: 700; white-space: nowrap; letter-spacing: 0; text-transform: none; }
   .missed-year-section.collapsed .missed-month-chevron,
   .missed-month-section.collapsed .missed-month-chevron { transform: rotate(-90deg); }
   .missed-year-section.collapsed .missed-year-body,
@@ -16412,6 +16413,7 @@ function missedRenderList(list) {
         <div class="missed-${depth}-label" onclick="missedToggleSection('${key}')">
           <svg class="missed-month-chevron" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
           ${label} <span style="color:var(--accent);font-size:10px;font-weight:800">${count}</span>
+          ${depth === 'month' ? `<span class="missed-month-pnl sensitive" id="missed-month-pnl-${key}"></span>` : ''}
         </div>
         <div class="missed-${depth}-body">${innerHtml}</div>
       </div>`;
@@ -16439,6 +16441,36 @@ function missedRenderList(list) {
     el.style.setProperty('--i', i);
     el.classList.add('animate-in');
   });
+  // Whatever quotes are already warm in the cache (e.g. a re-render within
+  // the TTL) paint immediately; missedFollowUp repaints once fresh ones land.
+  _paintMissedMonthSummaries(list);
+}
+
+// "Was this month, across everything I passed on, actually a good one?" —
+// the average % move from the logged price to the latest quote, over every
+// row in the month that has both. No position size is recorded here (these
+// were never bought), so a dollar total isn't answerable — the average % is.
+function _missedMonthAvgPct(items) {
+  const pts = items.map(r => {
+    const q = _missedQuotes[(r.sym || '').toUpperCase()];
+    const price = q?.p, base = +r.price || 0;
+    return (price && base) ? (price - base) / base * 100 : null;
+  }).filter(v => v !== null);
+  return pts.length ? { avg: pts.reduce((a, b) => a + b, 0) / pts.length, n: pts.length, of: items.length } : null;
+}
+function _paintMissedMonthSummaries(list) {
+  const byMonth = {};
+  list.forEach(r => { const k = (r.date || '').slice(0, 7); if (k.length === 7) (byMonth[k] ??= []).push(r); });
+  Object.entries(byMonth).forEach(([key, items]) => {
+    const el = document.getElementById('missed-month-pnl-' + key);
+    if (!el) return;
+    const s = _missedMonthAvgPct(items);
+    if (!s) { el.textContent = ''; el.title = ''; return; }
+    const good = s.avg >= 0;
+    el.innerHTML = `<span class="${good ? 'num-green' : 'num-red'}">${good ? '📈' : '📉'} ${fmtPct(s.avg)} בממוצע</span>`;
+    el.title = s.n < s.of ? `מבוסס על ${s.n} מתוך ${s.of} — לחלק אין ציטוט זמין` : `ממוצע השינוי מהמחיר שנרשם ועד היום, על ${s.n} עסקאות`;
+  });
+  applyPrivacy();
 }
 
 async function missedRender(force = false) {
@@ -16498,6 +16530,7 @@ async function missedFollowUp(list) {
         <span style="color:var(--text3)">מאז · $${fmtPrice(price)}</span>`;
     });
   }));
+  _paintMissedMonthSummaries(list);
   applyPrivacy();
 }
 
