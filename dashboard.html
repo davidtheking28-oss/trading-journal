@@ -15572,20 +15572,14 @@ document.addEventListener('visibilitychange', () => {
     _teardownRealtimeSync();
   } else if (_currentUser) {
     clearTimeout(_rtResumeTimer);
+    // Reconnecting the socket is enough — its own postgres_changes handlers
+    // (reloadMissed / the investments listeners in _setupRealtimeSync) already
+    // catch up on anything that actually changed elsewhere. Forcing
+    // _missedLoaded/_invData to null and re-rendering unconditionally here,
+    // every single time the tab regained visibility, is what made Missed
+    // Opportunities and Investments visibly reload on every alt-tab back —
+    // trades never did this dance and never had the complaint.
     _rtResumeTimer = setTimeout(() => { _setupRealtimeSync(); }, 150);
-    // The comment above promised this catch-up, but it was never written: the
-    // socket came back while the in-memory caches stayed warm, so a change made
-    // on another device while this tab was hidden stayed invisible until a full
-    // reload. Both caches are dropped and the visible tab repaints itself.
-    _missedLoaded = false;
-    _invData = null;
-    // Read the tab straight off the DOM. The `activeTab` helper this used to
-    // call is a const scoped inside another function, so at top level it threw
-    // ReferenceError on every return to the tab — killing the repaint below and
-    // leaving exactly the stale view the comment above says it fixes.
-    const tab = (document.querySelector('.tab-content.active') || {}).id || '';
-    if (tab === 'tab-missed') missedRender(true);
-    else if (tab === 'tab-investments') invInit();
   }
 });
 // Restored straight out of bfcache — no scripts re-run, so the socket closed on
