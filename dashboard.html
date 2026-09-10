@@ -16742,7 +16742,10 @@ function invRenderPortfolioPicker() {
   if (lbl) lbl.textContent = active?.name || '';
   const menu = document.getElementById('inv-portfolio-menu');
   if (!menu) return;
-  menu.innerHTML = _invPortfolios.map(p => `<button class="${p.id === _invActivePortfolioId ? 'active' : ''}" ${p.id === _invActivePortfolioId ? 'aria-current="true"' : ''} onclick="invSwitchPortfolio('${p.id}')">${esc(p.name)}</button>`).join('')
+  menu.innerHTML = _invPortfolios.map(p => `<div style="display:flex;align-items:center;gap:4px;">
+      <button class="${p.id === _invActivePortfolioId ? 'active' : ''}" ${p.id === _invActivePortfolioId ? 'aria-current="true"' : ''} onclick="invSwitchPortfolio('${p.id}')" style="flex:1;">${esc(p.name)}</button>
+      ${p.id === _invActivePortfolioId ? `<button onclick="invRenamePortfolio()" title="שנה שם" aria-label="שנה שם תיק" style="flex:0 0 auto;padding:4px 8px;">✏</button>` : ''}
+    </div>`).join('')
     + `<button onclick="invAddPortfolio()" style="border-top:1px solid rgba(255,255,255,0.08);margin-top:4px;padding-top:8px;">+ הוסף תיק</button>`;
   // Reparented to <body> each rebuild — the menu is position:fixed and needs
   // to escape .inv-header's stacking context, same pattern as port-equity-menu.
