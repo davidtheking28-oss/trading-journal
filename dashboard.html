@@ -6375,6 +6375,14 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div class="inv-header">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           <h2 data-i18n="inv_title">Investment Portfolio</h2>
+          <div id="inv-portfolio-dd" class="scope-dd">
+            <button class="scope-dd-btn" onclick="toggleScopeDD('inv-portfolio-dd')" aria-label="בחר תיק" title="בחר תיק">
+              <span id="inv-portfolio-lbl"></span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="scope-dd-menu" id="inv-portfolio-menu"></div>
+          </div>
+          <button class="inv-calc-open" onclick="invRenamePortfolio()" title="שנה שם תיק" style="padding:4px 8px;">✏</button>
           <button class="inv-calc-open" onclick="invCalcOpen()" title="חשב כמות וסיכון לפני קנייה — גם למניה שעדיין לא בתיק">🧮 מחשבון כמות</button>
         </div>
 
@@ -10298,10 +10306,8 @@ async function loadUserSettings() {
     _brokerBadgeFromStore('bybit', true);
   }
   renderFmpKeyStatus();
-  if (_userSettings.portfolio_total != null) {
-    const ptEl = document.getElementById('inv-portfolio-total');
-    if (ptEl) { ptEl.value = _userSettings.portfolio_total; invRecalc(); }
-  }
+  // portfolio_total moved to investments.portfolio_total (per-portfolio) —
+  // invInit() populates #inv-portfolio-total from there when the tab loads.
 }
 
 async function _saveUserSettings(patch) {
@@ -12705,7 +12711,7 @@ function liveCalc() {
 // base so risk % means something rather than being a free-floating number.
 function portfolioTotal() {
   const el = document.getElementById('inv-portfolio-total');
-  const v = +(el?.value) || +(_userSettings?.portfolio_total) || 0;
+  const v = +(el?.value) || +(_invData?.portfolioTotal) || 0;
   return v > 0 ? v : 0;
 }
 
@@ -16683,6 +16689,78 @@ if ('serviceWorker' in navigator) {
 // ===== INVESTMENTS TAB =====
 let _invData = null;
 let _invSaveTimer = null;
+let _invPortfolios = [];
+let _invActivePortfolioId = null;
+// Same rationale as tj_active_tab (CLAUDE.md): a same-tab reload should keep
+// the portfolio the user was looking at, but a fresh login should default
+// back to their is_default portfolio — sessionStorage, not localStorage.
+const _INV_ACTIVE_PORTFOLIO_KEY = () => 'inv_active_portfolio_' + (_currentUser?.id || 'anon');
+
+async function invLoadPortfolios() {
+  if (!_currentUser) { _invPortfolios = []; _invActivePortfolioId = null; return; }
+  const { data, error } = await _sb.from('portfolios')
+    .select('id, name, is_default')
+    .eq('user_id', _currentUser.id)
+    .order('is_default', { ascending: false })
+    .order('created_at', { ascending: true });
+  if (error) { console.error('[invLoadPortfolios]', error); return; }
+  _invPortfolios = data || [];
+  let saved = null;
+  try { saved = sessionStorage.getItem(_INV_ACTIVE_PORTFOLIO_KEY()); } catch {}
+  const def = _invPortfolios.find(p => p.is_default) || _invPortfolios[0];
+  _invActivePortfolioId = (saved && _invPortfolios.some(p => p.id === saved)) ? saved : (def ? def.id : null);
+}
+
+function invRenderPortfolioPicker() {
+  const lbl = document.getElementById('inv-portfolio-lbl');
+  const active = _invPortfolios.find(p => p.id === _invActivePortfolioId);
+  if (lbl) lbl.textContent = active?.name || '';
+  const menu = document.getElementById('inv-portfolio-menu');
+  if (!menu) return;
+  menu.innerHTML = _invPortfolios.map(p => `<button class="${p.id === _invActivePortfolioId ? 'active' : ''}" ${p.id === _invActivePortfolioId ? 'aria-current="true"' : ''} onclick="invSwitchPortfolio('${p.id}')">${esc(p.name)}</button>`).join('')
+    + `<button onclick="invAddPortfolio()" style="border-top:1px solid rgba(255,255,255,0.08);margin-top:4px;padding-top:8px;">+ הוסף תיק</button>`;
+  // Reparented to <body> each rebuild — the menu is position:fixed and needs
+  // to escape .inv-header's stacking context, same pattern as port-equity-menu.
+  document.body.appendChild(menu);
+}
+
+async function invSwitchPortfolio(id) {
+  _closeAllDDs();
+  if (id === _invActivePortfolioId) return;
+  _invActivePortfolioId = id;
+  try { sessionStorage.setItem(_INV_ACTIVE_PORTFOLIO_KEY(), id); } catch {}
+  _invData = null;
+  _invUpdatedAt = null;
+  _invReloadGen++;
+  invRenderPortfolioPicker();
+  await invInit();
+}
+
+async function invAddPortfolio() {
+  _closeAllDDs();
+  if (!_currentUser) return;
+  const name = (prompt('שם התיק החדש:') || '').trim().slice(0, 60);
+  if (!name) return;
+  const { data, error } = await _sb.from('portfolios')
+    .insert({ user_id: _currentUser.id, name, is_default: false })
+    .select('id, name, is_default').single();
+  if (error) { toast('שגיאה בהוספת תיק: ' + error.message, 'error'); console.error('[invAddPortfolio]', error); return; }
+  _invPortfolios.push(data);
+  await invSwitchPortfolio(data.id);
+  toast('תיק נוסף ✓', 'success');
+}
+
+async function invRenamePortfolio() {
+  const active = _invPortfolios.find(p => p.id === _invActivePortfolioId);
+  if (!active || !_currentUser) return;
+  const name = (prompt('שם חדש לתיק:', active.name) || '').trim().slice(0, 60);
+  if (!name || name === active.name) return;
+  const { error } = await _sb.from('portfolios').update({ name }).eq('id', active.id).eq('user_id', _currentUser.id);
+  if (error) { toast('שגיאה בשינוי שם: ' + error.message, 'error'); console.error('[invRenamePortfolio]', error); return; }
+  active.name = name;
+  invRenderPortfolioPicker();
+  toast('שם התיק עודכן ✓', 'success');
+}
 
 // Holdings are priced by Finnhub in USD and nothing converts them, so the
 // portfolio is USD-denominated, full stop. The old $/₪ toggle only relabelled
@@ -16713,9 +16791,9 @@ function invLoad() {
 
 async function invLoadFromDB() {
   if (!_currentUser) return invLoad();
-  const portfolioTotal = _userSettings.portfolio_total != null
-    ? String(_userSettings.portfolio_total)
-    : (invLoad().portfolioTotal || '');
+  if (!_invActivePortfolioId) await invLoadPortfolios();
+  if (!_invActivePortfolioId) return invLoad();
+  const fallbackTotal = invLoad().portfolioTotal || '';
   // maybeSingle, and the error is kept. `.single()` reports "no row" and "the
   // request failed" the same way — {data:null} — so a dropped connection, a 5xx
   // or a token refreshing mid-flight all used to fall into the brand-new-account
@@ -16724,8 +16802,9 @@ async function invLoadFromDB() {
   // an empty portfolio over a real one — and now also deletes every row in
   // investment_holdings, destroying both copies at once.
   const { data, error: docErr } = await _sb.from('investments')
-    .select('deposits, currency, alloc_targets, updated_at')
+    .select('deposits, currency, alloc_targets, updated_at, portfolio_total')
     .eq('user_id', _currentUser.id)
+    .eq('portfolio_id', _invActivePortfolioId)
     .maybeSingle();
   if (docErr) {
     console.error('[invLoadFromDB]', docErr);
@@ -16733,10 +16812,11 @@ async function invLoadFromDB() {
     // Deliberately does not touch _invData or _invUpdatedAt. _invData staying
     // null is what stops invAutoSave from persisting this empty screen, and the
     // untouched stamp keeps the guard armed if anything else tries.
-    return _invData || { portfolioTotal, holdings: [], deposits: [] };
+    return _invData || { portfolioTotal: fallbackTotal, holdings: [], deposits: [] };
   }
   if (data) {
     _invUpdatedAt = data.updated_at || null;
+    const portfolioTotal = data.portfolio_total != null ? String(data.portfolio_total) : '';
     // Stage 3 (2026-08-23): investment_holdings is now the only source — the
     // jsonb `holdings` document on this row stopped being written the moment
     // this shipped, so falling back to it here would silently freeze anyone
@@ -16745,6 +16825,7 @@ async function invLoadFromDB() {
     const { data: rows, error: rowsErr } = await _sb.from('investment_holdings')
       .select('id, symbol, cat, sector, entry_shares, entry_price, current_price, position')
       .eq('user_id', _currentUser.id)
+      .eq('portfolio_id', _invActivePortfolioId)
       .order('position', { ascending: true });
     if (rowsErr) {
       console.error('[invLoadFromDB] holdings', rowsErr);
@@ -16758,13 +16839,14 @@ async function invLoadFromDB() {
     invApplyTargets(data.alloc_targets);
     _invData = { portfolioTotal, holdings, deposits: data.deposits || [], allocTargets: invTargetsPayload() };
   } else {
-    // A brand-new account starts empty. This used to seed itself from the
-    // `inv_data_v1` localStorage blob and immediately save it — on a shared
-    // browser that adopted whoever used the app last as your own portfolio.
-    // Nothing writes that key any more, so it is only ever a stale leftover.
+    // A brand-new portfolio (or a brand-new account) starts empty. This used to
+    // seed itself from the `inv_data_v1` localStorage blob and immediately save
+    // it — on a shared browser that adopted whoever used the app last as your
+    // own portfolio. Nothing writes that key any more, so it is only ever a
+    // stale leftover.
     invApplyTargets(null);
     _invUpdatedAt = null;
-    _invData = { portfolioTotal, holdings: [], deposits: [] };
+    _invData = { portfolioTotal: '', holdings: [], deposits: [] };
   }
   return _invData;
 }
@@ -16801,6 +16883,7 @@ async function _invSaveWrite(data, prev, gen) {
   // reload discarded — and it would succeed, because the reload refreshed the
   // stamp this write is guarded by.
   if (gen !== _invReloadGen) return false;
+  if (!_invActivePortfolioId) return false;
   // Our own write is about to come back over the realtime channel; mark it so
   // the handler does not treat it as a change made elsewhere. Marked at the
   // moment of the write, not when it was queued — a write that waited its turn
@@ -16809,9 +16892,16 @@ async function _invSaveWrite(data, prev, gen) {
   // Stage 3 (2026-08-23): holdings no longer written here at all — only to
   // investment_holdings below, via _invSyncHoldingRows. This row now carries
   // only what still genuinely lives on it: the optimistic-lock stamp,
-  // deposits, currency, and allocation targets.
-  const row = { user_id: _currentUser.id, deposits: data.deposits || [],
-                currency: invGetCurrency(), alloc_targets: data.allocTargets || invTargetsPayload() };
+  // deposits, currency, allocation targets, and (since the multi-portfolio
+  // migration) this portfolio's own total — moved off user_settings, which
+  // could only ever hold one value per user.
+  const totalNum = (() => {
+    const n = +String(data.portfolioTotal || '').replace(/[^\d.]/g, '');
+    return Number.isFinite(n) && n > 0 ? n : null;
+  })();
+  const row = { user_id: _currentUser.id, portfolio_id: _invActivePortfolioId, deposits: data.deposits || [],
+                currency: invGetCurrency(), alloc_targets: data.allocTargets || invTargetsPayload(),
+                portfolio_total: totalNum };
 
   // The save rewrites the whole holdings document, so without a guard the last
   // tab to save silently erased what the other one did. Update only if the row
@@ -16819,7 +16909,7 @@ async function _invSaveWrite(data, prev, gen) {
   // first and we reload instead of clobbering them.
   if (_invUpdatedAt) {
     const { data: hit, error: upErr } = await _sb.from('investments')
-      .update(row).eq('user_id', _currentUser.id).eq('updated_at', _invUpdatedAt).select('updated_at');
+      .update(row).eq('user_id', _currentUser.id).eq('portfolio_id', _invActivePortfolioId).eq('updated_at', _invUpdatedAt).select('updated_at');
     if (upErr) {
       // Re-render too, as the upsert branch does. Without it the DOM keeps rows
       // the rolled-back copy no longer has, and invGetCurrentData maps identity
@@ -16840,7 +16930,7 @@ async function _invSaveWrite(data, prev, gen) {
     return true;
   }
 
-  const { error } = await _sb.from('investments').upsert(row, { onConflict: 'user_id' });
+  const { error } = await _sb.from('investments').upsert(row, { onConflict: 'user_id,portfolio_id' });
   if (error) {
     console.error('[invSaveData]', error);
     // The in-memory copy was already swapped, so without this the screen keeps
@@ -16852,7 +16942,7 @@ async function _invSaveWrite(data, prev, gen) {
   }
   // Pick up the stamp the insert created so later saves take the guarded path.
   const { data: fresh } = await _sb.from('investments')
-    .select('updated_at').eq('user_id', _currentUser.id).single();
+    .select('updated_at').eq('user_id', _currentUser.id).eq('portfolio_id', _invActivePortfolioId).single();
   _invUpdatedAt = fresh?.updated_at || null;
   await _invSyncHoldingRows(data.holdings);
   return true;
@@ -16874,6 +16964,7 @@ async function _invSyncHoldingRows(holdings) {
   const rows = live.map((h, i) => {
     const r = {
       user_id: _currentUser.id,
+      portfolio_id: _invActivePortfolioId,
       symbol: (h.symbol || '').toUpperCase().trim(),
       cat: h.cat || null,
       sector: h.sector || null,
@@ -16908,7 +16999,7 @@ async function _invSyncHoldingRows(holdings) {
   // keep-list has to delete everything rather than build `in.()`, which is not
   // valid syntax and would throw instead of clearing the last position.
   const keep = (saved || []).map(r => r.id).filter(Boolean);
-  let del = _sb.from('investment_holdings').delete().eq('user_id', _currentUser.id);
+  let del = _sb.from('investment_holdings').delete().eq('user_id', _currentUser.id).eq('portfolio_id', _invActivePortfolioId);
   if (keep.length) del = del.not('id', 'in', `(${keep.join(',')})`);
   const { error: delErr } = await del;
   if (delErr) {
@@ -16940,6 +17031,8 @@ async function _invSyncHoldingRows(holdings) {
 }
 
 async function invInit() {
+  if (!_invPortfolios.length) await invLoadPortfolios();
+  invRenderPortfolioPicker();
   const data = _invData || await invLoadFromDB();
   invSyncPnlBtn();
   const totalEl = document.getElementById('inv-portfolio-total');
@@ -18016,15 +18109,13 @@ function invAutoSector(idx) {
 let _invSaveTotalTimer = null;
 function invAutoSaveTotal() {
   const val = document.getElementById('inv-portfolio-total')?.value || '';
-  // The portfolio total lives in user_settings — persist only that, never the
-  // holdings.
   if (_invData) _invData.portfolioTotal = val;
   clearTimeout(_invSaveTotalTimer);
   _invSaveTotalTimer = setTimeout(() => {
-    // The field is type="text", so "100,000" or "$100k" reaches here. `+val` on
-    // those is NaN, which serialised to null and silently erased the total.
-    const n = +String(val).replace(/[^\d.]/g, '');
-    _saveUserSettings({ portfolio_total: val && Number.isFinite(n) && n > 0 ? n : null });
+    // The total now lives on investments.portfolio_total, per active portfolio
+    // — goes through the same guarded save queue as everything else on the tab
+    // rather than a separate ad hoc update.
+    if (_invData) invSaveData(invGetCurrentData());
   }, 500);
 }
 
@@ -18075,7 +18166,6 @@ function invAddDeposit() {
   if (totalElD) totalElD.value = newTotal;
   data.portfolioTotal = String(newTotal);
   invSaveData(data);
-  _saveUserSettings({ portfolio_total: newTotal });
   invRenderDeposits(data.deposits);
   invRecalc();
   document.getElementById('inv-dep-amount').value = '';
