@@ -3597,18 +3597,14 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
   /* Portfolio bar — glassmorphism card */
   .inv-portfolio-bar {
-    position: relative;
-    display: flex; align-items: center; gap: 16px;
+    display: flex; align-items: center; justify-content: center; gap: 28px; flex-wrap: wrap;
     width: 100%; max-width: 1200px; margin-inline: auto;
     background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(10,10,10,0.95) 100%);
     border: 1px solid rgba(129,140,248,0.18);
     border-radius: var(--r-lg); padding: 16px 22px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(129,140,248,0.08);
   }
-  .inv-portfolio-center {
-    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-    display: flex; align-items: center; gap: 12px;
-  }
+  .inv-portfolio-center { display: flex; align-items: center; gap: 12px; }
   .inv-portfolio-bar label { font-size: 13px; color: var(--text2); white-space: nowrap; font-weight: 500; }
   .inv-portfolio-bar input {
     width: 160px; background: rgba(255,255,255,0.05); border: 1px solid rgba(129,140,248,0.2);
@@ -3618,17 +3614,12 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-portfolio-bar input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(129,140,248,0.12); }
   #inv-portfolio-total::-webkit-outer-spin-button,
   #inv-portfolio-total::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  .inv-portfolio-bar .inv-total-allocated { display: flex; align-items: center; gap: 18px; margin-right: auto; }
+  .inv-portfolio-bar .inv-total-allocated { display: flex; align-items: center; gap: 18px; }
   .inv-portfolio-bar .inv-stat { display: flex; flex-direction: column; gap: 2px; align-items: flex-end; }
   .inv-portfolio-bar .inv-stat-lbl { font-size: 11px; color: var(--text3); font-weight: 500; }
   .inv-portfolio-bar .inv-stat-val { font-size: 15px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
   .inv-portfolio-bar .inv-stat-val.accent { color: var(--accent); }
   .inv-portfolio-bar .inv-stat-sep { width: 1px; height: 28px; background: var(--border); flex-shrink: 0; }
-  @media (max-width: 640px) {
-    .inv-portfolio-bar { flex-wrap: wrap; justify-content: center; }
-    .inv-portfolio-center { position: static; transform: none; }
-    .inv-portfolio-bar .inv-total-allocated { margin-right: 0; }
-  }
 
   .inv-scroll-hint { display: none; font-size: 11px; color: var(--text3); text-align: center; padding: 2px 0 4px; }
   @media (max-width: 768px) { .inv-scroll-hint { display: block; } }
