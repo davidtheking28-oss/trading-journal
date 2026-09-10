@@ -11,7 +11,7 @@
 //                   prove the behaviour, only that the guard was not deleted.
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { load, extractFunction, SOURCE } from './harness.mjs';
+import { load, extractFunction, extractConst, SOURCE } from './harness.mjs';
 
 const { flexParseXML } = load('flexParseXML');
 const { calcPL, calcTotal } = load('calcPL', 'calcTotal');
@@ -1599,5 +1599,29 @@ describe('live P&L never leaves the card on its placeholder', () => {
     releaseFetch();
     await update();
     assert.equal(el.textContent, '5100');   // 100 (stock) + 5000 (crypto)
+  });
+
+  // Regression: the very fix above (scoping the card to ovScope) silently
+  // broke the card on first load for anyone whose only open position isn't in
+  // ovScope's default bucket — a crypto-only user saw the card go blank again,
+  // because the default was 'stock'. The default must be the bucket that can
+  // never hide a position that exists: 'all'. Guard, not behavioural — the
+  // module-level `let` runs at parse time on page load, which this suite
+  // cannot execute, only inspect.
+  test('the Overview scope defaults to "all", so it can never hide a position on load', () => {
+    const decl = extractConst('ovScope');
+    assert.equal(decl.replace(/\s+/g, ''), "letovScope='all';",
+      `ovScope's default changed to ${decl.trim()} — a non-'all' default silently ` +
+      `hides any open position outside that one bucket until the user manually switches`);
+  });
+
+  // The HTML's own "active" button must agree with the JS default above, or a
+  // user opening the dropdown sees a highlighted bucket the card isn't actually
+  // using yet.
+  test('the ov-scope-menu HTML marks "all" active, matching the JS default', () => {
+    const menu = SOURCE.slice(SOURCE.indexOf('id="ov-scope-menu"'), SOURCE.indexOf('id="ov-scope-menu"') + 400);
+    const activeBtn = menu.match(/<button class="active"[^>]*onclick="setOvScope\('(\w+)'/);
+    assert.ok(activeBtn, 'no active button found in ov-scope-menu');
+    assert.equal(activeBtn[1], 'all');
   });
 });
