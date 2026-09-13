@@ -1167,6 +1167,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .form-control::placeholder { color: var(--text3); }
   select.form-control option { background: #101014; }
   textarea.form-control { resize: vertical; min-height: 68px; }
+  .form-control.invalid { border-color: var(--red) !important; box-shadow: 0 0 0 3px rgba(225,29,72,0.15) !important; }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 
@@ -9330,10 +9331,11 @@ let _ovLiveTimer = null;
 const CAL_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
 const TBL_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="0.5" fill="currentColor"/><circle cx="3" cy="12" r="0.5" fill="currentColor"/><circle cx="3" cy="18" r="0.5" fill="currentColor"/></svg>`;
 
-// Compact trades table (col-adv columns hidden) — off by default, opt-in,
+// Compact trades table (col-adv columns hidden) — on by default (the calmer
+// state; the extra 7 columns are still one row-click away), opt-out,
 // persisted across reloads. Same table serves both stock and crypto scope.
 function _compactColsOn() {
-  try { return localStorage.getItem('tj_compact_cols') === '1'; } catch { return false; }
+  try { return localStorage.getItem('tj_compact_cols') !== '0'; } catch { return true; }
 }
 function toggleCompactCols() {
   const next = !_compactColsOn();
@@ -12960,14 +12962,27 @@ function sizerApply() {
   liveCalc();
 }
 
+// Validation used to be toast-only — the offending field never got a border,
+// focus, or a scroll-into-view, so on a long form the user had to re-scan the
+// whole thing to find what the toast was talking about (impeccable audit,
+// 2026-09-13).
+function _flagInvalidField(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  el.classList.add('invalid');
+  el.focus({ preventScroll: true });
+  el.addEventListener('input', () => el.classList.remove('invalid'), { once: true });
+}
+
 async function saveTrade() {
   let type = document.getElementById('m-type').value;
   const idVal = document.getElementById('m-id').value;
   const data = getFormTrade();
 
-  if (!data.symbol)     { toast('נא להזין סימבול','error'); return; }
-  if (!data.entryDate)  { toast('נא להזין תאריך כניסה','error'); return; }
-  if (!data.entryPrice) { toast('נא להזין שער כניסה','error'); return; }
+  if (!data.symbol)     { _flagInvalidField('m-symbol');    toast('נא להזין סימבול','error'); return; }
+  if (!data.entryDate)  { _flagInvalidField('m-entryDate'); toast('נא להזין תאריך כניסה','error'); return; }
+  if (!data.entryPrice) { _flagInvalidField('m-entryPrice');toast('נא להזין שער כניסה','error'); return; }
   // Closing more than was bought silently multiplies the P&L. It happened on 11
   // rows: a position entered in several tranches got the full exit quantity
   // written onto every tranche, overstating the book's loss by $615.
