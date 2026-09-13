@@ -7797,7 +7797,26 @@ async function nameGateSave() {
   }
 }
 
+// One-time diagnostic: prints a timing breakdown of the login boot sequence
+// to the console 6s after auth succeeds (long enough to catch the slow
+// trailing fetches). Temporary — added 2026-09-13 to find what's actually
+// slow, since code review alone couldn't tell without real numbers. Safe to
+// remove once that's answered; it's read-only (performance API + console.log).
+function _logBootTiming(t0) {
+  setTimeout(() => {
+    const entries = performance.getEntriesByType('resource')
+      .map(e => ({ name: e.name.replace(location.origin, '').slice(0, 70), startMs: Math.round(e.startTime), durationMs: Math.round(e.duration) }))
+      .sort((a, b) => b.durationMs - a.durationMs)
+      .slice(0, 20);
+    console.log('%c[BOOT TIMING] paste this whole block back', 'color:#818cf8;font-weight:700');
+    console.log('page navigation → auth confirmed:', Math.round(t0), 'ms');
+    console.log('auth confirmed → login sequence done:', Math.round(performance.now() - t0), 'ms');
+    console.table(entries);
+  }, 6000);
+}
+
 async function _onAuthSuccess(user) {
+  const _bootT0 = performance.now();
   _currentUser = user;
   const _displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'ChartRoom';
   _setHeaderGreeting(_firstName(user));
@@ -7876,6 +7895,7 @@ async function _onAuthSuccess(user) {
   _maybeShowOrderIdNotice();
   _maybeShowFlexWindowNotice();
   _maybeShowBrokerSyncNotice();
+  _logBootTiming(_bootT0);
   console.log('%c ChartRoom ','background:#818cf8;color:#fff;font-weight:700;font-size:13px;border-radius:var(--r-sm);padding:2px 6px');
   console.log('%cRunning in the browser — treat other users\' data with respect.','color:#8896a8;font-size:11px');
 }
