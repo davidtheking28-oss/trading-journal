@@ -6378,9 +6378,25 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     <!-- ===== AI COACH ===== -->
     <!-- ===== INVESTMENTS ===== -->
     <div id="tab-screener" class="tab-content">
-      <iframe id="screener-frame" title="מסנן מניות SEPA"
-        style="width:100%;height:calc(100vh - 130px);min-height:520px;border:none;display:block;background:#101013"></iframe>
+      <div style="position:relative">
+        <iframe id="screener-frame" title="מסנן מניות SEPA"
+          style="width:100%;height:calc(100vh - 130px);min-height:520px;border:none;display:block;background:#101013"
+          onload="window._onScreenerLoad&&_onScreenerLoad()"></iframe>
+        <!-- The iframe launches right in the middle of the login boot burst (loadDB,
+             flex/bybit sync, fear-greed, symbol lists all fetching at once) — on a
+             cold cache it can take a while, and a blank dark rectangle reads as
+             broken rather than loading. This gives it a visible state, and a way
+             out if it genuinely never resolves (seen: works fine after a refresh,
+             i.e. once those requests are no longer competing and the assets are
+             cached — see _screenerLoadTimer below). -->
+        <div id="screener-loading" style="display:none;position:absolute;inset:0;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#101013;color:var(--text2);font-size:13px;">
+          <div style="width:28px;height:28px;border-radius:50%;border:3px solid rgba(255,255,255,0.12);border-top-color:var(--accent);animation:scr-spin 0.8s linear infinite;"></div>
+          <span id="screener-loading-txt">טוען את המסנן…</span>
+          <button id="screener-retry-btn" onclick="_retryScreener()" style="display:none" class="btn btn-secondary btn-sm">רענן</button>
+        </div>
+      </div>
     </div>
+    <style>@keyframes scr-spin{to{transform:rotate(360deg)}}</style>
 
     <div id="tab-investments" class="tab-content">
       <div class="inv-wrap">
@@ -8565,6 +8581,7 @@ function switchTab(name, btn) {
   if (name==='screener') {
     const f=document.getElementById('screener-frame');
     const scrTheme = document.documentElement.getAttribute('data-theme')==='light' ? 'tj-light' : 'tj';
+    if (!f._loaded) _showScreenerLoading();
     if(!f.src) f.src='https://davidtheking28-oss.github.io/stock-screener/?theme='+scrTheme;
     else try{ f.contentDocument.documentElement.dataset.theme=scrTheme; }catch(e){}
     const fit=()=>{ f.style.height=Math.max(520, window.innerHeight - f.getBoundingClientRect().top)+'px'; };
@@ -8574,6 +8591,41 @@ function switchTab(name, btn) {
   if (name==='investments') invInit();
   _syncMobileNav(name);
   _maybeShowTabIntro(name, tabEl);
+}
+
+// Reported: the screener tab "doesn't open" right after logging in, but works
+// after a page refresh. Root cause — the iframe request launches right in the
+// middle of the login boot burst (loadDB, flex/bybit sync, fear-greed, symbol
+// lists all fetching at once) competing for bandwidth on a cold cache, while a
+// refresh benefits from those assets already being cached and the burst having
+// settled. That contention isn't something this page can remove, but a blank
+// dark rectangle reading as "broken" instead of "loading" is fixable.
+let _screenerLoadTimer = null;
+function _showScreenerLoading() {
+  const overlay = document.getElementById('screener-loading');
+  if (!overlay) return;
+  overlay.style.display = 'flex';
+  document.getElementById('screener-loading-txt').textContent = 'טוען את המסנן…';
+  document.getElementById('screener-retry-btn').style.display = 'none';
+  clearTimeout(_screenerLoadTimer);
+  _screenerLoadTimer = setTimeout(() => {
+    document.getElementById('screener-loading-txt').textContent = 'הטעינה לוקחת יותר זמן מהרגיל';
+    document.getElementById('screener-retry-btn').style.display = '';
+  }, 8000);
+}
+function _onScreenerLoad() {
+  const f = document.getElementById('screener-frame');
+  f._loaded = true;
+  clearTimeout(_screenerLoadTimer);
+  const overlay = document.getElementById('screener-loading');
+  if (overlay) overlay.style.display = 'none';
+}
+function _retryScreener() {
+  const f = document.getElementById('screener-frame');
+  f._loaded = false;
+  _showScreenerLoading();
+  const scrTheme = document.documentElement.getAttribute('data-theme')==='light' ? 'tj-light' : 'tj';
+  f.src = 'https://davidtheking28-oss.github.io/stock-screener/?theme=' + scrTheme + '&_r=' + Date.now();
 }
 
 // Mobile bottom-nav: route a tap to the real sidebar tab button (keeps the
