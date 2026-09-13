@@ -537,7 +537,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     transition: opacity var(--t-fast), background var(--t-fast), border-color var(--t-fast);
     border: 1px solid;
   }
-  .qa-type-badge.stock  { background: rgba(45,212,160,0.12);  border-color: rgba(45,212,160,0.35);  color: #2dd4a0; }
+  .qa-type-badge.stock  { background: rgba(45,212,160,0.12);  border-color: rgba(45,212,160,0.35);  color: #0d9488; }
   .qa-type-badge.crypto { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.35); color: #f59e0b; }
   @media (hover: hover) and (pointer: fine) { .qa-type-badge:hover { opacity: 0.8; } }
   .qa-collapse-btn { display: none; }
@@ -614,9 +614,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   }
   @media (hover: hover) and (pointer: fine) { .mood-pill:hover { border-color: var(--accent); color: var(--accent); } }
   .mood-pill.active-focused   { background: rgba(129,140,248,0.18);  border-color: #818cf8; color: #818cf8; }
-  .mood-pill.active-calm      { background: rgba(63,185,80,0.18);   border-color: #3fb950; color: #3fb950; }
+  .mood-pill.active-calm      { background: rgba(63,185,80,0.18);   border-color: #0d9488; color: #0d9488; }
   .mood-pill.active-confident { background: rgba(163,113,247,0.18); border-color: #a371f7; color: #a371f7; }
-  .mood-pill.active-stressed  { background: rgba(248,81,73,0.18);   border-color: #f85149; color: #f85149; }
+  .mood-pill.active-stressed  { background: rgba(248,81,73,0.18);   border-color: #e11d48; color: #e11d48; }
   .mood-pill.active-impatient { background: rgba(245,166,35,0.18);  border-color: #f5a623; color: #f5a623; }
   .mood-pill.active-doubtful  { background: rgba(139,148,158,0.18); border-color: #8b949e; color: #8b949e; }
   .er-pills { display: flex; gap: 5px; flex-wrap: wrap; }
@@ -631,7 +631,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .er-pill.active-cheatl  { background: rgba(88,166,255,0.18);  border-color: #58a6ff; color: #58a6ff; }
   .er-pill.active-cheath  { background: rgba(245,166,35,0.18);  border-color: #f5a623; color: #f5a623; }
   .er-pill.active-handle  { background: rgba(255,121,77,0.18);  border-color: #ff794d; color: #ff794d; }
-  .er-pill.active-bo      { background: rgba(63,185,80,0.18);   border-color: #3fb950; color: #3fb950; }
+  .er-pill.active-bo      { background: rgba(63,185,80,0.18);   border-color: #0d9488; color: #0d9488; }
   .er-pill.active-blue    { background: rgba(79,131,255,0.18);  border-color: var(--accent); color: #a8c0ff; }
 
   /* badge in table */
@@ -643,12 +643,12 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .er-badge.cheatl { background: rgba(88,166,255,0.18);  color: #58a6ff; }
   .er-badge.cheath  { background: rgba(245,166,35,0.18);  color: #f5a623; }
   .er-badge.handle  { background: rgba(255,121,77,0.18);  color: #ff794d; }
-  .er-badge.bo     { background: rgba(63,185,80,0.18);   color: #3fb950; }
+  .er-badge.bo     { background: rgba(63,185,80,0.18);   color: #0d9488; }
 
   /* MARKET CONDITION BADGE */
   .mc-badge { display:inline-block; padding:2px 8px; border-radius:var(--r-md); font-size:10px; font-weight:700; }
-  .mc-badge.easy   { background:rgba(63,185,80,0.18);   color:#3fb950; }
-  .mc-badge.hard   { background:rgba(248,81,73,0.18);   color:#f85149; }
+  .mc-badge.easy   { background:rgba(63,185,80,0.18);   color:#0d9488; }
+  .mc-badge.hard   { background:rgba(248,81,73,0.18);   color:#e11d48; }
   .mc-badge.up     { background:rgba(88,166,255,0.18);  color:#58a6ff; }
   .mc-badge.press  { background:rgba(245,166,35,0.18);  color:#f5a623; }
   .mc-badge.down   { background:rgba(163,113,247,0.18); color:#a371f7; }
@@ -1481,8 +1481,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     margin-right: 4px; flex-shrink: 0;
     transition: background 0.3s;
   }
-  .ibkr-status-dot.connected { background: #3fb950; box-shadow: 0 0 6px rgba(63,185,80,0.6); }
-  .ibkr-status-dot.disconnected { background: #f85149; }
+  .ibkr-status-dot.connected { background: #0d9488; box-shadow: 0 0 6px rgba(63,185,80,0.6); }
+  .ibkr-status-dot.disconnected { background: #e11d48; }
 
   /* ══════════════════════════════════════
      COINGECKO STATUS
@@ -1493,9 +1493,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     padding: 6px 10px; border-radius: var(--r-md); max-width: 100%;
     background: rgba(129,140,248,0.05); border: 1px solid var(--border);
   }
-  .cg-status.live   { color: #2dd4a0; border-color: rgba(45,212,160,0.25); background: rgba(45,212,160,0.06); }
+  .cg-status.live   { color: #0d9488; border-color: rgba(45,212,160,0.25); background: rgba(45,212,160,0.06); }
   .cg-status.cache  { color: var(--accent); border-color: rgba(129,140,248,0.25); }
-  .cg-status.error  { color: #ff6b8a; border-color: rgba(255,107,138,0.25); background: rgba(255,107,138,0.06); }
+  .cg-status.error  { color: #e11d48; border-color: rgba(255,107,138,0.25); background: rgba(255,107,138,0.06); }
   .cg-status-icon   { font-size: 14px; flex-shrink: 0; }
   .cg-refresh-btn {
     margin-right: auto; background: none; border: 1px solid var(--border);
@@ -1593,7 +1593,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   @media (hover: hover) and (pointer: fine) { .s-section:hover .s-section-icon { transform: scale(1.08); } }
   .s-section-icon svg { width: 16px; height: 16px; }
   .s-section-icon.blue  { background: linear-gradient(145deg, rgba(129,140,248,0.26), rgba(129,140,248,0.09)); color: var(--accent);  box-shadow: inset 0 0 0 1px rgba(129,140,248,0.22), 0 4px 12px rgba(129,140,248,0.16); }
-  .s-section-icon.green { background: linear-gradient(145deg, rgba(52,211,153,0.24), rgba(52,211,153,0.08));  color: #34d399;       box-shadow: inset 0 0 0 1px rgba(52,211,153,0.20), 0 4px 12px rgba(52,211,153,0.14); }
+  .s-section-icon.green { background: linear-gradient(145deg, rgba(52,211,153,0.24), rgba(52,211,153,0.08));  color: #0d9488;       box-shadow: inset 0 0 0 1px rgba(52,211,153,0.20), 0 4px 12px rgba(52,211,153,0.14); }
   .s-section-icon.red   { background: linear-gradient(145deg, rgba(255,107,138,0.24), rgba(255,107,138,0.08)); color: var(--red);    box-shadow: inset 0 0 0 1px rgba(255,107,138,0.20), 0 4px 12px rgba(255,107,138,0.14); }
   .s-section-icon.yellow{ background: linear-gradient(145deg, rgba(251,191,36,0.24), rgba(251,191,36,0.08));   color: var(--yellow); box-shadow: inset 0 0 0 1px rgba(251,191,36,0.20), 0 4px 12px rgba(251,191,36,0.14); }
   .s-section-title {
@@ -1644,7 +1644,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     font-size: 10px; font-weight: 700; padding: 2px 8px;
     border-radius: var(--r-lg); letter-spacing: 0.3px;
   }
-  .badge-live   { background: rgba(45,212,160,0.12); color: #2dd4a0; border: 1px solid rgba(45,212,160,0.25); }
+  .badge-live   { background: rgba(45,212,160,0.12); color: #0d9488; border: 1px solid rgba(45,212,160,0.25); }
   .badge-sync   { background: rgba(129,140,248,0.1); color: var(--accent); border: 1px solid rgba(129,140,248,0.2); }
   .badge-secure { background: rgba(129,140,248,0.12); color: #818cf8; border: 1px solid rgba(129,140,248,0.25); }
   .badge-warn   { background: rgba(245,158,11,0.1); color: var(--yellow); border: 1px solid rgba(245,158,11,0.2); }
@@ -1661,7 +1661,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
     background: var(--text3);
   }
-  .sym-dot.live    { background: #2dd4a0; box-shadow: 0 0 6px rgba(45,212,160,0.5); animation: dotGlow 2s ease-in-out infinite; }
+  .sym-dot.live    { background: #0d9488; box-shadow: 0 0 6px rgba(45,212,160,0.5); animation: dotGlow 2s ease-in-out infinite; }
   .sym-dot.loading { background: var(--accent); animation: dotGlow 1s ease-in-out infinite; }
   .sym-dot.error   { background: var(--red); }
 
@@ -1679,7 +1679,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     background: rgba(255,255,255,0.02); border: 1px solid var(--border);
     font-size: 11px; color: var(--text2); font-weight: 500;
   }
-  .sec-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; background: #2dd4a0; box-shadow: 0 0 5px rgba(45,212,160,0.4); }
+  .sec-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; background: #0d9488; box-shadow: 0 0 5px rgba(45,212,160,0.4); }
   .sec-dot.off { background: var(--red); box-shadow: none; }
   .sec-dot.warn { background: var(--yellow); box-shadow: 0 0 5px rgba(245,158,11,0.4); }
 
@@ -2345,8 +2345,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     margin-bottom: 8px;
     color: var(--text);
   }
-  .kpi-value.green { color: #34d399; }
-  .kpi-value.red   { color: #ff6b8a; }
+  .kpi-value.green { color: #0d9488; }
+  .kpi-value.red   { color: #e11d48; }
   .kpi-sub {
     font-size: 11px;
     color: var(--text3);
@@ -2369,8 +2369,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     border-radius: var(--r-sm);
     display: inline-block;
   }
-  .kpi-trend.up   { color: #34d399; background: rgba(16,185,129,0.12); }
-  .kpi-trend.down { color: #fb7185; background: rgba(244,63,94,0.12); }
+  .kpi-trend.up   { color: #0d9488; background: rgba(16,185,129,0.12); }
+  .kpi-trend.down { color: #e11d48; background: rgba(244,63,94,0.12); }
   .kpi-trend.flat { color: var(--text3); background: rgba(255,255,255,0.05); }
 
   /* ── Table ── */
@@ -2403,14 +2403,14 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .calc-cell { background: transparent; }
 
   /* P&L coloring */
-  .num-green { color: #34d399; font-weight: 700; }
-  .num-red   { color: #fb7185; font-weight: 700; }
+  .num-green { color: #0d9488; font-weight: 700; }
+  .num-red   { color: #e11d48; font-weight: 700; }
   .num-yellow { color: #fbbf24; font-weight: 700; }
 
   /* ── Badges ── */
   .badge { padding: 2px 8px; border-radius: var(--r-sm); font-size: 10px; font-weight: 700; letter-spacing: 0.5px; }
-  .badge-L { background: rgba(52,211,153,0.15); color: #34d399; border: 1px solid rgba(52,211,153,0.2); }
-  .badge-S { background: rgba(251,113,133,0.15); color: #fb7185; border: 1px solid rgba(251,113,133,0.2); }
+  .badge-L { background: rgba(52,211,153,0.15); color: #0d9488; border: 1px solid rgba(52,211,153,0.2); }
+  .badge-S { background: rgba(251,113,133,0.15); color: #e11d48; border: 1px solid rgba(251,113,133,0.2); }
 
   /* ── Quick Add ── */
   .quick-add {
@@ -2973,11 +2973,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   @media (hover: hover) and (pointer: fine) { tbody tr.loss:hover td { background: rgba(248,113,113,0.055) !important; } }
 
   /* ── P&L ── */
-  .num-green  { color: #34d399 !important; font-weight: 700 !important; }
-  .num-red    { color: #f87171 !important; font-weight: 700 !important; }
+  .num-green  { color: #0d9488 !important; font-weight: 700 !important; }
+  .num-red    { color: #e11d48 !important; font-weight: 700 !important; }
   .num-yellow { color: #fbbf24 !important; font-weight: 700 !important; }
-  .badge-L { background: rgba(52,211,153,0.10) !important; color: #34d399 !important; border-color: rgba(52,211,153,0.20) !important; }
-  .badge-S { background: rgba(248,113,113,0.10) !important; color: #f87171 !important; border-color: rgba(248,113,113,0.20) !important; }
+  .badge-L { background: rgba(52,211,153,0.10) !important; color: #0d9488 !important; border-color: rgba(52,211,153,0.20) !important; }
+  .badge-S { background: rgba(248,113,113,0.10) !important; color: #e11d48 !important; border-color: rgba(248,113,113,0.20) !important; }
 
   /* ── Quick-add ── */
   .quick-add {
@@ -3080,7 +3080,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .btn-export {
     background: rgba(52,211,153,0.08) !important;
     border: 1px solid rgba(52,211,153,0.20) !important;
-    color: #34d399 !important;
+    color: #0d9488 !important;
     border-radius: var(--r-md) !important;
   }
   @media (hover: hover) and (pointer: fine) { .btn-export:hover { background: rgba(52,211,153,0.14) !important; } }
@@ -3214,14 +3214,14 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
      after dark mode lost them. */
   html[data-theme="light"] .kpi-label         { color: rgba(71,85,105,0.75) !important; opacity: 1 !important; }
   html[data-theme="light"] .kpi-value         { color: #0f172a !important; opacity: 1 !important; }
-  html[data-theme="light"] .kpi-value.green   { color: #059669 !important; text-shadow: none !important; }
-  html[data-theme="light"] .kpi-value.red     { color: #c0405c !important; text-shadow: none !important; }
+  html[data-theme="light"] .kpi-value.green   { color: #0b8a7a !important; text-shadow: none !important; }
+  html[data-theme="light"] .kpi-value.red     { color: #e11d48 !important; text-shadow: none !important; }
   html[data-theme="light"] .kpi-sub           { color: #586475 !important; opacity: 1 !important; }
   html[data-theme="light"] .kpi-progress-track { background: rgba(0,0,0,0.07); }
 
   /* P&L colors */
-  html[data-theme="light"] .num-green  { color: #059669; }
-  html[data-theme="light"] .num-red    { color: #c0405c; }
+  html[data-theme="light"] .num-green  { color: #0b8a7a; }
+  html[data-theme="light"] .num-red    { color: #e11d48; }
   html[data-theme="light"] .num-yellow { color: #b45309; }
 
   /* Table */
@@ -3248,8 +3248,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   html[data-theme="light"] .year-group-label { color: #64748b; }
 
   /* Badges */
-  html[data-theme="light"] .badge-L { background: rgba(5,150,105,0.12); color: #059669; border-color: rgba(5,150,105,0.28); }
-  html[data-theme="light"] .badge-S { background: rgba(220,38,38,0.1);  color: #c0405c; border-color: rgba(220,38,38,0.25); }
+  html[data-theme="light"] .badge-L { background: rgba(5,150,105,0.12); color: #0b8a7a; border-color: rgba(5,150,105,0.28); }
+  html[data-theme="light"] .badge-S { background: rgba(220,38,38,0.1);  color: #e11d48; border-color: rgba(220,38,38,0.25); }
 
   /* Month filter */
   html[data-theme="light"] .month-filter { background: transparent; border: 1px solid rgba(14,14,18,0.08); }
@@ -3295,8 +3295,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   html[data-theme="light"] .quick-add-title { color: #4f46e5; }
   html[data-theme="light"] .qa-label  { color: #64748b; }
   html[data-theme="light"] .qa-ls-btn { background: #f1f5f9; border: 1px solid #e2e8f0; color: #64748b; }
-  html[data-theme="light"] .qa-ls-btn.active-l { background: rgba(5,150,105,0.1);  color: #059669; border-color: rgba(5,150,105,0.3); }
-  html[data-theme="light"] .qa-ls-btn.active-s { background: rgba(220,38,38,0.08); color: #c0405c; border-color: rgba(220,38,38,0.25); }
+  html[data-theme="light"] .qa-ls-btn.active-l { background: rgba(5,150,105,0.1);  color: #0b8a7a; border-color: rgba(5,150,105,0.3); }
+  html[data-theme="light"] .qa-ls-btn.active-s { background: rgba(220,38,38,0.08); color: #e11d48; border-color: rgba(220,38,38,0.25); }
   html[data-theme="light"] .qa-collapse-btn { color: #64748b; }
 
   /* Overview sections */
@@ -3410,9 +3410,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   html[data-theme="light"] .mood-pill { background:#f1f5f9 !important; border-color:#cbd5e1 !important; color:#475569 !important; }
   @media (hover: hover) and (pointer: fine) { html[data-theme="light"] .mood-pill:hover { border-color:#0ea5e9 !important; color:#0ea5e9 !important; } }
   html[data-theme="light"] .mood-pill.active-focused   { background:rgba(14,165,233,0.1) !important; border-color:#0284c7 !important; color:#0284c7 !important; }
-  html[data-theme="light"] .mood-pill.active-calm      { background:rgba(5,150,105,0.1) !important;  border-color:#059669 !important; color:#059669 !important; }
+  html[data-theme="light"] .mood-pill.active-calm      { background:rgba(5,150,105,0.1) !important;  border-color:#0b8a7a !important; color:#0b8a7a !important; }
   html[data-theme="light"] .mood-pill.active-confident { background:rgba(124,58,237,0.1) !important; border-color:#7c3aed !important; color:#7c3aed !important; }
-  html[data-theme="light"] .mood-pill.active-stressed  { background:rgba(220,38,38,0.1) !important;  border-color:#c0405c !important; color:#c0405c !important; }
+  html[data-theme="light"] .mood-pill.active-stressed  { background:rgba(220,38,38,0.1) !important;  border-color:#e11d48 !important; color:#e11d48 !important; }
   html[data-theme="light"] .mood-pill.active-impatient { background:rgba(234,88,12,0.1) !important;  border-color:#ea580c !important; color:#ea580c !important; }
   html[data-theme="light"] .mood-pill.active-doubtful  { background:rgba(100,116,139,0.1) !important; border-color:#64748b !important; color:#64748b !important; }
   html[data-theme="light"] .er-pill {
@@ -3427,7 +3427,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     background: rgba(14,165,233,0.07) !important;
   }
   }
-  html[data-theme="light"] .er-pill.active-bo     { background: rgba(5,150,105,0.1) !important;  border-color: #059669 !important; color: #059669 !important; }
+  html[data-theme="light"] .er-pill.active-bo     { background: rgba(5,150,105,0.1) !important;  border-color: #0b8a7a !important; color: #0b8a7a !important; }
   html[data-theme="light"] .er-pill.active-handle { background: rgba(251,146,60,0.1) !important; border-color: #ea580c !important; color: #ea580c !important; }
   html[data-theme="light"] .er-pill.active-cheath { background: rgba(245,158,11,0.1) !important; border-color: #b45309 !important; color: #b45309 !important; }
   html[data-theme="light"] .er-pill.active-cheatl { background: rgba(14,165,233,0.1) !important; border-color: #0284c7 !important; color: #0284c7 !important; }
@@ -3483,8 +3483,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
   /* ── Misc hardcoded darks ── */
   html[data-theme="light"] .calc-grid > div { background: #ffffff !important; border: 1px solid #e2e8f0 !important; }
-  html[data-theme="light"] .kpi-trend.up   { color: #059669 !important; background: rgba(5,150,105,0.1)  !important; }
-  html[data-theme="light"] .kpi-trend.down { color: #c0405c !important; background: rgba(220,38,38,0.08) !important; }
+  html[data-theme="light"] .kpi-trend.up   { color: #0b8a7a !important; background: rgba(5,150,105,0.1)  !important; }
+  html[data-theme="light"] .kpi-trend.down { color: #e11d48 !important; background: rgba(220,38,38,0.08) !important; }
   html[data-theme="light"] .kpi-trend.flat { color: #64748b !important; background: rgba(0,0,0,0.05)     !important; }
   html[data-theme="light"] .filter-stats   { color: #64748b; }
   html[data-theme="light"] .ibkr-card-badge { filter: brightness(0.85); }
@@ -3651,7 +3651,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     white-space: nowrap; overflow: hidden;
   }
   .inv-table th:nth-child(4), .inv-table th:nth-child(5) { background: rgba(129,140,248,0.1); color: #818cf8; }
-  .inv-table th:nth-child(6), .inv-table th:nth-child(7) { background: rgba(52,211,153,0.1); color: #34d399; }
+  .inv-table th:nth-child(6), .inv-table th:nth-child(7) { background: rgba(52,211,153,0.1); color: #0d9488; }
   /* An unscoped `td { font-size: 13px !important }` meant for the trades table
      (search "Table: tighter, cleaner") leaks into every table on the page,
      including this one — it beats every rule below by specificity+!important,
@@ -3731,7 +3731,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     vertical-align: middle; line-height: 1.35; white-space: nowrap;
   }
   @media (hover: hover) and (pointer: fine) { .inv-buy-btn:hover { background: rgba(52,211,153,0.26); border-color: rgba(52,211,153,0.55); } }
-  html[data-theme="light"] .inv-buy-btn { color: #047857; border-color: rgba(5,150,105,0.35); }
+  html[data-theme="light"] .inv-buy-btn { color: #0b8a7a; border-color: rgba(5,150,105,0.35); }
   .inv-edit-btn {
     background: none; border: none; color: rgba(255,255,255,0.25); cursor: pointer;
     padding: 4px 6px; border-radius: var(--r-sm); transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s; vertical-align: middle;
@@ -3756,7 +3756,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-buy-form input { width: 90px; }
   .inv-buy-mode-toggle { display: flex; gap: 4px; }
   .inv-buy-mode { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--text2); cursor: pointer; padding: 5px 14px; border-radius: var(--r-sm); font-size: 12px; font-weight: 600; transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s; }
-  .inv-buy-mode.buy-active { background: rgba(52,211,153,0.15); border-color: rgba(52,211,153,0.4); color: #34d399; }
+  .inv-buy-mode.buy-active { background: rgba(52,211,153,0.15); border-color: rgba(52,211,153,0.4); color: #0d9488; }
   .inv-buy-mode.sell-active { background: rgba(255,107,138,0.12); border-color: rgba(255,107,138,0.3); color: var(--red); }
   .inv-buy-confirm { background: var(--accent); color: #fff; border: none; border-radius: var(--r-sm); padding: 5px 14px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, transform 0.15s, box-shadow 0.15s; }
   @media (hover: hover) and (pointer: fine) { .inv-buy-confirm:hover { opacity: 0.85; } }
@@ -3785,7 +3785,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-sum-val.pnl-neg { color: var(--red); }
   .inv-sum-updated .inv-sum-val { font-size: 12px; font-weight: 500; color: var(--text3); }
   html[data-theme="light"] .inv-sum-label { color: #586475; }
-  html[data-theme="light"] .inv-sum-val.pnl-pos { color: #047857; }
+  html[data-theme="light"] .inv-sum-val.pnl-pos { color: #0b8a7a; }
   html[data-theme="light"] .inv-sum-val.pnl-neg { color: #be123c; }
   .inv-empty {
     text-align: center; padding: 40px 28px; color: var(--text3); font-size: 13px;
@@ -3802,7 +3802,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   @media (hover: hover) and (pointer: fine) { .inv-alloc-row:hover { background: rgba(255,255,255,0.03); } }
   .inv-alloc-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(255,255,255,0.05); }
   .inv-alloc-dot.blue { background: #818cf8; }
-  .inv-alloc-dot.green { background: #34d399; }
+  .inv-alloc-dot.green { background: #0d9488; }
   .inv-alloc-dot.yellow { background: #fbbf24; }
   .inv-alloc-label { width: 215px; flex-shrink: 0; color: var(--text2); white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; }
   .inv-alloc-label > span { overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1; }
@@ -3915,7 +3915,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   html[data-theme="light"] .inv-table-wrap { background: #fff; border-color: #e2e8f0; }
   html[data-theme="light"] .inv-table th { color: #475569; background: #f8fafc; border-bottom-color: #e2e8f0; }
   html[data-theme="light"] .inv-table th:nth-child(4), html[data-theme="light"] .inv-table th:nth-child(5) { background: rgba(14,165,233,0.1); color: #0284c7; }
-  html[data-theme="light"] .inv-table th:nth-child(6), html[data-theme="light"] .inv-table th:nth-child(7) { background: rgba(5,150,105,0.1); color: #047857; }
+  html[data-theme="light"] .inv-table th:nth-child(6), html[data-theme="light"] .inv-table th:nth-child(7) { background: rgba(5,150,105,0.1); color: #0b8a7a; }
   html[data-theme="light"] .inv-table td { border-bottom-color: #f1f5f9; }
   html[data-theme="light"] .inv-table td:nth-child(4), html[data-theme="light"] .inv-table td:nth-child(5) { background: rgba(14,165,233,0.05); }
   html[data-theme="light"] .inv-table td:nth-child(6), html[data-theme="light"] .inv-table td:nth-child(7) { background: rgba(5,150,105,0.05); }
@@ -4071,7 +4071,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     color: #e8eaf8;
   }
   .kpi-value.green { color: #22d3a8; }
-  .kpi-value.red   { color: #fb7185; }
+  .kpi-value.red   { color: #e11d48; }
   .kpi-value.yellow { color: #fbbf24; }
   /* first-child 38px override removed — see the note at the base .kpi-grid rule. */
   .kpi-sub { font-size: 11.5px; color: var(--text3); margin-top: 7px; line-height: 1.5; }
@@ -4098,9 +4098,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
   /* ── Badges ── */
   .badge-L { background: rgba(34,211,168,0.12); color: #22d3a8; border: 1px solid rgba(34,211,168,0.22); border-radius: var(--r-sm); }
-  .badge-S { background: rgba(244,63,94,0.1);   color: #fb7185; border: 1px solid rgba(244,63,94,0.2); border-radius: var(--r-sm); }
+  .badge-S { background: rgba(244,63,94,0.1);   color: #e11d48; border: 1px solid rgba(244,63,94,0.2); border-radius: var(--r-sm); }
   .num-green  { color: #22d3a8; }
-  .num-red    { color: #fb7185; }
+  .num-red    { color: #e11d48; }
   .num-yellow { color: #fbbf24; }
 
   /* ── Month filter bar ── */
@@ -4689,8 +4689,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   html[data-theme="light"] .kpi-value         { color: #0f172a; }
   html[data-theme="light"] .kpi-label         { color: #475569 !important; }
   html[data-theme="light"] .kpi-sub           { color: #64748b; }
-  html[data-theme="light"] .kpi-value.green   { color: #059669; text-shadow: none; }
-  html[data-theme="light"] .kpi-value.red     { color: #c0405c; text-shadow: none; }
+  html[data-theme="light"] .kpi-value.green   { color: #0b8a7a; text-shadow: none; }
+  html[data-theme="light"] .kpi-value.red     { color: #e11d48; text-shadow: none; }
   html[data-theme="light"] .kpi-value.yellow  { color: #b45309; text-shadow: none; }
   html[data-theme="light"] .table-wrap {
     background: #f3f6fb !important;
@@ -4746,11 +4746,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   html[data-theme="light"] .theme-toggle { border-color: #e2e8f0; background: #f1f5f9; color: #64748b; }
   @media (hover: hover) and (pointer: fine) { html[data-theme="light"] .theme-toggle:hover { background: #e2e8f0; color: #334155; } }
   html[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(37,99,235,0.2); }
-  html[data-theme="light"] .num-green  { color: #059669; }
-  html[data-theme="light"] .num-red    { color: #c0405c; }
+  html[data-theme="light"] .num-green  { color: #0b8a7a; }
+  html[data-theme="light"] .num-red    { color: #e11d48; }
   html[data-theme="light"] .num-yellow { color: #b45309; }
-  html[data-theme="light"] .badge-L { background: rgba(5,150,105,0.1); color: #059669; border-color: rgba(5,150,105,0.25); }
-  html[data-theme="light"] .badge-S { background: rgba(220,38,38,0.08); color: #c0405c; border-color: rgba(220,38,38,0.22); }
+  html[data-theme="light"] .badge-L { background: rgba(5,150,105,0.1); color: #0b8a7a; border-color: rgba(5,150,105,0.25); }
+  html[data-theme="light"] .badge-S { background: rgba(220,38,38,0.08); color: #e11d48; border-color: rgba(220,38,38,0.22); }
 
   /* ── Light mode overrides for Premium Visual Upgrade block ── */
 
@@ -5216,8 +5216,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .header-title { font-size: 15px !important; font-weight: 700 !important; letter-spacing: -0.3px !important; }
 
   /* P&L badge colors — max contrast */
-  .num-green { color: #2dd4a0 !important; }
-  .num-red   { color: #ff6b8a !important; }
+  .num-green { color: #0d9488 !important; }
+  .num-red   { color: #e11d48 !important; }
 
   /* Badge refinement */
   .badge { font-size: 10.5px !important; font-weight: 700 !important; padding: 2px 7px !important; border-radius: var(--r-sm) !important; }
@@ -5237,7 +5237,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   /* P&L chip — scoped to table cells only, not KPI cards */
   td .num-green {
     background: rgba(45,212,160,0.09);
-    color: #2dd4a0 !important;
+    color: #0d9488 !important;
     padding: 1px 6px;
     border-radius: var(--r-sm);
     font-weight: 700 !important;
@@ -5245,7 +5245,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   }
   td .num-red {
     background: rgba(255,107,138,0.09);
-    color: #ff6b8a !important;
+    color: #e11d48 !important;
     padding: 1px 6px;
     border-radius: var(--r-sm);
     font-weight: 700 !important;
@@ -5519,7 +5519,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <defs>
           <linearGradient id="hbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0b0b0e"/><stop offset="100%" stop-color="#141418"/></linearGradient>
           <linearGradient id="ha" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#818cf8"/></linearGradient>
-          <linearGradient id="hg" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#059669"/><stop offset="100%" stop-color="#34d399"/></linearGradient>
+          <linearGradient id="hg" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#0b8a7a"/><stop offset="100%" stop-color="#0d9488"/></linearGradient>
         </defs>
         <circle cx="100" cy="100" r="96" fill="url(#hbg)" stroke="#1a3460" stroke-width="2"/>
         <line x1="44" y1="60" x2="156" y2="60" stroke="#18181c" stroke-width="1"/><line x1="44" y1="90" x2="156" y2="90" stroke="#18181c" stroke-width="1"/><line x1="44" y1="120" x2="156" y2="120" stroke="#18181c" stroke-width="1"/>
@@ -5574,13 +5574,13 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           <defs>
             <linearGradient id="sb-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0b0b0e"/><stop offset="100%" stop-color="#141418"/></linearGradient>
             <linearGradient id="sb-a" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#818cf8"/></linearGradient>
-            <linearGradient id="sb-g" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#059669"/><stop offset="100%" stop-color="#34d399"/></linearGradient>
+            <linearGradient id="sb-g" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#0b8a7a"/><stop offset="100%" stop-color="#0d9488"/></linearGradient>
           </defs>
           <circle cx="100" cy="100" r="96" fill="url(#sb-bg)" stroke="#1a3460" stroke-width="2"/>
           <line x1="44" y1="60" x2="156" y2="60" stroke="#18181c" stroke-width="1"/>
           <line x1="44" y1="90" x2="156" y2="90" stroke="#18181c" stroke-width="1"/>
           <line x1="44" y1="120" x2="156" y2="120" stroke="#18181c" stroke-width="1"/>
-          <line x1="58" y1="102" x2="58" y2="130" stroke="#ff6b8a" stroke-width="2" opacity="0.7"/><rect x="52" y="110" width="12" height="16" rx="2" fill="#ff6b8a" opacity="0.7"/>
+          <line x1="58" y1="102" x2="58" y2="130" stroke="#e11d48" stroke-width="2" opacity="0.7"/><rect x="52" y="110" width="12" height="16" rx="2" fill="#e11d48" opacity="0.7"/>
           <line x1="85" y1="88" x2="85" y2="122" stroke="url(#sb-a)" stroke-width="2"/><rect x="79" y="95" width="12" height="22" rx="2" fill="url(#sb-a)"/>
           <line x1="112" y1="65" x2="112" y2="112" stroke="url(#sb-a)" stroke-width="2"/><rect x="106" y="72" width="12" height="34" rx="2" fill="url(#sb-a)"/>
           <line x1="139" y1="52" x2="139" y2="95" stroke="url(#sb-g)" stroke-width="2"/><rect x="133" y="58" width="12" height="30" rx="2" fill="url(#sb-g)"/>
@@ -6123,7 +6123,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             </div>
           </div>
           <div class="s-row-ctrl">
-            <span id="ibkr-conn-dot" style="display:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:var(--r-lg);background:rgba(63,185,80,0.15);color:#3fb950;border:1px solid rgba(63,185,80,0.3);flex-shrink:0;">Connected</span>
+            <span id="ibkr-conn-dot" style="display:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:var(--r-lg);background:rgba(63,185,80,0.15);color:#0d9488;border:1px solid rgba(63,185,80,0.3);flex-shrink:0;">Connected</span>
             <svg class="s-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
         </div>
@@ -6175,7 +6175,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             </div>
           </div>
           <div class="s-row-ctrl">
-            <span id="bybit-conn-dot" style="display:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:var(--r-lg);background:rgba(63,185,80,0.15);color:#3fb950;border:1px solid rgba(63,185,80,0.3);flex-shrink:0;">Connected</span>
+            <span id="bybit-conn-dot" style="display:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:var(--r-lg);background:rgba(63,185,80,0.15);color:#0d9488;border:1px solid rgba(63,185,80,0.3);flex-shrink:0;">Connected</span>
             <svg class="s-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
         </div>
@@ -6444,7 +6444,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
               <div class="inv-alloc-row">
                 <span class="inv-alloc-dot green"></span>
                 <span class="inv-alloc-label"><span data-i18n="inv_green">🟢 Growth — Target</span> <input type="number" class="inv-target-input" id="inv-tg-green" min="0" max="100" step="1" onchange="invSetTarget('green',this.value)" aria-label="Growth target %">%</span>
-                <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-green" style="width:0%;background:#34d399;"></div></div>
+                <div class="inv-alloc-bar-wrap"><div class="inv-alloc-bar-fill" id="alloc-bar-green" style="width:0%;background:#0d9488;"></div></div>
                 <span class="inv-alloc-invested sensitive" id="alloc-inv-green">—</span>
                 <span class="inv-alloc-cur" id="alloc-cur-green">0%</span>
                 <span class="inv-alloc-remaining sensitive" id="alloc-rem-green">—</span>
@@ -6480,7 +6480,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
                 <circle id="donut-cash"   cx="65" cy="65" r="50" fill="none" stroke="#2dd4bf" stroke-width="18" stroke-dasharray="314 314" stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition: stroke-dasharray 0.4s, stroke-dashoffset 0.4s;"/>
                 <circle id="donut-none"   cx="65" cy="65" r="50" fill="none" stroke="#94a3b8" stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition: stroke-dasharray 0.4s, stroke-dashoffset 0.4s;"/>
                 <circle id="donut-yellow" cx="65" cy="65" r="50" fill="none" stroke="#fbbf24" stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition: stroke-dasharray 0.4s, stroke-dashoffset 0.4s;"/>
-                <circle id="donut-green"  cx="65" cy="65" r="50" fill="none" stroke="#34d399" stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition: stroke-dasharray 0.4s, stroke-dashoffset 0.4s;"/>
+                <circle id="donut-green"  cx="65" cy="65" r="50" fill="none" stroke="#0d9488" stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition: stroke-dasharray 0.4s, stroke-dashoffset 0.4s;"/>
                 <circle id="donut-blue"   cx="65" cy="65" r="50" fill="none" stroke="#818cf8" stroke-width="18" stroke-dasharray="0 314"   stroke-dashoffset="0"   style="transform:rotate(-90deg);transform-origin:65px 65px;transition: stroke-dasharray 0.4s, stroke-dashoffset 0.4s;"/>
                 <text x="65" y="58" text-anchor="middle" fill="var(--text)"  font-size="16" font-weight="700" id="donut-label-pct">0%</text>
                 <text x="65" y="74" text-anchor="middle" fill="var(--text3)" font-size="9"  id="donut-allocated-label">Allocated</text>
@@ -7098,7 +7098,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           <defs>
             <linearGradient id="abg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0b0b0e"/><stop offset="100%" stop-color="#141418"/></linearGradient>
             <linearGradient id="aa" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#818cf8"/></linearGradient>
-            <linearGradient id="ag" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#059669"/><stop offset="100%" stop-color="#34d399"/></linearGradient>
+            <linearGradient id="ag" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#0b8a7a"/><stop offset="100%" stop-color="#0d9488"/></linearGradient>
           </defs>
           <circle cx="100" cy="100" r="96" fill="url(#abg)" stroke="#1a3460" stroke-width="2"/>
           <line x1="44" y1="60" x2="156" y2="60" stroke="#18181c" stroke-width="1"/><line x1="44" y1="90" x2="156" y2="90" stroke="#18181c" stroke-width="1"/><line x1="44" y1="120" x2="156" y2="120" stroke="#18181c" stroke-width="1"/>
@@ -7250,7 +7250,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             <defs>
               <linearGradient id="obg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0b0b0e"/><stop offset="100%" stop-color="#141418"/></linearGradient>
               <linearGradient id="oa" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#818cf8"/></linearGradient>
-              <linearGradient id="og" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#059669"/><stop offset="100%" stop-color="#34d399"/></linearGradient>
+              <linearGradient id="og" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#0b8a7a"/><stop offset="100%" stop-color="#0d9488"/></linearGradient>
             </defs>
             <circle cx="100" cy="100" r="96" fill="url(#obg)" stroke="#1a3460" stroke-width="2"/>
             <line x1="44" y1="60" x2="156" y2="60" stroke="#18181c" stroke-width="1"/><line x1="44" y1="90" x2="156" y2="90" stroke="#18181c" stroke-width="1"/><line x1="44" y1="120" x2="156" y2="120" stroke="#18181c" stroke-width="1"/>
@@ -7601,10 +7601,10 @@ function authPasswordStrength(val) {
   el.style.display = '';
   const score = [val.length >= 8, /[A-Z]/.test(val), /[0-9]/.test(val), /[^A-Za-z0-9]/.test(val)].filter(Boolean).length;
   const levels = [
-    { w: '25%', color: '#ff6b8a', label: 'חלשה' },
+    { w: '25%', color: '#e11d48', label: 'חלשה' },
     { w: '50%', color: '#f59e0b', label: 'בינונית' },
     { w: '75%', color: '#3b82f6', label: 'טובה' },
-    { w: '100%', color: '#2dd4a0', label: 'חזקה' },
+    { w: '100%', color: '#0d9488', label: 'חזקה' },
   ];
   const lvl = levels[score - 1] || levels[0];
   bar.style.width      = lvl.w;
@@ -11317,11 +11317,11 @@ function langInit() {
 // ── Fear & Greed Index ──────────────────────────
 let _fgTimer = null;
 const FG_COLORS = {
-  'extreme fear': ['#ff6b8a', '#c0405c'],
+  'extreme fear': ['#e11d48', '#e11d48'],
   'fear':         ['#f97316', '#ea580c'],
   'neutral':      ['#eab308', '#ca8a04'],
   'greed':        ['#84cc16', '#65a30d'],
-  'extreme greed':['#2dd4a0', '#1d9678'],
+  'extreme greed':['#0d9488', '#1d9678'],
 };
 const FG_LABELS = {
   'extreme fear':  'Extreme Fear',
@@ -11529,7 +11529,7 @@ function renderOverview() {
       <div class="kpi-label">${t('kpi_winrate')}</div>
       <div class="kpi-value ${st.wr>=50?'green':'red'} sensitive">${fmt(st.wr,1)}%</div>
       <div class="kpi-sub">${st.wins}W / ${st.losses}L</div>
-      <div class="kpi-progress-track"><div class="kpi-progress-bar" style="width:${Math.min(st.wr,100)}%;background:${st.wr>=50?'#2dd4a0':'#ff6b8a'}"></div></div>
+      <div class="kpi-progress-track"><div class="kpi-progress-bar" style="width:${Math.min(st.wr,100)}%;background:${st.wr>=50?'#0d9488':'#e11d48'}"></div></div>
     </div>
     <div class="kpi-card ${avgR!==null&&avgR>=0?'c-green':'c-yellow'}" title="רווח/הפסד ממוצע ביחס לסיכון המתוכנן — סטופ שהוגדר, או אם לא הוגדר סטופ, מרחק הכניסה ממחיר היציאה בפועל">
       <div class="kpi-label">${t('kpi_rr')}</div>
@@ -12544,7 +12544,7 @@ function renderHoldCompare(adv) {
   const ratio = win > 0 && loss > 0
     ? (win >= loss ? `${(win / loss).toFixed(1)}:1` : `1:${(loss / win).toFixed(1)}`)
     : '—';
-  wrap.innerHTML = row('מנצחת', win, '#2dd4a0') + row('הפסד', loss, '#ff6b8a')
+  wrap.innerHTML = row('מנצחת', win, '#0d9488') + row('הפסד', loss, '#e11d48')
     + `<div style="text-align:center;font-size:13px;font-weight:700;color:var(--text);margin-top:2px;">יחס: ${ratio}</div>`;
 }
 
@@ -13123,7 +13123,7 @@ function calcRM() {
 
   // Gauge: cap at 4R for visual
   const gaugePct = Math.min(ratio/4*100, 100);
-  const gaugeColor = ratio>=3?'var(--green)':ratio>=2?'#2dd4a0':ratio>=1?'var(--yellow)':'var(--red)';
+  const gaugeColor = ratio>=3?'var(--green)':ratio>=2?'var(--green)':ratio>=1?'var(--yellow)':'var(--red)';
   const gaugeFill = document.getElementById('rm-gauge-fill');
   gaugeFill.style.width = gaugePct+'%';
   gaugeFill.style.background = gaugeColor;
@@ -15021,10 +15021,10 @@ function _setBrokerBadge(broker, state) {
   // 'syncing' is a transient live state — never persist it.
   if (_currentUser && state !== 'none' && state !== 'syncing') localStorage.setItem(broker + '_conn_' + _currentUser.id, state);
   const map = {
-    ok:      { t: 'מחובר',        bg: 'rgba(63,185,80,0.15)',  fg: '#3fb950', bd: 'rgba(63,185,80,0.3)' },
+    ok:      { t: 'מחובר',        bg: 'rgba(63,185,80,0.15)',  fg: '#0d9488', bd: 'rgba(63,185,80,0.3)' },
     syncing: { t: 'מסנכרן…',      bg: 'rgba(79,131,255,0.15)', fg: '#4f83ff', bd: 'rgba(79,131,255,0.35)' },
     pending: { t: 'ממתין לסנכרון', bg: 'rgba(210,153,34,0.15)', fg: '#d29922', bd: 'rgba(210,153,34,0.3)' },
-    error:   { t: 'בעיית חיבור',   bg: 'rgba(248,81,73,0.15)',  fg: '#f85149', bd: 'rgba(248,81,73,0.3)' },
+    error:   { t: 'בעיית חיבור',   bg: 'rgba(248,81,73,0.15)',  fg: '#e11d48', bd: 'rgba(248,81,73,0.3)' },
   };
   const m = map[state];
   // Mirror IBKR (primary broker) status onto the always-visible header dot.
@@ -15877,7 +15877,7 @@ function _buildLightCSS() {
       --border:rgba(14,14,18,0.08); --border2:rgba(14,14,18,0.13);
       --text:#0f172a; --text2:#334155; --text3:#64748b;
       --accent:#4f46e5; --accent2:#6366f1; --accent-glow:rgba(14,165,233,0.12);
-      --green:#059669; --green-bg:rgba(5,150,105,0.1);
+      --green:#0b8a7a; --green-bg:rgba(5,150,105,0.1);
       --red:#e11d48; --red-bg:rgba(225,29,72,0.08);
       --yellow:#b45309; --yellow-bg:rgba(180,83,9,0.08);
       --sidebar-bg: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
@@ -15917,17 +15917,17 @@ function _buildLightCSS() {
     /* Colored top border removed (2026-08-26) — see the dark-mode note above. */
     .kpi-label { color:#64748b !important; }
     .kpi-value { color:#0f172a !important; }
-    .kpi-value.green { color:#059669 !important; }
+    .kpi-value.green { color:#0b8a7a !important; }
     .kpi-value.red   { color:#e11d48 !important; }
     .kpi-sub { color:#64748b !important; }
-    .kpi-trend.up   { color:#059669 !important; background:rgba(5,150,105,0.1) !important; }
+    .kpi-trend.up   { color:#0b8a7a !important; background:rgba(5,150,105,0.1) !important; }
     .kpi-trend.down { color:#e11d48 !important; background:rgba(225,29,72,0.08) !important; }
     .kpi-trend.flat { color:#64748b !important; background:rgba(0,0,0,0.05) !important; }
 
     .chart-card { background:#f3f6fb !important; border:1px solid #e2e8f0 !important; box-shadow:0 2px 12px rgba(0,0,0,0.05) !important; }
     .chart-card::before { display:none !important; }
     .chart-title { color:#586475 !important; }
-    .donut-stat-value.green { color:#047857 !important; }
+    .donut-stat-value.green { color:#0b8a7a !important; }
     .donut-stat-value.red   { color:#be123c !important; }
     .comp-card  { background:#f3f6fb !important; border:1px solid #e2e8f0 !important; box-shadow:0 2px 12px rgba(0,0,0,0.05) !important; }
     .comp-card::before { display:none !important; }
@@ -15959,10 +15959,10 @@ function _buildLightCSS() {
     @media (hover: hover) and (pointer: fine) { html[data-theme="light"] tbody tr.loss:hover td { background:rgba(225,29,72,0.07) !important; } }
     html[data-theme="light"] .year-group-row td { background:#f8fafc !important; border-color:#e2e8f0 !important; }
     html[data-theme="light"] .year-group-label { color:#64748b !important; }
-    html[data-theme="light"] .num-green  { color:#047857 !important; }
+    html[data-theme="light"] .num-green  { color:#0b8a7a !important; }
     html[data-theme="light"] .num-red    { color:#be123c !important; }
     html[data-theme="light"] .num-yellow { color:#b45309 !important; }
-    html[data-theme="light"] .badge-L { background:rgba(5,150,105,0.12) !important; color:#059669 !important; border-color:rgba(5,150,105,0.28) !important; }
+    html[data-theme="light"] .badge-L { background:rgba(5,150,105,0.12) !important; color:#0b8a7a !important; border-color:rgba(5,150,105,0.28) !important; }
     html[data-theme="light"] .badge-S { background:rgba(225,29,72,0.1) !important; color:#e11d48 !important; border-color:rgba(225,29,72,0.25) !important; }
 
     /* Forms & Inputs */
@@ -15973,13 +15973,13 @@ function _buildLightCSS() {
     input,textarea,.form-control,.qa-input { background:#ffffff !important; border-color:#cbd5e1 !important; color:#0f172a !important; }
     input::placeholder,.qa-input::placeholder { color:#94a3b8 !important; }
     .form-label { color:#0369a1 !important; }
-    .qa-type-badge.stock  { background:rgba(4,120,87,0.1) !important;  border-color:rgba(4,120,87,0.35) !important;  color:#047857 !important; }
+    .qa-type-badge.stock  { background:rgba(4,120,87,0.1) !important;  border-color:rgba(4,120,87,0.35) !important;  color:#0b8a7a !important; }
     .qa-type-badge.crypto { background:rgba(180,83,9,0.1) !important; border-color:rgba(180,83,9,0.35) !important; color:#b45309 !important; }
     .search-input { background:#ffffff !important; border-color:#cbd5e1 !important; color:#0f172a !important; }
 
     /* Buttons & Pills */
     .er-pill { background:#f1f5f9 !important; border-color:#cbd5e1 !important; color:#475569 !important; }
-    .er-pill.active-bo     { background:rgba(5,150,105,0.1) !important; border-color:#059669 !important; color:#059669 !important; }
+    .er-pill.active-bo     { background:rgba(5,150,105,0.1) !important; border-color:#0b8a7a !important; color:#0b8a7a !important; }
     .er-pill.active-handle { background:rgba(234,88,12,0.1) !important; border-color:#ea580c !important; color:#ea580c !important; }
     .er-pill.active-cheath { background:rgba(180,83,9,0.1) !important; border-color:#b45309 !important; color:#b45309 !important; }
     .er-pill.active-cheatl { background:rgba(14,165,233,0.1) !important; border-color:#0284c7 !important; color:#0284c7 !important; }
@@ -15989,7 +15989,7 @@ function _buildLightCSS() {
     .quick-add-title { color:#0ea5e9 !important; }
     .qa-label { color:#64748b !important; }
     .qa-ls-btn { background:#f1f5f9 !important; border-color:#e2e8f0 !important; color:#64748b !important; }
-    .qa-ls-btn.active-l { background:rgba(5,150,105,0.1) !important; color:#059669 !important; border-color:rgba(5,150,105,0.3) !important; }
+    .qa-ls-btn.active-l { background:rgba(5,150,105,0.1) !important; color:#0b8a7a !important; border-color:rgba(5,150,105,0.3) !important; }
     .qa-ls-btn.active-s { background:rgba(225,29,72,0.08) !important; color:#e11d48 !important; border-color:rgba(225,29,72,0.25) !important; }
 
     /* Expanded rows, notes */
@@ -16014,9 +16014,9 @@ function _buildLightCSS() {
     /* Mood pills */
     .mood-pill { background:#f1f5f9 !important; border-color:#cbd5e1 !important; color:#475569 !important; }
     .mood-pill.active-focused   { background:rgba(14,165,233,0.1) !important; border-color:#0284c7 !important; color:#0284c7 !important; }
-    .mood-pill.active-calm      { background:rgba(5,150,105,0.1) !important;  border-color:#059669 !important; color:#059669 !important; }
+    .mood-pill.active-calm      { background:rgba(5,150,105,0.1) !important;  border-color:#0b8a7a !important; color:#0b8a7a !important; }
     .mood-pill.active-confident { background:rgba(124,58,237,0.1) !important; border-color:#7c3aed !important; color:#7c3aed !important; }
-    .mood-pill.active-stressed  { background:rgba(220,38,38,0.1) !important;  border-color:#c0405c !important; color:#c0405c !important; }
+    .mood-pill.active-stressed  { background:rgba(220,38,38,0.1) !important;  border-color:#e11d48 !important; color:#e11d48 !important; }
     .mood-pill.active-impatient { background:rgba(234,88,12,0.1) !important;  border-color:#ea580c !important; color:#ea580c !important; }
     .mood-pill.active-doubtful  { background:rgba(100,116,139,0.1) !important; border-color:#64748b !important; color:#64748b !important; }
 
@@ -16064,11 +16064,11 @@ function _buildLightCSS() {
     .er-badge.cheatl { background:rgba(14,165,233,0.1) !important; color:#0284c7 !important; }
     .er-badge.cheath { background:rgba(180,83,9,0.1)   !important; color:#b45309 !important; }
     .er-badge.handle { background:rgba(234,88,12,0.1)  !important; color:#ea580c !important; }
-    .er-badge.bo     { background:rgba(5,150,105,0.1)  !important; color:#059669 !important; }
+    .er-badge.bo     { background:rgba(5,150,105,0.1)  !important; color:#0b8a7a !important; }
 
     /* Market condition badges — light-mode contrast */
-    .mc-badge.easy  { background:rgba(5,150,105,0.1)  !important; color:#059669 !important; }
-    .mc-badge.hard  { background:rgba(220,38,38,0.1)  !important; color:#c0405c !important; }
+    .mc-badge.easy  { background:rgba(5,150,105,0.1)  !important; color:#0b8a7a !important; }
+    .mc-badge.hard  { background:rgba(220,38,38,0.1)  !important; color:#e11d48 !important; }
     .mc-badge.up    { background:rgba(14,165,233,0.1) !important; color:#0284c7 !important; }
     .mc-badge.press { background:rgba(180,83,9,0.1)   !important; color:#b45309 !important; }
     .mc-badge.down  { background:rgba(124,58,237,0.1) !important; color:#7c3aed !important; }
@@ -16105,7 +16105,7 @@ function _buildLightCSS() {
     #auth-showcase .auth-showcase-sub,
     #auth-showcase .kpi-label,
     #auth-showcase .kpi-sub { color:#475569 !important; }
-    #auth-showcase .kpi-value.green { color:#059669 !important; }
+    #auth-showcase .kpi-value.green { color:#0b8a7a !important; }
     #auth-overlay input, #auth-overlay .form-control,
     #name-gate input, #name-gate .form-control,
     #ob-overlay input, #ob-overlay .form-control,
@@ -17319,7 +17319,7 @@ function invRenderRows(holdings) {
 const ALLOC_DEFAULTS = { blue: 0.60, green: 0.35, yellow: 0.05, cash: 0.05 };
 let ALLOC_TARGETS = { blue: 0.60, green: 0.35, yellow: 0.05 };
 let ALLOC_CASH_TARGET = 0.05;
-const ALLOC_COLORS  = { blue: '#818cf8', green: '#34d399', yellow: '#fbbf24' };
+const ALLOC_COLORS  = { blue: '#818cf8', green: '#0d9488', yellow: '#fbbf24' };
 
 function invApplyTargets(tg) {
   const v = tg && typeof tg === 'object' ? tg : {};
@@ -18026,12 +18026,12 @@ function invCalcRender() {
       <div style="display:grid;grid-template-columns:${cols};gap:8px;padding:2px 0">
         <span><span style="color:var(--text3)">כניסה ${i + 1}:</span> <b>${e.shares}</b> מניות</span>
         <span class="sensitive" style="color:var(--text3);text-align:center">${usd(e.usd)}</span>
-        ${hasRisk ? `<span class="sensitive" style="color:#f87171;text-align:left;${ltr}">−${usd(risk[i].loss)}<span style="color:var(--text3)"> · −${usd(risk[i].cum)}</span></span>` : ''}
+        ${hasRisk ? `<span class="sensitive" style="color:#e11d48;text-align:left;${ltr}">−${usd(risk[i].loss)}<span style="color:var(--text3)"> · −${usd(risk[i].cum)}</span></span>` : ''}
       </div>`).join('')}
     <div style="display:grid;grid-template-columns:${cols};gap:8px;margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,0.07)">
       <span style="color:var(--text2)">סה"כ <b>${totalShares}</b> מניות</span>
       <span class="sensitive" style="color:var(--text2);text-align:center">${usd(totalUsd)}</span>
-      ${hasRisk ? `<span class="sensitive" style="color:#f87171;font-weight:700;text-align:left;${ltr}">−${usd(totalLoss)}${lossPct !== null ? `<span style="color:var(--text3);font-weight:400"> · ${lossPct.toFixed(2)}%</span>` : ''}</span>` : ''}
+      ${hasRisk ? `<span class="sensitive" style="color:#e11d48;font-weight:700;text-align:left;${ltr}">−${usd(totalLoss)}${lossPct !== null ? `<span style="color:var(--text3);font-weight:400"> · ${lossPct.toFixed(2)}%</span>` : ''}</span>` : ''}
     </div>
     ${!hasRisk ? '<div style="color:var(--text3);margin-top:5px">הזן סטופ כדי לראות כמה כל פעימה מסכנת</div>' : ''}
     ${short ? `<div style="color:var(--yellow,#fbbf24);margin-top:5px">רק ${r.shares} מניות בסך הכל — לא ניתן לחלק ל-${n} כניסות</div>` : ''}`;
@@ -18567,11 +18567,11 @@ function ttRender(themes, indices) {
     const avgPct = sorted.reduce((s, t) => s + t[pKey], 0) / total;
     const momentumScore = Math.min(Math.max((avgPct + 5) / 10 * 100, 0), 100);
     const score = Math.round(breadthScore * 0.5 + momentumScore * 0.5);
-    const [label, color] = score >= 80 ? ['Extreme Greed', '#2dd4a0']
+    const [label, color] = score >= 80 ? ['Extreme Greed', '#0d9488']
       : score >= 60 ? ['Greed', '#84cc16']
       : score >= 40 ? ['Neutral', '#94a3b8']
       : score >= 20 ? ['Fear', '#f97316']
-      : ['Extreme Fear', '#ff6b8a'];
+      : ['Extreme Fear', '#e11d48'];
   }
 
   // ── Meta: Top3/Bottom3 + Breadth ──
@@ -18605,7 +18605,7 @@ function ttRender(themes, indices) {
       </div>
       <div class="tt-meta-card">
         <div class="tt-meta-title">Market Breadth</div>
-        <div class="tt-breadth-bar-wrap" style="background:linear-gradient(to right,#2dd4a0 ${greenPct}%,#ff6b8a ${greenPct}%)"></div>
+        <div class="tt-breadth-bar-wrap" style="background:linear-gradient(to right,#0d9488 ${greenPct}%,#e11d48 ${greenPct}%)"></div>
         <div class="tt-breadth-labels">
           <span class="tt-breadth-red">▼ ${red} <span style="opacity:0.7">(${redPct}%)</span></span>
           <span class="tt-breadth-neutral">${total} themes</span>

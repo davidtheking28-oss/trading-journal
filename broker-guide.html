@@ -3,10 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>מדריך חיבור ברוקר — ChartRoom</title>
+<title>מדריך חיבור IBKR ו-Bybit ליומן מסחר — ChartRoom</title>
 <meta name="description" content="מדריך שלב-אחר-שלב לחיבור Interactive Brokers ו-Bybit ליומן המסחר.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://davidtheking28-oss.github.io/trading-journal/broker-guide.html">
+<meta property="og:title" content="מדריך חיבור IBKR ו-Bybit ליומן מסחר — ChartRoom">
+<meta property="og:description" content="מדריך שלב-אחר-שלב לחיבור Interactive Brokers ו-Bybit ליומן המסחר.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://davidtheking28-oss.github.io/trading-journal/broker-guide.html">
+<meta property="og:locale" content="he_IL">
+<meta property="og:image" content="https://davidtheking28-oss.github.io/trading-journal/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://davidtheking28-oss.github.io/trading-journal/assets/og-image.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "ChartRoom", "item": "https://davidtheking28-oss.github.io/trading-journal/" },
+    { "@type": "ListItem", "position": 2, "name": "מדריך חיבור ברוקר", "item": "https://davidtheking28-oss.github.io/trading-journal/broker-guide.html" }
+  ]
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&family=Rubik:wght@500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -15,7 +35,7 @@
 :root{
   --bg:#0d1526;--card:linear-gradient(145deg,#091525,#0b1e38);--border:rgba(255,255,255,0.07);
   --text:#e4ecf8;--text2:#7a9cc4;--text3:#6b8398;
-  --accent:#4f83ff;--green:#2dd4a0;--yellow:#fbbf24;--red:#ff6b8a;
+  --accent:#4f83ff;--green:#0d9488;--yellow:#fbbf24;--red:#e11d48;
   --blue:#60a5fa;
   --display:'Rubik','Heebo',sans-serif;--body:'Heebo',sans-serif;--mono:'JetBrains Mono',monospace;
 }
@@ -109,6 +129,8 @@ nav{position:sticky;top:0;z-index:100;background:rgba(13,21,38,0.82);backdrop-fi
 
 /* A11y: visible keyboard focus */
 a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
+.skip-link{position:absolute;top:-100%;right:0;background:var(--accent);color:#fff;padding:10px 20px;border-radius:0 0 8px 8px;font-size:14px;font-weight:600;text-decoration:none;z-index:9999;transition:top .2s}
+.skip-link:focus{top:0}
 /* Respect reduced-motion preference */
 @media(prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
@@ -124,6 +146,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
 </style>
 </head>
 <body>
+<a href="#main" class="skip-link">דלג לתוכן הראשי</a>
 
 <nav>
   <a href="/" class="nav-logo" aria-label="ChartRoom">
@@ -145,7 +168,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
   </a>
 </nav>
 
-<div class="container">
+<main class="container" id="main">
 
   <!-- HERO -->
   <div class="guide-hero">
@@ -156,7 +179,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
 
   <!-- SUPER SIMPLE SUMMARY -->
   <div class="callout callout-tip" style="margin-bottom:32px">
-    <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    <svg aria-hidden="true" class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
     <div class="callout-text"><strong>במילים פשוטות:</strong> אתה הולך להעתיק 2-3 קודים מהאתר של הברוקר שלך (כמו סיסמה חד-פעמית), ולהדביק אותם ביומן. זהו. אחר כך היומן "רואה" את העסקאות שלך לבד, בלי שתצטרך להקליד אף עסקה בעצמך. לוקח 5–10 דקות, וזה קורה פעם אחת בלבד.</div>
   </div>
 
@@ -182,21 +205,21 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
     </div>
 
     <div class="callout callout-info">
-      <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <svg aria-hidden="true" class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <div class="callout-text"><strong>מה זה Flex Query?</strong> זה כמו לבקש מ-IBKR דו"ח של כל הקניות והמכירות שלך. פעם אחת מגדירים — ואחר כך לוחצים Sync ביומן וזהו.</div>
     </div>
 
     <div class="callout callout-tip">
-      <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      <svg aria-hidden="true" class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
       <div class="callout-text"><strong>השורה התחתונה:</strong> הגדרה חד-פעמית (חינם). בסוף התהליך תעתיק <strong>2 דברים בלבד</strong> מ-IBKR — <strong>Token</strong> ו-<strong>Query ID</strong> — תדביק אותם ביומן, וזהו. מרגע זה העסקאות מסתנכרנות לבד.</div>
     </div>
 
     <!-- MOCKUP: where the 2 values live -->
     <div style="background:#0a1525;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:8px 0 4px;box-shadow:0 10px 30px rgba(0,0,0,0.35)">
       <div style="background:#0c1a30;padding:8px 12px;font-size:11px;color:var(--text3);border-bottom:1px solid var(--border);display:flex;gap:6px;align-items:center">
-        <span style="width:9px;height:9px;border-radius:50%;background:#ff6b8a;display:inline-block"></span>
+        <span style="width:9px;height:9px;border-radius:50%;background:var(--red);display:inline-block"></span>
         <span style="width:9px;height:9px;border-radius:50%;background:#fbbf24;display:inline-block"></span>
-        <span style="width:9px;height:9px;border-radius:50%;background:#2dd4a0;display:inline-block"></span>
+        <span style="width:9px;height:9px;border-radius:50%;background:var(--green);display:inline-block"></span>
         <span style="margin-right:8px">client.ibkr.com → Performance &amp; Reports → Flex Queries</span>
       </div>
       <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
@@ -230,7 +253,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
           <div class="step-title">סגור משימות פתוחות בחשבון</div>
           <div class="step-desc">אם הפורטל מציג משימות ממתינות — אימות פרטים, מסמכים חסרים, אישור דרישות — סיים אותן <strong>לפני</strong> שתמשיך.</div>
           <div class="callout callout-warn" style="margin-top:10px">
-            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <svg aria-hidden="true" class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <div class="callout-text">כל עוד יש משימה פתוחה IBKR חוסם את שירות ה-Flex, והחיבור נתקע — בדרך כלל עם הודעת שגיאה מבלבלת על ה-Token.</div>
           </div>
         </div>
@@ -242,7 +265,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
           <div class="step-title">פתח את Flex Queries</div>
           <div class="step-desc">בתפריט העליון לחץ <code>Performance &amp; Reports</code> ← <code>Flex Queries</code>.</div>
           <div class="callout callout-info" style="margin-top:10px">
-            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <svg aria-hidden="true" class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             <div class="callout-text">בעמוד הזה יש <strong>שני אזורים</strong>, ותצטרך את שניהם: <strong>Flex Web Service</strong> (משם ה-Token, שלבים 4–6) ו-<strong>Activity Flex Query</strong> (משם ה-Query ID, שלבים 7–12).</div>
           </div>
         </div>
@@ -269,7 +292,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
             </div>
           </div>
           <div class="callout callout-tip" style="margin-top:10px">
-            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <svg aria-hidden="true" class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             <div class="callout-text">ברירת המחדל היא 6 שעות בלבד — אם תשאיר אותה, החיבור יפסיק לעבוד עוד באותו יום. <strong>Year 1</strong> חוסך לך את זה.</div>
           </div>
         </div>
@@ -281,7 +304,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
           <div class="step-title">העתק ושמור את ה-Token</div>
           <div class="step-desc">יופיע מספר ארוך בכחול. העתק אותו לפנקס או לכל מקום זמני.</div>
           <div class="callout callout-warn" style="margin-top:10px">
-            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <svg aria-hidden="true" class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <div class="callout-text"><strong>העתק אותו עכשיו!</strong> IBKR מציג את ה-Token פעם אחת בלבד.</div>
           </div>
           <div class="field-row">
@@ -289,7 +312,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
             <div class="field-mock">12345678901234567890123456789012</div>
           </div>
           <div class="callout callout-info" style="margin-top:10px">
-            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <svg aria-hidden="true" class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             <div class="callout-text">ה-Token הוא מפתח <strong>קריאה בלבד</strong> — הוא מאפשר ליומן רק למשוך את דוח העסקאות, ולא לבצע שום פעולה בחשבון.</div>
           </div>
         </div>
@@ -301,7 +324,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
           <div class="step-title">צור Activity Flex Query</div>
           <div class="step-desc">חזור לראש העמוד, ליד <strong>Activity Flex Query</strong> לחץ על הפלוס <code>+</code>. בשדה <code>Query Name</code> תן שם לזיהוי — למשל <code>ChartRoom</code>.</div>
           <div class="callout callout-warn" style="margin-top:10px">
-            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <svg aria-hidden="true" class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <div class="callout-text">חובה <strong>Activity</strong> — לא Trade Confirmation (זה סוג אחר ברשימה).</div>
           </div>
         </div>
@@ -317,7 +340,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
           </div>
           <div class="step-desc" style="margin-top:14px">בדרופדאון של רמת הפירוט בחר <strong>Execution</strong>.</div>
           <div class="callout callout-warn" style="margin-top:10px">
-            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <svg aria-hidden="true" class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <div class="callout-text">אל תבחר <strong>Closed Lots</strong>. זה מחזיר נתונים מסוכמים במקום ביצועים בודדים, והיומן לא יוכל לזהות הזמנה שהתפצלה לכמה חלקים — כל חלק יופיע כעסקה נפרדת.</div>
           </div>
         </div>
@@ -344,7 +367,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
             <li><strong>Asset Class</strong> — מסנן החוצה מט"ח, אופציות וחוזים. בלעדיו המרות מטבע ואופציות עלולות להיכנס ליומן כאילו היו מניות</li>
           </ul>
           <div class="callout callout-tip" style="margin-top:10px">
-            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <svg aria-hidden="true" class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             <div class="callout-text">אפשר גם ללחוץ <code>Select All</code> ולסמן הכל — היומן מתעלם משדות מיותרים. רק ודא ש-10 האלה מסומנים. בסיום לחץ <code>Save</code>.</div>
           </div>
         </div>
@@ -356,7 +379,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
           <div class="step-title">בחר חשבון (אם יש לך כמה)</div>
           <div class="step-desc">אם מוצגת רשימת חשבונות, סמן את החשבון שאתה רוצה לעקוב אחריו — או את כולם, אם תרצה את כל העסקאות ביומן. אם יש לך חשבון אחד בלבד, דלג על השלב הזה.</div>
           <div class="callout callout-warn" style="margin-top:10px">
-            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <svg aria-hidden="true" class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <div class="callout-text">חשבון שלא סימנת פשוט לא ישלח עסקאות — בלי שום הודעת שגיאה. זו הסיבה הנפוצה ל"חלק מהעסקאות שלי חסרות".</div>
           </div>
         </div>
@@ -376,7 +399,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
             <img src="assets/broker-guide/format-period.png" alt="הגדרות Format=XML, Period=Last 365 Calendar Days, Date/Time Separator=semi-colon" style="width:100%;display:block;border-radius:12px">
           </div>
           <div class="callout callout-warn" style="margin-top:10px">
-            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <svg aria-hidden="true" class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <div class="callout-text">שלושתם חשובים: <strong>CSV</strong> במקום XML לא ייקרא בכלל; תקופה קצרה מ-365 יום גורמת לעסקאות ישנות להיעלם ולסגירות "מיותמות"; ושינוי המפריד ל-<strong>single-space</strong> גורם לכך ש<strong>אף עסקה</strong> לא תיובא. בסיום לחץ <code>Save</code>.</div>
           </div>
         </div>
@@ -412,7 +435,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
             <img src="assets/broker-guide/connected-card.png" alt="כרטיס חיבור IBKR ביומן, מסומן כמחובר, עם Query ID ו-Token שמור" style="width:100%;display:block;border-radius:12px">
           </div>
           <div class="callout callout-tip" style="margin-top:10px">
-            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <svg aria-hidden="true" class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             <div class="callout-text"><strong>מעכשיו זה אוטומטי.</strong> היומן מושך עסקאות חדשות לבד, פותח וסוגר פוזיציות בעצמו — לא תחזור על זה.</div>
           </div>
         </div>
@@ -420,7 +443,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
     </div>
 
     <div class="callout callout-info" style="margin-top:8px">
-      <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <svg aria-hidden="true" class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <div class="callout-text"><strong>אופציונלי — עדכון כמעט בזמן-אמת:</strong> ברירת המחדל מתעדכנת פעם ביום וזה מספיק לרוב. אם תרצה שעסקאות יופיעו תוך דקות, צור ב-IBKR גם <strong>Trade Confirmation Flex Query</strong> (אותם שדות, Format XML) והדבק את ה-Query ID שלו ביומן תחת <code>הגדרות → IBKR → הגדרות מתקדמות</code>. לא חובה.</div>
     </div>
   </section>
@@ -436,7 +459,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
     </div>
 
     <div class="callout callout-info">
-      <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <svg aria-hidden="true" class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <div class="callout-text"><strong>מה זה API Key?</strong> זה כמו סיסמה מיוחדת שמאפשרת ליומן לקרוא את הנתונים שלך מ-Bybit — בלי שיוכל לקנות, למכור, או למשוך כסף.</div>
     </div>
 
@@ -477,7 +500,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
             </ul>
           </div>
           <div class="callout callout-warn" style="margin-top:10px">
-            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <svg aria-hidden="true" class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <div class="callout-text"><strong>אל תסמן Withdraw!</strong> זה מאפשר משיכת כסף — לא נחוץ ומסוכן.</div>
           </div>
         </div>
@@ -539,7 +562,7 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
           <div class="step-title">בדוק שהעסקאות מופיעות</div>
           <div class="step-desc">לחץ על Stocks או Crypto ובדוק שהעסקאות שם. זהו — סיימת!</div>
           <div class="callout callout-tip" style="margin-top:10px">
-            <svg class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <svg aria-hidden="true" class="callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             <div class="callout-text">היומן רק קורא נתונים מהברוקר — לא שולח פקודות ולא מסחר בשמך.</div>
           </div>
         </div>
@@ -558,44 +581,44 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
 
     <div class="trouble-list">
       <div class="trouble-item">
-        <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Flex Queries בכלל לא מופיע אצלי ב-IBKR</div>
+        <div class="trouble-q"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Flex Queries בכלל לא מופיע אצלי ב-IBKR</div>
         <div class="trouble-a">יש שלוש סיבות נפוצות: (1) יש לך חשבון <strong>IBKR Lite</strong> — הסוג הזה לא תומך ב-Flex. צריך <strong>IBKR Pro</strong>. (2) החשבון שלך חדש ועדיין לא פעיל לגמרי — נסה שוב אחרי יום-יומיים. (3) יש לך חשבון ניסיון (Paper Trading) בלבד — לא נתמך.</div>
       </div>
 
       <div class="trouble-item">
-        <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>"Token לא תקין" או "Unauthorized"</div>
+        <div class="trouble-q"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>"Token לא תקין" או "Unauthorized"</div>
         <div class="trouble-a">שלוש בדיקות לפי הסדר: (1) <strong>יש לך משימות פתוחות בפורטל?</strong> אימות פרטים או מסמכים חסרים חוסמים את שירות ה-Flex וזו התקלה שנראית כמו Token שגוי — סגור אותן קודם. (2) בעמוד <code>Flex Queries</code> → אזור <strong>Flex Web Service Configuration</strong> ודא שהשירות מופעל. (3) אם ה-Token נוצר עם תוקף <code>6 Hrs</code> הוא כבר פג — לחץ <code>Generate Token</code> מחדש, בחר <strong>Year 1</strong>, והדבק את החדש ביומן.</div>
       </div>
       <div class="trouble-item">
-        <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>"Query ID לא נמצא"</div>
+        <div class="trouble-q"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>"Query ID לא נמצא"</div>
         <div class="trouble-a">ה-Query ID הוא מספרי בלבד (לדוגמה <code>1462900</code>). ודא גם שיצרת <strong>Activity</strong> Flex Query — לא Trade Confirmation.</div>
       </div>
       <div class="trouble-item">
-        <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>"0 עסקאות נמצאו" למרות שיש עסקאות</div>
+        <div class="trouble-q"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>"0 עסקאות נמצאו" למרות שיש עסקאות</div>
         <div class="trouble-a">פתח את ה-Flex Query ב-IBKR ובדוק שלושה דברים: הטווח הוא <code>Last 365 Calendar Days</code>, ה-<code>Format</code> הוא <strong>XML</strong> (לא CSV), וה-<code>Date/Time Separator</code> הוא <strong>semi-colon (;)</strong>. מפריד single-space גורם לכך שאף עסקה לא תיובא — בלי הודעת שגיאה.</div>
       </div>
       <div class="trouble-item">
-        <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>חלק מהעסקאות מיובאות וחלק חסרות</div>
+        <div class="trouble-q"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>חלק מהעסקאות מיובאות וחלק חסרות</div>
         <div class="trouble-a">אם יש לך יותר מחשבון IBKR אחד — פתח את ה-Flex Query ובדוק ברשימת החשבונות שכל החשבונות שאתה רוצה לעקוב אחריהם מסומנים. חשבון שלא סומן לא שולח עסקאות, בשקט.</div>
       </div>
       <div class="trouble-item">
-        <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>עסקה אחת מופיעה ביומן כמה פעמים</div>
+        <div class="trouble-q"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>עסקה אחת מופיעה ביומן כמה פעמים</div>
         <div class="trouble-a">כשהזמנה מתמלאת בכמה חלקים, היומן מאחד אותם לעסקה אחת — אבל רק אם ה-Flex Query כולל את השדה <strong>IB Order ID</strong>, ורמת הפירוט היא <strong>Execution</strong>. פתח את סעיף <code>Trades</code> ובדוק את שניהם.</div>
       </div>
       <div class="trouble-item">
-        <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>המרות מטבע או אופציות נכנסו כאילו היו מניות</div>
+        <div class="trouble-q"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>המרות מטבע או אופציות נכנסו כאילו היו מניות</div>
         <div class="trouble-a">חסר השדה <strong>Asset Class</strong> בסעיף <code>Trades</code>. בלעדיו היומן לא יכול להבחין בין מניה לבין המרת מט"ח או אופציה. סמן אותו, שמור, וסנכרן שוב.</div>
       </div>
       <div class="trouble-item">
-        <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>עסקאות מופיעות ב-Stocks אבל ללא Stop Loss</div>
+        <div class="trouble-q"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>עסקאות מופיעות ב-Stocks אבל ללא Stop Loss</div>
         <div class="trouble-a">זה נורמלי — IBKR לא שולח פקודות עתידיות, רק עסקאות שבוצעו. הזן Stop Loss ידנית בכל עסקה ביומן.</div>
       </div>
       <div class="trouble-item">
-        <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Bybit — "Invalid API Key"</div>
+        <div class="trouble-q"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Bybit — "Invalid API Key"</div>
         <div class="trouble-a">לך ב-Bybit ל-<code>My Profile ← API</code>, ודא שה-Key פעיל ולא פג תוקף. אם פג — צור חדש.</div>
       </div>
       <div class="trouble-item">
-        <div class="trouble-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>עסקאות כפולות לאחר Sync</div>
+        <div class="trouble-q"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>עסקאות כפולות לאחר Sync</div>
         <div class="trouble-a">רענן את הדף ולחץ Sync שוב — היומן בודק כפילויות ולא ייצור עסקאות חוזרות. אם זה ממשיך, צור קשר.</div>
       </div>
     </div>
@@ -611,6 +634,6 @@ a:focus-visible,.btn-cta:focus-visible{outline:2px solid var(--accent);outline-o
     </a>
   </div>
 
-</div>
+</main>
 </body>
 </html>
