@@ -11730,7 +11730,7 @@ async function _loadPersonalStem(force = false) {
   } catch { /* keep last known state rather than flashing to unknown */ }
   renderPersonalStemBadge();
 }
-const PSTEM_LABELS = { green: 'עובד', orange: 'סלקטיבי', red: 'לא עובד', thin: 'אין מספיק מניות' };
+const PSTEM_LABELS = { green: 'חזקה', orange: 'סלקטיבית', red: 'סביבת שוק קשה', thin: 'אין מספיק מניות' };
 const PSTEM_COLORS = { green: 'var(--green)', orange: 'var(--yellow)', red: 'var(--red)', thin: 'var(--text3)' };
 function renderPersonalStemBadge() {
   const el = document.getElementById('pstem-badge');
@@ -11739,9 +11739,9 @@ function renderPersonalStemBadge() {
   const color = PSTEM_COLORS[_pstemState];
   el.style.display = 'flex';
   el.style.setProperty('--stem-color', color);
-  // The sample size is always shown. Without it a reading off one or two
-  // symbols looks identical to one off thirty, and "100% positive" off a
-  // single stock reads as a market verdict it cannot support.
+  // Only the color + state name are shown now (2026-09-13, explicit request)
+  // — the % positive / avg return / sample count line was dropped. Still
+  // computed elsewhere (_pstemDownRatio, _pstemAvgReturn); just not rendered.
   const n = _pstemResolved;
   if (_pstemState === 'thin') {
     el.innerHTML = `
@@ -11750,11 +11750,9 @@ function renderPersonalStemBadge() {
     <span class="stem-pill-vix">${n != null ? n : 0}/${PSTEM_MIN_SAMPLE} — הוסף מניות לרשימת המעקב</span>`;
     return;
   }
-  const posPct = _pstemDownRatio != null ? (100 - _pstemDownRatio).toFixed(0) : null;
   el.innerHTML = `
     <span class="stem-pill-label">STEM</span>
-    <span class="stem-pill-state">${PSTEM_LABELS[_pstemState]}</span>
-    ${posPct != null ? `<span class="stem-pill-vix">${posPct}% חיוביות · ${_pstemAvgReturn != null ? `${_pstemAvgReturn >= 0 ? '+' : ''}${_pstemAvgReturn.toFixed(1)}% ` : ''}ב-5 ימים · ${n} מניות</span>` : ''}`;
+    <span class="stem-pill-state">${PSTEM_LABELS[_pstemState]}</span>`;
 }
 
 // Broker-derived portfolio equity — ibkr-cron and bybit-cron both write
