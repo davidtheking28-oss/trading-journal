@@ -4648,7 +4648,13 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   }
   }
 
-  /* ── Light mode: override the new vars ── */
+  /* ── Light mode: override the new vars ──
+     Only vars that genuinely differ from the main light-mode block above
+     (line ~3105) belong here. --green/--red/--text/--accent/etc. used to be
+     redeclared identically in both blocks — harmless while they matched, but
+     it meant a future color fix (see the 2026-09-13 CVD-contrast fix) had to
+     remember to touch both places. Removed the ones that were pure duplicates;
+     kept only the values this block actually overrides. */
   html[data-theme="light"] {
     --chart-bg:  #fdfdfe;
     --chart-bar: #334155;
@@ -4656,20 +4662,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     --chart-txt: #64748b;
     --bg:    #f0f4f9;
     --bg2:   #e8edf5;
-    --card:  #ffffff;
     --card2: #f8fafc;
     --border:  rgba(14,14,18,0.07);
     --border2: rgba(14,14,18,0.12);
-    --text:  #0f172a;
-    --text2: #334155;
-    --text3: #64748b;   /* AA on white; #8896a8 was 3.01:1 */
-    --accent: #4f46e5;
-    --accent2: #6366f1;
     --accent-glow: rgba(37,99,235,0.1);
-    --green: #0b8a7a;
-    --red:   #e11d48;
-    --yellow: #b45309;
-    --purple: #7c3aed;
     --sidebar-bg: linear-gradient(180deg, #f8fafc 0%, #f0f4f9 100%);
     --sidebar-border: rgba(14,14,18,0.08);
   }
