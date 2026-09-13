@@ -1,0 +1,22 @@
+# ChartRoom
+
+> יומן מסחר חינמי לסוחרים עצמאיים — מסחר במניות וקריפטו, עם ייבוא אוטומטי מברוקרים וכלי ניתוח.
+
+ChartRoom הוא יומן מסחר (trading journal) בעברית, חינמי לתמיד וללא צורך בכרטיס אשראי. הוא מיועד לסוחרים עצמאיים (מניות, קריפטו) שרוצים להבין מה עובד להם ומה לא, במקום לנחש.
+
+## תכונות עיקריות
+
+- **ייבוא אוטומטי מברוקרים** — Interactive Brokers (Flex Web Service) ו-Bybit, סנכרון תקופתי אוטומטי אחרי חיבור חד-פעמי.
+- **סטטיסטיקות מסחר** — win rate, profit factor, ממוצעי רווח/הפסד, פילוח P&L לפי סימבול ותאריך.
+- **Market Pulse** — Fear & Greed Index ורוחב שוק בזמן אמת.
+- **מסנן מניות** — סריקה לפי שיטת Minervini SEPA (Trend Template, RS Rating, VCP, Power Play).
+- **מעקב תיק השקעות** — הקצאת הון בין מניות, קריפטו ו-ETFs, חשיפת סיכון לפי נכס.
+- **פרטיות** — הנתונים שייכים למשתמש; חיבורי ברוקר הם read-only (קריאה בלבד, לא מבצעים פעולות מסחר).
+
+זהו כלי לניתוח מסחר בלבד — אינו מהווה ייעוץ השקעות ואינו כולל שום יכולת בינה מלאכותית (AI).
+
+## עמודים
+
+- דף הבית: https://davidtheking28-oss.github.io/trading-journal/
+- האפליקציה: https://davidtheking28-oss.github.io/trading-journal/dashboard.html
+- מדריך חיבור ברוקר: https://davidtheking28-oss.github.io/trading-journal/broker-guide.html

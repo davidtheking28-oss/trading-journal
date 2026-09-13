@@ -22,7 +22,7 @@
 </script>
 <meta name="google-site-verification" content="FSusm5X2VDUsrsnZfnk_L_4V8STvBITiGc044BZ2eC0">
 <title>יומן מסחר חינמי | ייבוא אוטומטי מ-IBKR ו-Bybit | ChartRoom</title>
-<meta name="description" content="יומן מסחר חינמי לסוחרים ישראלים — ייבוא אוטומטי מ-IBKR ו-Bybit, מסנן מניות Trend Template ו-Market Pulse בזמן אמת.">
+<meta name="description" content="יומן מסחר חינמי לסוחרים ישראלים — ייבוא אוטומטי מ-IBKR ו-Bybit, מסנן מניות Trend Template, Market Pulse בזמן אמת וניתוח win rate לכל עסקה. נסה חינם היום.">
 <meta name="keywords" content="יומן מסחר, trading journal, יומן מסחר חינמי, ניתוח עסקאות, מסחר במניות, מסחר בקריפטו, ניהול סיכונים, interactive brokers ייבוא, bybit יומן, win rate מסחר, profit factor, market pulse, fear greed index, מסנן מניות, trend template, stock screener, סוחר יומי ישראל, swing trading יומן">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://davidtheking28-oss.github.io/trading-journal/">
@@ -50,20 +50,23 @@
 {
   "@context": "https://schema.org",
   "@type": "Organization",
+  "@id": "https://davidtheking28-oss.github.io/trading-journal/#org",
   "name": "ChartRoom",
   "url": "https://davidtheking28-oss.github.io/trading-journal/",
   "logo": "https://davidtheking28-oss.github.io/trading-journal/assets/icon.svg",
-  "sameAs": []
+  "sameAs": ["https://github.com/davidtheking28-oss/trading-journal"]
 }
 </script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "WebSite",
+  "@id": "https://davidtheking28-oss.github.io/trading-journal/#site",
   "name": "ChartRoom",
   "url": "https://davidtheking28-oss.github.io/trading-journal/",
   "inLanguage": "he",
-  "description": "יומן מסחר מקצועי עם מסנן מניות לפי Trend Template, לסוחרים בשוק ההון ובקריפטו"
+  "description": "יומן מסחר מקצועי עם מסנן מניות לפי Trend Template, לסוחרים בשוק ההון ובקריפטו",
+  "publisher": { "@id": "https://davidtheking28-oss.github.io/trading-journal/#org" }
 }
 </script>
 <script type="application/ld+json">
@@ -81,10 +84,8 @@
     "priceCurrency": "ILS"
   },
   "inLanguage": "he",
-  "author": {
-    "@type": "Organization",
-    "name": "ChartRoom"
-  }
+  "author": { "@id": "https://davidtheking28-oss.github.io/trading-journal/#org" },
+  "provider": { "@id": "https://davidtheking28-oss.github.io/trading-journal/#org" }
 }
 </script>
 <link rel="alternate" hreflang="he" href="https://davidtheking28-oss.github.io/trading-journal/">
@@ -544,23 +545,6 @@ section { padding: 72px max(28px, 5vw); position: relative; z-index: 1; }
 .tr-pnl.pos { color: var(--green); }
 .tr-pnl.neg { color: var(--red); }
 
-/* AI badge */
-.card-ai {
-  margin-top: 12px; padding: 9px 12px;
-  background: rgba(155,114,255,0.06);
-  border: 1px solid rgba(155,114,255,0.15);
-  border-radius: var(--r-sm);
-  display: flex; align-items: center; gap: 8px;
-  font-size: 11px; color: rgba(196,167,255,0.9);
-  font-family: var(--mono);
-}
-
-.ai-icon {
-  width: 18px; height: 18px; border-radius: 5px;
-  background: linear-gradient(135deg,#6b48ff,#c084fc);
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; font-size: 10px;
-}
 
 /* ── DEMO CARD (mirrors real dashboard palette) ── */
 .demo-app {
@@ -582,6 +566,12 @@ section { padding: 72px max(28px, 5vw); position: relative; z-index: 1; }
   font-family: inherit;
 }
 .demo-tab.active { color: #818cf8; border-bottom-color: #818cf8; font-weight: 600; }
+.demo-tab-pause {
+  margin-inline-start: auto; padding: 6px 9px;
+  background: none; border: none; border-radius: var(--r-sm);
+  color: #8896a8; font-size: 12px; cursor: pointer; align-self: center;
+}
+.demo-tab-pause:hover { color: #cbd5e1; background: rgba(255,255,255,0.06); }
 /* Stage is the fixed-size viewport; screens are absolutely positioned inside it so
    the outgoing and incoming screen overlay instead of stacking in normal flow while
    both are briefly display:block during the crossfade — without this the card's
@@ -685,21 +675,6 @@ section { padding: 72px max(28px, 5vw); position: relative; z-index: 1; }
 .d-crit { background: #111; border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 8px 10px; }
 .d-crit-lbl { font-size: 8px; color: #8896a8; margin-bottom: 3px; }
 .d-crit-val { font-size: 12px; font-weight: 700; color: #f1f5f9; font-variant-numeric: tabular-nums; }
-
-/* AI screen */
-.d-ai-card { background: rgba(129,140,248,0.05); border: 1px solid rgba(129,140,248,0.16); border-radius: var(--r-sm); padding: 10px; margin-bottom: 8px; }
-.d-ai-hdr { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
-.d-ai-icon { width: 20px; height: 20px; border-radius: 5px; background: linear-gradient(135deg,#6366f1,#818cf8); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.d-ai-name { font-size: 11px; font-weight: 700; color: #818cf8; }
-.d-ai-trade { font-size: 10px; color: #8896a8; }
-.d-score-row { display: flex; align-items: baseline; gap: 4px; margin-bottom: 9px; }
-.d-score-num { font-size: 30px; font-weight: 800; color: #818cf8; line-height: 1; }
-.d-score-of  { font-size: 11px; color: #8896a8; }
-.d-score-lbl { font-size: 10px; color: #8896a8; }
-.d-pt { font-size: 11px; margin-bottom: 5px; display: flex; gap: 5px; line-height: 1.4; }
-.d-pt.ok   { color: #2dd4a0; }
-.d-pt.warn { color: #fbbf24; }
-.d-pattern { margin-top: 8px; padding: 7px 9px; background: rgba(167,139,250,0.08); border: 1px solid rgba(167,139,250,0.2); border-radius: 6px; font-size: 10px; color: rgba(196,167,255,0.9); line-height: 1.5; }
 
 /* Market Pulse screen */
 .d-fg { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.15); border-radius: var(--r-sm); margin-bottom: 8px; }
@@ -1124,7 +1099,7 @@ footer {
   background: rgba(255,255,255,0.03); color: var(--text); font-size: 12px; cursor: pointer;
   font-family: var(--body);
 }
-.a11y-item.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.a11y-item.active { background: var(--accent-btn); color: #fff; border-color: var(--accent-btn); }
 .a11y-reset { width: 100%; margin-top: 12px; padding: 8px; border-radius: var(--r-sm); border: 1px solid var(--border2); background: none; color: var(--text3); font-size: 12px; cursor: pointer; font-family: var(--body); }
 
 html.a11y-contrast body { background: #000 !important; color: #fff !important; }
@@ -1148,7 +1123,7 @@ html.a11y-underline a { text-decoration: underline !important; }
 .cookie-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 .cookie-btn-accept {
   padding: 7px 16px; border-radius: var(--r-sm); border: none; font-size: 13px; font-weight: 600;
-  background: var(--accent); color: #fff; cursor: pointer;
+  background: var(--accent-btn); color: #fff; cursor: pointer;
 }
 .cookie-btn-decline {
   padding: 7px 14px; border-radius: var(--r-sm); border: 1px solid var(--border2);
@@ -1256,7 +1231,7 @@ html.a11y-underline a { text-decoration: underline !important; }
       <h1 class="hero-title" id="hero-heading">
         <span class="hero-title-lead">תפסיק <span class="hl-accent">לנחש</span> למה עסקאות שלך מרוויחות או מפסידות.</span>
       </h1>
-      <p class="hero-sub">בפעם הבאה שתשאל את עצמך למה הפסדת בעסקה, כדאי שתהיה לך תשובה אמיתית — לא ניחוש.</p>
+      <p class="hero-sub">מחבר את IBKR או Bybit שלך ומפרק כל עסקה לפי win rate, profit factor ותבנית מסחר — כדי שתדע בדיוק מה עובד לך ומה עולה לך כסף.</p>
       <div class="hero-actions">
         <a href="dashboard.html" class="btn-hero-primary">
           התחל בחינם
@@ -1314,17 +1289,18 @@ html.a11y-underline a { text-decoration: underline !important; }
 
       <div class="demo-app">
         <div class="demo-nav" role="tablist" aria-label="הדגמת מערכת">
-          <button class="demo-tab active" id="dt0" role="tab" aria-selected="true" aria-controls="ds0">דשבורד</button>
-          <button class="demo-tab" id="dt1" role="tab" aria-selected="false" aria-controls="ds1">עסקאות</button>
-          <button class="demo-tab" id="dt2" role="tab" aria-selected="false" aria-controls="ds2">Market Pulse</button>
-          <button class="demo-tab" id="dt3" role="tab" aria-selected="false" aria-controls="ds3">מסנן מניות</button>
-          <button class="demo-tab" id="dt4" role="tab" aria-selected="false" aria-controls="ds4">סטטיסטיקות</button>
+          <button class="demo-tab active" id="dt0" role="tab" aria-selected="true" aria-controls="ds0" tabindex="0">דשבורד</button>
+          <button class="demo-tab" id="dt1" role="tab" aria-selected="false" aria-controls="ds1" tabindex="-1">עסקאות</button>
+          <button class="demo-tab" id="dt2" role="tab" aria-selected="false" aria-controls="ds2" tabindex="-1">Market Pulse</button>
+          <button class="demo-tab" id="dt3" role="tab" aria-selected="false" aria-controls="ds3" tabindex="-1">מסנן מניות</button>
+          <button class="demo-tab" id="dt4" role="tab" aria-selected="false" aria-controls="ds4" tabindex="-1">סטטיסטיקות</button>
+          <button type="button" class="demo-tab-pause" id="demo-pause-btn" aria-label="השהה החלפה אוטומטית">⏸</button>
         </div>
 
         <div class="demo-stage">
           <!-- Screen 1: Dashboard overview -->
           <div class="demo-body demo-screen active" id="ds0" role="tabpanel" aria-labelledby="dt0" style="padding:0">
-            <img src="assets/demo/demo-stats.jpg" alt="דשבורד — סטטיסטיקה ולוח שנה חודשי" loading="lazy">
+            <img src="assets/demo/demo-stats.jpg" alt="דשבורד — סטטיסטיקה ולוח שנה חודשי" fetchpriority="high">
           </div>
 
           <!-- Screen 2: Trades table -->
@@ -1361,24 +1337,24 @@ html.a11y-underline a { text-decoration: underline !important; }
   </div>
   <div class="steps-row">
     <div class="step reveal">
-      <div class="step-circle">01</div>
+      <div class="step-circle" aria-hidden="true">01</div>
       <div>
         <h3 class="step-title">הרשמה</h3>
         <p class="step-desc">פחות מדקה. אימייל או Google — וכבר בפנים.</p>
       </div>
     </div>
     <div class="step step-mid reveal">
-      <div class="step-circle">02</div>
+      <div class="step-circle" aria-hidden="true">02</div>
       <div>
         <h3 class="step-title">חבר את הברוקר שלך</h3>
         <p class="step-desc">IBKR או Bybit, סנכרון מאובטח ואוטומטי. ~10 דקות בפעם הראשונה, ואז זה לבד.</p>
       </div>
     </div>
     <div class="step reveal">
-      <div class="step-circle">03</div>
+      <div class="step-circle" aria-hidden="true">03</div>
       <div>
         <h3 class="step-title">קבל תובנות מיידיות</h3>
-        <p class="step-desc">המערכת מנתחת הכל ומראה לך מה באמת קורה — למה אתה מפסיד ומה עובד לך.</p>
+        <p class="step-desc">רואה win rate, profit factor ו-P&amp;L לפי סימבול ותאריך — ומזהה בדיוק אילו setups מרוויחים לך ואילו עולים לך כסף.</p>
       </div>
     </div>
   </div>
@@ -1390,6 +1366,9 @@ html.a11y-underline a { text-decoration: underline !important; }
     <div class="section-pill">למה זה עובד</div>
     <h2 class="section-title" id="features-heading">כל מה שטבלה לא יכולה להראות לך</h2>
     <p class="section-sub">ברוקר, שוק, סורק מניות ותיק השקעות — הכל במקום אחד, בלי לקפוץ בין עשר טאבים</p>
+    <p class="section-sub" style="max-width:58ch;margin:14px auto 0;">
+      דוח הברוקר מראה כמה הרווחת החודש. הוא לא מראה אילו setups מרוויחים לך שוב ושוב, מתי אתה סוגר פוזיציות מוקדם מדי, או שאתה מסתכן יותר מדי בסקטור אחד. ChartRoom לוקח את כל העסקאות שלך — ממניות, קריפטו, מכל ברוקר שתחבר — ומחשב מהן win rate, profit factor וממוצע רווח/הפסד אמיתיים, כדי שההחלטה הבאה שלך תתבסס על מה שבאמת עבד לך בעבר, לא על תחושת בטן.
+    </p>
   </div>
 
   <div class="feat-grid">
@@ -1411,7 +1390,7 @@ html.a11y-underline a { text-decoration: underline !important; }
     <div class="feat-card reveal">
       <span class="feat-num" aria-hidden="true">04</span>
       <h3 class="feat-row-title">בניית תיק השקעות</h3>
-      <p class="feat-row-desc">הקצאת הון בין מניות, קריפטו ו-ETFs, תשואה כוללת וחשיפת סיכון — במבט אחד, לפני שהשוק מזכיר לך את זה.</p>
+      <p class="feat-row-desc">הקצאת הון בין מניות, קריפטו ו-ETFs, תשואה כוללת במבט אחד — כדי לראות חשיפת יתר לנכס בודד לפני שהיא הופכת להפסד גדול.</p>
     </div>
   </div>
 </section>
@@ -1515,7 +1494,7 @@ html.a11y-underline a { text-decoration: underline !important; }
     <h2 class="cta-title">בעוד חודש יהיו לך עוד עשרות עסקאות. תדע עליהן משהו?</h2>
     <p class="cta-sub">כל יום בלי תיעוד הוא עוד יום שאתה לא רואה את הדפוסים האמיתיים שלך.</p>
     <a href="dashboard.html" class="btn-cta-dark">
-      התחל לראות בחינם
+      גלה מה עובד לך — בחינם
       <svg width="15" height="15" aria-hidden="true"><use href="#i-arr"/></svg>
     </a>
     <p style="margin-top:16px;font-size:12px;color:var(--text3);">ללא כרטיס אשראי · הרשמה בפחות מדקה · לא ייעוץ פיננסי, המסחר כרוך בסיכון</p>
@@ -1541,7 +1520,7 @@ html.a11y-underline a { text-decoration: underline !important; }
       <div class="footer-col" role="navigation" aria-label="מוצר">
         <span class="footer-col-title">מוצר</span>
         <a href="dashboard.html">כניסה לאפליקציה</a>
-        <a href="https://github.com/davidtheking28-oss/trading-journal" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://github.com/davidtheking28-oss/trading-journal" target="_blank" rel="noopener noreferrer" aria-label="GitHub (נפתח בכרטיסייה חדשה)">GitHub</a>
       </div>
       <div class="footer-col" role="navigation" aria-label="משפטי">
         <span class="footer-col-title">משפטי</span>
@@ -1577,10 +1556,22 @@ html.a11y-underline a { text-decoration: underline !important; }
         b.setAttribute('aria-pressed', on);
       });
     }
+    // aria-modal="true" on the panel promises the rest of the page is
+    // unreachable — without `inert`, a screen reader's browse-mode cursor
+    // (not just Tab) can still land on content behind it, so this keeps the
+    // promise the ARIA role makes.
+    function setBodyInert(on) {
+      var keep = { 'a11y-toggle': 1, 'a11y-panel': 1 };
+      Array.prototype.forEach.call(document.body.children, function (el) {
+        if (keep[el.id] || el.classList.contains('skip-link')) return;
+        el.inert = on;
+      });
+    }
     window.a11yToggle = function () {
       var panel = document.getElementById('a11y-panel');
       var open = panel.classList.toggle('open');
       document.getElementById('a11y-toggle').setAttribute('aria-expanded', open);
+      setBodyInert(open);
       if (open) {
         var focusable = panel.querySelectorAll('button');
         focusable[0].focus();
@@ -1676,25 +1667,43 @@ html.a11y-underline a { text-decoration: underline !important; }
   (function() {
     const screens = document.querySelectorAll('.demo-screen');
     const tabs = document.querySelectorAll('.demo-tab');
+    const pauseBtn = document.getElementById('demo-pause-btn');
     const total = screens.length;
-    let cur = 0, timer;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let cur = 0, timer = null, paused = reduceMotion; // WCAG 2.2.2: never auto-start when the user asked for less motion
     function go(idx) {
       screens[cur].classList.remove('active');
       tabs[cur].classList.remove('active');
       tabs[cur].setAttribute('aria-selected', 'false');
+      tabs[cur].setAttribute('tabindex', '-1');
       cur = idx;
       screens[cur].classList.add('active');
       tabs[cur].classList.add('active');
       tabs[cur].setAttribute('aria-selected', 'true');
+      tabs[cur].setAttribute('tabindex', '0');
       const img = screens[cur].querySelector('img[data-src]');
       if (img) { img.src = img.dataset.src; img.removeAttribute('data-src'); }
     }
-    tabs.forEach((tab, i) => tab.addEventListener('click', () => {
-      clearInterval(timer);
-      go(i);
-      timer = setInterval(() => go((cur + 1) % total), 5000);
+    function start() { if (paused) return; clearInterval(timer); timer = setInterval(() => go((cur + 1) % total), 5000); }
+    function stop() { clearInterval(timer); timer = null; }
+    function setPaused(v) {
+      paused = v;
+      if (pauseBtn) { pauseBtn.textContent = paused ? '▶' : '⏸'; pauseBtn.setAttribute('aria-label', paused ? 'המשך החלפה אוטומטית' : 'השהה החלפה אוטומטית'); }
+      if (paused) stop(); else start();
+    }
+    tabs.forEach((tab, i) => tab.addEventListener('click', () => { go(i); start(); }));
+    // Roving tabindex + arrow keys, per the ARIA APG Tabs pattern — RTL, so
+    // the visual "next" direction (ArrowLeft) is the one that increments.
+    tabs.forEach((tab, i) => tab.addEventListener('keydown', e => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      const next = e.key === 'ArrowLeft' ? (i + 1) % total : (i - 1 + total) % total;
+      go(next);
+      tabs[next].focus();
+      start();
     }));
-    timer = setInterval(() => go((cur + 1) % total), 5000);
+    if (pauseBtn) pauseBtn.addEventListener('click', () => setPaused(!paused));
+    setPaused(paused);
   })();
 
   // Count-up for stats
