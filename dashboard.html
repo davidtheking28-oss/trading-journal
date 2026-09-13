@@ -562,6 +562,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .qa-modal-grid .qa-field { margin: 0; }
   .qa-modal-grid .qa-field.full { grid-column: 1 / -1; }
   .qa-modal-footer {
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1197,6 +1198,15 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     margin: auto 0;
     position: relative;
     overflow: hidden;
+    /* The overlay used to be the only scroll container, so a tall form (the
+       add-trade modal's 9 sections is the worst case) scrolled header, body
+       and footer together — the Save button and whatever field the
+       validator complained about could vanish off-screen at the same time.
+       Capping the modal itself and scrolling only .modal-body keeps the
+       header and footer always in view. */
+    max-height: calc(100vh - 48px);
+    display: flex;
+    flex-direction: column;
   }
   .modal::before {
     content: '';
@@ -1220,7 +1230,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     padding: 5px 8px; border-radius: var(--r-sm); transition: background-color 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s, transform 0.2s, box-shadow 0.2s; font-family: inherit;
   }
   @media (hover: hover) and (pointer: fine) { .modal-close:hover { color: var(--text); background: var(--border2); border-color: var(--border2); } }
-  .modal-body { padding: 20px 24px; }
+  .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+  .modal-header, .modal-footer { flex: 0 0 auto; }
   .modal-footer { padding: 14px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
 
   .form-section { margin-bottom: 20px; }
@@ -13228,9 +13239,19 @@ function toast(msg, type='success') {
   const icon = document.createElement('span');
   icon.textContent = type === 'error' ? '❌' : type === 'warning' ? '⚠️' : type === 'info' ? 'ℹ️' : '✅';
   el.appendChild(icon);
-  el.appendChild(document.createTextNode(' ' + String(msg).slice(0, 100)));
+  // 100 chars used to cut mid-instruction on several real error messages
+  // (e.g. the IBKR retry-exhausted toast, which ends with the one line that
+  // actually tells the user how to fix the recurring 29-day Flex window
+  // issue) with no visual sign anything was cut. 240 covers every current
+  // toast call whole; the ellipsis is a safety net if a future one is longer.
+  const full = String(msg);
+  const shown = full.length > 240 ? full.slice(0, 239) + '…' : full;
+  el.appendChild(document.createTextNode(' ' + shown));
   c.appendChild(el);
-  setTimeout(()=>{ el.style.transition='opacity 0.18s ease-out, transform 0.18s ease-out'; el.style.opacity='0'; el.style.transform='translateX(-16px)'; setTimeout(()=>el.remove(),180); }, 3000);
+  // Longer messages get more time on screen — a one-word "success" toast
+  // doesn't need 3s any more than a full sentence needs less.
+  const dismissMs = Math.min(3000 + Math.max(0, shown.length - 40) * 40, 9000);
+  setTimeout(()=>{ el.style.transition='opacity 0.18s ease-out, transform 0.18s ease-out'; el.style.opacity='0'; el.style.transform='translateX(-16px)'; setTimeout(()=>el.remove(),180); }, dismissMs);
 }
 
 // ─────────────────────────────────────────────
