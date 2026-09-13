@@ -5985,7 +5985,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     <div class="s-col" style="display:contents">
 
       <!-- Account -->
-      <div class="s-section" style="order:1">
+      <div class="s-section" style="order:5">
         <div class="s-section-header">
           <div class="s-section-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
           <div><div class="s-section-title" data-i18n="set_grp_account">Account</div><div class="s-section-sub" data-i18n="set_grp_account_sub">Name, display name, email</div></div>
@@ -6121,8 +6121,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         </div>
       </div>
 
-      <!-- Import -->
-      <div class="s-section" style="order:5">
+      <!-- Import (order:1 — broker auto-sync is the app's main daily value
+           driver; used to sit at order:5, behind Account/Security, per the
+           impeccable audit, 2026-09-13) -->
+      <div class="s-section" style="order:1">
         <div class="s-section-header">
           <div class="s-section-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
           <div><div class="s-section-title" data-i18n="set_grp_import">Import</div><div class="s-section-sub">Broker connection &amp; file import</div></div>
