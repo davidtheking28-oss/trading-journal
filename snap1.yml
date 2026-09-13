@@ -1,0 +1,160 @@
+- generic [active] [ref=f19e1]:
+  - link "דלג לתוכן הראשי" [ref=f19e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "פתח תפריט נגישות" [ref=f19e3] [cursor=pointer]
+  - dialog "הסכמה לעוגיות" [ref=f19e113]:
+    - generic [ref=f19e114]: 🍪
+    - generic [ref=f19e115]:
+      - generic [ref=f19e116]: אנחנו משתמשים ב-Cookies
+      - generic [ref=f19e117]:
+        - text: האתר משתמש בעוגיות ואחסון מקומי (localStorage) לשמירת העסקאות, הגדרות ומפתח API שלך — הכל נשמר
+        - strong [ref=f19e118]: בדפדפן שלך בלבד
+        - text: ", לא נשלח שום מידע לשרת חיצוני."
+      - generic [ref=f19e119]:
+        - button "הגדרות" [ref=f19e120] [cursor=pointer]
+        - button "דחה הכל" [ref=f19e121] [cursor=pointer]
+        - button "אשר הכל" [ref=f19e122] [cursor=pointer]
+  - generic [ref=f19e9]:
+    - banner [ref=f19e10]:
+      - generic [ref=f19e17]:
+        - button "Home" [ref=f19e18] [cursor=pointer]
+        - button "Stocks" [ref=f19e19] [cursor=pointer]
+        - button "Statistics" [ref=f19e20] [cursor=pointer]
+        - button "Market Pulse" [ref=f19e21] [cursor=pointer]
+        - button "Screener" [ref=f19e22] [cursor=pointer]
+        - button "Missed" [ref=f19e23] [cursor=pointer]
+        - button "Investments" [ref=f19e24] [cursor=pointer]
+      - generic [ref=f19e25]:
+        - button "החלף ערכת צבעים" [ref=f19e26] [cursor=pointer]
+        - button "מצב פרטיות" [ref=f19e34] [cursor=pointer]
+        - button "יציאה" [ref=f19e38] [cursor=pointer]
+        - generic "Settings" [ref=f19e42] [cursor=pointer]
+    - main [ref=f19e47]:
+      - generic [ref=f19e126]:
+        - generic [ref=f19e127]:
+          - generic [ref=f19e128]: "סינון:"
+          - button "כל הזמן" [ref=f19e130] [cursor=pointer]
+          - button "📈 מניות" [ref=f19e135] [cursor=pointer]
+        - generic [ref=f19e139]:
+          - button "+ Add New Trade" [ref=f19e140] [cursor=pointer]
+          - button "חודשי" [ref=f19e141] [cursor=pointer]
+          - button "עמודות בסיס" [ref=f19e144] [cursor=pointer]
+          - button "🧹 Clean Duplicates" [ref=f19e145] [cursor=pointer]
+          - button "📅 Archive" [ref=f19e146] [cursor=pointer]
+          - generic [ref=f19e147]:
+            - text: "3 trades | P&L:"
+            - strong [ref=f19e148]: +$678.00
+            - text: "| Win:"
+            - strong [ref=f19e149]: 100.0%
+            - text: "| 2W / 0L"
+          - generic [ref=f19e150]:
+            - text: 🔍
+            - textbox "Search symbol..." [ref=f19e151]
+        - table [ref=f19e153]:
+          - rowgroup [ref=f19e174]:
+            - row [ref=f19e175]:
+              - columnheader "#" [ref=f19e176]
+              - columnheader "תאריך כניסה" [ref=f19e177] [cursor=pointer]
+              - columnheader "L/S" [ref=f19e180]
+              - columnheader "סטטוס" [ref=f19e181]
+              - columnheader "סיבת כניסה" [ref=f19e182]
+              - columnheader "סימבול" [ref=f19e183] [cursor=pointer]
+              - columnheader "כניסה" [ref=f19e187]
+              - columnheader "מניות" [ref=f19e188]
+              - columnheader "סטופ" [ref=f19e189]
+              - columnheader "יעדים" [ref=f19e190]
+              - columnheader "תאריך סגירה" [ref=f19e191]
+              - columnheader "מניות סגירה" [ref=f19e192]
+              - columnheader "יציאה" [ref=f19e193]
+              - columnheader "סקטור" [ref=f19e194]
+              - columnheader "עמלה" [ref=f19e195]
+              - columnheader "סה\"כ" [ref=f19e196]
+              - columnheader "%" [ref=f19e201]
+              - columnheader "R" [ref=f19e206]
+              - columnheader "פעולות" [ref=f19e211]
+          - rowgroup [ref=f19e212]:
+            - row [ref=f19e213]:
+              - cell [ref=f19e214]:
+                - text: 📅 2026
+                - generic [ref=f19e215]:
+                  - text: "3 עסקאות | P&L:"
+                  - strong [ref=f19e216]: +$678.00
+                  - text: "| Win:"
+                  - strong [ref=f19e217]: 100.0%
+                  - text: "| 2W / 0L"
+            - button [ref=f19e218] [cursor=pointer]:
+              - cell "3" [ref=f19e219]
+              - cell "08.09.26" [ref=f19e223]
+              - cell "L" [ref=f19e224]
+              - cell "פתוח" [ref=f19e226]
+              - cell "—" [ref=f19e228]
+              - cell [ref=f19e229]:
+                - strong [ref=f19e231]: NVDA
+              - cell "$120.2" [ref=f19e232]
+              - cell "30" [ref=f19e233]
+              - cell "$—" [ref=f19e234]
+              - cell "—" [ref=f19e235]
+              - cell "—" [ref=f19e236]
+              - cell "—" [ref=f19e237]
+              - cell "$—" [ref=f19e238]
+              - cell "Technology" [ref=f19e239]
+              - cell "$1.00" [ref=f19e240]
+              - cell "-$1.00" [ref=f19e241]
+              - cell "-0.03%" [ref=f19e243]
+              - cell "—" [ref=f19e245]
+              - cell [ref=f19e246]:
+                - generic [ref=f19e247]:
+                  - button "ערוך עסקה" [ref=f19e248]
+                  - button "מחק עסקה" [ref=f19e252]
+                  - button "צילומי מסך" [ref=f19e256]
+            - button [ref=f19e260] [cursor=pointer]:
+              - cell "2" [ref=f19e261]
+              - cell "01.09.26" [ref=f19e265]
+              - cell "L" [ref=f19e266]
+              - cell "סגור" [ref=f19e268]
+              - cell "—" [ref=f19e270]
+              - cell [ref=f19e271]:
+                - strong [ref=f19e273]: AAPL
+              - cell "$220.5" [ref=f19e274]
+              - cell "50" [ref=f19e275]
+              - cell "$—" [ref=f19e276]
+              - cell "—" [ref=f19e277]
+              - cell "05.09.26" [ref=f19e278]
+              - cell "50" [ref=f19e279]
+              - cell "$230.1" [ref=f19e280]
+              - cell "Technology" [ref=f19e281]
+              - cell "$1.00" [ref=f19e282]
+              - cell "+$479.00" [ref=f19e283]
+              - cell "+4.34%" [ref=f19e285]
+              - cell "+1.00R" [ref=f19e287]
+              - cell [ref=f19e289]:
+                - generic [ref=f19e290]:
+                  - button "ערוך עסקה" [ref=f19e291]
+                  - button "מחק עסקה" [ref=f19e295]
+                  - button "צילומי מסך" [ref=f19e299]
+            - button [ref=f19e303] [cursor=pointer]:
+              - cell "1" [ref=f19e304]
+              - cell "20.08.26" [ref=f19e308]
+              - cell "S" [ref=f19e309]
+              - cell "סגור" [ref=f19e311]
+              - cell "—" [ref=f19e313]
+              - cell [ref=f19e314]:
+                - strong [ref=f19e316]: MSFT
+              - cell "$410" [ref=f19e317]
+              - cell "20" [ref=f19e318]
+              - cell "$—" [ref=f19e319]
+              - cell "—" [ref=f19e320]
+              - cell "25.08.26" [ref=f19e321]
+              - cell "20" [ref=f19e322]
+              - cell "$400" [ref=f19e323]
+              - cell "Technology" [ref=f19e324]
+              - cell "$1.00" [ref=f19e325]
+              - cell "+$199.00" [ref=f19e326]
+              - cell "+2.43%" [ref=f19e328]
+              - cell "+0.99R" [ref=f19e330]
+              - cell [ref=f19e332]:
+                - generic [ref=f19e333]:
+                  - button "ערוך עסקה" [ref=f19e334]
+                  - button "מחק עסקה" [ref=f19e338]
+                  - button "צילומי מסך" [ref=f19e342]
+  - text: ✓ ✓ ✓
