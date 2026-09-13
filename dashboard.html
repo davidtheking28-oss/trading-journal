@@ -693,6 +693,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
      other KPI card in the row (2026-08-26, on request). Only the label keeps
      its own tracking. */
   .kpi-grid .kpi-card:first-child .kpi-label { font-size: 10px; letter-spacing: 1px; }
+  /* A card that carries a [title] has real disambiguating info in it (e.g.
+     "closed trades only") that's otherwise only reachable by hover — cursor:
+     help is at least a visible signal there's more to read, since the text
+     itself is unreachable on touch either way (impeccable audit, 2026-09-13). */
+  .kpi-card[title] { cursor: help; }
   .kpi-card {
     background: linear-gradient(155deg, #131317 0%, #0e0e11 100%);
     border: 1px solid var(--border);
