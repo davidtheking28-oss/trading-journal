@@ -1675,3 +1675,59 @@ describe('_missedMonthAvgPct — a missed month is judged on its OWN move, not t
     assert.equal(r, null);
   });
 });
+
+// ── Overview charts must follow the active theme, not hardcoded hex ─────────
+// getGridColor/getTickColor/cssVar/cssVar Rgb read the live theme; three of the
+// four Chart.js charts used to override chartDefaults()'s theme-aware scales
+// with fixed constants (#8faac8 etc.), so axis labels went nearly invisible in
+// light mode (measured 1.87:1 contrast). Fixed 2026-09-13 — see dataviz audit.
+describe('chart color helpers stay theme-aware', () => {
+  function stubbed(theme, cssProps) {
+    return {
+      document: { documentElement: { getAttribute: k => (k === 'data-theme' ? theme : null) } },
+      getComputedStyle: () => ({ getPropertyValue: name => cssProps[name] || '' }),
+    };
+  }
+
+  test('getGridColor/getTickColor differ between dark and light', () => {
+    const src = [extractFunction('getGridColor'), extractFunction('getTickColor')].join('\n');
+    const build = theme => {
+      const factory = new Function('document', `${src}\nreturn { getGridColor, getTickColor };`);
+      return factory(stubbed(theme, {}).document);
+    };
+    const dark = build(null), light = build('light');
+    assert.notEqual(dark.getTickColor(), light.getTickColor());
+    assert.notEqual(dark.getGridColor(), light.getGridColor());
+    assert.equal(light.getTickColor(), '#64748b');
+  });
+
+  test('cssVar/cssVarRgb read the live --green/--red custom properties', () => {
+    const src = [extractFunction('cssVar'), extractFunction('cssVarRgb')].join('\n');
+    const { document, getComputedStyle } = stubbed('dark', { '--green': '#0d9488', '--red': '#e11d48' });
+    const factory = new Function('document', 'getComputedStyle', `${src}\nreturn { cssVar, cssVarRgb };`);
+    const { cssVar, cssVarRgb } = factory(document, getComputedStyle);
+    assert.equal(cssVar('--green'), '#0d9488');
+    assert.equal(cssVarRgb('--green'), '13,148,136');
+    assert.equal(cssVarRgb('--red'), '225,29,72');
+  });
+
+  // Guard tests: these three charts are Chart.js instances (DOM canvas +
+  // ResizeObserver), so they cannot run headless — asserting on the source is
+  // the only way to catch a re-introduced hardcoded override.
+  test('renderCumChart/renderDrawdownChart/renderRHistogram scales call the live getters, not a fixed constant', () => {
+    for (const name of ['renderCumChart', 'renderDrawdownChart', 'renderRHistogram']) {
+      const src = extractFunction(name);
+      assert.doesNotMatch(src, /\bTICK_COLOR\b/, `${name} still references the removed TICK_COLOR constant`);
+      assert.doesNotMatch(src, /\bGRID_COLOR\b/, `${name} still references the removed GRID_COLOR constant`);
+      assert.match(src, /getTickColor\(\)/, `${name} should call getTickColor()`);
+      assert.match(src, /getGridColor\(\)/, `${name} should call getGridColor()`);
+    }
+  });
+
+  test('win/loss chart colors come from cssVar, not a hardcoded hex', () => {
+    for (const name of ['renderCumChart', 'renderDrawdownChart', 'renderRHistogram', 'renderDonut']) {
+      const src = extractFunction(name);
+      assert.doesNotMatch(src, /#2dd4a0|#ff6b8a|#e11d48|#0d9488/, `${name} should read colors via cssVar(), not hardcode them`);
+    }
+  });
+});
