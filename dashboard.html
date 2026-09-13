@@ -6976,7 +6976,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           </div>
           <div class="form-group">
             <label class="form-label" data-i18n="m_stop">Stop</label>
-            <input type="number" class="form-control" id="m-stop" step="0.0001" autocomplete="off" oninput="liveCalc()">
+            <input type="number" class="form-control" id="m-stop" step="0.0001" autocomplete="off" oninput="mUserEditedStop()">
           </div>
         </div>
       </div>
@@ -12807,15 +12807,29 @@ function getFormTrade() {
 // Crypto trades are often closed without ever setting a stop — the exit price
 // IS where the position actually got out, so leaving stop blank makes the row
 // look like it has no risk defined even though it closed cleanly. Only fires
-// for crypto and only when stop is still empty, so it never overwrites a real
-// stop the user set on purpose.
+// for crypto and only when stop is still empty (or was itself last set by
+// this function), so it never overwrites a real stop the user typed in.
+//
+// Bug fixed 2026-09-13 (code-review): checking `stopEl.value !== ''` alone
+// blocked itself after the FIRST keystroke — typing "150" into exit price set
+// stop to "1" on the first key, then every next key saw stop already
+// non-empty and bailed, leaving stop stuck at "1" instead of tracking the
+// full value. The `data-autofilled` marker distinguishes "empty because the
+// user hasn't touched it" from "the user typed a real value here": setting
+// .value from JS doesn't fire m-stop's own oninput, so the marker only ever
+// clears via mUserEditedStop below, i.e. an actual keystroke in that field.
 function mAutoFillStopFromExit() {
   if (document.getElementById('m-type').value !== 'crypto') return;
   const stopEl = document.getElementById('m-stop');
-  if (stopEl.value !== '') return;
+  if (stopEl.value !== '' && stopEl.dataset.autofilled !== '1') return;
   const exit = document.getElementById('m-exitPrice').value;
   if (exit === '') return;
   stopEl.value = exit;
+  stopEl.dataset.autofilled = '1';
+}
+function mUserEditedStop() {
+  document.getElementById('m-stop').dataset.autofilled = '';
+  liveCalc();
 }
 
 function liveCalc() {
@@ -16876,7 +16890,9 @@ async function invSwitchPortfolio(id) {
   _invData = null;
   _invUpdatedAt = null;
   _invReloadGen++;
-  invRenderPortfolioPicker();
+  // invInit() (below) calls invRenderPortfolioPicker() itself, first thing —
+  // this used to call it again beforehand, a redundant full innerHTML
+  // rebuild of the dropdown on every portfolio switch (code-review finding).
   await invInit();
 }
 
@@ -16975,6 +16991,14 @@ async function invLoadFromDB() {
   if (!_currentUser) return invLoad();
   if (!_invActivePortfolioId) await invLoadPortfolios();
   if (!_invActivePortfolioId) return invLoad();
+  // Snapshot the generation at entry and re-check it after each await. Without
+  // this, switching portfolios quickly (A→B→C) can let A's slower response
+  // land after C's faster one: this function has two awaits with no guard
+  // between them, so an unconditional `_invData = {...}` at the end (below)
+  // clobbered whichever portfolio was actually showing with a stale one's
+  // data — and the next autosave then wrote A's data under C's row in the DB.
+  // Mirrors the same `gen !== _invReloadGen` guard _invSaveWrite already uses.
+  const myGen = _invReloadGen;
   const fallbackTotal = invLoad().portfolioTotal || '';
   // maybeSingle, and the error is kept. `.single()` reports "no row" and "the
   // request failed" the same way — {data:null} — so a dropped connection, a 5xx
@@ -16996,6 +17020,7 @@ async function invLoadFromDB() {
     // untouched stamp keeps the guard armed if anything else tries.
     return _invData || { portfolioTotal: fallbackTotal, holdings: [], deposits: [] };
   }
+  if (myGen !== _invReloadGen) return _invData; // superseded by a newer switch/reload
   if (data) {
     _invUpdatedAt = data.updated_at || null;
     _invCurrency = data.currency === '₪' ? '₪' : '$';
@@ -17015,6 +17040,7 @@ async function invLoadFromDB() {
       toast('לא ניתן לטעון את ההשקעות — רענן את הדף', 'error');
       return _invData || { portfolioTotal, holdings: [], deposits: [] };
     }
+    if (myGen !== _invReloadGen) return _invData; // superseded by a newer switch/reload
     const holdings = (rows || []).map(r => ({ id: r.id, symbol: r.symbol || '', cat: r.cat || '', sector: r.sector || '',
                        entryShares: +r.entry_shares || 0, entryPrice: +r.entry_price || 0,
                        currentPrice: r.current_price == null ? undefined : +r.current_price,
