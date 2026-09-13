@@ -8614,24 +8614,33 @@ function switchTab(name, btn) {
 }
 
 // Reported: the screener tab "doesn't open" right after logging in, but works
-// after a page refresh. Root cause — the iframe request launches right in the
-// middle of the login boot burst (loadDB, flex/bybit sync, fear-greed, symbol
-// lists all fetching at once) competing for bandwidth on a cold cache, while a
-// refresh benefits from those assets already being cached and the burst having
-// settled. That contention isn't something this page can remove, but a blank
-// dark rectangle reading as "broken" instead of "loading" is fixable.
+// after a page refresh. Root cause, confirmed from the user's own console
+// (2026-09-13) — net::ERR_CACHE_READ_FAILURE on the screener's own CDN
+// scripts (supabase-js, lightweight-charts, a font), a corrupted browser disk
+// cache entry, not a bug in this code. That failure leaves `supabase`
+// undefined inside the screener, which then throws an uncaught
+// ReferenceError — the iframe's own `load` event still fires (the HTML shell
+// loaded fine), so the old timeout-only overlay never caught this: it hid
+// itself right on schedule over a screener that had already died. A refresh
+// works because the browser evicts a cache entry after a failed read, so the
+// retry is a normal network fetch. Same-origin (both are *.github.io/<repo>/,
+// which share an origin — path doesn't count), so this page can listen for
+// that error directly instead of guessing from a timeout.
 let _screenerLoadTimer = null;
-function _showScreenerLoading() {
+function _showScreenerLoading(isError) {
   const overlay = document.getElementById('screener-loading');
   if (!overlay) return;
   overlay.style.display = 'flex';
-  document.getElementById('screener-loading-txt').textContent = 'טוען את המסנן…';
-  document.getElementById('screener-retry-btn').style.display = 'none';
+  document.getElementById('screener-loading-txt').textContent =
+    isError ? 'המסנן נתקל בשגיאה בטעינה' : 'טוען את המסנן…';
+  document.getElementById('screener-retry-btn').style.display = isError ? '' : 'none';
   clearTimeout(_screenerLoadTimer);
-  _screenerLoadTimer = setTimeout(() => {
-    document.getElementById('screener-loading-txt').textContent = 'הטעינה לוקחת יותר זמן מהרגיל';
-    document.getElementById('screener-retry-btn').style.display = '';
-  }, 8000);
+  if (!isError) {
+    _screenerLoadTimer = setTimeout(() => {
+      document.getElementById('screener-loading-txt').textContent = 'הטעינה לוקחת יותר זמן מהרגיל';
+      document.getElementById('screener-retry-btn').style.display = '';
+    }, 8000);
+  }
 }
 function _onScreenerLoad() {
   const f = document.getElementById('screener-frame');
@@ -8639,6 +8648,15 @@ function _onScreenerLoad() {
   clearTimeout(_screenerLoadTimer);
   const overlay = document.getElementById('screener-loading');
   if (overlay) overlay.style.display = 'none';
+  // The shell loaded — doesn't mean the app itself came up. A script that
+  // failed to fetch (cache corruption, a blocked CDN) throws inside the
+  // iframe's own window, which onload can't see. Catch it directly.
+  try {
+    f.contentWindow.addEventListener('error', () => {
+      f._loaded = false;
+      _showScreenerLoading(true);
+    }, { once: true });
+  } catch (e) {}
 }
 function _retryScreener() {
   const f = document.getElementById('screener-frame');
