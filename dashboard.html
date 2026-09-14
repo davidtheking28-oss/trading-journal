@@ -5548,7 +5548,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
     <!-- Center Nav Tabs -->
     <div id="top-nav" style="display:flex;align-items:stretch;flex:1;justify-content:center;overflow-x:auto;scrollbar-width:none;">
-      <button class="tnav-btn active" onclick="switchTab('overview',this)" data-i18n="nav_overview">Home</button>
+      <button class="tnav-btn active" aria-current="page" onclick="switchTab('overview',this)" data-i18n="nav_overview">Home</button>
       <button class="tnav-btn" onclick="switchTab('stocks',this)" data-i18n="nav_stocks">Stocks</button>
       <button class="tnav-btn" onclick="switchTab('statistics',this)">Statistics</button>
       <button class="tnav-btn" onclick="switchTab('themes',this)">Market Pulse</button>
@@ -8578,13 +8578,14 @@ function setTradesScope(s, btn, ddId) {
 function switchTab(name, btn) {
   // sessionStorage, not localStorage: see _restoreLastTab.
   try { sessionStorage.setItem('tj_active_tab', name); } catch {}
-  document.querySelectorAll('.tab-btn,.tnav-btn').forEach(b=>{ b.classList.remove('active'); b.style.color=''; });
+  document.querySelectorAll('.tab-btn,.tnav-btn').forEach(b=>{ b.classList.remove('active'); b.style.color=''; b.removeAttribute('aria-current'); });
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
   // Callers that navigate programmatically (the screener → journal handoff, the
   // command palette) pass no button. This threw and aborted the whole handler,
   // so clicking "add to journal" in the embedded screener did nothing at all.
-  (btn || document.querySelector(`.tnav-btn[onclick*="switchTab('${name}'"], .tab-btn[onclick*="switchTab('${name}'"]`))
-    ?.classList.add('active');
+  const activeBtn = btn || document.querySelector(`.tnav-btn[onclick*="switchTab('${name}'"], .tab-btn[onclick*="switchTab('${name}'"]`);
+  activeBtn?.classList.add('active');
+  activeBtn?.setAttribute('aria-current', 'page');
   const tabEl = document.getElementById('tab-'+name);
   document.getElementById('main-content')?.classList.toggle('full-bleed', name==='screener');
   // The a11y widget is fixed to the viewport, so on the Screener tab it floats
