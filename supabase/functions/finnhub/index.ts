@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
 import { resolveQuote, yahooHistoricalClose } from '../_shared/quote.ts';
+import { serveCached } from '../_shared/swr.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': 'https://davidtheking28-oss.github.io',
@@ -126,17 +127,28 @@ serve(async (req: Request) => {
   if (path === 'stock/metric' && metric) finnhubUrl += `&metric=${encodeURIComponent(metric)}`;
   if (path === 'stock/financials-reported' && freq) finnhubUrl += `&freq=${encodeURIComponent(freq)}`;
 
-  try {
+  // Same fix as alphavantage: a Cache-Control response header on an
+  // authenticated fetch() reply caches nothing — every user's lookup of the
+  // same symbol's profile/metrics/earnings hit Finnhub live. `quote` above
+  // already goes through resolveQuote (its own retry+Yahoo fallback, no
+  // caching — it's meant to be live).
+  const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+  const cacheKey = `fh:${path}:${symbol}:${exchange}:${metric}:${freq}`;
+  const fetchFresh = async () => {
     const upstream = await fetch(finnhubUrl, { headers: { 'User-Agent': 'trading-journal/2.0' } });
+    if (!upstream.ok) return null;
     const data = await upstream.text();
+    await admin.from('market_cache').upsert({ cache_key: cacheKey, payload: data, refreshed_at: new Date().toISOString() });
+    return data;
+  };
 
-    const ttl = path === 'quote' ? 0 : path === 'stock/financials-reported' ? 3600 : 14400;
-    const cacheHeader = ttl === 0 ? 'no-store' : `max-age=${ttl}`;
-
-    return new Response(data, {
-      status: upstream.status,
-      headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': cacheHeader },
-    });
+  try {
+    const ttl = path === 'stock/financials-reported' ? 60 * 60_000 : 4 * 60 * 60_000;
+    const { payload } = await serveCached(admin, cacheKey, ttl, 48 * 60 * 60_000, fetchFresh);
+    if (payload === null) {
+      return new Response(JSON.stringify({ error: 'Failed to fetch data' }), { status: 502, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    }
+    return new Response(payload, { headers: { ...CORS, 'Content-Type': 'application/json' } });
   } catch (e) {
     console.error('[finnhub] upstream error:', e);
     return new Response(JSON.stringify({ error: 'Failed to fetch data' }), {

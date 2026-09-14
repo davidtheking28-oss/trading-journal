@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
+import { serveCached } from '../_shared/swr.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -54,14 +55,37 @@ serve(async (req: Request) => {
   }
 
   const avUrl = `https://www.alphavantage.co/query?function=${func}&symbol=${encodeURIComponent(symbol)}&apikey=${encodeURIComponent(apiKey)}`;
-  const upstream = await fetch(avUrl, { headers: { 'User-Agent': 'trading-journal/2.0' } });
-  const data = await upstream.text();
 
-  const ttl = func === 'GLOBAL_QUOTE' ? 0 : 3600;
-  const cacheHeader = ttl === 0 ? 'no-store' : `max-age=${ttl}`;
+  // The shared AV_API_KEY's quota is 25 calls/day total (see fx.ts) — the same
+  // symbol's OVERVIEW/EARNINGS/etc. is identical for every user, so a
+  // Cache-Control response header alone did nothing (an authenticated fetch()
+  // response is never cached by the browser and nothing sits in front of this
+  // function to honor it) and every user's lookup spent its own share of the
+  // quota. GLOBAL_QUOTE stays live — it's the one path meant to be real-time.
+  if (func === 'GLOBAL_QUOTE') {
+    const upstream = await fetch(avUrl, { headers: { 'User-Agent': 'trading-journal/2.0' } });
+    const data = await upstream.text();
+    return new Response(data, { status: upstream.status, headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+  }
 
-  return new Response(data, {
-    status: upstream.status,
-    headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': cacheHeader },
-  });
+  const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+  const cacheKey = `av:${func}:${symbol}`;
+  const fetchFresh = async () => {
+    const upstream = await fetch(avUrl, { headers: { 'User-Agent': 'trading-journal/2.0' } });
+    if (!upstream.ok) return null;
+    const data = await upstream.text();
+    await admin.from('market_cache').upsert({ cache_key: cacheKey, payload: data, refreshed_at: new Date().toISOString() });
+    return data;
+  };
+
+  try {
+    const { payload } = await serveCached(admin, cacheKey, 60 * 60_000, 24 * 60 * 60_000, fetchFresh);
+    if (payload === null) {
+      return new Response(JSON.stringify({ error: 'Failed to fetch data' }), { status: 502, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    }
+    return new Response(payload, { headers: { ...CORS, 'Content-Type': 'application/json' } });
+  } catch (e) {
+    console.error('[alphavantage] upstream error:', e);
+    return new Response(JSON.stringify({ error: 'Failed to fetch data' }), { status: 502, headers: { ...CORS, 'Content-Type': 'application/json' } });
+  }
 });

@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
+import { serveCached } from '../_shared/swr.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -78,14 +79,36 @@ serve(async (req: Request) => {
     fmpUrl += `&period=${encodeURIComponent(period)}&limit=4`;
   }
 
-  try {
-    const upstream = await fetch(fmpUrl, { headers: { 'User-Agent': 'trading-journal/2.0' } });
-    const data = await upstream.text();
+  // Same fix as alphavantage/finnhub: 'quote' stays live (no caching), the
+  // rest is identical for every user and a bare Cache-Control header cached
+  // nothing (never honored on an authenticated fetch() response).
+  if (path === 'quote') {
+    try {
+      const upstream = await fetch(fmpUrl, { headers: { 'User-Agent': 'trading-journal/2.0' } });
+      const data = await upstream.text();
+      return new Response(data, { status: upstream.status, headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+    } catch (e) {
+      console.error('[fmp] upstream error:', e);
+      return new Response(JSON.stringify({ error: 'Failed to fetch data' }), { status: 502, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    }
+  }
 
-    return new Response(data, {
-      status: upstream.status,
-      headers: { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'max-age=3600' },
-    });
+  const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+  const cacheKey = `fmp:${path}:${symbol}:${period}`;
+  const fetchFresh = async () => {
+    const upstream = await fetch(fmpUrl, { headers: { 'User-Agent': 'trading-journal/2.0' } });
+    if (!upstream.ok) return null;
+    const data = await upstream.text();
+    await admin.from('market_cache').upsert({ cache_key: cacheKey, payload: data, refreshed_at: new Date().toISOString() });
+    return data;
+  };
+
+  try {
+    const { payload } = await serveCached(admin, cacheKey, 60 * 60_000, 24 * 60 * 60_000, fetchFresh);
+    if (payload === null) {
+      return new Response(JSON.stringify({ error: 'Failed to fetch data' }), { status: 502, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    }
+    return new Response(payload, { headers: { ...CORS, 'Content-Type': 'application/json' } });
   } catch (e) {
     console.error('[fmp] upstream error:', e);
     return new Response(JSON.stringify({ error: 'Failed to fetch data' }), {
