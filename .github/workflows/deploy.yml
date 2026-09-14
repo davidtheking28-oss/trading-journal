@@ -37,7 +37,7 @@ jobs:
           deno-version: v2.x
 
       - name: Run edge function unit tests
-        run: deno test --allow-net supabase/functions/_shared/
+        run: deno test --allow-net supabase/functions/_shared/ supabase/functions/sector-holdings/
 
   deploy:
     needs: test
