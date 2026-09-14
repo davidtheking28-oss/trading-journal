@@ -6738,13 +6738,13 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           <input class="qa-input" id="qa-commission" type="number" placeholder="5.00" value="5.00" step="0.01">
         </div>
         <div class="qa-field full">
-          <div class="qa-label" data-i18n="qa_reason">Entry Reason</div>
-          <div class="er-pills" id="qa-er-pills">
-            <span class="er-pill" data-er="LPS"       onclick="qaSetER('LPS')">LPS</span>
-            <span class="er-pill" data-er="Low Cheat" onclick="qaSetER('Low Cheat')">Low Cheat</span>
-            <span class="er-pill" data-er="Cheat"     onclick="qaSetER('Cheat')">Cheat</span>
-            <span class="er-pill" data-er="Handle"    onclick="qaSetER('Handle')">Handle</span>
-            <span class="er-pill" data-er="Breakout"  onclick="qaSetER('Breakout')">Breakout</span>
+          <div class="qa-label" id="qa-reason-lbl" data-i18n="qa_reason">Entry Reason</div>
+          <div class="er-pills" id="qa-er-pills" role="group" aria-labelledby="qa-reason-lbl">
+            <button type="button" class="er-pill" data-er="LPS"       aria-pressed="false" onclick="qaSetER('LPS')">LPS</button>
+            <button type="button" class="er-pill" data-er="Low Cheat" aria-pressed="false" onclick="qaSetER('Low Cheat')">Low Cheat</button>
+            <button type="button" class="er-pill" data-er="Cheat"     aria-pressed="false" onclick="qaSetER('Cheat')">Cheat</button>
+            <button type="button" class="er-pill" data-er="Handle"    aria-pressed="false" onclick="qaSetER('Handle')">Handle</button>
+            <button type="button" class="er-pill" data-er="Breakout" aria-pressed="false" onclick="qaSetER('Breakout')">Breakout</button>
           </div>
         </div>
         <div class="qa-field">
@@ -7056,20 +7056,20 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <div class="form-section">
         <div class="form-section-title"><span class="fst-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span data-i18n="modal_notes">Notes & Quality</span></span></div>
         <div class="form-group">
-          <label class="form-label" data-i18n="m_reason">Entry Reason</label>
-          <div class="er-pills" id="m-er-pills" style="margin-bottom:16px;">
-            <span class="er-pill" data-er="LPS"          onclick="modalSetER('LPS')">LPS</span>
-            <span class="er-pill" data-er="Low Cheat"    onclick="modalSetER('Low Cheat')">Low Cheat</span>
-            <span class="er-pill" data-er="Cheat"        onclick="modalSetER('Cheat')">Cheat</span>
-            <span class="er-pill" data-er="Handle"       onclick="modalSetER('Handle')">Handle</span>
-            <span class="er-pill" data-er="Breakout"     onclick="modalSetER('Breakout')">Breakout</span>
+          <label class="form-label" id="m-reason-lbl" data-i18n="m_reason">Entry Reason</label>
+          <div class="er-pills" id="m-er-pills" role="group" aria-labelledby="m-reason-lbl" style="margin-bottom:16px;">
+            <button type="button" class="er-pill" data-er="LPS"          aria-pressed="false" onclick="modalSetER('LPS')">LPS</button>
+            <button type="button" class="er-pill" data-er="Low Cheat"    aria-pressed="false" onclick="modalSetER('Low Cheat')">Low Cheat</button>
+            <button type="button" class="er-pill" data-er="Cheat"        aria-pressed="false" onclick="modalSetER('Cheat')">Cheat</button>
+            <button type="button" class="er-pill" data-er="Handle"       aria-pressed="false" onclick="modalSetER('Handle')">Handle</button>
+            <button type="button" class="er-pill" data-er="Breakout"     aria-pressed="false" onclick="modalSetER('Breakout')">Breakout</button>
           </div>
           <input type="hidden" id="m-entry-reason">
         </div>
         <input type="hidden" id="m-setup-type">
         <div class="form-group">
-          <label class="form-label">סוג הסטאפ</label>
-          <div class="er-pills" id="m-setup-pills"></div>
+          <label class="form-label" id="m-setup-lbl">סוג הסטאפ</label>
+          <div class="er-pills" id="m-setup-pills" role="group" aria-labelledby="m-setup-lbl"></div>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -10159,7 +10159,9 @@ function qaSetER(val) {
   qaER = qaER === val ? '' : val; // toggle off on second click
   document.querySelectorAll('#qa-er-pills .er-pill').forEach(p => {
     const base = p.dataset.er;
-    p.className = 'er-pill' + (base === qaER ? ' active-' + (ER_CLASS[base]||'') : '');
+    const on = base === qaER;
+    p.className = 'er-pill' + (on ? ' active-' + (ER_CLASS[base]||'') : '');
+    p.setAttribute('aria-pressed', on);
   });
 }
 
@@ -10169,7 +10171,9 @@ function modalSetER(val) {
   document.getElementById('m-entry-reason').value = modalER;
   document.querySelectorAll('#m-er-pills .er-pill').forEach(p => {
     const base = p.dataset.er;
-    p.className = 'er-pill' + (base === modalER ? ' active-' + (ER_CLASS[base]||'') : '');
+    const on = base === modalER;
+    p.className = 'er-pill' + (on ? ' active-' + (ER_CLASS[base]||'') : '');
+    p.setAttribute('aria-pressed', on);
   });
 }
 
@@ -10185,7 +10189,7 @@ const SETUP_LABELS = { vcp:'VCP', breakout:'פריצה', pullback:'תיקון', 
 function setupRenderPills(containerId, val) {
   const host = document.getElementById(containerId); if (!host) return;
   host.innerHTML = SETUP_OPTIONS.map(s =>
-    `<button type="button" class="er-pill${s===val?' active-blue':''}" data-setup="${s}"
+    `<button type="button" class="er-pill${s===val?' active-blue':''}" data-setup="${s}" aria-pressed="${s===val}"
       onclick="modalSetSetup('${s}')">${SETUP_LABELS[s]}</button>`).join('');
 }
 function modalSetSetup(val) {
@@ -10198,7 +10202,9 @@ function erSetPills(containerId, val) {
   // used when opening modal with existing trade
   document.querySelectorAll('#'+containerId+' .er-pill').forEach(p => {
     const base = p.dataset.er;
-    p.className = 'er-pill' + (base === val ? ' active-' + (ER_CLASS[base]||'') : '');
+    const on = base === val;
+    p.className = 'er-pill' + (on ? ' active-' + (ER_CLASS[base]||'') : '');
+    p.setAttribute('aria-pressed', on);
   });
 }
 
