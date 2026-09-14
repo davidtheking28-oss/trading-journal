@@ -5566,10 +5566,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <button class="btn btn-export btn-sm" onclick="toggleTheme()" id="header-theme-btn" aria-label="החלף ערכת צבעים">
         <span id="header-theme-icon"></span>
       </button>
-      <button class="btn btn-export btn-sm" onclick="togglePrivacy()" id="privacy-btn" title="מצב פרטיות">
+      <button class="btn btn-export btn-sm" onclick="togglePrivacy()" id="privacy-btn" title="מצב פרטיות" aria-label="מצב פרטיות">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
       </button>
-      <button class="btn btn-secondary btn-sm" onclick="authSignOut()" id="signout-btn" title="יציאה">
+      <button class="btn btn-secondary btn-sm" onclick="authSignOut()" id="signout-btn" title="יציאה" aria-label="יציאה">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       </button>
       <div id="header-avatar" onclick="switchTab('ibkr', document.querySelector('.tab-btn[aria-label=Settings]') || document.querySelector('.tnav-btn:last-child'))" title="Settings" style="width:28px;height:28px;border-radius:50%;background:rgba(129,140,248,0.15);border:1.5px solid rgba(129,140,248,0.25);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;flex-shrink:0;transition:border-color 0.15s,box-shadow 0.15s;">
@@ -5770,7 +5770,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <button class="btn btn-secondary btn-sm" id="st-archive-btn" onclick="toggleInlineArchive('stock')" data-i18n="archive">📅 Archive</button>
         <span id="st-stats" style="color:var(--text2);font-size:12px;flex:1;text-align:center;direction:ltr;"></span>
         <div class="search-input-wrap">
-          <input class="search-input" id="st-search" placeholder="Search symbol..."
+          <input class="search-input" id="st-search" aria-label="Search symbol" placeholder="Search symbol..."
             data-i18n-ph="search"
             oninput="searchQuery.stock=this.value; renderTable('stock')" autocomplete="off">
         </div>
@@ -5852,7 +5852,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div class="calc-card">
           <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-left:6px"><path d="M3 3l18 18M3 21L21 3"/><path d="M16 3h5v5"/><path d="M3 8h5"/></svg>גודל פוזיציה</h3>
           <div class="form-group">
-            <label class="form-label">כיוון</label>
+            <label class="form-label" for="ps-dir">כיוון</label>
             <select class="form-control" id="ps-dir" onchange="calcPS()">
               <option value="L">Long — קנייה</option>
               <option value="S">Short — מכירה</option>
@@ -5860,26 +5860,26 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">גודל תיק ($)</label>
+              <label class="form-label" for="ps-account">גודל תיק ($)</label>
               <input type="number" class="form-control" id="ps-account" placeholder="10000" oninput="calcPS()">
             </div>
             <div class="form-group">
-              <label class="form-label">סיכון % מהתיק</label>
+              <label class="form-label" for="ps-riskpct">סיכון % מהתיק</label>
               <input type="number" class="form-control" id="ps-riskpct" placeholder="1" step="0.1" min="0.1" max="5" oninput="calcPS()">
             </div>
           </div>
           <div class="calc-ps-divider">— או הזן סכום ישירות —</div>
           <div class="form-group">
-            <label class="form-label">סכום לסיכון ($)</label>
+            <label class="form-label" for="ps-risk">סכום לסיכון ($)</label>
             <input type="number" class="form-control" id="ps-risk" placeholder="100" oninput="calcPS()">
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">מחיר כניסה</label>
+              <label class="form-label" for="ps-entry">מחיר כניסה</label>
               <input type="number" class="form-control" id="ps-entry" placeholder="50.00" step="0.0001" oninput="calcPS()">
             </div>
             <div class="form-group">
-              <label class="form-label">מחיר סטופ</label>
+              <label class="form-label" for="ps-stop">מחיר סטופ</label>
               <input type="number" class="form-control" id="ps-stop" placeholder="48.00" step="0.0001" oninput="calcPS()">
             </div>
           </div>
@@ -5897,15 +5897,15 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-left:6px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>R Multiple</h3>
           <div class="form-row-3">
             <div class="form-group">
-              <label class="form-label">כניסה</label>
+              <label class="form-label" for="rm-entry">כניסה</label>
               <input type="number" class="form-control" id="rm-entry" placeholder="50" step="0.0001" oninput="calcRM()">
             </div>
             <div class="form-group">
-              <label class="form-label">סטופ</label>
+              <label class="form-label" for="rm-stop">סטופ</label>
               <input type="number" class="form-control" id="rm-stop" placeholder="48" step="0.0001" oninput="calcRM()">
             </div>
             <div class="form-group">
-              <label class="form-label">יעד T1</label>
+              <label class="form-label" for="rm-target">יעד T1</label>
               <input type="number" class="form-control" id="rm-target" placeholder="54" step="0.0001" oninput="calcRM()">
             </div>
           </div>
@@ -5924,11 +5924,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           <h3 style="margin-top:16px">📉 שינוי %</h3>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">מחיר התחלה</label>
+              <label class="form-label" for="pct-from">מחיר התחלה</label>
               <input type="number" class="form-control" id="pct-from" placeholder="100.00" step="0.01" oninput="calcPctChange()">
             </div>
             <div class="form-group">
-              <label class="form-label">מחיר סוף</label>
+              <label class="form-label" for="pct-to">מחיר סוף</label>
               <input type="number" class="form-control" id="pct-to" placeholder="110.00" step="0.01" oninput="calcPctChange()">
             </div>
           </div>
@@ -5942,7 +5942,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div class="calc-card">
           <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-left:6px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Breakeven אחרי הפסד</h3>
           <div class="form-group">
-            <label class="form-label" style="display:flex;justify-content:space-between">
+            <label class="form-label" for="be-loss" style="display:flex;justify-content:space-between">
               <span>הפסד %</span>
               <span id="be-pct-display" style="color:var(--accent);font-weight:700">10%</span>
             </label>
@@ -6010,17 +6010,17 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           </div>
           <div class="s-profile-grid">
             <div class="profile-field">
-              <label class="profile-label" data-i18n="settings_first">First Name</label>
+              <label class="profile-label" for="profile-first" data-i18n="settings_first">First Name</label>
               <input class="profile-input" id="profile-first" type="text" placeholder="First name" data-i18n-ph="settings_first_ph" oninput="profileMarkDirty()">
             </div>
             <div class="profile-field">
-              <label class="profile-label" data-i18n="settings_last">Last Name</label>
+              <label class="profile-label" for="profile-last" data-i18n="settings_last">Last Name</label>
               <input class="profile-input" id="profile-last" type="text" placeholder="Last name" data-i18n-ph="settings_last_ph" oninput="profileMarkDirty()">
             </div>
           </div>
           <div class="s-profile-grid">
             <div class="profile-field">
-              <label class="profile-label" data-i18n="settings_email">Email</label>
+              <label class="profile-label" for="profile-email" data-i18n="settings_email">Email</label>
               <input class="profile-input" id="profile-email" type="email" disabled>
             </div>
           </div>
@@ -6058,11 +6058,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           <div style="font-size:10px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:var(--text3);padding-bottom:8px;">Password</div>
           <div class="s-profile-grid">
             <div class="profile-field">
-              <label class="profile-label" data-i18n="set_pw_new">New Password</label>
+              <label class="profile-label" for="pw-new" data-i18n="set_pw_new">New Password</label>
               <input class="profile-input" id="pw-new" type="password" placeholder="New password" data-i18n-ph="settings_pw_new_ph" autocomplete="new-password">
             </div>
             <div class="profile-field">
-              <label class="profile-label" data-i18n="set_pw_confirm">Confirm Password</label>
+              <label class="profile-label" for="pw-confirm" data-i18n="set_pw_confirm">Confirm Password</label>
               <input class="profile-input" id="pw-confirm" type="password" placeholder="Confirm password" data-i18n-ph="settings_pw_confirm_ph" autocomplete="new-password">
             </div>
           </div>
@@ -6104,7 +6104,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           </div>
           <div style="font-size:11px;color:var(--text3);line-height:1.5;" data-i18n="set_finnhub_desc">Required for real-time stock prices. Register free at finnhub.io — enter your key and click Save.</div>
           <div style="display:flex;gap:8px;align-items:center;">
-            <input id="finnhub-key-input" class="profile-input" type="password" placeholder="sk_••••••••••••••••••••••••" autocomplete="off" style="font-size:12px;flex:1;">
+            <input id="finnhub-key-input" class="profile-input" type="password" aria-label="Finnhub API Key" placeholder="sk_••••••••••••••••••••••••" autocomplete="off" style="font-size:12px;flex:1;">
             <button class="btn btn-primary btn-sm" onclick="saveFinnhubKey()" data-i18n="m_save_short">Save</button>
           </div>
         </div>
@@ -6115,7 +6115,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           </div>
           <div style="font-size:11px;color:var(--text3);line-height:1.5;margin-top:6px;" data-i18n="set_av_desc">Financial data for all stocks including small caps.</div>
           <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
-            <input id="av-key-input" class="profile-input" type="password" placeholder="Alpha Vantage API Key" autocomplete="off" style="font-size:12px;flex:1;">
+            <input id="av-key-input" class="profile-input" type="password" aria-label="Alpha Vantage API Key" placeholder="Alpha Vantage API Key" autocomplete="off" style="font-size:12px;flex:1;">
             <button class="btn btn-secondary btn-sm" onclick="saveAvKey()" data-i18n="m_save_short">Save</button>
           </div>
         </div>
@@ -6171,7 +6171,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             <a id="flex-advanced-toggle" onclick="toggleFlexAdvanced()" style="font-size:11px;font-weight:600;color:var(--accent);cursor:pointer;display:inline-block;margin-bottom:10px;" data-i18n="set_ibkr_advanced">הגדרות מתקדמות ▾</a>
             <div id="flex-advanced" style="display:none;margin-bottom:12px;max-width:280px;">
               <div class="ibkr-field-label" data-i18n="set_ibkr_confirm_label">Trade Confirmation Query ID — לעדכון כמעט בזמן-אמת (אופציונלי)</div>
-              <input id="flex-confirm-query-id" class="form-control" type="text" placeholder="1462900" autocomplete="off" style="font-size:12px;padding:6px 10px;" onkeydown="if(event.key==='Enter')flexSave()" onblur="if(document.getElementById('flex-token').value&&this.value)flexSave()">
+              <input id="flex-confirm-query-id" class="form-control" type="text" aria-label="Trade Confirmation Query ID" placeholder="1462900" autocomplete="off" style="font-size:12px;padding:6px 10px;" onkeydown="if(event.key==='Enter')flexSave()" onblur="if(document.getElementById('flex-token').value&&this.value)flexSave()">
             </div>
             <span class="ibkr-sync-status" id="flex-status"></span>
             <div id="flex-preview" class="ibkr-trades-list"></div>
@@ -6266,7 +6266,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           <div class="s-expand-inner">
             <div style="margin-bottom:12px;">
               <div class="ibkr-field-label" data-i18n="set_broker_label">Broker</div>
-              <select id="bi-broker" class="form-control" style="font-size:12px;padding:6px 10px;max-width:220px;margin-top:4px;">
+              <select id="bi-broker" class="form-control" aria-label="Broker" style="font-size:12px;padding:6px 10px;max-width:220px;margin-top:4px;">
                 <option value="" data-i18n="set_broker_select">Select broker...</option>
                 <option value="colmex">Colmex Pro</option>
               </select>
@@ -6321,23 +6321,23 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <!-- Add form -->
         <div class="missed-add-form">
           <div class="form-group">
-            <label class="form-label" data-i18n="missed_symbol">Symbol</label>
+            <label class="form-label" for="missed-sym" data-i18n="missed_symbol">Symbol</label>
             <input type="text" class="form-control" id="missed-sym" placeholder="AAPL" style="text-transform:uppercase" maxlength="20" oninput="missedAutoSector()">
           </div>
           <div class="form-group">
-            <label class="form-label" data-i18n="missed_date">Date</label>
+            <label class="form-label" for="missed-date" data-i18n="missed_date">Date</label>
             <input type="date" class="form-control" id="missed-date">
           </div>
           <div class="form-group">
-            <label class="form-label" data-i18n="missed_price">Price ($)</label>
+            <label class="form-label" for="missed-price" data-i18n="missed_price">Price ($)</label>
             <input type="number" class="form-control" id="missed-price" placeholder="0.00" step="0.0001">
           </div>
           <div class="form-group">
-            <label class="form-label" data-i18n="missed_sector">Sector</label>
+            <label class="form-label" for="missed-sector" data-i18n="missed_sector">Sector</label>
             <input type="text" class="form-control" id="missed-sector" placeholder="Technology" data-i18n-ph="missed_sector_ph" maxlength="40">
           </div>
           <div class="form-group" style="flex:2;min-width:140px;">
-            <label class="form-label" data-i18n="missed_note">Note (optional)</label>
+            <label class="form-label" for="missed-note" data-i18n="missed_note">Note (optional)</label>
             <input type="text" class="form-control" id="missed-note" placeholder="Why missed?" data-i18n-ph="missed_why" maxlength="120">
           </div>
           <button class="btn btn-primary btn-sm" onclick="missedAdd()" style="white-space:nowrap;height:36px;align-self:flex-end" data-i18n="missed_add">+ Add</button>
@@ -6513,8 +6513,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
             <span data-i18n="inv_deposits">Monthly Deposits</span>
           </div>
           <div class="inv-deposits-form">
-            <input type="month" id="inv-dep-month">
-            <input type="number" id="inv-dep-amount" placeholder="סכום" style="width:130px;" min="0" step="any">
+            <input type="month" id="inv-dep-month" aria-label="חודש הפקדה">
+            <input type="number" id="inv-dep-amount" aria-label="סכום הפקדה" placeholder="סכום" style="width:130px;" min="0" step="any">
             <button class="inv-deposits-add-btn" onclick="invAddDeposit()" data-i18n="inv_add_deposit">+ Add Deposit</button>
           </div>
           <div class="inv-deposits-stats">
@@ -6615,7 +6615,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     <div style="font-size:13px;color:var(--text3);margin-bottom:4px;">עסקה חדשה יובאה מ-IBKR</div>
     <div style="font-size:20px;font-weight:800;color:var(--text);margin-bottom:2px;" id="stop-prompt-symbol"></div>
     <div style="font-size:12px;color:var(--text3);margin-bottom:18px;" id="stop-prompt-detail"></div>
-    <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px;">מה ה-Stop Loss?</label>
+    <label for="stop-prompt-input" style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px;">מה ה-Stop Loss?</label>
     <input id="stop-prompt-input" type="number" step="0.01" min="0"
       style="width:100%;padding:10px 12px;font-size:16px;font-weight:700;
              background:rgba(255,255,255,0.05);border:1px solid rgba(129,140,248,0.3);
@@ -6706,7 +6706,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           </div>
         </div>
         <div class="qa-field">
-          <div class="qa-label">סימבול</div>
+          <label class="qa-label" for="qa-symbol">סימבול</label>
           <div class="sym-ac-wrap">
             <input class="qa-input" id="qa-symbol" placeholder="AAPL" maxlength="20"
               oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9._\-]/g,''); symAcShow('qa-symbol','qa-symbol-drop'); qaAutoType(); rtValidate('qa-symbol','qa-sym-status','qa-crypto')"
@@ -6717,24 +6717,24 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           <div class="sym-status" id="qa-sym-status"></div>
         </div>
         <div class="qa-field">
-          <div class="qa-label" data-i18n="qa_entry_date">Entry Date</div>
+          <label class="qa-label" for="qa-date" data-i18n="qa_entry_date">Entry Date</label>
           <input class="qa-input" id="qa-date" type="date">
         </div>
         <div class="qa-field">
-          <div class="qa-label" data-i18n="qa_entry_price">Entry Price</div>
+          <label class="qa-label" for="qa-entry" data-i18n="qa_entry_price">Entry Price</label>
           <input class="qa-input" id="qa-entry" type="number" placeholder="0.00" step="0.0001" oninput="qaCalc()">
         </div>
         <div class="qa-field">
-          <div class="qa-label" data-i18n="qa_shares">Shares</div>
+          <label class="qa-label" for="qa-shares" data-i18n="qa_shares">Shares</label>
           <input class="qa-input" id="qa-shares" type="number" placeholder="0" step="1" oninput="qaCalc()">
         </div>
         <div class="qa-field">
-          <div class="qa-label" data-i18n="qa_stop">Stop (SL)</div>
+          <label class="qa-label" for="qa-stop" data-i18n="qa_stop">Stop (SL)</label>
           <input class="qa-input" id="qa-stop" type="number" placeholder="0.00" step="0.0001" oninput="qaCalc()">
           <div class="qa-stop-pct" id="qa-stop-pct"></div>
         </div>
         <div class="qa-field">
-          <div class="qa-label" data-i18n="qa_commission">Commission</div>
+          <label class="qa-label" for="qa-commission" data-i18n="qa_commission">Commission</label>
           <input class="qa-input" id="qa-commission" type="number" placeholder="5.00" value="5.00" step="0.01">
         </div>
         <div class="qa-field full">
@@ -6748,7 +6748,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           </div>
         </div>
         <div class="qa-field">
-          <div class="qa-label" data-i18n="qa_market_cond">Market Condition</div>
+          <label class="qa-label" for="qa-market-cond" data-i18n="qa_market_cond">Market Condition</label>
           <select class="qa-input" id="qa-market-cond" style="padding:6px 8px;">
             <option value="">— Select —</option>
             <option value="green">🟢 Green</option>
@@ -6757,11 +6757,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           </select>
         </div>
         <div class="qa-field">
-          <div class="qa-label" data-i18n="qa_mood">Emotional State</div>
+          <label class="qa-label" for="qa-mood" data-i18n="qa_mood">Emotional State</label>
           <input class="qa-input" id="qa-mood" placeholder="How did you feel..." data-i18n-ph="qa_mood_ph" maxlength="300" autocomplete="off">
         </div>
         <div class="qa-field full">
-          <div class="qa-label" data-i18n="qa_note">Note</div>
+          <label class="qa-label" for="qa-note" data-i18n="qa_note">Note</label>
           <input class="qa-input" id="qa-note" placeholder="Trade description..." data-i18n-ph="qa_note_ph" maxlength="200" autocomplete="off">
         </div>
       </div>
@@ -6791,11 +6791,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <div class="form-section">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
           <div class="form-group">
-            <label class="form-label">סימבול (אופציונלי)</label>
+            <label class="form-label" for="ic-sym">סימבול (אופציונלי)</label>
             <input type="text" id="ic-sym" class="form-control" placeholder="NVDA" style="text-transform:uppercase" list="inv-sym-list">
           </div>
           <div class="form-group">
-            <label class="form-label">קטגוריה</label>
+            <label class="form-label" for="ic-cat">קטגוריה</label>
             <select id="ic-cat" class="form-control">
               <option value="blue" data-i18n="inv_cat_blue">🔵 Value</option>
               <option value="green" data-i18n="inv_cat_green">🟢 Growth</option>
@@ -6805,31 +6805,31 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
           <div class="form-group">
-            <label class="form-label">שווי התיק</label>
+            <label class="form-label" for="ic-portfolio">שווי התיק</label>
             <div style="display:flex;gap:6px">
               <input type="number" id="ic-portfolio" class="form-control sensitive" placeholder="0" min="0" step="any" style="flex:1" readonly title="מסונכרן אוטומטית עם סך התיק בהשקעות — לא ניתן לערוך ידנית">
-              <select id="ic-currency" class="form-control" style="width:64px;padding:7px 6px">
+              <select id="ic-currency" class="form-control" aria-label="מטבע" style="width:64px;padding:7px 6px">
                 <option value="$">$</option><option value="₪">₪</option>
               </select>
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">אחוז רצוי מהתיק</label>
+            <label class="form-label" for="ic-pct">אחוז רצוי מהתיק</label>
             <input type="number" id="ic-pct" class="form-control" placeholder="10" min="0" max="100" step="0.1">
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
           <div class="form-group">
-            <label class="form-label">מחיר מניה ($)</label>
+            <label class="form-label" for="ic-price">מחיר מניה ($)</label>
             <input type="number" id="ic-price" class="form-control" placeholder="0.00" min="0" step="any">
           </div>
           <div class="form-group">
-            <label class="form-label">סטופ % מהכניסה (אופציונלי)</label>
+            <label class="form-label" for="ic-stop">סטופ % מהכניסה (אופציונלי)</label>
             <input type="number" id="ic-stop" class="form-control" placeholder="8" min="0" max="100" step="0.1">
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">פעימות כניסה</label>
+          <label class="form-label" for="ic-tranches">פעימות כניסה</label>
           <input type="number" id="ic-tranches" class="form-control" value="1" min="1" max="20" step="1" placeholder="1">
         </div>
         <div id="ic-out" style="display:none;font-size:12.5px;line-height:1.95;color:var(--text2);margin-top:4px"></div>
@@ -6861,21 +6861,21 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div class="form-section-title">פרטי עסקה</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
           <div class="form-group">
-            <label class="form-label">כמות מניות</label>
+            <label class="form-label" for="inv-pos-qty">כמות מניות</label>
             <input type="number" id="inv-pos-qty" class="form-control" placeholder="0" min="0" step="any">
           </div>
           <div class="form-group" id="inv-pos-price-group">
-            <label class="form-label">מחיר לעסקה</label>
+            <label class="form-label" for="inv-pos-price">מחיר לעסקה</label>
             <input type="number" id="inv-pos-price" class="form-control" placeholder="0.00" min="0" step="any">
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
           <div class="form-group">
-            <label class="form-label">מחיר נוכחי</label>
+            <label class="form-label" for="inv-pos-current-price">מחיר נוכחי</label>
             <input type="number" id="inv-pos-current-price" class="form-control" placeholder="נשלף אוטומטית" readonly tabindex="-1" style="cursor:default;opacity:0.7;" title="מחיר נשלף אוטומטית מהשוק">
           </div>
           <div class="form-group">
-            <label class="form-label">תאריך הוספה</label>
+            <label class="form-label" for="inv-pos-date">תאריך הוספה</label>
             <input type="date" id="inv-pos-date" class="form-control">
           </div>
         </div>
@@ -6884,23 +6884,23 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div class="form-section-title">מחשבון כמות וסיכון</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
           <div class="form-group">
-            <label class="form-label">שווי התיק</label>
+            <label class="form-label" for="inv-sz-portfolio">שווי התיק</label>
             <div style="display:flex;gap:6px">
               <input type="number" id="inv-sz-portfolio" class="form-control sensitive" placeholder="0" min="0" step="any" style="flex:1">
-              <select id="inv-sz-currency" class="form-control" style="width:64px;padding:7px 6px">
+              <select id="inv-sz-currency" class="form-control" aria-label="מטבע" style="width:64px;padding:7px 6px">
                 <option value="$">$</option>
                 <option value="₪">₪</option>
               </select>
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">אחוז רצוי מהתיק</label>
+            <label class="form-label" for="inv-sz-pct">אחוז רצוי מהתיק</label>
             <input type="number" id="inv-sz-pct" class="form-control" placeholder="10" min="0" max="100" step="0.1">
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:end">
           <div class="form-group">
-            <label class="form-label">סטופ % מהכניסה (אופציונלי)</label>
+            <label class="form-label" for="inv-sz-stop">סטופ % מהכניסה (אופציונלי)</label>
             <input type="number" id="inv-sz-stop" class="form-control" placeholder="8" min="0" max="100" step="0.1">
           </div>
           <div class="form-group">
@@ -6953,18 +6953,18 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div class="form-section-title" data-i18n="modal_open_trade">Trade Entry</div>
         <div class="form-row-3">
           <div class="form-group">
-            <label class="form-label" data-i18n="m_entry_date">Entry Date</label>
+            <label class="form-label" for="m-entryDate" data-i18n="m_entry_date">Entry Date</label>
             <input type="date" class="form-control" id="m-entryDate" oninput="liveCalc()">
           </div>
           <div class="form-group">
-            <label class="form-label" data-i18n="m_ls">L / S</label>
+            <label class="form-label" for="m-ls" data-i18n="m_ls">L / S</label>
             <select class="form-control" id="m-ls" onchange="liveCalc()">
               <option value="L">L — Long</option>
               <option value="S">S — Short</option>
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label" data-i18n="m_symbol">Symbol</label>
+            <label class="form-label" for="m-symbol" data-i18n="m_symbol">Symbol</label>
             <div style="display:flex;gap:8px;align-items:center;">
               <div class="sym-ac-wrap" style="flex:1">
                 <input type="text" class="form-control" id="m-symbol" placeholder="AAPL" maxlength="20"
@@ -6980,15 +6980,15 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         </div>
         <div class="form-row-3">
           <div class="form-group">
-            <label class="form-label" data-i18n="m_entry_price">Entry Price</label>
+            <label class="form-label" for="m-entryPrice" data-i18n="m_entry_price">Entry Price</label>
             <input type="number" class="form-control" id="m-entryPrice" step="0.0001" autocomplete="off" oninput="liveCalc()">
           </div>
           <div class="form-group">
-            <label class="form-label" data-i18n="m_num_shares">Shares</label>
+            <label class="form-label" for="m-shares" data-i18n="m_num_shares">Shares</label>
             <input type="number" class="form-control" id="m-shares" autocomplete="off" oninput="liveCalc()">
           </div>
           <div class="form-group">
-            <label class="form-label" data-i18n="m_stop">Stop</label>
+            <label class="form-label" for="m-stop" data-i18n="m_stop">Stop</label>
             <input type="number" class="form-control" id="m-stop" step="0.0001" autocomplete="off" oninput="mUserEditedStop()">
           </div>
         </div>
@@ -7006,15 +7006,15 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div class="form-section-title"><span class="fst-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span data-i18n="modal_close_trade">Trade Close</span></span></div>
         <div class="form-row-3">
           <div class="form-group">
-            <label class="form-label" data-i18n="m_close_date">Close Date</label>
+            <label class="form-label" for="m-closeDate" data-i18n="m_close_date">Close Date</label>
             <input type="date" class="form-control" id="m-closeDate">
           </div>
           <div class="form-group">
-            <label class="form-label" data-i18n="m_closed_shares">Closed Shares</label>
+            <label class="form-label" for="m-closedShares" data-i18n="m_closed_shares">Closed Shares</label>
             <input type="number" class="form-control" id="m-closedShares" autocomplete="off" oninput="liveCalc()">
           </div>
           <div class="form-group">
-            <label class="form-label" data-i18n="m_exit_price">Exit Price</label>
+            <label class="form-label" for="m-exitPrice" data-i18n="m_exit_price">Exit Price</label>
             <input type="number" class="form-control" id="m-exitPrice" step="0.0001" autocomplete="off" oninput="mAutoFillStopFromExit();liveCalc()">
           </div>
         </div>
@@ -7024,11 +7024,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         <div class="form-section-title" data-i18n="modal_fees">Fees</div>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Commission</label>
+            <label class="form-label" for="m-commission">Commission</label>
             <input type="number" class="form-control" id="m-commission" step="0.01" oninput="liveCalc()">
           </div>
           <div class="form-group">
-            <label class="form-label" data-i18n="m_mood">Emotional State</label>
+            <label class="form-label" for="m-mood" data-i18n="m_mood">Emotional State</label>
             <textarea class="form-control" id="m-mood" placeholder="How did you feel before entry..." data-i18n-ph="m_mood_ph" maxlength="300" rows="1" style="resize:none;height:38px;padding-top:9px;"></textarea>
           </div>
         </div>
@@ -7044,7 +7044,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           <div><div class="cp-label">% תשואה</div><div class="cp-value" id="cp-pct">—</div></div>
         </div>
         <div class="sizer-row">
-          <label class="sizer-lbl">סיכון מהתיק</label>
+          <label class="sizer-lbl" for="m-risk-pct">סיכון מהתיק</label>
           <input type="number" id="m-risk-pct" class="sizer-input" step="0.25" min="0.1" max="10" value="1" oninput="sizerCalc()">
           <span class="sizer-lbl">%</span>
           <span class="sizer-out" id="sizer-out">הזן שער כניסה וסטופ</span>
@@ -7073,7 +7073,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label" data-i18n="m_market_cond">Market Condition</label>
+            <label class="form-label" for="m-market-cond" data-i18n="m_market_cond">Market Condition</label>
             <select class="form-control" id="m-market-cond">
               <option value="">— Select —</option>
               <option value="green">🟢 Green</option>
@@ -7083,11 +7083,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label" data-i18n="m_keep">What worked well</label>
+          <label class="form-label" for="m-notes-keep" data-i18n="m_keep">What worked well</label>
           <textarea class="form-control" id="m-notes-keep" placeholder="What worked well in this trade..." data-i18n-ph="m_keep_ph" maxlength="500"></textarea>
         </div>
         <div class="form-group">
-          <label class="form-label" data-i18n="m_improve">What to improve</label>
+          <label class="form-label" for="m-notes-improve" data-i18n="m_improve">What to improve</label>
           <textarea class="form-control" id="m-notes-improve" placeholder="What could be improved..." data-i18n-ph="m_improve_ph" maxlength="500"></textarea>
         </div>
       </div>
@@ -7135,17 +7135,17 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     </div>
 
     <div style="display:flex;flex-direction:column;gap:10px;">
-      <input id="auth-first" class="form-control" type="text" placeholder="שם פרטי" autocomplete="given-name"
+      <input id="auth-first" class="form-control" type="text" aria-label="שם פרטי" placeholder="שם פרטי" autocomplete="given-name"
         style="display:none;background:rgba(10,10,10,0.95);border:1px solid rgba(148,163,184,0.12);border-radius:var(--r-md);padding:12px 14px;font-size:14px;color:#f1f5f9;"
         onkeydown="if(event.key==='Enter')document.getElementById('auth-email').focus()">
       <div class="auth-input-wrap">
-      <input id="auth-email" class="form-control" type="email" placeholder="אימייל" autocomplete="email"
+      <input id="auth-email" class="form-control" type="email" aria-label="אימייל" placeholder="אימייל" autocomplete="email"
         style="background:rgba(10,10,10,0.95);border:1px solid rgba(148,163,184,0.12);border-radius:var(--r-md);padding:12px 14px;font-size:14px;color:#f1f5f9;width:100%;"
         onkeydown="if(event.key==='Enter')document.getElementById('auth-pass').focus()">
       <span class="auth-input-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z" opacity="0"/><path d="M22 6l-10 7L2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg></span>
       </div>
       <div class="auth-input-wrap">
-      <input id="auth-pass" class="form-control" type="password" placeholder="סיסמה (מינ׳ 8 תווים)"
+      <input id="auth-pass" class="form-control" type="password" aria-label="סיסמה" placeholder="סיסמה (מינ׳ 8 תווים)"
         style="background:rgba(10,10,10,0.95);border:1px solid rgba(148,163,184,0.12);border-radius:var(--r-md);padding:12px 14px;font-size:14px;color:#f1f5f9;width:100%;"
         autocomplete="current-password"
         oninput="authPasswordStrength(this.value)"
@@ -7242,7 +7242,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   <div style="background:linear-gradient(145deg,#091525,#0b1e38);border:1px solid rgba(79,131,255,0.18);border-radius:var(--r-lg);padding:32px 28px;width:100%;max-width:380px;box-shadow:0 24px 80px rgba(0,0,0,.8);text-align:center;">
     <div style="font-size:20px;font-weight:800;color:var(--text);margin-bottom:8px;">איך לקרוא לך?</div>
     <div style="font-size:13px;color:var(--text3);line-height:1.6;margin-bottom:20px;">נשתמש בשם הפרטי שלך כדי לקדם אותך בברכה אישית ביומן.</div>
-    <input id="name-gate-input" type="text" placeholder="שם פרטי" autocomplete="given-name" maxlength="40"
+    <input id="name-gate-input" type="text" aria-label="שם פרטי" placeholder="שם פרטי" autocomplete="given-name" maxlength="40"
       style="width:100%;background:rgba(10,10,10,0.95);border:1px solid rgba(148,163,184,0.12);border-radius:var(--r-md);padding:12px 14px;font-size:15px;color:#f1f5f9;text-align:center;font-family:inherit;"
       onkeydown="if(event.key==='Enter')nameGateSave()">
     <div id="name-gate-msg" style="display:none;color:var(--red);font-size:12px;margin-top:8px;"></div>
