@@ -28,6 +28,12 @@ self.addEventListener('fetch', e => {
   if (e.request.url.includes('localhost:8282/api/')) return;
   if (e.request.url.startsWith('chrome-extension://')) return;
   if (e.request.url.includes('supabase.co/functions/')) return;
+  // REST data queries (every supabase-js .select()) are GETs too — without this,
+  // an edit followed by a re-fetch of the same query URL got served the cached
+  // pre-edit response instead of hitting the network, and the row looked like it
+  // vanished/reverted until the next page load (by then the background refetch
+  // below had quietly updated the cache for the *next* call, masking the bug).
+  if (e.request.url.includes('supabase.co/rest/')) return;
 
   // Always fetch the app fresh. Match every page navigation (covers /dashboard
   // on Vercel, / on GitHub Pages, and /dashboard.html) plus sw.js — never serve
