@@ -6392,6 +6392,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     <!-- ===== INVESTMENTS ===== -->
     <div id="tab-screener" class="tab-content">
       <div id="screener-streak" class="scr-streak" style="display:none"></div>
+      <div id="screener-lookup" class="scr-lookup" style="display:none">
+        <label for="scr-lookup-date" data-i18n="scr_lookup_lbl">בדיקת תאריך:</label>
+        <input type="date" id="scr-lookup-date" class="form-control" style="font-size:12px;padding:4px 8px;width:auto" onchange="lookupScreenerVisit(this.value)">
+        <span id="scr-lookup-result" role="status"></span>
+      </div>
       <div style="position:relative">
         <iframe id="screener-frame" title="מסנן מניות SEPA"
           style="width:100%;height:calc(100vh - 130px);min-height:520px;border:none;display:block;background:#101013"
@@ -6418,6 +6423,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       .scr-day.visited{background:var(--green)}
       .scr-day.missed{background:rgba(239,68,68,0.35)}
       .scr-day.future{background:transparent}
+      .scr-lookup{display:flex;align-items:center;gap:8px;padding:0 4px 10px;font-size:12px;color:var(--text2)}
+      .scr-lookup #scr-lookup-result{font-weight:600}
     </style>
 
     <div id="tab-investments" class="tab-content">
@@ -8681,6 +8688,26 @@ async function renderScreenerStreak() {
   el.innerHTML = `<span class="scr-streak-lbl" data-i18n="scr_streak_lbl">35 ימים אחרונים:</span>`
     + days.map(d => `<span class="scr-day ${d.cls}" title="${d.iso}" aria-label="${d.iso} — ${statusLbl[d.cls]}"></span>`).join('');
   el.style.display = 'flex';
+  const lookup = document.getElementById('screener-lookup');
+  if (lookup) lookup.style.display = 'flex';
+}
+async function lookupScreenerVisit(iso) {
+  const resEl = document.getElementById('scr-lookup-result');
+  if (!resEl || !iso || !_currentUser) return;
+  resEl.textContent = '…';
+  const d = new Date(iso + 'T00:00:00');
+  const dow = d.getDay();
+  const dateHe = fmtDate(iso);
+  if (dow === 5 || dow === 6) {
+    resEl.textContent = `${dateHe} — סופ״ש, לא יום מסחר`;
+    resEl.style.color = 'var(--text3)';
+    return;
+  }
+  const { data, error } = await _sb.from('screener_visits')
+    .select('id').eq('user_id', _currentUser.id).eq('visit_date', iso).maybeSingle();
+  if (error) { resEl.textContent = 'שגיאה'; console.error('[lookupScreenerVisit]', error); return; }
+  if (data) { resEl.textContent = `✓ סיננת ב-${dateHe}`; resEl.style.color = 'var(--green)'; }
+  else { resEl.textContent = `✗ לא סיננת ב-${dateHe}`; resEl.style.color = 'var(--red)'; }
 }
 
 // Reported: the screener tab "doesn't open" right after logging in, but works
@@ -11177,7 +11204,7 @@ const LANG_STRINGS = {
     set_finnhub_desc:'Required for real-time stock prices. Register free at finnhub.io — enter your key and click Save.',
     set_av_desc:'Financial data for all stocks including small caps.',
     inv_cash_row:'💵 Cash — target', inv_col_pnl:'P&L',
-    scr_streak_lbl:'Last 35 days:',
+    scr_streak_lbl:'Last 35 days:', scr_lookup_lbl:'Check a date:',
   },
   he: {
     nav_overview:'ראשי', nav_stocks:'מניות / קריפטו', nav_crypto:'קריפטו',
@@ -11185,7 +11212,7 @@ const LANG_STRINGS = {
     set_finnhub_desc:'נדרש לנתוני מחיר מניות בזמן אמת. הרשם חינם ב-finnhub.io — הכנס את המפתח ולחץ Save.',
     set_av_desc:'נתוני פיננסים לכל המניות כולל Small Cap.',
     inv_cash_row:'💵 מזומן — יעד', inv_col_pnl:'רווח/הפסד',
-    scr_streak_lbl:'35 ימים אחרונים:',
+    scr_streak_lbl:'35 ימים אחרונים:', scr_lookup_lbl:'בדיקת תאריך:',
     nav_statistics:'סטטיסטיקות', nav_settings:'פרופיל', nav_themes:'Market Pulse',
     nav_ai:'Minervini', nav_screener:'מסנן מניות', nav_missed:'פוספסו', nav_investments:'השקעות',
     nav_section:'ניווט', add_trade:'הוסף עסקה',
