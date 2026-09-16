@@ -6391,6 +6391,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     <!-- ===== AI COACH ===== -->
     <!-- ===== INVESTMENTS ===== -->
     <div id="tab-screener" class="tab-content">
+      <div id="screener-streak" class="scr-streak" style="display:none"></div>
       <div style="position:relative">
         <iframe id="screener-frame" title="מסנן מניות SEPA"
           style="width:100%;height:calc(100vh - 130px);min-height:520px;border:none;display:block;background:#101013"
@@ -6409,7 +6410,15 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         </div>
       </div>
     </div>
-    <style>@keyframes scr-spin{to{transform:rotate(360deg)}}</style>
+    <style>
+      @keyframes scr-spin{to{transform:rotate(360deg)}}
+      .scr-streak{display:flex;align-items:center;gap:3px;padding:8px 4px;margin-bottom:8px;flex-wrap:wrap}
+      .scr-streak-lbl{font-size:11px;color:var(--text3);margin-inline-end:6px;white-space:nowrap}
+      .scr-day{width:11px;height:11px;border-radius:3px;background:rgba(255,255,255,0.06)}
+      .scr-day.visited{background:var(--green)}
+      .scr-day.missed{background:rgba(239,68,68,0.35)}
+      .scr-day.future{background:transparent}
+    </style>
 
     <div id="tab-investments" class="tab-content">
       <div class="inv-wrap">
@@ -8613,6 +8622,7 @@ function switchTab(name, btn) {
   }
   if (name==='missed') missedRender();
   if (name==='screener') {
+    logScreenerVisit();
     const f=document.getElementById('screener-frame');
     const scrTheme = document.documentElement.getAttribute('data-theme')==='light' ? 'tj-light' : 'tj';
     if (!f._loaded) _showScreenerLoading();
@@ -8625,6 +8635,52 @@ function switchTab(name, btn) {
   if (name==='investments') invInit();
   _syncMobileNav(name);
   _maybeShowTabIntro(name, tabEl);
+}
+
+// Tracks which days the user actually opened the Screener tab, so a small
+// calendar can show gaps rather than just trusting the habit happened.
+// One row per user per day (screener_visits, unique on user_id+visit_date);
+// upserted every time the tab opens — idempotent, so switching tabs
+// repeatedly in one day writes the same row again rather than piling up.
+function _todayLocalISO() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+async function logScreenerVisit() {
+  if (!_currentUser) return;
+  try {
+    await _sb.from('screener_visits')
+      .upsert({ user_id: _currentUser.id, visit_date: _todayLocalISO() }, { onConflict: 'user_id,visit_date', ignoreDuplicates: true });
+  } catch (e) { console.error('[logScreenerVisit]', e); }
+  renderScreenerStreak();
+}
+async function renderScreenerStreak() {
+  const el = document.getElementById('screener-streak');
+  if (!el || !_currentUser) return;
+  const today = new Date();
+  const start = new Date(today); start.setDate(start.getDate() - 34);
+  const { data, error } = await _sb.from('screener_visits')
+    .select('visit_date')
+    .eq('user_id', _currentUser.id)
+    .gte('visit_date', start.toISOString().slice(0,10));
+  if (error) { console.error('[renderScreenerStreak]', error); return; }
+  const visited = new Set((data||[]).map(r => r.visit_date));
+  const days = [];
+  for (let i = 0; i < 35; i++) {
+    const d = new Date(start); d.setDate(d.getDate() + i);
+    const iso = d.toISOString().slice(0,10);
+    const dow = d.getDay(); // 0=Sun..6=Sat
+    let cls;
+    if (d > today) cls = 'future';
+    else if (visited.has(iso)) cls = 'visited';
+    else if (dow === 5 || dow === 6) cls = ''; // Fri/Sat — not a US trading day
+    else cls = 'missed';
+    days.push({ iso, cls });
+  }
+  const statusLbl = { visited: 'סוננה', missed: 'פוספסה', future: 'עתידי', '': 'סופ"ש' };
+  el.innerHTML = `<span class="scr-streak-lbl" data-i18n="scr_streak_lbl">35 ימים אחרונים:</span>`
+    + days.map(d => `<span class="scr-day ${d.cls}" title="${d.iso}" aria-label="${d.iso} — ${statusLbl[d.cls]}"></span>`).join('');
+  el.style.display = 'flex';
 }
 
 // Reported: the screener tab "doesn't open" right after logging in, but works
@@ -11121,6 +11177,7 @@ const LANG_STRINGS = {
     set_finnhub_desc:'Required for real-time stock prices. Register free at finnhub.io — enter your key and click Save.',
     set_av_desc:'Financial data for all stocks including small caps.',
     inv_cash_row:'💵 Cash — target', inv_col_pnl:'P&L',
+    scr_streak_lbl:'Last 35 days:',
   },
   he: {
     nav_overview:'ראשי', nav_stocks:'מניות / קריפטו', nav_crypto:'קריפטו',
@@ -11128,6 +11185,7 @@ const LANG_STRINGS = {
     set_finnhub_desc:'נדרש לנתוני מחיר מניות בזמן אמת. הרשם חינם ב-finnhub.io — הכנס את המפתח ולחץ Save.',
     set_av_desc:'נתוני פיננסים לכל המניות כולל Small Cap.',
     inv_cash_row:'💵 מזומן — יעד', inv_col_pnl:'רווח/הפסד',
+    scr_streak_lbl:'35 ימים אחרונים:',
     nav_statistics:'סטטיסטיקות', nav_settings:'פרופיל', nav_themes:'Market Pulse',
     nav_ai:'Minervini', nav_screener:'מסנן מניות', nav_missed:'פוספסו', nav_investments:'השקעות',
     nav_section:'ניווט', add_trade:'הוסף עסקה',
