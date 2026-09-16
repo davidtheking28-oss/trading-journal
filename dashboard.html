@@ -8653,6 +8653,10 @@ function _todayLocalISO() {
   const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
+// Visits weren't tracked before this feature shipped — a date earlier than
+// this has no row for a real reason, not because the user skipped it, so it
+// must not read as a miss.
+const SCREENER_TRACKING_START = '2026-09-16';
 async function logScreenerVisit() {
   if (!_currentUser) return;
   try {
@@ -8680,11 +8684,12 @@ async function renderScreenerStreak() {
     let cls;
     if (d > today) cls = 'future';
     else if (visited.has(iso)) cls = 'visited';
-    else if (dow === 5 || dow === 6) cls = ''; // Fri/Sat — not a US trading day
+    else if (dow === 5 || dow === 6) cls = 'weekend';
+    else if (iso < SCREENER_TRACKING_START) cls = 'pretrack'; // no row for a real reason — not a miss
     else cls = 'missed';
     days.push({ iso, cls });
   }
-  const statusLbl = { visited: 'סוננה', missed: 'פוספסה', future: 'עתידי', '': 'סופ"ש' };
+  const statusLbl = { visited: 'סוננה', missed: 'פוספסה', future: 'עתידי', weekend: 'סופ"ש', pretrack: 'לפני תחילת המעקב' };
   el.innerHTML = `<span class="scr-streak-lbl" data-i18n="scr_streak_lbl">35 ימים אחרונים:</span>`
     + days.map(d => `<span class="scr-day ${d.cls}" title="${d.iso}" aria-label="${d.iso} — ${statusLbl[d.cls]}"></span>`).join('');
   el.style.display = 'flex';
@@ -8698,6 +8703,11 @@ async function lookupScreenerVisit(iso) {
   const d = new Date(iso + 'T00:00:00');
   const dow = d.getDay();
   const dateHe = fmtDate(iso);
+  if (iso < SCREENER_TRACKING_START) {
+    resEl.textContent = `${dateHe} — אין נתונים, לפני תחילת המעקב`;
+    resEl.style.color = 'var(--text3)';
+    return;
+  }
   if (dow === 5 || dow === 6) {
     resEl.textContent = `${dateHe} — סופ״ש, לא יום מסחר`;
     resEl.style.color = 'var(--text3)';
