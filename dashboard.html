@@ -8637,12 +8637,12 @@ function switchTab(name, btn) {
   _maybeShowTabIntro(name, tabEl);
 }
 
-// Tracks which SCREENER TYPES the user actually looked at each day (not
-// just whether the tab was open — opening it and staring at one default
-// screener doesn't mean "I went through my filters"). The screener posts
-// tj:screener-used for every type it shows, including the one restored on
-// load; screener_type_visits gets one row per (day, type). A day counts as
-// fully screened once at least half the types were seen.
+// Tracks which SCREENER TYPES the user actually reviewed each day (not just
+// switched to — the screener posts tj:screener-used only once the user has
+// scrolled to the bottom of that filter's results, so opening a tab and
+// leaving without reading doesn't count). screener_type_visits gets one row
+// per (day, type). A day counts as fully screened once at least half the
+// types were seen.
 function _todayLocalISO() {
   const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
