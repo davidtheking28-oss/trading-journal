@@ -6391,13 +6391,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     <!-- ===== AI COACH ===== -->
     <!-- ===== INVESTMENTS ===== -->
     <div id="tab-screener" class="tab-content">
-      <div id="screener-tracking-bar" class="scr-bar" style="display:none">
-        <div id="screener-streak" class="scr-streak"></div>
-        <div id="screener-lookup" class="scr-lookup">
-          <label for="scr-lookup-date" data-i18n="scr_lookup_lbl">בדיקת תאריך:</label>
-          <input type="date" id="scr-lookup-date" class="form-control" style="font-size:11px;padding:2px 6px;width:auto" onchange="lookupScreenerVisit(this.value)">
-          <span id="scr-lookup-result" role="status"></span>
-        </div>
+      <div id="screener-lookup" class="scr-lookup">
+        <label for="scr-lookup-date" data-i18n="scr_lookup_lbl">בדיקת תאריך:</label>
+        <input type="date" id="scr-lookup-date" class="form-control" style="font-size:11px;padding:2px 6px;width:auto" onchange="lookupScreenerVisit(this.value)">
+        <span id="scr-lookup-result" role="status"></span>
       </div>
       <div style="position:relative">
         <iframe id="screener-frame" title="מסנן מניות SEPA"
@@ -6419,15 +6416,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     </div>
     <style>
       @keyframes scr-spin{to{transform:rotate(360deg)}}
-      .scr-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:6px 4px;margin-bottom:6px;font-size:11px}
-      .scr-streak{display:flex;align-items:center;gap:2px}
-      .scr-streak-lbl{color:var(--text3);margin-inline-end:5px;white-space:nowrap}
-      .scr-day{width:8px;height:8px;border-radius:2px;background:rgba(255,255,255,0.06)}
-      .scr-day.visited{background:var(--green)}
-      .scr-day.partial{background:var(--yellow, #eab308)}
-      .scr-day.missed{background:rgba(239,68,68,0.35)}
-      .scr-day.future{background:transparent}
-      .scr-lookup{display:flex;align-items:center;gap:6px;color:var(--text2)}
+      .scr-lookup{display:flex;align-items:center;gap:6px;padding:6px 4px;margin-bottom:6px;font-size:11px;color:var(--text2)}
       .scr-lookup #scr-lookup-result{font-weight:600}
     </style>
 
@@ -8633,7 +8622,7 @@ function switchTab(name, btn) {
   }
   if (name==='missed') missedRender();
   if (name==='screener') {
-    renderScreenerStreak();
+    _showScreenerLookup();
     const f=document.getElementById('screener-frame');
     const scrTheme = document.documentElement.getAttribute('data-theme')==='light' ? 'tj-light' : 'tj';
     if (!f._loaded) _showScreenerLoading();
@@ -8673,42 +8662,14 @@ async function logScreenerTypeVisit(key) {
       .upsert({ user_id: _currentUser.id, visit_date: _todayLocalISO(), screener_key: key },
         { onConflict: 'user_id,visit_date,screener_key', ignoreDuplicates: true });
   } catch (e) { console.error('[logScreenerTypeVisit]', e); }
-  renderScreenerStreak();
+  const dateInput = document.getElementById('scr-lookup-date');
+  if (dateInput && (!dateInput.value || dateInput.value === _todayLocalISO())) lookupScreenerVisit(_todayLocalISO());
 }
-function _screenerDayClass(count, dow, iso, today) {
-  if (iso > today) return 'future';
-  if (count >= SCREENER_HALF_THRESHOLD) return 'visited';
-  if (count > 0) return 'partial';
-  if (dow === 5 || dow === 6) return 'weekend';
-  if (iso < SCREENER_TRACKING_START) return 'pretrack';
-  return 'missed';
-}
-async function renderScreenerStreak() {
-  const el = document.getElementById('screener-streak');
-  if (!el || !_currentUser) return;
-  const today = new Date();
-  const start = new Date(today); start.setDate(start.getDate() - 34);
-  const { data, error } = await _sb.from('screener_type_visits')
-    .select('visit_date,screener_key')
-    .eq('user_id', _currentUser.id)
-    .gte('visit_date', start.toISOString().slice(0,10));
-  if (error) { console.error('[renderScreenerStreak]', error); return; }
-  const byDate = {};
-  (data||[]).forEach(r => (byDate[r.visit_date] ??= new Set()).add(r.screener_key));
-  const todayIso = today.toISOString().slice(0,10);
-  const days = [];
-  for (let i = 0; i < 35; i++) {
-    const d = new Date(start); d.setDate(d.getDate() + i);
-    const iso = d.toISOString().slice(0,10);
-    const count = byDate[iso]?.size || 0;
-    days.push({ iso, count, cls: _screenerDayClass(count, d.getDay(), iso, todayIso) });
-  }
-  const statusLbl = c => ({ visited: `סוננה מלא (${c.count}/${SCREENER_TYPE_COUNT})`, partial: `חלקי (${c.count}/${SCREENER_TYPE_COUNT})`,
-    missed: 'פוספסה', future: 'עתידי', weekend: 'סופ"ש', pretrack: 'לפני תחילת המעקב' }[c.cls]);
-  el.innerHTML = `<span class="scr-streak-lbl" data-i18n="scr_streak_lbl">35 ימים אחרונים:</span>`
-    + days.map(d => `<span class="scr-day ${d.cls}" title="${d.iso}" aria-label="${d.iso} — ${statusLbl(d)}"></span>`).join('');
-  const bar = document.getElementById('screener-tracking-bar');
-  if (bar) bar.style.display = 'flex';
+function _showScreenerLookup() {
+  const dateInput = document.getElementById('scr-lookup-date');
+  if (!dateInput) return;
+  if (!dateInput.value) dateInput.value = _todayLocalISO();
+  lookupScreenerVisit(dateInput.value);
 }
 async function lookupScreenerVisit(iso) {
   const resEl = document.getElementById('scr-lookup-result');
@@ -11227,7 +11188,7 @@ const LANG_STRINGS = {
     set_finnhub_desc:'Required for real-time stock prices. Register free at finnhub.io — enter your key and click Save.',
     set_av_desc:'Financial data for all stocks including small caps.',
     inv_cash_row:'💵 Cash — target', inv_col_pnl:'P&L',
-    scr_streak_lbl:'Last 35 days:', scr_lookup_lbl:'Check a date:',
+    scr_lookup_lbl:'Check a date:',
   },
   he: {
     nav_overview:'ראשי', nav_stocks:'מניות / קריפטו', nav_crypto:'קריפטו',
@@ -11235,7 +11196,7 @@ const LANG_STRINGS = {
     set_finnhub_desc:'נדרש לנתוני מחיר מניות בזמן אמת. הרשם חינם ב-finnhub.io — הכנס את המפתח ולחץ Save.',
     set_av_desc:'נתוני פיננסים לכל המניות כולל Small Cap.',
     inv_cash_row:'💵 מזומן — יעד', inv_col_pnl:'רווח/הפסד',
-    scr_streak_lbl:'35 ימים אחרונים:', scr_lookup_lbl:'בדיקת תאריך:',
+    scr_lookup_lbl:'בדיקת תאריך:',
     nav_statistics:'סטטיסטיקות', nav_settings:'פרופיל', nav_themes:'Market Pulse',
     nav_ai:'Minervini', nav_screener:'מסנן מניות', nav_missed:'פוספסו', nav_investments:'השקעות',
     nav_section:'ניווט', add_trade:'הוסף עסקה',
