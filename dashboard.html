@@ -6424,6 +6424,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       .scr-streak-lbl{color:var(--text3);margin-inline-end:5px;white-space:nowrap}
       .scr-day{width:8px;height:8px;border-radius:2px;background:rgba(255,255,255,0.06)}
       .scr-day.visited{background:var(--green)}
+      .scr-day.partial{background:var(--yellow, #eab308)}
       .scr-day.missed{background:rgba(239,68,68,0.35)}
       .scr-day.future{background:transparent}
       .scr-lookup{display:flex;align-items:center;gap:6px;color:var(--text2)}
@@ -8632,7 +8633,7 @@ function switchTab(name, btn) {
   }
   if (name==='missed') missedRender();
   if (name==='screener') {
-    logScreenerVisit();
+    renderScreenerStreak();
     const f=document.getElementById('screener-frame');
     const scrTheme = document.documentElement.getAttribute('data-theme')==='light' ? 'tj-light' : 'tj';
     if (!f._loaded) _showScreenerLoading();
@@ -8647,11 +8648,12 @@ function switchTab(name, btn) {
   _maybeShowTabIntro(name, tabEl);
 }
 
-// Tracks which days the user actually opened the Screener tab, so a small
-// calendar can show gaps rather than just trusting the habit happened.
-// One row per user per day (screener_visits, unique on user_id+visit_date);
-// upserted every time the tab opens — idempotent, so switching tabs
-// repeatedly in one day writes the same row again rather than piling up.
+// Tracks which SCREENER TYPES the user actually looked at each day (not
+// just whether the tab was open — opening it and staring at one default
+// screener doesn't mean "I went through my filters"). The screener posts
+// tj:screener-used for every type it shows, including the one restored on
+// load; screener_type_visits gets one row per (day, type). A day counts as
+// fully screened once at least half the types were seen.
 function _todayLocalISO() {
   const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
@@ -8660,41 +8662,51 @@ function _todayLocalISO() {
 // this has no row for a real reason, not because the user skipped it, so it
 // must not read as a miss.
 const SCREENER_TRACKING_START = '2026-09-16';
-async function logScreenerVisit() {
+// Matches the screener's SCREENERS keys (sepa/power/vcp/qulla/finviz/growth/
+// commodities) — update if that repo adds or removes a screener type.
+const SCREENER_TYPE_COUNT = 7;
+const SCREENER_HALF_THRESHOLD = Math.ceil(SCREENER_TYPE_COUNT / 2);
+async function logScreenerTypeVisit(key) {
   if (!_currentUser) return;
   try {
-    await _sb.from('screener_visits')
-      .upsert({ user_id: _currentUser.id, visit_date: _todayLocalISO() }, { onConflict: 'user_id,visit_date', ignoreDuplicates: true });
-  } catch (e) { console.error('[logScreenerVisit]', e); }
+    await _sb.from('screener_type_visits')
+      .upsert({ user_id: _currentUser.id, visit_date: _todayLocalISO(), screener_key: key },
+        { onConflict: 'user_id,visit_date,screener_key', ignoreDuplicates: true });
+  } catch (e) { console.error('[logScreenerTypeVisit]', e); }
   renderScreenerStreak();
+}
+function _screenerDayClass(count, dow, iso, today) {
+  if (iso > today) return 'future';
+  if (count >= SCREENER_HALF_THRESHOLD) return 'visited';
+  if (count > 0) return 'partial';
+  if (dow === 5 || dow === 6) return 'weekend';
+  if (iso < SCREENER_TRACKING_START) return 'pretrack';
+  return 'missed';
 }
 async function renderScreenerStreak() {
   const el = document.getElementById('screener-streak');
   if (!el || !_currentUser) return;
   const today = new Date();
   const start = new Date(today); start.setDate(start.getDate() - 34);
-  const { data, error } = await _sb.from('screener_visits')
-    .select('visit_date')
+  const { data, error } = await _sb.from('screener_type_visits')
+    .select('visit_date,screener_key')
     .eq('user_id', _currentUser.id)
     .gte('visit_date', start.toISOString().slice(0,10));
   if (error) { console.error('[renderScreenerStreak]', error); return; }
-  const visited = new Set((data||[]).map(r => r.visit_date));
+  const byDate = {};
+  (data||[]).forEach(r => (byDate[r.visit_date] ??= new Set()).add(r.screener_key));
+  const todayIso = today.toISOString().slice(0,10);
   const days = [];
   for (let i = 0; i < 35; i++) {
     const d = new Date(start); d.setDate(d.getDate() + i);
     const iso = d.toISOString().slice(0,10);
-    const dow = d.getDay(); // 0=Sun..6=Sat
-    let cls;
-    if (d > today) cls = 'future';
-    else if (visited.has(iso)) cls = 'visited';
-    else if (dow === 5 || dow === 6) cls = 'weekend';
-    else if (iso < SCREENER_TRACKING_START) cls = 'pretrack'; // no row for a real reason — not a miss
-    else cls = 'missed';
-    days.push({ iso, cls });
+    const count = byDate[iso]?.size || 0;
+    days.push({ iso, count, cls: _screenerDayClass(count, d.getDay(), iso, todayIso) });
   }
-  const statusLbl = { visited: 'סוננה', missed: 'פוספסה', future: 'עתידי', weekend: 'סופ"ש', pretrack: 'לפני תחילת המעקב' };
+  const statusLbl = c => ({ visited: `סוננה מלא (${c.count}/${SCREENER_TYPE_COUNT})`, partial: `חלקי (${c.count}/${SCREENER_TYPE_COUNT})`,
+    missed: 'פוספסה', future: 'עתידי', weekend: 'סופ"ש', pretrack: 'לפני תחילת המעקב' }[c.cls]);
   el.innerHTML = `<span class="scr-streak-lbl" data-i18n="scr_streak_lbl">35 ימים אחרונים:</span>`
-    + days.map(d => `<span class="scr-day ${d.cls}" title="${d.iso}" aria-label="${d.iso} — ${statusLbl[d.cls]}"></span>`).join('');
+    + days.map(d => `<span class="scr-day ${d.cls}" title="${d.iso}" aria-label="${d.iso} — ${statusLbl(d)}"></span>`).join('');
   const bar = document.getElementById('screener-tracking-bar');
   if (bar) bar.style.display = 'flex';
 }
@@ -8710,15 +8722,13 @@ async function lookupScreenerVisit(iso) {
     resEl.style.color = 'var(--text3)';
     return;
   }
-  if (dow === 5 || dow === 6) {
-    resEl.textContent = `${dateHe} — סופ״ש, לא יום מסחר`;
-    resEl.style.color = 'var(--text3)';
-    return;
-  }
-  const { data, error } = await _sb.from('screener_visits')
-    .select('id').eq('user_id', _currentUser.id).eq('visit_date', iso).maybeSingle();
+  const { data, error } = await _sb.from('screener_type_visits')
+    .select('screener_key').eq('user_id', _currentUser.id).eq('visit_date', iso);
   if (error) { resEl.textContent = 'שגיאה'; console.error('[lookupScreenerVisit]', error); return; }
-  if (data) { resEl.textContent = `✓ סיננת ב-${dateHe}`; resEl.style.color = 'var(--green)'; }
+  const count = new Set((data||[]).map(r => r.screener_key)).size;
+  if (count >= SCREENER_HALF_THRESHOLD) { resEl.textContent = `✓ סיננת ב-${dateHe} (${count}/${SCREENER_TYPE_COUNT})`; resEl.style.color = 'var(--green)'; }
+  else if (count > 0) { resEl.textContent = `◐ חלקי ב-${dateHe} (${count}/${SCREENER_TYPE_COUNT})`; resEl.style.color = 'var(--yellow, #eab308)'; }
+  else if (dow === 5 || dow === 6) { resEl.textContent = `${dateHe} — סופ״ש, לא יום מסחר`; resEl.style.color = 'var(--text3)'; }
   else { resEl.textContent = `✗ לא סיננת ב-${dateHe}`; resEl.style.color = 'var(--red)'; }
 }
 
@@ -8813,6 +8823,7 @@ window.addEventListener('message', (e) => {
   const frame = document.getElementById('screener-frame');
   if (!frame || e.source !== frame.contentWindow) return;
   if (e.data?.type === 'tj:screener-ready') _sendSessionToScreener();
+  if (e.data?.type === 'tj:screener-used' && e.data.key) logScreenerTypeVisit(e.data.key);
 });
 
 function mNav(name) {
