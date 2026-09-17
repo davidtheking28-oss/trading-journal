@@ -13123,6 +13123,10 @@ async function saveTrade() {
     // failed to match the trade and imported it a second time as a duplicate.
     data.ibkr_id  = prev.ibkr_id  ?? null;
     data.bybit_id = prev.bybit_id ?? null;
+    // Same reason: the orphan-close idempotency guard compares t._exitDt
+    // against the in-memory row, so losing this on an edit lets the next sync
+    // in the same session re-apply a close it had already booked.
+    data.lastCloseDt = prev.lastCloseDt ?? null;
     data.deleted   = prev.deleted;
     data.deletedAt = prev.deletedAt;
     arr[i] = data; // optimistic
@@ -13794,15 +13798,19 @@ async function _flexImportInner(trades) {
         }
         opposite.t            = legs;
         opposite.exitPrice    = t.entryPrice;
-        opposite.closeDate    = t.entryDate;
         opposite.closedShares = (opposite.closedShares || 0) + closeQty;
+        // Same rule as the orphan-close branch above: a cover that only takes
+        // part of the position leaves shares still held, and a close_date on a
+        // row that still holds stock hides it from every open-position view
+        // (isOpenPosition) while reading as closed everywhere else.
+        opposite.closeDate    = opposite.closedShares >= (opposite.shares || 0) - 0.01 ? t.entryDate : null;
         // A pending row has not been written yet, so it just goes in already
         // closed — queueing an update against a row with no id would target
         // `.eq('id', undefined)` and silently match nothing.
         if (saved) {
           toUpdate.push({ row: opposite, prev, patch: {
             exit_price:    t.entryPrice,
-            close_date:    t.entryDate,
+            close_date:    opposite.closeDate,
             closed_shares: opposite.closedShares,
             targets:       legs,
           } });

@@ -436,6 +436,12 @@ describe('_flexImportInner — a no-indicator fill against an open opposite posi
     assert.equal(h.inserts.length, 0);
     assert.equal(h.updates[0].patch.closed_shares, 10, 'the other 20 shares are still short');
     assert.equal(h.db.stocks[0].shares - h.db.stocks[0].closedShares, 20);
+    // This case reached production with the assertion missing: the branch wrote
+    // close_date unconditionally, so a row still holding 20 shares read as
+    // closed and dropped out of every open-position view. The orphan-close
+    // branch had the guard; this sibling branch did not.
+    assert.equal(h.updates[0].patch.close_date, null, 'still short 20 — must not look fully closed');
+    assert.equal(h.db.stocks[0].closeDate, null);
   });
 
   test('buying back more than the short held reverses into a new long', async () => {
