@@ -20,6 +20,7 @@ alter table flex_statement_cache add column confirm_stale_since timestamptz;
 create or replace function flex_cache_track_staleness()
 returns trigger
 language plpgsql
+set search_path to 'public'
 as $$
 begin
   if new.imported_at is not null then
