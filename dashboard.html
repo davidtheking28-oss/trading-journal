@@ -6391,11 +6391,13 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     <!-- ===== AI COACH ===== -->
     <!-- ===== INVESTMENTS ===== -->
     <div id="tab-screener" class="tab-content">
-      <div id="screener-streak" class="scr-streak" style="display:none"></div>
-      <div id="screener-lookup" class="scr-lookup" style="display:none">
-        <label for="scr-lookup-date" data-i18n="scr_lookup_lbl">בדיקת תאריך:</label>
-        <input type="date" id="scr-lookup-date" class="form-control" style="font-size:12px;padding:4px 8px;width:auto" onchange="lookupScreenerVisit(this.value)">
-        <span id="scr-lookup-result" role="status"></span>
+      <div id="screener-tracking-bar" class="scr-bar" style="display:none">
+        <div id="screener-streak" class="scr-streak"></div>
+        <div id="screener-lookup" class="scr-lookup">
+          <label for="scr-lookup-date" data-i18n="scr_lookup_lbl">בדיקת תאריך:</label>
+          <input type="date" id="scr-lookup-date" class="form-control" style="font-size:11px;padding:2px 6px;width:auto" onchange="lookupScreenerVisit(this.value)">
+          <span id="scr-lookup-result" role="status"></span>
+        </div>
       </div>
       <div style="position:relative">
         <iframe id="screener-frame" title="מסנן מניות SEPA"
@@ -6417,13 +6419,14 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     </div>
     <style>
       @keyframes scr-spin{to{transform:rotate(360deg)}}
-      .scr-streak{display:flex;align-items:center;gap:3px;padding:8px 4px;margin-bottom:8px;flex-wrap:wrap}
-      .scr-streak-lbl{font-size:11px;color:var(--text3);margin-inline-end:6px;white-space:nowrap}
-      .scr-day{width:11px;height:11px;border-radius:3px;background:rgba(255,255,255,0.06)}
+      .scr-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:6px 4px;margin-bottom:6px;font-size:11px}
+      .scr-streak{display:flex;align-items:center;gap:2px}
+      .scr-streak-lbl{color:var(--text3);margin-inline-end:5px;white-space:nowrap}
+      .scr-day{width:8px;height:8px;border-radius:2px;background:rgba(255,255,255,0.06)}
       .scr-day.visited{background:var(--green)}
       .scr-day.missed{background:rgba(239,68,68,0.35)}
       .scr-day.future{background:transparent}
-      .scr-lookup{display:flex;align-items:center;gap:8px;padding:0 4px 10px;font-size:12px;color:var(--text2)}
+      .scr-lookup{display:flex;align-items:center;gap:6px;color:var(--text2)}
       .scr-lookup #scr-lookup-result{font-weight:600}
     </style>
 
@@ -8692,9 +8695,8 @@ async function renderScreenerStreak() {
   const statusLbl = { visited: 'סוננה', missed: 'פוספסה', future: 'עתידי', weekend: 'סופ"ש', pretrack: 'לפני תחילת המעקב' };
   el.innerHTML = `<span class="scr-streak-lbl" data-i18n="scr_streak_lbl">35 ימים אחרונים:</span>`
     + days.map(d => `<span class="scr-day ${d.cls}" title="${d.iso}" aria-label="${d.iso} — ${statusLbl[d.cls]}"></span>`).join('');
-  el.style.display = 'flex';
-  const lookup = document.getElementById('screener-lookup');
-  if (lookup) lookup.style.display = 'flex';
+  const bar = document.getElementById('screener-tracking-bar');
+  if (bar) bar.style.display = 'flex';
 }
 async function lookupScreenerVisit(iso) {
   const resEl = document.getElementById('scr-lookup-result');
