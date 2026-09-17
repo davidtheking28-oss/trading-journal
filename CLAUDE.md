@@ -609,3 +609,83 @@ unlike this one — push it manually).
   any import path. Swept all users when this was found: zero other accounts
   were affected. The one live corruption (account `9f9ffff4`, MD) was
   corrected by hand after backing up to `trades_backup_20260831_md_reversal`.
+
+## ⚠️ Don't reintroduce these regressions (fixed 2026-09-17, IBKR import never runs without a login)
+
+- **IBKR import is entirely client-side — `ibkr-cron` only fetches and caches
+  the Flex XML, it never parses or writes to `trades`.** `_flexImportFromCache`
+  (browser-only, triggered by opening the app) is the only caller of
+  `flexParseXML`/`_flexImportInner` anywhere in the codebase. `flex_sync_log.
+  status='ok'` is stamped purely on fetch success, so an account that stops
+  opening the app shows a permanently healthy sync while real broker fills
+  pile up in `flex_statement_cache` and never reach the journal. Found on
+  `dcb5bdba`: 26 real trades fetched successfully every day for weeks,
+  0 imported — the user's own report ("but he DOES trade in it") was right;
+  an earlier "hasn't traded since 8/19" conclusion in this session was wrong
+  because it only checked the `trades` table, not the raw cached XML. 16 rows
+  recovered by hand (`20260917_recover_dcb5bdba_ibkr_import.sql`) by running
+  the actual `flexParseXML`/`_flexImportInner` source headless (same
+  `tests/harness.mjs` technique the test suite uses) against the cached XML,
+  dry-run reviewed before writing. Backup: `trades_backup_20260917_dcb5bdba_recovery`.
+  **Moving import server-side is still an open architectural question, not
+  done** — this session only recovered the one account and closed the
+  monitoring gap (below); a real fix needs a design decision, not a silent
+  port of ~300 lines of matching/dedup logic into Deno.
+- **`numeric` Postgres columns come back as JS strings from `execute_sql`
+  (pg wire), but as bare JSON numbers from PostgREST** (what the browser
+  actually talks to via supabase-js) — `validateTradeSchema` depends on this
+  (`typeof entryPrice === 'number'`). Feeding an `execute_sql` dump straight
+  into `_rowToTrade` without `Number()`-coercing the numeric columns first
+  produces silent string-concatenation bugs (`"2" + 2 === "22"`, caught while
+  building the dcb5bdba recovery script) that don't exist in the live app —
+  always coerce before replaying real app logic against a raw SQL dump.
+- **`ibkr_sync_stalled` (2026-08-23) cannot see this failure mode by
+  construction** — it only proves the fetch side is alive. New check
+  `flex_fetched_not_imported` (`data_health_check_core`) catches the gap
+  instead, but NOT via `fetched_at`/`imported_at` directly: `ibkr-cron`
+  overwrites both `fetched_at` and `imported_at: null` on every successful
+  fetch, so a naive "imported_at is null and fetched_at is old" test only
+  catches an account that has been stale since its very first fetch — an
+  account that goes stale mid-life always looks fresh because fetched_at keeps
+  moving. `stale_since`/`confirm_stale_since`
+  (`20260917_flex_stale_since_tracking.sql`) are new columns, maintained by a
+  `before update` trigger (`flex_cache_track_staleness`) instead of editing
+  `ibkr-cron` — set to `now()` the moment `imported_at` first goes null with
+  nothing already tracking it, left alone on every subsequent fetch that still
+  hasn't been imported (so it keeps *when the gap started*, not the latest
+  fetch time), and cleared back to null the moment the client imports. Checked
+  live against both actively-used accounts before shipping — a first version
+  using `fetched_at`/`imported_at` directly false-positived on both of them,
+  since `imported_at` is routinely null for the few hours between a cron run
+  and the next visit.
+- **`_orphanClose` in `_flexImportInner` had no idempotency check at all** —
+  found while building the dcb5bdba recovery script. An account with no Trade
+  ID column has nothing to dedupe an orphan close against, and the Flex
+  query's rolling window keeps re-including old closes on every resync: a
+  2-share close from weeks earlier came back around and became `2+2=4`
+  instead of staying `2`. Fixed with `last_close_dt` (new `trades` column,
+  `20260917_trades_last_close_dt.sql`) — IBKR's raw `dateTime` (to the second)
+  is unique per execution even without a tradeID, stored on the row and
+  checked (`open.lastCloseDt === t._exitDt`) before applying. **Only tracks
+  the single most-recently-applied close, not a history of all of them** — a
+  row closed by two-or-more orphan executions across multiple resyncs is only
+  protected against re-replaying the latest one; this covers the bug as
+  actually observed (a single re-included close) without the larger schema
+  change (dated legs) a full history would need.
+- **Same code path was also violating the 2026-08-27 half_closed_row
+  invariant** — it set `close_date` unconditionally, even when the position
+  was only partially closed (room left after the update). Now gated on
+  `closedShares >= shares`, same as everywhere else in the file. Caught the
+  same way as the double-count bug: found live on dcb5bdba (ONDS, 20 of 53
+  shares closed) while building the recovery script, not by code review.
+- **When rebuilding `data_health_check_core` for a new check, diff against
+  `pg_get_functiondef('public.data_health_check_core(uuid)'::regprocedure)`,
+  never against a migration file picked by eye.** This session's first attempt
+  reconstructed the function body from the 20260823 migration and shipped it —
+  silently reintroducing the pre-2026-08-27 `half_closed_row` bug and dropping
+  `bybit_sync_stalled` (20260826) and `opposite_direction_open_same_symbol`
+  (20260831) entirely, because `CREATE OR REPLACE FUNCTION` has no partial-add
+  form and there is no single file that is always the latest version. Caught
+  immediately by re-running `data_health_check()` after applying (3 failing
+  rows appeared that weren't there before) — that habit is what caught it,
+  not the diff itself.

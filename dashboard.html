@@ -8081,6 +8081,7 @@ function _rowToTrade(row) {
     mood:         row.mood          || '',
     ibkr_id:      row.ibkr_id       || null,
     bybit_id:     row.bybit_id      || null,
+    lastCloseDt:  row.last_close_dt || null,
     deleted:      row.deleted       || false,
     deletedAt:    row.deleted_at,
   };
@@ -8115,6 +8116,7 @@ function _tradeToRow(trade) {
     // broker-id column migrations have been applied.
     ...(trade.ibkr_id ? { ibkr_id: trade.ibkr_id } : {}),
     ...(trade.bybit_id ? { bybit_id: trade.bybit_id } : {}),
+    ...(trade.lastCloseDt ? { last_close_dt: trade.lastCloseDt } : {}),
   };
 }
 
@@ -13708,12 +13710,21 @@ async function _flexImportInner(trades) {
       const candidates = arr.filter(x => !x.deleted && x.symbol === t.symbol
         && room(x) > 0.01 && (!t._closeLs || x.ls === t._closeLs));
       const open = candidates.find(x => Math.abs(room(x) - (t.closedShares || 0)) < 0.01) || candidates[0];
+      // The account's rolling Flex window keeps re-including old closes on
+      // every resync (no per-close id to dedupe against when the account has
+      // no Trade ID column), so without this an unattended re-sync silently
+      // re-applies the same execution and double-counts closedShares — found
+      // 2026-09-17 on dcb5bdba: a 2-share close from weeks earlier came back
+      // around and became 2+2=4 instead of staying 2. IBKR's own dateTime
+      // (to the second) is unique per execution even without a tradeID, so
+      // it doubles as the idempotency key here.
+      if (open && t._exitDt && open.lastCloseDt === t._exitDt) return;
       // The candidates[0] fallback can land on a position with less room than
       // the volume being closed. Writing that produces closed_shares > shares
       // and overstates P&L, so skip instead.
       if (open && (t.closedShares || 0) <= room(open) + 0.01) {
         const prev = { exitPrice: open.exitPrice, closeDate: open.closeDate,
-                       closedShares: open.closedShares, t: open.t };
+                       closedShares: open.closedShares, t: open.t, lastCloseDt: open.lastCloseDt };
         // calcPL prices the remainder (closedShares - sum(t[].shares)) at
         // exitPrice, so an exit already on the row has to be pinned down as an
         // explicit leg before exitPrice is repointed at this execution —
@@ -13726,13 +13737,20 @@ async function _flexImportInner(trades) {
         }
         open.t            = legs;
         open.exitPrice    = t.exitPrice;
-        open.closeDate    = t.closeDate;
         open.closedShares = (open.closedShares || 0) + (t.closedShares || 0);
+        open.lastCloseDt  = t._exitDt || open.lastCloseDt;
+        // close_date marks the row fully closed — a still-partial position
+        // (room left after this close) must not carry one, or it reads as
+        // closed while still holding shares (the 2026-08-27 half_closed_row
+        // fix: only closedShares >= shares gets a close_date).
+        const fullyClosed = open.closedShares >= (open.shares || 0) - 0.01;
+        open.closeDate    = fullyClosed ? t.closeDate : null;
         toUpdate.push({ row: open, prev, patch: {
-          exit_price:    t.exitPrice      || null,
-          close_date:    t.closeDate      || null,
-          closed_shares: open.closedShares || null,
+          exit_price:    t.exitPrice        || null,
+          close_date:    open.closeDate     || null,
+          closed_shares: open.closedShares  || null,
           targets:       legs,
+          last_close_dt: open.lastCloseDt   || null,
         } });
         updated++;
       }

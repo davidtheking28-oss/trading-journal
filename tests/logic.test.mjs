@@ -511,6 +511,94 @@ describe('_flexImportInner — a no-indicator fill against an open opposite posi
   });
 });
 
+// dcb5bdba, 2026-09-17: an account with no Trade ID column has nothing to
+// dedupe an orphan close against, and the Flex query's rolling window keeps
+// re-including old closes on every resync — found live when a 2-share close
+// from weeks earlier came back around and became 2+2=4 instead of staying 2.
+// IBKR's own dateTime (to the second, `_exitDt`) is unique per execution even
+// without a tradeID, so _flexImportInner now remembers the last one it
+// applied (`lastCloseDt` / `last_close_dt`) and skips a re-seen one instead of
+// re-adding it. Also covers the half_closed_row corollary this same code path
+// was violating: a still-partial position must not get a close_date.
+describe('_flexImportInner — orphan-close resync does not double-count', () => {
+  function run(trades, { existing = [] } = {}) {
+    const src = 'async ' + extractFunction('_flexImportInner');
+    const updates = [];
+    const inserts = [];
+    let nextId = 100;
+    const db = { stocks: existing.map(t => ({ ...t })), crypto: [] };
+    const chain = table => ({
+      update: patch => ({
+        eq: () => ({ eq: () => { updates.push({ table, patch }); return Promise.resolve({ error: null }); } }),
+      }),
+      insert: row => ({
+        select: () => ({
+          single: () => { const withId = { ...row, id: nextId++ }; inserts.push(withId); return Promise.resolve({ data: withId, error: null }); },
+        }),
+      }),
+    });
+    const scope = {
+      db,
+      _sb: { from: chain },
+      _currentUser: { id: 'u1' },
+      _tradeToRow: t => ({ ...t }),
+      _rowToTrade: row => ({ ...row }),
+      _isDeletedImport: () => false,
+      _dedupeTrades: async () => {},
+      initFilters: () => {}, renderTable: () => {}, renderOverview: () => {}, renderStatistics: () => {},
+      toast: () => {},
+      document: { getElementById: () => null },
+    };
+    const names = Object.keys(scope);
+    const factory = new Function(...names, `${src}\nreturn _flexImportInner;`);
+    return { run: () => factory(...names.map(n => scope[n]))(trades), db, updates, inserts };
+  }
+
+  const openRow = { symbol: 'ORCL', type: 'stock', ls: 'L', shares: 12, closedShares: 0, deleted: false,
+    entryPrice: 151.355, entryDate: '2026-08-10', commission: 4 };
+  const firstClose = { symbol: 'ORCL', type: 'stock', _orphanClose: true, _closeLs: 'L',
+    exitPrice: 144.755, closeDate: '2026-08-19', closedShares: 2, commission: 0.33, _exitDt: '20260819;130353' };
+
+  test('the same execution resynced a second time is skipped, not re-added', async () => {
+    const alreadyApplied = { ...openRow, closedShares: 2, lastCloseDt: '20260819;130353' };
+    const h = run([firstClose], { existing: [alreadyApplied] });
+    await h.run();
+    assert.equal(h.updates.length, 0, 'a previously-applied close must not fire again');
+    assert.equal(h.db.stocks[0].closedShares, 2, 'closed volume must not double');
+  });
+
+  test('a genuinely new close on the same row still applies', async () => {
+    const partiallyClosed = { ...openRow, closedShares: 2, exitPrice: 144.755, lastCloseDt: '20260819;130353' };
+    const secondClose = { symbol: 'ORCL', type: 'stock', _orphanClose: true, _closeLs: 'L',
+      exitPrice: 150.67, closeDate: '2026-08-27', closedShares: 10, commission: 2, _exitDt: '20260827;101018' };
+    const h = run([secondClose], { existing: [partiallyClosed] });
+    await h.run();
+    assert.equal(h.updates.length, 1);
+    assert.equal(h.updates[0].patch.closed_shares, 12, 'the real second close still applies');
+    assert.equal(h.updates[0].patch.last_close_dt, '20260827;101018');
+  });
+
+  test('a partial close does not get a close_date', async () => {
+    // The row still holds 33 of 53 shares after this close — a close_date on
+    // it reads as fully closed while stock is still held (2026-08-27 fix).
+    const bigOpen = { symbol: 'ONDS', type: 'stock', ls: 'L', shares: 53, closedShares: 0, deleted: false,
+      entryPrice: 5, entryDate: '2026-08-01', commission: 2 };
+    const partial = { symbol: 'ONDS', type: 'stock', _orphanClose: true, _closeLs: 'L',
+      exitPrice: 8.872, closeDate: '2026-08-19', closedShares: 20, commission: 2, _exitDt: '20260819;130430' };
+    const h = run([partial], { existing: [bigOpen] });
+    await h.run();
+    assert.equal(h.updates[0].patch.close_date, null, 'still holding shares — must not look fully closed');
+    assert.equal(h.updates[0].patch.closed_shares, 20);
+  });
+
+  test('a close that fully closes the row does get a close_date', async () => {
+    const h = run([firstClose], { existing: [{ ...openRow, shares: 2 }] });
+    await h.run();
+    assert.equal(h.updates[0].patch.close_date, '2026-08-19');
+    assert.equal(h.updates[0].patch.closed_shares, 2);
+  });
+});
+
 // ── Investments tab ─────────────────────────────────────────────────────────
 // invRecalc reads its numbers straight out of the table inputs, so the
 // arithmetic was untestable until the accumulation was split into these two
