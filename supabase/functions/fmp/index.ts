@@ -59,7 +59,7 @@ serve(async (req: Request) => {
         { status: 429, headers: { ...CORS, 'Content-Type': 'application/json' } }
       );
     }
-    supabase.from('ai_requests').insert({ user_id: user.id }).then(() => {});
+    await supabase.from('ai_requests').insert({ user_id: user.id });
   }
 
   const url = new URL(req.url);

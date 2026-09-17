@@ -101,7 +101,7 @@ jobs:
           for d in supabase/functions/*/; do
             name=$(basename "$d")
             case "$name" in _*) continue;; esac
-            if ! grep -q "functions deploy $name " .github/workflows/deploy.yml; then
+            if ! grep -v '^\s*#' .github/workflows/deploy.yml | grep -q "functions deploy $name "; then
               echo "::error::supabase/functions/$name has no deploy line in deploy.yml"
               missing=1
             fi

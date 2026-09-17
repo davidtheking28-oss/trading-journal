@@ -8,7 +8,7 @@
 //
 // Auth: same shared secret as ibkr-cron (x-cron-key vs app_secrets.cron_secret).
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
-import { computeBybitTrades, computeBybitOpen, fetchBybitEquity, openPositionRow } from '../_shared/bybit.ts';
+import { computeBybitTradesAndOpen, fetchBybitEquity, openPositionRow } from '../_shared/bybit.ts';
 
 // Wide enough to cover the entry leg of most swing holds — computeBybitTrades
 // silently skips (rather than mis-prices) a closing execution whose opening
@@ -55,7 +55,7 @@ Deno.serve(async (req: Request) => {
             .upsert({ user_id: u.user_id, broker: 'bybit', equity_usd: equity, fetched_at: new Date().toISOString() }, { onConflict: 'user_id,broker' });
           if (eqErr) console.log(`  equity upsert failed ${who}: ${eqErr.message}`);
         }
-        const trades = await computeBybitTrades(u.bybit_api_key, u.bybit_api_secret, RECENT_DAYS);
+        const { trades, open: openPositions } = await computeBybitTradesAndOpen(u.bybit_api_key, u.bybit_api_secret, RECENT_DAYS);
         if (trades.length) {
           const tradeRows = trades.map((t) => ({
             user_id: u.user_id, type: 'crypto', entry_date: t.entryDate, ls: t.ls,
@@ -74,8 +74,10 @@ Deno.serve(async (req: Request) => {
         // reconstructable key so this upserts IN PLACE rather than inserting
         // once and ignoring. Never touches a bybit_id outside this
         // mechanism's own 'open:' namespace, so a manually-entered or
-        // CSV-imported crypto row is never at risk.
-        const openPositions = await computeBybitOpen(u.bybit_api_key, u.bybit_api_secret, RECENT_DAYS);
+        // CSV-imported crypto row is never at risk. (openPositions came from
+        // the same computeBybitTradesAndOpen call above — computeBybitTrades
+        // and computeBybitOpen used to be called separately here, each
+        // re-fetching the same 45-day execution history from Bybit.)
         if (openPositions.length) {
           const openRows = openPositions.map((p) => openPositionRow(u.user_id, p));
           const { error: openErr } = await sb.from('trades').upsert(openRows, { onConflict: 'user_id,bybit_id' });

@@ -689,3 +689,95 @@ unlike this one — push it manually).
   immediately by re-running `data_health_check()` after applying (3 failing
   rows appeared that weren't there before) — that habit is what caught it,
   not the diff itself.
+
+## ⚠️ Don't reintroduce these regressions (fixed 2026-09-18, full-system audit)
+
+- **Adding `last_close_dt` to `trades` (2026-09-17) broke `trades_archive` for
+  everyone, not just dcb5bdba.** `purge_old_deleted_trades()` writes
+  `INSERT INTO trades_archive SELECT *, now() FROM moved` — positional, so it
+  depends on `trades_archive` having exactly `trades`'s columns plus
+  `archived_at` appended last. Adding a column to `trades` without mirroring
+  it onto `trades_archive` broke that silently (column-count mismatch, then a
+  text-into-timestamptz type error once the column was added in the wrong
+  slot). **Any future `ALTER TABLE trades ADD COLUMN` must add the same column
+  to `trades_archive` in the same migration**, or rewrite this function to use
+  an explicit column list (already done — see next point) so a future
+  mismatch fails loudly instead of silently.
+- **`trades-purge-deleted` failed 7 nights straight, caught only by manually
+  reading `cron.job_run_details`.** Root cause: a trade whose `ibkr_id` had
+  already been archived once (broker resync recreated the same execution,
+  soft-deleted again) collided with `trades_archive_user_id_ibkr_id_idx`, and
+  Postgres aborts the WHOLE batch `INSERT` on one conflicting row — so the
+  failure wasn't specific to that one row, it silently blocked archiving for
+  every OTHER user that ran in the same nightly job. Fixed with
+  `ON CONFLICT (user_id, ibkr_id) DO NOTHING` plus an explicit column list
+  (`20260918_fix_purge_archive_conflict.sql`). **`data_health_check_core` gained
+  two new checks for exactly this class of silent failure**:
+  `cron_job_failed_recently` (any `cron.job_run_details` failure in 48h — global,
+  not per-user, same pattern as `table_missing_rls`) and
+  `client_errors_accumulating` (new JS errors from `app='dashboard'` in 7
+  days — scoped to this app; `client_errors` is shared with the unrelated
+  budget-app/advisor frontend on the same Supabase project, whose error volume
+  is not this repo's concern).
+- **16 database functions existed with no migration file**, including
+  `get_broker_secret`/`set_broker_secret` (gate Vault-stored IBKR/Bybit
+  credentials) — CI has never verified any of them deploy from scratch.
+  Backfilled verbatim via `pg_get_functiondef` in
+  `20260918_backfill_missing_function_files.sql`. **When you find a function
+  like this, pull its body with `pg_get_functiondef`, not by guessing — do not
+  reconstruct SQL that reads Vault or governs auth from memory.**
+- **The "every function has a deploy line" CI guard (2026-08-26) could pass on
+  a COMMENTED-OUT deploy line.** `grep -q "functions deploy $name "` matches
+  inside `# supabase functions deploy foo ...` too. Fixed by stripping
+  comment lines first (`grep -v '^\s*#' ... | grep -q ...`). The later
+  "every function actually exists on Supabase" check (queries the Management
+  API) is a real safety net for a function that was NEVER deployed, but not
+  for one that WAS deployed once and then had its deploy line commented out
+  later — it stays ACTIVE on Supabase from the earlier deploy and this
+  second check can't tell its code stopped updating. The grep fix is the only
+  thing that catches that specific case.
+- **The reversal/no-indicator-close branch in `_flexImportInner` had the same
+  missing-`fullyClosed`-guard bug as the orphan-close branch fixed one day
+  earlier**, just not yet applied to its sibling: `opposite.closeDate =
+  t.entryDate` was unconditional, so covering only part of a short read as a
+  full close and the row vanished from every open-position view while 20+
+  shares were still held. Fixed the same way — gated on
+  `closedShares >= shares`. **The existing "a partial cover closes only what
+  was bought back" test in `tests/logic.test.mjs` covered the exact scenario
+  but never asserted `close_date`** — that's how this shipped in the first
+  place a day earlier. When adding a `fullyClosed`/`close_date` guard to one
+  branch, check every sibling branch that also sets `close_date` for the same
+  omission, and add the assertion to existing tests that already build the
+  right scenario rather than only writing new ones.
+- **Editing a trade dropped `lastCloseDt` from the in-memory row** (`saveTrade`
+  or equivalent — search where `data.ibkr_id = prev.ibkr_id ?? null` restores
+  broker ids after `getFormTrade()` builds a fresh object). `lastCloseDt` is
+  the orphan-close idempotency guard from the day before; losing it on any
+  edit meant a Flex sync later in the same session could re-apply an
+  already-booked close. Fixed by restoring it the same way `ibkr_id`/`bybit_id`
+  already are.
+- **`bybit-cron` fetched the same 45-day execution history from Bybit TWICE
+  per user per tick.** `computeBybitTrades` and `computeBybitOpen` each call
+  the shared `_runBybitFifo`, whose own comment says a second exported
+  function "must not mean a second network fetch" — true in isolation, but
+  `bybit-cron/index.ts` calls both functions in the same run, so the intent
+  was violated at the call site even though each function individually
+  respected it. Fixed with `computeBybitTradesAndOpen` (one `_runBybitFifo`
+  call, returns both), used only by `bybit-cron`; the manual "Sync" button
+  (`bybit/index.ts`) still calls `computeBybitTrades` alone, unaffected.
+- **The nightly SEPA scan email (stock-screener's `daily-scan`) mailed every
+  signed-in user on the shared Supabase project**, including trading-journal
+  accounts that never opened the screener — `auth.users` is shared across both
+  apps. Fixed by scoping recipients to users with a row in ANY
+  screener-specific table (`screener_watchlist`, `screener_prefs`,
+  `screener_history`, `screener_type_visits`) — a factual "has this account
+  ever used the screener" check, not a preference call.
+- **Still open, needs a product decision, not a mechanical fix**: `dcb5bdba`'s
+  IBKR Flex Query is still configured with a 30-day window and no Trade ID /
+  IB Order ID columns — this is the root cause underneath the orphan-close
+  bug, the fragmentation heuristics, and the reason this account needed manual
+  recovery at all (see 2026-09-17 above). A CI step to detect
+  migration drift between `supabase/migrations/**` and the live schema was
+  also identified as missing, but needs a DB connection secret in GitHub
+  Actions that may not exist yet — check before attempting.
+  not the diff itself.

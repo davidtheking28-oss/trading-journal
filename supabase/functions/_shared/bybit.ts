@@ -199,15 +199,7 @@ async function _runBybitFifo(apiKey: string, apiSecret: string, days: number):
   return { trades, openPositions };
 }
 
-export async function computeBybitTrades(apiKey: string, apiSecret: string, days: number): Promise<BybitTrade[]> {
-  return (await _runBybitFifo(apiKey, apiSecret, days)).trades;
-}
-
-// bybit-cron only — computeBybitTrades (the manual "Sync" button's full-
-// history backfill) stays closed-trades-only on purpose, see bybit_test.ts's
-// header comment and CLAUDE.md.
-export async function computeBybitOpen(apiKey: string, apiSecret: string, days: number): Promise<BybitOpenPosition[]> {
-  const { openPositions } = await _runBybitFifo(apiKey, apiSecret, days);
+function _openPositionsToRows(openPositions: Map<string, OpenPos>): BybitOpenPosition[] {
   return [...openPositions.entries()].map(([symbol, pos]) => {
     const totalQty = pos.entries.reduce((s, e) => s + e.qty, 0);
     const entryPrice = pos.entries.reduce((s, e) => s + e.price * e.qty, 0) / totalQty;
@@ -221,4 +213,28 @@ export async function computeBybitOpen(apiKey: string, apiSecret: string, days: 
       bybit_id: 'open:' + cleanSymbol,
     };
   });
+}
+
+export async function computeBybitTrades(apiKey: string, apiSecret: string, days: number): Promise<BybitTrade[]> {
+  return (await _runBybitFifo(apiKey, apiSecret, days)).trades;
+}
+
+// bybit-cron only — computeBybitTrades (the manual "Sync" button's full-
+// history backfill) stays closed-trades-only on purpose, see bybit_test.ts's
+// header comment and CLAUDE.md.
+export async function computeBybitOpen(apiKey: string, apiSecret: string, days: number): Promise<BybitOpenPosition[]> {
+  const { openPositions } = await _runBybitFifo(apiKey, apiSecret, days);
+  return _openPositionsToRows(openPositions);
+}
+
+// bybit-cron calls for both trades AND open positions on every run — calling
+// computeBybitTrades then computeBybitOpen separately ran _runBybitFifo (and
+// so fetchExecutions, the actual network cost) twice per user per tick
+// despite the comment on _runBybitFifo saying a second exported function
+// "must not mean a second network fetch". This is the one-fetch version for
+// a caller that needs both results.
+export async function computeBybitTradesAndOpen(apiKey: string, apiSecret: string, days: number):
+  Promise<{ trades: BybitTrade[]; open: BybitOpenPosition[] }> {
+  const { trades, openPositions } = await _runBybitFifo(apiKey, apiSecret, days);
+  return { trades, open: _openPositionsToRows(openPositions) };
 }

@@ -34,8 +34,8 @@ Deno.serve(async (req)=>{
     headers: CORS
   });
   const url = new URL(req.url);
-  const vapidKeys = await getVapid();
   if (url.searchParams.get('action') === 'vapid') {
+    const vapidKeys = await getVapid();
     const publicKey = await webpush.exportApplicationServerKey(vapidKeys);
     return new Response(JSON.stringify({
       publicKey
@@ -55,6 +55,7 @@ Deno.serve(async (req)=>{
       headers: CORS
     });
   }
+  const vapidKeys = await getVapid();
   const appServer = await webpush.ApplicationServer.new({
     contactInformation: 'mailto:davidtheking27@gmail.com',
     vapidKeys
@@ -82,6 +83,7 @@ Deno.serve(async (req)=>{
   const isFirstOfMonth = today.slice(8) === '01';
   let sent = 0;
   for (const [userId, userSubs] of byUser){
+    try {
     const dataId = ownerOf.get(userId) || userId;
     const { data: bd } = await admin.from('budget_data').select('transactions,budgets,subscriptions,settings').eq('user_id', dataId).maybeSingle();
     if (!bd) continue;
@@ -181,10 +183,14 @@ Deno.serve(async (req)=>{
         } catch (err) {
           const status = err?.response?.status;
           if (status === 404 || status === 410) {
-            await admin.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
+            await admin.from('push_subscriptions').delete().eq('endpoint', sub.endpoint).eq('user_id', sub.user_id);
           }
         }
       }
+    }
+    } catch (err) {
+      console.error('[push-daily] user failed', userId, err);
+      continue;
     }
   }
   return new Response(JSON.stringify({

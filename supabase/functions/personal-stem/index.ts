@@ -83,7 +83,7 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: 'Rate limit exceeded. Try again in a minute.' }),
       { status: 429, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
-  supabase.from('ai_requests').insert({ user_id: user.id }).then(() => {});
+  await supabase.from('ai_requests').insert({ user_id: user.id });
 
   const url = new URL(req.url);
   const symbols = [...new Set((url.searchParams.get('symbols') ?? '')

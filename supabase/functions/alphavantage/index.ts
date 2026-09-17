@@ -32,15 +32,39 @@ serve(async (req: Request) => {
     .eq('user_id', user.id)
     .single();
 
-  const apiKey = (settings?.av_key && /^[A-Za-z0-9]{6,20}$/.test(settings.av_key))
+  const userKey = (settings?.av_key && /^[A-Za-z0-9]{6,20}$/.test(settings.av_key))
     ? settings.av_key
-    : (Deno.env.get('AV_API_KEY') ?? '');
+    : null;
+  const apiKey = userKey ?? (Deno.env.get('AV_API_KEY') ?? '');
+  const usingSharedKey = !userKey;
 
   if (!apiKey) {
     return new Response(
       JSON.stringify({ error: 'No Alpha Vantage API key configured.' }),
       { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } }
     );
+  }
+
+  // The shared AV_API_KEY's quota is 25 calls/day total, far tighter than
+  // Finnhub/FMP's shared keys — a low per-minute cap here (same ai_requests
+  // counter those use) stops one user's burst from blowing the whole day's
+  // quota for everyone. Only gates the shared key; a user's own av_key is
+  // theirs to spend.
+  if (usingSharedKey) {
+    const windowStart = new Date(Date.now() - 60_000).toISOString();
+    const { count: recentCount } = await supabase
+      .from('ai_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('created_at', windowStart);
+
+    if ((recentCount ?? 0) >= 3) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded. Try again in a minute.' }),
+        { status: 429, headers: { ...CORS, 'Content-Type': 'application/json' } }
+      );
+    }
+    await supabase.from('ai_requests').insert({ user_id: user.id });
   }
 
   const url = new URL(req.url);

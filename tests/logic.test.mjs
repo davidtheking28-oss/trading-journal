@@ -517,6 +517,73 @@ describe('_flexImportInner — a no-indicator fill against an open opposite posi
   });
 });
 
+// A failed insert used to be silently dropped — no toast, no counter — while
+// _flexImportFromCache still stamped imported_at/confirm_imported_at
+// regardless, so the trade that failed to land was lost for good: the
+// statement was marked "imported" and never retried.
+describe('_flexImportInner — a failed insert is not silently dropped', () => {
+  function run(trades, { existing = [], failSymbol = null } = {}) {
+    const src = 'async ' + extractFunction('_flexImportInner');
+    const updates = [];
+    const inserts = [];
+    let nextId = 100;
+    const db = { stocks: existing.map(t => ({ ...t })), crypto: [] };
+    const chain = table => ({
+      update: patch => ({
+        eq: () => ({ eq: () => { updates.push({ table, patch }); return Promise.resolve({ error: null }); } }),
+      }),
+      insert: row => ({
+        select: () => ({
+          single: () => {
+            if (failSymbol && row.symbol === failSymbol) {
+              return Promise.resolve({ data: null, error: { message: 'boom' } });
+            }
+            const withId = { ...row, id: nextId++ }; inserts.push(withId); return Promise.resolve({ data: withId, error: null });
+          },
+        }),
+      }),
+    });
+    const toasts = [];
+    const scope = {
+      db,
+      _sb: { from: chain },
+      _currentUser: { id: 'u1' },
+      _tradeToRow: t => ({ ...t }),
+      _rowToTrade: row => ({ ...row }),
+      _isDeletedImport: () => false,
+      _dedupeTrades: async () => {},
+      initFilters: () => {}, renderTable: () => {}, renderOverview: () => {}, renderStatistics: () => {},
+      toast: (msg, kind) => toasts.push({ msg, kind }),
+      document: { getElementById: () => null },
+    };
+    const names = Object.keys(scope);
+    const factory = new Function(...names, `${src}\nreturn _flexImportInner;`);
+    return { run: () => factory(...names.map(n => scope[n]))(trades), db, updates, inserts, toasts };
+  }
+
+  const goodTrade = { symbol: 'AAPL', type: 'stock', ls: 'L', shares: 10,
+    entryPrice: 100, entryDate: '2026-09-10', commission: 1, ibkr_id: '9001' };
+  const badTrade = { symbol: 'MSFT', type: 'stock', ls: 'L', shares: 5,
+    entryPrice: 200, entryDate: '2026-09-10', commission: 1, ibkr_id: '9002' };
+
+  test('reports the failure and does not insert the failed trade', async () => {
+    const h = run([goodTrade, badTrade], { failSymbol: 'MSFT' });
+    const result = await h.run();
+    assert.equal(result.insertFailed, 1, 'the failed insert must be counted');
+    assert.equal(result.imported, 1, 'only the successful insert counts as imported');
+    assert.equal(h.inserts.length, 1);
+    assert.equal(h.inserts[0].symbol, 'AAPL', 'the failed trade must not appear among the inserts');
+    assert.ok(h.toasts.some(t => t.kind === 'error'), 'the user must be told an IBKR insert failed');
+  });
+
+  test('a clean batch reports zero insert failures', async () => {
+    const h = run([goodTrade], {});
+    const result = await h.run();
+    assert.equal(result.insertFailed, 0);
+    assert.equal(result.imported, 1);
+  });
+});
+
 // dcb5bdba, 2026-09-17: an account with no Trade ID column has nothing to
 // dedupe an orphan close against, and the Flex query's rolling window keeps
 // re-including old closes on every resync — found live when a 2-share close

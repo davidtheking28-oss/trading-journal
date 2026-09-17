@@ -13648,10 +13648,10 @@ let _flexImporting = false;
 async function _flexImport(trades) {
   // Re-entrancy guard: if a manual and an automatic import overlap, both could
   // pass the in-memory dedup before either inserts → duplicates. Run one at a time.
-  if (_flexImporting) return { imported: 0, updated: 0, newlyImported: [] };
+  if (_flexImporting) return { imported: 0, updated: 0, newlyImported: [], insertFailed: 0 };
   // Same reason as the Bybit guard: dedup reads db.stocks/db.crypto, so an
   // import that beats loadDB() sees an empty journal and re-imports everything.
-  if (!_dbLoaded) return { imported: 0, updated: 0, newlyImported: [] };
+  if (!_dbLoaded) return { imported: 0, updated: 0, newlyImported: [], insertFailed: 0 };
   _flexImporting = true;
   try {
     return await _flexImportInner(trades);
@@ -13904,16 +13904,18 @@ async function _flexImportInner(trades) {
   }
   if (updateFailed) toast(`${updateFailed} עדכוני סנכרון נכשלו — הנתונים לא נשמרו`, 'error');
 
+  let insertFailed = 0;
   for (const t of toInsert) {
     const row = _tradeToRow({ ...t, deleted: false });
     const { data: inserted, error: insErr } = await _sb.from('trades').insert(row).select().single();
-    if (insErr) { continue; }
+    if (insErr) { insertFailed++; console.error('[flex insert]', insErr); continue; }
     const newTrade = _rowToTrade(inserted);
     const arr = t.type === 'crypto' ? db.crypto : db.stocks;
     arr.push(newTrade);
     imported++;
     if (!t.exitPrice) newlyImported.push(newTrade);
   }
+  if (insertFailed) toast(`${insertFailed} עסקאות מ-IBKR נכשלו בייבוא`, 'error');
 
   await _dedupeTrades(); // sweep any leftover duplicates right after importing
 
@@ -13934,7 +13936,7 @@ async function _flexImportInner(trades) {
     // (off-tab) hits null chart containers. The stats tab re-reads db on open.
     if (document.getElementById('tab-statistics')?.classList.contains('active')) renderStatistics();
   }
-  return { imported, updated, newlyImported };
+  return { imported, updated, newlyImported, insertFailed };
 }
 
 // Smart sync throttle. Record each attempt's outcome and compute when the next
@@ -13995,11 +13997,13 @@ async function _flexImportFromCache(manual = false) {
     const trades = [];
     if (activityFresh) trades.push(...flexParseXML(row.xml));
     if (confirmFresh)  trades.push(...flexParseXML(row.xml_confirm));
-    const { imported, updated } = await _flexImport(trades);
+    const { imported, updated, insertFailed } = await _flexImport(trades);
     const stamp = {};
-    if (activityFresh) stamp.imported_at = new Date().toISOString();
-    if (confirmFresh)  stamp.confirm_imported_at = new Date().toISOString();
-    await _sb.from('flex_statement_cache').update(stamp).eq('user_id', _currentUser.id);
+    // A statement whose import dropped at least one insert must stay
+    // unstamped, or it is never retried and that trade is lost for good.
+    if (activityFresh && !insertFailed) stamp.imported_at = new Date().toISOString();
+    if (confirmFresh && !insertFailed)  stamp.confirm_imported_at = new Date().toISOString();
+    if (Object.keys(stamp).length) await _sb.from('flex_statement_cache').update(stamp).eq('user_id', _currentUser.id);
     _flexMarkSync(true);
     _setBrokerBadge('ibkr', 'ok');
     if (imported > 0 || updated > 0) {
