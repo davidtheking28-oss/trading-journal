@@ -6393,7 +6393,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     <div id="tab-screener" class="tab-content">
       <div id="screener-lookup" class="scr-lookup">
         <label for="scr-lookup-date" data-i18n="scr_lookup_lbl">בדיקת תאריך:</label>
-        <input type="date" id="scr-lookup-date" class="form-control" style="font-size:11px;padding:2px 6px;width:auto" onchange="lookupScreenerVisit(this.value)">
+        <input type="date" id="scr-lookup-date" class="form-control" style="padding:3px 8px;width:auto" onchange="lookupScreenerVisit(this.value)">
         <span id="scr-lookup-result" role="status"></span>
       </div>
       <div style="position:relative">
@@ -6416,8 +6416,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     </div>
     <style>
       @keyframes scr-spin{to{transform:rotate(360deg)}}
-      .scr-lookup{display:flex;align-items:center;gap:6px;padding:6px 4px;margin-bottom:6px;font-size:11px;color:var(--text2)}
-      .scr-lookup #scr-lookup-result{font-weight:600}
+      .scr-lookup{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:6px 4px;margin-bottom:6px;font-size:12px;color:var(--text2)}
+      .scr-lookup #scr-lookup-result{font-weight:600;font-variant-numeric:tabular-nums}
     </style>
 
     <div id="tab-investments" class="tab-content">
