@@ -8878,9 +8878,9 @@ async function _maybeShowFlexWindowNotice() {
   const today = new Date().toISOString().slice(0, 10);
   const key = 'flex_window_notice_' + _currentUser.id;
   try { if (localStorage.getItem(key) === today) return; } catch (e) {}
-  const { data, error } = await _sb.from('flex_statement_cache')
-    .select('xml').eq('user_id', _currentUser.id).maybeSingle();
-  if (error || !data?.xml) return; // no IBKR statement cached yet — nothing to warn about
+  let data;
+  try { data = await _fetchFlexCacheRow(); } catch (e) { return; }
+  if (!data?.xml) return; // no IBKR statement cached yet — nothing to warn about
   const from = data.xml.match(/fromDate="(\d{8})"/)?.[1];
   const to = data.xml.match(/toDate="(\d{8})"/)?.[1];
   if (!from || !to) return;
@@ -13965,6 +13965,24 @@ function _flexSyncCooldownLeft() {
   return Math.max(0, wait - (Date.now() - last));
 }
 
+// Both this and _maybeShowFlexWindowNotice() fire at boot and each used to run
+// its own full select against flex_statement_cache for the same user — a
+// wasted duplicate round trip of the (potentially large) XML column every
+// login. Memoized per boot cycle so whichever caller runs first fetches once
+// and the other reuses the same promise; _currentUser.id changing (a fresh
+// login after logout) naturally invalidates it since the id in the cache key
+// won't match.
+let _flexCacheRowPromise = null, _flexCacheRowPromiseUser = null;
+function _fetchFlexCacheRow() {
+  if (_flexCacheRowPromise && _flexCacheRowPromiseUser === _currentUser.id) return _flexCacheRowPromise;
+  _flexCacheRowPromiseUser = _currentUser.id;
+  _flexCacheRowPromise = _sb.from('flex_statement_cache')
+    .select('xml, fetched_at, imported_at, xml_confirm, confirm_fetched_at, confirm_imported_at')
+    .eq('user_id', _currentUser.id).maybeSingle()
+    .then(({ data }) => data);
+  return _flexCacheRowPromise;
+}
+
 // Import the statement that the scheduled server job pre-fetched at a good time
 // (flex_statement_cache). Reuses the existing parse + import path, so there is
 // no live IBKR call and no 1001. Returns true if a fresh cache was used.
@@ -13972,10 +13990,7 @@ async function _flexImportFromCache(manual = false) {
   if (!_currentUser) return false;
   let row;
   try {
-    const { data } = await _sb.from('flex_statement_cache')
-      .select('xml, fetched_at, imported_at, xml_confirm, confirm_fetched_at, confirm_imported_at')
-      .eq('user_id', _currentUser.id).maybeSingle();
-    row = data;
+    row = await _fetchFlexCacheRow();
   } catch (e) { return false; }
   if (!row || (!row.xml && !row.xml_confirm)) return false;
 
