@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terms of Use — ChartRoom</title>
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://davidtheking28-oss.github.io/trading-journal/terms-en.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&family=Rubik:wght@500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1526;--card:#09152a;--card-low:#07101f;
+  --border:rgba(255,255,255,0.05);--border2:rgba(255,255,255,0.08);
+  --text:#e4ecf8;--text2:#7a9cc4;--text3:#6b8398;
+  --accent:#4f83ff;--accent-deep:#2f5fe0;
+  --loss:#ff4060;
+  --display:'Rubik','Heebo',sans-serif;--body:'Heebo',sans-serif;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.6),0 4px 16px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.04);
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--body),-apple-system,'Segoe UI',sans-serif;line-height:1.6;min-height:100vh;font-size:15px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+
+nav{position:sticky;top:0;z-index:100;background:rgba(7,16,31,0.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{display:flex;align-items:center;gap:9px;text-decoration:none}
+.nav-logo-icon{width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nav-logo-text{font-family:var(--display);font-size:16px;font-weight:800;color:var(--text);letter-spacing:-0.4px}
+.nav-back{font-size:13px;color:var(--text2);text-decoration:none;display:flex;align-items:center;gap:5px;transition:color .2s}
+.nav-back:hover{color:var(--text)}
+
+.layout{max-width:1000px;margin:0 auto;padding:48px 24px 100px;display:grid;grid-template-columns:200px minmax(0,1fr);gap:56px;align-items:start}
+
+/* ── Table of contents (sticky, desktop only) ── */
+.toc{position:sticky;top:80px;display:flex;flex-direction:column;gap:1px;max-height:calc(100vh - 100px);overflow-y:auto}
+.toc-label{font-size:10.5px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;padding:0 10px}
+.toc a{display:block;font-size:12.5px;color:var(--text3);text-decoration:none;padding:6px 10px;border-radius:8px;line-height:1.4;transition:background-color .18s,color .18s}
+.toc a:hover{color:var(--text2);background:rgba(255,255,255,0.04)}
+.toc a.active{color:var(--accent);background:rgba(129,140,248,0.1);font-weight:600}
+
+.content{min-width:0}
+
+.page-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:rgba(129,140,248,0.1);border:1px solid rgba(129,140,248,0.25);border-radius:100px;font-size:11px;font-weight:600;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px}
+.page-title{font-size:34px;font-weight:800;letter-spacing:-1px;line-height:1.15;margin-bottom:8px}
+.page-date{font-size:13px;color:var(--text3);margin-bottom:32px}
+
+.disclaimer-box{background:rgba(255,107,138,0.07);border:1px solid rgba(255,107,138,0.22);border-radius:14px;padding:20px 24px;margin-bottom:44px;display:flex;gap:14px;align-items:flex-start;box-shadow:var(--shadow-sm)}
+.disclaimer-box svg{flex-shrink:0;margin-top:2px;color:var(--loss)}
+.disclaimer-text{font-size:14px;line-height:1.7;color:var(--text2);max-width:70ch}
+.disclaimer-text strong{color:var(--text);display:block;margin-bottom:4px;font-size:15px}
+
+section{scroll-margin-top:76px;margin-bottom:38px;padding-bottom:38px;border-bottom:1px solid var(--border)}
+section:last-of-type{border-bottom:none;margin-bottom:0;padding-bottom:0}
+h2{display:flex;align-items:baseline;gap:10px;font-size:17px;font-weight:700;margin-bottom:14px;color:var(--text);letter-spacing:-0.2px}
+h2 .num{font-size:12px;font-weight:700;color:var(--accent);font-feature-settings:"tnum";flex-shrink:0}
+p{font-size:14px;color:var(--text2);line-height:1.75;margin-bottom:12px;max-width:70ch}
+p:last-child{margin-bottom:0}
+ul{padding-right:20px;margin-bottom:12px;display:flex;flex-direction:column;gap:7px;max-width:70ch}
+ul:last-child{margin-bottom:0}
+li{font-size:14px;color:var(--text2);line-height:1.7}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.content p a,.content li a{text-decoration:underline}
+
+@media(max-width:860px){
+  .layout{grid-template-columns:1fr;padding:32px 16px 60px;gap:0}
+  .toc{display:none}
+  .page-title{font-size:28px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo" aria-label="ChartRoom">
+    <div class="nav-logo-icon" aria-hidden="true">
+      <svg width="28" height="28" viewBox="0 0 200 200" style="filter:drop-shadow(0 0 6px rgba(129,140,248,0.4))" aria-hidden="true">
+        <defs>
+          <linearGradient id="navbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0b0b0e"/><stop offset="100%" stop-color="#141418"/></linearGradient>
+          <linearGradient id="nava" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#4f83ff"/><stop offset="100%" stop-color="#818cf8"/></linearGradient>
+        </defs>
+        <circle cx="100" cy="100" r="96" fill="url(#navbg)" stroke="#1a3460" stroke-width="2"/>
+        <path d="M133 68C124 58 111 52 97 53C70 55 51 79 53 106C55 132 79 151 106 149C120 148 132 141 140 130" fill="none" stroke="url(#nava)" stroke-width="13" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <span class="nav-logo-text">ChartRoom</span>
+  </a>
+  <a href="/index-en.html" class="nav-back">
+    Back to home
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+  </a>
+</nav>
+
+<main>
+<div class="layout">
+
+  <nav class="toc" aria-label="Section navigation">
+    <div class="toc-label">On this page</div>
+    <a href="#s1">Eligibility</a>
+    <a href="#s2">Service Description</a>
+    <a href="#s3">No Financial Advice</a>
+    <a href="#s4">Brokers &amp; API Keys</a>
+    <a href="#s5">Market Data &amp; Screener</a>
+    <a href="#s6">User Responsibilities</a>
+    <a href="#s7">Indemnification</a>
+    <a href="#s8">Limitation of Liability</a>
+    <a href="#s9">Cancellation</a>
+    <a href="#s10">Data &amp; Privacy</a>
+    <a href="#s11">Intellectual Property</a>
+    <a href="#s12">Changes to These Terms</a>
+    <a href="#s13">Termination</a>
+    <a href="#s14">Governing Law &amp; Jurisdiction</a>
+    <a href="#s15">Contact</a>
+  </nav>
+
+  <div class="content">
+
+  <div class="page-badge">Terms of Use</div>
+  <h1 class="page-title">Terms of Use</h1>
+  <p class="page-date">Last updated: August 31, 2026</p>
+  <p style="font-size:13px;color:var(--text3);margin-bottom:24px;">This is a convenience translation. The <a href="terms.html">Hebrew original</a> is the binding version; in case of any conflict, the Hebrew text controls.</p>
+
+  <div class="disclaimer-box" role="note" aria-label="Important disclaimer">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <div class="disclaimer-text">
+      <strong>Not financial advice — please read</strong>
+      ChartRoom is a personal journaling and analytics tool only. Nothing in the app's content, AI analysis, or any other output constitutes investment advice, tax advice, financial advice, or a trading recommendation. Every trading decision is the user's sole responsibility.
+    </div>
+  </div>
+
+  <section id="s1">
+    <h2><span class="num">01</span>Acceptance of Terms &amp; Legal Eligibility</h2>
+    <p>Use of ChartRoom (the "Service") is subject to these terms. Accessing or using the app constitutes full agreement to these terms. If you do not agree — do not use the Service.</p>
+    <p>By using the Service you represent and confirm that you are at least 18 years old, and that you have full legal capacity to enter into this binding agreement and to independently carry out trading and other financial transactions. The Service operator may block or cancel the account of a user who does not meet this requirement.</p>
+  </section>
+
+  <section id="s2">
+    <h2><span class="num">02</span>Service Description, Availability &amp; Maintenance</h2>
+    <p>ChartRoom is a digital trading journal that lets you log trades, analyze performance, use a stock screener, and connect to brokers via API for automatic import of trade data. The Service is provided "as is," with no commitment to continuous availability or a 100% service level (SLA).</p>
+    <p>The Service, in whole or in part, may be temporarily unavailable due to maintenance, upgrades, server updates, communication failures, or other factors outside the Service operator's control. Where possible, the operator will make a reasonable effort to give advance notice of planned maintenance, but this does not create any obligation or liability for such downtime.</p>
+  </section>
+
+  <section id="s3">
+    <h2><span class="num">03</span>No Financial Advice</h2>
+    <p>The Service does not constitute and is not intended to constitute:</p>
+    <ul>
+      <li>Investment advice as defined under Israel's Regulation of Engagement in Investment Advice, Investment Marketing and Portfolio Management Law, 5755-1995</li>
+      <li>A recommendation to buy or sell securities, currencies, derivatives, or any financial instrument</li>
+      <li>A forecast of future market performance</li>
+      <li>Tax or accounting advice</li>
+    </ul>
+    <p>Past trade performance is not a guarantee of future results. Trading in capital markets involves risk of capital loss.</p>
+  </section>
+
+  <section id="s4">
+    <h2><span class="num">04</span>Broker Connections &amp; API Keys</h2>
+    <p>The Service allows connecting broker accounts (such as IBKR, Bybit) using API keys entered by the user. Regarding this connection:</p>
+    <ul>
+      <li>The user is solely responsible for safeguarding, managing, and scoping the permissions of their API keys. Keys should be granted the minimum permissions required (in particular — no order-execution permission, where avoidable) and unused keys should be revoked.</li>
+      <li>The Service operator is not a party to the broker account and does not control the broker's infrastructure, its availability, or its performance.</li>
+      <li>The Service operator is not liable for any damage, direct or indirect, arising from failure, downtime, communication latency, an error in transmitting a trading order, a duplicate order, an order not executed or executed late, loss, leak, or misuse of an API key that occurred through no fault of the Service operator, or financial loss resulting from a communication fault between the Service and the broker or connectivity provider.</li>
+      <li>Trade data imported from the broker is for logging and analysis purposes only, and does not constitute confirmation, warranty, or guarantee that it matches the actual broker account.</li>
+    </ul>
+  </section>
+
+  <section id="s5">
+    <h2><span class="num">05</span>Market Data &amp; Stock Screener</h2>
+    <p>Market data, prices, scans, and stock screener results are obtained from external (third-party) data providers. Accordingly:</p>
+    <ul>
+      <li>The Service operator is not responsible for the accuracy, completeness, availability, delay in updating, or errors in the data feed received from external providers.</li>
+      <li>Automated calculations, scans, rankings, and parameters shown in the stock screener (including but not limited to RS scores, Trend Template, and other filter conditions) are aids only, do not guarantee an accurate result, and may contain calculation errors or missing data.</li>
+      <li>Screener results or market data shown in the app should not be treated as a recommendation, endorsement, or rejection of any investment — see also Section 3 above.</li>
+    </ul>
+  </section>
+
+  <section id="s6">
+    <h2><span class="num">06</span>User Responsibilities</h2>
+    <p>The user agrees:</p>
+    <ul>
+      <li>Not to upload unlawful or offensive content</li>
+      <li>Not to attempt to hack, overload, or disrupt the Service</li>
+      <li>To keep their account access details confidential</li>
+      <li>Not to share broker API keys with third parties</li>
+      <li>Not to reverse-engineer, decompile, or attempt to expose the Service's source code</li>
+      <li>Not to perform automated scraping, use bots, or any other automated means to mine data from the app, except through interfaces explicitly authorized for that purpose</li>
+      <li>To use the Service in accordance with applicable Israeli law</li>
+    </ul>
+  </section>
+
+  <section id="s7">
+    <h2><span class="num">07</span>Indemnification</h2>
+    <p>The user agrees to indemnify and hold harmless the Service operator, its employees, and those acting on its behalf, immediately upon first demand, for any damage, loss, lost profit, claim, demand, or expense (including reasonable attorneys' fees and legal costs) incurred as a result of a third-party claim or demand — including a broker, a regulatory authority, or another user — arising from the user's misuse of the Service, the user's breach of these terms, or any trading activity the user carried out through their account.</p>
+  </section>
+
+  <section id="s8">
+    <h2><span class="num">08</span>Limitation of Liability</h2>
+    <p>The Service is provided "AS IS." The Service operator bears no liability for direct, indirect, incidental, or consequential damages arising from:</p>
+    <ul>
+      <li>Errors in data imported from the broker</li>
+      <li>Trading decisions made based on information from the app</li>
+      <li>Loss of access to the account or data</li>
+      <li>Service interruption or technical faults</li>
+    </ul>
+    <p>In any event, and subject to any mandatory applicable law, the Service operator's maximum cumulative liability to the user for any damage — under any cause of action — shall not exceed the amount actually paid by the user for the Service in the 12 months preceding the event giving rise to the claim, and in any case shall not exceed the equivalent of 100 NIS to the extent the Service was provided to the user free of charge.</p>
+  </section>
+
+  <section id="s9">
+    <h2><span class="num">09</span>Right of Cancellation</h2>
+    <p>To the extent the Service, in whole or in part, is provided under a paid subscription, the user is entitled to cancel the transaction in accordance with Israel's Consumer Protection Law, 5741-1981, within 14 days of the transaction date or the date the disclosure document regarding the transaction was received (whichever is later). Notice of cancellation shall be given in writing to the Service operator at <a href="mailto:davidtheking27@gmail.com">davidtheking27@gmail.com</a>. Upon such cancellation, the user will be refunded a proportional part of the payment made for the period following the cancellation date, subject to any deduction permitted by law (including a cancellation fee, if applicable). Cancellation after actual use of paid features has begun may be subject to additional restrictions under the law.</p>
+  </section>
+
+  <section id="s10">
+    <h2><span class="num">10</span>Data Collection, Privacy &amp; Communications</h2>
+    <p>Collection, use, and storage of information within the Service — including API keys (stored encrypted), IP addresses, and usage logs — is carried out in accordance with the Service's <a href="privacy.html">Privacy Policy</a>, which forms an integral part of these terms.</p>
+    <p>Messages sent to the user's email address are, as a rule, operational and system messages only (such as account verification, password recovery, security alerts, and material service updates), and do not require prior consent under Section 30A of Israel's Communications Law (Telecommunications and Broadcasting), 5742-1982. Promotional or marketing content will only be sent to the user subject to obtaining their express prior consent (opt-in), and every such promotional message will provide the user a simple and available way to unsubscribe at any time.</p>
+  </section>
+
+  <section id="s11">
+    <h2><span class="num">11</span>Intellectual Property</h2>
+    <p>All code, design, logo, and content of the app are the property of the Service operator. Reproduction, distribution, or commercial use without written permission is prohibited.</p>
+  </section>
+
+  <section id="s12">
+    <h2><span class="num">12</span>Changes to These Terms</h2>
+    <p>The Service operator may update these terms at any time. A material update will be communicated with 14 days' advance notice. Continued use after such notice constitutes agreement to the new terms.</p>
+  </section>
+
+  <section id="s13">
+    <h2><span class="num">13</span>Termination of Service</h2>
+    <p>The Service operator may discontinue the Service at any time, with 30 days' advance notice. In such a case, users will be given the opportunity to export their data.</p>
+  </section>
+
+  <section id="s14">
+    <h2><span class="num">14</span>Governing Law &amp; Jurisdiction</h2>
+    <p>These terms and any matter arising from them or from use of the Service shall be governed solely by the laws of the State of Israel, without giving effect to any conflict-of-law rules. Exclusive jurisdiction over any dispute or matter arising from this agreement or from use of the Service is vested solely in the competent courts of the Tel Aviv-Jaffa district.</p>
+  </section>
+
+  <section id="s15">
+    <h2><span class="num">15</span>Contact</h2>
+    <p>For questions about these terms: <a href="mailto:davidtheking27@gmail.com">davidtheking27@gmail.com</a></p>
+  </section>
+
+  </div>
+</div>
+</main>
+
+<script>
+(function(){
+  var links = [].slice.call(document.querySelectorAll('.toc a'));
+  var sections = links.map(function(a){ return document.querySelector(a.getAttribute('href')); });
+  if (!links.length || !window.IntersectionObserver) return;
+  var current = null;
+  function setActive(id){
+    if (id === current) return;
+    current = id;
+    links.forEach(function(a){ a.classList.toggle('active', a.getAttribute('href') === '#' + id); });
+  }
+  function atBottom(){
+    return window.scrollY + window.innerHeight >= document.body.scrollHeight - 2;
+  }
+  var visible = new Map();
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if (entry.isIntersecting) visible.set(entry.target.id, entry.boundingClientRect.top);
+      else visible.delete(entry.target.id);
+    });
+    if (atBottom()) { setActive(sections[sections.length - 1].id); return; }
+    if (!visible.size) {
+      if (window.scrollY < (sections[0] ? sections[0].offsetTop : 0)) setActive(sections[0].id);
+      return;
+    }
+    var topId = null, topY = Infinity;
+    visible.forEach(function(y, id){ if (y < topY) { topY = y; topId = id; } });
+    if (topId) setActive(topId);
+  }, { rootMargin: '-80px 0px -70% 0px', threshold: 0 });
+  sections.forEach(function(s){ if (s) io.observe(s); });
+  window.addEventListener('scroll', function(){
+    if (atBottom()) setActive(sections[sections.length - 1].id);
+  }, { passive: true });
+})();
+</script>
+
+</body>
+</html>

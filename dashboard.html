@@ -5651,8 +5651,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     <div class="sidebar-footer">
       <div class="sidebar-footer-text">v2.0 · מאובטח</div>
       <div class="sidebar-footer-links">
-        <a href="privacy.html" target="_blank" rel="noopener">פרטיות</a>
-        <a href="terms.html" target="_blank" rel="noopener">תנאי שימוש</a>
+        <a href="privacy.html" id="sidebar-privacy-link" target="_blank" rel="noopener">פרטיות</a>
+        <a href="terms.html" id="sidebar-terms-link" target="_blank" rel="noopener">תנאי שימוש</a>
         <a href="accessibility.html" target="_blank" rel="noopener">נגישות</a>
       </div>
       <div class="sidebar-footer-text" style="margin-top:6px;">© 2026 ChartRoom</div>
@@ -7178,7 +7178,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
         onkeydown="if(event.key==='Enter')authSubmit()">
       <label id="auth-consent-row" style="display:none;align-items:flex-start;gap:8px;margin-top:4px;font-size:12px;color:var(--text3);line-height:1.5;cursor:pointer;">
         <input id="auth-consent" type="checkbox" style="margin-top:2px;flex-shrink:0;cursor:pointer;accent-color:var(--accent);">
-        <span>קראתי ואני מסכים/ה ל<a href="terms.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:underline;">תנאי השימוש</a> ול<a href="privacy.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:underline;">מדיניות הפרטיות</a></span>
+        <span id="auth-consent-text">קראתי ואני מסכים/ה ל<a href="terms.html" id="auth-consent-terms-link" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:underline;">תנאי השימוש</a> ול<a href="privacy.html" id="auth-consent-privacy-link" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:underline;">מדיניות הפרטיות</a></span>
       </label>
     </div>
 
@@ -7209,9 +7209,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
     <!-- Legal links -->
     <div style="text-align:center;margin-top:18px;font-size:11px;color:var(--text3);line-height:1.6;">
-      <a href="terms.html" target="_blank" rel="noopener" style="color:var(--text3);text-decoration:underline;">תנאי שימוש</a>
+      <a href="terms.html" id="auth-footer-terms-link" target="_blank" rel="noopener" style="color:var(--text3);text-decoration:underline;">תנאי שימוש</a>
       &nbsp;·&nbsp;
-      <a href="privacy.html" target="_blank" rel="noopener" style="color:var(--text3);text-decoration:underline;">מדיניות פרטיות</a>
+      <a href="privacy.html" id="auth-footer-privacy-link" target="_blank" rel="noopener" style="color:var(--text3);text-decoration:underline;">מדיניות פרטיות</a>
       &nbsp;·&nbsp;
       <a href="accessibility.html" target="_blank" rel="noopener" style="color:var(--text3);text-decoration:underline;">הצהרת נגישות</a>
     </div>
@@ -7590,8 +7590,9 @@ let _authMode = 'login';
 // LEGAL / POLICY DOCUMENTS — open standalone pages (single source of truth)
 // ─────────────────────────────────────────────
 const LEGAL_PAGES = { privacy: 'privacy.html', terms: 'terms.html', accessibility: 'accessibility.html' };
+const LEGAL_PAGES_EN = { privacy: 'privacy-en.html', terms: 'terms-en.html', accessibility: 'accessibility.html' };
 function openLegal(type) {
-  const url = LEGAL_PAGES[type];
+  const url = (_lang === 'en' ? LEGAL_PAGES_EN : LEGAL_PAGES)[type];
   if (url) window.open(url, '_blank', 'noopener');
 }
 
@@ -11332,6 +11333,17 @@ function setLang(lang) {
   document.documentElement.setAttribute('lang', lang);
   document.documentElement.setAttribute('dir', lang === 'he' ? 'rtl' : 'ltr');
   const s = LANG_STRINGS[lang] || LANG_STRINGS.en;
+
+  // Legal pages have a parallel English translation (terms-en.html /
+  // privacy-en.html) — point every in-app link at the version matching the
+  // current UI language instead of always opening the Hebrew original.
+  const legalSuffix = lang === 'en' ? '-en' : '';
+  [['auth-consent-terms-link', 'terms'], ['auth-consent-privacy-link', 'privacy'],
+   ['auth-footer-terms-link', 'terms'], ['auth-footer-privacy-link', 'privacy'],
+   ['sidebar-terms-link', 'terms'], ['sidebar-privacy-link', 'privacy']].forEach(([id, doc]) => {
+    const el = document.getElementById(id);
+    if (el) el.href = `${doc}${legalSuffix}.html`;
+  });
 
   // Top nav
   const tnav = document.querySelectorAll('#top-nav .tnav-btn');
