@@ -171,6 +171,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     font-size: 15px; font-weight: 700; color: var(--text);
     letter-spacing: -0.3px; white-space: nowrap;
   }
+  .header-broker-dot {
+    width: 8px; height: 8px; border-radius: 50%; margin-inline-start: 8px;
+    flex-shrink: 0; box-shadow: 0 0 0 2px var(--bg, transparent);
+  }
   .header-title .accent { display: none; }
   .header-actions { display: flex; align-items: center; gap: 8px; }
 
@@ -5545,6 +5549,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       </svg>
       <span class="accent" style="font-size:15px;">ChartRoom</span>
       <span class="header-greeting" id="header-greeting"></span>
+      <span id="header-broker-dot" class="header-broker-dot" style="display:none" role="status"></span>
     </div>
 
     <!-- Center Nav Tabs -->
@@ -15241,7 +15246,13 @@ function _setBrokerBadge(broker, state) {
     const hd = document.getElementById('header-broker-dot');
     if (hd) {
       if (!m) hd.style.display = 'none';
-      else { hd.style.background = m.fg; hd.style.display = 'inline-block'; }
+      else {
+        hd.style.background = m.fg; hd.style.display = 'inline-block';
+        // A color-only dot has no accessible name — pair it with the same
+        // label the settings-page badge shows, not just its color.
+        hd.title = 'IBKR: ' + m.t;
+        hd.setAttribute('aria-label', 'IBKR: ' + m.t);
+      }
     }
   }
   if (!m) { el.style.display = 'none'; el.classList.remove('broker-badge-syncing'); return; }
