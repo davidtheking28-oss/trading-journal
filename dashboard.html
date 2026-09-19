@@ -744,6 +744,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
   .kpi-label { font-size: 10px; color: var(--text3); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
   .kpi-value { font-size: 26px; font-weight: 800; color: var(--text); letter-spacing: -0.6px; font-variant-numeric: tabular-nums; }
+  @keyframes overview-sync-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
   .kpi-value.green  { color: var(--green); }
   .kpi-value.red    { color: var(--red); }
   .kpi-value.yellow { color: var(--yellow); }
@@ -5691,6 +5692,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
       <!-- Period filter -->
       <div class="month-filter" style="margin-bottom:16px;">
+        <span id="overview-sync-pill" style="display:none;align-items:center;gap:5px;font-size:11px;color:var(--text3);margin-left:6px;" role="status">
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;animation:overview-sync-pulse 1.2s ease-in-out infinite;"></span>
+          מסנכרן נתוני ברוקר…
+        </span>
         <label data-i18n="filter_label">סינון:</label>
         <select id="ov-month" onchange="renderOverview()" style="display:none"></select>
         <select id="ov-year" onchange="renderOverview()" style="display:none"></select>
@@ -15205,7 +15210,21 @@ function toggleReveal(id, btn) {
 // Broker connection badge — reflects the REAL last-sync outcome, not just
 // "credentials saved". States: ok (verified), pending (saved, not yet synced),
 // error (a real connection/auth failure), none (no credentials → hidden).
+// The Overview KPIs re-render with fresh numbers whenever a background broker
+// sync (_autoFlexSync/_autoBybitSync) finishes right after login — correct
+// behavior, but with no visual cue it reads as the page unexpectedly
+// "jumping". This funnels through _setBrokerBadge (the one place both sync
+// paths already report their state) rather than adding a second tracking
+// mechanism.
+const _syncingBrokers = new Set();
+function _updateOverviewSyncPill(broker, state) {
+  if (state === 'syncing') _syncingBrokers.add(broker); else _syncingBrokers.delete(broker);
+  const pill = document.getElementById('overview-sync-pill');
+  if (pill) pill.style.display = _syncingBrokers.size ? 'inline-flex' : 'none';
+}
+
 function _setBrokerBadge(broker, state) {
+  _updateOverviewSyncPill(broker, state);
   const el = document.getElementById(broker + '-conn-dot');
   if (!el) return;
   // 'syncing' is a transient live state — never persist it.
