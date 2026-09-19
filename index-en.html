@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,56 +20,29 @@
   } catch (e) {}
 })();
 </script>
-<script>
-/* Redirect visitors outside Israel to the English landing page. A manual
-   toggle click (index-en.html's "עברית" link, or this page's own "English"
-   link) sets tj_landing_lang_choice and is never overridden by geo again —
-   respecting an explicit choice matters more than the guess. Without one,
-   the detected country is cached 7 days so repeat visitors redirect
-   instantly (no network wait); a first-time visitor briefly sees this
-   Hebrew page while the lookup runs, then redirects if it comes back
-   non-IL. If the geo API fails or is blocked, default stays Hebrew — the
-   primary audience is Israeli, so failing closed here is the safe default. */
-(function () {
-  try {
-    if (localStorage.getItem('tj_landing_lang_choice')) return;
-    var CACHE_KEY = 'tj_geo_country', CACHE_MS = 7 * 24 * 60 * 60 * 1000;
-    var cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
-    if (cached && Date.now() - cached.ts < CACHE_MS) {
-      if (cached.country && cached.country !== 'IL') location.replace('index-en.html');
-      return;
-    }
-    fetch('https://get.geojs.io/v1/ip/country.json').then(function (r) { return r.json(); }).then(function (d) {
-      var country = d && d.country || '';
-      try { localStorage.setItem(CACHE_KEY, JSON.stringify({ country: country, ts: Date.now() })); } catch (e) {}
-      if (country && country !== 'IL') location.replace('index-en.html');
-    }).catch(function () {});
-  } catch (e) {}
-})();
-</script>
 <meta name="google-site-verification" content="FSusm5X2VDUsrsnZfnk_L_4V8STvBITiGc044BZ2eC0">
-<title>יומן מסחר חינמי | ייבוא אוטומטי מ-IBKR ו-Bybit | ChartRoom</title>
-<meta name="description" content="יומן מסחר חינמי לסוחרים ישראלים — ייבוא אוטומטי מ-IBKR ו-Bybit, מסנן מניות Trend Template, Market Pulse בזמן אמת וניתוח win rate לכל עסקה. נסה חינם היום.">
-<meta name="keywords" content="יומן מסחר, trading journal, יומן מסחר חינמי, ניתוח עסקאות, מסחר במניות, מסחר בקריפטו, ניהול סיכונים, interactive brokers ייבוא, bybit יומן, win rate מסחר, profit factor, market pulse, fear greed index, מסנן מניות, trend template, stock screener, סוחר יומי ישראל, swing trading יומן">
+<title>Free Trading Journal | Automatic IBKR &amp; Bybit Import | ChartRoom</title>
+<meta name="description" content="Free trading journal for active traders — automatic import from IBKR and Bybit, a Trend Template stock screener, real-time Market Pulse and win-rate breakdowns for every trade. Try it free today.">
+<meta name="keywords" content="trading journal, free trading journal, trade analytics, stock trading journal, crypto trading journal, risk management, interactive brokers import, bybit journal, win rate trading, profit factor, market pulse, fear greed index, stock screener, trend template, swing trading journal">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://davidtheking28-oss.github.io/trading-journal/">
+<link rel="canonical" href="https://davidtheking28-oss.github.io/trading-journal/index-en.html">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://davidtheking28-oss.github.io/trading-journal/">
-<meta property="og:title" content="תפסיק לנחש למה אתה מרוויח או מפסיד | ChartRoom">
-<meta property="og:description" content="ייבוא אוטומטי מ-IBKR ו-Bybit, Market Pulse בזמן אמת ומסנן מניות Trend Template — חינם לתמיד, בלי כרטיס אשראי.">
-<meta property="og:locale" content="he_IL">
+<meta property="og:title" content="Stop Guessing Why Your Trades Win or Lose | ChartRoom">
+<meta property="og:description" content="Automatic import from IBKR and Bybit, real-time Market Pulse and a Trend Template stock screener — free forever, no credit card.">
+<meta property="og:locale" content="en_US">
 <meta property="og:site_name" content="ChartRoom">
 <meta property="og:image" content="https://davidtheking28-oss.github.io/trading-journal/assets/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="תפסיק לנחש למה אתה מרוויח או מפסיד | ChartRoom">
-<meta name="twitter:description" content="ייבוא אוטומטי מ-IBKR ו-Bybit, Market Pulse בזמן אמת ומסנן מניות Trend Template — חינם לתמיד, בלי כרטיס אשראי.">
+<meta name="twitter:title" content="Stop Guessing Why Your Trades Win or Lose | ChartRoom">
+<meta name="twitter:description" content="Automatic import from IBKR and Bybit, real-time Market Pulse and a Trend Template stock screener — free forever, no credit card.">
 <meta name="twitter:image" content="https://davidtheking28-oss.github.io/trading-journal/assets/og-image.png">
 <meta name="theme-color" content="#0c1022">
 <meta name="author" content="ChartRoom">
 <meta name="color-scheme" content="dark">
-<meta property="og:image:alt" content="ChartRoom — יומן מסחר מקצועי">
+<meta property="og:image:alt" content="ChartRoom — professional trading journal">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
@@ -91,8 +64,8 @@
   "@id": "https://davidtheking28-oss.github.io/trading-journal/#site",
   "name": "ChartRoom",
   "url": "https://davidtheking28-oss.github.io/trading-journal/",
-  "inLanguage": "he",
-  "description": "יומן מסחר מקצועי עם מסנן מניות לפי Trend Template, לסוחרים בשוק ההון ובקריפטו",
+  "inLanguage": "en",
+  "description": "Professional trading journal with a Trend Template stock screener, for stock and crypto traders",
   "publisher": { "@id": "https://davidtheking28-oss.github.io/trading-journal/#org" }
 }
 </script>
@@ -102,15 +75,15 @@
   "@type": "WebApplication",
   "name": "ChartRoom",
   "url": "https://davidtheking28-oss.github.io/trading-journal/",
-  "description": "יומן מסחר מקצועי עם מסנן מניות לפי Trend Template, לסוחרים בשוק ההון ובקריפטו",
+  "description": "Professional trading journal with a Trend Template stock screener, for stock and crypto traders",
   "applicationCategory": "FinanceApplication",
   "operatingSystem": "Web",
   "offers": {
     "@type": "Offer",
     "price": "0",
-    "priceCurrency": "ILS"
+    "priceCurrency": "USD"
   },
-  "inLanguage": "he",
+  "inLanguage": "en",
   "author": { "@id": "https://davidtheking28-oss.github.io/trading-journal/#org" },
   "provider": { "@id": "https://davidtheking28-oss.github.io/trading-journal/#org" }
 }
@@ -1163,37 +1136,37 @@ html.a11y-underline a { text-decoration: underline !important; }
 </head>
 <body>
 
-<a href="#main-content" class="skip-link">דלג לתוכן הראשי</a>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 
 <!-- ACCESSIBILITY WIDGET -->
-<button class="a11y-btn" onclick="a11yToggle()" aria-label="פתח תפריט נגישות" aria-haspopup="dialog" aria-expanded="false" aria-controls="a11y-panel" id="a11y-toggle">
+<button class="a11y-btn" onclick="a11yToggle()" aria-label="Open accessibility menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="a11y-panel" id="a11y-toggle">
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4" r="2"/><path d="M19 8l-7 2-7-2"/><path d="M12 10v6"/><path d="M9 21l3-6 3 6"/><path d="M8 13l4 1 4-1"/></svg>
 </button>
-<div class="a11y-panel" id="a11y-panel" role="dialog" aria-modal="true" aria-label="הגדרות נגישות">
-  <span class="a11y-label">גודל טקסט</span>
+<div class="a11y-panel" id="a11y-panel" role="dialog" aria-modal="true" aria-label="Accessibility settings">
+  <span class="a11y-label">Text size</span>
   <div class="a11y-row">
-    <button onclick="a11yFont(-10)" aria-label="הקטן טקסט">א-</button>
-    <button onclick="a11yFont(10)" aria-label="הגדל טקסט">א+</button>
+    <button onclick="a11yFont(-10)" aria-label="Decrease text size">A-</button>
+    <button onclick="a11yFont(10)" aria-label="Increase text size">A+</button>
   </div>
-  <span class="a11y-label">תצוגה</span>
+  <span class="a11y-label">Display</span>
   <div class="a11y-row">
-    <button class="a11y-item" data-a11y="contrast" aria-pressed="false" onclick="a11yContrast()">ניגודיות גבוהה</button>
+    <button class="a11y-item" data-a11y="contrast" aria-pressed="false" onclick="a11yContrast()">High contrast</button>
   </div>
   <div class="a11y-row">
-    <button class="a11y-item" data-a11y="underline" aria-pressed="false" onclick="a11yUnderline()">הדגשת קישורים</button>
+    <button class="a11y-item" data-a11y="underline" aria-pressed="false" onclick="a11yUnderline()">Underline links</button>
   </div>
-  <button class="a11y-reset" onclick="a11yReset()">איפוס הגדרות</button>
+  <button class="a11y-reset" onclick="a11yReset()">Reset settings</button>
 </div>
 
 <!-- COOKIE BANNER -->
-<div class="cookie-banner" id="cookie-banner" role="dialog" aria-label="הסכמה לעוגיות" style="display:none">
+<div class="cookie-banner" id="cookie-banner" role="dialog" aria-label="Cookie consent" style="display:none">
   <div class="cookie-icon" aria-hidden="true">🍪</div>
   <div class="cookie-body">
-    <div class="cookie-title">אנחנו משתמשים בעוגיות מינימליות</div>
-    <div class="cookie-desc">האתר טוען גופנים מ-Google Fonts, מה שמעביר את כתובת ה-IP שלך ל-Google. לא נאסף שום מידע נוסף ולא מופעל מעקב פרסומי. פרטים ב<a href="privacy.html">מדיניות הפרטיות</a>.</div>
+    <div class="cookie-title">We use minimal cookies</div>
+    <div class="cookie-desc">This site loads fonts from Google Fonts, which sends your IP address to Google. No other data is collected and no advertising tracking is used. Details in our <a href="privacy.html">Privacy Policy</a>.</div>
     <div class="cookie-actions">
-      <button class="cookie-btn-accept" onclick="cookieAccept()">אשר</button>
-      <button class="cookie-btn-decline" onclick="cookieDecline()">סגור</button>
+      <button class="cookie-btn-accept" onclick="cookieAccept()">Accept</button>
+      <button class="cookie-btn-decline" onclick="cookieDecline()">Close</button>
     </div>
   </div>
 </div>
@@ -1214,7 +1187,7 @@ html.a11y-underline a { text-decoration: underline !important; }
 
 <!-- NAV -->
 <header>
-<nav role="navigation" aria-label="ניווט ראשי">
+<nav role="navigation" aria-label="Main navigation">
   <a href="#" class="nav-logo" aria-label="ChartRoom">
     <div class="nav-logo-icon" aria-hidden="true">
       <svg width="32" height="32" viewBox="0 0 200 200" style="filter:drop-shadow(0 0 6px rgba(129,140,248,0.4))" aria-hidden="true">
@@ -1229,24 +1202,24 @@ html.a11y-underline a { text-decoration: underline !important; }
     <span class="nav-logo-text">ChartRoom</span>
   </a>
   <div class="nav-links">
-    <a href="#features" class="nav-link">תכונות</a>
-    <a href="#how" class="nav-link">איך זה עובד</a>
-    <a href="#faq" class="nav-link">שאלות</a>
+    <a href="#features" class="nav-link">Features</a>
+    <a href="#how" class="nav-link">How It Works</a>
+    <a href="#faq" class="nav-link">Questions</a>
   </div>
   <div class="nav-right">
-    <a href="index-en.html" class="nav-link" onclick="try{localStorage.setItem('tj_landing_lang_choice','en')}catch(e){}">English</a>
-    <a href="dashboard.html" class="nav-link">כניסה</a>
-    <a href="dashboard.html" class="nav-cta">הרשמה חינם</a>
-    <button class="nav-menu-btn" onclick="toggleMobileNav()" aria-label="תפריט ניווט" aria-expanded="false" aria-controls="mobile-nav-panel">
+    <a href="index.html" class="nav-link" onclick="try{localStorage.setItem('tj_landing_lang_choice','he')}catch(e){}">עברית</a>
+    <a href="dashboard.html" class="nav-link">Log In</a>
+    <a href="dashboard.html" class="nav-cta">Start Free</a>
+    <button class="nav-menu-btn" onclick="toggleMobileNav()" aria-label="Navigation menu" aria-expanded="false" aria-controls="mobile-nav-panel">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
     </button>
   </div>
   <div class="mobile-nav-panel" id="mobile-nav-panel">
-    <a href="#features" class="nav-link" onclick="toggleMobileNav()">תכונות</a>
-    <a href="#how" class="nav-link" onclick="toggleMobileNav()">איך זה עובד</a>
-    <a href="#faq" class="nav-link" onclick="toggleMobileNav()">שאלות</a>
-    <a href="index-en.html" class="nav-link" onclick="try{localStorage.setItem('tj_landing_lang_choice','en')}catch(e){}">English</a>
-    <a href="dashboard.html" class="nav-link">כניסה</a>
+    <a href="#features" class="nav-link" onclick="toggleMobileNav()">Features</a>
+    <a href="#how" class="nav-link" onclick="toggleMobileNav()">How It Works</a>
+    <a href="#faq" class="nav-link" onclick="toggleMobileNav()">Questions</a>
+    <a href="index.html" class="nav-link" onclick="try{localStorage.setItem('tj_landing_lang_choice','he')}catch(e){}">עברית</a>
+    <a href="dashboard.html" class="nav-link">Log In</a>
   </div>
 </nav>
 </header>
@@ -1259,25 +1232,25 @@ html.a11y-underline a { text-decoration: underline !important; }
   <div class="hero-wrap">
     <div>
       <h1 class="hero-title" id="hero-heading">
-        <span class="hero-title-lead">תפסיק <span class="hl-accent">לנחש</span> למה עסקאות שלך מרוויחות או מפסידות.</span>
+        <span class="hero-title-lead">Stop <span class="hl-accent">guessing</span> why your trades win or lose.</span>
       </h1>
-      <p class="hero-sub">מחבר את IBKR או Bybit שלך ומפרק כל עסקה לפי win rate, profit factor ותבנית מסחר — כדי שתדע בדיוק מה עובד לך ומה עולה לך כסף.</p>
+      <p class="hero-sub">Connects to your IBKR or Bybit and breaks down every trade by win rate, profit factor and setup — so you know exactly what's working and what's costing you money.</p>
       <div class="hero-actions">
         <a href="dashboard.html" class="btn-hero-primary">
-          התחל בחינם
+          Start Free
           <svg width="14" height="14" aria-hidden="true"><use href="#i-arr"/></svg>
         </a>
-        <a href="#demo" class="btn-hero-ghost">צפה במערכת</a>
+        <a href="#demo" class="btn-hero-ghost">See It In Action</a>
       </div>
-      <p class="hero-trust-line">ללא כרטיס אשראי · חינם לתמיד, לא רק בהרשמה</p>
+      <p class="hero-trust-line">No credit card · Free forever, not just at signup</p>
     </div>
   </div>
 </section>
 
 <!-- BROKER TRUST STRIP -->
 <div class="broker-strip">
-  <span class="broker-strip-label">מתחברים לברוקרים המובילים</span>
-  <a href="broker-guide.html" style="font-size:13px;color:var(--text3);text-decoration:underline;">איך מחברים את הברוקר?</a>
+  <span class="broker-strip-label">Connects to leading brokers</span>
+  <a href="broker-guide.html" style="font-size:13px;color:var(--text3);text-decoration:underline;">How do I connect my broker?</a>
   <div class="broker-strip-badges">
     <div class="broker-card">
       <span class="broker-card-icon ibkr" aria-hidden="true">
@@ -1304,9 +1277,9 @@ html.a11y-underline a { text-decoration: underline !important; }
 <!-- DEMO SHOWCASE -->
 <section id="demo" aria-labelledby="demo-heading">
   <div class="centered reveal">
-    <div class="section-pill">הדגמה חיה</div>
-    <h2 class="section-title" id="demo-heading">הצצה למערכת</h2>
-    <p class="section-sub" style="margin:0 auto;">הכלים שיראו לך למה אתה באמת מרוויח ומפסיד</p>
+    <div class="section-pill">Live Demo</div>
+    <h2 class="section-title" id="demo-heading">A Look Inside</h2>
+    <p class="section-sub" style="margin:0 auto;">The tools that show you why you're actually winning or losing</p>
   </div>
   <div class="demo-showcase-wrap reveal">
     <div class="hero-visual-glow"></div>
@@ -1318,39 +1291,39 @@ html.a11y-underline a { text-decoration: underline !important; }
       </div>
 
       <div class="demo-app">
-        <div class="demo-nav" role="tablist" aria-label="הדגמת מערכת">
-          <button class="demo-tab active" id="dt0" role="tab" aria-selected="true" aria-controls="ds0" tabindex="0">דשבורד</button>
-          <button class="demo-tab" id="dt1" role="tab" aria-selected="false" aria-controls="ds1" tabindex="-1">עסקאות</button>
+        <div class="demo-nav" role="tablist" aria-label="System demo">
+          <button class="demo-tab active" id="dt0" role="tab" aria-selected="true" aria-controls="ds0" tabindex="0">Dashboard</button>
+          <button class="demo-tab" id="dt1" role="tab" aria-selected="false" aria-controls="ds1" tabindex="-1">Trades</button>
           <button class="demo-tab" id="dt2" role="tab" aria-selected="false" aria-controls="ds2" tabindex="-1">Market Pulse</button>
-          <button class="demo-tab" id="dt3" role="tab" aria-selected="false" aria-controls="ds3" tabindex="-1">מסנן מניות</button>
-          <button class="demo-tab" id="dt4" role="tab" aria-selected="false" aria-controls="ds4" tabindex="-1">סטטיסטיקות</button>
-          <button type="button" class="demo-tab-pause" id="demo-pause-btn" aria-label="השהה החלפה אוטומטית">⏸</button>
+          <button class="demo-tab" id="dt3" role="tab" aria-selected="false" aria-controls="ds3" tabindex="-1">Screener</button>
+          <button class="demo-tab" id="dt4" role="tab" aria-selected="false" aria-controls="ds4" tabindex="-1">Statistics</button>
+          <button type="button" class="demo-tab-pause" id="demo-pause-btn" aria-label="Pause auto-switching">⏸</button>
         </div>
 
         <div class="demo-stage">
           <!-- Screen 1: Dashboard overview -->
           <div class="demo-body demo-screen active" id="ds0" role="tabpanel" aria-labelledby="dt0" style="padding:0">
-            <img src="assets/demo/demo-stats.jpg" alt="דשבורד — סטטיסטיקה ולוח שנה חודשי" fetchpriority="high">
+            <img src="assets/demo/demo-stats.jpg" alt="Dashboard — statistics and monthly calendar" fetchpriority="high">
           </div>
 
           <!-- Screen 2: Trades table -->
           <div class="demo-body demo-screen" id="ds1" role="tabpanel" aria-labelledby="dt1" style="padding:0">
-            <img data-src="assets/demo/demo-trades.jpg" alt="טבלת עסקאות ביומן המסחר">
+            <img data-src="assets/demo/demo-trades.jpg" alt="Trades table in the trading journal">
           </div>
 
           <!-- Screen 3: Market Pulse -->
           <div class="demo-body demo-screen" id="ds2" role="tabpanel" aria-labelledby="dt2" style="padding:0">
-            <img data-src="assets/demo/demo-pulse.png" alt="Market Pulse — מדדים ורוחב שוק">
+            <img data-src="assets/demo/demo-pulse.png" alt="Market Pulse — indices and market breadth">
           </div>
 
           <!-- Screen 4: Stock screener -->
           <div class="demo-body demo-screen" id="ds3" role="tabpanel" aria-labelledby="dt3" style="padding:0">
-            <img data-src="assets/demo/demo-screener.png" alt="מסנן מניות — Trend Template + SEPA">
+            <img data-src="assets/demo/demo-screener.png" alt="Stock screener — Trend Template + SEPA">
           </div>
 
           <!-- Screen 5: Statistics -->
           <div class="demo-body demo-screen" id="ds4" role="tabpanel" aria-labelledby="dt4" style="padding:0">
-            <img data-src="assets/demo/demo-winloss.jpg" alt="סטטיסטיקות — Profit Factor, ממוצעי רווח/הפסד ויחס נצחונות מול הפסדים">
+            <img data-src="assets/demo/demo-winloss.jpg" alt="Statistics — profit factor, average win/loss and win/loss ratio">
           </div>
         </div>
       </div>
@@ -1361,30 +1334,30 @@ html.a11y-underline a { text-decoration: underline !important; }
 <!-- HOW -->
 <section id="how" aria-labelledby="how-heading">
   <div class="centered reveal">
-    <div class="section-pill">תהליך</div>
-    <h2 class="section-title" id="how-heading">שלושה שלבים, ואתה כבר לא מנחש</h2>
-    <p class="section-sub" style="margin:0 auto;">ללא כרטיס אשראי</p>
+    <div class="section-pill">Process</div>
+    <h2 class="section-title" id="how-heading">Three steps, and you're never guessing again</h2>
+    <p class="section-sub" style="margin:0 auto;">No credit card</p>
   </div>
   <div class="steps-row">
     <div class="step reveal">
       <div class="step-circle" aria-hidden="true">01</div>
       <div>
-        <h3 class="step-title">הרשמה</h3>
-        <p class="step-desc">פחות מדקה. אימייל או Google — וכבר בפנים.</p>
+        <h3 class="step-title">Sign Up</h3>
+        <p class="step-desc">Under a minute. Email or Google — and you're in.</p>
       </div>
     </div>
     <div class="step step-mid reveal">
       <div class="step-circle" aria-hidden="true">02</div>
       <div>
-        <h3 class="step-title">חבר את הברוקר שלך</h3>
-        <p class="step-desc">IBKR או Bybit, סנכרון מאובטח ואוטומטי. ~10 דקות בפעם הראשונה, ואז זה לבד.</p>
+        <h3 class="step-title">Connect Your Broker</h3>
+        <p class="step-desc">IBKR or Bybit, secure automatic sync. ~10 minutes the first time, then it runs itself.</p>
       </div>
     </div>
     <div class="step reveal">
       <div class="step-circle" aria-hidden="true">03</div>
       <div>
-        <h3 class="step-title">קבל תובנות מיידיות</h3>
-        <p class="step-desc">רואה win rate, profit factor ו-P&amp;L לפי סימבול ותאריך — ומזהה בדיוק אילו setups מרוויחים לך ואילו עולים לך כסף.</p>
+        <h3 class="step-title">Get Instant Insights</h3>
+        <p class="step-desc">See win rate, profit factor and P&amp;L by symbol and date — and pinpoint exactly which setups make you money and which cost you.</p>
       </div>
     </div>
   </div>
@@ -1393,34 +1366,34 @@ html.a11y-underline a { text-decoration: underline !important; }
 <!-- FEATURES -->
 <section id="features" aria-labelledby="features-heading">
   <div class="centered reveal">
-    <div class="section-pill">למה זה עובד</div>
-    <h2 class="section-title" id="features-heading">כל מה שטבלה לא יכולה להראות לך</h2>
-    <p class="section-sub">ברוקר, שוק, סורק מניות ותיק השקעות — הכל במקום אחד, בלי לקפוץ בין עשר טאבים</p>
+    <div class="section-pill">Why It Works</div>
+    <h2 class="section-title" id="features-heading">Everything a spreadsheet can't show you</h2>
+    <p class="section-sub">Broker, market, stock screener and portfolio — all in one place, no jumping between ten tabs</p>
     <p class="section-sub" style="max-width:58ch;margin:14px auto 0;">
-      דוח הברוקר מראה כמה הרווחת החודש. הוא לא מראה אילו setups מרוויחים לך שוב ושוב, מתי אתה סוגר פוזיציות מוקדם מדי, או שאתה מסתכן יותר מדי בסקטור אחד. ChartRoom לוקח את כל העסקאות שלך — ממניות, קריפטו, מכל ברוקר שתחבר — ומחשב מהן win rate, profit factor וממוצע רווח/הפסד אמיתיים, כדי שההחלטה הבאה שלך תתבסס על מה שבאמת עבד לך בעבר, לא על תחושת בטן.
+      Your broker's report shows how much you made this month. It doesn't show which setups keep winning for you, when you're closing positions too early, or when you're over-exposed to one sector. ChartRoom takes every trade you make — stocks, crypto, any broker you connect — and computes real win rate, profit factor and average win/loss, so your next decision is based on what actually worked before, not a gut feeling.
     </p>
   </div>
 
   <div class="feat-grid">
     <div class="feat-card reveal">
       <span class="feat-num" aria-hidden="true">01</span>
-      <h3 class="feat-row-title">שכח מטבלאות</h3>
-      <p class="feat-row-desc">חבר את <span class="kw">Interactive Brokers</span> או <span class="kw">Bybit</span> פעם אחת — חיבור קורא-בלבד, ללא גישה לביצוע פעולות — וכל עסקה נכנסת לבד.</p>
+      <h3 class="feat-row-title">Forget spreadsheets</h3>
+      <p class="feat-row-desc">Connect <span class="kw">Interactive Brokers</span> or <span class="kw">Bybit</span> once — read-only, no access to place or execute trades — and every trade logs itself.</p>
     </div>
     <div class="feat-card reveal">
       <span class="feat-num" aria-hidden="true">02</span>
-      <h3 class="feat-row-title">דופק השוק בזמן אמת</h3>
-      <p class="feat-row-desc">ביצועי סקטורים, <span class="kw">Fear &amp; Greed Index</span> ומניות מובילות — במקום אחד, כדי שתדע לאן הכסף זורם לפני שאתה נכנס לפוזיציה.</p>
+      <h3 class="feat-row-title">The market's pulse, live</h3>
+      <p class="feat-row-desc">Sector performance, <span class="kw">Fear &amp; Greed Index</span> and leading stocks — all in one place, so you know where the money's flowing before you enter a position.</p>
     </div>
     <div class="feat-card reveal">
       <span class="feat-num" aria-hidden="true">03</span>
-      <h3 class="feat-row-title">מסנן מניות מובנה</h3>
-      <p class="feat-row-desc">הסורק סורק את כל השוק ומציג רק מניות עם מבנה טכני חזק (<span class="kw">Trend Template</span>) — ישר בתוך היומן.</p>
+      <h3 class="feat-row-title">Built-in stock screener</h3>
+      <p class="feat-row-desc">Scans the whole market and surfaces only stocks with a strong technical structure (<span class="kw">Trend Template</span>) — right inside the journal.</p>
     </div>
     <div class="feat-card reveal">
       <span class="feat-num" aria-hidden="true">04</span>
-      <h3 class="feat-row-title">בניית תיק השקעות</h3>
-      <p class="feat-row-desc">הקצאת הון בין מניות, קריפטו ו-ETFs, תשואה כוללת במבט אחד — כדי לראות חשיפת יתר לנכס בודד לפני שהיא הופכת להפסד גדול.</p>
+      <h3 class="feat-row-title">Portfolio tracking</h3>
+      <p class="feat-row-desc">Capital allocation across stocks, crypto and ETFs, total return at a glance — so you spot over-exposure to a single asset before it turns into a big loss.</p>
     </div>
   </div>
 </section>
@@ -1428,12 +1401,12 @@ html.a11y-underline a { text-decoration: underline !important; }
 <!-- TESTIMONIAL -->
 <section id="testimonial" class="centered" aria-labelledby="testimonial-heading">
   <div class="reveal">
-    <div class="section-pill">עדות</div>
-    <h2 class="section-title" id="testimonial-heading" style="margin-bottom:36px;">מה סוחרים חושבים על הפלטפורמה</h2>
+    <div class="section-pill">Testimonial</div>
+    <h2 class="section-title" id="testimonial-heading" style="margin-bottom:36px;">What traders think of the platform</h2>
   </div>
   <div class="testimonial-grid reveal">
     <div class="testimonial-proof-card">
-      <img class="testimonial-proof-img" src="assets/demo/testimonial-amit.jpg" alt="הודעת וואטסאפ מעמית, סוחר ב-Interactive Brokers, על ChartRoom: הפלטפורמה החדשה באמת ברמה גבוהה, יומן מסחר מעולה ששדרג לי את העבודה, משתמש בו ברמה יומיומית" loading="lazy">
+      <img class="testimonial-proof-img" src="assets/demo/testimonial-amit.jpg" alt="WhatsApp message from Amit, an Interactive Brokers trader, about ChartRoom: the new platform is genuinely top-notch, an excellent trading journal that upgraded my workflow, I use it every day" loading="lazy">
     </div>
   </div>
 </section>
@@ -1441,25 +1414,25 @@ html.a11y-underline a { text-decoration: underline !important; }
 <!-- PRICING -->
 <section id="pricing" class="centered" aria-labelledby="pricing-heading">
   <div class="reveal">
-    <div class="section-pill">תמחור</div>
-    <h2 class="section-title" id="pricing-heading">חינמי לחלוטין. לא בינתיים — תמיד.</h2>
-    <p class="section-sub">בלי כרטיס אשראי, בלי תוכנית "בסיס" שדוחפת לשדרג.</p>
+    <div class="section-pill">Pricing</div>
+    <h2 class="section-title" id="pricing-heading">Completely free. Not for now — forever.</h2>
+    <p class="section-sub">No credit card, no "basic" tier pushing you to upgrade.</p>
   </div>
 
   <div class="pricing-outer reveal">
     <div class="pricing-card">
-      <div class="price-label">חינם לתמיד</div>
-      <div class="price-amount"><span class="cur">₪</span>0 <span class="per">/ חודש</span></div>
-      <div class="price-note">כל הפיצ'רים פתוחים. אין מה לשדרג.</div>
-      <ul class="price-list" aria-label="מה כלול">
-        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>ייבוא אוטומטי מ-Interactive Brokers ו-Bybit</li>
-        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>סטטיסטיקות מלאות — win rate, P&amp;L, profit factor</li>
+      <div class="price-label">Free Forever</div>
+      <div class="price-amount"><span class="cur">$</span>0 <span class="per">/ month</span></div>
+      <div class="price-note">Every feature unlocked. Nothing to upgrade.</div>
+      <ul class="price-list" aria-label="What's included">
+        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>Automatic import from Interactive Brokers and Bybit</li>
+        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>Full statistics — win rate, P&amp;L, profit factor</li>
         <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>Market Pulse + Fear &amp; Greed Index</li>
-        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>מסנן מניות מובנה — Trend Template</li>
-        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>גיבוי ענן מאובטח — RLS, HTTPS מוצפן</li>
+        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>Built-in stock screener — Trend Template</li>
+        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>Secure cloud backup — RLS, encrypted HTTPS</li>
       </ul>
       <a href="dashboard.html" class="btn-solid" style="width:100%;">
-        התחל בחינם
+        Start Free
       </a>
     </div>
   </div>
@@ -1468,51 +1441,51 @@ html.a11y-underline a { text-decoration: underline !important; }
 <!-- FAQ -->
 <section id="faq" aria-labelledby="faq-heading">
   <div class="centered reveal">
-    <h2 class="section-title" id="faq-heading">שאלות נפוצות</h2>
-    <p class="section-sub">כל מה שרצית לדעת על המערכת</p>
+    <h2 class="section-title" id="faq-heading">Frequently Asked Questions</h2>
+    <p class="section-sub">Everything you wanted to know about the system</p>
   </div>
   <div class="faq-grid" role="list">
       <div class="faq-item reveal" role="listitem">
         <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a1">
-          האם החיבור לברוקר בטוח?
+          Is the broker connection safe?
           <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
         </button>
-        <div class="faq-a" id="faq-a1" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">כן. חיבור Read-Only בלבד — אין למערכת גישה לביצוע פעולות או משיכת כספים. הנתונים מוצפנים (RLS + HTTPS).</div></div></div>
+        <div class="faq-a" id="faq-a1" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">Yes. Read-only connection only — the system has no access to place trades or withdraw funds. Data is encrypted (RLS + HTTPS).</div></div></div>
       </div>
       <div class="faq-item reveal" role="listitem">
         <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a2">
-          האם נתוני בזמן אמת ומסנן המניות באמת בחינם?
+          Is the real-time data and stock screener really free?
           <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
         </button>
-        <div class="faq-a" id="faq-a2" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">כן. כל הכלים פתוחים לגמרי, ללא כרטיס אשראי.</div></div></div>
+        <div class="faq-a" id="faq-a2" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">Yes. Every tool is fully unlocked, no credit card required.</div></div></div>
       </div>
       <div class="faq-item reveal" role="listitem">
         <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a3">
-          איך קטגוריית בניית התיק עוזרת לי ספציפית?
+          How does the portfolio tracking category help me specifically?
           <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
         </button>
-        <div class="faq-a" id="faq-a3" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">מראה לך פיזור הון בלייב, כדי שלא תגלה חשיפת יתר לנכס אחד אחרי שכבר קרה.</div></div></div>
+        <div class="faq-a" id="faq-a3" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">Shows you live capital allocation, so you catch over-exposure to one asset before it already happened.</div></div></div>
       </div>
       <div class="faq-item reveal" role="listitem">
         <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a4">
-          כמה זמן לוקח להגדיר?
+          How long does setup take?
           <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
         </button>
-        <div class="faq-a" id="faq-a4" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">הרשמה — פחות מדקה. חיבור ברוקר — כ-10 דקות בפעם הראשונה, ואז זה אוטומטי.</div></div></div>
+        <div class="faq-a" id="faq-a4" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">Sign up — under a minute. Connecting a broker — about 10 minutes the first time, then it's automatic.</div></div></div>
       </div>
       <div class="faq-item reveal" role="listitem">
         <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a5">
-          מה קורה לנתונים שלי אם אני רוצה למחוק את החשבון?
+          What happens to my data if I want to delete my account?
           <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
         </button>
-        <div class="faq-a" id="faq-a5" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">הנתונים שייכים לך. ייצוא ל-CSV בכל רגע, ומחיקה מלאה בפנייה אלינו. לא נמכר לצד שלישי.</div></div></div>
+        <div class="faq-a" id="faq-a5" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">Your data belongs to you. Export to CSV anytime, and full deletion on request. Never sold to third parties.</div></div></div>
       </div>
       <div class="faq-item reveal" role="listitem">
         <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a6">
-          האם עובד בנייד?
+          Does it work on mobile?
           <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
         </button>
-        <div class="faq-a" id="faq-a6" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">כן, האפליקציה רספונסיבית ועובדת בדפדפן בנייד. אפשר להתקין כ-PWA ישירות מהדפדפן.</div></div></div>
+        <div class="faq-a" id="faq-a6" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">Yes, the app is responsive and works in a mobile browser. It can be installed as a PWA directly from the browser.</div></div></div>
       </div>
   </div>
 </section>
@@ -1521,13 +1494,13 @@ html.a11y-underline a { text-decoration: underline !important; }
 <section id="cta">
   <div class="cta-inner reveal">
     <div class="cta-bg" aria-hidden="true"></div>
-    <h2 class="cta-title">בעוד חודש יהיו לך עוד עשרות עסקאות. תדע עליהן משהו?</h2>
-    <p class="cta-sub">כל יום בלי תיעוד הוא עוד יום שאתה לא רואה את הדפוסים האמיתיים שלך.</p>
+    <h2 class="cta-title">A month from now you'll have dozens more trades. Will you know anything about them?</h2>
+    <p class="cta-sub">Every day without a journal is another day you don't see your real patterns.</p>
     <a href="dashboard.html" class="btn-cta-dark">
-      גלה מה עובד לך — בחינם
+      Discover what works for you — free
       <svg width="15" height="15" aria-hidden="true"><use href="#i-arr"/></svg>
     </a>
-    <p style="margin-top:16px;font-size:12px;color:var(--text3);">ללא כרטיס אשראי · הרשמה בפחות מדקה · לא ייעוץ פיננסי, המסחר כרוך בסיכון</p>
+    <p style="margin-top:16px;font-size:12px;color:var(--text3);">No credit card · Sign up in under a minute · Not financial advice, trading involves risk</p>
   </div>
 </section>
 
@@ -1544,24 +1517,24 @@ html.a11y-underline a { text-decoration: underline !important; }
         </svg>
         <span class="footer-logo-text">ChartRoom</span>
       </div>
-      <p class="footer-brand-desc">יומן מסחר חינמי לסוחרים ישראלים. ייבוא אוטומטי מהברוקר, נתוני שוק בזמן אמת ומסנן מניות מובנה.</p>
+      <p class="footer-brand-desc">Free trading journal for active traders. Automatic broker import, real-time market data and a built-in stock screener.</p>
     </div>
     <div class="footer-cols">
-      <div class="footer-col" role="navigation" aria-label="מוצר">
-        <span class="footer-col-title">מוצר</span>
-        <a href="dashboard.html">כניסה לאפליקציה</a>
-        <a href="https://github.com/davidtheking28-oss/trading-journal" target="_blank" rel="noopener noreferrer" aria-label="GitHub (נפתח בכרטיסייה חדשה)">GitHub</a>
+      <div class="footer-col" role="navigation" aria-label="Product">
+        <span class="footer-col-title">Product</span>
+        <a href="dashboard.html">Log in to the app</a>
+        <a href="https://github.com/davidtheking28-oss/trading-journal" target="_blank" rel="noopener noreferrer" aria-label="GitHub (opens in a new tab)">GitHub</a>
       </div>
-      <div class="footer-col" role="navigation" aria-label="משפטי">
-        <span class="footer-col-title">משפטי</span>
-        <a href="terms.html">תנאי שימוש</a>
-        <a href="privacy.html">מדיניות פרטיות</a>
-        <a href="accessibility.html">נגישות</a>
+      <div class="footer-col" role="navigation" aria-label="Legal">
+        <span class="footer-col-title">Legal</span>
+        <a href="terms.html">Terms of Use</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="accessibility.html">Accessibility</a>
       </div>
-      <div class="footer-col" role="navigation" aria-label="תמיכה">
-        <span class="footer-col-title">תמיכה</span>
+      <div class="footer-col" role="navigation" aria-label="Support">
+        <span class="footer-col-title">Support</span>
         <a href="mailto:davidtheking27@gmail.com">davidtheking27@gmail.com</a>
-        <a href="mailto:davidtheking27@gmail.com" class="footer-contact-btn">דברו איתנו</a>
+        <a href="mailto:davidtheking27@gmail.com" class="footer-contact-btn">Contact Us</a>
       </div>
     </div>
   </div>
@@ -1718,7 +1691,7 @@ html.a11y-underline a { text-decoration: underline !important; }
     function stop() { clearInterval(timer); timer = null; }
     function setPaused(v) {
       paused = v;
-      if (pauseBtn) { pauseBtn.textContent = paused ? '▶' : '⏸'; pauseBtn.setAttribute('aria-label', paused ? 'המשך החלפה אוטומטית' : 'השהה החלפה אוטומטית'); }
+      if (pauseBtn) { pauseBtn.textContent = paused ? '▶' : '⏸'; pauseBtn.setAttribute('aria-label', paused ? 'Resume auto-switching' : 'Pause auto-switching'); }
       if (paused) stop(); else start();
     }
     tabs.forEach((tab, i) => tab.addEventListener('click', () => { go(i); start(); }));
@@ -1856,12 +1829,12 @@ html.a11y-underline a { text-decoration: underline !important; }
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
-    {"@type":"Question","name":"האם החיבור לברוקר בטוח?","acceptedAnswer":{"@type":"Answer","text":"כן. חיבור Read-Only בלבד — אין למערכת גישה לביצוע פעולות או משיכת כספים. הנתונים מוצפנים (RLS + HTTPS)."}},
-    {"@type":"Question","name":"האם נתוני בזמן אמת ומסנן המניות באמת בחינם?","acceptedAnswer":{"@type":"Answer","text":"כן. כל הכלים פתוחים לגמרי, ללא כרטיס אשראי."}},
-    {"@type":"Question","name":"איך קטגוריית בניית התיק עוזרת לי ספציפית?","acceptedAnswer":{"@type":"Answer","text":"מראה לך פיזור הון בלייב, כדי שלא תגלה חשיפת יתר לנכס אחד אחרי שכבר קרה."}},
-    {"@type":"Question","name":"כמה זמן לוקח להגדיר?","acceptedAnswer":{"@type":"Answer","text":"הרשמה — פחות מדקה. חיבור ברוקר — כ-10 דקות בפעם הראשונה, ואז זה אוטומטי."}},
-    {"@type":"Question","name":"האם עובד בנייד?","acceptedAnswer":{"@type":"Answer","text":"כן, האפליקציה רספונסיבית ועובדת בדפדפן בנייד. אפשר להתקין כ-PWA ישירות מהדפדפן."}},
-    {"@type":"Question","name":"מה קורה לנתונים שלי אם אני רוצה למחוק את החשבון?","acceptedAnswer":{"@type":"Answer","text":"הנתונים שייכים לך. ייצוא ל-CSV בכל רגע, ומחיקה מלאה בפנייה אלינו. לא נמכר לצד שלישי."}}
+    {"@type":"Question","name":"Is the broker connection safe?","acceptedAnswer":{"@type":"Answer","text":"Yes. Read-only connection only — the system has no access to place trades or withdraw funds. Data is encrypted (RLS + HTTPS)."}},
+    {"@type":"Question","name":"Is the real-time data and stock screener really free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Every tool is fully unlocked, no credit card required."}},
+    {"@type":"Question","name":"How does the portfolio tracking category help me specifically?","acceptedAnswer":{"@type":"Answer","text":"Shows you live capital allocation, so you catch over-exposure to one asset before it already happened."}},
+    {"@type":"Question","name":"How long does setup take?","acceptedAnswer":{"@type":"Answer","text":"Sign up — under a minute. Connecting a broker — about 10 minutes the first time, then it's automatic."}},
+    {"@type":"Question","name":"Does it work on mobile?","acceptedAnswer":{"@type":"Answer","text":"Yes, the app is responsive and works in a mobile browser. It can be installed as a PWA directly from the browser."}},
+    {"@type":"Question","name":"What happens to my data if I want to delete my account?","acceptedAnswer":{"@type":"Answer","text":"Your data belongs to you. Export to CSV anytime, and full deletion on request. Never sold to third parties."}}
   ]
 }
 </script>

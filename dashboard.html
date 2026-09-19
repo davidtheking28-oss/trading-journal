@@ -11410,9 +11410,20 @@ function _applyModalLang(s) {
 }
 
 function langInit() {
-  const saved = localStorage.getItem('tj_lang') || 'he';
-  _lang = saved;
-  setLang(saved);
+  const saved = localStorage.getItem('tj_lang');
+  if (saved) { _lang = saved; setLang(saved); return; }
+  // No explicit choice yet (new visitor) — default to Hebrew immediately so
+  // the UI never waits on a network call, then switch to English if the geo
+  // lookup comes back non-Israel. setLang() persists tj_lang on every call,
+  // so this only ever runs once per browser — after that the saved choice
+  // above short-circuits it, same as an explicit manual pick would.
+  _lang = 'he';
+  setLang('he');
+  try {
+    fetch('https://get.geojs.io/v1/ip/country.json').then(r => r.json()).then(d => {
+      if (d && d.country && d.country !== 'IL') setLang('en');
+    }).catch(() => {});
+  } catch (e) {}
 }
 
 // ── Fear & Greed Index ──────────────────────────
