@@ -3717,6 +3717,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .inv-pct-fill { height: 5px; border-radius: var(--r-sm); background: linear-gradient(90deg, var(--accent), #818cf8); transition: width 0.4s; min-width: 2px; }
   .inv-pct-label { font-size: 12px; font-weight: 700; color: var(--text2); white-space: nowrap; min-width: 38px; }
   .inv-avg-label { font-size: 12px; color: var(--text3); }
+  .inv-stop-label { font-size: 12px; color: var(--red); }
   .inv-value-label { font-size: 12px; font-weight: 700; color: var(--text); }
   .inv-calc-open {
     margin-right: auto; background: rgba(129,140,248,0.14); border: 1px solid rgba(129,140,248,0.35);
@@ -6554,6 +6555,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
                 <th style="width:100px" data-i18n="inv_col_category">Category</th>
                 <th style="width:82px" data-i18n="inv_col_qty">Qty</th>
                 <th style="width:80px" data-i18n="inv_col_entry_price">Entry Price</th>
+                <th style="width:80px" data-i18n="inv_col_stop" title="8% מתחת למחיר הכניסה">Stop Loss</th>
                 <th style="width:85px" data-i18n="inv_col_cur_price">Current Price</th>
                 <th style="width:70px;border-left:1px solid var(--border)" data-i18n="inv_col_avg">Average</th>
                 <th style="width:75px" data-i18n="inv_col_value">Value</th>
@@ -11127,7 +11129,8 @@ const LANG_STRINGS = {
     inv_yellow:'🟡 Speculative — Target',
     inv_cat_blue:'🔵 Value', inv_cat_green:'🟢 Growth', inv_cat_yellow:'🟡 Speculative',
     inv_col_symbol:'Symbol', inv_col_sector:'Sector', inv_col_category:'Category',
-    inv_col_qty:'Qty', inv_col_entry_price:'Entry Price', inv_col_cur_price:'Current Price',
+    inv_col_qty:'Qty', inv_col_entry_price:'Entry Price', inv_col_stop:'Stop Loss',
+    inv_col_cur_price:'Current Price',
     inv_col_avg:'Average', inv_col_value:'Value',
     inv_col_portfolio_pct:'% Portfolio', inv_col_remaining:'Remaining',
     inv_add_holding:'+ Add Holding', inv_save:'💾 Save',
@@ -11264,7 +11267,8 @@ const LANG_STRINGS = {
     inv_yellow:'🟡 ספקולציה — יעד',
     inv_cat_blue:'🔵 מניות ערך', inv_cat_green:'🟢 צמיחה', inv_cat_yellow:'🟡 ספקולציה',
     inv_col_symbol:'סימבול', inv_col_sector:'סקטור', inv_col_category:'קטגוריה',
-    inv_col_qty:'כמות', inv_col_entry_price:'מחיר כניסה', inv_col_cur_price:'מחיר נוכחי',
+    inv_col_qty:'כמות', inv_col_entry_price:'מחיר כניסה', inv_col_stop:'סטופ לוס',
+    inv_col_cur_price:'מחיר נוכחי',
     inv_col_avg:'ממוצע', inv_col_value:'שווי',
     inv_col_portfolio_pct:'% תיק', inv_col_remaining:'נותר',
     inv_add_holding:'+ הוסף אחזקה', inv_save:'💾 שמור',
@@ -17490,7 +17494,7 @@ function invRenderRows(holdings) {
   const tbody = document.getElementById('inv-tbody');
   if (!tbody) return;
   if (!holdings.length) {
-    tbody.innerHTML = `<tr><td colspan="12" class="inv-empty">אין עדיין אחזקות — לחץ על "+ הוסף אחזקה" כדי להתחיל</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="13" class="inv-empty">אין עדיין אחזקות — לחץ על "+ הוסף אחזקה" כדי להתחיל</td></tr>`;
     return;
   }
   tbody.innerHTML = holdings.map((h, i) => {
@@ -17513,6 +17517,7 @@ function invRenderRows(holdings) {
       </td>
       <td><input class="sensitive" type="number" value="${+h.entryShares || ''}" placeholder="0" min="0" step="any" ${ro} ${locked?'':'oninput="invRecalc();invAutoSave()"'}></td>
       <td><input class="sensitive" type="number" value="${+h.entryPrice || ''}" placeholder="0.00" min="0" step="any" ${ro} ${locked?'':'oninput="invRecalc();invAutoSave()"'}></td>
+      <td><span class="inv-stop-label sensitive" id="inv-stop-${i}" title="8% מתחת למחיר הכניסה">—</span></td>
       <td><input class="sensitive" type="number" value="${+h.currentPrice || ''}" placeholder="0.00" min="0" step="any" readonly tabindex="-1" style="cursor:default;opacity:0.7;" title="מחיר נשלף אוטומטית"></td>
       <td><span class="inv-avg-label sensitive" id="inv-avg-${i}">—</span></td>
       <td><span class="inv-value-label sensitive" id="inv-val-${i}">—</span></td>
@@ -17810,6 +17815,7 @@ function invRecalc() {
   rowData.forEach(({ i, value, cost, pnlAmt, pnlPct }) => {
     const pct   = effectiveTotal > 0 ? (value / effectiveTotal) * 100 : 0;
     const avgEl = document.getElementById(`inv-avg-${i}`);
+    const stopEl = document.getElementById(`inv-stop-${i}`);
     const valEl = document.getElementById(`inv-val-${i}`);
     const pnlEl = document.getElementById(`inv-pnl-${i}`);
     const barEl = document.getElementById(`inv-bar-${i}`);
@@ -17817,6 +17823,7 @@ function invRecalc() {
     const inputs = tbody.querySelector(`tr[data-idx="${i}"]`)?.querySelectorAll('input');
     const entryPrice = +(inputs?.[3]?.value) || 0;
     if (avgEl) avgEl.textContent = entryPrice > 0 ? cur + entryPrice.toFixed(2) : '—';
+    if (stopEl) stopEl.textContent = entryPrice > 0 ? cur + (entryPrice * 0.92).toFixed(2) : '—';
     if (valEl) valEl.textContent = value > 0 ? cur + value.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
     if (pnlEl) {
       if (pnlAmt !== null) {
