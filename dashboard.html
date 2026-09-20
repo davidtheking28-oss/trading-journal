@@ -18030,6 +18030,15 @@ async function invLockRow(i) {
 function invAddRow() {
   const data = invGetCurrentData();
   data.holdings.push({ symbol:'', entryShares:0, entryPrice:0, locked: false });
+  // _invData is the source of truth invGetCurrentData() reads ids from (known[idx]),
+  // and what the realtime handler's invInit()->invRenderRows() redraws from on ANY
+  // postgres_changes event for this user's investments/investment_holdings rows —
+  // including a delayed echo of their own earlier save. Without this line, the new
+  // blank row exists only in the DOM until the first autosave fires; a realtime
+  // event landing in that window wiped it out from under the user mid-edit, with
+  // no error and nothing to see after a refresh — the "I added it, it showed, then
+  // it was gone" report.
+  if (_invData) _invData.holdings = data.holdings;
   invRenderRows(data.holdings);
   const tbody = document.getElementById('inv-tbody');
   if (tbody) {
