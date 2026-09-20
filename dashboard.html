@@ -17455,25 +17455,15 @@ async function _invSyncHoldingRows(holdings) {
     toast('האחזקות נשמרו חלקית — רענן את הדף לפני שינוי נוסף', 'error');
   }
 
-  // Hand the ids back to the in-memory copy, or the next save re-inserts every
-  // row it just created. Matched by position, which is the index within the
-  // stripped list, not within _invData.holdings — blank editing rows sit in the
-  // latter and shift it.
-  // `_invData === data` matters: invSaveData swaps _invData synchronously while
-  // writes wait their turn on the queue, so by the time this runs _invData can
-  // already be a different, newer array. Comparing saved.length to live.length
-  // alone is no test at all — both derive from this write and always agree —
-  // and handing ids back into the newer array assigns each id to whichever
-  // holding happens to sit at that index now.
-  if (_invData === data && Array.isArray(_invData.holdings) && (saved || []).length === live.length) {
-    const byPos = new Map((saved || []).map(r => [r.position, r.id]));
-    let i = 0;
-    for (const h of _invData.holdings) {
-      if (!(h.symbol || h.entryShares || h.entryPrice)) continue;
-      const id = byPos.get(i++);
-      if (id) h.id = id;
-    }
-  }
+  // Ids used to be backfilled here after the fact, matched by position — that
+  // block referenced an undefined `data` variable (this function's parameter
+  // is `holdings`), so it threw a ReferenceError on the tail of every single
+  // call, rejecting the promise `invSaveData`/`invLockRow` awaits even though
+  // the actual writes above had already succeeded. That's why a click on the
+  // lock (✓) button could go completely silent — no toast, no re-render — the
+  // await threw before any of that ran. Moot now anyway: `rows` above already
+  // assigns `h.id` in place (on the same object `live`/`holdings` reference)
+  // before the request goes out, so every id is already correct in memory.
 }
 
 async function invInit() {
