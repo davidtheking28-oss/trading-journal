@@ -17396,8 +17396,19 @@ async function _invSyncHoldingRows(holdings) {
   // This write echoes back on its own channel now that the table is published.
   _rtSuppress('investment_holdings');
   const live = invStripBlank(holdings);
+  // PostgREST's bulk upsert requires every object in the batch to have the
+  // SAME set of keys — an existing row (carrying `id`) next to a brand-new one
+  // (no `id` yet, conditionally omitted) made the whole batch a mixed shape and
+  // PostgREST rejected the entire request with "All object keys must match",
+  // silently killing every save that added a holding to a non-empty portfolio.
+  // Generating the id client-side keeps every row's key set identical, and
+  // mutates `h` in place (`live` holds the same references as `holdings`), so
+  // the id is already correct in memory — no need to wait for the id/position
+  // backfill below.
   const rows = live.map((h, i) => {
-    const r = {
+    if (!h.id) h.id = crypto.randomUUID();
+    return {
+      id: h.id,
       user_id: _currentUser.id,
       portfolio_id: _invActivePortfolioId,
       symbol: (h.symbol || '').toUpperCase().trim(),
@@ -17408,8 +17419,6 @@ async function _invSyncHoldingRows(holdings) {
       current_price: +h.currentPrice || null,
       position: i,
     };
-    if (h.id) r.id = h.id;
-    return r;
   });
 
   // `position` comes back with each row because PostgREST does not promise to
@@ -17426,6 +17435,7 @@ async function _invSyncHoldingRows(holdings) {
     // any rows at all it wins, so a half-applied sync is what the user sees
     // next, and their following save copies it back into the document.
     console.error('[invSyncHoldingRows] upsert', error);
+    _reportClientError('inv_holdings_upsert', error.message || String(error), { stack: JSON.stringify({ code: error.code, details: error.details, hint: error.hint, rows: rows.length }).slice(0, 2000) });
     toast('האחזקות נשמרו חלקית — רענן את הדף לפני שינוי נוסף', 'error');
     return;
   }
@@ -17441,6 +17451,7 @@ async function _invSyncHoldingRows(holdings) {
     // Same reasoning as the upsert above: a failed cleanup leaves a deleted
     // holding in the table, and the table is what the next load renders.
     console.error('[invSyncHoldingRows] delete', delErr);
+    _reportClientError('inv_holdings_delete', delErr.message || String(delErr), { stack: JSON.stringify({ code: delErr.code, details: delErr.details, hint: delErr.hint, keep: keep.length }).slice(0, 2000) });
     toast('האחזקות נשמרו חלקית — רענן את הדף לפני שינוי נוסף', 'error');
   }
 
