@@ -11,9 +11,12 @@
 //                   prove the behaviour, only that the guard was not deleted.
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { load, extractFunction, extractConst, SOURCE, loadFlexParseXML } from './harness.mjs';
+import { _flexImportInner } from '../supabase/functions/_shared/flex-import.mjs';
 
 const flexParseXML = loadFlexParseXML();
+const FLEX_IMPORT_SOURCE = readFileSync(new URL('../supabase/functions/_shared/flex-import.mjs', import.meta.url), 'utf8');
 const { calcPL, calcTotal } = load('calcPL', 'calcTotal');
 const { isClosed } = load('isClosed');
 const { calcRisk } = load('calcRisk');
@@ -245,7 +248,9 @@ describe('P&L', () => {
 });
 
 describe('guards that cannot be exercised headless', () => {
-  const importSrc = extractFunction('_flexImportInner');
+  // _flexImportInner now lives in the shared module (flex-import.mjs), not in
+  // dashboard.html's text — these regex guards read its real source.
+  const importSrc = FLEX_IMPORT_SOURCE;
   const dedupeSrc = extractFunction('deduplicateDB');
   const autoDedupeSrc = extractFunction('_dedupeTrades');
   const csvSrc = extractFunction('biParseRows');
@@ -323,7 +328,6 @@ describe('guards that cannot be exercised headless', () => {
 // the existing opposite-direction row instead of inserting a new one.
 describe('_flexImportInner — a no-indicator fill against an open opposite position', () => {
   function run(trades, { existing = [] } = {}) {
-    const src = 'async ' + extractFunction('_flexImportInner');
     const updates = [];
     const inserts = [];
     let nextId = 100;
@@ -338,7 +342,7 @@ describe('_flexImportInner — a no-indicator fill against an open opposite posi
         }),
       }),
     });
-    const scope = {
+    const ctx = {
       db,
       _sb: { from: chain },
       _currentUser: { id: 'u1' },
@@ -346,13 +350,8 @@ describe('_flexImportInner — a no-indicator fill against an open opposite posi
       _rowToTrade: row => ({ ...row }),
       _isDeletedImport: () => false,
       _dedupeTrades: async () => {},
-      initFilters: () => {}, renderTable: () => {}, renderOverview: () => {}, renderStatistics: () => {},
-      toast: () => {},
-      document: { getElementById: () => null },
     };
-    const names = Object.keys(scope);
-    const factory = new Function(...names, `${src}\nreturn _flexImportInner;`);
-    return { run: () => factory(...names.map(n => scope[n]))(trades), db, updates, inserts };
+    return { run: () => _flexImportInner(trades, ctx), db, updates, inserts };
   }
 
   const openLong = { symbol: 'MD', type: 'stock', ls: 'L', shares: 30, closedShares: 0,
@@ -523,7 +522,6 @@ describe('_flexImportInner — a no-indicator fill against an open opposite posi
 // statement was marked "imported" and never retried.
 describe('_flexImportInner — a failed insert is not silently dropped', () => {
   function run(trades, { existing = [], failSymbol = null } = {}) {
-    const src = 'async ' + extractFunction('_flexImportInner');
     const updates = [];
     const inserts = [];
     let nextId = 100;
@@ -543,8 +541,7 @@ describe('_flexImportInner — a failed insert is not silently dropped', () => {
         }),
       }),
     });
-    const toasts = [];
-    const scope = {
+    const ctx = {
       db,
       _sb: { from: chain },
       _currentUser: { id: 'u1' },
@@ -552,13 +549,8 @@ describe('_flexImportInner — a failed insert is not silently dropped', () => {
       _rowToTrade: row => ({ ...row }),
       _isDeletedImport: () => false,
       _dedupeTrades: async () => {},
-      initFilters: () => {}, renderTable: () => {}, renderOverview: () => {}, renderStatistics: () => {},
-      toast: (msg, kind) => toasts.push({ msg, kind }),
-      document: { getElementById: () => null },
     };
-    const names = Object.keys(scope);
-    const factory = new Function(...names, `${src}\nreturn _flexImportInner;`);
-    return { run: () => factory(...names.map(n => scope[n]))(trades), db, updates, inserts, toasts };
+    return { run: () => _flexImportInner(trades, ctx), db, updates, inserts };
   }
 
   const goodTrade = { symbol: 'AAPL', type: 'stock', ls: 'L', shares: 10,
@@ -573,7 +565,9 @@ describe('_flexImportInner — a failed insert is not silently dropped', () => {
     assert.equal(result.imported, 1, 'only the successful insert counts as imported');
     assert.equal(h.inserts.length, 1);
     assert.equal(h.inserts[0].symbol, 'AAPL', 'the failed trade must not appear among the inserts');
-    assert.ok(h.toasts.some(t => t.kind === 'error'), 'the user must be told an IBKR insert failed');
+    // _flexImportInner itself no longer calls toast (moved to the caller in
+    // dashboard.html, which shows one when it reads insertFailed > 0 back) —
+    // this asserts on the count that toast is now driven by, not a toast call.
   });
 
   test('a clean batch reports zero insert failures', async () => {
@@ -595,7 +589,6 @@ describe('_flexImportInner — a failed insert is not silently dropped', () => {
 // was violating: a still-partial position must not get a close_date.
 describe('_flexImportInner — orphan-close resync does not double-count', () => {
   function run(trades, { existing = [] } = {}) {
-    const src = 'async ' + extractFunction('_flexImportInner');
     const updates = [];
     const inserts = [];
     let nextId = 100;
@@ -610,7 +603,7 @@ describe('_flexImportInner — orphan-close resync does not double-count', () =>
         }),
       }),
     });
-    const scope = {
+    const ctx = {
       db,
       _sb: { from: chain },
       _currentUser: { id: 'u1' },
@@ -618,13 +611,8 @@ describe('_flexImportInner — orphan-close resync does not double-count', () =>
       _rowToTrade: row => ({ ...row }),
       _isDeletedImport: () => false,
       _dedupeTrades: async () => {},
-      initFilters: () => {}, renderTable: () => {}, renderOverview: () => {}, renderStatistics: () => {},
-      toast: () => {},
-      document: { getElementById: () => null },
     };
-    const names = Object.keys(scope);
-    const factory = new Function(...names, `${src}\nreturn _flexImportInner;`);
-    return { run: () => factory(...names.map(n => scope[n]))(trades), db, updates, inserts };
+    return { run: () => _flexImportInner(trades, ctx), db, updates, inserts };
   }
 
   const openRow = { symbol: 'ORCL', type: 'stock', ls: 'L', shares: 12, closedShares: 0, deleted: false,
