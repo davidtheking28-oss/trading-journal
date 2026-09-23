@@ -100,6 +100,15 @@ export class DOMParser {
   parseFromString(xml) { return new StubDocument(xml); }
 }
 
+// flexParseXML/_flexImportInner now live in a real shared module (imported
+// by both dashboard.html and the ibkr-import Edge Function), not extracted
+// from dashboard.html's text — this wraps the real export with the stub
+// DOMParser above instead of regex-extracting a copy of it.
+import { flexParseXML as _flexParseXML } from '../supabase/functions/_shared/flex-import.mjs';
+export function loadFlexParseXML() {
+  return (xml) => _flexParseXML(xml, DOMParser);
+}
+
 // Evaluate the named functions together (so they can call each other) and hand
 // them back. Anything they reference beyond each other must be stubbed here.
 // Names are pulled in the order given, so a helper that closes over a state

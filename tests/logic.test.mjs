@@ -11,9 +11,9 @@
 //                   prove the behaviour, only that the guard was not deleted.
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { load, extractFunction, extractConst, SOURCE } from './harness.mjs';
+import { load, extractFunction, extractConst, SOURCE, loadFlexParseXML } from './harness.mjs';
 
-const { flexParseXML } = load('flexParseXML');
+const flexParseXML = loadFlexParseXML();
 const { calcPL, calcTotal } = load('calcPL', 'calcTotal');
 const { isClosed } = load('isClosed');
 const { calcRisk } = load('calcRisk');
