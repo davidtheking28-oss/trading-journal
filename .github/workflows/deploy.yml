@@ -37,7 +37,7 @@ jobs:
           deno-version: v2.x
 
       - name: Run edge function unit tests
-        run: deno test --allow-net supabase/functions/_shared/ supabase/functions/sector-holdings/
+        run: deno test --allow-net --allow-read supabase/functions/_shared/ supabase/functions/sector-holdings/
 
   deploy:
     needs: test
@@ -152,6 +152,7 @@ jobs:
           # belongs here; adding a new one means adding a line here too.
           supabase functions deploy ibkr-cron         --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
           supabase functions deploy ibkr-alert        --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
+          supabase functions deploy ibkr-import       --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
           supabase functions deploy push-daily        --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
           supabase functions deploy personal-stem     --project-ref fnklrqxwyeibfptaxewf --no-verify-jwt
 

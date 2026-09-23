@@ -471,3 +471,22 @@ export async function _flexImportInner(trades, ctx) {
 
   return { imported, updated, newlyImported, insertFailed, updateFailed };
 }
+
+// Runs the real import logic against an in-memory, no-op "database" so the
+// result can be inspected without writing anything — used by ibkr-import in
+// shadow mode. Reuses _flexImportInner itself rather than re-implementing
+// its matching rules, so shadow mode can never drift from what a real
+// import would do.
+export async function computeShadowDiff(trades, existingTrades) {
+  const db = { stocks: existingTrades.map(t => ({ ...t })), crypto: [] };
+  const noopChain = () => ({
+    update: () => ({ eq: () => ({ eq: () => Promise.resolve({ error: null }) }) }),
+    insert: row => ({ select: () => ({ single: () => Promise.resolve({ data: { ...row, id: `shadow-${row.ibkr_id}` }, error: null }) }) }),
+  });
+  const result = await _flexImportInner(trades, {
+    db, _sb: { from: noopChain }, _currentUser: { id: 'shadow' },
+    _tradeToRow: t => ({ ...t }), _rowToTrade: row => ({ ...row }),
+    _isDeletedImport: () => false, _dedupeTrades: async () => {},
+  });
+  return result; // { imported, updated, newlyImported, insertFailed }
+}
