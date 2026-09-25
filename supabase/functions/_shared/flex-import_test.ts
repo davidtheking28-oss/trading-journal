@@ -35,10 +35,30 @@ Deno.test("computeShadowDiff reports a trade missing from existing rows", async 
 
 Deno.test("computeShadowDiff reports nothing when the trade already exists", async () => {
   const trade = { symbol: "AAPL", type: "stock", ls: "L", shares: 10,
-    entryPrice: 150, entryDate: "2026-01-01", commission: 1, ibkr_id: "t1", closedShares: 0, deleted: false };
-  const result = await computeShadowDiff([trade], [trade]);
+    entryPrice: 150, entryDate: "2026-01-01", commission: 1, ibkr_id: "t1", closedShares: 0 };
+  const row = { id: 1, symbol: "AAPL", type: "stock", ls: "L", shares: 10, entry_price: 150,
+    entry_date: "2026-01-01", commission: 1, ibkr_id: "t1", closed_shares: 0, deleted: false };
+  const result = await computeShadowDiff([trade], [row]);
   assertEquals(result.imported, 0);
   assertEquals(result.updated, 0);
+});
+
+const closedRow = { id: 7, type: "stock", symbol: "AAPL", ls: "L", shares: 10, entry_price: 150,
+  entry_date: "2026-01-01", exit_price: 160, close_date: "2026-01-05", closed_shares: 10,
+  targets: [], commission: 2, ibkr_id: "t1", deleted: false };
+const closedTrade = { symbol: "AAPL", type: "stock", ls: "L", shares: 10, entryPrice: 150,
+  entryDate: "2026-01-01", exitPrice: 160, closeDate: "2026-01-05", closedShares: 10,
+  t: [], commission: 2, ibkr_id: "t1" };
+
+Deno.test("computeShadowDiff reads raw trades rows, so an unchanged closed trade is not an update", async () => {
+  const result = await computeShadowDiff([closedTrade], [closedRow]);
+  assertEquals(result.updated, 0);
+  assertEquals(result.imported, 0);
+});
+
+Deno.test("computeShadowDiff does not report a trade the user deleted as missing", async () => {
+  const result = await computeShadowDiff([closedTrade], [{ ...closedRow, deleted: true }]);
+  assertEquals(result.imported, 0);
 });
 
 Deno.test("ibkr-import never writes to the trades table while in shadow mode", async () => {

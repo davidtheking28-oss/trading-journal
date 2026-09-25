@@ -477,8 +477,53 @@ export async function _flexImportInner(trades, ctx) {
 // shadow mode. Reuses _flexImportInner itself rather than re-implementing
 // its matching rules, so shadow mode can never drift from what a real
 // import would do.
-export async function computeShadowDiff(trades, existingTrades) {
-  const db = { stocks: existingTrades.map(t => ({ ...t })), crypto: [] };
+// Takes raw `trades` rows (snake_case, deleted ones included) exactly as the
+// browser's loadDB receives them, and prepares them the same way — passing the
+// rows straight in made every closed trade read as changed (no exitPrice on a
+// row that only has exit_price) and every deleted trade read as missing.
+export function rowToTrade(row) {
+  return {
+    id:           row.id,
+    type:         row.type,
+    entryDate:    row.entry_date,
+    ls:           row.ls === 'Long' ? 'L' : row.ls === 'Short' ? 'S' : row.ls,
+    symbol:       row.symbol,
+    entryPrice:   row.entry_price,
+    shares:       row.shares,
+    stop:         row.stop,
+    t:            Array.isArray(row.targets) ? row.targets : (row.targets ? JSON.parse(row.targets) : []),
+    closeDate:    row.close_date,
+    closedShares: row.closed_shares,
+    exitPrice:    row.exit_price,
+    ecn:          row.ecn,
+    commission:   row.commission,
+    notes_keep:   row.notes_keep    || '',
+    notes_improve:row.notes_improve || '',
+    entryReason:  row.entry_reason  || '',
+    setupType:    row.setup_type    || '',
+    marketCond:   row.market_cond   || '',
+    processScore: row.process_score,
+    mood:         row.mood          || '',
+    ibkr_id:      row.ibkr_id       || null,
+    bybit_id:     row.bybit_id      || null,
+    lastCloseDt:  row.last_close_dt || null,
+    deleted:      row.deleted       || false,
+    deletedAt:    row.deleted_at,
+  };
+}
+
+const deletedFingerprint = t =>
+  `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
+
+export async function computeShadowDiff(trades, rows) {
+  const all = rows.map(rowToTrade);
+  const gone = all.filter(t => t.deleted);
+  const goneIds = new Set(gone.filter(t => t.ibkr_id || t.bybit_id).map(t => t.ibkr_id || t.bybit_id));
+  const goneFps = new Set(gone.map(deletedFingerprint));
+  const db = {
+    stocks: all.filter(t => t.type === 'stock'  && !t.deleted),
+    crypto: all.filter(t => t.type === 'crypto' && !t.deleted),
+  };
   const noopChain = () => ({
     update: () => ({ eq: () => ({ eq: () => Promise.resolve({ error: null }) }) }),
     insert: row => ({ select: () => ({ single: () => Promise.resolve({ data: { ...row, id: `shadow-${row.ibkr_id}` }, error: null }) }) }),
@@ -486,7 +531,11 @@ export async function computeShadowDiff(trades, existingTrades) {
   const result = await _flexImportInner(trades, {
     db, _sb: { from: noopChain }, _currentUser: { id: 'shadow' },
     _tradeToRow: t => ({ ...t }), _rowToTrade: row => ({ ...row }),
-    _isDeletedImport: () => false, _dedupeTrades: async () => {},
+    _isDeletedImport: t => {
+      const bid = t.ibkr_id || t.bybit_id;
+      return bid ? goneIds.has(bid) : goneFps.has(deletedFingerprint(t));
+    },
+    _dedupeTrades: async () => {},
   });
   return result; // { imported, updated, newlyImported, insertFailed }
 }

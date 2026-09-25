@@ -65,8 +65,7 @@ Deno.serve(async (req: Request) => {
       const { data: existing, error: exErr } = await sb
         .from('trades')
         .select('*')
-        .eq('user_id', row.user_id)
-        .eq('deleted', false);
+        .eq('user_id', row.user_id);
       if (exErr) throw new Error('trades read: ' + exErr.message);
 
       const plan = await computeShadowDiff(trades, existing ?? []);

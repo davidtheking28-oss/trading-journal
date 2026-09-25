@@ -13,7 +13,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { load, extractFunction, extractConst, SOURCE, loadFlexParseXML } from './harness.mjs';
-import { _flexImportInner } from '../supabase/functions/_shared/flex-import.mjs';
+import { _flexImportInner, rowToTrade as sharedRowToTrade } from '../supabase/functions/_shared/flex-import.mjs';
 
 const flexParseXML = loadFlexParseXML();
 const FLEX_IMPORT_SOURCE = readFileSync(new URL('../supabase/functions/_shared/flex-import.mjs', import.meta.url), 'utf8');
@@ -1878,5 +1878,18 @@ describe('chart color helpers stay theme-aware', () => {
       const src = extractFunction(name);
       assert.doesNotMatch(src, /#2dd4a0|#ff6b8a|#e11d48|#0d9488/, `${name} should read colors via cssVar(), not hardcode them`);
     }
+  });
+});
+
+describe('shadow-mode row mapping', () => {
+  test("the shared rowToTrade stays identical to dashboard's _rowToTrade", () => {
+    const { _rowToTrade } = load('_rowToTrade');
+    const row = { id: 3, type: 'stock', entry_date: '2026-01-01', ls: 'Long', symbol: 'AAPL',
+      entry_price: 150, shares: 10, stop: 140, targets: '[{"shares":4,"price":160}]',
+      close_date: '2026-01-05', closed_shares: 10, exit_price: 165, ecn: 0, commission: 2,
+      notes_keep: 'k', notes_improve: null, entry_reason: 'r', setup_type: 's', market_cond: null,
+      process_score: 4, mood: 'm', ibkr_id: 't1', bybit_id: null, last_close_dt: '20260105;100000',
+      deleted: false, deleted_at: null };
+    assert.deepEqual(sharedRowToTrade(row), _rowToTrade(row));
   });
 });
