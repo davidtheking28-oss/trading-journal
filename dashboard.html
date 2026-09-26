@@ -8671,9 +8671,10 @@ function _todayLocalISO() {
 // this has no row for a real reason, not because the user skipped it, so it
 // must not read as a miss.
 const SCREENER_TRACKING_START = '2026-09-16';
-// Matches the screener's SCREENERS keys (sepa/power/vcp/qulla/finviz/growth/
-// commodities) — update if that repo adds or removes a screener type.
-const SCREENER_TYPE_COUNT = 7;
+// Matches the screener's SCREENERS keys (sepa/power/vcp/cleanbase/qulla/
+// finviz/growth/commodities) — update if that repo adds or removes a
+// screener type. cleanbase added 2026-09-26 (VCP + weak down-candles).
+const SCREENER_TYPE_COUNT = 8;
 const SCREENER_HALF_THRESHOLD = Math.ceil(SCREENER_TYPE_COUNT / 2);
 async function logScreenerTypeVisit(key) {
   if (!_currentUser) return;
