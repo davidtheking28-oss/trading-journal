@@ -1893,3 +1893,30 @@ describe('shadow-mode row mapping', () => {
     assert.deepEqual(sharedRowToTrade(row), _rowToTrade(row));
   });
 });
+
+describe('_missedReason — why a setup was missed, from the free-text note', () => {
+  const { _missedReason } = load('_missedReason');
+  test('market conditions and rate decisions', () => {
+    for (const n of ['השוק חלש היום', 'לפני החלטת ריבית', 'סביבת שוק קשה ולא פעלתי', 'שוק תנודתי']) assert.equal(_missedReason(n), 'market', n);
+  });
+  test('did not notice / forgot', () => {
+    for (const n of ['הייתה במעקב ולא שמתי לב', 'שכחתי לשים פקודה', 'לא ראיתי אותה במסנן', 'הייתי במילואים']) assert.equal(_missedReason(n), 'noticed', n);
+  });
+  test('hesitation', () => {
+    for (const n of ['חוסר ביטחון', 'פשוט לא פעלתי', 'לא הייתי סגור על זה', 'הייתי שאנן']) assert.equal(_missedReason(n), 'doubt', n);
+  });
+  test('the setup itself', () => {
+    for (const n of ['פתחה בגאפ', 'סיכון גבוה מעל ממוצע 50', 'היה ניעור', 'רק נר אחד בלי LPS']) assert.equal(_missedReason(n), 'setup', n);
+  });
+  test('market wins when a note names both', () => {
+    assert.equal(_missedReason('פשוט לא פעלתי בגלל סביבת השוק'), 'market');
+  });
+  test('logged automatically from the screener watchlist', () => {
+    assert.equal(_missedReason('פרצה מ-Pivot $10.00 על ווליום ×1.6 — זוהה אוטומטית מרשימת המעקב'), 'auto');
+  });
+  test('empty or unrecognised', () => {
+    assert.equal(_missedReason(''), 'none');
+    assert.equal(_missedReason(null), 'none');
+    assert.equal(_missedReason('משהו אחר לגמרי'), 'other');
+  });
+});

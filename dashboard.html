@@ -3895,6 +3895,12 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .missed-add-form .form-group { margin: 0; flex: 1; min-width: 130px; }
   .missed-add-form .form-label { font-size: 11px; font-weight: 700; color: var(--text3); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
   .missed-list { padding-top: 4px; }
+  .missed-reasons:empty { display: none; }
+  .missed-reasons { margin: 0 0 20px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 14px; }
+  .missed-reasons-title { font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 8px; }
+  .missed-reasons-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .missed-reasons-table th, .missed-reasons-table td { padding: 6px 8px; text-align: right; border-top: 1px solid var(--border); }
+  .missed-reasons-table th { color: var(--text3); font-weight: 600; font-size: 11px; }
   /* Two collapsible levels: year (the archive) wraps its months, each month
      wraps its cards. Same label/chevron/collapse styling at both levels. */
   .missed-year-section { margin-bottom: 28px; }
@@ -6353,6 +6359,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
           </div>
           <button class="btn btn-primary btn-sm" onclick="missedAdd()" style="white-space:nowrap;height:36px;align-self:flex-end" data-i18n="missed_add">+ Add</button>
         </div>
+
+        <div class="missed-reasons" id="missed-reasons"></div>
 
         <!-- Cards -->
         <div class="missed-list" id="missed-tbody">
@@ -16500,6 +16508,7 @@ async function missedRender(force = false) {
   _missedList = list;
   _missedLoaded = true;
   missedRenderList(list);
+  _paintMissedReasons(list);
   missedFollowUp(list);
   _fetchMissedMonthHistory(list);
 }
@@ -16514,6 +16523,39 @@ async function missedRender(force = false) {
 // is rate-limited to 30/min per user and missedFollowUp fires every symbol at
 // once, so a single 429 used to blank that symbol's percentage permanently.
 const _missedQuotes = {};
+// Why a setup was missed, read off the free-text note. Order matters: "didn't
+// act because of the market" is a market call, not hesitation.
+function _missedReason(note) {
+  const n = (note || '').trim();
+  if (!n) return 'none';
+  if (/זוהה אוטומטית/.test(n)) return 'auto';
+  if (/שוק|ריבית|תנודתי/.test(n)) return 'market';
+  if (/לא שמתי לב|שכחתי|לא ראיתי|ברח לי|מילואים|לא סיננתי/.test(n)) return 'noticed';
+  if (/גאפ|ניעור|ממוצע|סיכון|lps|נר /i.test(n)) return 'setup';
+  if (/ביטחון|לא פעלתי|לא הייתי סגור|שאנן|היסוס|פחד/.test(n)) return 'doubt';
+  return 'other';
+}
+const _MISSED_REASON_LBL = { market: 'שוק / ריבית', noticed: 'לא שמתי לב', doubt: 'היסוס', setup: 'בעיה בסטאפ', auto: 'זוהה אוטומטית', other: 'אחר', none: 'בלי הערה' };
+// Grouped by reason, each with what those trades did since: the log itself
+// shows the pattern only one card at a time.
+function _paintMissedReasons(list) {
+  const el = document.getElementById('missed-reasons');
+  if (!el) return;
+  if (!list.length) { el.innerHTML = ''; return; }
+  const g = {};
+  for (const r of list) {
+    const k = _missedReason(r.note), p = _missedQuotes[(r.sym || '').toUpperCase()]?.p, base = +r.price || 0;
+    (g[k] ??= { n: 0, chg: [] }).n++;
+    if (p && base) g[k].chg.push((p - base) / base * 100);
+  }
+  const rows = Object.entries(g).sort((a, b) => b[1].n - a[1].n).map(([k, v]) => {
+    const avg = v.chg.length ? v.chg.reduce((s, x) => s + x, 0) / v.chg.length : null;
+    const up = v.chg.length ? Math.round(v.chg.filter(x => x > 0).length / v.chg.length * 100) : null;
+    return `<tr><td>${_MISSED_REASON_LBL[k]}</td><td>${v.n}</td><td>${avg == null ? '—' : `<span class="${avg >= 0 ? 'num-green' : 'num-red'}">${fmtPct(avg)}</span>`}</td><td>${up == null ? '—' : up + '%'}</td></tr>`;
+  }).join('');
+  el.innerHTML = `<div class="missed-reasons-title">למה פספסתי — ומה קרה אחר כך</div>`
+    + `<table class="missed-reasons-table"><thead><tr><th scope="col">סיבה</th><th scope="col">פעמים</th><th scope="col">ממוצע מאז</th><th scope="col">עלו מאז</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
 const _MISSED_QUOTE_TTL = 60_000;
 async function missedFollowUp(list) {
   if (!list.length) return;
@@ -16553,6 +16595,7 @@ async function missedFollowUp(list) {
     });
   }));
   _paintMissedMonthSummaries(list);
+  _paintMissedReasons(list);
   applyPrivacy();
 }
 
