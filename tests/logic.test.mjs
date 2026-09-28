@@ -1920,3 +1920,30 @@ describe('_missedReason — why a setup was missed, from the free-text note', ()
     assert.equal(_missedReason('משהו אחר לגמרי'), 'other');
   });
 });
+
+describe('_tradeFromScreener — prefill a new trade from the screener chart', () => {
+  const { _tradeFromScreener } = load('_tradeFromScreener');
+  test('maps each screener to its setup', () => {
+    const s = k => _tradeFromScreener({ symbol: 'ABC', price: 10, setup: k }).setup;
+    assert.equal(s('vcp'), 'vcp');
+    assert.equal(s('cleanbase'), 'vcp');
+    assert.equal(s('power'), 'powerplay');
+    assert.equal(s('sepa'), 'breakout');
+    assert.equal(s('qulla'), 'breakout');
+    assert.equal(s('growth'), '');
+    assert.equal(s(null), '');
+  });
+  test('keeps symbol and price', () => {
+    assert.deepEqual(_tradeFromScreener({ symbol: 'BRK.B', price: 412.5, setup: 'vcp' }), { symbol: 'BRK.B', price: 412.5, setup: 'vcp' });
+  });
+  test('drops a missing or bad price but keeps the trade', () => {
+    assert.equal(_tradeFromScreener({ symbol: 'ABC', price: null }).price, null);
+    assert.equal(_tradeFromScreener({ symbol: 'ABC', price: -3 }).price, null);
+    assert.equal(_tradeFromScreener({ symbol: 'ABC', price: '5' }).price, null);
+  });
+  test('rejects anything that is not a ticker', () => {
+    assert.equal(_tradeFromScreener({ symbol: '<img src=x>' }), null);
+    assert.equal(_tradeFromScreener({ symbol: '' }), null);
+    assert.equal(_tradeFromScreener({}), null);
+  });
+});

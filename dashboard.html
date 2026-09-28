@@ -8814,7 +8814,28 @@ window.addEventListener('message', (e) => {
   if (!frame || e.source !== frame.contentWindow) return;
   if (e.data?.type === 'tj:screener-ready') _sendSessionToScreener();
   if (e.data?.type === 'tj:screener-used' && e.data.key) logScreenerTypeVisit(e.data.key);
+  if (e.data?.type === 'tj:add-trade') openTradeFromScreener(e.data);
 });
+
+function _tradeFromScreener(d) {
+  const symbol = typeof d?.symbol === 'string' ? d.symbol : '';
+  if (!/^[A-Z0-9.\-]{1,12}$/.test(symbol)) return null;
+  const setups = { vcp: 'vcp', cleanbase: 'vcp', power: 'powerplay', sepa: 'breakout', qulla: 'breakout' };
+  const price = typeof d.price === 'number' && d.price > 0 ? d.price : null;
+  return { symbol, price, setup: setups[d.setup] || '' };
+}
+function openTradeFromScreener(d) {
+  const tr = _tradeFromScreener(d);
+  if (!tr) return;
+  openModal('stock');
+  document.getElementById('m-symbol').value = tr.symbol;
+  if (tr.price) document.getElementById('m-entryPrice').value = +tr.price.toFixed(2);
+  document.getElementById('m-setup-type').value = tr.setup;
+  setupRenderPills('m-setup-pills', tr.setup);
+  mAutoType();
+  liveCalc();
+  document.getElementById('m-shares').focus();
+}
 
 function mNav(name) {
   const btn = document.querySelector(`.tab-btn[onclick*="switchTab('${name}'"]`)
