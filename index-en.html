@@ -1681,7 +1681,7 @@ html.a11y-underline a { text-decoration: underline !important; }
   if (!canvas) return;
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const loadThree = () => import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js').then(THREE => {
+  const loadThree = () => import('./assets/vendor/three-0.160.0.module.min.js').then(THREE => {
     const hero = document.getElementById('hero');
     let w = hero.clientWidth, h = hero.clientHeight;
 
