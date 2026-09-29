@@ -1974,6 +1974,12 @@ describe('_entryPivotDistance — how far the entry sat from the pre-entry Pivot
     const r = _entryPivotDistance(bars, new Date((bars[69].t + DAY) * 1000).toISOString(), 90);
     assert.ok(r.distPct < 0);
   });
+  test('an entry price far from that day\'s market range is flagged, not measured', () => {
+    const bars = Array.from({ length: 70 }, (_, i) => ({ t: 1700000000 + i * DAY, h: 55, l: 52, c: 54 }));
+    const entryISO = new Date(bars[69].t * 1000).toISOString();
+    assert.deepEqual(_entryPivotDistance(bars, entryISO, 108), { mismatch: true });
+    assert.equal(_entryPivotDistance(bars, entryISO, 54).mismatch, undefined);
+  });
   test('bad entry price or date returns null', () => {
     const bars = makeBars(70, () => 100);
     const entryISO = new Date((bars[69].t + DAY) * 1000).toISOString();

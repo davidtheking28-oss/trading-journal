@@ -8850,6 +8850,11 @@ function _entryPivotDistance(bars, entryDateISO, entryPrice) {
   if (isNaN(entryTs) || !entryPrice || entryPrice <= 0) return null;
   const pivot = _pivotFromBars(bars, entryTs);
   if (!pivot) return null;
+  const day = bars.filter(b => b.t >= entryTs - 86400 && b.t < entryTs + 2 * 86400);
+  if (day.length) {
+    const lo = Math.min(...day.map(b => b.l ?? b.c)), hi = Math.max(...day.map(b => b.h));
+    if (entryPrice < lo * 0.85 || entryPrice > hi * 1.15) return { mismatch: true };
+  }
   return { pivot, distPct: (entryPrice / pivot - 1) * 100 };
 }
 
@@ -8888,14 +8893,18 @@ async function renderPivotDistance(trades) {
   const barsBySymbol = {};
   await Promise.all(symbols.map(async sym => { barsBySymbol[sym] = await _fetchPivotBars(sym); }));
   if (seq !== _pivotRenderSeq) return;
+  let mismatched = 0;
   const rows = candidates.map(t => {
     const r = _entryPivotDistance(barsBySymbol[t.symbol], t.entryDate, t.entryPrice);
-    return r ? { symbol: t.symbol, entryDate: t.entryDate, entryPrice: t.entryPrice, ...r } : null;
+    if (r?.mismatch) mismatched++;
+    return r && !r.mismatch ? { symbol: t.symbol, entryDate: t.entryDate, entryPrice: t.entryPrice, ...r } : null;
   }).filter(Boolean);
+  const note = mismatched ? `<div style="color:var(--text3);font-size:11px;margin-top:8px">
+      ${mismatched} עסקאות הוסתרו: מחיר הכניסה רחוק ממחירי השוק באותו יום (פיצול מניה, או מחיר שגוי בעסקה).</div>` : '';
   if (!rows.length) {
     host.innerHTML = `<div style="padding:14px 16px;background:var(--card);
       border:1px solid var(--border);border-radius:var(--r-lg);color:var(--text2);font-size:12px">
-      אין מספיק היסטוריית מחירים לחישוב Pivot לעסקאות אלה.</div>`;
+      אין מספיק היסטוריית מחירים לחישוב Pivot לעסקאות אלה.${note}</div>`;
     return;
   }
   rows.sort((a, b) => Date.parse(b.entryDate) - Date.parse(a.entryDate));
@@ -8914,7 +8923,7 @@ async function renderPivotDistance(trades) {
       <td style="padding:7px 8px" class="sensitive">$${r.pivot.toFixed(2)}</td>
       <td style="padding:7px 8px;font-weight:700" class="${r.distPct>=0?'num-green':'num-red'}">${r.distPct>=0?'+':''}${r.distPct.toFixed(1)}%</td>
     </tr>`).join('')}
-    </tbody></table></div>`;
+    </tbody></table>${note}</div>`;
 }
 
 function mNav(name) {
