@@ -8868,12 +8868,15 @@ async function _fetchPivotBars(symbol) {
     } catch { return null; }
   })();
   _pivotBarsCache.set(symbol, p);
+  p.then(v => { if (v === null) _pivotBarsCache.delete(symbol); });
   return p;
 }
+let _pivotRenderSeq = 0;
 async function renderPivotDistance(trades) {
   const host = document.getElementById('pivot-distance-wrap');
   if (!host) return;
-  const candidates = trades.filter(t => t.symbol && t.entryDate && t.entryPrice > 0);
+  const seq = ++_pivotRenderSeq;
+  const candidates = trades.filter(t => t.type !== 'crypto' && t.symbol && t.entryDate && t.entryPrice > 0);
   if (!candidates.length) {
     host.innerHTML = `<div style="padding:14px 16px;background:var(--card);
       border:1px solid var(--border);border-radius:var(--r-lg);color:var(--text2);font-size:12px">
@@ -8884,6 +8887,7 @@ async function renderPivotDistance(trades) {
   const symbols = [...new Set(candidates.map(t => t.symbol))];
   const barsBySymbol = {};
   await Promise.all(symbols.map(async sym => { barsBySymbol[sym] = await _fetchPivotBars(sym); }));
+  if (seq !== _pivotRenderSeq) return;
   const rows = candidates.map(t => {
     const r = _entryPivotDistance(barsBySymbol[t.symbol], t.entryDate, t.entryPrice);
     return r ? { symbol: t.symbol, entryDate: t.entryDate, entryPrice: t.entryPrice, ...r } : null;
@@ -8904,8 +8908,8 @@ async function renderPivotDistance(trades) {
       <th style="padding:7px 8px;font-weight:600">מרחק</th>
     </tr></thead><tbody>
     ${rows.map(r => `<tr style="border-top:1px solid rgba(255,255,255,0.05)">
-      <td style="padding:7px 8px;font-weight:600">${r.symbol}</td>
-      <td style="padding:7px 8px">${r.entryDate}</td>
+      <td style="padding:7px 8px;font-weight:600">${esc(r.symbol)}</td>
+      <td style="padding:7px 8px">${esc(r.entryDate)}</td>
       <td style="padding:7px 8px" class="sensitive">${fmtUSD(r.entryPrice)}</td>
       <td style="padding:7px 8px" class="sensitive">${fmtUSD(r.pivot)}</td>
       <td style="padding:7px 8px;font-weight:700" class="${r.distPct>=0?'num-green':'num-red'}">${r.distPct>=0?'+':''}${r.distPct.toFixed(1)}%</td>
