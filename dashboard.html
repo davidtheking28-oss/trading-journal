@@ -17306,6 +17306,19 @@ function invParseTotal(raw) {
 // Pure accumulation, kept out of invRecalc so the arithmetic can be tested
 // without a DOM. Input is one plain object per holding; nothing here reads or
 // writes the page.
+// How much of its category's target is still free, and what that buys. `cost`
+// is the position's current cost basis, which stands in for one tranche.
+function invRoomInfo(o) {
+  const { portfolioTotal, target, catValue, price, cost } = o;
+  const catAmt = (portfolioTotal || 0) * (target || 0);
+  const room = catAmt - (catValue || 0);
+  const free = Math.max(0, room);
+  return {
+    catAmt, free, over: Math.max(0, -room),
+    shares: price > 0 ? Math.floor(free / price) : null,
+    tranches: cost > 0 ? free / cost : null,
+  };
+}
 function invAccumulate(holdings) {
   let totalCost = 0, totalCurrentValue = 0, totalUnrealizedPnL = null, pnlCost = 0;
   // `none` is a real bucket, not a rounding error: a new row renders with no
@@ -17626,17 +17639,31 @@ function invRecalc() {
     }
   }
 
-  const catRemaining = {};
-  Object.entries(ALLOC_TARGETS).forEach(([cat, target]) => {
-    catRemaining[cat] = Math.max(0, portfolioTotal * target - byCatValue[cat]);
-  });
-  rowData.forEach(({ i, cat }) => {
+  const symOf = i => (tbody.querySelector(`tr[data-idx="${i}"] .inv-sym-chip`)?.textContent
+    || tbody.querySelector(`tr[data-idx="${i}"] .inv-sym-input`)?.value || '').trim();
+  const money0 = n => c + Math.round(n).toLocaleString('en-US');
+  const money2 = n => c + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  rowData.forEach(({ i, cat, cost }) => {
     const remEl = document.getElementById(`inv-catrem-${i}`);
     if (!remEl) return;
-    if (!cat || portfolioTotal === 0) { remEl.textContent = '—'; remEl.style.color = ''; return; }
-    const over = byCatValue[cat] > portfolioTotal * ALLOC_TARGETS[cat];
-    remEl.textContent = over ? t('inv_over') : `${c}${catRemaining[cat].toLocaleString('en-US',{maximumFractionDigits:0})}`;
-    remEl.style.color = over ? 'var(--red)' : 'var(--green)';
+    if (!cat || portfolioTotal === 0) { remEl.textContent = '—'; remEl.title = ''; remEl.style.color = ''; return; }
+    const inputs = tbody.querySelector(`tr[data-idx="${i}"]`)?.querySelectorAll('input');
+    const price = +(inputs?.[4]?.value) || +(inputs?.[3]?.value) || 0;
+    const info = invRoomInfo({ portfolioTotal, target: ALLOC_TARGETS[cat], catValue: byCatValue[cat], price, cost });
+    const sub = info.over > 0
+      ? `עודף ${money0(info.over)} מעל היעד`
+      : [info.shares != null ? `≈${info.shares} מניות` : '', info.tranches != null ? `${info.tranches.toFixed(1)} פעימות` : ''].filter(Boolean).join(' · ');
+    remEl.innerHTML = `<span style="display:block">${info.over > 0 ? t('inv_over') : money0(info.free)}</span>` +
+      (sub ? `<span style="display:block;font-size:11px;font-weight:500;color:var(--text3)">${sub}</span>` : '');
+    const others = rowData.filter(r => r.cat === cat && r.i !== i).map(r => symOf(r.i)).filter(Boolean);
+    remEl.title = [
+      `יעד הקטגוריה: ${money2(info.catAmt)} (${(ALLOC_TARGETS[cat] * 100).toFixed(0)}% מהתיק)`,
+      `מושקע כרגע בקטגוריה: ${money2(byCatValue[cat])}`,
+      info.over > 0 ? `עודף מעל היעד: ${money2(info.over)}` : `נשאר להשקיע: ${money2(info.free)}`,
+      cost > 0 ? `פעימה = עלות הפוזיציה הנוכחית: ${money2(cost)}` : '',
+      others.length ? `הסכום משותף עם: ${others.join(', ')}` : '',
+    ].filter(Boolean).join('\n');
+    remEl.style.color = info.over > 0 ? 'var(--red)' : 'var(--green)';
   });
 
   invUpdateDonut(byCatValue, effectiveTotal, cash);

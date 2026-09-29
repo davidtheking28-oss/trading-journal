@@ -2052,3 +2052,28 @@ describe('renderPivotDistance — fetch cache, crypto and stale renders', () => 
     } finally { teardown(); }
   });
 });
+
+describe('invRoomInfo — what is left of a category target, in money, shares and tranches', () => {
+  const { invRoomInfo } = load('invRoomInfo');
+  test('free room, whole shares and fractional tranches (the IBIT case)', () => {
+    const r = invRoomInfo({ portfolioTotal: 32253, target: 0.05, catValue: 1038.62, price: 47.21, cost: 983.4 });
+    assert.equal(r.catAmt, 1612.65);
+    assert.ok(Math.abs(r.free - 574.03) < 0.01);
+    assert.equal(r.over, 0);
+    assert.equal(r.shares, 12);
+    assert.ok(Math.abs(r.tranches - 574.03 / 983.4) < 1e-9);
+  });
+  test('a category over its target has no room and reports the excess', () => {
+    const r = invRoomInfo({ portfolioTotal: 10000, target: 0.05, catValue: 700, price: 50, cost: 300 });
+    assert.equal(r.free, 0);
+    assert.equal(r.over, 200);
+    assert.equal(r.shares, 0);
+    assert.equal(r.tranches, 0);
+  });
+  test('missing price or cost leaves that figure out instead of inventing one', () => {
+    const r = invRoomInfo({ portfolioTotal: 10000, target: 0.1, catValue: 0, price: 0, cost: 0 });
+    assert.equal(r.free, 1000);
+    assert.equal(r.shares, null);
+    assert.equal(r.tranches, null);
+  });
+});
