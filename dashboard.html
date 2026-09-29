@@ -37,8 +37,8 @@
 <meta http-equiv="Content-Security-Policy"
   content="default-src 'self';
            script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
-           style-src  'self' 'unsafe-inline' https://fonts.googleapis.com;
-           font-src   'self' https://fonts.gstatic.com;
+           style-src  'self' 'unsafe-inline';
+           font-src   'self';
            img-src    'self' data: blob: https://images.financialmodelingprep.com;
            connect-src 'self'
              https://fnklrqxwyeibfptaxewf.supabase.co
@@ -55,19 +55,20 @@
 <!-- Permissions Policy: חסימת גישה לחומרה ומיקום -->
 <meta http-equiv="Permissions-Policy"
   content="camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=(), serial=(), nfc=(), accelerometer=(), gyroscope=(), magnetometer=(), ambient-light-sensor=(), battery=()">
-<!-- Google Fonts — Heebo only (2026-08-26: Plus Jakarta Sans/Barlow Condensed/Inter
+<!-- Self-hosted fonts (assets/fonts) — Heebo only (2026-08-26: Plus Jakarta Sans/Barlow Condensed/Inter
      were loaded but never actually used as a first-choice font anywhere, only as
      unused fallbacks after Heebo — pure wasted weight. One considered typeface
      used consistently everywhere, not a font-stack grab-bag, is deliberate: do
      not add another family back in as a "just for this one element" fallback. -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- The two CDN scripts and the Supabase host are both on the critical path but
      aren't discovered until ~7000 lines in; warming DNS+TLS here takes that
      handshake off the path entirely. -->
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://fnklrqxwyeibfptaxewf.supabase.co" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Heebo';font-style:normal;font-weight:400 900;font-display:swap;src:url('assets/fonts/heebo-hebrew.woff2') format('woff2');unicode-range:U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;}
+@font-face{font-family:'Heebo';font-style:normal;font-weight:400 900;font-display:swap;src:url('assets/fonts/heebo-latin.woff2') format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+</style>
 <script>
 const SUPABASE_URL = 'https://fnklrqxwyeibfptaxewf.supabase.co';
 const SUPABASE_ANON = '__SUPABASE_ANON__';
