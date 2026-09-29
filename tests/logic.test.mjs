@@ -1988,3 +1988,67 @@ describe('_entryPivotDistance — how far the entry sat from the pre-entry Pivot
     assert.equal(_entryPivotDistance(bars, 'not-a-date', 90), null);
   });
 });
+
+describe('renderPivotDistance — fetch cache, crypto and stale renders', () => {
+  // extractFunction drops the async keyword, so the two async ones are re-prefixed here
+  const N = new Function([
+    extractFunction('_pivotFromBars'), extractFunction('_entryPivotDistance'), extractConst('_pivotBarsCache'),
+    'async ' + extractFunction('_fetchPivotBars'), extractConst('_pivotRenderSeq'),
+    'async ' + extractFunction('renderPivotDistance'),
+    'return { _pivotBarsCache, _fetchPivotBars, renderPivotDistance };',
+  ].join('\n'))();
+  const DAY = 86400, T0 = 1700000000;
+  const bars = Array.from({ length: 70 }, (_, i) => ({ t: T0 + i * DAY, h: 100, l: 95, c: 98 }));
+  const entryDate = new Date((T0 + 70 * DAY) * 1000).toISOString().slice(0, 10);
+  const trade = (symbol, type = 'stock') => ({ symbol, type, entryDate, entryPrice: 99 });
+  let host, calls, saved;
+  const setup = fetchImpl => {
+    N._pivotBarsCache.clear();
+    calls = [];
+    host = { innerHTML: '' };
+    saved = { document: globalThis.document, fetch: globalThis.fetch };
+    Object.assign(globalThis, { SUPABASE_URL: 'http://x', _getToken: async () => 't', esc: s => String(s) });
+    globalThis.document = { getElementById: () => host };
+    globalThis.fetch = (url) => { calls.push(url); return fetchImpl(url); };
+  };
+  const teardown = () => { globalThis.document = saved.document; globalThis.fetch = saved.fetch; };
+  const okBars = () => Promise.resolve({ ok: true, json: async () => ({ bars }) });
+
+  test('a failed fetch is not cached, so the next call retries', async () => {
+    let n = 0;
+    setup(() => (++n === 1 ? Promise.resolve({ ok: false }) : okBars()));
+    try {
+      assert.equal(await N._fetchPivotBars('AAA'), null);
+      assert.equal((await N._fetchPivotBars('AAA')).length, 70);
+      assert.equal(calls.length, 2);
+    } finally { teardown(); }
+  });
+  test('a successful fetch is cached', async () => {
+    setup(okBars);
+    try {
+      await N._fetchPivotBars('AAA'); await N._fetchPivotBars('AAA');
+      assert.equal(calls.length, 1);
+    } finally { teardown(); }
+  });
+  test('crypto trades never reach the price service', async () => {
+    setup(okBars);
+    try {
+      await N.renderPivotDistance([trade('BTCUSDT', 'crypto'), trade('AAA')]);
+      assert.equal(calls.length, 1);
+      assert.match(calls[0], /symbol=AAA/);
+    } finally { teardown(); }
+  });
+  test('an older render that finishes late does not overwrite the newer one', async () => {
+    let release;
+    const gate = new Promise(r => { release = r; });
+    setup(url => (url.includes('OLD') ? gate.then(okBars) : okBars()));
+    try {
+      const a = N.renderPivotDistance([trade('OLD')]);
+      await N.renderPivotDistance([trade('NEW')]);
+      release();
+      await a;
+      assert.ok(host.innerHTML.includes('NEW'));
+      assert.ok(!host.innerHTML.includes('OLD'));
+    } finally { teardown(); }
+  });
+});
