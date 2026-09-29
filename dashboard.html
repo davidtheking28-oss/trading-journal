@@ -5857,6 +5857,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
       <div id="setup-breakdown-wrap" style="margin-bottom:22px;"></div>
       <div class="ov-section" style="margin-bottom:10px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> ביצועים לפי זמן החזקה</div>
       <div id="hold-breakdown-wrap" style="margin-bottom:22px;"></div>
+      <div class="ov-section" style="margin-bottom:10px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M3 17l6-6 4 4 8-8"/></svg> מרחק כניסה מ-Pivot</div>
+      <div id="pivot-distance-wrap" style="margin-bottom:22px;"></div>
       <div id="comparison-wrap" style="margin-bottom:22px;"></div>
       </div>
     </div>
@@ -8835,6 +8837,80 @@ function openTradeFromScreener(d) {
   mAutoType();
   liveCalc();
   document.getElementById('m-shares').focus();
+}
+
+function _pivotFromBars(bars, entryTs) {
+  if (!Array.isArray(bars)) return null;
+  const before = bars.filter(b => b.t < entryTs && b.h != null).slice(-60);
+  if (before.length < 20) return null;
+  return Math.max(...before.map(b => b.h));
+}
+function _entryPivotDistance(bars, entryDateISO, entryPrice) {
+  const entryTs = Math.floor(Date.parse(entryDateISO) / 1000);
+  if (isNaN(entryTs) || !entryPrice || entryPrice <= 0) return null;
+  const pivot = _pivotFromBars(bars, entryTs);
+  if (!pivot) return null;
+  return { pivot, distPct: (entryPrice / pivot - 1) * 100 };
+}
+
+const _pivotBarsCache = new Map();
+async function _fetchPivotBars(symbol) {
+  if (_pivotBarsCache.has(symbol)) return _pivotBarsCache.get(symbol);
+  const p = (async () => {
+    try {
+      const token = await _getToken();
+      if (!token) return null;
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/ohlc?symbol=${encodeURIComponent(symbol)}&range=1y`,
+        { headers: { 'Authorization': `Bearer ${token}` } });
+      if (!res.ok) return null;
+      const d = await res.json();
+      return Array.isArray(d?.bars) ? d.bars : null;
+    } catch { return null; }
+  })();
+  _pivotBarsCache.set(symbol, p);
+  return p;
+}
+async function renderPivotDistance(trades) {
+  const host = document.getElementById('pivot-distance-wrap');
+  if (!host) return;
+  const candidates = trades.filter(t => t.symbol && t.entryDate && t.entryPrice > 0);
+  if (!candidates.length) {
+    host.innerHTML = `<div style="padding:14px 16px;background:var(--card);
+      border:1px solid var(--border);border-radius:var(--r-lg);color:var(--text2);font-size:12px">
+      אין עסקאות עם מחיר כניסה ותאריך לחישוב מרחק מה-Pivot.</div>`;
+    return;
+  }
+  host.innerHTML = `<div style="padding:14px 16px;color:var(--text3);font-size:12px">מחשב...</div>`;
+  const symbols = [...new Set(candidates.map(t => t.symbol))];
+  const barsBySymbol = {};
+  await Promise.all(symbols.map(async sym => { barsBySymbol[sym] = await _fetchPivotBars(sym); }));
+  const rows = candidates.map(t => {
+    const r = _entryPivotDistance(barsBySymbol[t.symbol], t.entryDate, t.entryPrice);
+    return r ? { symbol: t.symbol, entryDate: t.entryDate, entryPrice: t.entryPrice, ...r } : null;
+  }).filter(Boolean);
+  if (!rows.length) {
+    host.innerHTML = `<div style="padding:14px 16px;background:var(--card);
+      border:1px solid var(--border);border-radius:var(--r-lg);color:var(--text2);font-size:12px">
+      אין מספיק היסטוריית מחירים לחישוב Pivot לעסקאות אלה.</div>`;
+    return;
+  }
+  rows.sort((a, b) => Date.parse(b.entryDate) - Date.parse(a.entryDate));
+  host.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;min-width:0;border-collapse:collapse;font-size:12px">
+    <thead><tr style="color:var(--text3);text-align:right">
+      <th style="padding:7px 8px;font-weight:600">סימבול</th>
+      <th style="padding:7px 8px;font-weight:600">תאריך כניסה</th>
+      <th style="padding:7px 8px;font-weight:600">מחיר כניסה</th>
+      <th style="padding:7px 8px;font-weight:600">Pivot</th>
+      <th style="padding:7px 8px;font-weight:600">מרחק</th>
+    </tr></thead><tbody>
+    ${rows.map(r => `<tr style="border-top:1px solid rgba(255,255,255,0.05)">
+      <td style="padding:7px 8px;font-weight:600">${r.symbol}</td>
+      <td style="padding:7px 8px">${r.entryDate}</td>
+      <td style="padding:7px 8px" class="sensitive">${fmtUSD(r.entryPrice)}</td>
+      <td style="padding:7px 8px" class="sensitive">${fmtUSD(r.pivot)}</td>
+      <td style="padding:7px 8px;font-weight:700" class="${r.distPct>=0?'num-green':'num-red'}">${r.distPct>=0?'+':''}${r.distPct.toFixed(1)}%</td>
+    </tr>`).join('')}
+    </tbody></table></div>`;
 }
 
 function mNav(name) {
@@ -12223,6 +12299,7 @@ function renderStatistics() {
   renderMonthlyTracker(trades);
   renderSetupBreakdown(trades);
   renderHoldBreakdown(trades);
+  renderPivotDistance(trades);
   renderComparison(stTrades, crTrades);
   applyPrivacy();
 }

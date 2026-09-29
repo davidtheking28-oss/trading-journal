@@ -1947,3 +1947,38 @@ describe('_tradeFromScreener — prefill a new trade from the screener chart', (
     assert.equal(_tradeFromScreener({}), null);
   });
 });
+
+describe('_entryPivotDistance — how far the entry sat from the pre-entry Pivot', () => {
+  const { _pivotFromBars, _entryPivotDistance } = load('_pivotFromBars', '_entryPivotDistance');
+  const DAY = 86400;
+  function makeBars(n, highFn, startTs = 1700000000) {
+    return Array.from({ length: n }, (_, i) => ({ t: startTs + i * DAY, h: highFn(i), c: highFn(i) - 0.5 }));
+  }
+  test('pivot is the highest high in the 60 sessions before entry, ignoring later bars', () => {
+    const bars = makeBars(80, i => (i < 60 ? 20 + i : 1000));
+    const entryTs = bars[60].t;
+    assert.equal(_pivotFromBars(bars, entryTs), 20 + 59);
+  });
+  test('needs at least 20 prior sessions or returns null', () => {
+    const bars = makeBars(10, i => 20 + i);
+    assert.equal(_pivotFromBars(bars, bars[9].t + DAY), null);
+  });
+  test('entry above the pivot gives a positive distance', () => {
+    const bars = makeBars(70, () => 100);
+    const r = _entryPivotDistance(bars, new Date((bars[69].t + DAY) * 1000).toISOString(), 110);
+    assert.equal(r.pivot, 100);
+    assert.ok(r.distPct > 0);
+  });
+  test('entry below the pivot gives a negative distance', () => {
+    const bars = makeBars(70, () => 100);
+    const r = _entryPivotDistance(bars, new Date((bars[69].t + DAY) * 1000).toISOString(), 90);
+    assert.ok(r.distPct < 0);
+  });
+  test('bad entry price or date returns null', () => {
+    const bars = makeBars(70, () => 100);
+    const entryISO = new Date((bars[69].t + DAY) * 1000).toISOString();
+    assert.equal(_entryPivotDistance(bars, entryISO, 0), null);
+    assert.equal(_entryPivotDistance(bars, entryISO, null), null);
+    assert.equal(_entryPivotDistance(bars, 'not-a-date', 90), null);
+  });
+});
