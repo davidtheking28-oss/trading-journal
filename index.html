@@ -281,7 +281,7 @@ section { padding: 72px max(28px, 5vw); position: relative; z-index: 1; }
   background: rgba(79,127,255,0.07);
   border: 1px solid rgba(79,127,255,0.2);
   border-radius: 100px;
-  font-family: var(--mono); font-size: 10px; font-weight: 600;
+  font-family: var(--mono); font-size: 12px; font-weight: 600;
   color: var(--accent); letter-spacing: 1.5px; text-transform: uppercase;
   margin-bottom: 20px;
 }
@@ -289,7 +289,7 @@ section { padding: 72px max(28px, 5vw); position: relative; z-index: 1; }
 .section-title {
   font-family: var(--display);
   font-size: clamp(32px, 4.4vw, 54px);
-  font-weight: 800; letter-spacing: -1.8px;
+  font-weight: 800; letter-spacing: -0.8px;
   color: var(--text); line-height: 1.05;
   margin-bottom: 16px;
 }
@@ -325,27 +325,10 @@ section { padding: 72px max(28px, 5vw); position: relative; z-index: 1; }
   display: flex; flex-direction: column; align-items: center;
 }
 
-/* Beta chip */
-.hero-chip {
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: 5px 12px 5px 9px;
-  background: rgba(0,230,118,0.06);
-  border: 1px solid rgba(0,230,118,0.18);
-  border-radius: 100px;
-  font-family: var(--mono); font-size: 11px; font-weight: 500;
-  color: var(--green); margin-bottom: 26px;
-}
-
-.chip-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--green); flex-shrink: 0;
-  box-shadow: 0 0 6px var(--green);
-}
-
 .hero-title {
   font-family: var(--display);
   font-size: clamp(38px, 5.4vw, 64px);
-  font-weight: 900; letter-spacing: -2.6px;
+  font-weight: 900; letter-spacing: -1px;
   line-height: 1.02; margin-bottom: 24px;
   color: var(--text);
 }
@@ -426,27 +409,6 @@ section { padding: 72px max(28px, 5vw); position: relative; z-index: 1; }
   transform: scale(0.97); transition: transform 120ms ease-out;
 }
 
-/* Hero stats — a quiet inline reading, not boxed metric cards */
-.hero-stats {
-  display: flex; align-items: baseline; gap: 26px; margin-top: 38px;
-  flex-wrap: wrap; justify-content: center;
-}
-
-.hero-stat {
-  display: flex; align-items: baseline; gap: 8px;
-  padding-right: 26px;
-  border-right: 1px solid var(--border2);
-}
-.hero-stat:first-child { padding-right: 0; }
-.hero-stat:last-child { border-right: none; }
-
-.stat-num {
-  font-family: var(--mono); font-size: 19px; font-weight: 600;
-  color: var(--text); letter-spacing: -0.3px;
-  line-height: 1; font-variant-numeric: tabular-nums;
-}
-.stat-num .unit { font-family: var(--body); font-size: 13px; color: var(--text3); margin-right: 2px; }
-.stat-label { font-size: 12.5px; color: var(--text3); }
 
 /* Hero trust bar */
 .hero-trust {
@@ -587,16 +549,16 @@ section { padding: 72px max(28px, 5vw); position: relative; z-index: 1; }
   padding: 0 6px;
 }
 .demo-tab {
-  padding: 8px 11px;
+  padding: 8px 11px; min-height: 44px;
   background: none; border: none;
   border-bottom: 2px solid transparent;
-  color: #8896a8; font-size: 10.5px; font-weight: 500;
+  color: #8896a8; font-size: 12px; font-weight: 500;
   cursor: pointer; transition: color .18s, border-color .18s; white-space: nowrap;
   font-family: inherit;
 }
 .demo-tab.active { color: #818cf8; border-bottom-color: #818cf8; font-weight: 600; }
 .demo-tab-pause {
-  margin-inline-start: auto; padding: 6px 9px;
+  margin-inline-start: auto; padding: 6px 9px; min-width: 44px; min-height: 44px;
   background: none; border: none; border-radius: var(--r-sm);
   color: #8896a8; font-size: 12px; cursor: pointer; align-self: center;
 }
@@ -868,7 +830,7 @@ section { padding: 72px max(28px, 5vw); position: relative; z-index: 1; }
 }
 
 .price-label {
-  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  font-family: var(--mono); font-size: 12px; font-weight: 500;
   color: var(--text3); text-transform: uppercase; letter-spacing: 2px;
   margin-bottom: 16px;
 }
@@ -984,7 +946,7 @@ section { padding: 72px max(28px, 5vw); position: relative; z-index: 1; }
 .cta-title {
   font-family: var(--display);
   font-size: clamp(26px,3.5vw,38px);
-  font-weight: 800; letter-spacing: -1.2px;
+  font-weight: 800; letter-spacing: -0.6px;
   color: var(--text); margin-bottom: 12px; line-height: 1.15;
 }
 
@@ -1022,9 +984,9 @@ footer {
   color: var(--text3); letter-spacing: 1px; text-transform: uppercase;
   margin-bottom: 14px;
 }
-.footer-col { display: flex; flex-direction: column; gap: 10px; }
+.footer-col { display: flex; flex-direction: column; gap: 0; }
 .footer-col a {
-  font-size: 13px; color: var(--text2);
+  display: flex; align-items: center; min-height: 44px; font-size: 13px; color: var(--text2);
   text-decoration: none; transition: color .2s;
 }
 @media (hover: hover) and (pointer: fine) { .footer-col a:hover { color: var(--text); } }
@@ -1062,17 +1024,12 @@ footer {
   .d-kpi-sub { font-size: 9px; }
   .hero-actions { flex-direction: column; }
   .btn-hero-primary, .btn-hero-ghost { justify-content: center; }
-  .hero-stats { width: 100%; }
-  .hero-stat { flex: 1; text-align: center; }
   .cta-inner { padding: 40px 24px; }
   section { padding: 56px max(20px, 5vw); }
 }
 
 @media (max-width: 480px) {
-  .hero-title { letter-spacing: -1.6px; }
-  .hero-stats { flex-direction: column; border-radius: var(--r-md); }
-  .hero-stat { border-right: none !important; border-bottom: 1px solid var(--border2); padding: 10px 16px; }
-  .hero-stat:last-child { border-bottom: none; }
+  .hero-title { letter-spacing: -0.8px; }
   .cta-inner { padding: 32px 18px; }
   .price-amount { font-size: 48px; }
   .pricing-card { padding: 32px 24px; }
@@ -1401,7 +1358,7 @@ html.a11y-underline a { text-decoration: underline !important; }
     <h2 class="section-title" id="features-heading">כל מה שטבלה לא יכולה להראות לך</h2>
     <p class="section-sub">ברוקר, שוק, סורק מניות ותיק השקעות — הכל במקום אחד, בלי לקפוץ בין עשר טאבים</p>
     <p class="section-sub" style="max-width:58ch;margin:14px auto 0;">
-      דוח הברוקר מראה כמה הרווחת החודש. הוא לא מראה אילו setups מרוויחים לך שוב ושוב, מתי אתה סוגר פוזיציות מוקדם מדי, או שאתה מסתכן יותר מדי בסקטור אחד. ChartRoom לוקח את כל העסקאות שלך — ממניות, קריפטו, מ-IBKR ומ-Bybit — ומחשב מהן win rate, profit factor וממוצע רווח/הפסד אמיתיים, כדי שההחלטה הבאה שלך תתבסס על מה שבאמת עבד לך בעבר, לא על תחושת בטן.
+      דוח הברוקר מראה כמה הרווחת, אבל לא אילו setups מרוויחים לך שוב ושוב ולא מתי אתה סוגר מוקדם מדי. ChartRoom מחשב מהעסקאות שלך win rate, profit factor וממוצע רווח/הפסד אמיתיים, כדי שההחלטה הבאה תתבסס על מה שעבד, לא על תחושת בטן.
     </p>
   </div>
 
@@ -1639,7 +1596,6 @@ html.a11y-underline a { text-decoration: underline !important; }
       setTimeout(() => {
         const banner = document.getElementById('cookie-banner');
         banner.style.display = '';
-        banner.querySelector('.cookie-btn-accept').focus();
       }, 800);
     }
   })();
@@ -1740,33 +1696,6 @@ html.a11y-underline a { text-decoration: underline !important; }
     setPaused(paused);
   })();
 
-  // Count-up for stats
-  function countUp(el, target, duration) {
-    // Pure JS rAF loop — the CSS prefers-reduced-motion block never touches it.
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      el.textContent = target;
-      return;
-    }
-    const start = performance.now();
-    const update = now => {
-      const p = Math.min((now - start) / duration, 1);
-      el.textContent = Math.round(p * target);
-      if (p < 1) requestAnimationFrame(update);
-    };
-    requestAnimationFrame(update);
-  }
-
-  const statsObs = new IntersectionObserver(entries => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        e.target.querySelectorAll('[data-count]').forEach(el => {
-          countUp(el, parseInt(el.dataset.count), 1200);
-        });
-        statsObs.unobserve(e.target);
-      }
-    });
-  }, { threshold: 0.5 });
-  document.querySelectorAll('.hero-stats').forEach(el => statsObs.observe(el));
 </script>
 <!-- Three.js is ESM-only from r150+, so it can't carry the SRI-hash pattern used on
      the classic-build <script src> tags elsewhere in this file (Chart.js etc). -->
