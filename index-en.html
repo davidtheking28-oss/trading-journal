@@ -206,6 +206,7 @@ nav {
 @media (hover: hover) and (pointer: fine) { .nav-menu-btn:hover { color: var(--text); } }
 @media (max-width: 900px) { .nav-menu-btn { display: flex; } }
 @media (max-width: 520px) { .nav-right .nav-link { display: none; } }
+@media (max-width: 360px) { .nav-right .nav-cta { display: none; } }
 
 .mobile-nav-panel {
   position: fixed; top: 58px; right: 0; left: 0; z-index: 199;
@@ -297,23 +298,6 @@ section { padding: 72px max(28px, 5vw); position: relative; z-index: 1; }
   display: flex; flex-direction: column; align-items: center;
 }
 
-/* Beta chip */
-.hero-chip {
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: 5px 12px 5px 9px;
-  background: rgba(0,230,118,0.06);
-  border: 1px solid rgba(0,230,118,0.18);
-  border-radius: 100px;
-  font-family: var(--mono); font-size: 11px; font-weight: 500;
-  color: var(--green); margin-bottom: 26px;
-}
-
-.chip-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--green); flex-shrink: 0;
-  box-shadow: 0 0 6px var(--green);
-}
-
 .hero-title {
   font-family: var(--display);
   font-size: clamp(38px, 5.4vw, 64px);
@@ -398,27 +382,6 @@ section { padding: 72px max(28px, 5vw); position: relative; z-index: 1; }
   transform: scale(0.97); transition: transform 120ms ease-out;
 }
 
-/* Hero stats — a quiet inline reading, not boxed metric cards */
-.hero-stats {
-  display: flex; align-items: baseline; gap: 26px; margin-top: 38px;
-  flex-wrap: wrap; justify-content: center;
-}
-
-.hero-stat {
-  display: flex; align-items: baseline; gap: 8px;
-  padding-right: 26px;
-  border-right: 1px solid var(--border2);
-}
-.hero-stat:first-child { padding-right: 0; }
-.hero-stat:last-child { border-right: none; }
-
-.stat-num {
-  font-family: var(--mono); font-size: 19px; font-weight: 600;
-  color: var(--text); letter-spacing: -0.3px;
-  line-height: 1; font-variant-numeric: tabular-nums;
-}
-.stat-num .unit { font-family: var(--body); font-size: 13px; color: var(--text3); margin-right: 2px; }
-.stat-label { font-size: 12.5px; color: var(--text3); }
 
 /* Hero trust bar */
 .hero-trust {
@@ -559,16 +522,16 @@ section { padding: 72px max(28px, 5vw); position: relative; z-index: 1; }
   padding: 0 6px;
 }
 .demo-tab {
-  padding: 8px 11px;
+  padding: 8px 11px; min-height: 44px;
   background: none; border: none;
   border-bottom: 2px solid transparent;
-  color: #8896a8; font-size: 10.5px; font-weight: 500;
+  color: #8896a8; font-size: 12px; font-weight: 500;
   cursor: pointer; transition: color .18s, border-color .18s; white-space: nowrap;
   font-family: inherit;
 }
 .demo-tab.active { color: #818cf8; border-bottom-color: #818cf8; font-weight: 600; }
 .demo-tab-pause {
-  margin-inline-start: auto; padding: 6px 9px;
+  margin-inline-start: auto; padding: 6px 9px; min-width: 44px; min-height: 44px;
   background: none; border: none; border-radius: var(--r-sm);
   color: #8896a8; font-size: 12px; cursor: pointer; align-self: center;
 }
@@ -994,9 +957,9 @@ footer {
   color: var(--text3); letter-spacing: 1px; text-transform: uppercase;
   margin-bottom: 14px;
 }
-.footer-col { display: flex; flex-direction: column; gap: 10px; }
+.footer-col { display: flex; flex-direction: column; gap: 0; }
 .footer-col a {
-  font-size: 13px; color: var(--text2);
+  display: flex; align-items: center; min-height: 44px; font-size: 13px; color: var(--text2);
   text-decoration: none; transition: color .2s;
 }
 @media (hover: hover) and (pointer: fine) { .footer-col a:hover { color: var(--text); } }
@@ -1034,17 +997,12 @@ footer {
   .d-kpi-sub { font-size: 9px; }
   .hero-actions { flex-direction: column; }
   .btn-hero-primary, .btn-hero-ghost { justify-content: center; }
-  .hero-stats { width: 100%; }
-  .hero-stat { flex: 1; text-align: center; }
   .cta-inner { padding: 40px 24px; }
   section { padding: 56px max(20px, 5vw); }
 }
 
 @media (max-width: 480px) {
   .hero-title { letter-spacing: -1.6px; }
-  .hero-stats { flex-direction: column; border-radius: var(--r-md); }
-  .hero-stat { border-right: none !important; border-bottom: 1px solid var(--border2); padding: 10px 16px; }
-  .hero-stat:last-child { border-bottom: none; }
   .cta-inner { padding: 32px 18px; }
   .price-amount { font-size: 48px; }
   .pricing-card { padding: 32px 24px; }
@@ -1071,9 +1029,12 @@ footer {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
   .reveal { opacity:1; transform:none; transition:none; }
   * { animation-duration:.01ms !important; transition-duration:.01ms !important; }
 }
+
+@media (max-width: 480px) { .demo-showcase-wrap .hero-card { min-width: 0; } }
 
 /* ── ACCESSIBILITY WIDGET ── */
 .a11y-btn {
@@ -1277,7 +1238,7 @@ html.a11y-underline a { text-decoration: underline !important; }
 <!-- DEMO SHOWCASE -->
 <section id="demo" aria-labelledby="demo-heading">
   <div class="centered reveal">
-    <div class="section-pill">Live Demo</div>
+    <div class="section-pill">Dashboard Preview</div>
     <h2 class="section-title" id="demo-heading">A Look Inside</h2>
     <p class="section-sub" style="margin:0 auto;">The tools that show you why you're actually winning or losing</p>
   </div>
@@ -1286,7 +1247,7 @@ html.a11y-underline a { text-decoration: underline !important; }
     <div class="hero-card" style="padding:0;overflow:hidden;">
       <div class="card-topbar browser-topbar">
         <span class="browser-dots" aria-hidden="true"><span></span><span></span><span></span></span>
-        <span class="browser-url">chartroom.app/dashboard</span>
+        <span class="browser-url">davidtheking28-oss.github.io/trading-journal</span>
         <span class="browser-topbar-spacer" aria-hidden="true"></span>
       </div>
 
@@ -1370,7 +1331,7 @@ html.a11y-underline a { text-decoration: underline !important; }
     <h2 class="section-title" id="features-heading">Everything a spreadsheet can't show you</h2>
     <p class="section-sub">Broker, market, stock screener and portfolio — all in one place, no jumping between ten tabs</p>
     <p class="section-sub" style="max-width:58ch;margin:14px auto 0;">
-      Your broker's report shows how much you made this month. It doesn't show which setups keep winning for you, when you're closing positions too early, or when you're over-exposed to one sector. ChartRoom takes every trade you make — stocks, crypto, any broker you connect — and computes real win rate, profit factor and average win/loss, so your next decision is based on what actually worked before, not a gut feeling.
+      Your broker's report shows how much you made, but not which setups keep winning for you or when you close too early. ChartRoom computes real win rate, profit factor and average win/loss from your trades, so your next decision rests on what worked, not a gut feeling.
     </p>
   </div>
 
@@ -1402,7 +1363,7 @@ html.a11y-underline a { text-decoration: underline !important; }
 <section id="testimonial" class="centered" aria-labelledby="testimonial-heading">
   <div class="reveal">
     <div class="section-pill">Testimonial</div>
-    <h2 class="section-title" id="testimonial-heading" style="margin-bottom:36px;">What traders think of the platform</h2>
+    <h2 class="section-title" id="testimonial-heading" style="margin-bottom:36px;">What a trader says about the platform</h2>
   </div>
   <div class="testimonial-grid reveal">
     <div class="testimonial-proof-card">
@@ -1429,7 +1390,7 @@ html.a11y-underline a { text-decoration: underline !important; }
         <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>Full statistics — win rate, P&amp;L, profit factor</li>
         <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>Market Pulse + Fear &amp; Greed Index</li>
         <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>Built-in stock screener — Trend Template</li>
-        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>Secure cloud backup — RLS, encrypted HTTPS</li>
+        <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>Secure cloud backup — encrypted traffic, and each user sees only their own data</li>
       </ul>
       <a href="dashboard.html" class="btn-solid" style="width:100%;">
         Start Free
@@ -1450,7 +1411,7 @@ html.a11y-underline a { text-decoration: underline !important; }
           Is the broker connection safe?
           <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
         </button>
-        <div class="faq-a" id="faq-a1" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">Yes. Read-only connection only — the system has no access to place trades or withdraw funds. Data is encrypted (RLS + HTTPS).</div></div></div>
+        <div class="faq-a" id="faq-a1" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">Yes. Read-only connection only — the system has no access to place trades or withdraw funds. Data is traffic is encrypted over HTTPS, and each user sees only their own data.</div></div></div>
       </div>
       <div class="faq-item reveal" role="listitem">
         <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a2">
@@ -1608,7 +1569,6 @@ html.a11y-underline a { text-decoration: underline !important; }
       setTimeout(() => {
         const banner = document.getElementById('cookie-banner');
         banner.style.display = '';
-        banner.querySelector('.cookie-btn-accept').focus();
       }, 800);
     }
   })();
@@ -1709,33 +1669,6 @@ html.a11y-underline a { text-decoration: underline !important; }
     setPaused(paused);
   })();
 
-  // Count-up for stats
-  function countUp(el, target, duration) {
-    // Pure JS rAF loop — the CSS prefers-reduced-motion block never touches it.
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      el.textContent = target;
-      return;
-    }
-    const start = performance.now();
-    const update = now => {
-      const p = Math.min((now - start) / duration, 1);
-      el.textContent = Math.round(p * target);
-      if (p < 1) requestAnimationFrame(update);
-    };
-    requestAnimationFrame(update);
-  }
-
-  const statsObs = new IntersectionObserver(entries => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        e.target.querySelectorAll('[data-count]').forEach(el => {
-          countUp(el, parseInt(el.dataset.count), 1200);
-        });
-        statsObs.unobserve(e.target);
-      }
-    });
-  }, { threshold: 0.5 });
-  document.querySelectorAll('.hero-stats').forEach(el => statsObs.observe(el));
 </script>
 <!-- Three.js is ESM-only from r150+, so it can't carry the SRI-hash pattern used on
      the classic-build <script src> tags elsewhere in this file (Chart.js etc). -->
@@ -1829,7 +1762,7 @@ html.a11y-underline a { text-decoration: underline !important; }
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
-    {"@type":"Question","name":"Is the broker connection safe?","acceptedAnswer":{"@type":"Answer","text":"Yes. Read-only connection only — the system has no access to place trades or withdraw funds. Data is encrypted (RLS + HTTPS)."}},
+    {"@type":"Question","name":"Is the broker connection safe?","acceptedAnswer":{"@type":"Answer","text":"Yes. Read-only connection only — the system has no access to place trades or withdraw funds. Data is traffic is encrypted over HTTPS, and each user sees only their own data."}},
     {"@type":"Question","name":"Is the real-time data and stock screener really free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Every tool is fully unlocked, no credit card required."}},
     {"@type":"Question","name":"How does the portfolio tracking category help me specifically?","acceptedAnswer":{"@type":"Answer","text":"Shows you live capital allocation, so you catch over-exposure to one asset before it already happened."}},
     {"@type":"Question","name":"How long does setup take?","acceptedAnswer":{"@type":"Answer","text":"Sign up — under a minute. Connecting a broker — about 10 minutes the first time, then it's automatic."}},
