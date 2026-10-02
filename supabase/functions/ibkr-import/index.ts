@@ -77,7 +77,7 @@ Deno.serve(async (req: Request) => {
       // timestamp is the first sighting. Keying on the account (not on whichever
       // trade happens to be first) keeps that first-seen date stable.
       let stale = sb.from('flex_import_shadow_log').delete().eq('user_id', row.user_id);
-      if (hasDiff) stale = stale.not('kind', 'eq', kind);
+      if (hasDiff) stale = stale.or(`ibkr_id.neq.account,kind.neq.${kind}`);
       const { error: delErr } = await stale;
       if (delErr) throw new Error('shadow log cleanup: ' + delErr.message);
       if (hasDiff) {
