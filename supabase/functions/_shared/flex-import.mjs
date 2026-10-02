@@ -159,6 +159,7 @@ export function flexParseXML(xml, DOMParserImpl = globalThis.DOMParser) {
         trade.exitPrice    = last.price;
         trade.closeDate    = last.date;
         trade.closedShares = lot.exits.reduce((s, e) => s + e.qty, 0); // total closed
+        if (last.dt) trade.lastCloseDt = last.dt;
         if (lot.exits.length > 1) trade.t = lot.exits.slice(0, -1).map(e => ({ price: e.price, shares: e.qty }));
       }
       trades.push(trade);
@@ -316,6 +317,21 @@ export async function _flexImportInner(trades, ctx) {
       return;
     }
 
+    // A fill that already closed a row must never come back as a new position.
+    // Two ways it does: the confirm feed re-serves a same-day fill on every sync
+    // (EGBN, 9f9ffff4, 2026-10-01 — the closed long had no room left, so its
+    // SELL went in as a short), and the rolling Flex window drops a position's
+    // opening fill while its close is still inside, so a re-parse reads the
+    // close as opening the other way (AAPL/EM on 5f72e0bb). Every close records
+    // its fill's IBKR dateTime in lastCloseDt; a new position starting on a fill
+    // already recorded there is that same fill, read a second time. A row that
+    // already carries this fill's own id is a genuine reversal and is left to
+    // the normal path below.
+    const knownHere = t.ibkr_id ? arr.some(x => !x.deleted && x.ibkr_id === t.ibkr_id)
+                                : arr.some(x => !x.deleted && sameEntry(x, t));
+    if (!t._orphanClose && !knownHere && t._entryDt && arr.some(x => !x.deleted && x.symbol === t.symbol
+        && x.ls !== t.ls && x.lastCloseDt === t._entryDt)) return;
+
     // A same-direction-blind fill closing (or reversing) a position that this
     // statement never saw opened. flexParseXML has no visibility outside the
     // one XML it's parsing, so a fill with no openCloseIndicator that leaves
@@ -331,13 +347,6 @@ export async function _flexImportInner(trades, ctx) {
     // while a phantom short appeared beside it.
     if (!t._orphanClose && !t.exitPrice && !arr.some(x => !x.deleted && x.ibkr_id === t.ibkr_id)) {
       const room = x => (x.shares || 0) - (x.closedShares || 0);
-      // The confirm feed re-serves the same fill on every sync until the next
-      // day, and once it has closed the opposite row that row has no room left,
-      // so nothing below would recognise it. EGBN (9f9ffff4, 2026-10-01) went in
-      // as a phantom short exactly this way. The close records the fill's
-      // timestamp in lastCloseDt; a fill already recorded there is spent.
-      if (t._entryDt && arr.some(x => !x.deleted && x.symbol === t.symbol && x.ls !== t.ls
-          && x.lastCloseDt === t._entryDt)) return;
       const isOpposite = x => x.symbol === t.symbol && x.ls !== t.ls && room(x) > 0.01;
       // The journal first, then this same batch. _flexSyncFromCache parses the
       // activity statement AND the confirm feed into ONE array and imports them
@@ -414,7 +423,8 @@ export async function _flexImportInner(trades, ctx) {
       let changed = false;
       const patch = {};
       const prev = { ibkr_id: existing.ibkr_id, exitPrice: existing.exitPrice, closeDate: existing.closeDate,
-                     closedShares: existing.closedShares, t: existing.t, commission: existing.commission };
+                     closedShares: existing.closedShares, t: existing.t, commission: existing.commission,
+                     lastCloseDt: existing.lastCloseDt };
       if (t.ibkr_id && existing.ibkr_id !== t.ibkr_id) { existing.ibkr_id = t.ibkr_id; patch.ibkr_id = t.ibkr_id; changed = true; }
       // The parsed exit only describes THIS row when both describe the same
       // position. flexParseXML merges SMART-router fills that the journal may
@@ -440,6 +450,11 @@ export async function _flexImportInner(trades, ctx) {
         patch.closed_shares = t.closedShares|| null;
         patch.targets       = t.t || [];
         patch.commission    = t.commission  || 0;
+        changed = true;
+      }
+      if (sameSize && t.lastCloseDt && existing.lastCloseDt !== t.lastCloseDt) {
+        existing.lastCloseDt = t.lastCloseDt;
+        patch.last_close_dt  = t.lastCloseDt;
         changed = true;
       }
       if (changed) { toUpdate.push({ row: existing, prev, patch }); updated++; }

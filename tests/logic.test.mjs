@@ -410,6 +410,58 @@ describe('_flexImportInner — a no-indicator fill against an open opposite posi
     assert.equal(h.inserts[0].commission, 1, 'the new position keeps only its own 10/30 share');
   });
 
+  // EM, 5f72e0bb: a long closed by a SELL of 800; a later window no longer
+  // holds the buys, so the re-parse reads that SELL as opening a short.
+  test('window edge: a close whose opening fell out of the window is not re-read as a short (EM)', async () => {
+    const closedLong = { symbol: 'EM', type: 'stock', ls: 'L', shares: 600, closedShares: 600, entryPrice: 1.35,
+      entryDate: '2025-09-22', exitPrice: 1.33, closeDate: '2025-10-10', ibkr_id: '8233646100',
+      lastCloseDt: '20251010;093001', deleted: false };
+    const [shortLot] = flexParseXML(xmlOf({ symbol: 'EM', dateTime: '20251010;093001', tradePrice: '1.33',
+      ibCommission: '-1', buySell: 'SELL', quantity: '-800', tradeID: '8342199065' }));
+    const h = run([shortLot], { existing: [closedLong] });
+    await h.run();
+    assert.equal(h.inserts.length, 0);
+  });
+
+  // AAPL, 5f72e0bb: the BUY that covered a short came back as a new long once
+  // the window rolled past the short's opening.
+  test('window edge: a covering BUY is not re-read as a new long (AAPL)', async () => {
+    const coveredShort = { symbol: 'AAPL', type: 'stock', ls: 'S', shares: 5, closedShares: 5, entryPrice: 242.5,
+      entryDate: '2025-09-19', exitPrice: 260.49, closeDate: '2026-01-27', ibkr_id: '8225276268',
+      lastCloseDt: '20260127;094411', deleted: false };
+    const parsed = flexParseXML(xmlOf(
+      { symbol: 'AAPL', dateTime: '20260127;094411', tradePrice: '260.49', ibCommission: '-1', buySell: 'BUY', quantity: '5', tradeID: '8888675187' },
+      { symbol: 'AAPL', dateTime: '20260127;141911', tradePrice: '259.8', ibCommission: '-1', buySell: 'SELL', quantity: '-5', tradeID: '8893015764' }));
+    const h = run(parsed, { existing: [coveredShort] });
+    await h.run();
+    assert.equal(h.inserts.length, 0);
+  });
+
+  test('a genuine reversal already in the journal is left alone on resync', async () => {
+    const parsed = flexParseXML(xmlOf(
+      { symbol: 'XYZ', dateTime: '20260901;100000', tradePrice: '10', ibCommission: '-1', buySell: 'BUY', quantity: '10', tradeID: 'b1' },
+      { symbol: 'XYZ', dateTime: '20260902;100000', tradePrice: '11', ibCommission: '-1', buySell: 'SELL', quantity: '-15', tradeID: 's1' }));
+    const first = run(parsed);
+    await first.run();
+    assert.equal(first.inserts.length, 2, 'the closed long and the 5-share short both go in');
+    const again = run(parsed, { existing: first.inserts.map(r => ({ ...r, deleted: false })) });
+    await again.run();
+    assert.equal(again.inserts.length, 0, 'nothing duplicated on resync');
+  });
+
+  test('the parser records which fill closed a lot, and resync backfills it', async () => {
+    const parsed = flexParseXML(xmlOf(
+      { symbol: 'XYZ', dateTime: '20260901;100000', tradePrice: '10', ibCommission: '-1', buySell: 'BUY', quantity: '10', tradeID: 'b1' },
+      { symbol: 'XYZ', dateTime: '20260902;100000', tradePrice: '11', ibCommission: '-1', buySell: 'SELL', quantity: '-10', tradeID: 's1' }));
+    assert.equal(parsed[0].lastCloseDt, '20260902;100000');
+    const old = { symbol: 'XYZ', type: 'stock', ls: 'L', shares: 10, closedShares: 10, entryPrice: 10, entryDate: '2026-09-01',
+      exitPrice: 11, closeDate: '2026-09-02', commission: 2, ibkr_id: 'b1', lastCloseDt: null, deleted: false };
+    const h = run(parsed, { existing: [old] });
+    await h.run();
+    assert.equal(h.updates.length, 1);
+    assert.equal(h.updates[0].patch.last_close_dt, '20260902;100000');
+  });
+
   test('the spent fill is still recognised after a reload from the database', async () => {
     const closed = { ...egbnLong, closedShares: 47, exitPrice: 27.595, closeDate: '2026-10-01', lastCloseDt: '20261001;093016' };
     const h = run([egbnSell], { existing: [closed] });
