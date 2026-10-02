@@ -781,3 +781,18 @@ unlike this one — push it manually).
   also identified as missing, but needs a DB connection secret in GitHub
   Actions that may not exist yet — check before attempting.
   not the diff itself.
+
+## ⚠️ Don't reintroduce these regressions (fixed 2026-10-02, phantom short on resync)
+
+- **The no-indicator close branch in `_flexImportInner` must record the fill it
+  used.** EGBN (account `9f9ffff4`): the confirm feed's SELL closed the long on
+  one sync; the next sync re-read the same SELL (the "Today" feed keeps serving
+  it until IBKR's next day), the long had no room left, and the SELL went in as
+  a new open short. The close now writes the fill's `dateTime` into
+  `last_close_dt` (same idempotency key the orphan-close branch uses, carried
+  from the parser as `_entryDt`), and a fill already recorded there is skipped.
+  Phantom row soft-deleted; backup `trades_backup_20261002_egbn_phantom_short`.
+- **Not fixed, needs a decision:** account `5f72e0bb` has a different tangle on
+  AAPL 2026-01-27 (rows 2731/2732/4228 claim the same two fills twice; 4228 was
+  inserted 2026-09-28). Without an openCloseIndicator the true position cannot
+  be proven from the XML — left untouched.

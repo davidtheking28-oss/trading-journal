@@ -153,6 +153,7 @@ export function flexParseXML(xml, DOMParserImpl = globalThis.DOMParser) {
         notes_keep: '', notes_improve: '',
       };
       if (lot.tid) trade.ibkr_id = lot.tid; // IBKR's unique entry-execution id
+      if (lot.dt) trade._entryDt = lot.dt;
       if (lot.exits.length) {
         const last = lot.exits[lot.exits.length - 1];
         trade.exitPrice    = last.price;
@@ -330,6 +331,13 @@ export async function _flexImportInner(trades, ctx) {
     // while a phantom short appeared beside it.
     if (!t._orphanClose && !t.exitPrice && !arr.some(x => !x.deleted && x.ibkr_id === t.ibkr_id)) {
       const room = x => (x.shares || 0) - (x.closedShares || 0);
+      // The confirm feed re-serves the same fill on every sync until the next
+      // day, and once it has closed the opposite row that row has no room left,
+      // so nothing below would recognise it. EGBN (9f9ffff4, 2026-10-01) went in
+      // as a phantom short exactly this way. The close records the fill's
+      // timestamp in lastCloseDt; a fill already recorded there is spent.
+      if (t._entryDt && arr.some(x => !x.deleted && x.symbol === t.symbol && x.ls !== t.ls
+          && x.lastCloseDt === t._entryDt)) return;
       const isOpposite = x => x.symbol === t.symbol && x.ls !== t.ls && room(x) > 0.01;
       // The journal first, then this same batch. _flexSyncFromCache parses the
       // activity statement AND the confirm feed into ONE array and imports them
@@ -343,7 +351,7 @@ export async function _flexImportInner(trades, ctx) {
         const openShares = t.shares;
         const closeQty = Math.min(room(opposite), openShares);
         const prev = { exitPrice: opposite.exitPrice, closeDate: opposite.closeDate,
-                       closedShares: opposite.closedShares, t: opposite.t };
+                       closedShares: opposite.closedShares, t: opposite.t, lastCloseDt: opposite.lastCloseDt };
         const legs = Array.isArray(opposite.t) ? opposite.t.slice() : [];
         if (opposite.exitPrice && (opposite.closedShares || 0) > 0) {
           const booked = legs.reduce((a, g) => a + (+g.shares || 0), 0);
@@ -358,6 +366,7 @@ export async function _flexImportInner(trades, ctx) {
         // row that still holds stock hides it from every open-position view
         // (isOpenPosition) while reading as closed everywhere else.
         opposite.closeDate    = opposite.closedShares >= (opposite.shares || 0) - 0.01 ? t.entryDate : null;
+        opposite.lastCloseDt  = t._entryDt || opposite.lastCloseDt;
         // A pending row has not been written yet, so it just goes in already
         // closed — queueing an update against a row with no id would target
         // `.eq('id', undefined)` and silently match nothing.
@@ -367,6 +376,7 @@ export async function _flexImportInner(trades, ctx) {
             close_date:    opposite.closeDate,
             closed_shares: opposite.closedShares,
             targets:       legs,
+            last_close_dt: opposite.lastCloseDt || null,
           } });
           updated++;
         }

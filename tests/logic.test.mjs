@@ -379,6 +379,36 @@ describe('_flexImportInner — a no-indicator fill against an open opposite posi
     assert.equal(h.inserts[0].ls, 'S');
   });
 
+  // EGBN, account 9f9ffff4, 2026-10-01: the confirm feed's SELL closed the long
+  // on the first sync, then the next sync re-read the same SELL. The long had no
+  // room left, nothing remembered the SELL was spent, so it went in as a short.
+  const egbnLong = { symbol: 'EGBN', type: 'stock', ls: 'L', shares: 47, closedShares: 0,
+    entryPrice: 28.33, entryDate: '2026-09-24', commission: 2.5, ibkr_id: '1591937870', deleted: false };
+  const egbnSell = { symbol: 'EGBN', type: 'stock', ls: 'S', shares: 47, entryPrice: 27.595,
+    entryDate: '2026-10-01', commission: 2.5, ibkr_id: '1600246831', _entryDt: '20261001;093016' };
+
+  test('a resync of the same closing fill does not open a phantom short (EGBN)', async () => {
+    const h = run([egbnSell], { existing: [egbnLong] });
+    await h.run();
+    await h.run();
+    assert.equal(h.inserts.length, 0, 'the second sync must not insert the spent SELL as a short');
+    assert.equal(h.updates[0].patch.last_close_dt, '20261001;093016', 'the close must persist which fill it used');
+  });
+
+  test('the spent fill is still recognised after a reload from the database', async () => {
+    const closed = { ...egbnLong, closedShares: 47, exitPrice: 27.595, closeDate: '2026-10-01', lastCloseDt: '20261001;093016' };
+    const h = run([egbnSell], { existing: [closed] });
+    await h.run();
+    assert.equal(h.inserts.length, 0);
+    assert.equal(h.updates.length, 0);
+  });
+
+  test('the parser carries each opening fill\'s own timestamp', () => {
+    const [tr] = flexParseXML(xmlOf({ symbol: 'EGBN', dateTime: '20261001;093016', tradePrice: '27.595',
+      ibCommission: '-2.5', buySell: 'SELL', quantity: '-47', tradeID: '1600246831' }));
+    assert.equal(tr._entryDt, '20261001;093016');
+  });
+
   test('a fresh position with nothing open in the opposite direction still inserts normally', async () => {
     const h = run([confirmSell], { existing: [] });
     await h.run();
