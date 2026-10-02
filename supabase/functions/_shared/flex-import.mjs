@@ -556,8 +556,11 @@ export async function computeShadowDiff(trades, rows) {
     stocks: all.filter(t => t.type === 'stock'  && !t.deleted),
     crypto: all.filter(t => t.type === 'crypto' && !t.deleted),
   };
+  // Which rows a real import would touch, and which columns — the bare counts
+  // were too coarse to tell a harmless backfill from a real disagreement.
+  const updates = [];
   const noopChain = () => ({
-    update: () => ({ eq: () => ({ eq: () => Promise.resolve({ error: null }) }) }),
+    update: patch => ({ eq: (_c, id) => ({ eq: () => { updates.push({ id, keys: Object.keys(patch), patch }); return Promise.resolve({ error: null }); } }) }),
     insert: row => ({ select: () => ({ single: () => Promise.resolve({ data: { ...row, id: `shadow-${row.ibkr_id}` }, error: null }) }) }),
   });
   const result = await _flexImportInner(trades, {
@@ -569,5 +572,7 @@ export async function computeShadowDiff(trades, rows) {
     },
     _dedupeTrades: async () => {},
   });
-  return result; // { imported, updated, newlyImported, insertFailed }
+  const byKeys = {};
+  updates.forEach(u => { const k = u.keys.slice().sort().join('+'); byKeys[k] = (byKeys[k] || 0) + 1; });
+  return { ...result, updatesByKeys: byKeys, updateSample: updates.slice(0, 5) };
 }

@@ -72,3 +72,12 @@ Deno.test("ibkr-import never writes to the trades table while in shadow mode", a
     );
   }
 });
+
+Deno.test("computeShadowDiff says which columns a planned update would write", async () => {
+  const result = await computeShadowDiff([{ ...closedTrade, exitPrice: 161 }], [closedRow]);
+  assertEquals(result.updated, 1);
+  assertEquals(Object.keys(result.updatesByKeys).length, 1);
+  const byKeys = result.updatesByKeys as Record<string, number>;
+  assertEquals(byKeys["close_date+closed_shares+commission+exit_price+targets"], 1);
+  assertEquals((result.updateSample as { id: number }[])[0].id, 7);
+});
