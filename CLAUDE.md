@@ -822,3 +822,9 @@ unlike this one — push it manually).
   read twice — skipped. Covers the confirm-feed resync (EGBN) and the rolling
   window dropping an opening buy (AAPL/EM). A genuine reversal is unaffected:
   its row carries the fill's own id and is matched before this guard matters.
+- **`flex_import_shadow_log` holds each account's CURRENT diff only, one row
+  per account** (`ibkr_id='account'`). Rows used to pile up and never clear, so
+  a diff the owner's next login resolved kept tripping `shadow_diff_unresolved`
+  forever. The row's `expected` now carries `updatesByKeys` / `updateSample`, so
+  a harmless backfill (`last_close_dt` only) is distinguishable from a real
+  disagreement (exit/commission/closed_shares). Read it before Phase 4 cutover.
