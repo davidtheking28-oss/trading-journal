@@ -804,3 +804,21 @@ unlike this one — push it manually).
   AAPL 2026-01-27 (rows 2731/2732/4228 claim the same two fills twice; 4228 was
   inserted 2026-09-28). Without an openCloseIndicator the true position cannot
   be proven from the XML — left untouched.
+- **The journal is now reconciled against IBKR every night**
+  (`20261002_broker_reconciliation_checks.sql`). Every earlier health check
+  compared the journal with itself, so none of EGBN/MD/QTTB tripped anything.
+  `broker_pnl_mismatch` (critical): per symbol whose fills net to zero inside
+  the Flex window, journal calcTotal must equal the raw fills'
+  `sum(-quantity*price + commission)`. `reversal_from_closing_fill` (warning):
+  an open position that starts on the fill which closed an opposite row — the
+  shape of every phantom found. Both skip unimported caches (`stale_since`).
+  Verified each catches its original bug by undoing the fix inside a rolled-back
+  transaction. Known, unprovable gaps live in `broker_reconcile_accepted` with
+  the gap pinned — an accepted symbol alerts again the moment its gap moves.
+  **Do not accept a new gap without finding its cause first.**
+- **Every close records the fill that made it** (`lastCloseDt`, IBKR dateTime):
+  the parser sets it on lots it closes, resyncs backfill it, and a new position
+  whose opening fill is already some opposite row's `lastCloseDt` is that fill
+  read twice — skipped. Covers the confirm-feed resync (EGBN) and the rolling
+  window dropping an opening buy (AAPL/EM). A genuine reversal is unaffected:
+  its row carries the fill's own id and is matched before this guard matters.
