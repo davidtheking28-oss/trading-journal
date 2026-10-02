@@ -395,6 +395,21 @@ describe('_flexImportInner — a no-indicator fill against an open opposite posi
     assert.equal(h.updates[0].patch.last_close_dt, '20261001;093016', 'the close must persist which fill it used');
   });
 
+  test('the closing fill\'s commission is charged to the row it closes (EGBN, MD)', async () => {
+    const h = run([egbnSell], { existing: [egbnLong] });
+    await h.run();
+    assert.equal(h.updates[0].patch.commission, 5, 'buy 2.50 + sell 2.50 — matches the broker to the cent');
+    assert.equal(h.db.stocks[0].commission, 5);
+  });
+
+  test('a reversal splits the closing fill\'s commission by volume', async () => {
+    const smallLong = { ...openLong, shares: 20, closedShares: 0, commission: 1 };
+    const h = run([{ ...confirmSell, shares: 30, commission: 3 }], { existing: [smallLong] });
+    await h.run();
+    assert.equal(h.updates[0].patch.commission, 3, '1 + 3 × 20/30');
+    assert.equal(h.inserts[0].commission, 1, 'the new position keeps only its own 10/30 share');
+  });
+
   test('the spent fill is still recognised after a reload from the database', async () => {
     const closed = { ...egbnLong, closedShares: 47, exitPrice: 27.595, closeDate: '2026-10-01', lastCloseDt: '20261001;093016' };
     const h = run([egbnSell], { existing: [closed] });

@@ -351,7 +351,13 @@ export async function _flexImportInner(trades, ctx) {
         const openShares = t.shares;
         const closeQty = Math.min(room(opposite), openShares);
         const prev = { exitPrice: opposite.exitPrice, closeDate: opposite.closeDate,
-                       closedShares: opposite.closedShares, t: opposite.t, lastCloseDt: opposite.lastCloseDt };
+                       closedShares: opposite.closedShares, t: opposite.t, lastCloseDt: opposite.lastCloseDt,
+                       commission: opposite.commission };
+        // The closing fill's own commission belongs on the row it closes. It
+        // was dropped here, so every close through this path read $2.50 better
+        // than the broker (EGBN, MD on 9f9ffff4).
+        opposite.commission = Math.round(((opposite.commission || 0)
+          + (t.commission || 0) * (closeQty / openShares)) * 1e6) / 1e6;
         const legs = Array.isArray(opposite.t) ? opposite.t.slice() : [];
         if (opposite.exitPrice && (opposite.closedShares || 0) > 0) {
           const booked = legs.reduce((a, g) => a + (+g.shares || 0), 0);
@@ -377,6 +383,7 @@ export async function _flexImportInner(trades, ctx) {
             closed_shares: opposite.closedShares,
             targets:       legs,
             last_close_dt: opposite.lastCloseDt || null,
+            commission:    opposite.commission,
           } });
           updated++;
         }

@@ -792,6 +792,14 @@ unlike this one — push it manually).
   `last_close_dt` (same idempotency key the orphan-close branch uses, carried
   from the parser as `_entryDt`), and a fill already recorded there is skipped.
   Phantom row soft-deleted; backup `trades_backup_20261002_egbn_phantom_short`.
+- **The same branch also dropped the closing fill's commission** — every close
+  through it read $2.50 better than the broker (EGBN, MD). Found by reconciling
+  per-symbol cash flow against the raw XML, not by reading code. The closing
+  fill's commission is now added to the row it closes, split by volume on a
+  reversal. EGBN 4067 and MD 3248 corrected (+2.50 each); both now match IBKR
+  to the cent. Any further broker-vs-journal check: compare per-symbol
+  `sum(-quantity*price + commission)` from the XML against calcTotal, for
+  symbols whose net quantity is 0.
 - **Not fixed, needs a decision:** account `5f72e0bb` has a different tangle on
   AAPL 2026-01-27 (rows 2731/2732/4228 claim the same two fills twice; 4228 was
   inserted 2026-09-28). Without an openCloseIndicator the true position cannot
