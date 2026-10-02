@@ -69,15 +69,23 @@ Deno.serve(async (req: Request) => {
       if (exErr) throw new Error('trades read: ' + exErr.message);
 
       const plan = await computeShadowDiff(trades, existing ?? []);
-      if (plan.imported > 0 || plan.updated > 0) {
+      const kind = plan.imported > 0 ? 'missing' : 'mismatched';
+      const hasDiff = plan.imported > 0 || plan.updated > 0;
+      // The log holds the account's CURRENT diff only. Rows were never removed,
+      // so a diff the owner's next login resolved kept alarming forever, and one
+      // that was re-found every run still aged out as "unresolved" because the
+      // timestamp is the first sighting. Keying on the account (not on whichever
+      // trade happens to be first) keeps that first-seen date stable.
+      let stale = sb.from('flex_import_shadow_log').delete().eq('user_id', row.user_id);
+      if (hasDiff) stale = stale.not('kind', 'eq', kind);
+      const { error: delErr } = await stale;
+      if (delErr) throw new Error('shadow log cleanup: ' + delErr.message);
+      if (hasDiff) {
         flagged++;
-        // One row per account-level diff is enough to trigger a manual look in
-        // Phase 3 — refine to per-trade granularity there if this proves too
-        // coarse to act on (see the plan's Task 3 note).
         const { error: logErr } = await sb.from('flex_import_shadow_log').upsert({
           user_id: row.user_id,
-          ibkr_id: trades[0]?.ibkr_id ?? 'unknown',
-          kind: plan.imported > 0 ? 'missing' : 'mismatched',
+          ibkr_id: 'account',
+          kind,
           expected: plan,
           actual: null,
         }, { onConflict: 'user_id,ibkr_id,kind' });
@@ -90,6 +98,16 @@ Deno.serve(async (req: Request) => {
       });
     }
   }
+
+  // An account the owner has since imported drops out of the stale set above,
+  // so the loop never revisits it — its last diff would sit in the log forever.
+  const stillStale = (rows ?? []).map(r => r.user_id);
+  let cleanup = sb.from('flex_import_shadow_log').delete();
+  cleanup = stillStale.length
+    ? cleanup.not('user_id', 'in', `(${stillStale.join(',')})`)
+    : cleanup.not('user_id', 'is', null);
+  const { error: cleanErr } = await cleanup;
+  if (cleanErr) await sb.from('client_errors').insert({ kind: 'ibkr_import_log_cleanup', message: cleanErr.message, app: 'ibkr-import' });
 
   return new Response(JSON.stringify({ done: true, checked, flagged }), { status: 200, headers: { 'Content-Type': 'application/json' } });
 });
