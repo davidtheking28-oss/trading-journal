@@ -807,6 +807,57 @@ section { padding: 72px max(28px, 5vw); position: relative; z-index: 1; }
 }
 .step-desc { font-size: 14px; color: var(--text2); line-height: 1.75; max-width: 440px; }
 
+/* ── FLOW DEMO (broker → trades → insights) ── */
+.step-circle { transition: background .35s, border-color .35s, color .35s, box-shadow .35s; }
+.step.lit .step-circle { background: rgba(0,230,118,0.12); border-color: rgba(0,230,118,0.55); color: var(--green); box-shadow: 0 0 0 6px rgba(0,230,118,0.08); }
+.flow-demo { max-width: 640px; margin: 44px auto 0; text-align: start; }
+.fd-card { background: linear-gradient(145deg, var(--card), var(--card2)); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.35); }
+.fd-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.fd-broker { display: inline-flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text2); }
+.fd-broker b { font-family: var(--mono); color: var(--text); font-size: 13px; padding: 4px 9px; border-radius: 8px; background: rgba(79,127,255,0.1); border: 1px solid rgba(79,127,255,0.25); }
+.fd-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+.flow-demo.s-sync .fd-dot { background: var(--yellow); animation: dot-pulse 1s ease-in-out infinite; }
+.flow-demo.s-synced .fd-dot { background: var(--green); animation: none; }
+.fd-sample { font-size: 12px; color: var(--text3); border: 1px solid var(--border2); border-radius: var(--r-pill); padding: 3px 10px; white-space: nowrap; }
+.fd-rows { display: grid; gap: 6px; min-height: 0; }
+.fd-row { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding: 9px 12px; border-radius: 10px; background: rgba(255,255,255,0.025); border: 1px solid var(--border2); font-size: 13px; opacity: 0; transform: translateY(8px); transition: opacity .4s cubic-bezier(.16,1,.3,1), transform .4s cubic-bezier(.16,1,.3,1); }
+.fd-row.in { opacity: 1; transform: none; }
+.fd-sym { font-family: var(--mono); font-weight: 700; color: var(--text); direction: ltr; unicode-bidi: isolate; }
+.fd-side { font-size: 12px; color: var(--text3); }
+.fd-pl { font-family: var(--mono); font-weight: 600; direction: ltr; unicode-bidi: isolate; justify-self: end; }
+.fd-pl.pos { color: var(--green); } .fd-pl.neg { color: var(--red); }
+.fd-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+.fd-kpi { padding: 12px; border-radius: 12px; background: rgba(79,127,255,0.06); border: 1px solid var(--border); opacity: .35; transition: opacity .4s; }
+.flow-demo.s-kpi .fd-kpi { opacity: 1; }
+.fd-kpi-lbl { font-size: 12px; color: var(--text2); }
+.fd-kpi-val { font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--text); margin-top: 4px; direction: ltr; unicode-bidi: isolate; text-align: start; font-variant-numeric: tabular-nums; }
+.fd-kpi-val.pos { color: var(--green); }
+.fd-chart { margin-top: 14px; height: 90px; }
+.fd-chart svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.fd-line { fill: none; stroke: var(--green); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.fd-area { fill: url(#fdGrad); opacity: 0; transition: opacity .6s .9s; }
+.flow-demo.s-chart .fd-line { transition: stroke-dashoffset 1.4s cubic-bezier(.65,0,.35,1); stroke-dashoffset: 0; }
+.flow-demo.s-chart .fd-area { opacity: 1; }
+.fd-foot { display: flex; justify-content: flex-end; margin-top: 10px; }
+.fd-replay { font: 500 13px var(--body); color: var(--text2); background: transparent; border: 1px solid var(--border2); border-radius: var(--r-pill); padding: 0 14px; min-height: 44px; cursor: pointer; visibility: hidden; transition: color .15s, border-color .15s; }
+.flow-demo.ran .fd-replay { visibility: visible; }
+.fd-replay:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (hover: hover) { .fd-replay:hover { color: var(--text); border-color: var(--border); } }
+@media (max-width: 480px) {
+  .fd-card { padding: 14px; }
+  .fd-kpis { gap: 6px; }
+  .fd-kpi { padding: 10px 8px; }
+  .fd-kpi-val { font-size: 17px; }
+  .fd-row { gap: 10px; padding: 8px 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fd-row { opacity: 1; transform: none; }
+  .fd-kpi { opacity: 1; }
+  .fd-line { stroke-dashoffset: 0; }
+  .fd-area { opacity: 1; }
+  .flow-demo.s-sync .fd-dot { animation: none; }
+}
+
 /* ── PRICING ── */
 #pricing { text-align: center; padding-top: 64px; padding-bottom: 64px; }
 
@@ -1341,6 +1392,23 @@ html.a11y-underline a { text-decoration: underline !important; }
       </div>
     </div>
   </div>
+
+  <div class="flow-demo" id="flow-demo">
+    <div class="fd-card" role="img" aria-label="הדגמה עם נתונים לדוגמה: חיבור ל-IBKR, חמש עסקאות שיובאו אוטומטית, אחוז הצלחה 60%, יחס רווח 5.36 ורווח נקי של 3,180 דולר">
+      <div class="fd-top">
+        <span class="fd-broker"><span class="fd-dot"></span><b>IBKR</b><span class="fd-status" data-idle="ממתין לחיבור" data-sync="מסנכרן…" data-done="מסונכרן">מסונכרן</span></span>
+        <span class="fd-sample">נתוני הדגמה</span>
+      </div>
+      <div class="fd-rows"><div class="fd-row"><span class="fd-sym">NVDA</span><span class="fd-side">לונג</span><span class="fd-pl pos">+$1,240</span></div><div class="fd-row"><span class="fd-sym">TSLA</span><span class="fd-side">לונג</span><span class="fd-pl neg">−$310</span></div><div class="fd-row"><span class="fd-sym">PLTR</span><span class="fd-side">לונג</span><span class="fd-pl pos">+$860</span></div><div class="fd-row"><span class="fd-sym">AMD</span><span class="fd-side">לונג</span><span class="fd-pl neg">−$420</span></div><div class="fd-row"><span class="fd-sym">META</span><span class="fd-side">לונג</span><span class="fd-pl pos">+$1,810</span></div></div>
+      <div class="fd-kpis">
+        <div class="fd-kpi"><div class="fd-kpi-lbl">אחוז הצלחה</div><div class="fd-kpi-val" data-to="60" data-suf="%">60%</div></div>
+        <div class="fd-kpi"><div class="fd-kpi-lbl">יחס רווח</div><div class="fd-kpi-val" data-to="5.36" data-dec="2">5.36</div></div>
+        <div class="fd-kpi"><div class="fd-kpi-lbl">רווח נקי</div><div class="fd-kpi-val pos" data-to="3180" data-pre="+$">+$3,180</div></div>
+      </div>
+      <div class="fd-chart"><svg viewBox="0 0 300 90" preserveAspectRatio="none" aria-hidden="true" focusable="false"><defs><linearGradient id="fdGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#00e676" stop-opacity="0.22"/><stop offset="1" stop-color="#00e676" stop-opacity="0"/></linearGradient></defs><polygon class="fd-area" points="0,85 60,55.8 120,63.1 180,42.8 240,52.7 300,10 300,90 0,90"/><polyline class="fd-line" pathLength="1" points="0,85 60,55.8 120,63.1 180,42.8 240,52.7 300,10"/></svg></div>
+    </div>
+    <div class="fd-foot"><button type="button" class="fd-replay">הפעל שוב</button></div>
+  </div>
 </section>
 
 <!-- FEATURES -->
@@ -1644,6 +1712,60 @@ html.a11y-underline a { text-decoration: underline !important; }
   setTimeout(() => {
     document.querySelectorAll('.reveal:not(.in)').forEach(el => el.classList.add('in'));
   }, 2500);
+
+  // Flow demo — broker connects, trades land, insights count up, curve draws.
+  (function() {
+    const root = document.getElementById('flow-demo');
+    if (!root) return;
+    const steps = document.querySelectorAll('#how .step');
+    const rows = root.querySelectorAll('.fd-row');
+    const vals = root.querySelectorAll('.fd-kpi-val');
+    const status = root.querySelector('.fd-status');
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let timers = [], ran = false;
+    const T = (ms, fn) => timers.push(setTimeout(fn, ms));
+    const lit = i => steps.forEach((s, j) => s.classList.toggle('lit', j === i));
+    const fmt = (el, v) => {
+      const d = +el.dataset.dec || 0;
+      el.textContent = (el.dataset.pre || '') + v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) + (el.dataset.suf || '');
+    };
+    const final = () => {
+      root.className = 'flow-demo ran s-sync s-synced s-kpi s-chart s-done';
+      rows.forEach(r => r.classList.add('in'));
+      vals.forEach(v => fmt(v, +v.dataset.to));
+      status.textContent = status.dataset.done;
+    };
+    const count = () => {
+      const t0 = performance.now();
+      const tick = now => {
+        const p = Math.min(1, (now - t0) / 900), e = 1 - Math.pow(1 - p, 3);
+        vals.forEach(v => fmt(v, +v.dataset.to * e));
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    };
+    const play = () => {
+      timers.forEach(clearTimeout); timers = [];
+      root.className = 'flow-demo' + (ran ? ' ran' : '');
+      rows.forEach(r => r.classList.remove('in'));
+      vals.forEach(v => fmt(v, 0));
+      status.textContent = status.dataset.idle;
+      lit(0);
+      T(500, () => { lit(1); root.classList.add('s-sync'); status.textContent = status.dataset.sync; });
+      T(1400, () => { root.classList.add('s-synced'); status.textContent = status.dataset.done; });
+      rows.forEach((r, i) => T(1600 + i * 260, () => r.classList.add('in')));
+      T(3000, () => { lit(2); root.classList.add('s-kpi'); count(); });
+      T(3600, () => root.classList.add('s-chart'));
+      T(5400, () => { ran = true; root.classList.add('s-done', 'ran'); lit(-1); });
+    };
+    root.querySelector('.fd-replay').addEventListener('click', () => reduce ? final() : play());
+    if (reduce || !('IntersectionObserver' in window)) { final(); return; }
+    vals.forEach(v => fmt(v, 0));
+    const io = new IntersectionObserver(es => {
+      if (es.some(e => e.isIntersecting)) { io.disconnect(); play(); }
+    }, { threshold: 0.4 });
+    io.observe(root);
+  })();
 
   // Demo slideshow
   (function() {
