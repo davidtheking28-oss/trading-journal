@@ -1334,7 +1334,7 @@ html.a11y-underline a { text-decoration: underline !important; }
         <div class="demo-stage">
           <!-- Screen 1: Dashboard overview -->
           <div class="demo-body demo-screen active" id="ds0" role="tabpanel" aria-labelledby="dt0" style="padding:0">
-            <img src="assets/demo/demo-stats.jpg" alt="דשבורד — סטטיסטיקה ולוח שנה חודשי" fetchpriority="high">
+            <img src="assets/demo/demo-stats.jpg" alt="דשבורד — סטטיסטיקה ולוח שנה חודשי" loading="lazy" decoding="async">
           </div>
 
           <!-- Screen 2: Trades table -->
@@ -1894,6 +1894,9 @@ html.a11y-underline a { text-decoration: underline !important; }
     raf = requestAnimationFrame(tick);
   }).catch(() => {});
 
+  // 168 KB of WebGL plus a running animation loop is a third of the page's weight
+  // and a battery cost on a phone, where the hero's own gradient carries it fine.
+  if (window.matchMedia('(max-width: 768px)').matches || navigator.connection?.saveData) return;
   if ('requestIdleCallback' in window) requestIdleCallback(loadThree, { timeout: 2000 });
   else setTimeout(loadThree, 300);
 })();
