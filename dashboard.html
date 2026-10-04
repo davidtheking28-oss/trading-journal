@@ -5443,6 +5443,14 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     /* Roomier rows for touch */
     table td, table th { padding-top: 11px; padding-bottom: 11px; }
   }
+  /* Portrait tablets (~770-900px): the 7 tabs measured 507px against 480px of room at
+     800px, so Screener/Investments sat off-screen behind a hidden scrollbar and the
+     tab set looked different from landscape. Tighter padding and narrower header side
+     blocks make all seven fit. */
+  @media (min-width: 769px) and (max-width: 900px) {
+    .tnav-btn { padding: 0 6px; font-size: 12px; }
+    header .header-title, header .header-actions { flex-basis: 96px !important; }
+  }
   /* Mobile KPI columns — also override the late unconditional 5-col rule */
   @media (max-width: 768px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; } }
 
