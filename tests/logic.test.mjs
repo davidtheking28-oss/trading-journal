@@ -11,11 +11,163 @@
 //                   prove the behaviour, only that the guard was not deleted.
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 import { load, extractFunction, extractConst, SOURCE, loadFlexParseXML } from './harness.mjs';
 import { _flexImportInner, rowToTrade as sharedRowToTrade } from '../supabase/functions/_shared/flex-import.mjs';
 
 const flexParseXML = loadFlexParseXML();
+
+describe('investment saves — atomic RPC and session boundaries', () => {
+  function fixture(reply = async () => ({ data: { updated_at: 'new', holdings: [{ id: 'holding', position: 0 }] }, error: null })) {
+    const calls = [], notices = [];
+    const status = { dataset: {}, textContent: '' }, retry = { hidden: true };
+    const ctx = {
+      _currentUser: { id: 'user-A' }, _invActivePortfolioId: 'portfolio-A', _invReloadGen: 0,
+      _invUpdatedAt: 'old', _invData: null, _invCurrency: '$',
+      _invPortfolios: [{ id: 'portfolio-A' }, { id: 'portfolio-B' }],
+      _invSaveTimer: null, _invSaveTotalTimer: null, _invSaveChain: Promise.resolve(),
+      _invSaveState: 'idle', _invSaveRevision: 0, _invSavedRevision: 0, _invPendingWrites: 0,
+      crypto: { randomUUID: () => 'holding' }, clearTimeout, setTimeout, structuredClone,
+      document: { getElementById: id => id === 'inv-save-status' ? status : id === 'inv-save-retry' ? retry : null },
+      _rtSuppress() {}, invGetCurrency: () => '$', invTargetsPayload: () => ({}),
+      invStripBlank: hs => (hs || []).filter(h => h.symbol || h.entryShares || h.entryPrice),
+      invRenderRows() {}, _reportClientError() {},
+      toast: (...args) => notices.push(args), invInit: async () => { ctx.reloads++; }, reloads: 0,
+      _closeAllDDs() {}, sessionStorage: { setItem() {} }, _INV_ACTIVE_PORTFOLIO_KEY: () => 'active',
+      invGetCurrentData: () => ctx._invData,
+      _sb: { rpc: async (name, params) => { calls.push({ name, params }); return reply(params); } },
+    };
+    vm.createContext(ctx);
+    for (const name of ['invSetSaveState','invMarkDirty','invHasUnsavedChanges','invSaveData','_invSaveWrite','_invResetSession','invSwitchPortfolio','invLockRow']) {
+      const src = extractFunction(name);
+      vm.runInContext((['_invSaveWrite','invSwitchPortfolio','invLockRow'].includes(name) ? 'async ' : '') + src, ctx);
+    }
+    return { ctx, calls, notices, status, retry };
+  }
+  const payload = () => ({ portfolioTotal: '100', holdings: [{ id: 'holding', symbol: 'AAPL', entryShares: 2, entryPrice: 10 }] });
+  test('one RPC persists the document, holdings and deletion set for the captured portfolio', async () => {
+    const {ctx,calls}=fixture();
+    assert.equal(await ctx._invSaveWrite(payload(),null,0),true);
+    assert.equal(calls.length,1);
+    assert.equal(calls[0].name,'save_investment_portfolio');
+    assert.equal(calls[0].params.p_portfolio_id,'portfolio-A');
+    assert.equal(calls[0].params.p_expected_updated_at,'old');
+    assert.equal(calls[0].params.p_holdings[0].entry_shares,2);
+    assert.equal(ctx._invUpdatedAt,'new');
+  });
+  test('switch during the RPC cannot apply the response to the next portfolio', async () => {
+    const {ctx,calls}=fixture(async()=>{
+      ctx._invActivePortfolioId='portfolio-B';ctx._invReloadGen++;
+      return {data:{updated_at:'stamp-A'},error:null};
+    });
+    assert.equal(await ctx._invSaveWrite(payload(),null,0),false);
+    assert.equal(calls[0].params.p_portfolio_id,'portfolio-A');
+    assert.equal(ctx._invUpdatedAt,'old');
+  });
+  test('sign-out during a request cannot apply its response to the next account', async () => {
+    const {ctx}=fixture(async()=>{
+      ctx._invResetSession();ctx._currentUser={id:'user-B'};ctx._invActivePortfolioId='portfolio-B';
+      return {data:{updated_at:'stamp-A'},error:null};
+    });
+    assert.equal(await ctx._invSaveWrite(payload(),null,0),false);
+    assert.equal(ctx._invUpdatedAt,null);
+  });
+  test('failed atomic save retains edits, shows failure and offers retry', async () => {
+    const {ctx,status,retry}=fixture(async()=>({data:null,error:{message:'offline'}}));
+    const data=payload();
+    assert.equal(await ctx.invSaveData(data),false);
+    assert.equal(ctx._invData,data);
+    assert.equal(status.dataset.state,'error');
+    assert.equal(retry.hidden,false);
+    assert.equal(ctx.invHasUnsavedChanges(),true);
+  });
+  test('successful save clears the unload warning only after the server acknowledges it', async () => {
+    let release;const gate=new Promise(r=>{release=r;});
+    const {ctx,status}=fixture(()=>gate);
+    const saving=ctx.invSaveData(payload());
+    assert.equal(status.dataset.state,'saving');assert.equal(ctx.invHasUnsavedChanges(),true);
+    release({data:{updated_at:'new'},error:null});
+    assert.equal(await saving,true);
+    assert.equal(status.dataset.state,'saved');assert.equal(ctx.invHasUnsavedChanges(),false);
+  });
+  test('older acknowledgement leaves newer unsaved input marked pending', async () => {
+    let release;const gate=new Promise(r=>{release=r;});
+    const {ctx,status}=fixture(()=>gate);
+    const saving=ctx.invSaveData(payload());ctx.invMarkDirty();
+    release({data:{updated_at:'new'},error:null});await saving;
+    assert.equal(status.dataset.state,'pending');assert.equal(ctx.invHasUnsavedChanges(),true);
+  });
+  test('queued snapshots use the previous acknowledgement stamp and preserve submitted values', async () => {
+    const {ctx,calls}=fixture();
+    const first=payload();const a=ctx.invSaveData(first);first.portfolioTotal='999';
+    const b=ctx.invSaveData(payload());
+    await Promise.all([a,b]);
+    assert.equal(calls[0].params.p_portfolio_total,100);
+    assert.equal(calls[1].params.p_expected_updated_at,'new');
+    assert.equal(ctx.invHasUnsavedChanges(),false);
+  });
+  test('unexpected network rejection is a failed save, never an unhandled rejection', async () => {
+    const {ctx,status}=fixture(async()=>{throw Error('disconnected');});
+    assert.equal(await ctx.invSaveData(payload()),false);
+    assert.equal(status.dataset.state,'error');assert.equal(ctx._invPendingWrites,0);
+  });
+  test('remote conflict cancels obsolete queued writes and reloads', async () => {
+    const {ctx,calls,status}=fixture(async()=>({data:null,error:{code:'PT409',message:'conflict'}}));
+    const a=ctx.invSaveData(payload()), b=ctx.invSaveData(payload());
+    assert.deepEqual(await Promise.all([a,b]),[false,false]);
+    assert.equal(calls.length,1);assert.equal(ctx.reloads,1);
+    assert.equal(ctx._invPendingWrites,0);assert.equal(status.dataset.state,'error');
+  });
+  test('account change during conflict reload cannot show the old error in the new session', async () => {
+    const {ctx,status}=fixture(async()=>({data:null,error:{code:'PT409'}}));
+    ctx.invInit=async()=>{ctx._invResetSession();ctx._currentUser={id:'user-B'};};
+    assert.equal(await ctx.invSaveData(payload()),false);
+    assert.equal(status.dataset.state,'idle');
+  });
+  test('session reset cancels queued writes and timers and clears prior portfolio state', async () => {
+    const {ctx,calls}=fixture();let fired=false;
+    ctx._invSaveTimer=setTimeout(()=>{fired=true;},0);ctx._invSaveTotalTimer=setTimeout(()=>{fired=true;},0);
+    ctx._invResetSession();ctx._currentUser={id:'user-B'};
+    assert.equal(await ctx._invSaveWrite(payload(),null,0),false);
+    await new Promise(r=>setTimeout(r,10));assert.equal(fired,false);assert.equal(calls.length,0);
+    assert.equal(ctx._invPortfolios.length,0);assert.equal(ctx._invActivePortfolioId,null);
+    assert.equal(ctx._invUpdatedAt,null);assert.equal(ctx._invData,null);
+  });
+  test('portfolio switch flushes debounced edits before changing the active id', async () => {
+    const {ctx}=fixture();ctx._invData=payload();const savedIn=[];
+    ctx._invSaveTimer=setTimeout(()=>{},1000);
+    ctx.invSaveData=async()=>{savedIn.push(ctx._invActivePortfolioId);return true;};
+    await ctx.invSwitchPortfolio('portfolio-B');
+    assert.deepEqual(savedIn,['portfolio-A']);assert.equal(ctx._invActivePortfolioId,'portfolio-B');
+  });
+  test('portfolio switch stays put when its pending edit fails to save', async () => {
+    const {ctx}=fixture();ctx._invData=payload();ctx._invSaveTimer=setTimeout(()=>{},1000);
+    ctx.invSaveData=async()=>false;await ctx.invSwitchPortfolio('portfolio-B');
+    assert.equal(ctx._invActivePortfolioId,'portfolio-A');
+  });
+  test('input arriving during a switch is flushed before leaving the old portfolio', async () => {
+    const {ctx}=fixture();ctx._invData=payload();ctx.invMarkDirty();let saves=0;
+    ctx.invSaveData=async()=>{
+      saves++;ctx._invSavedRevision=ctx._invSaveRevision;
+      if(saves===1)ctx.invMarkDirty();
+      return true;
+    };
+    await ctx.invSwitchPortfolio('portfolio-B');
+    assert.equal(saves,2);assert.equal(ctx._invActivePortfolioId,'portfolio-B');
+  });
+  test('failed row commit neither shows success nor redraws optimistic holdings', async () => {
+    const {ctx,notices}=fixture();ctx._invData=payload();ctx.invSaveData=async()=>false;
+    let renders=0;ctx.invRenderRows=()=>{renders++;};await ctx.invLockRow(0);
+    assert.equal(notices.length,0);assert.equal(renders,0);
+  });
+  test('late successful row commit cannot redraw the portfolio after a switch', async () => {
+    const {ctx,notices}=fixture();ctx._invData=payload();ctx.invSaveData=async()=>{ctx._invReloadGen++;return true;};
+    let renders=0;ctx.invRenderRows=()=>{renders++;};await ctx.invLockRow(0);
+    assert.equal(notices.length,0);assert.equal(renders,0);
+  });
+});
+
 const FLEX_IMPORT_SOURCE = readFileSync(new URL('../supabase/functions/_shared/flex-import.mjs', import.meta.url), 'utf8');
 const { calcPL, calcTotal } = load('calcPL', 'calcTotal');
 const { isClosed } = load('isClosed');

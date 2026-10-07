@@ -1,0 +1,9237 @@
+// ─────────────────────────────────────────────
+// ACCESSIBILITY WIDGET
+// ─────────────────────────────────────────────
+(function() {
+  var root = document.documentElement;
+  var KEY = 'a11y-prefs';
+  function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
+  function save(p) { try { localStorage.setItem(KEY, JSON.stringify(p)); } catch (e) {} }
+  var prefs = load();
+  function apply() {
+    root.style.fontSize = (prefs.scale || 100) + '%';
+    root.classList.toggle('a11y-contrast', !!prefs.contrast);
+    root.classList.toggle('a11y-underline', !!prefs.underline);
+    document.querySelectorAll('.a11y-item').forEach(function (b) {
+      b.classList.toggle('active', !!prefs[b.dataset.a11y]);
+    });
+  }
+  window.a11yToggle = function () {
+    var panel = document.getElementById('a11y-panel');
+    var open = panel.classList.toggle('open');
+    document.getElementById('a11y-toggle').setAttribute('aria-expanded', open);
+  };
+  window.a11yFont = function (delta) {
+    prefs.scale = Math.min(150, Math.max(80, (prefs.scale || 100) + delta));
+    save(prefs); apply();
+  };
+  window.a11yContrast = function () { prefs.contrast = !prefs.contrast; save(prefs); apply(); };
+  window.a11yUnderline = function () { prefs.underline = !prefs.underline; save(prefs); apply(); };
+  window.a11yReset = function () { prefs = {}; save(prefs); apply(); };
+  apply();
+})();
+
+// ─────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────
+const KEY = 'trading-journal-v1';
+
+// ─────────────────────────────────────────────
+// SECURITY — XSS Prevention
+// ─────────────────────────────────────────────
+// esc() — מסנן כל תו HTML מסוכן לפני הכנסה ל-innerHTML
+// חובה להשתמש בה על כל טקסט שמגיע מהמשתמש
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/\//g, '&#x2F;');
+}
+
+// sanitizeText() — חותך טקסט ארוך מדי ומנקה תווים בלתי נראים
+function sanitizeText(s, maxLen = 500) {
+  if (!s) return '';
+  return String(s).trim().slice(0, maxLen);
+}
+
+// sanitizeNumber() — מוודא שהערך הוא מספר תקין ובטווח הגיוני
+function sanitizeNumber(v, min = -1e9, max = 1e9) {
+  const n = parseFloat(v);
+  if (isNaN(n) || !isFinite(n)) return 0;
+  return Math.min(Math.max(n, min), max);
+}
+
+// validateTradeSchema() — בודק שאובייקט עסקה שנטען מ-localStorage תקין
+function validateTradeSchema(t) {
+  if (!t || typeof t !== 'object') return false;
+  if (typeof t.id !== 'number') return false;
+  if (!['L','S'].includes(t.ls)) return false;
+  if (typeof t.symbol !== 'string' || !t.symbol) return false;
+  if (typeof t.entryPrice !== 'number' || t.entryPrice < 0) return false;
+  if (!Array.isArray(t.t)) t.t = [];
+  // נקה שדות טקסט
+  t.notes_keep    = sanitizeText(t.notes_keep,    500);
+  t.notes_improve = sanitizeText(t.notes_improve, 500);
+  t.symbol        = sanitizeText(t.symbol, 20).toUpperCase().replace(/[^A-Z0-9._\-]/g,'');
+  return true;
+}
+
+const SEED = {
+  stocks: [
+    {id:1,type:'stock',entryDate:'2025-09-05',ls:'L',symbol:'CONL',entryPrice:33.21,shares:6,stop:28.80,t:[],closeDate:'2025-09-17',closedShares:6,exitPrice:28.80,ecn:0,commission:2.5,notes_keep:'',notes_improve:''},
+    {id:2,type:'stock',entryDate:'2025-09-09',ls:'L',symbol:'SHOP',entryPrice:145.47,shares:6,stop:140.60,t:[],closeDate:'2025-09-17',closedShares:6,exitPrice:146.52,ecn:0,commission:2.5,notes_keep:'',notes_improve:''},
+    {id:3,type:'stock',entryDate:'2025-10-20',ls:'L',symbol:'NEGG',entryPrice:48.87,shares:6,stop:43.93,t:[],closeDate:'2025-10-23',closedShares:6,exitPrice:43.93,ecn:0,commission:2.5,notes_keep:'',notes_improve:''},
+    {id:4,type:'stock',entryDate:'2025-10-09',ls:'L',symbol:'PJT',entryPrice:180.85,shares:7,stop:176.85,t:[],closeDate:'2025-10-17',closedShares:7,exitPrice:185.00,ecn:0,commission:2.5,notes_keep:'',notes_improve:''},
+    {id:5,type:'stock',entryDate:'2025-11-10',ls:'L',symbol:'QS',entryPrice:16.63,shares:14,stop:14.76,t:[],closeDate:'2025-12-11',closedShares:14,exitPrice:7.17,ecn:0,commission:2.5,notes_keep:'',notes_improve:''},
+    {id:6,type:'stock',entryDate:'2025-11-10',ls:'L',symbol:'A',entryPrice:147.13,shares:10,stop:144.32,t:[],closeDate:'2025-11-17',closedShares:10,exitPrice:144.32,ecn:0,commission:2.5,notes_keep:'',notes_improve:''},
+    {id:7,type:'stock',entryDate:'2025-11-12',ls:'L',symbol:'AIR',entryPrice:84.08,shares:14,stop:82.11,t:[],closeDate:'2025-11-13',closedShares:14,exitPrice:82.34,ecn:0,commission:2.5,notes_keep:'',notes_improve:''},
+    {id:8,type:'stock',entryDate:'2025-11-28',ls:'L',symbol:'OPEN',entryPrice:7.95,shares:57,stop:7.42,t:[],closeDate:'2025-11-29',closedShares:57,exitPrice:7.42,ecn:0,commission:2.5,notes_keep:'',notes_improve:''},
+    {id:9,type:'stock',entryDate:'2026-01-02',ls:'L',symbol:'RDDT',entryPrice:233.72,shares:3,stop:227.49,t:[{shares:1,price:262.00}],closeDate:'2026-01-07',closedShares:3,exitPrice:230.00,ecn:0,commission:5.0,notes_keep:'',notes_improve:''},
+    {id:10,type:'stock',entryDate:'2026-01-05',ls:'L',symbol:'GROY',entryPrice:4.18,shares:110,stop:3.97,t:[],closeDate:'2026-01-16',closedShares:110,exitPrice:4.95,ecn:0,commission:2.5,notes_keep:'',notes_improve:''},
+    {id:11,type:'stock',entryDate:'2026-01-06',ls:'L',symbol:'TQQQ',entryPrice:54.34,shares:19,stop:53.28,t:[],closeDate:'2026-01-14',closedShares:19,exitPrice:53.29,ecn:0,commission:2.5,notes_keep:'',notes_improve:''},
+    {id:12,type:'stock',entryDate:'2026-01-28',ls:'L',symbol:'JOE',entryPrice:64.79,shares:26,stop:null,t:[],closeDate:'2026-02-06',closedShares:26,exitPrice:66.98,ecn:0,commission:2.5,notes_keep:'',notes_improve:''},
+    {id:13,type:'stock',entryDate:'2026-02-11',ls:'L',symbol:'ANAB',entryPrice:51.46,shares:8,stop:48.14,t:[],closeDate:'2026-02-11',closedShares:8,exitPrice:48.40,ecn:0,commission:2.5,notes_keep:'סטאפ יומי טוב אחלה vcp',notes_improve:'שבועי וחודשי נראה פחות טוב'},
+    {id:14,type:'stock',entryDate:'2026-03-18',ls:'L',symbol:'AHR',entryPrice:53.40,shares:27,stop:52.40,t:[],closeDate:'2026-03-19',closedShares:27,exitPrice:52.43,ecn:0,commission:2.5,notes_keep:'',notes_improve:'לא היה טריגר כניסה'},
+    {id:15,type:'stock',entryDate:'2026-03-30',ls:'L',symbol:'SOLS',entryPrice:76.75,shares:10,stop:73.29,t:[],closeDate:'2026-04-01',closedShares:10,exitPrice:73.16,ecn:0,commission:2.5,notes_keep:'',notes_improve:'קנה לי במחיר יקר מידי'}
+  ],
+  crypto: [
+    {id:1,type:'crypto',entryDate:'2026-02-17',ls:'L',symbol:'HIPPOUSDT.P',entryPrice:0.3385,shares:7,stop:0.3285,t:[{shares:4,price:0.3580}],closeDate:'2026-02-17',closedShares:3,exitPrice:0.35,ecn:0,commission:5,notes_keep:'',notes_improve:''},
+    {id:2,type:'crypto',entryDate:'2026-02-17',ls:'L',symbol:'BEAMUSDT.P',entryPrice:0.007672,shares:6,stop:0.00726,t:[],closeDate:'2026-02-18',closedShares:6,exitPrice:0.007554,ecn:0,commission:2.5,notes_keep:'',notes_improve:''},
+    {id:3,type:'crypto',entryDate:'2026-02-17',ls:'L',symbol:'SOLUSDT.P',entryPrice:209.56,shares:1,stop:204.29,t:[],closeDate:'2026-02-18',closedShares:1,exitPrice:209.56,ecn:0,commission:0,notes_keep:'',notes_improve:''},
+    {id:4,type:'crypto',entryDate:'2026-02-20',ls:'L',symbol:'ETHUSDT.P',entryPrice:2780.0,shares:1,stop:2700.0,t:[],closeDate:'2026-02-21',closedShares:1,exitPrice:2750.0,ecn:0,commission:2.5,notes_keep:'',notes_improve:''},
+    {id:5,type:'crypto',entryDate:'2026-02-24',ls:'L',symbol:'XRPUSDT.P',entryPrice:2.45,shares:100,stop:2.3,t:[],closeDate:'2026-02-25',closedShares:100,exitPrice:2.52,ecn:0,commission:2.5,notes_keep:'',notes_improve:''}
+  ]
+};
+
+let db = {stocks:[], crypto:[]};
+
+// ── Supabase row ↔ JS trade object ─────────────────────────────────────────
+function _rowToTrade(row) {
+  return {
+    id:           row.id,
+    type:         row.type,
+    entryDate:    row.entry_date,
+    ls:           row.ls === 'Long' ? 'L' : row.ls === 'Short' ? 'S' : row.ls,
+    symbol:       row.symbol,
+    entryPrice:   row.entry_price,
+    shares:       row.shares,
+    stop:         row.stop,
+    t:            Array.isArray(row.targets) ? row.targets : (row.targets ? JSON.parse(row.targets) : []),
+    closeDate:    row.close_date,
+    closedShares: row.closed_shares,
+    exitPrice:    row.exit_price,
+    ecn:          row.ecn,
+    commission:   row.commission,
+    notes_keep:   row.notes_keep    || '',
+    notes_improve:row.notes_improve || '',
+    entryReason:  row.entry_reason  || '',
+    setupType:    row.setup_type    || '',
+    marketCond:   row.market_cond   || '',
+    processScore: row.process_score,
+    mood:         row.mood          || '',
+    ibkr_id:      row.ibkr_id       || null,
+    bybit_id:     row.bybit_id      || null,
+    lastCloseDt:  row.last_close_dt || null,
+    deleted:      row.deleted       || false,
+    deletedAt:    row.deleted_at,
+  };
+}
+
+function _tradeToRow(trade) {
+  return {
+    user_id:       _currentUser.id,
+    type:          trade.type,
+    entry_date:    trade.entryDate,
+    ls:            trade.ls,
+    symbol:        trade.symbol,
+    entry_price:   trade.entryPrice,
+    shares:        trade.shares,
+    stop:          trade.stop,
+    targets:       trade.t || [],
+    close_date:    trade.closeDate   || null,
+    closed_shares: trade.closedShares|| null,
+    exit_price:    trade.exitPrice   || null,
+    ecn:           trade.ecn         || 0,
+    commission:    trade.commission  || 0,
+    notes_keep:    trade.notes_keep  || '',
+    notes_improve: trade.notes_improve || '',
+    entry_reason:  trade.entryReason || '',
+    setup_type:    trade.setupType   || '',
+    market_cond:   trade.marketCond  || '',
+    process_score: trade.processScore|| null,
+    mood:          trade.mood        || '',
+    deleted:       trade.deleted     || false,
+    deleted_at:    trade.deletedAt   || null,
+    // Only set when present so manual-trade inserts work even before the
+    // broker-id column migrations have been applied.
+    ...(trade.ibkr_id ? { ibkr_id: trade.ibkr_id } : {}),
+    ...(trade.bybit_id ? { bybit_id: trade.bybit_id } : {}),
+    ...(trade.lastCloseDt ? { last_close_dt: trade.lastCloseDt } : {}),
+  };
+}
+
+// Broker sync deduplicates against db.stocks/db.crypto. If it runs before the
+// journal has finished loading, those arrays are empty, every fill looks new,
+// and the whole statement is imported again — which is how one Bybit fill ended
+// up stored five times across five sync runs. Nothing may sync until this flag
+// is set, and it is cleared whenever a load fails or a user signs out.
+let _dbLoaded = false;
+
+async function loadDB() {
+  if (!_currentUser) { db = JSON.parse(JSON.stringify(SEED)); _dbLoaded = false; return; }
+  const { data, error } = await _sb.from('trades').select('*')
+    .eq('user_id', _currentUser.id)
+    .order('entry_date', { ascending: false });
+  if (error) { _dbLoaded = false; toast('שגיאה בטעינת נתונים — נסה לרענן', 'error'); console.error('[loadDB]', error); return; }
+  const all = (data || []).map(_rowToTrade).filter(validateTradeSchema);
+  db.stocks  = all.filter(t => t.type === 'stock'  && !t.deleted);
+  db.crypto  = all.filter(t => t.type === 'crypto' && !t.deleted);
+  // Build a fingerprint set of deleted trades so auto-sync never re-imports them
+  db._deletedFingerprints = new Set(
+    all.filter(t => t.deleted).map(t =>
+      `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`
+    )
+  );
+  db._deletedBrokerIds = new Set(
+    all.filter(t => t.deleted && (t.ibkr_id || t.bybit_id)).map(t => t.ibkr_id || t.bybit_id)
+  );
+  await _dedupeTrades(); // always keep the journal free of duplicates
+  _dbLoaded = true;
+  initFilters(); renderOverview(); renderTable('stock');
+}
+
+// ── Live cross-device sync (Supabase Realtime) ───────────────────────────
+// A change made on one device (add/edit/delete a trade) is pushed to every
+// other open session and re-rendered, so the computer and the phone stay in
+// step without a manual refresh. Lighter than loadDB(): re-fetches and
+// re-renders but keeps the user's current filter and skips the dedupe write
+// (so a remote change can't trigger a write→event loop).
+let _rtChannel = null;
+// Suppress realtime-triggered reloads during our own bulk writes (dedupe,
+// bybit_id backfill, imports) so their echoes don't thrash the UI with
+// re-renders — that burst was perceived as the page "jumping" for a few
+// seconds right after login.
+// Suppression says "the change about to arrive is my own echo", which is a
+// statement about one table. A single shared window meant a trades sync also
+// muted the investments and missed handlers, and vice versa — a genuine change
+// from another device that happened to land inside somebody else's 4-second
+// window was dropped and never reloaded. Keyed by table so each one only ever
+// mutes itself.
+const _rtSuppressUntil = { trades: 0, missed_opportunities: 0, investments: 0, investment_holdings: 0 };
+const _rtSuppress = (table, ms = 4000) => {
+  _rtSuppressUntil[table] = Math.max(_rtSuppressUntil[table] || 0, Date.now() + ms);
+};
+const _rtMuted = table => Date.now() < (_rtSuppressUntil[table] || 0);
+async function _syncReloadTrades() {
+  if (!_currentUser) return;
+  const { data, error } = await _sb.from('trades').select('*')
+    .eq('user_id', _currentUser.id).order('entry_date', { ascending: false });
+  if (error) return;
+  const all = (data || []).map(_rowToTrade).filter(validateTradeSchema);
+  db.stocks = all.filter(t => t.type === 'stock'  && !t.deleted);
+  db.crypto = all.filter(t => t.type === 'crypto' && !t.deleted);
+  db._deletedFingerprints = new Set(all.filter(t => t.deleted).map(t =>
+    `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`));
+  db._deletedBrokerIds = new Set(all.filter(t => t.deleted && (t.ibkr_id || t.bybit_id)).map(t => t.ibkr_id || t.bybit_id));
+  renderOverview();
+  renderTable('stock');
+}
+function _teardownRealtimeSync() {
+  if (_rtChannel) { try { _sb.removeChannel(_rtChannel); } catch {} _rtChannel = null; }
+}
+async function _setupRealtimeSync() {
+  if (!_currentUser) return;
+  _teardownRealtimeSync();
+  const uid = _currentUser.id;
+  const f = 'user_id=eq.' + uid;
+  // Realtime must carry the user's JWT or RLS filters out every change event.
+  const token = await _getToken();
+  if (token && _sb.realtime?.setAuth) { try { _sb.realtime.setAuth(token); } catch {} }
+  const activeTab = () => (document.querySelector('.tab-content.active') || {}).id || '';
+  let tt;
+  const reloadTrades = () => { if (_rtMuted('trades')) return; clearTimeout(tt); tt = setTimeout(_syncReloadTrades, 800); };
+  let mtt;
+  const reloadMissed = () => {
+    if (_rtMuted('missed_opportunities')) return;
+    // Not on the tab: skip the re-render, but the in-memory list is now stale
+    // and missedRender() without force would happily paint it again. Dropping
+    // the loaded flag makes the next visit refetch. Without this the tab could
+    // show a row deleted elsewhere indefinitely — and deleting that ghost row
+    // matches nothing, which used to fail silently.
+    if (activeTab() !== 'tab-missed') { _missedLoaded = false; return; }
+    clearTimeout(mtt); mtt = setTimeout(() => missedRender(true), 800);
+  };
+  _rtChannel = _sb.channel('rt-' + uid)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'trades', filter: f }, reloadTrades)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'missed_opportunities', filter: f }, reloadMissed)
+    // invInit() reads `_invData || await invLoadFromDB()`, so the cache MUST be
+    // dropped first or the "refresh" re-renders the very data it was meant to
+    // replace. Clearing it only on the off-tab branch — as this once did — left
+    // the on-tab case silently doing nothing, which is the case that matters:
+    // the stale rows stayed on screen and the next keystroke saved them back
+    // over the change that had just arrived.
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'investments', filter: f },
+        () => {
+          // Ignore the echo of our own write, exactly as reloadTrades does.
+          // Without this, invSaveData -> realtime -> invInit -> invFetchPrices
+          // -> invRecalc -> invAutoSave -> invSaveData spun forever: measured at
+          // 15 writes in 40 idle seconds. The old code accidentally avoided it
+          // only because invInit() was a no-op against a warm cache.
+          if (_rtMuted('investments')) return;
+          _invData = null;
+          if (activeTab() === 'tab-investments') invInit();
+        })
+    // The holdings rows are written a round-trip after the document, so the
+    // document's echo alone reloads the other tab too early: it re-reads the
+    // fresh document but the not-yet-updated rows, and reads prefer the rows.
+    // This second event is what corrects it.
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'investment_holdings', filter: f },
+        () => {
+          if (_rtMuted('investment_holdings')) return;
+          _invData = null;
+          if (activeTab() === 'tab-investments') invInit();
+        })
+    .subscribe();
+}
+
+// Remove duplicate trades — runs on every load and after every sync. Only
+// removes provably-duplicate rows, never a legitimate unique trade or scale-in:
+//   • two trades sharing IBKR's unique tradeID (same execution)
+//   • an untagged trade that exactly matches (entry AND exit) a tagged IBKR trade
+//     (a leftover from the old buggy import; the tagged one is canonical)
+async function _dedupeTrades() {
+  if (!_currentUser) return 0;
+  const fp = t => [t.symbol, t.entryDate, Math.round((t.entryPrice||0)*1000), Math.round((t.shares||0)*1000),
+                   Math.round((t.exitPrice||0)*1000), Math.round((t.closedShares||0)*1000)].join('|');
+  const toRemove = [];
+  for (const type of ['stock', 'crypto']) {
+    const live = (type === 'stock' ? db.stocks : db.crypto).filter(x => !x.deleted);
+    const seenId = new Set();      // broker ids (ibkr/bybit) already kept
+    const taggedFp = new Set();    // full fingerprints of kept tagged trades
+    const bid = t => t.ibkr_id || t.bybit_id;  // stable broker id from either source
+    // Process tagged (canonical) trades first so untagged duplicates are the ones removed.
+    const ordered = [...live].sort((a, b) => (bid(a) ? 0 : 1) - (bid(b) ? 0 : 1) || ((+a.id || 0) - (+b.id || 0)));
+    for (const t of ordered) {
+      if (bid(t)) {
+        if (seenId.has(bid(t))) toRemove.push(t);
+        else { seenId.add(bid(t)); taggedFp.add(fp(t)); }
+      } else if (taggedFp.has(fp(t))) {
+        toRemove.push(t); // exact duplicate of a tagged trade
+      }
+    }
+  }
+  let removed = 0;
+  for (const t of toRemove) {
+    _rtSuppress('trades');
+    // Only drop it from memory once the soft-delete actually persisted, or the
+    // row reappears on the next load and the journal contradicts itself.
+    const { error } = await _sb.from('trades').update({ deleted: true, deleted_at: new Date().toISOString() })
+      .eq('id', t.id).eq('user_id', _currentUser.id);
+    if (error) { console.error('[dedupe]', error); continue; }
+    t.deleted = true;
+    removed++;
+  }
+  if (removed) {
+    db.stocks = db.stocks.filter(x => !x.deleted);
+    db.crypto = db.crypto.filter(x => !x.deleted);
+  }
+  return removed;
+}
+// Whether an incoming broker/import trade was previously deleted by the user.
+// Broker trades (ibkr_id/bybit_id) are matched by their unique execution id so a
+// deleted trade never blocks a different same-price re-entry on the same day;
+// untagged (manual/CSV) trades fall back to the symbol+date+price+shares print.
+function _isDeletedImport(t) {
+  const bid = t.ibkr_id || t.bybit_id;
+  if (bid) return !!db._deletedBrokerIds?.has(bid);
+  const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
+  return !!db._deletedFingerprints?.has(fp);
+}
+// ─────────────────────────────────────────────
+// CALCULATIONS
+// ─────────────────────────────────────────────
+function calcPL(tr) {
+  let pl = 0;
+  const entry = +tr.entryPrice || 0;
+  const ls = tr.ls;
+  if (tr.t && tr.t.length > 0) {
+    for (const tg of tr.t) {
+      const s = +tg.shares || 0;
+      const p = +tg.price || 0;
+      if (s > 0 && p > 0) {
+        pl += (ls === 'L' ? p - entry : entry - p) * s;
+      }
+    }
+    const exited = tr.t.reduce((a,tg) => a + (+tg.shares||0), 0);
+    const rem = (+tr.closedShares || +tr.shares || 0) - exited;
+    const ep = +tr.exitPrice || 0;
+    if (rem > 0 && ep > 0) {
+      pl += (ls === 'L' ? ep - entry : entry - ep) * rem;
+    }
+  } else {
+    const s = +tr.closedShares || +tr.shares || 0;
+    const ep = +tr.exitPrice || 0;
+    if (s > 0 && ep > 0) {
+      pl = (ls === 'L' ? ep - entry : entry - ep) * s;
+    }
+  }
+  return pl;
+}
+function calcTotal(tr) { return calcPL(tr) - (+tr.ecn||0) - (+tr.commission||0); }
+function calcRisk(tr) { return (+tr.entryPrice||0) * (+tr.shares||0); }
+function calcPct(tr) {
+  const risk = calcRisk(tr);
+  return risk ? (calcTotal(tr) / risk) * 100 : 0;
+}
+
+// Single definition of "closed", so stats() and advancedStats() can't disagree
+// about which trades they are averaging over.
+function isClosed(t) { return !!(t.closeDate || (+t.exitPrice > 0) || (t.t && t.t.length > 0)); }
+// Shares still held on a row. A partial close leaves the rest of the lot open,
+// so a row can be BOTH closed (it has realised P&L) and open (it still holds
+// stock) at once — isClosed() answers the first question, this one the second.
+function openShares(t) { return (+t.shares || 0) - (+t.closedShares || 0); }
+// The open-position views used to test `!exitPrice`, which silently dropped
+// every partially-closed row: setting any exit price at all made the still-held
+// remainder invisible to live P&L, the STEM focus list and the exposure alert.
+// Verified against raw IBKR Flex XML on 2026-08-27 — CRWV held 20 shares while
+// the journal's open-position views could only see 12.
+function isOpenPosition(t) { return !t.deleted && openShares(t) > 0 && !!t.symbol && +t.entryPrice > 0; }
+
+function stats(trades) {
+  const closed = trades.filter(isClosed);
+  // Realised P&L only. Summing every row folded the entry commission of each
+  // still-open position into the headline, so "P&L כולל" never reconciled with
+  // avg × closed count. Those fees aren't lost — they ride on the trade and get
+  // recognised when it closes, which is where they belong.
+  const total = closed.reduce((s,t) => s+calcTotal(t), 0);
+  // Win/loss classification uses net P&L (after commission) so a trade that's
+  // a net loss after fees never counts as a "win" — matches the net "total"
+  // above instead of the pre-commission calcPL.
+  const wins = closed.filter(t => calcTotal(t) > 0);
+  const losses = closed.filter(t => calcTotal(t) <= 0);
+  const wr = closed.length ? wins.length / closed.length * 100 : 0;
+  const best = closed.length ? Math.max(...closed.map(t=>calcTotal(t))) : 0;
+  const worst = closed.length ? Math.min(...closed.map(t=>calcTotal(t))) : 0;
+  const avg = closed.length ? total / closed.length : 0;
+  return {total, wins:wins.length, losses:losses.length, wr, best, worst, avg,
+          n:trades.length, nClosed:closed.length, nOpen:trades.length-closed.length};
+}
+
+// ─────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────
+const MONTHS_HE = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+const MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTHS_SHORT_HE = ['ינו','פבר','מרץ','אפר','מאי','יוני','יולי','אוג','ספט','אוק','נוב','דצ'];
+const MONTHS_SHORT_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTHS = MONTHS_HE;
+function months() { return _lang === 'he' ? MONTHS_HE : MONTHS_EN; }
+function monthsShort() { return _lang === 'he' ? MONTHS_SHORT_HE : MONTHS_SHORT_EN; }
+
+function fmt(n, d=2) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return (+n).toFixed(d);
+}
+// fmtPrice — מציג מחיר בלי אפסים מיותרים בסוף (28.8000 → 28.8, 0.0077 → 0.0077)
+function fmtPrice(n) {
+  if (n === null || n === undefined || isNaN(n) || +n === 0) return '—';
+  const v = +n;
+  // לקריפטו עם ערכים קטנים מאוד — מציג עד 6 ספרות
+  if (v < 0.01) return v.toPrecision(4).replace(/\.?0+$/, '');
+  // רגיל — עד 4 ספרות, ללא אפסים מיותרים
+  return parseFloat(v.toFixed(4)).toString();
+}
+function fmtUSD(n) {
+  if (isNaN(n)) return '—';
+  return (n>=0?'+':'-') + '$' + Math.abs(n).toFixed(2);
+}
+function fmtPct(n) {
+  if (isNaN(n)) return '—';
+  return (n>=0?'+':'') + n.toFixed(2) + '%';
+}
+function clr(v) { return v > 0 ? 'num-green' : v < 0 ? 'num-red' : ''; }
+// calcStopRisk — סיכון אמיתי: (מחיר כניסה - סטופ) × מניות
+function calcStopRisk(tr) {
+  // No stop set: fall back to the actual exit price as the risk reference.
+  // User-confirmed tradeoff — this makes R come out at ±1 by construction
+  // on a stopless trade (no real planned-risk figure to divide by), but the
+  // user wants a number here rather than "—".
+  const stop = +tr.stop || (tr.exitPrice ? +tr.exitPrice : 0);
+  if (!stop) return 0;
+  const entry = +tr.entryPrice || 0;
+  // Size the risk on the quantity the P&L is measured over. Using the full
+  // position against a partial close divided a 3-share gain by 7-share risk.
+  const qty = (+tr.closedShares || +tr.shares || 0);
+  const risk = Math.abs(entry - stop) * qty;
+  if (!(risk > 0)) return 0;
+  // A position whose planned risk is smaller than its own commission produces
+  // an R driven by fees, not by the trade (a 6-unit sub-cent perp risked $0.002
+  // and reported -2023R). Not measurable, so say so.
+  if (risk <= Math.abs(+tr.commission || 0)) return 0;
+  return risk;
+}
+// fmtR — מחשב R-Multiple: כמה כפולות סיכון הרווחנו/הפסדנו
+function fmtR(tot, stopRisk) {
+  if (!stopRisk || isNaN(stopRisk) || stopRisk === 0) return '<span style="color:var(--text3)">—</span>';
+  const r = tot / stopRisk;
+  const cls = r > 0 ? 'num-green' : r < 0 ? 'num-red' : '';
+  // A loss past -1R means the position was held beyond the stop that was
+  // planned for it. With average losses running larger than average wins, that
+  // is the specific behaviour worth seeing at a glance rather than averaging away.
+  const breach = r <= -1.05
+    ? ` <span title="ההפסד עבר את הסטופ המתוכנן" style="color:var(--red);font-weight:700">⚠</span>`
+    : '';
+  return `<span class="${cls}">${r >= 0 ? '+' : ''}${r.toFixed(2)}R</span>${breach}`;
+}
+// calcDrawdownSeries — running equity curve + peak-to-trough drawdown, sorted
+// chronologically over closed trades only (an open position has no realised
+// equity to plot).
+//
+// The percent denominator is the total capital deployed (sum of entry cost
+// basis across the closed trades), NOT the running peak of cumulative P&L —
+// peak crosses arbitrarily close to zero on a book whose equity oscillates
+// around its starting point, and dividing by a near-zero peak produced
+// drawdowns like -18982% on real seed data (verified live). renderCumChart's
+// own pct mode already denominates against deployed capital for the same
+// reason; this mirrors it instead of inventing a second convention.
+function calcDrawdownSeries(trades) {
+  const closed = trades.filter(isClosed).slice()
+    .sort((a, b) => (a.closeDate || a.entryDate).localeCompare(b.closeDate || b.entryDate));
+  const base = Math.abs(closed.reduce((s, t) => s + (t.entryPrice || 0) * (t.shares || 0), 0));
+  const pctMode = base > 0;
+  let equity = 0, peak = 0;
+  const points = [];
+  closed.forEach(t => {
+    equity += calcTotal(t);
+    peak = Math.max(peak, equity);
+    const dd = pctMode ? (equity - peak) / base * 100 : (equity - peak);
+    points.push({ date: t.closeDate || t.entryDate, equity, drawdown: dd });
+  });
+  const maxDrawdown = points.length ? Math.min(...points.map(p => p.drawdown)) : 0;
+  const current = points.length ? points[points.length - 1].drawdown : 0;
+  return { points, maxDrawdown, current, pctMode };
+}
+// calcRHistogram — buckets closed trades' R-multiples (calcTotal / calcStopRisk)
+// into fixed bins. Only trades with a real, measurable stop-risk are counted —
+// matches the same coverage rule "ממוצע R" already uses, so this histogram and
+// that KPI describe the same population instead of two different denominators.
+const R_HIST_BUCKETS = [
+  { max: -2,        label: '<-2R' },
+  { max: -1,        label: '-2R..-1R' },
+  { max: 0,         label: '-1R..0R' },
+  { max: 1,         label: '0R..1R' },
+  { max: 2,         label: '1R..2R' },
+  { max: 3,         label: '2R..3R' },
+  { max: Infinity,  label: '>3R' },
+];
+function calcRHistogram(trades) {
+  const buckets = R_HIST_BUCKETS.map(b => ({ ...b, count: 0 }));
+  let counted = 0;
+  trades.filter(isClosed).forEach(t => {
+    const risk = calcStopRisk(t);
+    if (!(risk > 0)) return;
+    const r = calcTotal(t) / risk;
+    const b = buckets.find(x => r <= x.max) || buckets[buckets.length - 1];
+    b.count++;
+    counted++;
+  });
+  return { buckets, counted };
+}
+// "Today" in the visitor's own local calendar day — new Date().toISOString()
+// converts to UTC first, which silently rolls back to yesterday's date for
+// anyone east of UTC during their early-morning hours (e.g. Israel, 00:00-02:xx).
+function _todayLocal(d = new Date()) {
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
+function fmtDate(s) {
+  if (!s) return '—';
+  const d = new Date(s+'T00:00:00');
+  return d.toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit',year:'2-digit'});
+}
+
+function filterTrades(type, month, year, ignoreScope) {
+  let active;
+  if (!ignoreScope && type === 'stock' && _tradesScope !== 'stock') {
+    if (_tradesScope === 'all') {
+      active = [
+        ...db.stocks.filter(x=>!x.deleted).map(x=>({...x,_tt:'stock'})),
+        ...db.crypto.filter(x=>!x.deleted).map(x=>({...x,_tt:'crypto'}))
+      ];
+    } else {
+      active = db.crypto.filter(x=>!x.deleted).map(x=>({...x,_tt:'crypto'}));
+    }
+  } else {
+    active = (type==='stock' ? db.stocks : db.crypto).filter(t=>!t.deleted);
+  }
+  if (!month && !year) return active;
+  return active.filter(t => {
+    const d = new Date(t.entryDate+'T00:00:00');
+    return (!month || d.getMonth()+1 === +month) && (!year || d.getFullYear() === +year);
+  });
+}
+
+// ─────────────────────────────────────────────
+// FILTERS INIT
+// ─────────────────────────────────────────────
+function initFilters() {
+  const curYear = new Date().getFullYear();
+  const years = new Set();
+  [...db.stocks,...db.crypto].forEach(t => {
+    if (t.entryDate) years.add(new Date(t.entryDate+'T00:00:00').getFullYear());
+  });
+  years.add(curYear); // always include current year so filter works even with no trades yet
+  const yrs = [...years].sort((a,b)=>b-a);
+
+  ['ov','st','cr','stats'].forEach(p => {
+    const ms = document.getElementById(p+'-month');
+    const ys = document.getElementById(p+'-year');
+    if (!ms) return;
+    ms.innerHTML = `<option value="">${t('filter_all_months')}</option>` + months().map((m,i)=>`<option value="${i+1}">${m}</option>`).join('');
+    if (ys) ys.innerHTML = `<option value="">${t('filter_all_years')}</option>` + yrs.map(y=>`<option value="${y}">${y}</option>`).join('');
+    if (p === 'ov') {
+      ms.value = new Date().getMonth() + 1;
+      if (ys) ys.value = new Date().getFullYear();
+      updatePeriodLabel('ov');
+    } else if (p === 'stats') {
+      updatePeriodLabel('stats');
+    } else if (p === 'st') {
+      if (ys) ys.value = curYear;
+      _pdYear[p] = curYear;
+      updatePeriodLabel(p);
+    }
+  });
+}
+
+function getFilter(p) {
+  return {
+    month: (document.getElementById(p+'-month')||{}).value || '',
+    year:  (document.getElementById(p+'-year')||{}).value  || ''
+  };
+}
+
+function resetFilter(p) {
+  const ms = document.getElementById(p+'-month');
+  const ys = document.getElementById(p+'-year');
+  if (ms) ms.value = '';
+  if (ys) ys.value = '';
+  updatePeriodLabel(p);
+  if (p==='st') renderTable('stock');
+  else if (p==='cr') renderTable('crypto');
+  else if (p==='stats') renderStatistics();
+  else renderOverview();
+}
+
+// ─────────────────────────────────────────────
+// TAB SWITCHING
+// ─────────────────────────────────────────────
+let ovScope = 'all';
+let _tradesScope = 'stock';
+function setTradesScope(s, btn, ddId) {
+  _tradesScope = s;
+  document.getElementById('trades-scope-lbl').textContent = _scopeLabels[s];
+  document.querySelectorAll('#trades-scope-menu button').forEach(b => { b.classList.remove('active'); b.removeAttribute('aria-current'); });
+  if (btn) { btn.classList.add('active'); btn.setAttribute('aria-current', 'true'); }
+  _closeAllDDs();
+  renderTable('stock');
+}
+
+function switchTab(name, btn) {
+  // sessionStorage, not localStorage: see _restoreLastTab.
+  try { sessionStorage.setItem('tj_active_tab', name); } catch {}
+  document.querySelectorAll('.tab-btn,.tnav-btn').forEach(b=>{ b.classList.remove('active'); b.style.color=''; b.removeAttribute('aria-current'); });
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  // Callers that navigate programmatically (the screener → journal handoff, the
+  // command palette) pass no button. This threw and aborted the whole handler,
+  // so clicking "add to journal" in the embedded screener did nothing at all.
+  const activeBtn = btn || document.querySelector(`.tnav-btn[onclick*="switchTab('${name}'"], .tab-btn[onclick*="switchTab('${name}'"]`);
+  activeBtn?.classList.add('active');
+  activeBtn?.setAttribute('aria-current', 'page');
+  const tabEl = document.getElementById('tab-'+name);
+  document.getElementById('main-content')?.classList.toggle('full-bleed', name==='screener');
+  // The a11y widget is fixed to the viewport, so on the Screener tab it floats
+  // on top of the embedded iframe's own content — the iframe can't see it to
+  // work around it (documented in the screener repo's own CSS comments).
+  // Hidden only here; every other tab keeps it.
+  const a11yBtn = document.getElementById('a11y-toggle');
+  if (a11yBtn) a11yBtn.style.display = name==='screener' ? 'none' : '';
+  tabEl.classList.add('active');
+  tabEl.classList.remove('tab-entering');
+  void tabEl.offsetWidth;
+  tabEl.classList.add('tab-entering');
+  if (name==='overview') renderOverview();
+  else if (_ovLiveTimer) { clearInterval(_ovLiveTimer); _ovLiveTimer = null; }
+  if (name !== 'investments' && _invPriceTimer) { clearInterval(_invPriceTimer); _invPriceTimer = null; }
+  if (name==='stocks') renderTable('stock');
+  if (name==='crypto') renderTable('crypto');
+  if (name==='statistics') renderStatistics();
+  if (name==='themes') { ttLoad(); ttStartTimer(); } else { ttStopTimer(); }
+  if (name==='ibkr') {
+    flexInit();
+    bybitInit();
+    renderSecurityStatus();
+    profileLoad();
+  }
+  if (name==='missed') missedRender();
+  if (name==='screener') {
+    _showScreenerLookup();
+    const f=document.getElementById('screener-frame');
+    const scrTheme = document.documentElement.getAttribute('data-theme')==='light' ? 'tj-light' : 'tj';
+    if (!f._loaded) _showScreenerLoading();
+    if(!f.src) f.src='https://davidtheking28-oss.github.io/stock-screener/?theme='+scrTheme;
+    else try{ f.contentDocument.documentElement.dataset.theme=scrTheme; }catch(e){}
+    const fit=()=>{ f.style.height=Math.max(520, window.innerHeight - f.getBoundingClientRect().top)+'px'; };
+    fit(); requestAnimationFrame(fit); setTimeout(fit,120);
+    if(!f._fitBound){ f._fitBound=true; window.addEventListener('resize', fit); }
+  }
+  if (name==='investments') invInit();
+  _syncMobileNav(name);
+  _maybeShowTabIntro(name, tabEl);
+}
+
+// Tracks which SCREENER TYPES the user actually reviewed each day (not just
+// switched to — the screener posts tj:screener-used only once the user has
+// scrolled to the bottom of that filter's results, so opening a tab and
+// leaving without reading doesn't count). screener_type_visits gets one row
+// per (day, type). A day counts as fully screened once at least half the
+// types were seen.
+function _todayLocalISO() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+// Visits weren't tracked before this feature shipped — a date earlier than
+// this has no row for a real reason, not because the user skipped it, so it
+// must not read as a miss.
+const SCREENER_TRACKING_START = '2026-09-16';
+// Matches the screener's SCREENERS keys (sepa/power/vcp/cleanbase/qulla/
+// finviz/growth/commodities) — update if that repo adds or removes a
+// screener type. cleanbase added 2026-09-26 (VCP + weak down-candles).
+const SCREENER_TYPE_COUNT = 8;
+const SCREENER_HALF_THRESHOLD = Math.ceil(SCREENER_TYPE_COUNT / 2);
+async function logScreenerTypeVisit(key) {
+  if (!_currentUser) return;
+  try {
+    await _sb.from('screener_type_visits')
+      .upsert({ user_id: _currentUser.id, visit_date: _todayLocalISO(), screener_key: key },
+        { onConflict: 'user_id,visit_date,screener_key', ignoreDuplicates: true });
+  } catch (e) { console.error('[logScreenerTypeVisit]', e); }
+  const dateInput = document.getElementById('scr-lookup-date');
+  if (dateInput && (!dateInput.value || dateInput.value === _todayLocalISO())) lookupScreenerVisit(_todayLocalISO());
+}
+function _showScreenerLookup() {
+  const dateInput = document.getElementById('scr-lookup-date');
+  if (!dateInput) return;
+  if (!dateInput.value) dateInput.value = _todayLocalISO();
+  lookupScreenerVisit(dateInput.value);
+}
+async function lookupScreenerVisit(iso) {
+  const resEl = document.getElementById('scr-lookup-result');
+  if (!resEl || !iso || !_currentUser) return;
+  resEl.textContent = '…';
+  const d = new Date(iso + 'T00:00:00');
+  const dow = d.getDay();
+  const dateHe = fmtDate(iso);
+  if (iso < SCREENER_TRACKING_START) {
+    resEl.textContent = `${dateHe} — אין נתונים, לפני תחילת המעקב`;
+    resEl.style.color = 'var(--text3)';
+    return;
+  }
+  const { data, error } = await _sb.from('screener_type_visits')
+    .select('screener_key').eq('user_id', _currentUser.id).eq('visit_date', iso);
+  if (error) { resEl.textContent = 'שגיאה'; console.error('[lookupScreenerVisit]', error); return; }
+  const count = new Set((data||[]).map(r => r.screener_key)).size;
+  if (count >= SCREENER_HALF_THRESHOLD) { resEl.textContent = `✓ סיננת ב-${dateHe} (${count}/${SCREENER_TYPE_COUNT})`; resEl.style.color = 'var(--green)'; }
+  else if (count > 0) { resEl.textContent = `◐ חלקי ב-${dateHe} (${count}/${SCREENER_TYPE_COUNT})`; resEl.style.color = 'var(--yellow, #eab308)'; }
+  else if (dow === 5 || dow === 6) { resEl.textContent = `${dateHe} — סופ״ש, לא יום מסחר`; resEl.style.color = 'var(--text3)'; }
+  else { resEl.textContent = `✗ לא סיננת ב-${dateHe}`; resEl.style.color = 'var(--red)'; }
+}
+
+// Reported: the screener tab "doesn't open" right after logging in, but works
+// after a page refresh. Root cause, confirmed from the user's own console
+// (2026-09-13) — net::ERR_CACHE_READ_FAILURE on the screener's own CDN
+// scripts (supabase-js, lightweight-charts, a font), a corrupted browser disk
+// cache entry, not a bug in this code. That failure leaves `supabase`
+// undefined inside the screener, which then throws an uncaught
+// ReferenceError — the iframe's own `load` event still fires (the HTML shell
+// loaded fine), so the old timeout-only overlay never caught this: it hid
+// itself right on schedule over a screener that had already died. A refresh
+// works because the browser evicts a cache entry after a failed read, so the
+// retry is a normal network fetch. Same-origin (both are *.github.io/<repo>/,
+// which share an origin — path doesn't count), so this page can listen for
+// that error directly instead of guessing from a timeout.
+let _screenerLoadTimer = null;
+function _showScreenerLoading(isError) {
+  const overlay = document.getElementById('screener-loading');
+  if (!overlay) return;
+  overlay.style.display = 'flex';
+  document.getElementById('screener-loading-txt').textContent =
+    isError ? 'המסנן נתקל בשגיאה בטעינה' : 'טוען את המסנן…';
+  document.getElementById('screener-retry-btn').style.display = isError ? '' : 'none';
+  clearTimeout(_screenerLoadTimer);
+  if (!isError) {
+    _screenerLoadTimer = setTimeout(() => {
+      document.getElementById('screener-loading-txt').textContent = 'הטעינה לוקחת יותר זמן מהרגיל';
+      document.getElementById('screener-retry-btn').style.display = '';
+    }, 8000);
+  }
+}
+function _onScreenerLoad() {
+  const f = document.getElementById('screener-frame');
+  f._loaded = true;
+  clearTimeout(_screenerLoadTimer);
+  const overlay = document.getElementById('screener-loading');
+  if (overlay) overlay.style.display = 'none';
+  // The shell loaded — doesn't mean the app itself came up. A script that
+  // failed to fetch (cache corruption, a blocked CDN) throws inside the
+  // iframe's own window, which onload can't see. Catch it directly.
+  try {
+    f.contentWindow.addEventListener('error', () => {
+      f._loaded = false;
+      _showScreenerLoading(true);
+    }, { once: true });
+  } catch (e) {}
+}
+function _retryScreener() {
+  const f = document.getElementById('screener-frame');
+  f._loaded = false;
+  _showScreenerLoading();
+  const scrTheme = document.documentElement.getAttribute('data-theme')==='light' ? 'tj-light' : 'tj';
+  f.src = 'https://davidtheking28-oss.github.io/stock-screener/?theme=' + scrTheme + '&_r=' + Date.now();
+}
+
+// Mobile bottom-nav: route a tap to the real sidebar tab button (keeps the
+// drawer's highlight in sync too), then highlight the matching bar item.
+// Warm the screener iframe so opening that tab feels instant — but only once the
+// main thread is genuinely idle. On a fixed 1.5s timer it landed at ~2.2s into
+// boot, in the middle of the trades/settings/quote burst, and paid for a whole
+// extra page load nobody had asked for yet. requestIdleCallback keeps the warm
+// start without competing with the data the user is actually waiting on.
+window.addEventListener('load', () => {
+  const warm = () => {
+    const f = document.getElementById('screener-frame');
+    if (f && !f.src) f.src = 'https://davidtheking28-oss.github.io/stock-screener/?theme=' + (document.documentElement.getAttribute('data-theme')==='light' ? 'tj-light' : 'tj');
+  };
+  if (window.requestIdleCallback) requestIdleCallback(warm, { timeout: 10000 });
+  else setTimeout(warm, 5000);
+});
+
+// Journal SSO for the screener — it has its own separate Supabase auth
+// (different origin storage), so without this "נוסף למעקב" never has
+// anything to show: checkAndSaveHistory bails out with no user, and nobody
+// had ever separately logged into the screener itself. Same github.io
+// account for both, so handing the session down is safe; the screener pings
+// tj:screener-ready once its own listener is armed (rather than this side
+// guessing a load-order-safe delay) and gets tj:session back.
+const SCREENER_ORIGIN = 'https://davidtheking28-oss.github.io';
+function _sendSessionToScreener() {
+  const frame = document.getElementById('screener-frame');
+  if (!frame?.contentWindow || !_currentSession?.access_token) return;
+  frame.contentWindow.postMessage({
+    type: 'tj:session',
+    accessToken: _currentSession.access_token,
+    refreshToken: _currentSession.refresh_token,
+  }, SCREENER_ORIGIN);
+}
+window.addEventListener('message', (e) => {
+  if (e.origin !== SCREENER_ORIGIN) return;
+  const frame = document.getElementById('screener-frame');
+  if (!frame || e.source !== frame.contentWindow) return;
+  if (e.data?.type === 'tj:screener-ready') _sendSessionToScreener();
+  if (e.data?.type === 'tj:screener-used' && e.data.key) logScreenerTypeVisit(e.data.key);
+  if (e.data?.type === 'tj:add-trade') openTradeFromScreener(e.data);
+});
+
+function _tradeFromScreener(d) {
+  const symbol = typeof d?.symbol === 'string' ? d.symbol : '';
+  if (!/^[A-Z0-9.\-]{1,12}$/.test(symbol)) return null;
+  const setups = { vcp: 'vcp', cleanbase: 'vcp', power: 'powerplay', sepa: 'breakout', qulla: 'breakout' };
+  const price = typeof d.price === 'number' && d.price > 0 ? d.price : null;
+  return { symbol, price, setup: setups[d.setup] || '' };
+}
+function openTradeFromScreener(d) {
+  const tr = _tradeFromScreener(d);
+  if (!tr) return;
+  openModal('stock');
+  document.getElementById('m-symbol').value = tr.symbol;
+  if (tr.price) document.getElementById('m-entryPrice').value = +tr.price.toFixed(2);
+  document.getElementById('m-setup-type').value = tr.setup;
+  setupRenderPills('m-setup-pills', tr.setup);
+  mAutoType();
+  liveCalc();
+  document.getElementById('m-shares').focus();
+}
+
+function _pivotFromBars(bars, entryTs) {
+  if (!Array.isArray(bars)) return null;
+  const before = bars.filter(b => b.t < entryTs && b.h != null).slice(-60);
+  if (before.length < 20) return null;
+  return Math.max(...before.map(b => b.h));
+}
+function _entryPivotDistance(bars, entryDateISO, entryPrice) {
+  const entryTs = Math.floor(Date.parse(entryDateISO) / 1000);
+  if (isNaN(entryTs) || !entryPrice || entryPrice <= 0) return null;
+  const pivot = _pivotFromBars(bars, entryTs);
+  if (!pivot) return null;
+  const day = bars.filter(b => b.t >= entryTs - 86400 && b.t < entryTs + 2 * 86400);
+  if (day.length) {
+    const lo = Math.min(...day.map(b => b.l ?? b.c)), hi = Math.max(...day.map(b => b.h));
+    if (entryPrice < lo * 0.85 || entryPrice > hi * 1.15) return { mismatch: true };
+  }
+  return { pivot, distPct: (entryPrice / pivot - 1) * 100 };
+}
+
+const _pivotBarsCache = new Map();
+async function _fetchPivotBars(symbol) {
+  if (_pivotBarsCache.has(symbol)) return _pivotBarsCache.get(symbol);
+  const p = (async () => {
+    try {
+      const token = await _getToken();
+      if (!token) return null;
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/ohlc?symbol=${encodeURIComponent(symbol)}&range=1y`,
+        { headers: { 'Authorization': `Bearer ${token}` } });
+      if (!res.ok) return null;
+      const d = await res.json();
+      return Array.isArray(d?.bars) ? d.bars : null;
+    } catch { return null; }
+  })();
+  _pivotBarsCache.set(symbol, p);
+  p.then(v => { if (v === null) _pivotBarsCache.delete(symbol); });
+  return p;
+}
+let _pivotRenderSeq = 0;
+async function renderPivotDistance(trades) {
+  const host = document.getElementById('pivot-distance-wrap');
+  if (!host) return;
+  const seq = ++_pivotRenderSeq;
+  const candidates = trades.filter(t => t.type !== 'crypto' && t.symbol && t.entryDate && t.entryPrice > 0);
+  if (!candidates.length) {
+    host.innerHTML = `<div style="padding:14px 16px;background:var(--card);
+      border:1px solid var(--border);border-radius:var(--r-lg);color:var(--text2);font-size:12px">
+      אין עסקאות עם מחיר כניסה ותאריך לחישוב מרחק מה-Pivot.</div>`;
+    return;
+  }
+  host.innerHTML = `<div style="padding:14px 16px;color:var(--text3);font-size:12px">מחשב...</div>`;
+  const symbols = [...new Set(candidates.map(t => t.symbol))];
+  const barsBySymbol = {};
+  await Promise.all(symbols.map(async sym => { barsBySymbol[sym] = await _fetchPivotBars(sym); }));
+  if (seq !== _pivotRenderSeq) return;
+  let mismatched = 0;
+  const rows = candidates.map(t => {
+    const r = _entryPivotDistance(barsBySymbol[t.symbol], t.entryDate, t.entryPrice);
+    if (r?.mismatch) mismatched++;
+    return r && !r.mismatch ? { symbol: t.symbol, entryDate: t.entryDate, entryPrice: t.entryPrice, ...r } : null;
+  }).filter(Boolean);
+  const note = mismatched ? `<div style="color:var(--text3);font-size:11px;margin-top:8px">
+      ${mismatched} עסקאות הוסתרו: מחיר הכניסה רחוק ממחירי השוק באותו יום (פיצול מניה, או מחיר שגוי בעסקה).</div>` : '';
+  if (!rows.length) {
+    host.innerHTML = `<div style="padding:14px 16px;background:var(--card);
+      border:1px solid var(--border);border-radius:var(--r-lg);color:var(--text2);font-size:12px">
+      אין מספיק היסטוריית מחירים לחישוב Pivot לעסקאות אלה.${note}</div>`;
+    return;
+  }
+  rows.sort((a, b) => Date.parse(b.entryDate) - Date.parse(a.entryDate));
+  host.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;min-width:0;border-collapse:collapse;font-size:12px">
+    <thead><tr style="color:var(--text3);text-align:right">
+      <th style="padding:7px 8px;font-weight:600">סימבול</th>
+      <th style="padding:7px 8px;font-weight:600">תאריך כניסה</th>
+      <th style="padding:7px 8px;font-weight:600">מחיר כניסה</th>
+      <th style="padding:7px 8px;font-weight:600">Pivot</th>
+      <th style="padding:7px 8px;font-weight:600">מרחק</th>
+    </tr></thead><tbody>
+    ${rows.map(r => `<tr style="border-top:1px solid rgba(255,255,255,0.05)">
+      <td style="padding:7px 8px;font-weight:600">${esc(r.symbol)}</td>
+      <td style="padding:7px 8px">${esc(r.entryDate)}</td>
+      <td style="padding:7px 8px" class="sensitive">$${r.entryPrice.toFixed(2)}</td>
+      <td style="padding:7px 8px" class="sensitive">$${r.pivot.toFixed(2)}</td>
+      <td style="padding:7px 8px;font-weight:700" class="${r.distPct>=0?'num-green':'num-red'}">${r.distPct>=0?'+':''}${r.distPct.toFixed(1)}%</td>
+    </tr>`).join('')}
+    </tbody></table>${note}</div>`;
+}
+
+function mNav(name) {
+  const btn = document.querySelector(`.tab-btn[onclick*="switchTab('${name}'"]`)
+           || document.querySelector(`.tnav-btn[onclick*="switchTab('${name}'"]`);
+  if (btn) switchTab(name, btn);
+}
+function _syncMobileNav(name) {
+  document.querySelectorAll('.mnav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+}
+
+// ── First-visit tab intros ───────────────────────
+// A short "what is this tab for" banner shown once per tab, per user.
+const _tabIntros = {
+  overview:    { he: { t: 'סקירה כללית', d: 'מבט-על על הביצועים שלך: רווח/הפסד כולל, פוזיציות פתוחות בזמן אמת, אחוז הצלחה, וגרף מצטבר. אפשר לסנן לפי תקופה ולעבור בין מניות/קריפטו.' },
+                 en: { t: 'Overview', d: 'A snapshot of your performance: total P&L, live open positions, win rate and a cumulative chart. Filter by period and switch between stocks and crypto.' } },
+  stocks:      { he: { t: 'יומן העסקאות', d: 'כל העסקאות שלך — מסונכרנות מהברוקר או נוספות ידנית בכפתור "הוסף עסקה". לחיצה על שורה פותחת פירוט מלא, אפשר לחפש לפי סימבול ולסנן לפי תקופה.' },
+                 en: { t: 'Trade journal', d: 'All your trades — synced from your broker or added manually with "Add Trade". Click a row for full detail, search by symbol and filter by period.' } },
+  statistics:  { he: { t: 'סטטיסטיקה', d: 'ניתוח עומק של הביצועים: אחוז הצלחה, יחס רווח/סיכון (R), רצפי ניצחון/הפסד וגרפים. אפשר לסנן לפי scope ותקופה.' },
+                 en: { t: 'Statistics', d: 'Deep performance analysis: win rate, risk/reward (R), win/loss streaks and charts. Filter by scope and period.' } },
+  themes:      { he: { t: 'דופק השוק', d: 'ביצועי סקטורים בזמן אמת. לחיצה על סקטור מציגה את המניות המובילות בו, עם בחירת תקופה (היום/שבוע/חודש).' },
+                 en: { t: 'Market Pulse', d: 'Live sector performance. Click a sector to see its leading stocks, with a period selector (today/week/month).' } },
+  missed:      { he: { t: 'הזדמנויות שהוחמצו', d: 'תיעוד מניות שפספסת — מתי, באיזה מחיר ולמה. כלי ללמידה כדי לזהות דפוסים ולא לחזור על אותן החמצות.' },
+                 en: { t: 'Missed opportunities', d: 'Log trades you missed — when, at what price and why. A learning tool to spot patterns and avoid repeating them.' } },
+  investments: { he: { t: 'תיק השקעות', d: 'התיק ארוך-הטווח שלך: אחזקות, הקצאה מול יעד, מזומן פנוי והפקדות חודשיות. המחירים והרווח מתעדכנים חי.' },
+                 en: { t: 'Investments', d: 'Your long-term portfolio: holdings, allocation vs target, free cash and monthly deposits. Prices and P&L update live.' } },
+  ibkr:        { he: { t: 'הגדרות', d: 'ניהול החשבון והאבטחה (PIN / 2FA / סיסמה), חיבור הברוקר לסנכרון אוטומטי, ויצוא הנתונים שלך ל-CSV.' },
+                 en: { t: 'Settings', d: 'Manage your account and security (PIN / 2FA / password), connect your broker for auto-sync, and export your data to CSV.' } },
+};
+function _maybeShowTabIntro(name, tabEl) {
+  if (!tabEl || !_currentUser) return;
+  if (_userSettings.tab_intros_dismissed) return;
+  try { if (localStorage.getItem('ob_done_' + _currentUser.id)) return; } catch {}
+  const intro = _tabIntros[name];
+  if (!intro) return;
+  const key = 'tj_intro_' + _currentUser.id + '_' + name;
+  try { if (localStorage.getItem(key)) return; } catch {}
+  if (tabEl.querySelector('.tab-intro')) return;
+  const c = _lang === 'he' ? intro.he : intro.en;
+  const el = document.createElement('div');
+  el.className = 'tab-intro';
+  el.innerHTML = `<div class="tab-intro-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2h6c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z"/></svg></div>
+    <div class="tab-intro-body"><div class="tab-intro-title">${esc(c.t)}</div><div class="tab-intro-text">${esc(c.d)}</div></div>
+    <button class="tab-intro-dismiss" onclick="_dismissTabIntro(this)">${_lang === 'he' ? 'הבנתי' : 'Got it'}</button>`;
+  tabEl.insertBefore(el, tabEl.firstChild);
+  try { localStorage.setItem(key, '1'); } catch {}
+}
+function _dismissTabIntro(btn) {
+  const el = btn.closest('.tab-intro');
+  if (!el) return;
+  el.style.maxHeight = el.offsetHeight + 'px';
+  requestAnimationFrame(() => { el.style.maxHeight = '0'; el.style.opacity = '0'; el.style.marginBottom = '0'; el.style.paddingTop = '0'; el.style.paddingBottom = '0'; });
+  setTimeout(() => el.remove(), 280);
+  _userSettings.tab_intros_dismissed = true;
+  _saveUserSettings({ tab_intros_dismissed: true });
+}
+
+// One-time nudge (2026-08-13) for the one account whose Flex Query is still
+// missing the "IB Order ID" column — added directly to flexParseXML's fill-
+// consolidation grouping key when present, but this account's query (1601294)
+// hasn't had it configured/saved yet. Server-persisted (not localStorage) so
+// it survives across devices and only ever fires once, then never again.
+function _maybeShowOrderIdNotice() {
+  if (!_currentUser || _currentUser.id !== '5f72e0bb-fb32-4bd4-b766-96e907ece8fd') return;
+  if (_userSettings.order_id_notice_seen) return;
+  toast('צעד אחד נשאר: הוסף IB Order ID ב-IBKR. מדריך בהגדרות ← מדריך חיבור ברוקר', 'info');
+  _userSettings.order_id_notice_seen = true;
+  _saveUserSettings({ order_id_notice_seen: true });
+}
+
+// A Flex query configured with too short a "Period" is the root cause of
+// every orphan-close bug seen so far: an execution closing a position whose
+// opening fill fell outside the statement window. This isn't specific to one
+// account — any user who sets Period to less than ~3 months in IBKR hits it —
+// so unlike _maybeShowOrderIdNotice above, this checks the user's own live
+// data instead of a hardcoded id.
+//
+// Deliberately no persisted "seen" flag: it reads the cached statement fresh
+// every login, so the moment the user actually fixes it in IBKR (Client
+// Portal → Reports → Flex Queries → Period = "Last 365 Days"), the next sync
+// widens the window and this stops firing on its own — nothing to go stale
+// the way order_id_notice_seen did (persisted true, but never read back into
+// _userSettings, so that notice re-toasted forever regardless of the flag;
+// fixed above, but avoided here by not having a flag at all). Throttled to
+// once per calendar day via localStorage purely so a user who logs in more
+// than once a day isn't shown the same toast repeatedly.
+async function _maybeShowFlexWindowNotice() {
+  if (!_currentUser) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const key = 'flex_window_notice_' + _currentUser.id;
+  try { if (localStorage.getItem(key) === today) return; } catch (e) {}
+  let data;
+  try { data = await _fetchFlexCacheRow(); } catch (e) { return; }
+  if (!data?.xml) return; // no IBKR statement cached yet — nothing to warn about
+  const from = data.xml.match(/fromDate="(\d{8})"/)?.[1];
+  const to = data.xml.match(/toDate="(\d{8})"/)?.[1];
+  if (!from || !to) return;
+  const asDate = s => new Date(+s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8));
+  const days = Math.round((asDate(to) - asDate(from)) / 86400000);
+  if (days >= 90) return; // healthy window — 365 is the target, but nothing this short of it is the bug
+  toast(`חלון הדוח מ-IBKR קצר מדי (${days} ימים) — עלול לגרום לעסקאות "יתומות" עם נתונים חסרים. ב-Client Portal: Reports ← Flex Queries ← ערוך את שאילתת Trades ← Period = Last 365 Days`, 'info');
+  try { localStorage.setItem(key, today); } catch (e) {}
+}
+
+// Tells the user, in the app, when one of their brokers has stopped syncing.
+// Until now the only signal was a nightly Telegram alert: user 9f9ffff4's Bybit
+// key expired and failed 215 consecutive times over five days with nothing on
+// screen. That matters more than it used to, because broker_balances now feeds
+// the Kelly sizing suggestion and the STEM exposure alert — a silent broker
+// means those numbers are computed off incomplete data.
+//
+// flex_sync_log itself stays RLS-locked; my_broker_sync_health() is a narrow
+// SECURITY DEFINER view of the caller's own per-broker health.
+const BROKER_FAIL_STREAK_ALERT = 3; // below this it is a transient blip, not a dead connection
+// A 3s auto-dismissing toast, shown at most once/day, meant a 9-day Bybit
+// outage got at most 9 independent 3-second chances to be seen — each
+// starting from zero, no escalation. A banner that stays until the user
+// dismisses THIS specific failure (keyed on last_ok, so a fresh failure
+// after a real recovery re-shows it) fixes that without adding a second
+// notification mechanism — same broken() check, just a persistent surface.
+async function _maybeShowBrokerSyncNotice() {
+  if (!_currentUser) return;
+  const wrap = document.getElementById('broker-sync-banners');
+  if (!wrap) return;
+  const { data, error } = await _sb.rpc('my_broker_sync_health');
+  if (error || !Array.isArray(data)) return;
+  const broken = data.filter(r => (r.fails_since_ok || 0) >= BROKER_FAIL_STREAK_ALERT);
+  wrap.innerHTML = broken.map(b => {
+    const dismissKey = 'broker_sync_dismissed_' + _currentUser.id + '_' + b.broker + '_' + (b.last_ok || 'never');
+    try { if (localStorage.getItem(dismissKey) === '1') return ''; } catch (e) {}
+    const since = b.last_ok
+      ? `מאז ${new Date(b.last_ok).toLocaleDateString('he-IL')}`
+      : 'מעולם לא הצליח';
+    return `
+      <div class="broker-sync-banner" data-dismiss-key="${esc(dismissKey)}">
+        <div class="broker-sync-banner-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+        <div class="broker-sync-banner-body">
+          <div class="broker-sync-banner-title">הסנכרון מ-${esc(b.broker.toUpperCase())} לא עובד ${since}</div>
+          <div class="broker-sync-banner-text">${b.fails_since_ok} כשלונות: ${esc(b.last_error || 'שגיאה לא ידועה')}. גודל התיק ו-Kelly מחושבים כרגע על נתונים חלקיים.</div>
+        </div>
+        <button class="broker-sync-banner-dismiss" onclick="_dismissBrokerSyncBanner(this)">הבנתי</button>
+      </div>`;
+  }).join('');
+}
+function _dismissBrokerSyncBanner(btn) {
+  const el = btn.closest('.broker-sync-banner');
+  try { localStorage.setItem(el.dataset.dismissKey, '1'); } catch (e) {}
+  el.remove();
+}
+
+// Automatic market-regime (STEM) classifier — reuses the VIX + breadth rating
+// already carried in the fear-greed edge function's CNN payload. Thresholds
+// are a standard/generic VIX+breadth reading, not tuned to this account:
+// green = calm (VIX<20 and breadth reads greed/extreme-greed), red = stressed
+// (VIX>30 or breadth reads extreme fear), everything else = caution.
+// breadthPct = % of the 11 SPDR sector ETFs above their own 50-day SMA,
+// computed server-side (fear-greed edge function) — real breadth, not CNN's
+// McClellan-based rating this used to read.
+function computeStemState(vix, breadthPct) {
+  if (vix == null) return null;
+  if (vix > 30 || (breadthPct != null && breadthPct < 40)) return 'red';
+  if (vix < 20 && breadthPct != null && breadthPct >= 55) return 'green';
+  return 'orange';
+}
+let _stemState = null, _stemVix = null;
+
+const STEM_LABELS = { green: 'רגוע', orange: 'זהירות', red: 'לחוץ' };
+const STEM_COLORS = { green: 'var(--green)', orange: 'var(--yellow)', red: 'var(--red)' };
+// Plain-language action per state, not just the label — a color/word alone
+// answers "what is the market doing" but not "what should I do about it",
+// so it gets read once and then habituated-to like a favicon.
+const STEM_ACTIONS = {
+  green:  'סיכון שוק נמוך — גודל פוזיציה רגיל תקין',
+  orange: 'סיכון שוק מוגבר — שווה לצמצם גודל פוזיציה',
+  red:    'סיכון שוק גבוה — זהירות מקסימלית, גודל פוזיציה מינימלי',
+};
+// A pill (not just a dot) so the VIX number itself is visible, not only the
+// color — the color alone can't be told apart by anyone with color-vision
+// deficiency, and the number is what actually justifies the state.
+function renderStemBadge() {
+  const el = document.getElementById('stem-badge');
+  if (!el) return;
+  if (!_stemState) { el.style.display = 'none'; return; }
+  const color = STEM_COLORS[_stemState];
+  const vixTxt = _stemVix != null ? `VIX ${_stemVix.toFixed(1)}` : '';
+  el.title = 'סיכון שוק כללי, מחושב אוטומטית מ-VIX ורוחב שוק (לא STEM של מינרוויני — זה מדד מדדים, לא רשימת מניות אישית). ' + STEM_ACTIONS[_stemState];
+  el.style.display = 'flex';
+  el.style.setProperty('--stem-color', color);
+  el.innerHTML = `
+    <span class="stem-pill-label">סיכון שוק</span>
+    <span class="stem-pill-state">${STEM_LABELS[_stemState]}</span>
+    ${vixTxt ? `<span class="stem-pill-vix">${vixTxt}</span>` : ''}`;
+}
+
+// Warns once a day when the automatic regime reads red (stressed market) but
+// the account's own open exposure is still large relative to its portfolio
+// size — the portfolio↔STEM mismatch the council flagged. Cost-basis of open
+// positions, not live mark, so it doesn't depend on a successful quote fetch.
+function _maybeShowStemMismatchNotice() {
+  if (!_currentUser || _stemState !== 'red') return;
+  const today = new Date().toISOString().slice(0, 10);
+  const key = 'stem_mismatch_notice_' + _currentUser.id;
+  try { if (localStorage.getItem(key) === today) return; } catch (e) {}
+  const open = [...db.stocks, ...db.crypto].filter(t => isOpenPosition(t));
+  const exposureCost = open.reduce((s, t) => s + ((t.shares || 0) - (t.closedShares || 0)) * (t.entryPrice || 0), 0);
+  const pt = portfolioTotal() || _brokerEquityUsd;
+  if (!pt || pt <= 0 || exposureCost <= 0) return;
+  const pct = exposureCost / pt * 100;
+  if (pct < 70) return;
+  toast(`סיכון השוק האוטומטי קרא אדום, והחשיפה הפתוחה שלך גבוהה (${pct.toFixed(0)}% מהתיק) — שווה לשקול לצמצם`, 'info');
+  try { localStorage.setItem(key, today); } catch (e) {}
+}
+
+// Restore the tab the user last viewed (set in switchTab). Falls back to the
+// default overview when nothing is saved or the target isn't navigable here.
+//
+// Deliberately sessionStorage. Two situations look identical to the page and
+// have to be told apart:
+//   • the browser reloaded the page under the user (a backgrounded tab getting
+//     discarded is enough) — losing their place there is the bug this function
+//     was written to fix;
+//   • the user actually left and came back — they expect to start at home.
+// sessionStorage is exactly that line: it survives a reload of the same tab and
+// is gone once the tab is closed. With localStorage the second case was
+// indistinguishable from the first and always restored.
+function _restoreLastTab() {
+  let name; try { name = sessionStorage.getItem('tj_active_tab'); } catch {}
+  if (!name || name === 'overview') return;
+  const tabEl = document.getElementById('tab-' + name);
+  if (!tabEl) return;
+  const btn = Array.from(document.querySelectorAll('.tnav-btn,.tab-btn')).find(b =>
+    (b.getAttribute('onclick') || '').includes(`switchTab('${name}'`) && b.offsetParent !== null);
+  if (btn) switchTab(name, btn);
+}
+
+// ─── Command palette (⌘/Ctrl-K) ──────────────────
+function _navTo(name) {
+  const btn = Array.from(document.querySelectorAll('.tnav-btn,.tab-btn')).find(b =>
+    (b.getAttribute('onclick') || '').includes(`switchTab('${name}'`) && b.offsetParent !== null);
+  switchTab(name, btn);
+}
+const _CMDK_ICONS = {
+  home: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  trend: '<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>',
+  bars: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>',
+  grid: '<rect x="2" y="2" width="9" height="9" rx="1"/><rect x="13" y="2" width="9" height="9" rx="1"/><rect x="2" y="13" width="9" height="9" rx="1"/><rect x="13" y="13" width="9" height="9" rx="1"/>',
+  search: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+  plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+  sync: '<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>',
+  lock: '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/>',
+  briefcase: '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  brain: '<path d="M12 2a5 5 0 0 1 5 5c0 1.5-.6 2.8-1.6 3.8L17 20H7l1.6-9.2A5 5 0 0 1 7 7a5 5 0 0 1 5-5z"/><line x1="9" y1="20" x2="15" y2="20"/><circle cx="12" cy="7" r="1.5" fill="currentColor" opacity="0.6"/>',
+};
+function _cmdkIc(name) { return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${_CMDK_ICONS[name]}</svg>`; }
+function _cmdkActions() {
+  const a = [
+    { ic:_cmdkIc('home'), label:'מעבר: סקירה', kw:'home overview סקירה דשבורד בית', run:()=>_navTo('overview') },
+    { ic:_cmdkIc('trend'), label:'מעבר: עסקאות', kw:'stocks trades מניות עסקאות טבלה יומן', run:()=>_navTo('stocks') },
+    { ic:_cmdkIc('bars'), label:'מעבר: סטטיסטיקה', kw:'statistics stats סטטיסטיקה ביצועים', run:()=>_navTo('statistics') },
+    { ic:_cmdkIc('grid'), label:'מעבר: Market Pulse', kw:'market pulse themes שוק מגמות', run:()=>_navTo('themes') },
+    { ic:_cmdkIc('search'), label:'מעבר: Missed', kw:'missed החמצות פספוס', run:()=>_navTo('missed') },
+    { ic:_cmdkIc('gear'), label:'הגדרות / חיבור ברוקר', kw:'settings broker ibkr הגדרות ברוקר חיבור', run:()=>_navTo('ibkr') },
+    { ic:_cmdkIc('plus'), label:'עסקה חדשה — מניה', kw:'add new trade stock עסקה חדשה מניה', run:()=>openModal('stock') },
+    { ic:_cmdkIc('plus'), label:'עסקה חדשה — קריפטו', kw:'add new trade crypto עסקה חדשה קריפטו', run:()=>openModal('crypto') },
+    { ic:_cmdkIc('sync'), label:'סנכרן ברוקר עכשיו', kw:'sync broker ibkr סנכרן עדכן', run:()=>{ _navTo('ibkr'); setTimeout(()=>document.getElementById('flex-sync-btn')?.click(), 250); } },
+    { ic:_cmdkIc('lock'), label:'מצב פרטיות', kw:'privacy hide פרטיות הסתר מספרים', run:()=>togglePrivacy() },
+    { ic:_cmdkIc('sun'), label:'החלף ערכת נושא', kw:'theme dark light ערכת נושא צבע', run:()=>toggleTheme() },
+  ];
+  a.push({ ic:_cmdkIc('briefcase'), label:'מעבר: Investments', kw:'investments תיק השקעות', run:()=>_navTo('investments') });
+  return a;
+}
+let _cmdkIdx = 0, _cmdkList = [];
+function cmdkToggle() {
+  const o = document.getElementById('cmdk');
+  if (o.classList.contains('open')) cmdkClose(); else cmdkOpen();
+}
+function cmdkOpen() {
+  document.getElementById('cmdk').classList.add('open');
+  const inp = document.getElementById('cmdk-input');
+  inp.value = ''; cmdkFilter('');
+  setTimeout(() => inp.focus(), 20);
+}
+function cmdkClose() { document.getElementById('cmdk').classList.remove('open'); }
+function cmdkFilter(q) {
+  q = (q || '').trim().toLowerCase();
+  const all = _cmdkActions();
+  _cmdkList = q ? all.filter(a => (a.label + ' ' + a.kw).toLowerCase().includes(q)) : all;
+  _cmdkIdx = 0; cmdkRender();
+}
+function cmdkRender() {
+  const ul = document.getElementById('cmdk-list');
+  ul.innerHTML = _cmdkList.length
+    ? _cmdkList.map((a, i) => `<div class="cmdk-item${i === _cmdkIdx ? ' sel' : ''}" onmousemove="_cmdkHover(${i})" onclick="_cmdkRun(${i})"><span class="cmdk-ic">${a.ic}</span><span>${esc(a.label)}</span></div>`).join('')
+    : `<div class="cmdk-empty">אין תוצאות</div>`;
+}
+function _cmdkHover(i) { if (i !== _cmdkIdx) { _cmdkIdx = i; cmdkRender(); } }
+function _cmdkRun(i) { const a = _cmdkList[i]; if (!a) return; cmdkClose(); a.run(); }
+function _cmdkScroll() { document.querySelector('#cmdk-list .cmdk-item.sel')?.scrollIntoView({ block: 'nearest' }); }
+function _cmdkKey(e) {
+  if (e.key === 'ArrowDown') { e.preventDefault(); _cmdkIdx = Math.min(_cmdkIdx + 1, _cmdkList.length - 1); cmdkRender(); _cmdkScroll(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); _cmdkIdx = Math.max(_cmdkIdx - 1, 0); cmdkRender(); _cmdkScroll(); }
+  else if (e.key === 'Enter') { e.preventDefault(); _cmdkRun(_cmdkIdx); }
+  else if (e.key === 'Escape') { e.preventDefault(); cmdkClose(); }
+}
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); cmdkToggle(); return; }
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const ae = document.activeElement, tag = ae?.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || ae?.isContentEditable) return;
+  if (_topOpenModal() || document.getElementById('cmdk')?.classList.contains('open')) return;
+  if (e.key === '/') { const s = document.getElementById('st-search'); if (s && s.offsetParent) { e.preventDefault(); s.focus(); } }
+  else if (e.key === 'n' || e.key === 'N') { e.preventDefault(); openModal('stock'); }
+});
+
+// ─── Shared dropdown helpers ─────────────────────
+function _closeAllDDs() {
+  document.querySelectorAll('.scope-dd.open').forEach(d => d.classList.remove('open'));
+  document.querySelectorAll('.dd-open').forEach(m => m.classList.remove('dd-open'));
+}
+function _openMenu(triggerBtn, menu) {
+  _closeAllDDs();
+  const rect = triggerBtn.getBoundingClientRect();
+  // Render off-screen first to measure dimensions
+  menu.style.left = '-9999px';
+  menu.style.top  = '-9999px';
+  menu.classList.add('dd-open');
+  const mw = menu.offsetWidth;
+  const mh = menu.offsetHeight;
+  // Align right edge of menu to right edge of button (RTL-natural)
+  let left = rect.right - mw;
+  if (left < 8) left = 8;
+  if (left + mw > window.innerWidth - 8) left = window.innerWidth - mw - 8;
+  // Open downward, flip upward if not enough space
+  let top = rect.bottom + 5;
+  const flipped = top + mh > window.innerHeight - 8;
+  if (flipped) top = rect.top - mh - 5;
+  menu.style.left = left + 'px';
+  menu.style.top  = top  + 'px';
+  // Scale in from the corner nearest the trigger button, not the menu's
+  // own center — matches the right-aligned/flip logic above so the entrance
+  // always reads as growing out of the button that opened it.
+  menu.style.setProperty('--dd-origin', (flipped ? 'bottom' : 'top') + ' right');
+  triggerBtn.closest('.scope-dd').classList.add('open');
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.scope-dd') && !e.target.closest('.scope-dd-menu') && !e.target.closest('.period-dd-menu'))
+    _closeAllDDs();
+});
+// Move menus to body so they escape any parent overflow/stacking context
+document.addEventListener('DOMContentLoaded', function() {
+  ['ov-scope-menu','stats-scope-menu','trades-scope-menu'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) document.body.appendChild(el);
+  });
+});
+
+// ─── Scope dropdown ──────────────────────────────
+const _scopeLabels = { stock: '📈 מניות', crypto: '₿ קריפטו', all: 'הכל' };
+
+function toggleScopeDD(id) {
+  const dd = document.getElementById(id);
+  const btn = dd.querySelector('.scope-dd-btn');
+  const menuId = id.replace('-dd', '-menu');
+  const menu = document.getElementById(menuId);
+  if (menu.classList.contains('dd-open')) { _closeAllDDs(); return; }
+  _openMenu(btn, menu);
+}
+
+function setOvScope(s, btn, ddId) {
+  ovScope = s;
+  document.getElementById('ov-scope-lbl').textContent = _scopeLabels[s];
+  document.querySelectorAll('#ov-scope-menu button').forEach(b => { b.classList.remove('active'); b.removeAttribute('aria-current'); });
+  if (btn) { btn.classList.add('active'); btn.setAttribute('aria-current', 'true'); }
+  _closeAllDDs();
+  renderOverview();
+}
+
+let statsScope = 'stock';
+let _statsInitialized = false;
+
+function _saveStatsState() {
+  const ms = document.getElementById('stats-month');
+  const ys = document.getElementById('stats-year');
+  localStorage.setItem('stats_state_v1', JSON.stringify({
+    scope: statsScope,
+    month: ms?.value || '',
+    year:  ys?.value  || ''
+  }));
+}
+
+function _restoreStatsState() {
+  if (_statsInitialized) return;
+  _statsInitialized = true;
+  try {
+    const raw = localStorage.getItem('stats_state_v1');
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (s.scope && _scopeLabels[s.scope]) {
+      statsScope = s.scope;
+      const lbl = document.getElementById('stats-scope-lbl');
+      if (lbl) lbl.textContent = _scopeLabels[s.scope];
+      document.querySelectorAll('#stats-scope-menu button').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('onclick')?.includes(`'${s.scope}'`));
+      });
+    }
+    const ms = document.getElementById('stats-month');
+    const ys = document.getElementById('stats-year');
+    if (ms && s.month) ms.value = s.month;
+    if (ys && s.year)  ys.value = s.year;
+    if (s.month || s.year) {
+      _pdYear['stats'] = s.year ? +s.year : new Date().getFullYear();
+      updatePeriodLabel('stats');
+    }
+  } catch(e) {}
+}
+
+function setStatsScope(s, btn, ddId) {
+  statsScope = s;
+  document.getElementById('stats-scope-lbl').textContent = _scopeLabels[s];
+  document.querySelectorAll('#stats-scope-menu button').forEach(b => { b.classList.remove('active'); b.removeAttribute('aria-current'); });
+  if (btn) { btn.classList.add('active'); btn.setAttribute('aria-current', 'true'); }
+  _closeAllDDs();
+  _saveStatsState();
+  renderStatistics();
+}
+
+// ─── Period dropdown ──────────────────────────────
+const _pdYear = {};
+let _pdMenuEl = null;
+
+function _getPdMenu() {
+  if (!_pdMenuEl) {
+    _pdMenuEl = document.createElement('div');
+    _pdMenuEl.className = 'period-dd-menu';
+    _pdMenuEl.id = '_pd_menu';
+    document.body.appendChild(_pdMenuEl);
+  }
+  return _pdMenuEl;
+}
+
+function _buildPeriodHTML(prefix, showYears) {
+  const ms = document.getElementById(prefix+'-month');
+  const ys = document.getElementById(prefix+'-year');
+  const selMonth = ms ? +ms.value : 0;
+  const selYear  = ys ? +ys.value  : 0;
+  const yr = _pdYear[prefix] || new Date().getFullYear();
+  const yOpts = ys ? [...ys.options].map(o=>+o.value).filter(v=>v) : [new Date().getFullYear()];
+  const isAll = !ms?.value && !ys?.value;
+
+  if (showYears) {
+    const yearBtns = yOpts.map(y =>
+      `<button class="pd-month-btn${y===selYear?' active':''}" onclick="event.stopPropagation();_pdPickYear('${prefix}',${y})">${y}</button>`
+    ).join('');
+    return `
+      <button class="pd-all-btn${isAll?' active':''}" onclick="_resetPeriod('${prefix}')">כל הזמן</button>
+      <button class="pd-year-btn active" onclick="event.stopPropagation();_pdToggleYears('${prefix}',false)">${yr}</button>
+      <div class="pd-years">${yearBtns}</div>`;
+  }
+
+  const monthBtns = MONTHS_SHORT_HE.map((m,i) => {
+    const mn = i+1;
+    const active = mn===selMonth && yr===selYear ? ' active':'';
+    return `<button class="pd-month-btn${active}" onclick="_setPeriod('${prefix}',${mn},${yr})">${m}</button>`;
+  }).join('');
+
+  const wholeYearActive = !selMonth && selYear===yr ? ' active':'';
+  return `
+    <button class="pd-all-btn${isAll?' active':''}" onclick="_resetPeriod('${prefix}')">כל הזמן</button>
+    <button class="pd-year-btn" onclick="event.stopPropagation();_pdToggleYears('${prefix}',true)">${yr}</button>
+    <button class="pd-all-btn${wholeYearActive}" onclick="_setYearOnly('${prefix}',${yr})">כל ${yr}</button>
+    <div class="pd-months">${monthBtns}</div>`;
+}
+
+function togglePeriodDD(prefix) {
+  const dd = document.getElementById(prefix+'-period-dd');
+  const btn = dd.querySelector('.scope-dd-btn');
+  const menu = _getPdMenu();
+  menu._prefix = prefix;
+  if (menu.classList.contains('dd-open') && menu._prefix === prefix) { _closeAllDDs(); return; }
+  if (!_pdYear[prefix]) _pdYear[prefix] = +(document.getElementById(prefix+'-year')?.value) || new Date().getFullYear();
+  menu.innerHTML = _buildPeriodHTML(prefix, false);
+  _openMenu(btn, menu);
+}
+
+function _pdToggleYears(prefix, show) {
+  _getPdMenu().innerHTML = _buildPeriodHTML(prefix, show);
+}
+
+function _pdPickYear(prefix, year) {
+  _pdYear[prefix] = year;
+  _getPdMenu().innerHTML = _buildPeriodHTML(prefix, false);
+}
+
+function _setPeriod(prefix, month, year) {
+  const ms = document.getElementById(prefix+'-month');
+  const ys = document.getElementById(prefix+'-year');
+  if (ms) ms.value = month;
+  if (ys) ys.value = year;
+  _pdYear[prefix] = year;
+  document.getElementById(prefix+'-period-lbl').textContent = MONTHS_SHORT_HE[month-1]+' '+year;
+  _closeAllDDs();
+  if (prefix==='ov') renderOverview();
+  else if (prefix==='st') renderTable('stock');
+  else { _saveStatsState(); renderStatistics(); }
+}
+
+// Filter by a whole year (no specific month).
+function _setYearOnly(prefix, year) {
+  const ms = document.getElementById(prefix+'-month');
+  const ys = document.getElementById(prefix+'-year');
+  if (ms) ms.value = '';
+  if (ys) ys.value = year;
+  _pdYear[prefix] = year;
+  document.getElementById(prefix+'-period-lbl').textContent = String(year);
+  _closeAllDDs();
+  if (prefix==='ov') renderOverview();
+  else if (prefix==='st') renderTable('stock');
+  else { _saveStatsState(); renderStatistics(); }
+}
+
+function _resetPeriod(prefix) {
+  const ms = document.getElementById(prefix+'-month');
+  const ys = document.getElementById(prefix+'-year');
+  if (ms) ms.value = '';
+  if (ys) ys.value = '';
+  document.getElementById(prefix+'-period-lbl').textContent = 'כל הזמן';
+  _closeAllDDs();
+  if (prefix==='ov') renderOverview();
+  else if (prefix==='st') renderTable('stock');
+  else { _saveStatsState(); renderStatistics(); }
+}
+
+function updatePeriodLabel(prefix) {
+  const ms = document.getElementById(prefix+'-month');
+  const ys = document.getElementById(prefix+'-year');
+  const lbl = document.getElementById(prefix+'-period-lbl');
+  if (!lbl) return;
+  const m = ms?.value, y = ys?.value;
+  lbl.textContent = (m||y) ? ((m?MONTHS_SHORT_HE[+m-1]:'')+(y?' '+y:'')).trim() : 'כל הזמן';
+}
+
+// ─────────────────────────────────────────────
+// TRADES TABLE
+// ─────────────────────────────────────────────
+const expanded = {};
+const sortState = { stock: { col: 'entryDate', dir: -1 }, crypto: { col: 'entryDate', dir: -1 } };
+const searchQuery = { stock: '', crypto: '' };
+// IDs present in the last render of each type — used to flash genuinely-new rows
+// (broker sync / manual add). null on first render so nothing flashes on initial load.
+const _prevTradeIds = { stock: null, crypto: null };
+
+function sortTable(type, col) {
+  const s = sortState[type];
+  if (s.col === col) s.dir *= -1;
+  else { s.col = col; s.dir = -1; }
+  renderTable(type);
+}
+
+function applySort(trades, type) {
+  const { col, dir } = sortState[type];
+  return [...trades].sort((a, b) => {
+    let va, vb;
+    if (col === 'total')    { va = calcTotal(a);    vb = calcTotal(b); }
+    else if (col === 'pct') { va = calcPct(a);      vb = calcPct(b); }
+    else if (col === 'r')   { const ra = calcStopRisk(a), rb = calcStopRisk(b); va = ra ? calcTotal(a)/ra : -Infinity; vb = rb ? calcTotal(b)/rb : -Infinity; }
+    else if (col === 'symbol')    { return dir * a.symbol.localeCompare(b.symbol); }
+    else if (col === 'entryDate') { return dir * (new Date(b.entryDate) - new Date(a.entryDate)) * -1; }
+    else { va = a[col] || 0; vb = b[col] || 0; }
+    return dir * (va - vb);
+  });
+}
+
+function applySearch(trades, type) {
+  const q = searchQuery[type].trim().toLowerCase();
+  if (!q) return trades;
+  return trades.filter(t => t.symbol.toLowerCase().includes(q));
+}
+
+function tradeSector(tr) {
+  const raw = (tr.symbol || '').toUpperCase().replace(/USDT\.P|USDT|\.P$/,'');
+  const sec = SECTOR_MAP[raw];
+  // Unescaped here, this was the file's one real XSS sink: it fires precisely
+  // for symbols missing from SECTOR_MAP, and neither the CSV importer nor the
+  // IBKR Flex parser applies the save-path symbol filter, so a hostile symbol
+  // from an imported statement reached the attribute raw.
+  if (!sec) return `<span class="sector-cell" data-sym="${esc(raw)}" style="color:var(--text3)">—</span>`;
+  return `<span class="sector-cell" style="color:var(--text2);font-size:12px">${esc(sec)}</span>`;
+}
+
+function tradeStatus(tr) {
+  const closed = +tr.closedShares || 0;
+  const total  = +tr.shares || 0;
+  if (tr.exitPrice && closed >= total && total > 0) return '<span class="status-badge closed">סגור</span>';
+  if (tr.exitPrice || tr.closeDate)                 return '<span class="status-badge partial">חלקי</span>';
+  return '<span class="status-badge open">פתוח</span>';
+}
+
+function thSort(type, col, label, currentCol, currentDir) {
+  const active = currentCol === col;
+  const cls = active ? (currentDir === 1 ? 'sort-asc' : 'sort-desc') : '';
+  const arrow = active
+    ? (currentDir === 1
+        ? `<svg width="8" height="8" viewBox="0 0 8 8" style="margin-right:4px;vertical-align:middle;opacity:1;color:var(--accent)" fill="currentColor"><path d="M4 1L7 6H1z"/></svg>`
+        : `<svg width="8" height="8" viewBox="0 0 8 8" style="margin-right:4px;vertical-align:middle;opacity:1;color:var(--accent)" fill="currentColor"><path d="M4 7L1 2H7z"/></svg>`)
+    : `<svg width="8" height="8" viewBox="0 0 8 8" style="margin-right:4px;vertical-align:middle;opacity:0.25" fill="currentColor"><path d="M4 1L6.5 4H1.5z"/><path d="M4 7L1.5 4H6.5z"/></svg>`;
+  return `<th class="sortable ${cls}" onclick="sortTable('${type}','${col}')">${label}${arrow}</th>`;
+}
+
+// ─────────────────────────────────────────────
+// CALENDAR VIEW
+// ─────────────────────────────────────────────
+const tableViewMode = { stock: 'table', crypto: 'table' };
+const calendarNav   = { stock: null, crypto: null, overview: null };
+let _ovLiveTimer = null;
+const CAL_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+const TBL_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="0.5" fill="currentColor"/><circle cx="3" cy="12" r="0.5" fill="currentColor"/><circle cx="3" cy="18" r="0.5" fill="currentColor"/></svg>`;
+
+// Compact trades table (col-adv columns hidden) — on by default (the calmer
+// state; the extra 7 columns are still one row-click away), opt-out,
+// persisted across reloads. Same table serves both stock and crypto scope.
+function _compactColsOn() {
+  try { return localStorage.getItem('tj_compact_cols') !== '0'; } catch { return true; }
+}
+function toggleCompactCols() {
+  const next = !_compactColsOn();
+  try { localStorage.setItem('tj_compact_cols', next ? '1' : '0'); } catch {}
+  renderTable('stock');
+}
+
+function toggleTableView(type) {
+  tableViewMode[type] = tableViewMode[type] === 'table' ? 'calendar' : 'table';
+  if (tableViewMode[type] === 'table') { calendarNav[type] = null; renderTable(type); return; }
+  if (tableViewMode[type] === 'calendar' && !calendarNav[type]) {
+    const p = type === 'stock' ? 'st' : 'cr';
+    const f = getFilter(p);
+    if (f.month && f.year) {
+      calendarNav[type] = { year: +f.year, month: +f.month };
+    } else {
+      const arr = (type === 'stock' ? db.stocks : db.crypto).filter(t => !t.deleted && t.entryDate);
+      const pool = f.year ? arr.filter(t => t.entryDate.startsWith(f.year)) : arr;
+      if (pool.length) {
+        const latest = pool.reduce((b, t) => t.entryDate > b.entryDate ? t : b);
+        const d = new Date(latest.entryDate + 'T00:00:00');
+        calendarNav[type] = { year: d.getFullYear(), month: d.getMonth() + 1 };
+      } else {
+        const now = new Date();
+        calendarNav[type] = { year: f.year ? +f.year : now.getFullYear(), month: now.getMonth() + 1 };
+      }
+    }
+  }
+  renderTable(type);
+}
+function calNavPrev(type) {
+  const n = calendarNav[type];
+  calendarNav[type] = n.month === 1 ? { year: n.year-1, month: 12 } : { year: n.year, month: n.month-1 };
+  if (type === 'overview') _ovGoToMonth(); else renderTable(type);
+}
+function calNavNext(type) {
+  const n = calendarNav[type];
+  calendarNav[type] = n.month === 12 ? { year: n.year+1, month: 1 } : { year: n.year, month: n.month+1 };
+  if (type === 'overview') _ovGoToMonth(); else renderTable(type);
+}
+// Overview calendar nav drives the period filter so KPIs, chart and calendar all move together.
+function _ovGoToMonth() {
+  const { month, year } = calendarNav.overview;
+  const ys = document.getElementById('ov-year');
+  if (ys && ![...ys.options].some(o => +o.value === year)) {
+    const opt = document.createElement('option');
+    opt.value = year; opt.textContent = year;
+    ys.appendChild(opt);
+  }
+  _setPeriod('ov', month, year);
+}
+
+function renderCalendar(type) {
+  const isAll = type === 'all';
+  const navType = isAll ? 'overview' : type;
+  const p    = isAll ? 'ov' : (type === 'stock' ? 'st' : 'cr');
+  const wrap = document.getElementById(isAll ? 'ov-calendar' : (type === 'stock' ? 'stocks-wrap' : 'crypto-wrap'));
+  if (!wrap) return;   // #crypto-wrap is gone — same guard renderTable already has
+  if (!calendarNav[navType]) {
+    const f = getFilter(p), now = new Date();
+    calendarNav[navType] = { year: f.year?+f.year:now.getFullYear(), month: f.month?+f.month:now.getMonth()+1 };
+  }
+  const { year, month } = calendarNav[navType];
+  const arr = isAll
+    ? (ovScope === 'stock' ? db.stocks : ovScope === 'crypto' ? db.crypto : [...db.stocks, ...db.crypto]).filter(t => !t.deleted)
+    : (type === 'stock' ? db.stocks : db.crypto).filter(t => !t.deleted);
+
+  // Group trades by day
+  const byDay = {};
+  arr.forEach(t => {
+    if (!t.entryDate) return;
+    const d = new Date(t.entryDate+'T00:00:00');
+    if (d.getFullYear() === year && d.getMonth()+1 === month) {
+      const key = t.entryDate.slice(0,10);
+      if (!byDay[key]) byDay[key] = [];
+      byDay[key].push(t);
+    }
+  });
+
+  const allMonthTrades = Object.values(byDay).flat();
+  // calcTotal on an open position is -commission, so summing unfiltered turned
+  // every open trade into a small loss: it dragged the month total down, and
+  // the win/loss badge counted each one as a loss. stats() was fixed to
+  // realised-only long ago; the calendar was not. Rows stay in byDay so the day
+  // still shows it was traded — only the money is realised-only.
+  const realised = arr => arr.filter(isClosed);
+  const monthTotal = realised(allMonthTrades).reduce((s,t) => s+calcTotal(t), 0);
+  const totalStyle = monthTotal > 0 ? 'color:var(--green)' : monthTotal < 0 ? 'color:var(--red)' : 'color:var(--text2)';
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const startDow    = new Date(year, month-1, 1).getDay(); // 0=Sun
+  const todayObj    = new Date();
+  const todayStr    = `${todayObj.getFullYear()}-${String(todayObj.getMonth()+1).padStart(2,'0')}-${String(todayObj.getDate()).padStart(2,'0')}`;
+
+  // Build cell array (null = empty, number = day)
+  const cells = Array(startDow).fill(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  // In RTL grid: HTML order = [Sun, Mon, Tue, Wed, Thu, Fri, Sat, WeekSum]
+  // grid-template-columns: repeat(7,1fr) 110px → WeekSum is leftmost in RTL
+  const DAY_HDRS_HE = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת','סיכום שבועי'];
+  const DAY_HDRS_EN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat','Weekly Sum'];
+  const DAY_HDRS_ORDER = _lang === 'he' ? DAY_HDRS_HE : DAY_HDRS_EN;
+
+  const winsCount  = realised(allMonthTrades).filter(t => calcTotal(t) > 0).length;
+  const lossCount  = realised(allMonthTrades).length - winsCount;
+
+  const _isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  if (_isLight) {
+    wrap.style.setProperty('background', '#ffffff', 'important');
+    wrap.style.setProperty('border-color', '#e2e8f0', 'important');
+  } else {
+    wrap.style.removeProperty('background');
+    wrap.style.removeProperty('border-color');
+  }
+  const _calBg = _isLight ? 'style="background:#ffffff !important;"' : '';
+
+  let html = `<div class="cal-wrap" ${_calBg}>
+  <div class="cal-header" ${_calBg}>
+    <button class="cal-nav-btn" onclick="calNavPrev('${navType}')" title="חודש קודם" aria-label="חודש קודם"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <div class="cal-title">
+      <span class="cal-title-month">${months()[month-1]} ${year}</span>
+      ${allMonthTrades.length ? `<span class="cal-divider"></span>
+      <span class="cal-summary sensitive" style="${totalStyle}">${fmtUSD(monthTotal)}</span>
+      <span class="cal-divider"></span>
+      <span class="cal-trade-count">${allMonthTrades.length} ${t('trades')} · ${winsCount}W / ${lossCount}L</span>` : `<span class="cal-trade-count cal-no-trades">${t('cal_no_trades')}</span>`}
+    </div>
+    <button class="cal-nav-btn" onclick="calNavNext('${navType}')" title="חודש הבא" aria-label="חודש הבא"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+  </div>
+  <div class="cal-scroll"><div class="cal-grid">`;
+
+  // Header row — days first, week-sum last (RTL: WeekSum appears leftmost)
+  DAY_HDRS_ORDER.forEach((h,i) => {
+    const isLast = i === DAY_HDRS_ORDER.length - 1;
+    html += `<div class="cal-day-hdr${isLast?' hdr-week':''}">${h}</div>`;
+  });
+
+  // Weeks — day cells first (Sun→Sat), then WeekSum last
+  const numWeeks = cells.length / 7;
+  for (let w = 0; w < numWeeks; w++) {
+    const weekDays = cells.slice(w*7, w*7+7);
+
+    // Day cells Sun(0)→Sat(6)
+    weekDays.forEach((day, colIdx) => {
+      const isWeekend = colIdx === 5 || colIdx === 6; // Fri=5, Sat=6
+      if (day === null) {
+        html += `<div class="cal-empty${isWeekend?' weekend':''}"></div>`;
+      } else {
+        const ds = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const dt = byDay[ds] || [];
+        const dayTotal = realised(dt).reduce((s,t) => s+calcTotal(t), 0);
+        const isToday  = ds === todayStr;
+        const cls = [
+          'cal-cell',
+          dt.length ? 'has-trades' : '',
+          isWeekend   ? 'weekend'    : '',
+          isToday     ? 'today'      : ''
+        ].filter(Boolean).join(' ');
+        const dtStyle = dayTotal >= 0 ? 'color:var(--green)' : 'color:var(--red)';
+        const plStr1 = dt.length === 1 ? fmtUSD(calcTotal(dt[0])) : '';
+        html += `<div class="${cls}" ${dt.length > 1 ? `onclick="showCalDayModal('${ds}')" onkeydown="if((event.key==='Enter'||event.key===' ')&&event.target===this){event.preventDefault();showCalDayModal('${ds}')}" role="button" tabindex="0" style="cursor:pointer"` : ''}>
+          <div class="cal-date">${day}</div>
+          ${dt.length === 1 ? `<div class="cal-chip ${calcPL(dt[0])>=0?'win':'loss'}" onclick="event.stopPropagation();showCalTradeModal('${dt[0].type}','${dt[0].id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();showCalTradeModal('${dt[0].type}','${dt[0].id}')}" role="button" tabindex="0">
+              <span class="cal-chip-sym">${esc(dt[0].symbol)}</span>
+              <span class="cal-chip-pl sensitive">${plStr1}</span>
+            </div>` : ''}
+          ${dt.length > 1 ? `<div class="cal-multi-badge sensitive" style="${dtStyle}">
+              <span class="cal-multi-count">${dt.length}</span>
+              <span class="cal-multi-pl">${fmtUSD(dayTotal)}</span>
+            </div>` : ''}
+        </div>`;
+      }
+    });
+
+    // Weekly summary cell — rendered last = leftmost column in RTL
+    const wTrades = weekDays.filter(Boolean).flatMap(d => {
+      const ds = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      return byDay[ds] || [];
+    });
+    const wTotal = realised(wTrades).reduce((s,t) => s+calcTotal(t), 0);
+    if (wTrades.length) {
+      const wCls = wTotal >= 0 ? 'color:var(--green)' : 'color:var(--red)';
+      html += `<div class="cal-week-sum">
+        <span class="cal-week-pl sensitive" style="${wCls}">${fmtUSD(wTotal)}</span>
+        <span class="cal-week-count">${wTrades.length} ${t('trades')}</span>
+      </div>`;
+    } else {
+      html += `<div class="cal-week-sum"><span class="cal-week-empty">—</span></div>`;
+    }
+  }
+
+  html += `</div></div></div>`;
+  wrap.innerHTML = html;
+}
+
+// Builds the expandable detail row for a trade. Pure given `tr` — used both by
+// the full renderTable and by the partial toggleTradeRow (no full re-render).
+function _expandedRowHTML(tr, key) {
+  const tot   = calcTotal(tr);
+  const risk  = calcRisk(tr);
+  const pct   = calcPct(tr);
+  const stopR = calcStopRisk(tr);
+  const rVal  = stopR ? tot / stopR : null;
+  const stopDist = tr.entryPrice && tr.stop
+    ? Math.abs((tr.entryPrice - tr.stop) / tr.entryPrice * 100)
+    : null;
+  const commission = +(tr.commission || 0);
+  const isWin = tot > 0;
+
+  const tile = (label, val, col) =>
+    `<div class="tr-tile">
+      <div class="tr-tile-val" style="color:${col||'var(--text)'}">${val}</div>
+      <div class="tr-tile-label">${label}</div>
+    </div>`;
+
+  const tgtsHtml = tr.t && tr.t.length
+    ? tr.t.map((tg,i)=>`<span class="tr-target-pill"><strong>T${i+1}</strong> ${tg.shares} @ $${fmtPrice(tg.price)}</span>`).join('')
+    : `<span style="color:var(--text3);font-size:12px;">${t('tile_no_targets')}</span>`;
+
+  const mcLabel = {'green':t('mc_green'),'orange':t('mc_orange'),'red':t('mc_red'),'easy':t('mc_easy'),'hard':t('mc_hard'),'up':t('mc_up'),'press':t('mc_press'),'down':t('mc_down')};
+  const mcSafe = Object.prototype.hasOwnProperty.call(mcLabel, tr.marketCond) ? tr.marketCond : '';
+
+  const noteKeep = tr.notes_keep
+    ? `<div class="tr-note tr-note-keep"><div class="tr-note-label">${t('tile_keep')}</div><div class="tr-note-text">${esc(tr.notes_keep)}</div></div>` : '';
+  const noteImp = tr.notes_improve
+    ? `<div class="tr-note tr-note-imp"><div class="tr-note-label">${t('tile_improve')}</div><div class="tr-note-text">${esc(tr.notes_improve)}</div></div>` : '';
+  const noNotes = !tr.notes_keep && !tr.notes_improve
+    ? `<span style="color:var(--text3);font-size:12px;">${t('tile_no_notes')}</span>` : '';
+
+  return `<tr class="expanded-row" data-expkey="${key}">
+    <td colspan="20">
+      <div class="tr-review">
+
+        <!-- Metric tiles -->
+        <div class="tr-tiles">
+          ${tile(t('tile_net_pl'), `<span class="sensitive">${fmtUSD(tot)}</span>`, tot>=0?'var(--green)':'var(--red)')}
+          ${tile(t('tile_return'), `<span class="sensitive">${fmtPct(pct)}</span>`, pct>=0?'var(--green)':'var(--red)')}
+          ${tile(t('tile_r_mult'), rVal!==null ? fmtR(tot,stopR) : '—', rVal===null?'var(--text3)':rVal>=1?'var(--green)':rVal>=0?'var(--yellow)':'var(--red)')}
+          ${tile(t('tile_risk'), risk>0?`<span class="sensitive">${fmtUSD(risk)}</span>`:'—', 'var(--text)')}
+          ${tile(t('tile_stop_dist'), stopDist!==null?`${fmt(stopDist,1)}%`:'—', 'var(--text)')}
+          ${tile(t('tile_commission'), `<span class="sensitive">$${fmt(commission)}</span>`, 'var(--text3)')}
+        </div>
+
+        <!-- Price flow -->
+        <div class="tr-flow-row">
+          <div class="tr-flow-block">
+            <div class="tr-flow-label">${t('tile_entry')}</div>
+            <div class="tr-flow-price sensitive">$${fmtPrice(tr.entryPrice)}</div>
+            <div class="tr-flow-sub">${fmtDate(tr.entryDate)}</div>
+          </div>
+          <div class="tr-flow-arrow">→</div>
+          <div class="tr-flow-block">
+            <div class="tr-flow-label">${t('tile_stop')}</div>
+            <div class="tr-flow-price sensitive" style="color:var(--red)">$${fmtPrice(tr.stop)}</div>
+            <div class="tr-flow-sub">${stopDist!==null?fmt(stopDist,1)+'% '+t('tile_from_entry'):''}</div>
+          </div>
+          <div class="tr-flow-arrow">→</div>
+          <div class="tr-flow-block">
+            <div class="tr-flow-label">${t('tile_exit')}</div>
+            <div class="tr-flow-price sensitive" style="color:${isWin?'var(--green)':'var(--red)'}">$${fmtPrice(tr.exitPrice||tr.entryPrice)}</div>
+            <div class="tr-flow-sub">${tr.closeDate?fmtDate(tr.closeDate):''}</div>
+          </div>
+          ${tr.t&&tr.t.length?`<div class="tr-flow-arrow" style="color:var(--text3)">|</div>
+          <div class="tr-flow-block">
+            <div class="tr-flow-label">${t('tile_partial_tgt')}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">${tgtsHtml}</div>
+          </div>`:''}
+          ${mcSafe?`<div class="tr-flow-arrow" style="color:var(--text3)">|</div>
+          <div class="tr-flow-block">
+            <div class="tr-flow-label">${t('tile_market_cond')}</div>
+            <div class="tr-flow-price" style="font-size:13px;color:var(--text2)">${mcLabel[mcSafe]}</div>
+          </div>`:''}
+        </div>
+
+        <!-- Notes -->
+        ${noteKeep||noteImp||noNotes?`<div class="tr-notes-row">${noteKeep}${noteImp}${noNotes}</div>`:''}
+
+      </div>
+    </td>
+  </tr>`;
+}
+
+// FMP's symbol-image endpoint serves crypto logos too, but only keyed as
+// base+USD (BTCUSD.png) — never the bare ticker, and never a broker's pair
+// suffix (BTCUSDT, BEAMUSDT.P). Stock tickers pass through unchanged.
+// A broker/CSV symbol stripped to its base asset — "BEAMUSDT.P" -> "BEAM",
+// "BTC" -> "BTC" unchanged. Shared by the logo lookup and the live-quote
+// symbol below so the two never drift on what "the base asset" means.
+function _cryptoBaseSymbol(sym) {
+  return String(sym || '').replace(/\.P$/i, '').replace(/(USDT|USD|BUSD)$/i, '');
+}
+function _symLogoUrl(tr, type) {
+  if ((tr._tt || type) !== 'crypto') return `https://images.financialmodelingprep.com/symbol/${encodeURIComponent(tr.symbol)}.png`;
+  return `https://images.financialmodelingprep.com/symbol/${encodeURIComponent(_cryptoBaseSymbol(tr.symbol))}USD.png`;
+}
+
+function renderTable(type) {
+  const p = type==='stock' ? 'st' : 'cr';
+  const wrap = document.getElementById(type==='stock' ? 'stocks-wrap' : 'crypto-wrap');
+  // Crypto was folded into the stocks tab behind the scope switch, so
+  // #crypto-wrap no longer exists and every renderTable('crypto') threw on the
+  // first wrap.innerHTML. Broker sync calls it right after the inserts commit,
+  // so a successful IBKR/Bybit import reported itself as a failure — and the
+  // Flex cache path swallowed the throw before stamping imported_at, causing
+  // the same statement to re-import on every tick.
+  if (!wrap) return;
+
+  // Update toggle button icon
+  const toggleBtn = document.getElementById(p+'-view-toggle');
+  if (toggleBtn) {
+    const isCalMode = tableViewMode[type] === 'calendar';
+    toggleBtn.innerHTML = isCalMode ? TBL_ICON + ' ' + t('view_table') : CAL_ICON + ' ' + t('view_calendar');
+  }
+  const compactBtn = document.getElementById('st-compact-toggle');
+  if (compactBtn) compactBtn.textContent = _compactColsOn() ? 'עמודות מלאות' : 'עמודות בסיס';
+
+  // Calendar mode
+  if (tableViewMode[type] === 'calendar') { renderCalendar(type); return; }
+
+  const {month, year} = getFilter(p);
+  let trades = filterTrades(type, month, year);
+  trades = applySearch(trades, type);
+  trades = applySort(trades, type);
+  const { col: sc, dir: sd } = sortState[type];
+
+  // stats bar
+  const st = stats(trades);
+  const el = document.getElementById(p+'-stats');
+  if (el) {
+    const totalColor = st.total >= 0 ? 'var(--green)' : 'var(--red)';
+    el.innerHTML = `${trades.length} trades &nbsp;|&nbsp; P&amp;L: <strong style="color:${totalColor}">${fmtUSD(st.total)}</strong> &nbsp;|&nbsp; Win: <strong>${fmt(st.wr,1)}%</strong> &nbsp;|&nbsp; ${st.wins}W / ${st.losses}L`;
+  }
+
+  // info
+  const info = document.getElementById(p+'-filter-info');
+  if (info) info.textContent = (month||year) ? `${month ? months()[+month-1] : ''} ${year||''}`.trim() : '';
+
+  if (!trades.length) {
+    const _emptyIcon = type==='stock'
+      ? `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`
+      : `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.5 9a3 3 0 0 1 5 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>`;
+    const dbArr = type === 'stock' ? db.stocks : db.crypto;
+    const isFirstUse = dbArr.filter(tr => !tr.deleted).length === 0;
+    wrap.innerHTML = isFirstUse
+      ? `<div class="empty-state">
+           <div class="empty-icon">${_emptyIcon}</div>
+           <p style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:0">${type === 'stock' ? 'עדיין אין עסקאות מניות' : 'עדיין אין עסקאות קריפטו'}</p>
+           <p style="font-size:13px;margin-top:8px;max-width:260px">תעד את הפוזיציה הראשונה שלך ותתחיל לעקוב אחרי הביצועים</p>
+           <button onclick="openModal('${type}')" style="margin-top:20px;padding:9px 22px;background:var(--accent);color:#fff;border:none;border-radius:var(--r-md);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s;" onmouseenter="this.style.opacity='.85'" onmouseleave="this.style.opacity='1'">+ הוסף עסקה ראשונה</button>
+         </div>`
+      : `<div class="empty-state"><div class="empty-icon">${_emptyIcon}</div><p>${t('no_trades')}</p>
+           <button onclick="resetFilter('${p}')" style="margin-top:16px;padding:8px 18px;background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:var(--r-md);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition: background-color .15s, border-color .15s, color .15s, opacity .15s, transform .15s, box-shadow .15s;" onmouseenter="this.style.background='var(--accent)';this.style.color='#fff'" onmouseleave="this.style.background='transparent';this.style.color='var(--accent)'">${_lang==='he'?'נקה סינון':'Clear filter'}</button>
+         </div>`;
+    return;
+  }
+
+  let h = `<table><colgroup>
+    <col style="width:44px"><col style="width:110px"><col style="width:54px">
+    <col style="width:90px"><col style="width:110px">
+    <col style="width:90px"><col style="width:90px"><col style="width:80px">
+    <col style="width:80px"><col style="width:70px"><col style="width:110px">
+    <col style="width:100px"><col style="width:90px"><col style="width:70px">
+    <col style="width:80px"><col style="width:90px"><col style="width:70px">
+    <col style="width:60px"><col style="min-width:100px">
+  </colgroup><thead><tr>
+    <th>#</th>
+    ${thSort(type,'entryDate',t('col_entry_date'),sc,sd)}
+    <th>L/S</th>
+    <th>${t('col_status')}</th>
+    <th class="col-adv">${t('col_reason')}</th>
+    ${thSort(type,'symbol',t('col_symbol'),sc,sd)}
+    <th>${t('col_entry')}</th>
+    <th>${t('col_shares')}</th>
+    <th class="col-adv">${t('col_stop')}</th>
+    <th class="col-adv">${t('col_targets')}</th>
+    <th class="col-adv">${t('col_close_date')}</th>
+    <th class="col-adv">${t('col_closed_shares')}</th>
+    <th>${t('col_exit')}</th>
+    <th class="col-adv">${t('col_sector')}</th>
+    <th class="col-adv">${t('col_commission')}</th>
+    <th class="calc-cell">${thSort(type,'total',t('col_total'),sc,sd).replace('<th','<span').replace('</th>','</span>')}</th>
+    <th class="calc-cell">${thSort(type,'pct','%',sc,sd).replace('<th','<span').replace('</th>','</span>')}</th>
+    <th class="calc-cell">${thSort(type,'r','R',sc,sd).replace('<th','<span').replace('</th>','</span>')}</th>
+    <th>${t('col_actions')}</th>
+  </tr></thead><tbody>`;
+
+  // Pre-compute per-year stats when no year filter (for group headers)
+  let yearStatsMap = {};
+  if (!year) {
+    trades.forEach(tr => {
+      const y = tr.entryDate ? tr.entryDate.slice(0,4) : '—';
+      if (!yearStatsMap[y]) yearStatsMap[y] = [];
+      yearStatsMap[y].push(tr);
+    });
+  }
+  let lastRenderedYear = null;
+
+  // Build per-year sequential trade numbers based on chronological entry date
+  // Use all trades of this type (not just filtered) for accurate year numbering
+  // In "all"/"crypto" scope the rendered rows span both arrays, so numbering and
+  // new-row detection have to cover both — keyed on each row's own type. Before
+  // this, every crypto row was numbered "—" and flashed as new on every render.
+  const _fullIds = new Set([...db.stocks, ...db.crypto].filter(t => !t.deleted).map(t => t.id));
+  const _prevIds = _prevTradeIds[type];
+  const yearTradeNum = { stock: {}, crypto: {} };
+  ['stock', 'crypto'].forEach(tt => {
+    [...(tt === 'stock' ? db.stocks : db.crypto)]
+      .filter(t => !t.deleted)
+      .sort((a, b) => (a.entryDate || '').localeCompare(b.entryDate || ''))
+      .forEach(t => {
+        const y = t.entryDate ? t.entryDate.slice(0, 4) : '—';
+        if (!yearTradeNum[tt][y]) yearTradeNum[tt][y] = { next: 1 };
+        yearTradeNum[tt][y][t.id] = yearTradeNum[tt][y].next++;
+      });
+  });
+
+  trades.forEach(tr => {
+    // Year group header when no year filter is active
+    if (!year) {
+      const trYear = tr.entryDate ? tr.entryDate.slice(0,4) : '—';
+      if (trYear !== lastRenderedYear) {
+        lastRenderedYear = trYear;
+        const yst = stats(yearStatsMap[trYear]);
+        const ytc = yst.total >= 0 ? 'var(--green)' : 'var(--red)';
+        h += `<tr class="year-group-row"><td colspan="20">
+          <span class="year-group-label">📅 ${trYear}</span>
+          <span class="year-group-stats">${yearStatsMap[trYear].length} ${t('trades')} &nbsp;|&nbsp; P&L: <strong style="color:${ytc}">${fmtUSD(yst.total)}</strong> &nbsp;|&nbsp; Win: <strong>${fmt(yst.wr,1)}%</strong> &nbsp;|&nbsp; ${yst.wins}W / ${yst.losses}L</span>
+        </td></tr>`;
+      }
+    }
+
+    const pl = calcPL(tr);
+    const tot = calcTotal(tr);
+    const risk = calcRisk(tr);
+    const pct = calcPct(tr);
+    const rowCls = tot > 0 ? 'profit' : tot < 0 ? 'loss' : '';
+    const key = type+'-'+tr.id;
+    const isExp = expanded[key];
+
+    const trYear = tr.entryDate ? tr.entryDate.slice(0,4) : '—';
+    const trNum = yearTradeNum[tr._tt || type]?.[trYear]?.[tr.id] ?? '—';
+    const _flash = _prevIds && !_prevIds.has(tr.id) ? ' row-flash' : '';
+    h += `<tr class="data-row ${rowCls}${_flash}" data-rowkey="${key}" role="button" tabindex="0" aria-expanded="${isExp?'true':'false'}" onclick="toggleTradeRow('${type}',${tr.id})" onkeydown="if((event.key==='Enter'||event.key===' ')&&event.target===this){event.preventDefault();toggleTradeRow('${type}',${tr.id})}">
+      <td style="color:var(--text);font-size:12px;font-weight:600;"><span style="display:flex;align-items:center;gap:4px"><svg class="row-expand-chevron" width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3.5L5 6.5L8 3.5"/></svg>${trNum}</span></td>
+      <td>${fmtDate(tr.entryDate)}</td>
+      <td><span class="badge badge-${tr.ls}">${tr.ls}</span></td>
+      <td>${tradeStatus(tr)}</td>
+      <td class="col-adv">${erBadge(tr.entryReason)}</td>
+      <td><span style="display:flex;align-items:center;gap:6px;width:100%"><img src="${_symLogoUrl(tr,type)}" alt="" loading="lazy" style="width:18px;height:18px;border-radius:50%;object-fit:cover;background:rgba(255,255,255,0.08);flex-shrink:0" onerror="this.style.visibility='hidden'"><strong style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(tr.symbol)}</strong></span></td>
+      <td class="sensitive">$${fmtPrice(tr.entryPrice)}</td>
+      <td>${tr.shares}</td>
+      <td class="col-adv sensitive">$${fmtPrice(tr.stop)}</td>
+      <td class="col-adv">${tr.t&&tr.t.length ? `<span style="color:var(--purple);font-weight:700;">T${tr.t.length}</span>` : '<span style="color:var(--text3)">—</span>'}</td>
+      <td class="col-adv">${fmtDate(tr.closeDate)}</td>
+      <td class="col-adv">${tr.closedShares||'—'}</td>
+      <td class="sensitive">$${fmtPrice(tr.exitPrice)}</td>
+      <td class="col-adv">${tradeSector(tr)}</td>
+      <td class="col-adv sensitive">$${fmt(tr.commission)}</td>
+      <td class="calc-cell"><span class="${clr(tot)} sensitive">${fmtUSD(tot)}</span></td>
+      <td class="calc-cell"><span class="${clr(pct)} sensitive">${fmtPct(pct)}</span></td>
+      <td class="calc-cell sensitive">${fmtR(tot,calcStopRisk(tr))}</td>
+      <td onclick="event.stopPropagation()">
+        <div style="display:flex;gap:5px;align-items:center;">
+          <button class="btn-icon" title="ערוך" onclick="editTrade('${tr._tt||type}','${tr.id}')" aria-label="ערוך עסקה"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+          <button class="btn-icon danger" title="מחק" onclick="deleteTrade('${tr._tt||type}','${tr.id}')" aria-label="מחק עסקה"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+          <button class="btn-camera" id="cam-btn-${key}" title="צילומי מסך" onclick="openSSModal('${key}','${esc(tr.symbol)}')" aria-label="צילומי מסך"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span class="screenshot-badge" id="ss-count-${key}" style="display:none">0</span></button>
+        </div>
+      </td>
+    </tr>`;
+
+    if (isExp) h += _expandedRowHTML(tr, key);
+  });
+
+  h += '</tbody></table>';
+  _prevTradeIds[type] = _fullIds;
+  wrap.innerHTML = h;
+  wrap.classList.toggle('compact-cols', _compactColsOn());
+  wrap.querySelectorAll('tr.data-row').forEach((row, i) => {
+    row.style.setProperty('--i', Math.min(i, 14));
+    row.classList.add('animate-in');
+  });
+  // Load screenshot counts for each trade row
+  trades.forEach(tr => {
+    const key = type+'-'+tr.id;
+    refreshScreenshotCount(key);
+  });
+
+  // Recycle bin hidden — deleted trades are excluded from view
+
+  applyPrivacy();
+  _fillMissingSectors(type);
+}
+
+const _sectorCache = {};
+// Persist sector holdings across reloads so re-opening a sector is instant
+// (stale-while-revalidate): show the saved data immediately, refresh in the bg.
+const _SECTOR_LS = 'sector_cache_v1';
+function _sectorLoadLS() {
+  try { return JSON.parse(localStorage.getItem(_SECTOR_LS) || '{}'); } catch { return {}; }
+}
+function _sectorSaveLS(ticker, holdings) {
+  try {
+    const all = _sectorLoadLS();
+    all[ticker] = { ts: Date.now(), holdings };
+    localStorage.setItem(_SECTOR_LS, JSON.stringify(all));
+  } catch (e) {}
+}
+async function _fillMissingSectors(type) {
+  const tabEl = document.getElementById('tab-'+(type==='stock'?'stocks':'crypto'));
+  if (!tabEl) return;
+  const cells = tabEl.querySelectorAll('.sector-cell[data-sym]');
+  const seen = new Set();
+  for (const cell of cells) {
+    const sym = cell.dataset.sym;
+    if (!sym || seen.has(sym)) { if (seen.has(sym) && _sectorCache[sym]) cell.textContent = _sectorCache[sym]; continue; }
+    seen.add(sym);
+    if (_sectorCache[sym]) { cell.textContent = _sectorCache[sym]; cell.style.color = 'var(--text2)'; cell.removeAttribute('data-sym'); continue; }
+    try {
+      const token = await _getToken();
+      if (!token) break;
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=stock%2Fprofile2&symbol=${encodeURIComponent(sym)}`,
+        { headers: { 'Authorization': `Bearer ${token}` } });
+      const d = await res.json();
+      const sec = d.finnhubIndustry || '';
+      if (sec) {
+        _sectorCache[sym] = sec;
+        tabEl.querySelectorAll(`.sector-cell[data-sym="${sym}"]`).forEach(el => {
+          el.textContent = sec; el.style.color = 'var(--text2)'; el.removeAttribute('data-sym');
+        });
+      }
+    } catch { /* silent */ }
+  }
+}
+
+function toggleTradeRow(type, id) {
+  const key = type+'-'+id;
+  const wasOpen = !!expanded[key];
+  expanded[key] = !wasOpen;
+
+  // Partial DOM update — avoid rebuilding the whole table (and re-running
+  // entrance animations / screenshot-count fetches) just to open one row.
+  const rowEl = document.querySelector(`tr.data-row[data-rowkey="${key}"]`);
+  if (!rowEl) { renderTable(type); return; }
+  rowEl.setAttribute('aria-expanded', String(!wasOpen));
+
+  if (wasOpen) {
+    const exp = rowEl.nextElementSibling;
+    if (exp && exp.classList.contains('expanded-row') && exp.dataset.expkey === key) exp.remove();
+    return;
+  }
+
+  const tr = (type === 'stock' ? db.stocks : db.crypto).find(t => t.id == id && !t.deleted);
+  if (!tr) { renderTable(type); return; }
+  const tmp = document.createElement('tbody');
+  tmp.innerHTML = _expandedRowHTML(tr, key);
+  const expRow = tmp.firstElementChild;
+  rowEl.after(expRow);
+  applyPrivacy();
+}
+
+function showCalDayModal(ds) {
+  const all = [...db.stocks, ...db.crypto].filter(t => !t.deleted && t.entryDate?.slice(0,10) === ds);
+  if (!all.length) return;
+  // Realised only, matching the calendar cell this modal opens from — an open
+  // position's calcTotal is just -commission and is not a result yet.
+  const dayTotal = all.filter(isClosed).reduce((s,t) => s+calcTotal(t), 0);
+  const dtStyle = dayTotal >= 0 ? 'color:var(--green)' : 'color:var(--red)';
+  const [y,mo,d] = ds.split('-');
+  const title = `${+d}/${+mo}/${y}`;
+  document.getElementById('cal-trade-modal-title').innerHTML =`${title} &nbsp;·&nbsp; ${all.length} ${t('trades')} &nbsp;·&nbsp; <span style="${dtStyle}">${fmtUSD(dayTotal)}</span>`;
+  document.getElementById('cal-trade-modal-body').innerHTML = all.map(tr => {
+    const pl = calcTotal(tr); const pct = calcPct(tr);
+    const plStyle = pl >= 0 ? 'color:var(--green)' : 'color:var(--red)';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;" role="button" tabindex="0" onclick="closeCalTradeModal();setTimeout(()=>showCalTradeModal('${tr.type}','${tr.id}'),120)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();closeCalTradeModal();setTimeout(()=>showCalTradeModal('${tr.type}','${tr.id}'),120)}">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:14px;font-weight:700;color:var(--text)">${esc(tr.symbol)}</span>
+        <span style="font-size:11px;color:var(--text3)">${tr.ls === 'L' ? 'Long' : 'Short'}</span>
+      </div>
+      <div style="text-align:left;">
+        <div class="sensitive" style="font-size:14px;font-weight:700;${plStyle}">${(pl>=0?'+':'')+fmtUSD(pl)}</div>
+        ${pct !== null ? `<div class="sensitive" style="font-size:11px;color:var(--text3)">${(pct>=0?'+':'')+pct.toFixed(2)}%</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('cal-trade-modal').classList.add('open');
+}
+
+function showCalTradeModal(type, id) {
+  const arr = type === 'stock' ? db.stocks : db.crypto;
+  const tr = arr.find(x => String(x.id) === String(id));
+  if (!tr) return;
+
+  const tot   = calcTotal(tr);
+  const risk  = calcRisk(tr);
+  const pct   = calcPct(tr);
+  const stopR = calcStopRisk(tr);
+  const rVal  = stopR ? tot / stopR : null;
+  const stopDist = tr.entryPrice && tr.stop
+    ? Math.abs((tr.entryPrice - tr.stop) / tr.entryPrice * 100)
+    : null;
+  const commission = +(tr.commission || 0);
+  const isWin = tot > 0;
+
+  const tile = (label, val, col) =>
+    `<div class="tr-tile"><div class="tr-tile-val" style="color:${col||'var(--text)'}">${val}</div><div class="tr-tile-label">${label}</div></div>`;
+
+  const tgtsHtml = tr.t && tr.t.length
+    ? tr.t.map((tg,i)=>`<span class="tr-target-pill"><strong>T${i+1}</strong> ${tg.shares} @ $${fmtPrice(tg.price)}</span>`).join('')
+    : `<span style="color:var(--text3);font-size:12px;">${t('tile_no_targets')}</span>`;
+
+  const mcLabel = {'green':t('mc_green'),'orange':t('mc_orange'),'red':t('mc_red'),'easy':t('mc_easy'),'hard':t('mc_hard'),'up':t('mc_up'),'press':t('mc_press'),'down':t('mc_down')};
+  const mcSafe = Object.prototype.hasOwnProperty.call(mcLabel, tr.marketCond) ? tr.marketCond : '';
+
+  const noteKeep = tr.notes_keep
+    ? `<div class="tr-note tr-note-keep"><div class="tr-note-label">${t('tile_keep')}</div><div class="tr-note-text">${esc(tr.notes_keep)}</div></div>` : '';
+  const noteImp = tr.notes_improve
+    ? `<div class="tr-note tr-note-imp"><div class="tr-note-label">${t('tile_improve')}</div><div class="tr-note-text">${esc(tr.notes_improve)}</div></div>` : '';
+  const noNotes = !tr.notes_keep && !tr.notes_improve
+    ? `<span style="color:var(--text3);font-size:12px;">${t('tile_no_notes')}</span>` : '';
+
+  document.getElementById('cal-trade-modal-title').textContent = `${tr.symbol} · ${fmtDate(tr.entryDate)}`;
+  document.getElementById('cal-trade-edit-btn').onclick = () => { closeCalTradeModal(); editTrade(type, id); };
+  document.getElementById('cal-trade-modal-body').innerHTML = `<div class="tr-review">
+    <div class="tr-tiles">
+      ${tile(t('tile_net_pl'), `<span class="sensitive">${fmtUSD(tot)}</span>`, tot>=0?'var(--green)':'var(--red)')}
+      ${tile(t('tile_return'), `<span class="sensitive">${fmtPct(pct)}</span>`, pct>=0?'var(--green)':'var(--red)')}
+      ${tile(t('tile_r_mult'), rVal!==null ? fmtR(tot,stopR) : '—', rVal===null?'var(--text3)':rVal>=1?'var(--green)':rVal>=0?'var(--yellow)':'var(--red)')}
+      ${tile(t('tile_risk'), risk>0?`<span class="sensitive">${fmtUSD(risk)}</span>`:'—', 'var(--text)')}
+      ${tile(t('tile_stop_dist'), stopDist!==null?`${fmt(stopDist,1)}%`:'—', 'var(--text)')}
+      ${tile(t('tile_commission'), `<span class="sensitive">$${fmt(commission)}</span>`, 'var(--text3)')}
+    </div>
+    <div class="tr-flow-row">
+      <div class="tr-flow-block">
+        <div class="tr-flow-label">${t('tile_entry')}</div>
+        <div class="tr-flow-price sensitive">$${fmtPrice(tr.entryPrice)}</div>
+        <div class="tr-flow-sub">${fmtDate(tr.entryDate)}</div>
+      </div>
+      <div class="tr-flow-arrow">→</div>
+      <div class="tr-flow-block">
+        <div class="tr-flow-label">${t('tile_stop')}</div>
+        <div class="tr-flow-price sensitive" style="color:var(--red)">$${tr.stop ? fmtPrice(tr.stop) : '—'}</div>
+        <div class="tr-flow-sub">${stopDist!==null?fmt(stopDist,1)+'% '+t('tile_from_entry'):''}</div>
+      </div>
+      <div class="tr-flow-arrow">→</div>
+      <div class="tr-flow-block">
+        <div class="tr-flow-label">${t('tile_exit')}</div>
+        <div class="tr-flow-price sensitive" style="color:${isWin?'var(--green)':'var(--red)'}">$${fmtPrice(tr.exitPrice||tr.entryPrice)}</div>
+        <div class="tr-flow-sub">${tr.closeDate?fmtDate(tr.closeDate):''}</div>
+      </div>
+    </div>
+    ${tr.t&&tr.t.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.06);border-radius:var(--r-md);">
+      <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);width:100%;margin-bottom:4px;">${t('tile_partial_tgt')}</span>
+      ${tgtsHtml}
+    </div>`:''}
+    ${mcSafe?`<div style="padding:10px 14px;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.06);border-radius:var(--r-md);">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:4px;">${t('tile_market_cond')}</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text2)">${mcLabel[mcSafe]}</div>
+    </div>`:''}
+    ${noteKeep||noteImp||noNotes?`<div class="tr-notes-row">${noteKeep}${noteImp}${noNotes}</div>`:''}
+  </div>`;
+  document.getElementById('cal-trade-modal').classList.add('open');
+  applyPrivacy();
+}
+
+function closeCalTradeModal() {
+  document.getElementById('cal-trade-modal').classList.remove('open');
+}
+
+// ══════════════════════════════════════════════
+// ARCHIVE — שנים קודמות
+// ══════════════════════════════════════════════
+const _ICON_ARCHIVE = `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>`;
+
+function archiveStatCard(label, value, color, sub) {
+  return `<div class="archive-stat-card">
+    <div class="archive-stat-label">${label}</div>
+    <div class="archive-stat-value" style="color:${color}">${value}</div>
+    ${sub ? `<div class="archive-stat-sub">${sub}</div>` : ''}
+  </div>`;
+}
+
+function archiveTradeTable(trades, type) {
+  const sorted = [...trades].sort((a,b)=> (b.entryDate||'').localeCompare(a.entryDate||''));
+  let h = `<div class="table-wrap" style="margin-bottom:16px;"><table><thead><tr>
+    <th>#</th><th>תאריך</th><th>L/S</th><th>סטטוס</th><th>סימבול</th>
+    <th>כניסה</th><th>מניות</th><th>יציאה</th><th>עמלה</th>
+    <th class="calc-cell">סה"כ</th><th class="calc-cell">%</th><th class="calc-cell">R</th>
+  </tr></thead><tbody>`;
+  sorted.forEach((tr,i) => {
+    const tot = calcTotal(tr);
+    const pct = calcPct(tr);
+    const rowCls = tot > 0 ? 'profit' : tot < 0 ? 'loss' : '';
+    h += `<tr class="data-row ${rowCls}">
+      <td>${i+1}</td>
+      <td>${fmtDate(tr.entryDate)}</td>
+      <td><span class="badge badge-${tr.ls}">${tr.ls}</span></td>
+      <td>${tradeStatus(tr)}</td>
+      <td><strong>${esc(tr.symbol)}</strong></td>
+      <td>$${fmtPrice(tr.entryPrice)}</td>
+      <td>${tr.shares}</td>
+      <td>$${fmtPrice(tr.exitPrice)}</td>
+      <td>$${fmt(tr.commission)}</td>
+      <td class="calc-cell"><span class="${clr(tot)}">${fmtUSD(tot)}</span></td>
+      <td class="calc-cell"><span class="${clr(pct)}">${fmtPct(pct)}</span></td>
+      <td class="calc-cell">${fmtR(tot,calcStopRisk(tr))}</td>
+    </tr>`;
+  });
+  h += '</tbody></table></div>';
+  return h;
+}
+
+function archiveToggle(uid) {
+  const body = document.getElementById(uid+'-body');
+  const chev = document.getElementById(uid+'-chev');
+  if (!body) return;
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  if (chev) chev.textContent = open ? '▼' : '▲';
+}
+
+function toggleInlineArchive(type) {
+  const wrapId = type === 'stock' ? 'st-archive-wrap' : 'cr-archive-wrap';
+  const btnId  = type === 'stock' ? 'st-archive-btn'  : 'cr-archive-btn';
+  const wrap = document.getElementById(wrapId);
+  const btn  = document.getElementById(btnId);
+  if (!wrap) { toast('שגיאת מערכת — נסה לרענן את הדף', 'error'); return; }
+  const isOpen = wrap.dataset.open === '1';
+  if (isOpen) {
+    wrap.style.display = 'none';
+    wrap.dataset.open = '0';
+    if (btn) btn.classList.remove('active');
+  } else {
+    renderInlineArchive(type);
+    wrap.style.display = 'block';
+    wrap.dataset.open = '1';
+    if (btn) btn.classList.add('active');
+    wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+function renderInlineArchive(type) {
+  const wrapId = type === 'stock' ? 'st-archive-wrap' : 'cr-archive-wrap';
+  const wrap = document.getElementById(wrapId);
+  if (!wrap) return;
+  const curYear = new Date().getFullYear();
+  const arr = type === 'stock' ? db.stocks : db.crypto;
+
+  const byYear = {};
+  arr.filter(t => !t.deleted && t.entryDate).forEach(t => {
+    const y = +t.entryDate.slice(0, 4);
+    if (y >= curYear) return;
+    if (!byYear[y]) byYear[y] = [];
+    byYear[y].push(t);
+  });
+
+  const years = Object.keys(byYear).map(Number).sort((a, b) => b - a);
+
+  if (!years.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">${_ICON_ARCHIVE}</div><p>אין עסקאות בארכיון — כל העסקאות הן משנת ${curYear}</p></div>`;
+    return;
+  }
+
+  const typeLabel = type === 'stock' ? 'מניות' : 'קריפטו';
+  const uidPfx = type === 'stock' ? 'st-arc' : 'cr-arc';
+  let h = `<div style="padding:4px 0 16px;font-size:12px;color:var(--text3);">ארכיון ${typeLabel} מכיל עסקאות מלפני שנת ${curYear}. לחץ על שנה לפתיחה.</div>`;
+
+  years.forEach(y => {
+    const trades = byYear[y];
+    const yst = stats(trades);
+    const tc = yst.total >= 0 ? 'var(--green)' : 'var(--red)';
+    const uid = uidPfx + '-' + y;
+
+    h += `<div class="archive-year-block" id="${uid}-block">
+      <div class="archive-year-header" onclick="archiveToggle('${uid}')">
+        <span class="archive-year-label">📅 ${y}</span>
+        <span class="archive-year-summary">
+          ${trades.length} עסקאות &nbsp;|&nbsp;
+          P&L: <strong style="color:${tc}">${fmtUSD(yst.total)}</strong> &nbsp;|&nbsp;
+          Win: <strong>${fmt(yst.wr, 1)}%</strong> &nbsp;|&nbsp;
+          ${yst.wins}W / ${yst.losses}L
+        </span>
+        <span class="archive-chevron" id="${uid}-chev">▼</span>
+      </div>
+      <div class="archive-year-body" id="${uid}-body" style="display:none;">
+        <div class="archive-stats-row">`;
+    h += archiveStatCard(typeLabel + ' ' + y, fmtUSD(yst.total), tc, trades.length + ' עסקאות | Win ' + fmt(yst.wr, 1) + '%');
+    if (trades.length) h += archiveStatCard('עסקה הטובה', fmtUSD(yst.best), 'var(--green)', '');
+    if (trades.length) h += archiveStatCard('עסקה הגרועה', fmtUSD(yst.worst), 'var(--red)', '');
+    h += `</div>`;
+    h += archiveTradeTable(trades, type);
+    h += `</div></div>`;
+  });
+
+  wrap.innerHTML = h;
+}
+
+// ─────────────────────────────────────────────
+// OVERVIEW
+// ─────────────────────────────────────────────
+const charts = {};
+
+// ══════════════════════════════════════════════
+// ENTRY REASON HELPERS
+// ══════════════════════════════════════════════
+const ER_OPTIONS = ['LPS','Low Cheat','Cheat','Handle','Breakout'];
+const ER_CLASS   = {'LPS':'lps','Low Cheat':'cheatl','Cheat':'cheath','Handle':'handle','Breakout':'bo'};
+
+function erBadge(er) {
+  if (!er) return '<span style="color:var(--text3)">—</span>';
+  const cls = ER_CLASS[er] || '';
+  return `<span class="er-badge ${cls}">${esc(er)}</span>`;
+}
+
+let qaER = '';
+function qaSetER(val) {
+  qaER = qaER === val ? '' : val; // toggle off on second click
+  document.querySelectorAll('#qa-er-pills .er-pill').forEach(p => {
+    const base = p.dataset.er;
+    const on = base === qaER;
+    p.className = 'er-pill' + (on ? ' active-' + (ER_CLASS[base]||'') : '');
+    p.setAttribute('aria-pressed', on);
+  });
+}
+
+let modalER = '';
+function modalSetER(val) {
+  modalER = modalER === val ? '' : val;
+  document.getElementById('m-entry-reason').value = modalER;
+  document.querySelectorAll('#m-er-pills .er-pill').forEach(p => {
+    const base = p.dataset.er;
+    const on = base === modalER;
+    p.className = 'er-pill' + (on ? ' active-' + (ER_CLASS[base]||'') : '');
+    p.setAttribute('aria-pressed', on);
+  });
+}
+
+// ── Review inbox ──
+// Of 248 trades, 124 came from a broker sync. Those never open the add-trade
+// ── Setup type ──
+// The column and a hidden input already existed but nothing ever wrote to them,
+// which is why all 248 trades carry an empty setup_type and no breakdown by
+// setup was possible. Same pill interaction as the entry reason.
+const SETUP_OPTIONS = ['vcp','breakout','pullback','powerplay','reversal','earnings','other'];
+const SETUP_LABELS = { vcp:'VCP', breakout:'פריצה', pullback:'תיקון', powerplay:'Power Play',
+                       reversal:'היפוך', earnings:'דוחות', other:'אחר' };
+function setupRenderPills(containerId, val) {
+  const host = document.getElementById(containerId); if (!host) return;
+  host.innerHTML = SETUP_OPTIONS.map(s =>
+    `<button type="button" class="er-pill${s===val?' active-blue':''}" data-setup="${s}" aria-pressed="${s===val}"
+      onclick="modalSetSetup('${s}')">${SETUP_LABELS[s]}</button>`).join('');
+}
+function modalSetSetup(val) {
+  const el = document.getElementById('m-setup-type');
+  el.value = el.value === val ? '' : val;
+  setupRenderPills('m-setup-pills', el.value);
+}
+
+function erSetPills(containerId, val) {
+  // used when opening modal with existing trade
+  document.querySelectorAll('#'+containerId+' .er-pill').forEach(p => {
+    const base = p.dataset.er;
+    const on = base === val;
+    p.className = 'er-pill' + (on ? ' active-' + (ER_CLASS[base]||'') : '');
+    p.setAttribute('aria-pressed', on);
+  });
+}
+
+// ══════════════════════════════════════════════
+// MOOD HELPERS
+// ══════════════════════════════════════════════
+const MOOD_OPTIONS = ['focused','calm','confident','stressed','impatient','doubtful'];
+
+// ══════════════════════════════════════════════
+// MINERVINI — PROCESS SCORE & MARKET CONDITION
+// ══════════════════════════════════════════════
+let qaPS = 0;
+let modalPS = 0;
+
+function psSetStars(containerId, val) {
+  document.querySelectorAll('#'+containerId+' span').forEach(s => {
+    s.className = parseInt(s.dataset.v) <= val ? 'on' : '';
+  });
+}
+
+// ══════════════════════════════════════════════
+// QUICK ADD WIDGET
+// ══════════════════════════════════════════════
+let qaLS = 'L';
+let qaCollapsed = false; // managed by modal open/close
+
+function qaInit() {
+  const el = document.getElementById('qa-date');
+  if (el && !el.value) el.value = _todayLocal();
+}
+
+function fabToggle() {
+  const modal = document.getElementById('qa-modal');
+  const isOpen = modal.classList.toggle('open');
+  document.getElementById('fab-btn')?.classList.toggle('open', isOpen);
+  document.body.style.overflow = isOpen ? 'hidden' : '';
+  if (isOpen) {
+    const d = document.getElementById('qa-date');
+    if (d && !d.value) d.value = _todayLocal();
+    setTimeout(() => document.getElementById('qa-symbol')?.focus(), 80);
+  }
+}
+
+// Known crypto base symbols that would otherwise be mistaken for stocks
+const CRYPTO_SYMBOLS = new Set([
+  // ── Layer 1 ──
+  'BTC','ETH','SOL','XRP','ADA','AVAX','DOT','ATOM','NEAR','APT',
+  'SUI','SEI','TON','TIA','INJ','TRX','EOS','XTZ','ALGO','ONE',
+  'EGLD','FTM','CELO','KAVA','ROSE','CFX','CORE','HBAR','VET','ICX',
+  'IOST','IOTA','NANO','QTUM','WAN','ZEN','ZEC','ZIL','WAVES','LSK',
+  'STEEM','ARDR','XEM','NXT','BURST','SC','DCR','DGB','RVN','KMD',
+  // ── Layer 2 & Scaling ──
+  'OP','ARB','MATIC','IMX','METIS','BOBA','CKB','STRK','MANTA','ZK',
+  'ZETA','TAIKO','SCROLL','BASE','BLAST','MODE','MANTLE','LINEA',
+  // ── DeFi Blue Chips ──
+  'UNI','AAVE','MKR','CRV','CVX','BAL','COMP','SNX','YFI','SUSHI',
+  'CAKE','DYDX','GMX','GNS','PERP','PENDLE','RDNT','VELO','AERO',
+  'LDO','RPL','FXS','FRAX','LUSD','RAI','VOLT','FOLD','TOKE','KNC',
+  'BNT','ZRX','1INCH','COW','PSP','DODO','MDX','EPS','ALPACA',
+  // ── Exchange Tokens ──
+  'BNB','OKB','HT','KCS','LEO','FTT','CRO','GT','WRX','MEXC',
+  // ── Meme Coins ──
+  'DOGE','SHIB','PEPE','FLOKI','BONK','WIF','BOME','MYRO','POPCAT',
+  'MEW','TURBO','MEME','HIPPO','RATS','SATS','ORDI','NOT','WEN',
+  'SLERF','TURT','NEIRO','DOGS','HMSTR','CATI','MOODENG','PNUT',
+  'ACT','GOAT','KEKIUS','BRETT','ANDY','GIGA','MOG','APU','CHEEMS',
+  // ── AI & Data ──
+  'FET','AGIX','OCEAN','CTXC','NMR','GRT','BAND','API3','DIA',
+  'RLC','LINK','TRB','UMA','FLUX','AKT','HMT','RNDR','AR','TAO',
+  // ── Gaming & Metaverse ──
+  'AXS','SAND','MANA','ENJ','GALA','ILV','YGG','MAGIC','TLM','SLP',
+  'ALICE','STARL','GHST','ATLAS','POLIS','DEAPL','NAKA','CWAR',
+  // ── Infrastructure & Storage ──
+  'FIL','AR','STORJ','ROSE','SKL','LRC','OMG','OXT','ANKR','BICO',
+  'API3','POKT','HNT','MOBILE','IOT','PRCL','HONEY','WIFI',
+  // ── Privacy ──
+  'XMR','ZEC','DASH','SCRT','DUSK','NYM','OXEN','RAILGUN',
+  // ── Stablecoins & Wrapped ──
+  'USDT','USDC','DAI','BUSD','TUSD','PAXG','LUSD','GUSD','FRAX',
+  'WBTC','WETH','STETH','RETH','CBETH','BBTC','RENBTC','HBTC',
+  // ── BNB Chain Ecosystem ──
+  'CAKE','XVS','BSW','BAKE','BURGER','CHESS','DEGO','FOR','LINA',
+  'MBOX','MIR','NEXO','ONG','QKC','REEF','SFP','STMX','SXP','TCT',
+  'TROY','TWT','UNFI','UTK','VIDT','WING','XNO','BETA','COCOS',
+  // ── Cosmos Ecosystem ──
+  'OSMO','JUNO','EVMOS','STARS','STRD','UMEE','AXL','MARS','KUJI',
+  'SCRT','DVPN','CMDX','HUAHUA','SOMM','NTRN','DYDX','PYTH','JUP',
+  // ── Solana Ecosystem ──
+  'RAY','SRM','FIDA','MNGO','COPE','TULIP','STEP','ORCA','PORT',
+  'SLND','SONAR','MEAN','MEDIA','MIMO','SAMO','CATO','TNSR','JTO',
+  'JITO','DRIFT','ZETA','PYUSD','BONK','WIF','JUP','BOME',
+  // ── Other Notable ──
+  'LTC','BCH','BSV','XLM','VET','THETA','FTM','HBAR','ICP','EGLD',
+  'FLOW','NEAR','RUNE','NEXO','CEL','HEX','PLS','PLSX','INC',
+  'CHZ','ENS','BLUR','X2Y2','LOOKS','RARE','SUPER','NFTY',
+  'GAL','GTC','MASK','DAO','BIT','OX','CYBER','ID','EDU','ACH',
+  'AUDIO','SPELL','TRIBE','ALCX','TOKE','BOND','IDLE','ROOK','FOX',
+  'TORN','BADGER','DIGG','BOR','MTA','DCHF','OUSD','FRAXBP',
+  'NXRA','ATH','ZKJ','ZKSYNC','EIGEN','ETHFI','RENZO','PUFFER',
+  'SSV','OBOL','DVT','LSETH','RSETH','EETH','OSETH','WEETH',
+]);
+
+// ── CoinGecko live symbol list ─────────────────────────────────
+const CGECKO_CACHE_KEY = 'cg-symbols-v1';
+const CGECKO_TTL_MS    = 24 * 60 * 60 * 1000; // 24 hours
+
+async function loadCryptoSymbolsFromCoinGecko() {
+  // 1. Load from cache immediately for instant availability
+  let cachedCount = 0, cachedTs = 0;
+  try {
+    const raw = localStorage.getItem(CGECKO_CACHE_KEY);
+    if (raw) {
+      const { ts, symbols } = JSON.parse(raw);
+      if (Array.isArray(symbols) && symbols.length) {
+        symbols.forEach(s => CRYPTO_SYMBOLS.add(s));
+        cachedCount = symbols.length;
+        cachedTs = ts;
+        updateCryptoStatus('cache', cachedCount, cachedTs);
+      }
+    }
+  } catch(e) {}
+
+  // 2. Refetch only once the cache has actually gone stale. CGECKO_TTL_MS was
+  //    declared but never read, so every single page load re-fetched the whole
+  //    CoinGecko coin list (~1.1MB upstream) for data that changes weekly.
+  if (cachedCount && Date.now() - cachedTs < CGECKO_TTL_MS) return;
+  //    CoinGecko's free API throttles server IPs intermittently, so retry a few
+  //    times with backoff.
+  updateCryptoStatus('loading', cachedCount, cachedTs);
+  const DELAYS = [0, 2000, 5000];
+  for (let i = 0; i < DELAYS.length; i++) {
+    if (DELAYS[i]) await new Promise(r => setTimeout(r, DELAYS[i]));
+    try {
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 30000);
+      const _cgToken = await _getToken();
+      const res = await fetch(
+        `${SUPABASE_URL}/functions/v1/coingecko`,
+        { signal: controller.signal, headers: { 'Authorization': `Bearer ${_cgToken}` } }
+      );
+      clearTimeout(tid);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const coins = await res.json();
+      const symbols = coins
+        .map(c => (c.symbol || '').toUpperCase().trim())
+        .filter(s => s && s.length <= 10 && /^[A-Z0-9]+$/.test(s));
+      const unique = [...new Set(symbols)];
+      unique.forEach(s => CRYPTO_SYMBOLS.add(s));
+      // Save to cache
+      try { localStorage.setItem(CGECKO_CACHE_KEY, JSON.stringify({ ts: Date.now(), symbols: unique })); } catch(e) { console.warn('[CoinGecko] cache save failed:', e); }
+      updateCryptoStatus('live', unique.length, Date.now());
+      return;
+    } catch(e) {
+      console.warn(`[CoinGecko] attempt ${i + 1}/${DELAYS.length} failed:`, e.message);
+    }
+  }
+  // All attempts failed — keep the cached list if we have one (calmer status).
+  updateCryptoStatus(cachedCount ? 'cache' : 'error', cachedCount, cachedTs);
+}
+
+function updateCryptoStatus(state, count, ts) {
+  const el = document.getElementById('crypto-sym-status');
+  if (!el) return;
+  const age = ts ? Math.round((Date.now() - ts) / 3600000) : 0;
+  const he = _lang === 'he';
+  const ageStr = ts ? (age < 1 ? (he ? 'עכשיו' : 'just now') : (he ? `לפני ${age}ש׳` : `${age}h ago`)) : '';
+  const map = {
+    loading: { icon: '🔄', text: count ? `${count.toLocaleString()} ${he?'מטבעות':'coins'} (${he?'מרענן ברקע...':'refreshing...'})` : (he?'טוען מ-CoinGecko...':'Loading from CoinGecko...'), cls: '' },
+    live:    { icon: '🟢', text: `${count.toLocaleString()} ${he?'מטבעות':'coins'} (${he?'עודכן עכשיו':'updated now'})`, cls: 'live' },
+    cache:   { icon: '🔵', text: `${count.toLocaleString()} ${he?'מטבעות':'coins'} (${ageStr})`, cls: 'cache' },
+    error:   { icon: '🔴', text: he?'טעינה נכשלה — משתמש ברשימה מקומית':'Load failed — using local list', cls: 'error' },
+  };
+  const m = map[state] || map.error;
+  el.innerHTML = `<span class="cg-status-icon">${m.icon}</span> ${m.text}
+    ${state !== 'loading' ? `<button class="cg-refresh-btn" onclick="cgRefresh()" title="${he?'רענן רשימה':'Refresh'}">↺</button>` : ''}`;
+  el.className = `cg-status ${m.cls}`;
+}
+
+async function cgRefresh() {
+  localStorage.removeItem(CGECKO_CACHE_KEY);
+  await loadCryptoSymbolsFromCoinGecko();
+}
+// ────────────────────────────────────────────────────────────────
+
+// ── Stock symbol list — Finnhub (daily) with SEC EDGAR fallback ──
+const SEC_CACHE_KEY     = 'sec-symbols-v1';
+const FINNHUB_CACHE_KEY = 'fh-symbols-v1';
+const SEC_TTL_MS        = 7 * 24 * 60 * 60 * 1000;
+const FINNHUB_TTL_MS    = 24 * 60 * 60 * 1000;
+const FINNHUB_KEY_LS    = 'finnhub-api-key';
+let STOCK_SYMBOLS       = new Set();
+
+// In-memory user settings cache (populated by loadUserSettings on login)
+let _userSettings = {};
+
+async function loadUserSettings() {
+  if (!_currentUser) return;
+  const { data } = await _sb.from('user_settings')
+    .select('finnhub_key, fmp_key, av_key, flex_query_id, flex_confirm_query_id, portfolio_total, onboarding_done, order_id_notice_seen')
+    .eq('user_id', _currentUser.id)
+    .single();
+  _userSettings = data || {};
+  // Onboarding-done lives on the server so it follows the user across devices /
+  // cleared caches. Mirror it into localStorage, which the intro checks read.
+  if (_userSettings.onboarding_done) { try { localStorage.setItem('ob_done_' + _currentUser.id, '1'); } catch {} }
+  const av = _currentUser?.user_metadata?.avatar;
+  if (av) _setAvatar(av);
+
+  // Show saved status without exposing key value
+  if (_userSettings.finnhub_key) {
+    const el = document.getElementById('finnhub-key-input');
+    if (el) { el.value = ''; el.placeholder = 'מפתח שמור ✓'; }
+  }
+  if (_userSettings.av_key) {
+    const el = document.getElementById('av-key-input');
+    if (el) { el.value = ''; el.placeholder = 'מפתח שמור ✓'; }
+  }
+  // Broker credentials live in Vault and are never sent to the browser — the
+  // field shows that one is stored, not what it is.
+  const { data: _bp } = await _sb.rpc('broker_secrets_present');
+  _userSettings.flex_token       = _bp?.flex_token       ? true : false;
+  _userSettings.bybit_api_key    = _bp?.bybit_api_key    ? true : false;
+  _userSettings.bybit_api_secret = _bp?.bybit_api_secret ? true : false;
+  if (_userSettings.flex_token) {
+    const el = document.getElementById('flex-token');
+    if (el) { el.value = ''; el.placeholder = 'טוקן שמור ✓'; }
+    _brokerBadgeFromStore('ibkr', true);
+  }
+  if (_userSettings.flex_query_id) {
+    const el = document.getElementById('flex-query-id');
+    if (el) { el.value = _userSettings.flex_query_id; el.placeholder = ''; }
+  }
+  if (_userSettings.flex_confirm_query_id) {
+    const el = document.getElementById('flex-confirm-query-id');
+    if (el) { el.value = _userSettings.flex_confirm_query_id; el.placeholder = ''; }
+    const adv = document.getElementById('flex-advanced');
+    if (adv) adv.style.display = 'block';
+  }
+  if (_userSettings.bybit_api_key) {
+    const el = document.getElementById('bybit-api-key');
+    if (el) { el.value = ''; el.placeholder = 'מפתח שמור ✓'; }
+    const el2 = document.getElementById('bybit-api-secret');
+    if (el2 && _userSettings.bybit_api_secret) { el2.value = ''; el2.placeholder = 'סוד שמור ✓'; }
+    _brokerBadgeFromStore('bybit', true);
+  }
+  renderFmpKeyStatus();
+  // portfolio_total moved to investments.portfolio_total (per-portfolio) —
+  // invInit() populates #inv-portfolio-total from there when the tab loads.
+}
+
+async function _saveUserSettings(patch) {
+  if (!_currentUser) return false;
+  const prev = {};
+  for (const k in patch) prev[k] = _userSettings[k];
+  Object.assign(_userSettings, patch);
+  // The error was discarded, so a rejected upsert still left the value in
+  // memory and every caller toasted success — an API key looked saved, worked
+  // all session, and was gone at next login with nothing having said so.
+  const { error } = await _sb.from('user_settings').upsert(
+    { user_id: _currentUser.id, ...patch },
+    { onConflict: 'user_id' }
+  );
+  if (error) {
+    Object.assign(_userSettings, prev);
+    console.error('user_settings save failed', error);
+    toast('ההגדרה לא נשמרה', 'error');
+    return false;
+  }
+  return true;
+}
+
+function getFinnhubKey() { return _userSettings.finnhub_key || ''; }
+
+async function saveFinnhubKey() {
+  const val = (document.getElementById('finnhub-key-input')?.value || '').trim();
+  await _saveUserSettings({ finnhub_key: val || null });
+  localStorage.removeItem(FINNHUB_CACHE_KEY);
+  const inp = document.getElementById('finnhub-key-input');
+  if (inp) { inp.value = ''; inp.placeholder = val ? 'מפתח שמור ✓' : 'Finnhub API Key'; }
+  toast(val ? 'מפתח Finnhub נשמר 🔐' : 'מפתח הוסר — משתמש ב-SEC EDGAR', 'success');
+  STOCK_SYMBOLS = new Set();
+  loadStockSymbols();
+}
+
+function getFmpKey() { return _userSettings.fmp_key || ''; }
+function getAvKey()  { return _userSettings.av_key  || ''; }
+
+async function saveFmpKey() {
+  const el = document.getElementById('fmp-key-input');
+  const val = (el?.value || '').trim();
+  await _saveUserSettings({ fmp_key: val || null });
+  if (el) el.value = '';
+  toast(val ? 'מפתח FMP נשמר 🔐' : 'מפתח FMP הוסר', 'success');
+  renderFmpKeyStatus();
+}
+
+function renderFmpKeyStatus() {
+  const el = document.getElementById('fmp-key-status');
+  if (!el) return;
+  const key = getFmpKey();
+  el.textContent = key ? '✓ מפתח שמור' : '';
+  el.style.color = key ? 'var(--green)' : 'var(--text3)';
+}
+
+async function saveAvKey() {
+  const val = (document.getElementById('av-key-input')?.value || '').trim();
+  await _saveUserSettings({ av_key: val || null });
+  const inp = document.getElementById('av-key-input');
+  if (inp) { inp.value = ''; inp.placeholder = val ? 'מפתח שמור ✓' : 'Alpha Vantage API Key'; }
+  toast(val ? 'מפתח Alpha Vantage נשמר 🔐' : 'מפתח Alpha Vantage הוסר', 'success');
+}
+
+async function loadStockSymbols() {
+  const key = getFinnhubKey();
+  if (key) await loadFromFinnhub();
+  else     await loadFromSEC();
+}
+
+async function loadFromFinnhub() {
+  // 1. Load from cache immediately
+  let cachedCount = 0, cachedTs = 0;
+  try {
+    const raw = localStorage.getItem(FINNHUB_CACHE_KEY);
+    if (raw) {
+      const { ts, symbols } = JSON.parse(raw);
+      if (Array.isArray(symbols) && symbols.length) {
+        symbols.forEach(s => STOCK_SYMBOLS.add(s));
+        cachedCount = symbols.length;
+        cachedTs = ts;
+        updateStockStatus('cache', cachedCount, cachedTs, 'Finnhub');
+      }
+    }
+  } catch(e) {}
+
+  // 2. Refetch only past the TTL — FINNHUB_TTL_MS was declared but never read,
+  //    so the full US ticker list was re-pulled on every single page load.
+  if (cachedCount && Date.now() - cachedTs < FINNHUB_TTL_MS) return;
+  updateStockStatus('loading', cachedCount, cachedTs, 'Finnhub');
+  try {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 20000);
+    // Route through Supabase Edge Function (handles auth + token from user_settings)
+    const token = await _getToken();
+    const resUS = await fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=stock%2Fsymbol&exchange=US`,
+      { signal: controller.signal, headers: { 'Authorization': `Bearer ${token}` } });
+    clearTimeout(tid);
+    if (!resUS.ok) throw new Error('HTTP ' + resUS.status);
+    const dataUS = await resUS.json();
+    if (!Array.isArray(dataUS)) throw new Error('Bad response');
+    const usSymbols = dataUS
+      .map(c => (c.symbol || '').toUpperCase().trim().split('.')[0])
+      .filter(s => s && /^[A-Z]{1,5}$/.test(s));
+    const unique = [...new Set(usSymbols)];
+    unique.forEach(s => STOCK_SYMBOLS.add(s));
+    try { localStorage.setItem(FINNHUB_CACHE_KEY, JSON.stringify({ ts: Date.now(), symbols: unique })); } catch(e) { console.warn('[Finnhub] cache save failed:', e); }
+    updateStockStatus('live', unique.length, Date.now(), 'Finnhub');
+  } catch(e) {
+    console.warn('[Finnhub] proxy failed:', e.message);
+    updateStockStatus('error', 0, 0, 'Finnhub');
+    await loadFromSEC();
+  }
+}
+
+async function loadFromSEC() {
+  // 1. Load from cache immediately
+  let cachedCount = 0, cachedTs = 0;
+  try {
+    const raw = localStorage.getItem(SEC_CACHE_KEY);
+    if (raw) {
+      const { ts, symbols } = JSON.parse(raw);
+      if (Array.isArray(symbols) && symbols.length) {
+        symbols.forEach(s => STOCK_SYMBOLS.add(s));
+        cachedCount = symbols.length;
+        cachedTs = ts;
+        updateStockStatus('cache', cachedCount, cachedTs);
+      }
+    }
+  } catch(e) {}
+
+  // 2. Refetch via the Edge Function (avoids browser CORS on SEC.gov) only past
+  //    the TTL — SEC_TTL_MS was declared but never read.
+  if (cachedCount && Date.now() - cachedTs < SEC_TTL_MS) return;
+  updateStockStatus('loading', cachedCount, cachedTs);
+  try {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 20000);
+    const token = await _getToken();
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/edgar?tickers=1`,
+      { signal: controller.signal, headers: { 'Authorization': `Bearer ${token}` } });
+    clearTimeout(tid);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const unique = await res.json();
+    if (!Array.isArray(unique)) throw new Error('Bad response');
+    unique.forEach(s => STOCK_SYMBOLS.add(s));
+    try { localStorage.setItem(SEC_CACHE_KEY, JSON.stringify({ ts: Date.now(), symbols: unique })); } catch(e) { console.warn('[SEC] cache save failed:', e); }
+    updateStockStatus('live', unique.length, Date.now());
+  } catch(e) {
+    console.warn('[SEC] failed:', e.message);
+    if (cachedCount) updateStockStatus('cache', cachedCount, cachedTs);
+    else updateStockStatus('error', 0, 0, 'SEC');
+  }
+}
+
+function updateStockStatus(state, count, ts, source) {
+  const el = document.getElementById('stock-sym-status');
+  if (!el) return;
+  const age = ts ? Math.round((Date.now() - ts) / 3600000) : 0;
+  const he = _lang === 'he';
+  const ageStr = ts ? (age < 1 ? (he?'עכשיו':'just now') : age < 24 ? (he?`לפני ${age}ש׳`:`${age}h ago`) : (he?`לפני ${Math.round(age/24)}י׳`:`${Math.round(age/24)}d ago`)) : '';
+  const src = source ? ` <span style="opacity:.6;font-size:10px;">(${source})</span>` : '';
+  const map = {
+    loading: { icon: '🔄', text: count ? `${count.toLocaleString()} ${he?'מניות':'stocks'} (${he?'מרענן ברקע...':'refreshing...'})${src}` : `${he?'טוען מ-':'Loading from '}${source||''}...`, cls: '' },
+    live:    { icon: '🟢', text: `${count.toLocaleString()} ${he?'מניות':'stocks'} — ${he?'עודכן עכשיו':'updated now'}${src}`, cls: 'live' },
+    cache:   { icon: '🔵', text: `${count.toLocaleString()} ${he?'מניות':'stocks'} — ${ageStr}${src}`, cls: 'cache' },
+    error:   { icon: '🔴', text: he?`שגיאה ב-${source} — עובר ל-SEC EDGAR`:`Error in ${source} — switching to SEC EDGAR`, cls: 'error' },
+  };
+  const m = map[state] || map.error;
+  el.innerHTML = `<span class="cg-status-icon">${m.icon}</span> ${m.text}
+    ${state !== 'loading' ? `<button class="cg-refresh-btn" onclick="secRefresh()" title="${he?'רענן רשימה':'Refresh'}">↺</button>` : ''}`;
+  el.className = `cg-status ${m.cls}`;
+}
+
+async function secRefresh() {
+  localStorage.removeItem(SEC_CACHE_KEY);
+  localStorage.removeItem(FINNHUB_CACHE_KEY);
+  STOCK_SYMBOLS = new Set();
+  await loadStockSymbols();
+}
+// ────────────────────────────────────────────────────────────────
+
+// Shared auto-type logic — returns true if symbol looks like crypto
+function symIsCrypto(sym) {
+  const s = sym.toUpperCase().trim();
+  // 1. Explicit crypto suffix: SOLUSDT.P, ETHUSDT, BTC.P
+  if (/USDT\.P$|USDT$|\.P$/i.test(s)) return true;
+  // 2. If SEC EDGAR knows it as a stock — it's not crypto
+  if (STOCK_SYMBOLS.size > 0 && STOCK_SYMBOLS.has(s)) return false;
+  // 3. Longer than 5 chars → likely crypto
+  if (s.length > 5) return true;
+  // 4. Known crypto base symbols
+  if (CRYPTO_SYMBOLS.has(s)) return true;
+  return false;
+}
+
+// Apply badge UI for stock/crypto type
+function applyTypeBadge(badgeEl, isCrypto) {
+  if (!badgeEl) return;
+  badgeEl.textContent = isCrypto ? t('m_crypto_badge') : t('m_stock_badge');
+  badgeEl.className   = 'qa-type-badge ' + (isCrypto ? 'crypto' : 'stock');
+}
+
+// Auto-detect trade type from symbol (Quick-Add widget)
+function qaAutoType() {
+  const sym = (document.getElementById('qa-symbol').value || '').trim().toUpperCase();
+  if (!sym) return;
+  const isCrypto = symIsCrypto(sym);
+  const cb = document.getElementById('qa-crypto');
+  if (cb && cb.checked !== isCrypto) {
+    cb.checked = isCrypto;
+    applyTypeBadge(document.getElementById('qa-type-badge'), isCrypto);
+    qaCalc();
+  }
+}
+
+// Toggle type manually in Quick-Add (badge click)
+function qaToggleType() {
+  const cb = document.getElementById('qa-crypto');
+  if (!cb) return;
+  cb.checked = !cb.checked;
+  applyTypeBadge(document.getElementById('qa-type-badge'), cb.checked);
+  qaCalc();
+}
+
+// Auto-detect type in the trade modal
+function mAutoType() {
+  const sym = (document.getElementById('m-symbol').value || '').trim().toUpperCase();
+  if (!sym) return;
+  const isCrypto = symIsCrypto(sym);
+  const typeInput = document.getElementById('m-type');
+  if (typeInput) typeInput.value = isCrypto ? 'crypto' : 'stock';
+  applyTypeBadge(document.getElementById('m-type-badge'), isCrypto);
+}
+
+// Toggle type manually in modal (badge click)
+function mToggleType() {
+  const typeInput = document.getElementById('m-type');
+  if (!typeInput) return;
+  const isCrypto = typeInput.value !== 'crypto';
+  typeInput.value = isCrypto ? 'crypto' : 'stock';
+  applyTypeBadge(document.getElementById('m-type-badge'), isCrypto);
+}
+
+function qaSetLS(ls) {
+  qaLS = ls;
+  document.getElementById('qa-l-btn').className = 'qa-ls-btn' + (ls==='L' ? ' active-l' : '');
+  document.getElementById('qa-s-btn').className = 'qa-ls-btn' + (ls==='S' ? ' active-s' : '');
+  qaCalc();
+}
+
+function qaCalc() {
+  const entry = +document.getElementById('qa-entry').value || 0;
+  const stop  = +document.getElementById('qa-stop').value  || 0;
+  const shares= +document.getElementById('qa-shares').value|| 0;
+  const comm  = +document.getElementById('qa-commission').value || 0;
+
+  // % סטופ מהכניסה
+  const stopPctEl = document.getElementById('qa-stop-pct');
+  const stopFromEl = document.getElementById('qa-stop-from');
+  if (entry && stop) {
+    const pct = ((stop - entry) / entry * 100);
+    stopPctEl.textContent = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
+    stopPctEl.className = 'qa-stop-pct' + (pct < 0 ? ' neg' : '');
+    if (stopFromEl) stopFromEl.textContent = stopPctEl.textContent;
+  } else {
+    if (stopFromEl) stopFromEl.textContent = '';
+    stopPctEl.textContent = '';
+  }
+
+  // תצוגה מקדימה גודל פוזיציה + סיכון
+  const preview = document.getElementById('qa-preview');
+  if (entry && shares) {
+    preview.style.display = 'flex';
+    const posSize = entry * shares;
+    document.getElementById('qa-prev-pl').textContent = '$' + posSize.toFixed(0);
+    const stopRisk = stop && shares ? Math.abs(stop - entry) * shares : 0;
+    const pctEl = document.getElementById('qa-prev-pct');
+    pctEl.textContent = stopRisk ? '$' + stopRisk.toFixed(2) : '—';
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
+function qaSave() {
+  const symbol = sanitizeText(document.getElementById('qa-symbol').value.toUpperCase().replace(/[^A-Z0-9._\-]/g,''), 20);
+  const entryPrice = sanitizeNumber(document.getElementById('qa-entry').value, 0);
+  const shares     = sanitizeNumber(document.getElementById('qa-shares').value, 0, 1e7);
+  const stop       = sanitizeNumber(document.getElementById('qa-stop').value, 0);
+  const commission = sanitizeNumber(document.getElementById('qa-commission').value, 0, 1e6);
+  const entryDate  = document.getElementById('qa-date').value.slice(0, 10);
+  const note       = sanitizeText(document.getElementById('qa-note').value, 200);
+  const isCrypto   = document.getElementById('qa-crypto').checked;
+
+  if (!symbol)     { toast('נא להזין סימבול', 'error'); return; }
+  const symInpEl = document.getElementById('qa-symbol');
+  if (symInpEl && symInpEl.dataset.symValid === '0') {
+    toast('⚠️ הסימבול "' + symbol + '" לא נמצא — בדוק ושנה לפני שמירה', 'error'); return;
+  }
+  if (!entryDate)  { toast('נא לבחור תאריך', 'error'); return; }
+  if (!entryPrice) { toast('נא להזין מחיר כניסה', 'error'); return; }
+  if (!shares)     { toast('נא להזין מספר מניות', 'error'); return; }
+
+  const type = isCrypto ? 'crypto' : 'stock';
+  const arr  = isCrypto ? db.crypto : db.stocks;
+
+  const trade = {
+    type,
+    entryDate, ls: qaLS, symbol, entryPrice, shares, stop,
+    t: [], closeDate: '', closedShares: 0, exitPrice: 0,
+    ecn: 0, commission,
+    notes_keep: '', notes_improve: note,
+    entryReason: ER_OPTIONS.includes(qaER) ? qaER : '',
+    marketCond:  document.getElementById('qa-market-cond').value || '',
+    processScore: qaPS || 0,
+    mood: sanitizeText(document.getElementById('qa-mood').value, 300)
+  };
+
+  _sb.from('trades').insert(_tradeToRow(trade)).select().single().then(({ data, error }) => {
+    if (error) { toast('שגיאה בשמירה: ' + error.message, 'error'); return; }
+    arr.unshift(_rowToTrade(data));
+    renderTable(type);
+    auditLog('trade_added', symbol + ' (quick-add)');
+    toast('✅ עסקה נוספה: ' + symbol, 'success');
+
+    // איפוס שדות (שמור תאריך ועמלה)
+    const _symEl = document.getElementById('qa-symbol');
+    _symEl.value = ''; _symEl.dataset.symValid = ''; _symEl.dataset.symPrice = '';
+    const _stEl = document.getElementById('qa-sym-status');
+    if (_stEl) { _stEl.textContent = ''; _stEl.className = 'sym-status'; }
+    document.getElementById('qa-entry').value  = '';
+    document.getElementById('qa-shares').value = '';
+    document.getElementById('qa-stop').value   = '';
+    document.getElementById('qa-note').value   = '';
+    document.getElementById('qa-mood').value   = '';
+    document.getElementById('qa-stop-pct').textContent = '';
+    document.getElementById('qa-stop-from').textContent = '';
+    document.getElementById('qa-preview').style.display = 'none';
+    document.getElementById('qa-market-cond').value = '';
+    qaPS = 0; document.querySelectorAll('#qa-ps-stars span').forEach(s => s.className = '');
+    qaER = ''; document.querySelectorAll('#qa-er-pills .er-pill').forEach(p => p.className = 'er-pill');
+
+    renderOverview();
+    initFilters();
+    fabToggle(); // סגור מודל אחרי שמירה
+  });
+}
+
+function tradeDays(t) {
+  if (!t.entryDate || !t.closeDate) return 0;
+  const diff = new Date(t.closeDate+'T00:00:00') - new Date(t.entryDate+'T00:00:00');
+  return Math.max(0, Math.round(diff / (1000 * 60 * 60 * 24)));
+}
+
+function advancedStats(trades) {
+  // Open positions carry a commission and nothing else, so calcTotal returns
+  // -commission and each one used to land in "losers" — 12 open trades at -$2
+  // pulled the average loss from -$44.54 to -$41.78 and fed the expectancy and
+  // win/loss KPIs from a different population than stats() uses.
+  const closed  = trades.filter(isClosed);
+  const winners = closed.filter(t => calcTotal(t) > 0);
+  // <= 0, matching stats()'s win-rate split. With < 0 a break-even row counted
+  // against the win rate but was left out of avgLoss, so expectancy
+  // (wr*avgWin + (1-wr)*avgLoss) charged it as a loss of average size.
+  const losers  = closed.filter(t => calcTotal(t) <= 0);
+  const avgWin     = winners.length ? winners.reduce((s,t) => s + calcTotal(t), 0) / winners.length : 0;
+  const avgLoss    = losers.length  ? losers.reduce((s,t)  => s + calcTotal(t), 0) / losers.length  : 0;
+  const avgWinDays = winners.length ? winners.reduce((s,t) => s + tradeDays(t), 0) / winners.length : 0;
+  const avgLossDays= losers.length  ? losers.reduce((s,t)  => s + tradeDays(t), 0) / losers.length  : 0;
+  return { avgWin, avgLoss, avgWinDays, avgLossDays };
+}
+
+const MONTHS_SHORT = MONTHS_SHORT_HE;
+
+function _tradePct(t) {
+  const base = t.entryPrice * (t.closedShares || t.shares);
+  return base > 0 ? calcTotal(t) / base * 100 : null;
+}
+
+function renderMonthlyTracker(trades) {
+  const wrap = document.getElementById('monthly-tracker-wrap');
+  if (!wrap) return;
+  const effectiveYear = +(document.getElementById('stats-year')?.value) || +(document.getElementById('ov-year')?.value) || new Date().getFullYear();
+  const lbl = document.getElementById('mt-year-label');
+  if (lbl) lbl.textContent = effectiveYear;
+  const closed = trades.filter(t =>
+    t.exitPrice > 0 && t.closedShares > 0 &&
+    +(t.entryDate||'').slice(0,4) === effectiveYear
+  );
+
+  // Build per-month data
+  const byMonth = {}; // key = "MM" (01-12)
+  closed.forEach(t => {
+    const m = (t.entryDate || '').slice(5, 7);
+    if (!m) return;
+    if (!byMonth[m]) byMonth[m] = [];
+    byMonth[m].push(t);
+  });
+
+  const MONTH_KEYS = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+
+  function monthStats(arr) {
+    if (!arr || !arr.length) return null;
+    const winners = arr.filter(t => calcTotal(t) > 0);
+    const losers  = arr.filter(t => calcTotal(t) <= 0);
+    const avgGainPct = winners.length ? winners.reduce((s,t)=>{ const p=_tradePct(t); return p!==null?s+p:s; },0) / winners.length : null;
+    const avgLossPct = losers.length  ? losers.reduce((s,t)=>{ const p=_tradePct(t); return p!==null?s+p:s; },0) / losers.length  : null;
+    const winRate    = arr.length ? winners.length / arr.length * 100 : 0;
+    const lgGain     = winners.length ? Math.max(...winners.map(t=>calcTotal(t))) : null;
+    const lgLoss     = losers.length  ? Math.min(...losers.map(t=>calcTotal(t)))  : null;
+    const avgDaysWin = winners.length ? winners.reduce((s,t)=>s+tradeDays(t),0)/winners.length : null;
+    const avgDaysLoss= losers.length  ? losers.reduce((s,t)=>s+tradeDays(t),0)/losers.length   : null;
+    return { n: arr.length, avgGainPct, avgLossPct, winRate, lgGain, lgLoss, avgDaysWin, avgDaysLoss };
+  }
+
+  function pct(v) { return v === null ? '<span class="mt-empty">—</span>' : `${v>=0?'+':''}${v.toFixed(2)}%`; }
+  function usd(v) { return v === null ? '<span class="mt-empty">—</span>' : fmtUSD(v); }
+  function days(v){ return v === null ? '<span class="mt-empty">—</span>' : Math.round(v); }
+  function clrPct(v, el) { return v === null ? '' : v >= 0 ? 'color:var(--green)' : 'color:var(--red)'; }
+
+  let rows = '';
+  const validMonths = [];
+  MONTH_KEYS.forEach((mk, i) => {
+    const arr = byMonth[mk];
+    const s = monthStats(arr);
+    if (!s) {
+      rows += `<tr><td>${monthsShort()[i]}</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td></tr>`;
+      return;
+    }
+    validMonths.push(s);
+    rows += `<tr>
+      <td>${monthsShort()[i]}</td>
+      <td class="${s.avgGainPct!==null?(s.avgGainPct>=0?'cl-green':'cl-red'):''} sensitive">${pct(s.avgGainPct)}</td>
+      <td class="${s.avgLossPct!==null?(s.avgLossPct>=0?'cl-green':'cl-red'):''} sensitive">${pct(s.avgLossPct)}</td>
+      <td class="${s.winRate>=50?'cl-green':'cl-red'} sensitive">${fmt(s.winRate,1)}%</td>
+      <td class="sensitive">${s.n}</td>
+      <td class="cl-green sensitive">${usd(s.lgGain)}</td>
+      <td class="cl-red sensitive">${usd(s.lgLoss)}</td>
+      <td class="sensitive">${days(s.avgDaysWin)}</td>
+      <td class="sensitive">${days(s.avgDaysLoss)}</td>
+    </tr>`;
+  });
+
+  // AVG row
+  let avgRow = `<tr><td>${t('mt_avg_row')}</td>`;
+  if (validMonths.length) {
+    const avg = f => { const vals=validMonths.filter(s=>s[f]!==null); return vals.length?vals.reduce((a,s)=>a+s[f],0)/vals.length:null; };
+    const avgWR = validMonths.reduce((a,s)=>a+s.winRate,0)/validMonths.length;
+    const avgN  = Math.round(validMonths.reduce((a,s)=>a+s.n,0)/validMonths.length);
+    const agp = avg('avgGainPct'), alp = avg('avgLossPct');
+    avgRow += `<td class="${agp!==null?(agp>=0?'cl-green':'cl-red'):''} sensitive">${pct(agp)}</td>`;
+    avgRow += `<td class="${alp!==null?(alp>=0?'cl-green':'cl-red'):''} sensitive">${pct(alp)}</td>`;
+    avgRow += `<td class="${avgWR>=50?'cl-green':'cl-red'} sensitive">${fmt(avgWR,1)}%</td>`;
+    avgRow += `<td class="sensitive">${avgN}</td>`;
+    avgRow += `<td class="cl-green sensitive">${usd(avg('lgGain'))}</td>`;
+    avgRow += `<td class="cl-red sensitive">${usd(avg('lgLoss'))}</td>`;
+    avgRow += `<td class="sensitive">${days(avg('avgDaysWin'))}</td>`;
+    avgRow += `<td class="sensitive">${days(avg('avgDaysLoss'))}</td>`;
+  } else {
+    avgRow += '<td colspan="8" class="mt-empty">—</td>';
+  }
+  avgRow += '</tr>';
+
+  wrap.innerHTML = `<table class="mt-table">
+    <thead><tr>
+      <th></th>
+      <th>${t('mt_avg_gain')}</th>
+      <th>${t('mt_avg_loss')}</th>
+      <th>WIN %</th>
+      <th>${t('mt_total_trades')}</th>
+      <th>${t('mt_max_gain')}</th>
+      <th>${t('mt_max_loss')}</th>
+      <th>${t('mt_avg_days_win')}</th>
+      <th>${t('mt_avg_days_loss')}</th>
+    </tr></thead>
+    <tbody>${rows}${avgRow}</tbody>
+  </table>`;
+}
+
+// ─────────────────────────────────────────────
+// PROFILE
+// ─────────────────────────────────────────────
+function profileLoad() {
+  if (!_currentUser) return;
+  const m = _currentUser.user_metadata || {};
+  document.getElementById('profile-first').value   = m.first_name   || '';
+  document.getElementById('profile-last').value    = m.last_name    || '';
+  document.getElementById('profile-email').value   = _currentUser.email || '';
+  document.getElementById('profile-save-btn').style.display = 'none';
+}
+
+function profileMarkDirty() {
+  document.getElementById('profile-save-btn').style.display = 'inline-flex';
+}
+
+async function profileSave() {
+  const first   = document.getElementById('profile-first').value.trim();
+  const last    = document.getElementById('profile-last').value.trim();
+  const display = [first, last].filter(Boolean).join(' ') || _currentUser.email.split('@')[0];
+  const btn = document.getElementById('profile-save-btn');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+  try {
+    await _sb.auth.updateUser({ data: { first_name: first, last_name: last, full_name: display } });
+    if (_currentUser?.user_metadata) { _currentUser.user_metadata.first_name = first; _currentUser.user_metadata.full_name = display; }
+    _setHeaderGreeting(first || display.split(/\s+/)[0]);
+    const el = document.getElementById('header-user-name');
+    if (el) el.textContent = display;
+    btn.style.display = 'none';
+    toast('פרופיל נשמר ✓', 'success');
+  } catch {
+    toast('שגיאה בשמירת הפרופיל', 'error');
+  } finally {
+    btn.textContent = 'Save Changes';
+    btn.disabled = false;
+  }
+}
+
+async function avatarUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { toast('תמונה גדולה מדי — מקסימום 2MB', 'error'); return; }
+  const dataURL = await compressImage(file);
+  if (!dataURL) { toast('שגיאה בטעינת התמונה', 'error'); return; }
+  const { error } = await _sb.auth.updateUser({ data: { avatar: dataURL } });
+  if (error) { toast('שגיאה בשמירה: ' + error.message, 'error'); return; }
+  _setAvatar(dataURL);
+  toast('תמונת פרופיל עודכנה ✓', 'success');
+}
+
+// ─────────────────────────────────────────────
+// LANGUAGE
+// ─────────────────────────────────────────────
+let _lang = localStorage.getItem('tj_lang') || 'he';
+function t(k) { return (LANG_STRINGS[_lang] || LANG_STRINGS.en)[k] || k; }
+
+const LANG_STRINGS = {
+  en: {
+    nav_overview:'Home', nav_stocks:'Stocks / Crypto', nav_crypto:'Crypto',
+    nav_statistics:'Statistics', nav_settings:'Profile', nav_themes:'Market Pulse',
+    nav_ai:'Minervini', nav_screener:'Screener', nav_missed:'Missed', nav_investments:'Investments',
+    nav_section:'Navigation', add_trade:'Add Trade',
+    filter_label:'Filter:', all_time:'All Time', archive:'📅 Archive',
+    search:'Search symbol...',
+    add_new_trade:'+ Add New Trade', clean_dupes:'🧹 Clean Duplicates', m_ls:'L / S',
+    col_entry_date:'Entry Date', col_status:'Status', col_reason:'Entry Reason',
+    col_symbol:'Symbol', col_entry:'Entry', col_shares:'Shares', col_stop:'Stop',
+    col_targets:'Targets', col_close_date:'Close Date', col_closed_shares:'Closed Shares',
+    col_exit:'Exit', col_sector:'Sector', col_commission:'Commission',
+    col_total:'Total', col_actions:'Actions',
+    kpi_pnl:'Total P&L', kpi_winrate:'Win Rate', kpi_trades:"Trades",
+    kpi_rr:'Risk/Reward', kpi_live:'Live P&L',
+    kpi_with_stop:'trades with measurable risk', kpi_add_stop:'Add stop',
+    kpi_open_pos:'open positions', kpi_no_open:'No open positions',
+    kpi_calculating:'Calculating...', kpi_vs_prev:'vs last month',
+    kpi_updated:'Updated',
+    kpi_no_quotes:'no live prices available', kpi_missing_quotes:'without a quote', kpi_market_closed:'market closed',
+    tile_net_pl:'Net P&L', tile_return:'Return', tile_r_mult:'R Multiple',
+    tile_risk:'Trade Risk', tile_stop_dist:'Stop Distance', tile_commission:'Commission',
+    tile_entry:'Entry', tile_stop:'Stop', tile_exit:'Exit',
+    tile_partial_tgt:'Partial Targets', tile_market_cond:'Market Condition',
+    tile_no_targets:'No targets', tile_from_entry:'% from entry',
+    tile_keep:'What to keep', tile_improve:'What to improve',
+    tile_no_notes:'No notes recorded',
+    trades:'trades', no_trades:'No trades for this period',
+    modal_add:'Add Trade', modal_edit:'Edit Trade',
+    modal_open_trade:'Trade Entry', modal_targets:'Partial Targets (T1–T5)',
+    modal_close_trade:'Trade Close', modal_fees:'Fees',
+    modal_calc:'Auto Calculation', modal_notes:'Notes & Quality',
+    add_target:'+ Add Target', m_entry_date:'Entry Date',
+    m_symbol:'Symbol', m_entry_price:'Entry Price', m_num_shares:'Shares',
+    m_stop:'Stop', m_close_date:'Close Date', m_closed_shares:'Closed Shares',
+    m_exit_price:'Exit Price', m_mood:'Emotional State', m_reason:'Entry Reason',
+    m_market_cond:'Market Condition', m_keep:'What worked well',
+    m_improve:'What to improve', m_save:'💾 Save Trade', m_cancel:'Cancel',
+    m_stock_badge:'Stock', m_crypto_badge:'Crypto',
+    m_keep_ph:'What worked well in this trade...',
+    m_improve_ph:'What could be improved...',
+    m_mood_ph:'How did you feel before entry...',
+    qa_type:'Type', qa_entry_date:'Entry Date', qa_entry_price:'Entry Price',
+    qa_shares:'Shares', qa_stop:'Stop (SL)', qa_commission:'Commission',
+    qa_reason:'Entry Reason', qa_market_cond:'Market Condition',
+    qa_mood:'Emotional State', qa_note:'Note', qa_save:'💾 Save Trade',
+    qa_pos_size:'Position', qa_risk_pct:'Risk %', qa_stop_from:'Stop from Entry',
+    qa_select:'— Select —', qa_mood_ph:'How did you feel...', qa_note_ph:'Trade description...',
+    inv_title:'Investment Portfolio', inv_portfolio_total:'Portfolio Total', inv_cash_label:'Cash',
+    inv_free_cash:'Free Cash', inv_total_value:'Total',
+    inv_allocated:'Invested', inv_alloc_title:'Portfolio Allocation — Target',
+    inv_available:'Available:', inv_donut_allocated:'Allocated',
+    inv_blue:'🔵 Value — Target', inv_green:'🟢 Growth — Target',
+    inv_yellow:'🟡 Speculative — Target',
+    inv_cat_blue:'🔵 Value', inv_cat_green:'🟢 Growth', inv_cat_yellow:'🟡 Speculative',
+    inv_col_symbol:'Symbol', inv_col_sector:'Sector', inv_col_category:'Category',
+    inv_col_qty:'Qty', inv_col_entry_price:'Entry Price', inv_col_stop:'Stop Loss',
+    inv_col_cur_price:'Current Price',
+    inv_col_avg:'Average', inv_col_value:'Value',
+    inv_col_portfolio_pct:'% Portfolio', inv_col_remaining:'Remaining',
+    inv_add_holding:'+ Add Holding', inv_save:'💾 Save',
+    inv_deposits:'Monthly Deposits', inv_add_deposit:'+ Add Deposit',
+    inv_total_dep:'Total Deposited', inv_portfolio_now:'Portfolio Value Now',
+    inv_pnl:'P&L vs Deposits', inv_unrealized:'Unrealized P&L', inv_refresh_prices:'Refresh Prices', inv_over:'Exceeded', inv_overby:'Exceeded by', inv_free:'Available', inv_saved:'Portfolio saved ✓', inv_cash_label:'Cash', inv_sum_invested:'Total Invested', inv_sum_value:'Current Value', inv_sum_pnl:'Unrealized P&L', inv_sum_updated:'Prices updated', inv_just_now:'just now', inv_dep_month:'Month', inv_dep_amount:'Deposit',
+    inv_dep_cumulative:'Cumulative', inv_cash:'Cash',
+    inv_legend_blue:'Value', inv_legend_green:'Growth', inv_legend_yellow:'Speculative',
+    missed_title:'Missed Opportunities', missed_symbol:'Symbol',
+    missed_date:'Date', missed_price:'Price ($)', missed_sector:'Sector',
+    missed_note:'Note (optional)', missed_add:'+ Add',
+    missed_empty:'No opportunities recorded yet — add the first one above',
+    missed_why:'Why missed?', missed_sector_ph:'Technology',
+    chart_cum:'Cumulative P&L',
+    settings_profile:'Profile', settings_first:'First Name',
+    settings_last:'Last Name', settings_display:'Display Name',
+    settings_first_ph:'First name', settings_last_ph:'Last name',
+    settings_pw_new_ph:'New password', settings_pw_confirm_ph:'Confirm password',
+    set_pw_new:'New Password', set_pw_confirm:'Confirm Password', set_pw_update:'Update Password',
+    settings_email:'Email', settings_save_profile:'Save Profile',
+    settings_lang:'Language', settings_export:'Export Data',
+    export_stocks:'Export Stocks', export_crypto:'Export Crypto', export_all:'Export All',
+    mc_green:'🟢 Green', mc_orange:'🟠 Orange', mc_red:'🔴 Red',
+    mc_easy:'Easy Market', mc_hard:'Hard Market', mc_up:'Uptrend',
+    mc_press:'Pressure', mc_down:'Downtrend',
+    cal_no_trades:'No trades', view_table:'Table', view_calendar:'Monthly',
+    filter_all_months:'All Months', filter_all_years:'All Years',
+    set_stocks:'Stocks', set_crypto:'Crypto', set_security:'Security',
+    set_ibkr_sync:'Broker Connection', set_file_import:'File Import',
+    set_export:'Export Data', set_broker_import:'Broker Import',
+    set_2fa:'Two-Factor Authentication',
+    set_ibkr_desc:'Enables automatic trade import from Interactive Brokers.',
+    set_ibkr_how:'How to configure:',
+    set_ibkr_steps:'In IBKR create an Activity Flex Query → Period: Last 365 Calendar Days, Format: XML, Trades section with the "Trade ID" and "Open/Close Indicator" fields → paste the Token and Query ID. That\'s it — your trades sync automatically.',
+    set_ibkr_advanced:'Advanced settings ▾',
+    set_ibkr_confirm_label:'Trade Confirmation Query ID — for near-real-time updates (optional)',
+    set_sync:'Sync', m_save_short:'Save',
+    set_tlg_drop:'Drag .tlg file or click to select',
+    set_export_desc:'Export all trades to a CSV file for external analysis.',
+    set_broker_desc:'Import trades from your broker\'s export file. Select broker, upload CSV, and confirm column mapping.',
+    set_broker_label:'Broker', set_broker_select:'Select broker...',
+    set_csv_drop:'Drag CSV file or click to select',
+    set_import_btn:'Import Trades',
+    set_loading:'Loading...',
+    set_finnhub_key:'Finnhub Key (Admin only)',
+    set_av_key:'Alpha Vantage Key — financial data for all stocks including small caps',
+    set_get_free_key:'Get free key',
+    set_page_title:'Settings', set_page_sub:'Manage your account, security, and data preferences.',
+    set_grp_account:'Account', set_grp_account_sub:'Name, email',
+    set_grp_prefs:'Preferences', set_grp_prefs_sub:'Language and display',
+    set_security_sub:'PIN, 2FA, password',
+    set_avatar_label:'Profile Picture', set_avatar_sub:'JPG or PNG, max 2MB', set_avatar_btn:'Change Photo',
+    set_grp_data:'Data Sources & Security', set_grp_import:'Broker Connection',
+    st_best:'Best Trade', st_worst:'Worst Trade', st_avg_trade:'Avg per Trade',
+    st_avg_win:'Avg Win', st_avg_loss:'Avg Loss', st_expectancy:'Expectancy',
+    scope_all:'All',
+    st_wl_ratio:'W/L Ratio', st_max_win_streak:'Max Win Streak', st_max_loss_streak:'Max Loss Streak',
+    st_avg_hold_win:'Avg Hold (Win)', st_avg_hold_loss:'Avg Hold (Loss)',
+    st_avg_r:'Avg R', st_win_rate:'Win Rate',
+    mt_avg_gain:'Avg Gain %', mt_avg_loss:'Avg Loss %', mt_total_trades:'Trades',
+    mt_max_gain:'Max Gain', mt_max_loss:'Max Loss',
+    mt_avg_days_win:'Days (Win)', mt_avg_days_loss:'Days (Loss)', mt_avg_row:'Average',
+    donut_win:'Win', donut_loss:'Loss', donut_best:'Best Trade', donut_worst:'Worst Trade',
+    donut_wins:'Wins', donut_losses:'Losses',
+    donut_win_streak:'Win Streak', donut_loss_streak:'Loss Streak',
+    comp_trades:'trades', comp_total_pl:'Total P&L',
+    comp_avg_win:'Avg Win', comp_avg_loss:'Avg Loss',
+    comp_best:'Best', comp_worst:'Worst', comp_avg_trade:'Avg per Trade',
+    comp_stocks:'📈 Stocks', comp_crypto:'₿ Crypto',
+    set_crypto_desc:'CoinGecko · No key required, works automatically',
+    set_finnhub_desc:'Required for real-time stock prices. Register free at finnhub.io — enter your key and click Save.',
+    set_av_desc:'Financial data for all stocks including small caps.',
+    inv_cash_row:'💵 Cash — target', inv_col_pnl:'P&L',
+    scr_lookup_lbl:'Check a date:',
+  },
+  he: {
+    nav_overview:'ראשי', nav_stocks:'מניות / קריפטו', nav_crypto:'קריפטו',
+    set_crypto_desc:'CoinGecko · ללא מפתח, עובד אוטומטית',
+    set_finnhub_desc:'נדרש לנתוני מחיר מניות בזמן אמת. הרשם חינם ב-finnhub.io — הכנס את המפתח ולחץ Save.',
+    set_av_desc:'נתוני פיננסים לכל המניות כולל Small Cap.',
+    inv_cash_row:'💵 מזומן — יעד', inv_col_pnl:'רווח/הפסד',
+    scr_lookup_lbl:'בדיקת תאריך:',
+    nav_statistics:'סטטיסטיקות', nav_settings:'פרופיל', nav_themes:'Market Pulse',
+    nav_ai:'Minervini', nav_screener:'מסנן מניות', nav_missed:'פוספסו', nav_investments:'השקעות',
+    nav_section:'ניווט', add_trade:'הוסף עסקה',
+    filter_label:'סינון:', all_time:'כל הזמן', archive:'📅 ארכיון',
+    search:'חיפוש סימבול...',
+    add_new_trade:'+ הוסף עסקה חדשה', clean_dupes:'🧹 נקה כפילויות', m_ls:'כיוון (L/S)',
+    col_entry_date:'תאריך כניסה', col_status:'סטטוס', col_reason:'סיבת כניסה',
+    col_symbol:'סימבול', col_entry:'כניסה', col_shares:'מניות', col_stop:'סטופ',
+    col_targets:'יעדים', col_close_date:'תאריך סגירה', col_closed_shares:'מניות סגירה',
+    col_exit:'יציאה', col_sector:'סקטור', col_commission:'עמלה',
+    col_total:'סה"כ', col_actions:'פעולות',
+    kpi_pnl:'P&L כולל', kpi_winrate:'אחוז הצלחה', kpi_trades:"מס' עסקאות",
+    kpi_rr:'יחס סיכוי/סיכון', kpi_live:'רווח/הפסד בזמן אמת',
+    kpi_with_stop:'עסקאות עם סיכון מדיד', kpi_add_stop:'הוסף סטופ',
+    kpi_open_pos:'פוזיציות פתוחות', kpi_no_open:'אין פוזיציות פתוחות',
+    kpi_calculating:'מחשב...', kpi_vs_prev:'vs חודש קודם',
+    kpi_updated:'עודכן',
+    kpi_no_quotes:'אין מחירים זמינים', kpi_missing_quotes:'ללא מחיר', kpi_market_closed:'השוק סגור',
+    tile_net_pl:'P&L נטו', tile_return:'תשואה', tile_r_mult:'R Multiple',
+    tile_risk:'סיכון בעסקה', tile_stop_dist:'מרחק סטופ', tile_commission:'עמלה',
+    tile_entry:'כניסה', tile_stop:'סטופ', tile_exit:'יציאה',
+    tile_partial_tgt:'יעדים חלקיים', tile_market_cond:'תנאי שוק',
+    tile_no_targets:'אין יעדים', tile_from_entry:'% מהכניסה',
+    tile_keep:'מה לשמר', tile_improve:'מה לשפר',
+    tile_no_notes:'לא נרשמו הערות',
+    trades:'עסקאות', no_trades:'אין עסקאות להצגה בתקופה זו',
+    modal_add:'הוסף עסקה', modal_edit:'ערוך עסקה',
+    modal_open_trade:'פתיחת עסקה', modal_targets:'יעדים חלקיים (T1–T5)',
+    modal_close_trade:'סגירת עסקה', modal_fees:'עמלות',
+    modal_calc:'חישוב אוטומטי', modal_notes:'הערות ואיכות',
+    add_target:'+ הוסף יעד', m_entry_date:'תאריך כניסה',
+    m_symbol:'סימבול', m_entry_price:'שער כניסה', m_num_shares:"מס' מניות",
+    m_stop:'סטופ', m_close_date:'תאריך סגירה', m_closed_shares:'מניות סגירה',
+    m_exit_price:'מחיר יציאה', m_mood:'מצב רגשי לפני הכניסה', m_reason:'סיבת כניסה',
+    m_market_cond:'תנאי שוק בכניסה', m_keep:'מה אפשר לשמר',
+    m_improve:'מה לשפר להבא', m_save:'💾 שמור עסקה', m_cancel:'ביטול',
+    m_stock_badge:'מניה', m_crypto_badge:'קריפטו',
+    m_keep_ph:'מה עבד טוב בעסקה הזו...',
+    m_improve_ph:'מה ניתן לשפר...',
+    m_mood_ph:'איך הרגשת לפני הכניסה...',
+    qa_type:'סוג', qa_entry_date:'תאריך כניסה', qa_entry_price:'מחיר כניסה',
+    qa_shares:'מניות', qa_stop:'סטופ (SL)', qa_commission:'עמלה',
+    qa_reason:'סיבת כניסה', qa_market_cond:'תנאי שוק',
+    qa_mood:'מצב רגשי', qa_note:'הערה', qa_save:'💾 שמור עסקה',
+    qa_pos_size:"גודל פוז'", qa_risk_pct:'סיכון %', qa_stop_from:'סטופ מ-כניסה',
+    qa_select:'— בחר —', qa_mood_ph:'איך הרגשת...', qa_note_ph:'תיאור הכניסה...',
+    inv_title:'תיק השקעות', inv_portfolio_total:'סך התיק', inv_cash_label:'מזומן',
+    inv_free_cash:'מזומן פנוי', inv_total_value:'סך התיק',
+    inv_allocated:'מושקע', inv_alloc_title:'הקצאת תיק — יעד',
+    inv_available:'זמין:', inv_donut_allocated:'מוקצה',
+    inv_blue:'🔵 מניות ערך — יעד', inv_green:'🟢 צמיחה — יעד',
+    inv_yellow:'🟡 ספקולציה — יעד',
+    inv_cat_blue:'🔵 מניות ערך', inv_cat_green:'🟢 צמיחה', inv_cat_yellow:'🟡 ספקולציה',
+    inv_col_symbol:'סימבול', inv_col_sector:'סקטור', inv_col_category:'קטגוריה',
+    inv_col_qty:'כמות', inv_col_entry_price:'מחיר כניסה', inv_col_stop:'סטופ לוס',
+    inv_col_cur_price:'מחיר נוכחי',
+    inv_col_avg:'ממוצע', inv_col_value:'שווי',
+    inv_col_portfolio_pct:'% תיק', inv_col_remaining:'נותר',
+    inv_add_holding:'+ הוסף אחזקה', inv_save:'💾 שמור',
+    inv_deposits:'הפקדות חודשיות', inv_add_deposit:'+ הוסף הפקדה',
+    inv_total_dep:'סה"כ הופקד', inv_portfolio_now:'שווי תיק כעת',
+    inv_pnl:'רווח/הפסד vs הפקדות', inv_unrealized:'רווח לא ממומש', inv_refresh_prices:'רענן מחירים', inv_over:'חרגת', inv_overby:'חרגת ב-', inv_free:'פנוי', inv_saved:'תיק ההשקעות נשמר ✓', inv_cash_label:'מזומן', inv_sum_invested:'סה"כ הושקע', inv_sum_value:'שווי נוכחי', inv_sum_pnl:'רווח לא ממומש', inv_sum_updated:'מחירים עודכנו', inv_just_now:'הרגע', inv_dep_month:'חודש', inv_dep_amount:'הפקדה',
+    inv_dep_cumulative:'מצטבר', inv_cash:'מזומן',
+    inv_legend_blue:'מניות ערך', inv_legend_green:'צמיחה', inv_legend_yellow:'ספקולציה',
+    missed_title:'הזדמנויות שפוספסו', missed_symbol:'סימבול',
+    missed_date:'תאריך', missed_price:'מחיר ($)', missed_sector:'סקטור',
+    missed_note:'הערה (אופציונלי)', missed_add:'+ הוסף',
+    missed_empty:'אין הזדמנויות שנרשמו עדיין — הוסף את הראשונה למעלה',
+    missed_why:'למה פוספסה?', missed_sector_ph:'טכנולוגיה',
+    chart_cum:'P&L מצטבר',
+    settings_profile:'פרופיל', settings_first:'שם פרטי',
+    settings_last:'שם משפחה', settings_display:'שם תצוגה',
+    settings_first_ph:'שם פרטי', settings_last_ph:'שם משפחה',
+    settings_pw_new_ph:'סיסמה חדשה', settings_pw_confirm_ph:'אישור סיסמה',
+    set_pw_new:'סיסמה חדשה', set_pw_confirm:'אישור סיסמה', set_pw_update:'עדכן סיסמה',
+    settings_email:'אימייל', settings_save_profile:'שמור פרופיל',
+    settings_lang:'שפה', settings_export:'ייצוא נתונים',
+    export_stocks:'ייצא מניות', export_crypto:'ייצא קריפטו', export_all:'ייצא הכל',
+    mc_green:'🟢 ירוק', mc_orange:'🟠 כתום', mc_red:'🔴 אדום',
+    mc_easy:'שוק קל', mc_hard:'שוק קשה', mc_up:'מגמה עולה',
+    mc_press:'לחץ', mc_down:'מגמה יורדת',
+    cal_no_trades:'אין עסקאות', view_table:'טבלה', view_calendar:'חודשי',
+    filter_all_months:'כל החודשים', filter_all_years:'כל השנים',
+    set_stocks:'מניות', set_crypto:'קריפטו', set_security:'אבטחה',
+    set_ibkr_sync:'חיבור לברוקר', set_file_import:'ייבוא קובץ',
+    set_export:'ייצוא נתונים', set_broker_import:'ייבוא מברוקר',
+    set_2fa:'אימות דו-שלבי',
+    set_ibkr_desc:'מאפשר ייבוא עסקאות אוטומטי מ-Interactive Brokers.',
+    set_ibkr_how:'איך להגדיר:',
+    set_ibkr_steps:'ב-IBKR צור Activity Flex Query → Period: Last 365 Calendar Days, פורמט: XML, סעיף Trades עם השדות "Trade ID" ו-"Open/Close Indicator" → הדבק את ה-Token וה-Query ID. זהו — העסקאות מסתנכרנות אוטומטית.',
+    set_ibkr_advanced:'הגדרות מתקדמות ▾',
+    set_ibkr_confirm_label:'Trade Confirmation Query ID — לעדכון כמעט בזמן-אמת (אופציונלי)',
+    set_sync:'סנכרן', m_save_short:'שמור',
+    set_tlg_drop:'גרור קובץ .tlg או לחץ לבחירה',
+    set_export_desc:'ייצוא כל העסקאות לקובץ CSV לניתוח חיצוני.',
+    set_broker_desc:'ייבוא עסקאות מקובץ ייצוא של הברוקר. בחר ברוקר, העלה קובץ CSV, ואשר את מיפוי העמודות.',
+    set_broker_label:'ברוקר', set_broker_select:'בחר ברוקר...',
+    set_csv_drop:'גרור קובץ CSV או לחץ לבחירה',
+    set_import_btn:'ייבא עסקאות',
+    set_loading:'טוען...',
+    set_finnhub_key:'מפתח Finnhub (Admin בלבד)',
+    set_av_key:'מפתח Alpha Vantage — נתונים פיננסיים לכל מניה כולל סמולקאפ',
+    set_get_free_key:'קבל מפתח חינמי',
+    set_page_title:'הגדרות', set_page_sub:'נהל את החשבון, האבטחה והעדפות הנתונים שלך.',
+    set_grp_account:'חשבון', set_grp_account_sub:'שם, אימייל',
+    set_grp_prefs:'העדפות', set_grp_prefs_sub:'שפה ותצוגה',
+    set_security_sub:'PIN, 2FA, סיסמה',
+    set_avatar_label:'תמונת פרופיל', set_avatar_sub:'JPG או PNG, עד 2MB', set_avatar_btn:'שנה תמונה',
+    set_grp_data:'מקורות נתונים ואבטחה', set_grp_import:'חיבור ברוקר',
+    st_best:'עסקה הטובה ביותר', st_worst:'עסקה הגרועה ביותר', st_avg_trade:'רווח/הפסד ממוצע לעסקה',
+    st_avg_win:'ממוצע רווח', st_avg_loss:'ממוצע הפסד', st_expectancy:'ציפייה לעסקה (רווח צפוי בממוצע)',
+    scope_all:'הכל',
+    st_wl_ratio:'יחס W/L', st_max_win_streak:'רצף ניצחון מקסימלי', st_max_loss_streak:'רצף הפסד מקסימלי',
+    st_avg_hold_win:'ימי החזקה ממוצע (זכייה)', st_avg_hold_loss:'ימי החזקה ממוצע (הפסד)',
+    st_avg_r:'ממוצע R', st_win_rate:'אחוז הצלחה',
+    mt_avg_gain:'ממוצע רווח %', mt_avg_loss:'ממוצע הפסד %', mt_total_trades:'סה"כ עסקאות',
+    mt_max_gain:'רווח מקסימלי', mt_max_loss:'הפסד מקסימלי',
+    mt_avg_days_win:'ימים ממוצע (רווח)', mt_avg_days_loss:'ימים ממוצע (הפסד)', mt_avg_row:'ממוצע',
+    donut_win:'ניצחון', donut_loss:'הפסד', donut_best:'עסקה הטובה', donut_worst:'עסקה הגרועה',
+    donut_wins:'מנצחות', donut_losses:'הפסדים',
+    donut_win_streak:'רצף ניצחונות', donut_loss_streak:'רצף הפסדים',
+    comp_trades:'עסקאות', comp_total_pl:'P&L כולל',
+    comp_avg_win:'ממוצע ניצחון', comp_avg_loss:'ממוצע הפסד',
+    comp_best:'הטובה', comp_worst:'הגרועה', comp_avg_trade:'ממוצע לעסקה',
+    comp_stocks:'📈 מניות', comp_crypto:'₿ קריפטו',
+  }
+};
+
+function setLang(lang) {
+  _lang = lang;
+  localStorage.setItem('tj_lang', lang);
+  document.documentElement.setAttribute('lang', lang);
+  document.documentElement.setAttribute('dir', lang === 'he' ? 'rtl' : 'ltr');
+  const s = LANG_STRINGS[lang] || LANG_STRINGS.en;
+
+  // Legal pages have a parallel English translation (terms-en.html /
+  // privacy-en.html) — point every in-app link at the version matching the
+  // current UI language instead of always opening the Hebrew original.
+  const legalSuffix = lang === 'en' ? '-en' : '';
+  [['auth-consent-terms-link', 'terms'], ['auth-consent-privacy-link', 'privacy'],
+   ['auth-footer-terms-link', 'terms'], ['auth-footer-privacy-link', 'privacy'],
+   ['sidebar-terms-link', 'terms'], ['sidebar-privacy-link', 'privacy']].forEach(([id, doc]) => {
+    const el = document.getElementById(id);
+    if (el) el.href = `${doc}${legalSuffix}.html`;
+  });
+
+  // Top nav
+  const tnav = document.querySelectorAll('#top-nav .tnav-btn');
+  const tnavKeys = ['nav_overview','nav_stocks','nav_statistics','nav_themes','nav_screener','nav_missed','nav_investments','nav_settings'];
+  tnav.forEach((btn, i) => { if (tnavKeys[i]) btn.textContent = s[tnavKeys[i]]; });
+
+  // Sidebar nav-labels
+  const sideKeys = ['nav_overview','nav_stocks','nav_statistics','nav_settings','nav_themes','nav_ai','nav_missed','nav_investments'];
+  document.querySelectorAll('.sidebar-nav .nav-label').forEach((el, i) => { if (sideKeys[i]) el.textContent = s[sideKeys[i]]; });
+
+  // Sidebar section label
+  const sectionEl = document.querySelector('.sidebar-section-label');
+  if (sectionEl) sectionEl.textContent = s.nav_section;
+
+  // Add trade button handled via data-i18n on the inner span
+
+  // data-i18n elements
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.dataset.i18n;
+    if (s[k]) el.textContent = s[k];
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    const k = el.dataset.i18nPh;
+    if (s[k]) el.placeholder = s[k];
+  });
+
+  // Toggle buttons
+  document.getElementById('lang-en')?.classList.toggle('active', lang === 'en');
+  document.getElementById('lang-he')?.classList.toggle('active', lang === 'he');
+  const desc = document.getElementById('lang-desc');
+  if (desc) desc.textContent = lang === 'he' ? 'ממשק בעברית' : 'Interface in English';
+
+  // Re-populate filter dropdowns with localized month names
+  if (typeof initFilters === 'function') initFilters();
+
+  // Re-render active tab content
+  const activeTab = document.querySelector('.tab-content.active');
+  if (activeTab) {
+    const id = activeTab.id;
+    if (id === 'tab-overview') renderOverview();
+    else if (id === 'tab-stocks') renderTable('stock');
+    else if (id === 'tab-crypto') renderTable('crypto');
+    else if (id === 'tab-statistics') renderStatistics();
+    else if (id === 'tab-investments') invInit();
+    else if (id === 'tab-missed') missedRender();
+  }
+  // Also update modal/quick-add labels dynamically
+  _applyModalLang(s);
+}
+
+function _applyModalLang(s) {
+  // Type badge (dynamic, not covered by data-i18n)
+  const qaBadge = document.getElementById('qa-type-badge');
+  if (qaBadge) {
+    const isCrypto = document.getElementById('qa-crypto')?.checked;
+    qaBadge.textContent = isCrypto ? s.m_crypto_badge : s.m_stock_badge;
+  }
+  const mBadge = document.getElementById('m-type-badge');
+  if (mBadge) {
+    mBadge.textContent = mBadge.classList.contains('crypto') ? s.m_crypto_badge : s.m_stock_badge;
+  }
+  // Select options (option text not covered by data-i18n)
+  const updateSelect = id => {
+    const sel = document.getElementById(id);
+    if (!sel || sel.options.length < 2) return;
+    sel.options[0].textContent = s.qa_select;
+    sel.options[1].textContent = s.mc_green;
+    sel.options[2].textContent = s.mc_orange;
+    sel.options[3].textContent = s.mc_red;
+  };
+  updateSelect('qa-market-cond');
+  updateSelect('m-market-cond');
+  // Donut SVG text (SVG text elements can't use data-i18n textContent update)
+  const dotEl = document.getElementById('donut-allocated-label');
+  if (dotEl) dotEl.textContent = s.inv_donut_allocated;
+}
+
+function langInit() {
+  const saved = localStorage.getItem('tj_lang');
+  if (saved) { _lang = saved; setLang(saved); return; }
+  // No explicit choice yet (new visitor) — default to Hebrew immediately so
+  // the UI never waits on a network call, then switch to English if the geo
+  // lookup comes back non-Israel. setLang() persists tj_lang on every call,
+  // so this only ever runs once per browser — after that the saved choice
+  // above short-circuits it, same as an explicit manual pick would.
+  _lang = 'he';
+  setLang('he');
+  try {
+    fetch('https://get.geojs.io/v1/ip/country.json').then(r => r.json()).then(d => {
+      if (d && d.country && d.country !== 'IL') setLang('en');
+    }).catch(() => {});
+  } catch (e) {}
+}
+
+// ── Fear & Greed Index ──────────────────────────
+let _fgTimer = null;
+const FG_COLORS = {
+  'extreme fear': ['#e11d48', '#e11d48'],
+  'fear':         ['#f97316', '#ea580c'],
+  'neutral':      ['#eab308', '#ca8a04'],
+  'greed':        ['#84cc16', '#65a30d'],
+  'extreme greed':['#0d9488', '#1d9678'],
+};
+const FG_LABELS = {
+  'extreme fear':  'Extreme Fear',
+  'fear':          'Fear',
+  'neutral':       'Neutral',
+  'greed':         'Greed',
+  'extreme greed': 'Extreme Greed',
+};
+
+// The two Fear & Greed widgets and Market Pulse all used to repaint from zero on
+// every page load. The edge functions cache server-side, but with this project's
+// traffic that cache is almost never warm — measured live on 2026-08-28, all four
+// market_cache rows were 30 minutes old against a 5-minute TTL — so the round
+// trip was reliably the slow path. Holding the last payload locally means the
+// widget shows a real number on the first frame and the network result just
+// replaces it.
+const _PULSE_CACHE_PREFIX = 'pulse_cache_';
+function _pulseCacheRead(key, maxAgeMs) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(_PULSE_CACHE_PREFIX + key) || 'null');
+    if (!raw || !raw.ts || Date.now() - raw.ts > maxAgeMs) return null;
+    return raw;
+  } catch (e) { return null; }
+}
+function _pulseCacheWrite(key, payload) {
+  try { localStorage.setItem(_PULSE_CACHE_PREFIX + key, JSON.stringify({ ts: Date.now(), payload })); } catch (e) {}
+}
+
+// Shared by the cached repaint and the fresh one so a cached reading is rendered
+// identically rather than drifting into its own slightly-different markup.
+function _renderFGWidget(el, d, label, source, ts) {
+  const score  = Math.round(d.score);
+  const key    = (d.rating || '').toLowerCase();
+  const colors = FG_COLORS[key] || ['#8faac8','#64748b'];
+  // colors[0] is tuned for a dark background — on the light theme it fails text
+  // contrast (e.g. the yellow/lime ratings run ~1.9-2.8:1 on white), so text uses
+  // colors[1] (the darker variant) there while the bar fill keeps colors[0].
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  const textColor = isLight ? colors[1] : colors[0];
+  const rating = FG_LABELS[key] || d.rating;
+  const when   = new Date(ts || Date.now()).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  el.innerHTML = `
+      <div class="fg-bar-wrap">
+        <div class="fg-bar-score">
+          <span class="fg-score" style="color:${textColor}">${score}</span>
+          <span class="fg-score-sub">/100</span>
+        </div>
+        <div class="fg-bar-track">
+          <div class="fg-bar-fill" style="width:${score}%;background:${colors[0]};box-shadow:0 0 6px ${colors[0]}80"></div>
+        </div>
+      </div>
+      <div class="fg-info">
+        <div class="fg-label">${label}</div>
+        <div class="fg-rating" style="color:${textColor}">${rating}</div>
+        <div class="fg-source">${source} · ${when}</div>
+      </div>`;
+}
+function _fgPlaceholder(el, label) {
+  el.innerHTML = `<div class="fg-bar-wrap"><div class="fg-bar-score"><span class="fg-score" style="color:var(--text2)">…</span></div><div class="fg-bar-track"></div></div><div class="fg-info"><div class="fg-label">${label}</div><div class="fg-rating" style="color:var(--text2);font-size:13px;">Loading</div></div>`;
+}
+function _fgUnavailable(el, label) {
+  el.innerHTML = `<div class="fg-bar-wrap"><div class="fg-bar-score"><span class="fg-score" style="color:var(--text2)">—</span></div><div class="fg-bar-track"></div></div><div class="fg-info"><div class="fg-label">${label}</div><div class="fg-rating" style="color:var(--text2);font-size:13px;">Unavailable</div></div>`;
+}
+
+async function loadFearGreed() {
+  const el = document.getElementById('fear-greed-widget');
+  if (!el) return;
+  const cachedFG = _pulseCacheRead('fear-greed', 6 * 60 * 60 * 1000);
+  if (cachedFG) {
+    _renderFGWidget(el, cachedFG.payload, 'Fear & Greed Index', 'CNN', cachedFG.ts);
+    // The STEM badge rides this same payload, so it too paints from cache
+    // instead of sitting blank until the network answers.
+    _stemState = computeStemState(cachedFG.payload.vix, cachedFG.payload.breadthPct);
+    _stemVix = typeof cachedFG.payload.vix === 'number' ? cachedFG.payload.vix : null;
+    renderStemBadge();
+  } else {
+    _fgPlaceholder(el, 'Fear & Greed');
+  }
+  try {
+    const jwt = await _getToken();
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/fear-greed`,
+      jwt ? { headers: { 'Authorization': `Bearer ${jwt}` } } : {}
+    );
+    const d = await res.json();
+    if (!d.score) throw new Error('no data');
+    _pulseCacheWrite('fear-greed', d);
+    _stemState = computeStemState(d.vix, d.breadthPct);
+    _stemVix = typeof d.vix === 'number' ? d.vix : null;
+    _maybeShowStemMismatchNotice();
+    renderStemBadge();
+    _renderFGWidget(el, d, 'Fear & Greed Index', 'CNN', Date.now());
+  } catch {
+    // A cached reading on screen is better than replacing it with "Unavailable"
+    // because one refresh failed.
+    if (!cachedFG) _fgUnavailable(el, 'Fear & Greed');
+  }
+  clearTimeout(_fgTimer);
+  // CNN's live score moves intraday (only the historical chart series is daily),
+  // confirmed live 2026-09-02: the widget showed 29 while CNN's own site showed
+  // 31 at the same moment, because the 60min client refresh let a real intraday
+  // move sit on screen for up to an hour. The edge function still caches
+  // server-side for 5 min, so a tighter client interval doesn't add real load.
+  _fgTimer = setTimeout(loadFearGreed, 15 * 60 * 1000);
+}
+
+let _cfgTimer = null;
+async function loadCryptoFearGreed() {
+  const el = document.getElementById('crypto-fear-greed-widget');
+  if (!el) return;
+  const cachedCFG = _pulseCacheRead('crypto-fear-greed', 48 * 60 * 60 * 1000);
+  if (cachedCFG) _renderFGWidget(el, cachedCFG.payload, 'Crypto Fear & Greed', 'Alternative.me', cachedCFG.ts);
+  else _fgPlaceholder(el, 'Crypto Fear & Greed');
+  try {
+    const jwt = await _getToken();
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/crypto-fear-greed`,
+      jwt ? { headers: { 'Authorization': `Bearer ${jwt}` } } : {}
+    );
+    const d = await res.json();
+    if (!d.score) throw new Error('no data');
+    _pulseCacheWrite('crypto-fear-greed', d);
+    _renderFGWidget(el, d, 'Crypto Fear & Greed', 'Alternative.me', Date.now());
+  } catch {
+    if (!cachedCFG) _fgUnavailable(el, 'Crypto Fear & Greed');
+  }
+  clearTimeout(_cfgTimer);
+  _cfgTimer = setTimeout(loadCryptoFearGreed, 24 * 60 * 60 * 1000);
+}
+
+function renderOverview() {
+  const now = new Date();
+  const om = document.getElementById('ov-month');
+  const oy = document.getElementById('ov-year');
+  if (om && !om.value) om.value = now.getMonth() + 1;
+  if (oy && !oy.value) oy.value = now.getFullYear();
+  const {month, year} = getFilter('ov');
+  const info = document.getElementById('ov-filter-info');
+  if (info) info.textContent = (month||year) ? `${month?months()[+month-1]:''} ${year||''}`.trim() : '';
+
+  let stTrades = filterTrades('stock', month, year, true);
+  let crTrades = filterTrades('crypto', month, year, true);
+  let trades;
+  if (ovScope==='stock') trades = stTrades;
+  else if (ovScope==='crypto') trades = crTrades;
+  else trades = [...stTrades, ...crTrades];
+
+  trades = [...trades].sort((a,b) => new Date(a.entryDate)-new Date(b.entryDate));
+  const st    = stats(trades);
+  const adv = advancedStats(trades);
+
+  // Trend
+  const byMon = {};
+  // Realised only: an open position contributes -commission and would show a
+  // month as slightly negative purely because positions were opened in it.
+  trades.filter(isClosed).forEach(t => { const k=(t.entryDate||'').slice(0,7); if(k) byMon[k]=(byMon[k]||0)+calcTotal(t); });
+  const monKeys = Object.keys(byMon).sort();
+  let trendCls='flat', trendLbl='—';
+  if (monKeys.length >= 2) {
+    const diff = byMon[monKeys[monKeys.length-1]] - byMon[monKeys[monKeys.length-2]];
+    trendCls = diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat';
+    // Math.abs() strips the direction but fmtUSD() re-adds a "+" to anything
+    // non-negative, so a month that fell $98 read "▼ +$98.00" — arrow and sign
+    // contradicting each other. The arrow carries the direction; the figure is
+    // the unsigned magnitude.
+    trendLbl = (diff > 0 ? '▲ ' : diff < 0 ? '▼ ' : '') + '$' + Math.abs(diff).toFixed(2) + ' ' + t('kpi_vs_prev');
+  }
+
+  // Avg R
+  // Net of commission and closed-only, so this matches the statistics tab's R
+  // instead of contradicting it — gross vs net flipped the sign on small trades.
+  const withR = trades.filter(tr2 => isClosed(tr2) && calcStopRisk(tr2) > 0);
+  const avgR  = withR.length ? withR.reduce((s,tr2) => s + calcTotal(tr2)/calcStopRisk(tr2), 0) / withR.length : null;
+
+  // Open positions — same ovScope the other Overview cards already use, so
+  // the live P&L card doesn't keep combining stock+crypto after every other
+  // card on this tab has already been filtered down to one.
+  const openSource = ovScope==='stock' ? db.stocks : ovScope==='crypto' ? db.crypto : [...db.stocks, ...db.crypto];
+  const openTrades = openSource.filter(tr2 => !tr2.deleted && !tr2.exitPrice);
+
+  // 5 KPI cards
+  const _noTrades = db.stocks.filter(tr=>!tr.deleted).length + db.crypto.filter(tr=>!tr.deleted).length === 0;
+  if (_noTrades) {
+    document.getElementById('kpi-grid').innerHTML = `
+      <div style="grid-column:1/-1;padding:28px 24px;text-align:center;border:1px dashed rgba(129,140,248,0.2);border-radius:var(--r-lg);background:rgba(129,140,248,0.03);">
+        <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px;">הוסף את הפוזיציה הראשונה שלך</div>
+        <div style="font-size:13px;color:var(--text3);line-height:1.6;margin-bottom:18px;">לאחר רישום עסקאות תוכל לצפות כאן בנתוני הביצועים שלך</div>
+        <div style="display:flex;justify-content:center;gap:10px;">
+          <button onclick="openModal('stock')" style="padding:9px 20px;background:var(--accent);color:#fff;border:none;border-radius:var(--r-md);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s;" onmouseenter="this.style.opacity='.85'" onmouseleave="this.style.opacity='1'">+ מניה</button>
+          <button onclick="openModal('crypto')" style="padding:9px 20px;background:rgba(255,255,255,0.07);color:var(--text);border:1px solid rgba(255,255,255,0.1);border-radius:var(--r-md);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s;" onmouseenter="this.style.opacity='.85'" onmouseleave="this.style.opacity='1'">+ קריפטו</button>
+        </div>
+      </div>`;
+  } else {
+    document.getElementById('kpi-grid').innerHTML = `
+    <div class="kpi-card ${st.total>=0?'c-green':'c-red'}" title="רווח/הפסד כולל בתקופה ובסקופ הנבחרים (עסקאות סגורות בלבד)">
+      <div class="kpi-label">${t('kpi_pnl')}</div>
+      <div class="kpi-value ${st.total>=0?'green':'red'} sensitive">${fmtUSD(st.total)}</div>
+      <div class="kpi-sub">${st.nClosed} ${t('trades')}${st.nOpen ? ` · ${st.nOpen} פתוחות` : ''}</div>
+      ${monKeys.length>=2 ? `<div class="kpi-trend ${trendCls} sensitive">${trendLbl}</div>` : ''}
+    </div>
+    <div class="kpi-card c-yellow" id="kpi-live-card" title="שווי הפוזיציות הפתוחות במחיר השוק הנוכחי, מתעדכן כל דקה">
+      <div class="kpi-label">${t('kpi_live')}</div>
+      <div class="kpi-value sensitive" id="kpi-live-pl">${t('kpi_calculating')}</div>
+      <div class="kpi-sub" id="kpi-live-sub">${openTrades.length} ${t('kpi_open_pos')}</div>
+    </div>
+    <div class="kpi-card c-blue" title="אחוז העסקאות הסגורות שהסתיימו ברווח">
+      <div class="kpi-label">${t('kpi_winrate')}</div>
+      <div class="kpi-value ${st.wr>=50?'green':'red'} sensitive">${fmt(st.wr,1)}%</div>
+      <div class="kpi-sub">${st.wins}W / ${st.losses}L</div>
+      <div class="kpi-progress-track"><div class="kpi-progress-bar" style="width:${Math.min(st.wr,100)}%;background:${st.wr>=50?'#0d9488':'#e11d48'}"></div></div>
+    </div>
+    <div class="kpi-card ${avgR!==null&&avgR>=0?'c-green':'c-yellow'}" title="רווח/הפסד ממוצע ביחס לסיכון המתוכנן — סטופ שהוגדר, או אם לא הוגדר סטופ, מרחק הכניסה ממחיר היציאה בפועל">
+      <div class="kpi-label">${t('kpi_rr')}</div>
+      <div class="kpi-value ${avgR!==null?(avgR>=0?'green':'red'):''} sensitive">${avgR!==null?avgR.toFixed(2)+'R':'—'}</div>
+      <div class="kpi-sub">${withR.length ? withR.length+' '+t('kpi_with_stop') : ''}</div>
+    </div>
+    <div class="kpi-card c-blue" title="סך העסקאות שנרשמו בתקופה ובסקופ הנבחרים, כולל פתוחות">
+      <div class="kpi-label">${t('kpi_trades')}</div>
+      <div class="kpi-value">${st.n}</div>
+    </div>
+  `;
+    document.querySelectorAll('#kpi-grid .kpi-card').forEach((el, i) => {
+      el.style.setProperty('--i', i);
+      el.classList.add('animate-in');
+    });
+  }
+
+  // Calendar
+  calendarNav.overview = { year: year ? +year : now.getFullYear(), month: month ? +month : now.getMonth()+1 };
+  renderCalendar('all');
+
+  renderCumChart(trades);
+
+  // Live P&L refresh
+  if (_ovLiveTimer) clearInterval(_ovLiveTimer);
+  _updateLivePL();
+  _ovLiveTimer = setInterval(() => _updateLivePL(true), 60000);
+  _loadPersonalStem();
+
+  applyPrivacy();
+}
+
+let _livePLToken = 0;
+// renderOverview() re-runs on every filter change, tab switch back to Overview,
+// and trade CRUD — none of which mean the quotes themselves are stale. Without
+// this, picking a different month refetched live prices from the network on
+// every click even though the open-position set (and therefore the quotes)
+// hadn't changed. Skip the network round trip if the same symbol set was
+// priced within the last 20s; `force` (the 60s timer, visibilitychange) always
+// goes through.
+let _lastLivePLTs = 0, _lastLivePLSymbols = '';
+const _LIVE_PL_MIN_INTERVAL = 20000;
+// US equity quotes do not move outside 09:30-16:00 America/New_York on a
+// weekday, so refetching them every 60s overnight and all weekend was pure
+// latency and rate-limit burn for a number that cannot have changed. Market
+// holidays are deliberately not modelled: the cost of being wrong is one
+// unnecessary refresh, and a hardcoded holiday table goes stale silently.
+const _LIVE_PL_CLOSED_INTERVAL = 900000;
+function _isUSMarketOpen(d = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York',
+    weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(d);
+  const get = k => parts.find(x => x.type === k)?.value;
+  const wd = get('weekday');
+  if (wd === 'Sat' || wd === 'Sun') return false;
+  // hour12:false renders midnight as '24' in some engines, not '00'.
+  const mins = (Number(get('hour')) % 24) * 60 + Number(get('minute'));
+  return mins >= 570 && mins < 960;
+}
+// The card used to sit on "מחשב..." until a network round trip finished, on
+// every single load. The last figure is cached per user+symbol-set so the
+// number paints immediately and the fetch only ever corrects it.
+const _livePLCacheKey = () => 'live_pl_' + (_currentUser?.id || 'anon');
+function _readLivePLCache() {
+  try { return JSON.parse(localStorage.getItem(_livePLCacheKey()) || 'null'); } catch (e) { return null; }
+}
+function _writeLivePLCache(o) {
+  try { localStorage.setItem(_livePLCacheKey(), JSON.stringify(o)); } catch (e) {}
+}
+async function _updateLivePL(force = false) {
+  const el  = document.getElementById('kpi-live-pl');
+  const sub = document.getElementById('kpi-live-sub');
+  if (!el) return;
+  if (document.hidden) return;
+  const ovTab = document.getElementById('tab-overview');
+  if (ovTab && !ovTab.classList.contains('active')) return;
+  // Same ovScope filter renderOverview's own openTrades count uses — the
+  // card otherwise kept summing stock+crypto together regardless of the
+  // scope selector every other KPI card on this tab already respects.
+  const openSource = ovScope==='stock' ? db.stocks : ovScope==='crypto' ? db.crypto : [...db.stocks, ...db.crypto];
+  const open = openSource.filter(t => isOpenPosition(t));
+  const symKey = [...new Set(open.map(t => t.symbol.toUpperCase()))].sort().join(',');
+  // Crypto trades around the clock, so the closed-market shortcut only applies
+  // when every open position is an equity.
+  const marketClosed = !open.some(t => t.type === 'crypto') && !_isUSMarketOpen();
+  // Paint the cached figure before doing anything slow. The same symbol set
+  // means the same positions, so the only thing that can have changed is price.
+  const cached = _readLivePLCache();
+  if (cached && cached.symKey === symKey && Number.isFinite(cached.totalUnreal)) {
+    _paintLivePL(el, sub, cached.totalUnreal, cached.openCount, cached.priced, cached.symCount, cached.ts, marketClosed);
+  }
+  // When the market is closed the quote cannot move, so even a forced refresh
+  // (the 60s timer, visibilitychange) is throttled hard rather than skipped —
+  // a genuinely stale cache still refreshes, just every 15 min not every 60s.
+  const staleAfter = marketClosed ? _LIVE_PL_CLOSED_INTERVAL : (force ? 0 : _LIVE_PL_MIN_INTERVAL);
+  if (symKey === _lastLivePLSymbols && Date.now() - _lastLivePLTs < staleAfter) return;
+  if (!open.length) {
+    el.textContent = '$0.00';
+    if (sub) sub.textContent = t('kpi_no_open');
+    return;
+  }
+  // The finnhub edge function has a shared fallback key and the personal field is
+  // hidden from non-admins, so gating on a personal key killed this card for
+  // every regular user. The JWT alone is enough.
+  // Claimed here, not at the top of the function: the token exists to stop an
+  // older in-flight fetch from overwriting a newer one, so only a call that is
+  // actually going to fetch may claim it. Taking it before the guards above let
+  // a call that then bailed out ("same symbols, refreshed recently") cancel the
+  // one call that was going to paint — both returned without writing and the
+  // card sat on "מחשב..." forever. Worst while the US market is closed, where
+  // staleAfter is 15 min and ignores `force`, so every 60s tick re-bailed and
+  // nothing was ever cached to paint on the next visit either.
+  const myToken = ++_livePLToken;
+  const token = await _getToken();
+  // Finnhub's /quote is a stock endpoint and Yahoo's chart endpoint needs a
+  // "-USD" suffix for crypto — a bare "BTC" doesn't fail loudly on Yahoo, it
+  // silently resolves to an unrelated ETF that happens to share the ticker
+  // ($34 vs. BTC's real ~$78,600), and Bybit's own pair names (XRPUSDT.P)
+  // resolve nowhere at all. quoteSym(t) is what actually goes to the feed;
+  // t.symbol is still what's shown and what positions are grouped by.
+  const quoteSym = t => t.type === 'crypto' ? _cryptoBaseSymbol(t.symbol).toUpperCase() + '-USD' : t.symbol.toUpperCase();
+  const symbols = [...new Set(open.map(quoteSym))];
+  _lastLivePLTs = Date.now();
+  _lastLivePLSymbols = [...symbols].sort().join(',');
+  let totalUnreal = 0;
+  // A symbol with no quote used to contribute 0 silently, so a fully failed
+  // refresh (rate limit, network, or a symbol the feed doesn't carry) rendered
+  // a confident green "+$0.00" that was indistinguishable from genuinely flat
+  // positions. Count what resolved.
+  let priced = 0;
+  // One batched call instead of one edge-function round trip per symbol — each
+  // round trip paid its own auth+rate-limit overhead, which dominated load time
+  // once there were more than a couple of open positions.
+  try {
+    // Neither this fetch nor the edge function's own per-symbol Finnhub calls
+    // had a timeout, so a single slow/hung upstream response could leave this
+    // card stuck on "מחשב..." indefinitely. 12s here comfortably covers the
+    // edge function's own 5s-per-symbol cap plus network overhead.
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 12000);
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=quote&symbols=${encodeURIComponent(symbols.join(','))}`,
+      { headers: { 'Authorization': `Bearer ${token}` }, signal: controller.signal });
+    clearTimeout(tid);
+    const quotes = await r.json();
+    symbols.forEach(sym => {
+      const price = quotes?.[sym]?.c;
+      if (!price) return;
+      priced++;
+      open.filter(t => quoteSym(t) === sym).forEach(t => {
+        const shares = (t.shares || 0) - (t.closedShares || 0);
+        const side = t.ls === 'S' ? -1 : 1;
+        totalUnreal += side * shares * (price - t.entryPrice);
+      });
+    });
+  } catch {}
+  if (myToken !== _livePLToken) return;
+  // className was assigned, not amended, which dropped `kpi-value` (26px/800)
+  // and `sensitive` off the element the first time it refreshed — the figure
+  // shrank to body text and privacy mode stopped hiding it.
+  const setCls = extra => { el.className = 'kpi-value sensitive' + (extra ? ' ' + extra : ''); };
+  if (!priced) {
+    // A failed refresh must not wipe out a figure that was already on screen.
+    // The cached one is stale by at most the refresh interval; a bare em dash
+    // is strictly less information than that.
+    if (cached && cached.symKey === symKey && Number.isFinite(cached.totalUnreal)) {
+      _paintLivePL(el, sub, cached.totalUnreal, cached.openCount, cached.priced, cached.symCount, cached.ts, marketClosed);
+      return;
+    }
+    el.textContent = '—';
+    setCls('');
+    if (sub) sub.textContent = `${open.length} ${t('kpi_open_pos')} · ${t('kpi_no_quotes')}`;
+    return;
+  }
+  _writeLivePLCache({ symKey, totalUnreal, openCount: open.length, priced, symCount: symbols.length, ts: Date.now() });
+  _paintLivePL(el, sub, totalUnreal, open.length, priced, symbols.length, Date.now(), marketClosed);
+}
+
+// Shared by the live path and the instant cached repaint, so a cached figure is
+// formatted identically to a fresh one rather than drifting into its own
+// slightly-different rendering.
+function _paintLivePL(el, sub, totalUnreal, openCount, priced, symCount, ts, marketClosed) {
+  const sign = totalUnreal >= 0 ? '+' : '';
+  el.textContent = sign + '$' + Math.abs(totalUnreal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  el.className = 'kpi-value sensitive ' + (totalUnreal >= 0 ? 'green' : 'red');
+  // A real clock time, not a fixed "updated now" that read the same whether the
+  // last refresh was 5 seconds or an hour ago.
+  const clock = new Date(ts).toLocaleTimeString(_lang === 'he' ? 'he-IL' : 'en-US',
+    { hour: '2-digit', minute: '2-digit' });
+  const missing = (symCount || 0) - (priced || 0);
+  if (sub) sub.textContent = `${openCount} ${t('kpi_open_pos')} · ${t('kpi_updated')} ${clock}`
+    + (marketClosed ? ` · ${t('kpi_market_closed')}` : '')
+    + (missing > 0 ? ` · ${missing} ${t('kpi_missing_quotes')}` : '');
+  applyPrivacy();
+}
+
+// setInterval keeps firing while the tab is in the background, where
+// _updateLivePL returns early by design — so coming back to a tab that had been
+// hidden for an hour showed an hour-old figure until the next tick. Refresh the
+// moment it becomes visible again.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden || !_ovLiveTimer) return;
+  _updateLivePL(true);
+});
+
+// The real Minervini-style STEM: rolling 5-day breakout success of the
+// trader's OWN focus list (their open positions), not a market-wide index
+// gauge — see personal-stem edge function for the full rationale. Daily-bar
+// data, so a 1h guard is plenty; reuses the same open-symbol computation
+// _updateLivePL already does.
+let _pstemState = null, _pstemDownRatio = null, _pstemAvgReturn = null, _pstemResolved = null, _lastPstemTs = 0, _lastPstemSymbols = '';
+const PSTEM_MIN_INTERVAL = 3600000;
+// Minervini's public description has TWO components: "how many of the Focus
+// List stocks are closing down for the 5 day period (e.g. less than 60%)"
+// AND "how they are all cumulatively performing". An earlier version here
+// used only the first — avgReturn was fetched and then ignored, so a book
+// where most names were barely green but the few red ones were collapsing
+// still read as healthy. Both halves now matter, and the down-count
+// threshold is the 60% the sources actually cite rather than an invented 55.
+//
+// Deliberately NOT a faithful clone: Minervini states his model is
+// subjective, and his Focus List is a forward-looking breakout watchlist
+// rather than positions already entered. This is the closest mechanical
+// approximation the available data allows.
+// A market-environment read needs a real sample. Minervini reads a focus list
+// of dozens of names; with one or two symbols "100% positive" is just that one
+// stock's week restated as a market verdict, which is worse than showing
+// nothing. Below MIN a thin-sample state is returned so the badge can say why
+// instead of printing a confident-looking number off n=1.
+const PSTEM_MIN_SAMPLE = 5;
+function computePersonalStemState(downRatio, avgReturn, resolved) {
+  if (downRatio == null) return null;
+  if (resolved != null && resolved < PSTEM_MIN_SAMPLE) return 'thin';
+  if (downRatio >= 60 || (avgReturn != null && avgReturn <= -2)) return 'red';
+  if (downRatio <= 30 && (avgReturn == null || avgReturn > 0)) return 'green';
+  return 'orange';
+}
+async function _loadPersonalStem(force = false) {
+  // Minervini's own Focus List is forward-looking — breakout candidates he is
+  // watching, not positions already entered — so the screener watchlist alone
+  // is the faithful population and is used on its own whenever it's big
+  // enough to read (>= PSTEM_MIN_SAMPLE). Open positions are unioned in only
+  // as a fallback for a watchlist too thin to stand on its own, so a user who
+  // hasn't built up a watchlist yet still gets a reading instead of "thin".
+  let watchlist = [];
+  try {
+    const { data } = await _sb.from('screener_watchlist').select('ticker').eq('user_id', _currentUser.id);
+    watchlist = (data || []).map(r => r.ticker).filter(Boolean);
+  } catch { /* a watchlist read failure must not blank out the fallback below */ }
+  let symbols;
+  if (watchlist.length >= PSTEM_MIN_SAMPLE) {
+    symbols = [...new Set(watchlist.map(s => String(s).toUpperCase()))].sort();
+  } else {
+    const open = [...db.stocks, ...db.crypto].filter(t => isOpenPosition(t));
+    symbols = [...new Set([...open.map(t => t.symbol), ...watchlist].map(s => String(s).toUpperCase()))].sort();
+  }
+  const symKey = symbols.join(',');
+  if (!force && symKey === _lastPstemSymbols && Date.now() - _lastPstemTs < PSTEM_MIN_INTERVAL) return;
+  if (!symbols.length) { _pstemState = null; renderPersonalStemBadge(); return; }
+  // The badge used to stay hidden until the network answered, which meant a
+  // cold fan-out over the whole focus list on every page load. Keyed on the
+  // symbol set, since a different focus list is a different reading.
+  const cachedPS = _pulseCacheRead('personal-stem', 24 * 60 * 60 * 1000);
+  if (cachedPS && cachedPS.payload.symKey === symKey) {
+    _pstemDownRatio = cachedPS.payload.downRatio;
+    _pstemAvgReturn = cachedPS.payload.avgReturn;
+    _pstemResolved  = cachedPS.payload.resolved;
+    _pstemState = computePersonalStemState(_pstemDownRatio, _pstemAvgReturn, _pstemResolved);
+    renderPersonalStemBadge();
+  }
+  _lastPstemTs = Date.now();
+  _lastPstemSymbols = symKey;
+  try {
+    const jwt = await _getToken();
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 15000);
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/personal-stem?symbols=${encodeURIComponent(symbols.join(','))}`,
+      { headers: { 'Authorization': `Bearer ${jwt}` }, signal: controller.signal });
+    clearTimeout(tid);
+    const d = await res.json();
+    _pstemDownRatio = typeof d.downRatio === 'number' ? d.downRatio : null;
+    _pstemAvgReturn = typeof d.avgReturn === 'number' ? d.avgReturn : null;
+    _pstemResolved = typeof d.resolved === 'number' ? d.resolved : null;
+    _pstemState = computePersonalStemState(_pstemDownRatio, _pstemAvgReturn, _pstemResolved);
+    _pulseCacheWrite('personal-stem', { symKey, downRatio: _pstemDownRatio, avgReturn: _pstemAvgReturn, resolved: _pstemResolved });
+  } catch { /* keep last known state rather than flashing to unknown */ }
+  renderPersonalStemBadge();
+}
+const PSTEM_LABELS = { green: 'חזקה', orange: 'סלקטיבית', red: 'סביבת שוק קשה', thin: 'אין מספיק מניות' };
+const PSTEM_COLORS = { green: 'var(--green)', orange: 'var(--yellow)', red: 'var(--red)', thin: 'var(--text3)' };
+function renderPersonalStemBadge() {
+  const el = document.getElementById('pstem-badge');
+  if (!el) return;
+  if (!_pstemState) { el.style.display = 'none'; return; }
+  const color = PSTEM_COLORS[_pstemState];
+  el.style.display = 'flex';
+  el.style.setProperty('--stem-color', color);
+  // Only the color + state name are shown now (2026-09-13, explicit request)
+  // — the % positive / avg return / sample count line was dropped. Still
+  // computed elsewhere (_pstemDownRatio, _pstemAvgReturn); just not rendered.
+  const n = _pstemResolved;
+  if (_pstemState === 'thin') {
+    el.innerHTML = `
+    <span class="stem-pill-label">STEM</span>
+    <span class="stem-pill-state">${PSTEM_LABELS.thin}</span>
+    <span class="stem-pill-vix">${n != null ? n : 0}/${PSTEM_MIN_SAMPLE} — הוסף מניות לרשימת המעקב</span>`;
+    return;
+  }
+  el.innerHTML = `
+    <span class="stem-pill-label">STEM</span>
+    <span class="stem-pill-state">${PSTEM_LABELS[_pstemState]}</span>`;
+}
+
+// Broker-derived portfolio equity — ibkr-cron and bybit-cron both write
+// broker_balances on each sync run, one row per (user, broker). Cached
+// client-side and refetched at most once every 60s, same guard shape as
+// _updateLivePL's symbol-key guard.
+const _BROKER_NAMES = { ibkr: 'אינטראקטיב ברוקר', bybit: 'Bybit' };
+let _brokerEquityUsd = null, _brokerEquityTs = 0, _brokerEquityLabel = 'גודל תיק (ברוקר)';
+let _brokerEquityByBroker = {};
+// null = combined sum of every connected broker. Set by the card's own
+// dropdown when more than one broker is connected; a single broker never
+// shows the dropdown, since there is nothing to switch to.
+let _brokerEquitySelected = null;
+async function _loadBrokerEquity() {
+  if (!_currentUser) return;
+  if (Date.now() - _brokerEquityTs < 60000) return;
+  _brokerEquityTs = Date.now();
+  const { data } = await _sb.from('broker_balances').select('equity_usd, broker').eq('user_id', _currentUser.id);
+  if (!data) return;
+  const sum = data.reduce((s, r) => s + Number(r.equity_usd || 0), 0);
+  _brokerEquityByBroker = {};
+  data.forEach(r => { if (r.broker) _brokerEquityByBroker[r.broker] = Number(r.equity_usd || 0); });
+  // A single connected broker gets named outright; more than one offers a
+  // dropdown instead of picking an arbitrary order to list them in.
+  const brokers = Object.keys(_brokerEquityByBroker);
+  if (brokers.length === 1) {
+    _brokerEquitySelected = null;
+    _brokerEquityLabel = `גודל תיק ${_BROKER_NAMES[brokers[0]] || brokers[0]}`;
+  } else if (_brokerEquitySelected && !brokers.includes(_brokerEquitySelected)) {
+    _brokerEquitySelected = null; // a previously-selected broker got disconnected
+  }
+  if (sum !== _brokerEquityUsd) { _brokerEquityUsd = sum; renderStatistics(); }
+  else _brokerEquityUsd = sum;
+}
+
+function _setBrokerEquitySelected(broker, btn) {
+  _brokerEquitySelected = broker || null;
+  document.querySelectorAll('#port-equity-menu button').forEach(b => { b.classList.remove('active'); b.removeAttribute('aria-current'); });
+  if (btn) { btn.classList.add('active'); btn.setAttribute('aria-current', 'true'); }
+  _closeAllDDs();
+  renderStatistics();
+}
+
+function renderStatistics() {
+  _restoreStatsState();
+  _loadBrokerEquity();
+  const { month, year } = getFilter('stats');
+  let allTrades = [...db.stocks, ...db.crypto].filter(t => !t.deleted && t.entryDate);
+  if (month) allTrades = allTrades.filter(t => +t.entryDate.slice(5, 7) === +month);
+  if (year)  allTrades = allTrades.filter(t => +t.entryDate.slice(0, 4) === +year);
+
+  const stTrades = allTrades.filter(t => t.type === 'stock' || !t.type);
+  const crTrades = allTrades.filter(t => t.type === 'crypto');
+
+  let trades;
+  if (statsScope === 'stock') trades = stTrades;
+  else if (statsScope === 'crypto') trades = crTrades;
+  else trades = allTrades;
+
+  const st  = stats(trades);
+  const adv = advancedStats(trades);
+
+  // Must be the same closed-test stats()/advancedStats() use. This screen shows
+  // both families of KPI side by side, so a row that one counts and the other
+  // doesn't makes win-rate and profit-factor describe different populations.
+  const closed  = trades.filter(isClosed);
+  const winners = closed.filter(t => calcTotal(t) > 0);
+  const losers  = closed.filter(t => calcTotal(t) <= 0);
+  const winSum  = winners.reduce((s, t) => s + calcTotal(t), 0);
+  const lossSum = Math.abs(losers.reduce((s, t) => s + calcTotal(t), 0));
+  const pf      = lossSum > 0 ? winSum / lossSum : null;
+
+  let curW = 0, maxW = 0, curL = 0, maxL = 0;
+  [...closed].sort((a, b) => a.entryDate.localeCompare(b.entryDate)).forEach(t => {
+    if (calcTotal(t) > 0) { curW++; maxW = Math.max(maxW, curW); curL = 0; }
+    else               { curL++; maxL = Math.max(maxL, curL); curW = 0; }
+  });
+
+  // Same risk definition the rest of the app uses — this used to inline its own
+  // and so kept the fee-dominated outliers calcStopRisk already rejects.
+  let rSum = 0, rCount = 0;
+  closed.forEach(t => {
+    const risk = calcStopRisk(t);
+    if (risk > 0) { rSum += calcTotal(t) / risk; rCount++; }
+  });
+  const avgR = rCount > 0 ? rSum / rCount : 0;
+
+  // Negatives dropped their sign entirely and leaned on the red class alone, so
+  // "הפסד ממוצע $44.00" read as a gain in any context where color is lost.
+  const fmt = v => (v >= 0 ? '+' : '-') + '$' + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const pct  = v => v.toFixed(1) + '%';
+
+  // Broker-derived portfolio size gets its own full-width card above the grid.
+  // Locked to the same מניות/קריפטו/הכל filter the KPIs below already use — it
+  // used to run its own independent broker pick, so picking "קריפטו" up top
+  // could still show the IBKR (stock) balance in this card, right above stats
+  // that were only ever measuring the crypto book.
+  const _SCOPE_BROKER = { stock: 'ibkr', crypto: 'bybit' };
+  const scopeBroker = _SCOPE_BROKER[statsScope] || null;
+  const brokerList = Object.keys(_brokerEquityByBroker);
+  let portfolioCard = null;
+  if (scopeBroker) {
+    // Single deterministic broker for this scope — no picker, same as the
+    // existing "only one broker connected" case never showing one either.
+    if (scopeBroker in _brokerEquityByBroker) {
+      portfolioCard = {
+        label: `גודל תיק ${_BROKER_NAMES[scopeBroker] || scopeBroker}`,
+        value: '$' + _brokerEquityByBroker[scopeBroker].toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+        brokerDD: null,
+      };
+    }
+  } else if (_brokerEquityUsd != null) {
+    // statsScope 'all' — combined by default, with the existing dropdown to
+    // peek at one connected broker without leaving the combined stats scope.
+    const selectedEquity = _brokerEquitySelected != null ? _brokerEquityByBroker[_brokerEquitySelected] : _brokerEquityUsd;
+    portfolioCard = {
+      label: _brokerEquitySelected != null
+        ? `גודל תיק ${_BROKER_NAMES[_brokerEquitySelected] || _brokerEquitySelected}`
+        : _brokerEquityLabel,
+      value: '$' + (selectedEquity ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      brokerDD: brokerList.length > 1 ? brokerList : null,
+    };
+  }
+
+  // Curated down from 15 flat tiles to the 8 numbers that actually drive a
+  // go/no-go read on the book — best/worst trade, avg trade, hold-time and
+  // drawdown stayed available lower in the tab (Trading Summary) instead of
+  // repeating here, per the user's "too crowded" feedback.
+  const maxWin  = winners.length ? Math.max(...winners.map(t => calcTotal(t))) : 0;
+  const maxLoss = losers.length  ? Math.min(...losers.map(t => calcTotal(t)))  : 0;
+  const ICON_DOLLAR = '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>';
+  const ICON_TARGET = '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/>';
+  const ICON_BARS   = '<line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>';
+  const ICON_PCT    = '<line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>';
+  const ICON_UP     = '<path d="M14 9V5a3 3 0 0 0-3-3L7 11v10h10.3a2 2 0 0 0 2-1.7l1.4-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>';
+  const ICON_DOWN   = '<path d="M10 15v4a3 3 0 0 0 3 3l4-8V4H6.7a2 2 0 0 0-2 1.7l-1.4 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/>';
+  const ICON_SWAP   = '<polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>';
+  const ICON_TROPHY = '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M5 4H3v2a4 4 0 0 0 4 4M19 4h2v2a4 4 0 0 1-4 4"/>';
+  const ICON_FROWN  = '<circle cx="12" cy="12" r="9"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>';
+  // No closed trades yet: several of these cards would otherwise show a
+  // fabricated "+$0.00" / "0.0%" (fmt(0) and pct(0) both format fine, they're
+  // just not measuring anything) — matches how fmtR already renders "—" for
+  // an unmeasurable value instead of a real one.
+  const noDataYet = st.nClosed === 0;
+  const kpiCards = [
+    { label: t('kpi_pnl'), tip: 'רווח/הפסד כולל בתקופה ובסקופ הנבחרים (עסקאות סגורות בלבד)', value: noDataYet ? '—' : fmt(st.total), sub: `${st.nClosed} ${t('trades')}${st.nOpen ? ` · ${st.nOpen} פתוחות` : ''}`, cls: st.total >= 0 ? 'c-green' : 'c-red', valCls: noDataYet ? '' : (st.total >= 0 ? 'green' : 'red'), sensitive: true, icon: ICON_DOLLAR },
+    { label: t('st_win_rate'), tip: 'אחוז העסקאות הסגורות שהסתיימו ברווח', value: noDataYet ? '—' : pct(st.wr), sub: `${st.wins}W / ${losers.length}L`, cls: st.wr >= 50 ? 'c-green' : 'c-red', valCls: noDataYet ? '' : (st.wr >= 50 ? 'green' : 'red'), icon: ICON_TARGET },
+    { label: 'Profit Factor', tip: 'סך הרווחים חלקי סך ההפסדים — מעל 1 אומר שהמערכת רווחית', value: pf != null ? pf.toFixed(2) : '—', sub: pf != null ? (pf >= 1 ? 'רווחי' : 'לא רווחי') : '', cls: pf != null ? (pf >= 1 ? 'c-green' : 'c-red') : 'c-blue', valCls: pf != null ? (pf >= 1 ? 'green' : 'red') : '', icon: ICON_BARS },
+    { label: t('st_avg_r'), tip: 'רווח/הפסד ממוצע ביחס לסיכון המתוכנן — סטופ שהוגדר, או אם לא הוגדר סטופ, מרחק הכניסה ממחיר היציאה בפועל', value: rCount ? avgR.toFixed(2) + 'R' : '—', sub: rCount ? `${rCount} עסקאות עם סיכון מדיד` : '', cls: avgR >= 0 ? 'c-green' : 'c-red', valCls: rCount ? (avgR >= 0 ? 'green' : 'red') : '', icon: ICON_PCT },
+    { label: t('st_avg_win'), tip: 'רווח ממוצע בעסקה מנצחת', value: winners.length ? fmt(adv.avgWin) : '—', sub: winners.length ? `מקסימום: ${fmt(maxWin)}` : '', cls: 'c-green', valCls: winners.length ? 'green' : '', sensitive: true, icon: ICON_UP },
+    { label: t('st_avg_loss'), tip: 'הפסד ממוצע בעסקה מפסידה', value: losers.length ? fmt(adv.avgLoss) : '—', sub: losers.length ? `מקסימום: ${fmt(maxLoss)}` : '', cls: 'c-red', valCls: losers.length ? 'red' : '', sensitive: true, icon: ICON_DOWN },
+    { label: t('st_wl_ratio'), tip: 'רווח ממוצע חלקי הפסד ממוצע', value: adv.avgLoss !== 0 ? Math.abs(adv.avgWin / adv.avgLoss).toFixed(2) + 'x' : '—', sub: 'רווח / הפסד ממוצע', cls: 'c-blue', valCls: '', icon: ICON_SWAP },
+    { label: t('st_max_win_streak'), tip: 'הרצף הארוך ביותר של עסקאות מנצחות ברציפות', value: maxW, sub: 'עסקאות רצופות', cls: 'c-green', valCls: 'green', icon: ICON_TROPHY },
+    { label: t('st_max_loss_streak'), tip: 'הרצף הארוך ביותר של עסקאות מפסידות ברציפות', value: maxL, sub: 'עסקאות רצופות', cls: 'c-red', valCls: 'red', icon: ICON_FROWN },
+  ];
+
+  const grid = document.getElementById('stats-kpi-grid');
+  if (grid) {
+    const portfolioHtml = portfolioCard ? `
+      <div class="kpi-card portfolio-hero c-blue" title="שווי התיק כפי שדווח מהברוקר המחובר, לא ערך מוזן ידנית">
+        <div class="kpi-label" style="display:flex;align-items:center;gap:6px;justify-content:center;">
+          <span>${portfolioCard.label}</span>
+          ${portfolioCard.brokerDD ? `
+            <div id="port-equity-dd" class="scope-dd">
+              <button class="scope-dd-btn" onclick="toggleScopeDD('port-equity-dd')" aria-label="בחר ברוקר להצגה" title="בחר ברוקר להצגה">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="scope-dd-menu" id="port-equity-menu">
+                <button class="${_brokerEquitySelected == null ? 'active' : ''}" ${_brokerEquitySelected == null ? 'aria-current="true"' : ''} onclick="_setBrokerEquitySelected(null,this)">כל הברוקרים</button>
+                ${portfolioCard.brokerDD.map(b => `<button class="${_brokerEquitySelected === b ? 'active' : ''}" ${_brokerEquitySelected === b ? 'aria-current="true"' : ''} onclick="_setBrokerEquitySelected('${b}',this)">${_BROKER_NAMES[b] || b}</button>`).join('')}
+              </div>
+            </div>` : ''}
+        </div>
+        <div class="kpi-value sensitive">${portfolioCard.value}</div>
+      </div>` : '';
+    const cardHtml = k => `
+      <div class="kpi-card ${k.cls}" title="${k.tip}">
+        <div class="kpi-label">${k.label}</div>
+        <div class="kpi-value ${k.valCls}${k.sensitive ? ' sensitive' : ''}">${k.value}</div>
+        ${k.sub ? `<div class="kpi-sub">${k.sub}</div>` : ''}
+      </div>`;
+    // Spans every column except the last one, placed right before the final
+    // KPI card in DOM order — the grid's auto-placement then has no choice but
+    // to start it on a fresh row (an explicit column-1 start can't land
+    // mid-row) and drop the last card into the one column left beside it,
+    // exactly filling the gap a row of leftover cards would otherwise leave.
+    // Grid-line indices are relative, so this holds at any column count the
+    // responsive auto-fit grid resolves to, not just today's width.
+    const lastCard = kpiCards[kpiCards.length - 1];
+    const cardsHtml = kpiCards.slice(0, -1).map(cardHtml).join('') + `
+      <div style="grid-column:1/-2;padding:6px 2px;">
+        <div class="kpi-label" style="text-align:right;margin-bottom:6px;">משך זמן ממוצע לפי סוג עסקה</div>
+        <div id="hold-compare-wrap"></div>
+      </div>` + cardHtml(lastCard);
+    grid.innerHTML = portfolioHtml + `<div class="kpi-grid-hero">${cardsHtml}</div>`;
+    // Rebuilt fresh on every render, so it has to be reparented here every
+    // time (not just once at DOMContentLoaded like the other scope-dd-menus)
+    // — .kpi-card's fadeUp animation leaves a permanent (fill-mode: both)
+    // transform behind, which makes it a containing block for this
+    // position:fixed menu and detaches it from its trigger button otherwise.
+    const _peMenu = document.getElementById('port-equity-menu');
+    if (_peMenu) document.body.appendChild(_peMenu);
+  }
+
+  renderHoldCompare(adv);
+  renderDonut(st, adv, trades);
+  renderDrawdownChart(trades);
+  renderRHistogram(trades);
+  renderMonthlyTracker(trades);
+  renderSetupBreakdown(trades);
+  renderHoldBreakdown(trades);
+  renderPivotDistance(trades);
+  renderComparison(stTrades, crTrades);
+  applyPrivacy();
+}
+
+// Which setup actually pays. Expectancy is the number that matters here: a
+// setup can win often and still lose money, and with the book's 25.8% hit rate
+// and wins smaller than losses that is exactly the shape to watch for.
+function renderSetupBreakdown(trades) {
+  const host = document.getElementById('setup-breakdown-wrap');
+  if (!host) return;
+  const closed = trades.filter(t => t.closeDate && t.exitPrice);
+  const tagged = closed.filter(t => t.setupType);
+  if (!tagged.length) {
+    host.innerHTML = `<div style="padding:14px 16px;background:var(--card);
+      border:1px solid var(--border);border-radius:var(--r-lg);color:var(--text2);font-size:12px;line-height:1.7">
+      אף עסקה סגורה עדיין לא מתויגת בסוג סטאפ. תייג כמה ב״להשלמה״ שבסקירה הכללית — משם מגיע הפילוח.
+      </div>`;
+    return;
+  }
+  const groups = {};
+  tagged.forEach(t => {
+    const k = t.setupType;
+    (groups[k] = groups[k] || []).push(t);
+  });
+  const rows = Object.entries(groups).map(([k, arr]) => {
+    const pnl = arr.map(calcTotal);
+    const wins = pnl.filter(v => v > 0), losses = pnl.filter(v => v <= 0);
+    const total = pnl.reduce((a, b) => a + b, 0);
+    const wr = arr.length ? wins.length / arr.length * 100 : 0;
+    const avgW = wins.length ? wins.reduce((a, b) => a + b, 0) / wins.length : 0;
+    const avgL = losses.length ? losses.reduce((a, b) => a + b, 0) / losses.length : 0;
+    const exp = arr.length ? total / arr.length : 0;
+    // R only where a stop was recorded, so this stays honest about coverage
+    const rs = arr.map(t => { const r = calcStopRisk(t); return r ? calcTotal(t) / r : null; }).filter(v => v != null);
+    const avgR = rs.length ? rs.reduce((a, b) => a + b, 0) / rs.length : null;
+    return { k, n: arr.length, wr, avgW, avgL, total, exp, avgR, rn: rs.length,
+             nWins: wins.length, nLosses: losses.length };
+  }).sort((a, b) => b.total - a.total);
+
+  const untagged = closed.length - tagged.length;
+  host.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;min-width:0;border-collapse:collapse;font-size:12px">
+    <thead><tr style="color:var(--text3);text-align:right">
+      <th style="padding:7px 8px;font-weight:600">סטאפ</th>
+      <th style="padding:7px 8px;font-weight:600">עסקאות</th>
+      <th style="padding:7px 8px;font-weight:600">הצלחה</th>
+      <th style="padding:7px 8px;font-weight:600">רווח ממוצע</th>
+      <th style="padding:7px 8px;font-weight:600">הפסד ממוצע</th>
+      <th style="padding:7px 8px;font-weight:600">תוחלת</th>
+      <th style="padding:7px 8px;font-weight:600">R ממוצע</th>
+      <th style="padding:7px 8px;font-weight:600">סה״כ</th>
+    </tr></thead><tbody>
+    ${rows.map(r => `<tr style="border-top:1px solid rgba(255,255,255,0.05)">
+      <td style="padding:7px 8px;font-weight:600">${SETUP_LABELS[r.k] || r.k}</td>
+      <td style="padding:7px 8px">${r.n}</td>
+      <td style="padding:7px 8px">${r.wr.toFixed(0)}%</td>
+      <td style="padding:7px 8px" class="num-green sensitive">${r.nWins ? fmtUSD(r.avgW) : '<span style="color:var(--text3)">—</span>'}</td>
+      <td style="padding:7px 8px" class="num-red sensitive">${r.nLosses ? fmtUSD(r.avgL) : '<span style="color:var(--text3)">—</span>'}</td>
+      <td style="padding:7px 8px;font-weight:700" class="${r.exp>=0?'num-green':'num-red'} sensitive">${fmtUSD(r.exp)}</td>
+      <td style="padding:7px 8px">${r.avgR==null?'<span style="color:var(--text3)">—</span>':
+          `<span class="${r.avgR>=0?'num-green':'num-red'}">${r.avgR>=0?'+':''}${r.avgR.toFixed(2)}R</span>
+           <span style="color:var(--text3);font-size:10px">(${r.rn})</span>`}</td>
+      <td style="padding:7px 8px;font-weight:700" class="${r.total>=0?'num-green':'num-red'} sensitive">${fmtUSD(r.total)}</td>
+    </tr>`).join('')}
+    </tbody></table>
+    ${untagged ? `<div style="color:var(--text3);font-size:11px;margin-top:8px">
+      ${untagged} עסקאות סגורות עדיין בלי סטאפ ולא נכללות כאן.</div>` : ''}
+  </div>`;
+}
+
+// How long a position was given to work. Across the book, exits inside two days
+// hit 5% and everything held past three weeks was the only positive bucket, so
+// this is the cut that separates the strategy from the impatience.
+const HOLD_BUCKETS = [
+  { max: 0,        label: 'תוך-יומי' },
+  { max: 2,        label: '1–2 ימים' },
+  { max: 5,        label: '3–5 ימים' },
+  { max: 20,       label: '6–20 ימים' },
+  { max: Infinity, label: '20+ ימים' },
+];
+function _holdDays(t) {
+  if (!t.closeDate || !t.entryDate) return null;
+  const a = Date.parse(t.entryDate), b = Date.parse(t.closeDate);
+  if (isNaN(a) || isNaN(b)) return null;
+  return Math.max(0, Math.round((b - a) / 86400000));
+}
+function renderHoldBreakdown(trades) {
+  const host = document.getElementById('hold-breakdown-wrap');
+  if (!host) return;
+  const closed = trades.filter(t => t.closeDate && t.exitPrice && _holdDays(t) !== null);
+  if (!closed.length) {
+    host.innerHTML = `<div style="padding:14px 16px;background:var(--card);
+      border:1px solid var(--border);border-radius:var(--r-lg);color:var(--text2);font-size:12px">
+      אין עסקאות סגורות עם תאריך סגירה בתקופה שנבחרה.</div>`;
+    return;
+  }
+  const rows = HOLD_BUCKETS.map((b, i) => {
+    const lo = i === 0 ? -1 : HOLD_BUCKETS[i - 1].max;
+    const arr = closed.filter(t => { const d = _holdDays(t); return d > lo && d <= b.max; });
+    if (!arr.length) return null;
+    const pnl = arr.map(calcTotal);
+    const total = pnl.reduce((a, c) => a + c, 0);
+    const wins = pnl.filter(v => v > 0).length;
+    return { label: b.label, n: arr.length, wr: wins / arr.length * 100, avg: total / arr.length, total };
+  }).filter(Boolean);
+
+  const worst = Math.max(...rows.map(r => Math.abs(r.total)), 1);
+  host.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;min-width:0;border-collapse:collapse;font-size:12px">
+    <thead><tr style="color:var(--text3);text-align:right">
+      <th style="padding:7px 8px;font-weight:600">זמן החזקה</th>
+      <th style="padding:7px 8px;font-weight:600">עסקאות</th>
+      <th style="padding:7px 8px;font-weight:600">הצלחה</th>
+      <th style="padding:7px 8px;font-weight:600">ממוצע לעסקה</th>
+      <th style="padding:7px 8px;font-weight:600">סה״כ</th>
+      <th style="padding:7px 8px;font-weight:600;width:180px"></th>
+    </tr></thead><tbody>
+    ${rows.map(r => `<tr style="border-top:1px solid rgba(255,255,255,0.05)">
+      <td style="padding:7px 8px;font-weight:600">${r.label}</td>
+      <td style="padding:7px 8px">${r.n}</td>
+      <td style="padding:7px 8px" class="${r.wr>=50?'num-green':r.wr<20?'num-red':''}">${r.wr.toFixed(0)}%</td>
+      <td style="padding:7px 8px" class="${r.avg>=0?'num-green':'num-red'} sensitive">${fmtUSD(r.avg)}</td>
+      <td style="padding:7px 8px;font-weight:700" class="${r.total>=0?'num-green':'num-red'} sensitive">${fmtUSD(r.total)}</td>
+      <td style="padding:7px 8px">
+        <div style="height:6px;border-radius:var(--r-sm);background:rgba(255,255,255,0.05);overflow:hidden">
+          <div style="height:100%;width:${Math.abs(r.total)/worst*100}%;background:${r.total>=0?'var(--green)':'var(--red)'}"></div>
+        </div>
+      </td>
+    </tr>`).join('')}
+    </tbody></table></div>`;
+}
+
+// ── Subtle gridline color per design system recommendation ──
+// Gridlines: subtle, adapts to both dark/light via dynamic lookup
+function getGridColor() { return document.documentElement.getAttribute('data-theme')==='light' ? 'rgba(14,14,18,0.07)' : 'rgba(148,163,184,0.07)'; }
+function getTickColor() { return document.documentElement.getAttribute('data-theme')==='light' ? '#64748b' : '#4b6080'; }
+const CHART_FONT  = { family: "'Heebo', 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif", size: 12, weight: '500' };
+function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function cssVarRgb(name) {
+  const hex = cssVar(name).replace('#', '');
+  const n = parseInt(hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex, 16);
+  return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`;
+}
+
+function showChart(skelId, canvasId) {
+  const skel = document.getElementById(skelId);
+  const canvas = document.getElementById(canvasId);
+  if (skel)   skel.style.display = 'none';
+  if (canvas) canvas.style.display = '';
+}
+
+function chartDefaults(type) {
+  const gc = getGridColor(), tc = getTickColor();
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 300 },
+    plugins: {
+      legend: { labels: { color: tc, font: CHART_FONT } },
+      tooltip: { callbacks: {}, backgroundColor: 'rgba(10,18,36,0.92)', titleColor: '#e2e8f0', bodyColor: '#e2e8f0', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, padding: 10, cornerRadius: 8 }
+    },
+    scales: type === 'bar' || type === 'line' ? {
+      x: { ticks: { color: tc, font: CHART_FONT }, grid: { color: gc, drawBorder: false } },
+      y: { ticks: { color: tc, font: CHART_FONT }, grid: { color: gc, drawBorder: false } }
+    } : undefined
+  };
+}
+
+function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+let _cumTrades = [];
+let _cumMode   = 'pct'; // 'pct' | 'usd'
+
+function setCumMode(mode) {
+  _cumMode = mode;
+  document.getElementById('cum-mode-pct').style.background = mode === 'pct' ? 'var(--accent)' : 'transparent';
+  document.getElementById('cum-mode-pct').style.color      = mode === 'pct' ? '#fff' : 'var(--text3)';
+  document.getElementById('cum-mode-usd').style.background = mode === 'usd' ? 'var(--accent)' : 'transparent';
+  document.getElementById('cum-mode-usd').style.color      = mode === 'usd' ? '#fff' : 'var(--text3)';
+  renderCumChart(_cumTrades);
+}
+
+// Toggle a chart canvas between "drawn" and "no data yet" WITHOUT ever
+// removing the canvas node from the DOM. An earlier version replaced
+// canvasEl.parentElement.innerHTML with the empty-state markup — that
+// destroys the <canvas> permanently, so the next render (even with real
+// data) can't find it via getElementById, bails out early, and the stale
+// empty message is stuck for the rest of the session. Reproduced live:
+// landing on an empty month first, then navigating to a month with a real
+// closed trade, left the chart showing "no closed trades" forever even
+// though the calendar right next to it correctly showed the trade.
+function _showChartEmpty(canvasEl, message) {
+  canvasEl.style.display = 'none';
+  let el = canvasEl.parentElement.querySelector(':scope > .chart-empty-state');
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'empty-state chart-empty-state';
+    canvasEl.parentElement.appendChild(el);
+  }
+  el.innerHTML = `<p>${message}</p>`;
+  el.style.display = '';
+}
+function _hideChartEmpty(canvasEl) {
+  canvasEl.style.display = '';
+  const el = canvasEl.parentElement.querySelector(':scope > .chart-empty-state');
+  if (el) el.style.display = 'none';
+}
+
+let _cumResizeObserver = null;
+
+function renderCumChart(trades) {
+  _cumTrades = trades;
+  destroyChart('cum');
+  if (_cumResizeObserver) { _cumResizeObserver.disconnect(); _cumResizeObserver = null; }
+
+  const f = getFilter('ov');
+  const useDaily = !!f.month;
+
+  // Group by day or month
+  const byKey = {};
+  // Realised only. Otherwise every open position steps the equity curve down by
+  // its commission, so the curve's final point disagreed with the KPI headline
+  // that sits directly above it.
+  trades.filter(isClosed).forEach(t => {
+    const d = useDaily ? t.entryDate?.slice(0, 10) : t.entryDate?.slice(0, 7);
+    if (!d) return;
+    byKey[d] = (byKey[d] || 0) + calcTotal(t);
+  });
+
+  const keys = Object.keys(byKey).sort();
+
+  const labelsRaw = keys.map(k => {
+    if (useDaily) {
+      const [, mo, d] = k.split('-');
+      return d + '/' + mo;
+    }
+    const [y, mo] = k.split('-');
+    return months()[+mo-1] + "'" + y.slice(2);
+  });
+  const labels = ['', ...labelsRaw];
+
+  let cum = 0;
+  const cumUsdRaw = keys.map(k => { cum += byKey[k]; return +cum.toFixed(2); });
+  const cumUsd = [0, ...cumUsdRaw];
+
+  const base = Math.abs(trades.reduce((s, t) => s + (t.entryPrice || 0) * (t.shares || 0), 0)) || 1;
+  let cumPct = 0;
+  const cumPctRaw = keys.map(k => { cumPct += byKey[k]; return +(cumPct / base * 100).toFixed(2); });
+  const cumPctData = [0, ...cumPctRaw];
+
+  const isPct   = _cumMode === 'pct';
+  const data    = isPct ? cumPctData : cumUsd;
+  const lastVal = data[data.length - 1] ?? 0;
+  const color   = lastVal >= 0 ? cssVar('--green') : cssVar('--red');
+  const colorRgb = lastVal >= 0 ? cssVarRgb('--green') : cssVarRgb('--red');
+
+  showChart('skel-cum', 'chart-cum');
+  const cumEl = document.getElementById('chart-cum');
+  if (!cumEl) return;
+  // No closed trades yet: nothing real to plot. A Chart.js instance still
+  // draws an axis and gridlines even with all-zero data (labels=[''], data=[0]),
+  // which reads as a real ±1% scale on an empty book — show the same empty-state
+  // pattern the rest of the app uses instead. Hides the canvas rather than
+  // destroying it — see _showChartEmpty.
+  if (!keys.length) {
+    _showChartEmpty(cumEl, 'אין עדיין עסקאות סגורות לגרף P&amp;L');
+    return;
+  }
+  _hideChartEmpty(cumEl);
+  const ctx2d = cumEl.getContext('2d');
+  // A fill this heavy read as a solid block rather than a trend — softened to
+  // the same light-to-nothing taper the rest of the app's charts use.
+  const grad = ctx2d.createLinearGradient(0, 0, 0, cumEl.offsetHeight || 200);
+  grad.addColorStop(0,    `rgba(${colorRgb},0.22)`);
+  grad.addColorStop(0.55, `rgba(${colorRgb},0.06)`);
+  grad.addColorStop(1,    `rgba(${colorRgb},0.00)`);
+
+  charts.cum = new Chart(ctx2d, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: isPct ? 'P&L %' : 'P&L $',
+        data,
+        borderColor: color,
+        backgroundColor: grad,
+        tension: 0.4, fill: true,
+        pointRadius: data.length > 20 ? 0 : 4,
+        pointBackgroundColor: color,
+        pointBorderColor: 'rgba(255,255,255,0.6)',
+        pointBorderWidth: 1.5,
+        pointHoverRadius: 6,
+        pointHoverBackgroundColor: color,
+        pointHoverBorderColor: '#fff',
+        pointHoverBorderWidth: 2,
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      ...chartDefaults('line'),
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(10,18,36,0.95)',
+          titleColor: '#94a3b8',
+          bodyColor: '#f1f5f9',
+          borderColor: 'rgba(255,255,255,0.12)',
+          borderWidth: 1,
+          padding: 10,
+          cornerRadius: 8,
+          displayColors: false,
+          callbacks: {
+            title: c => c[0]?.label || '',
+            label: c => {
+              const v = +c.raw;
+              const sign = v >= 0 ? '+' : '';
+              return isPct ? ` ${sign}${v.toFixed(2)}%` : ` ${sign}$${v.toFixed(2)}`;
+            }
+          }
+        }
+      },
+      // right was 70 — dead space with nothing drawn into it. 12 just clears
+      // the last point's hover ring from the card edge.
+      layout: { padding: { top: 8, right: 12, bottom: 0, left: 0 } },
+      scales: {
+        x: { ticks: { color: getTickColor(), font: CHART_FONT, maxTicksLimit: 8 }, grid: { color: getGridColor(), drawBorder: false } },
+        y: { ticks: { color: getTickColor(), font: CHART_FONT, callback: v => isPct ? (+v).toFixed(1) + '%' : '$' + (+v).toFixed(2) }, grid: { color: getGridColor(), drawBorder: false } }
+      }
+    }
+  });
+  // The dead space on the right wasn't padding — the gridlines themselves
+  // stopped short of the card edge too, meaning Chart.js measured the
+  // container BEFORE it reached its final width (KPI grid / fonts above it
+  // still settling) and never re-measured after. A single requestAnimationFrame
+  // shrank the gap but didn't clear it — whatever settles the layout (a web
+  // font swap can land well after the first frame) still lands after that one
+  // resize. A ResizeObserver on the wrapper catches every width change for as
+  // long as this chart instance exists, not just the first one.
+  const wrapEl = cumEl.parentElement;
+  if (wrapEl) {
+    _cumResizeObserver = new ResizeObserver(() => charts.cum?.resize());
+    _cumResizeObserver.observe(wrapEl);
+  }
+}
+
+let _ddResizeObserver = null;
+function renderDrawdownChart(trades) {
+  destroyChart('dd');
+  if (_ddResizeObserver) { _ddResizeObserver.disconnect(); _ddResizeObserver = null; }
+  showChart('skel-dd', 'chart-dd');
+  const el = document.getElementById('chart-dd');
+  const statsEl = document.getElementById('dd-stats');
+  if (!el) return;
+  const { points, maxDrawdown, current, pctMode } = calcDrawdownSeries(trades);
+  const wrapEl = el.parentElement;
+  if (!points.length) {
+    _showChartEmpty(el, 'אין עדיין עסקאות סגורות למדידת ירידת הון');
+    if (statsEl) statsEl.innerHTML = '';
+    return;
+  }
+  _hideChartEmpty(el);
+  // MM-DD alone reads as nonsense once the series crosses a year boundary
+  // (07-11 ... 01-15 ... 08-31 looks like it goes backward in time) — fmtDate
+  // includes the 2-digit year so the axis stays chronological to the eye.
+  const labels = ['', ...points.map(p => fmtDate(p.date))];
+  const data = [0, ...points.map(p => +p.drawdown.toFixed(2))];
+  const ctx2d = el.getContext('2d');
+  const ddRgb = cssVarRgb('--red');
+  const grad = ctx2d.createLinearGradient(0, 0, 0, el.offsetHeight || 150);
+  grad.addColorStop(0,    `rgba(${ddRgb},0.00)`);
+  grad.addColorStop(0.55, `rgba(${ddRgb},0.10)`);
+  grad.addColorStop(1,    `rgba(${ddRgb},0.24)`);
+  charts.dd = new Chart(ctx2d, {
+    type: 'line',
+    data: { labels, datasets: [{
+      label: 'Drawdown', data, borderColor: cssVar('--red'), backgroundColor: grad,
+      tension: 0.35, fill: true, pointRadius: data.length > 20 ? 0 : 4,
+      pointBackgroundColor: cssVar('--red'), borderWidth: 2,
+    }] },
+    options: {
+      ...chartDefaults('line'),
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(10,18,36,0.95)', titleColor: '#94a3b8', bodyColor: '#f1f5f9',
+          borderColor: 'rgba(255,255,255,0.12)', borderWidth: 1, padding: 10, cornerRadius: 8, displayColors: false,
+          callbacks: { label: c => ` ${(+c.raw).toFixed(2)}${pctMode ? '%' : '$'}` }
+        }
+      },
+      layout: { padding: { top: 8, right: 12, bottom: 0, left: 0 } },
+      scales: {
+        x: { ticks: { color: getTickColor(), font: CHART_FONT, maxTicksLimit: 8 }, grid: { color: getGridColor(), drawBorder: false } },
+        y: { ticks: { color: getTickColor(), font: CHART_FONT, callback: v => (+v).toFixed(1) + (pctMode ? '%' : '$') }, grid: { color: getGridColor(), drawBorder: false } }
+      }
+    }
+  });
+  if (wrapEl) {
+    _ddResizeObserver = new ResizeObserver(() => charts.dd?.resize());
+    _ddResizeObserver.observe(wrapEl);
+  }
+  if (statsEl) {
+    statsEl.innerHTML = `<div style="display:flex;justify-content:space-between;font-size:12px;">
+      <span style="color:var(--text3)">ירידה נוכחית: <b style="color:var(--red)">${current.toFixed(2)}${pctMode ? '%' : '$'}</b></span>
+      <span style="color:var(--text3)">ירידה מקסימלית: <b style="color:var(--red)">${maxDrawdown.toFixed(2)}${pctMode ? '%' : '$'}</b></span>
+    </div>`;
+  }
+}
+
+function renderRHistogram(trades) {
+  destroyChart('rhist');
+  showChart('skel-rhist', 'chart-rhist');
+  const el = document.getElementById('chart-rhist');
+  const statsEl = document.getElementById('rhist-stats');
+  if (!el) return;
+  const { buckets, counted } = calcRHistogram(trades);
+  const wrapEl = el.parentElement;
+  if (!counted) {
+    _showChartEmpty(el, 'אין עדיין עסקאות סגורות עם סיכון מדיד למדידת R');
+    if (statsEl) statsEl.innerHTML = '';
+    return;
+  }
+  _hideChartEmpty(el);
+  const ctx2d = el.getContext('2d');
+  // A bucket with 1-2 trades renders a near-zero-height bar next to a bucket
+  // with 25 — the count is real but invisible next to the tall bars. Draw the
+  // count above every non-empty bar so a thin sliver still reads as data.
+  const rhistCountLabels = {
+    id: 'rhistCountLabels',
+    afterDatasetsDraw(chart) {
+      const { ctx, data } = chart;
+      const meta = chart.getDatasetMeta(0);
+      ctx.save();
+      ctx.fillStyle = getTickColor();
+      ctx.font = CHART_FONT.weight + ' 11px ' + CHART_FONT.family;
+      ctx.textAlign = 'center';
+      meta.data.forEach((bar, i) => {
+        const count = data.datasets[0].data[i];
+        if (!count) return;
+        ctx.fillText(count, bar.x, bar.y - 6);
+      });
+      ctx.restore();
+    }
+  };
+  charts.rhist = new Chart(ctx2d, {
+    type: 'bar',
+    data: {
+      labels: buckets.map(b => b.label),
+      datasets: [{
+        data: buckets.map(b => b.count),
+        backgroundColor: buckets.map(b => `rgba(${b.max <= 0 ? cssVarRgb('--red') : cssVarRgb('--green')},0.65)`),
+        borderRadius: 4, borderSkipped: false,
+        minBarLength: 3,
+      }]
+    },
+    plugins: [rhistCountLabels],
+    options: {
+      ...chartDefaults('bar'),
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(10,18,36,0.95)', titleColor: '#94a3b8', bodyColor: '#f1f5f9',
+          borderColor: 'rgba(255,255,255,0.12)', borderWidth: 1, padding: 10, cornerRadius: 8, displayColors: false,
+          callbacks: { label: c => ` ${c.raw} עסקאות` }
+        }
+      },
+      layout: { padding: { top: 20, right: 12, bottom: 0, left: 0 } },
+      scales: {
+        x: { ticks: { color: getTickColor(), font: CHART_FONT }, grid: { display: false } },
+        y: { ticks: { color: getTickColor(), font: CHART_FONT, precision: 0 }, grid: { color: getGridColor(), drawBorder: false } }
+      }
+    }
+  });
+  if (statsEl) {
+    statsEl.innerHTML = `<div style="text-align:center;font-size:12px;color:var(--text3)">${counted} עסקאות עם סיכון מדיד נספרו</div>`;
+  }
+}
+
+// Horizontal bar comparison of avg holding time, winners vs losers — reads the
+// same adv (advancedStats) values already computed for the KPI grid, filtered
+// by whatever period/scope renderStatistics is currently showing.
+function renderHoldCompare(adv) {
+  const wrap = document.getElementById('hold-compare-wrap');
+  if (!wrap) return;
+  const win = adv.avgWinDays, loss = adv.avgLossDays;
+  const max = Math.max(win, loss, 0.01);
+  const row = (label, days, color) => `
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+      <div style="width:40px;flex-shrink:0;font-size:13px;font-weight:600;color:var(--text2);">${label}</div>
+      <div style="flex:1;height:4px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;">
+        <div style="width:${Math.min(days / max * 100, 100)}%;height:100%;background:${color};border-radius:3px;"></div>
+      </div>
+      <div style="width:36px;flex-shrink:0;font-size:13px;font-weight:700;color:var(--text);text-align:left;">${days.toFixed(1)}d</div>
+    </div>`;
+  const ratio = win > 0 && loss > 0
+    ? (win >= loss ? `${(win / loss).toFixed(1)}:1` : `1:${(loss / win).toFixed(1)}`)
+    : '—';
+  wrap.innerHTML = row('מנצחת', win, '#0d9488') + row('הפסד', loss, '#e11d48')
+    + `<div style="text-align:center;font-size:13px;font-weight:700;color:var(--text);margin-top:2px;">יחס: ${ratio}</div>`;
+}
+
+function renderDonut(st, adv, trades) {
+  destroyChart('donut');
+  showChart('skel-donut', 'chart-donut');
+  const rowEl = document.getElementById('donut-row');
+  if (rowEl) rowEl.style.display = 'flex';
+  const donutEl = document.getElementById('chart-donut'); if (!donutEl) return;
+  const ctx = donutEl.getContext('2d');
+  const winPct  = st.n ? (st.wins / st.n * 100).toFixed(1)   : '0.0';
+  const lossPct = st.n ? (st.losses / st.n * 100).toFixed(1) : '0.0';
+  const winEl  = document.getElementById('donut-legend-win');
+  const lossEl = document.getElementById('donut-legend-loss');
+  if (winEl) winEl.innerHTML = `
+    <div class="donut-legend-lbl"><span class="donut-legend-dot" style="background:var(--green);"></span>${t('donut_wins')}</div>
+    <div class="donut-legend-val" style="color:var(--green);">${st.wins || 0} (${winPct}%)</div>`;
+  if (lossEl) lossEl.innerHTML = `
+    <div class="donut-legend-lbl"><span class="donut-legend-dot" style="background:var(--red);"></span>${t('donut_losses')}</div>
+    <div class="donut-legend-val" style="color:var(--red);">${st.losses || 0} (${lossPct}%)</div>`;
+  charts.donut = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: [t('donut_win'), t('donut_loss')],
+      datasets: [{
+        data: [st.wins || 0, st.losses || 0],
+        backgroundColor: [cssVar('--green'), cssVar('--red')],
+        borderColor: 'rgba(0,0,0,0)',
+        borderWidth: 0,
+        hoverOffset: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: c => ` ${c.label}: ${c.raw} (${st.n ? (c.raw/st.n*100).toFixed(1) : 0}%)` }
+        }
+      },
+      cutout: '70%',
+      animation: { duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 300 }
+    }
+  });
+
+  // ── Compute extra stats ──────────────────────────
+  // Profit Factor, W/L Ratio and the win/loss streaks now live in the KPI grid
+  // above — kept here would be the same numbers twice on one tab. Best/worst
+  // trade are the only donut-adjacent numbers not already shown elsewhere.
+  const none = '—';
+  const bestStr  = st.n ? fmtUSD(st.best)  : none;
+  const worstStr = st.n ? fmtUSD(st.worst) : none;
+
+  const el = document.getElementById('donut-stats');
+  if (el) el.innerHTML = `
+    <div class="donut-stat">
+      <div class="donut-stat-label">${t('donut_best')}</div>
+      <div class="donut-stat-value green sensitive">${bestStr}</div>
+    </div>
+    <div class="donut-stat">
+      <div class="donut-stat-label">${t('donut_worst')}</div>
+      <div class="donut-stat-value red sensitive">${worstStr}</div>
+    </div>`;
+  applyPrivacy();
+}
+
+let _compScopeData = { st: [], cr: [] };
+let _compScope = 'all';
+
+function _renderCompBody(scope) {
+  const tr = scope === 'stock' ? _compScopeData.st
+           : scope === 'crypto' ? _compScopeData.cr
+           : [..._compScopeData.st, ..._compScopeData.cr];
+  const accentColor = scope === 'stock' ? '#818cf8' : scope === 'crypto' ? '#f59e0b' : '#4f83ff';
+  const st = stats(tr);
+  const adv = advancedStats(tr);
+  const winSum  = tr.reduce((s,x)=>{ const v=calcPL(x); return v>0?s+v:s; },0);
+  const lossSum = Math.abs(tr.reduce((s,x)=>{ const v=calcPL(x); return v<0?s+v:s; },0));
+  const pf    = lossSum>0 ? (winSum/lossSum).toFixed(2) : '—';
+  const pfCls = lossSum>0 ? (winSum/lossSum>=1?'num-green':'num-red') : '';
+  const wl    = adv.avgLoss!==0 ? Math.abs(adv.avgWin/adv.avgLoss).toFixed(2)+'x' : '—';
+  const pills = [
+    { key:'all',    label: t('scope_all')    || 'הכל' },
+    { key:'stock',  label: t('comp_stocks')?.replace(/^.*\s/,'') || 'מניות' },
+    { key:'crypto', label: t('comp_crypto')?.replace(/^.*\s/,'') || 'קריפטו' },
+  ].map(p => `<button class="comp-scope-pill${p.key===scope?' active':''}" onclick="_switchCompScope('${p.key}')">${p.label}</button>`).join('');
+  document.getElementById('comp-card-inner').innerHTML = `
+    <div class="comp-scope-pills">${pills}</div>
+    <div class="comp-stat"><span class="comp-stat-label">${t('comp_total_pl')}</span><span class="comp-stat-val ${clr(st.total)} sensitive">${st.n?fmtUSD(st.total):'—'}</span></div>
+    <div class="comp-stat"><span class="comp-stat-label">Win Rate</span>
+      <span class="comp-stat-val"><span class="${st.wr>=50?'num-green':'num-red'}">${fmt(st.wr,1)}%</span>
+      <span style="color:var(--text3);font-size:11px;margin-right:5px;">${st.wins}W / ${st.losses}L</span></span>
+    </div>
+    <div class="comp-stat"><span class="comp-stat-label">Profit Factor</span><span class="comp-stat-val ${pfCls} sensitive">${pf}</span></div>
+    <div class="comp-stat"><span class="comp-stat-label">W/L Ratio</span><span class="comp-stat-val sensitive">${wl}</span></div>
+    <div class="comp-stat"><span class="comp-stat-label">${t('comp_avg_win')}</span><span class="comp-stat-val num-green sensitive">${st.wins?fmtUSD(adv.avgWin):'—'}</span></div>
+    <div class="comp-stat"><span class="comp-stat-label">${t('comp_avg_loss')}</span><span class="comp-stat-val num-red sensitive">${st.losses?fmtUSD(adv.avgLoss):'—'}</span></div>
+    <div class="comp-stat"><span class="comp-stat-label">${t('comp_best')}</span><span class="comp-stat-val num-green sensitive">${st.n?fmtUSD(st.best):'—'}</span></div>
+    <div class="comp-stat"><span class="comp-stat-label">${t('comp_worst')}</span><span class="comp-stat-val num-red sensitive">${st.n?fmtUSD(st.worst):'—'}</span></div>
+    <div class="comp-stat"><span class="comp-stat-label">${t('comp_avg_trade')}</span><span class="comp-stat-val ${clr(st.avg)} sensitive">${st.n?fmtUSD(st.avg):'—'}</span></div>
+    <div class="comp-stat"><span class="comp-stat-label">${t('comp_trades')}</span><span class="comp-stat-val">${st.n}</span></div>
+  `;
+  document.getElementById('comp-card-wrap').style.borderTopColor = accentColor;
+  applyPrivacy();
+}
+
+function _switchCompScope(scope) {
+  _compScope = scope;
+  _renderCompBody(scope);
+}
+
+function renderComparison(stTrades, crTrades) {
+  _compScopeData = { st: stTrades, cr: crTrades };
+  document.getElementById('comparison-wrap').innerHTML =
+    `<div class="comp-card" id="comp-card-wrap" style="border-top:2px solid #4f83ff;"><div id="comp-card-inner"></div></div>`;
+  _renderCompBody(_compScope);
+}
+
+// ─────────────────────────────────────────────
+// MODAL
+// ─────────────────────────────────────────────
+function openModal(type, tr=null) {
+  document.getElementById('tgt-list').innerHTML = '';
+  document.getElementById('m-type').value = type;
+  document.getElementById('modal-title').textContent = tr ? t('modal_edit') : t('modal_add');
+  document.getElementById('m-id').value = tr ? tr.id : '';
+
+  const today = _todayLocal();
+  document.getElementById('m-entryDate').value   = tr ? (tr.entryDate||'')    : today;
+  document.getElementById('m-ls').value          = tr ? (tr.ls||'L')           : 'L';
+  document.getElementById('m-symbol').value      = tr ? (tr.symbol||'')        : '';
+  document.getElementById('m-entryPrice').value  = tr ? (tr.entryPrice||'')    : '';
+  document.getElementById('m-shares').value      = tr ? (tr.shares||'')        : '';
+  document.getElementById('m-stop').value        = tr ? (tr.stop||'')          : '';
+  document.getElementById('m-closeDate').value   = tr ? (tr.closeDate||'')     : '';
+  document.getElementById('m-closedShares').value= tr ? (tr.closedShares||'')  : '';
+  document.getElementById('m-exitPrice').value   = tr ? (tr.exitPrice||'')     : '';
+  document.getElementById('m-commission').value  = tr ? (tr.commission!==undefined?tr.commission:'5.00') : '5.00';
+  modalER = tr ? (tr.entryReason || '') : '';
+  document.getElementById('m-entry-reason').value = modalER;
+  erSetPills('m-er-pills', modalER);
+  const _setup = tr ? (tr.setupType || '') : '';
+  document.getElementById('m-setup-type').value = _setup;
+  setupRenderPills('m-setup-pills', _setup);
+  document.getElementById('m-market-cond').value = tr ? (tr.marketCond || '') : '';
+  modalPS = tr ? (tr.processScore || 0) : 0;
+  const psEl = document.getElementById('m-process-score');
+  if (psEl) psEl.value = modalPS;
+  psSetStars('m-ps-stars', modalPS);
+  const moodEl = document.getElementById('m-mood');
+  if (moodEl) moodEl.value = tr ? (tr.mood || '') : '';
+  document.getElementById('m-notes-keep').value  = tr ? (tr.notes_keep||'')    : '';
+  document.getElementById('m-notes-improve').value = tr ? (tr.notes_improve||'') : '';
+
+  if (tr && tr.t) tr.t.forEach(tg => addTarget(tg));
+  updateAddTgtBtn();
+  liveCalc();
+  // An existing trade's stored type is authoritative — re-detecting it from the
+  // symbol reclassified tickers like DASH/SOL and sent the edit to the wrong array.
+  if (tr) applyTypeBadge(document.getElementById('m-type-badge'), document.getElementById('m-type').value === 'crypto');
+  else mAutoType();
+  document.getElementById('trade-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('trade-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function onOverlayClick(e) {
+  if (e.target === document.getElementById('trade-modal')) closeModal();
+}
+
+function addTarget(data=null) {
+  const list = document.getElementById('tgt-list');
+  const n = list.querySelectorAll('.target-row').length;
+  if (n >= 5) { toast('מקסימום 5 יעדים','error'); return; }
+  const idx = n + 1;
+  const div = document.createElement('div');
+  div.className = 'target-row';
+  div.innerHTML = `
+    <div>
+      <div class="target-lbl">T${idx} — מס' מניות</div>
+      <input type="number" class="form-control" value="${data?data.shares:''}" placeholder="0" oninput="liveCalc()">
+    </div>
+    <div>
+      <div class="target-lbl">T${idx} — מחיר יציאה</div>
+      <input type="number" class="form-control" value="${data?data.price:''}" placeholder="0.00" step="0.0001" oninput="liveCalc()">
+    </div>
+    <button class="target-remove" onclick="removeTarget(this)" title="הסר">✕</button>
+  `;
+  list.appendChild(div);
+  updateAddTgtBtn();
+  liveCalc();
+}
+
+function removeTarget(btn) {
+  btn.closest('.target-row').remove();
+  // re-label
+  document.querySelectorAll('#tgt-list .target-row').forEach((r,i) => {
+    r.querySelectorAll('.target-lbl').forEach((l,j) => {
+      l.textContent = `T${i+1} — ${j===0?"מס' מניות":'מחיר יציאה'}`;
+    });
+  });
+  updateAddTgtBtn();
+  liveCalc();
+}
+
+function updateAddTgtBtn() {
+  const btn = document.getElementById('add-tgt-btn');
+  const n = document.querySelectorAll('#tgt-list .target-row').length;
+  if (btn) btn.style.display = n>=5 ? 'none' : '';
+}
+
+function getTargets() {
+  const rows = document.querySelectorAll('#tgt-list .target-row');
+  const out = [];
+  rows.forEach(r => {
+    const ins = r.querySelectorAll('input');
+    const s = +ins[0].value, p = +ins[1].value;
+    if (s > 0 && p > 0) out.push({shares:s, price:p});
+  });
+  return out;
+}
+
+function getFormTrade() {
+  // ניקוי וולידציה של כל שדה לפני שמירה
+  const rawSymbol = document.getElementById('m-symbol').value.toUpperCase().trim();
+  const cleanSymbol = rawSymbol.replace(/[^A-Z0-9._\-]/g, '').slice(0, 20);
+  const ls = document.getElementById('m-ls').value;
+  const safeLs = ['L','S'].includes(ls) ? ls : 'L';
+
+  return {
+    entryDate:    document.getElementById('m-entryDate').value.slice(0,10),
+    ls:           safeLs,
+    symbol:       cleanSymbol,
+    entryPrice:   sanitizeNumber(document.getElementById('m-entryPrice').value, 0),
+    shares:       sanitizeNumber(document.getElementById('m-shares').value, 0, 1e7),
+    stop:         sanitizeNumber(document.getElementById('m-stop').value, 0),
+    t:            getTargets(),
+    closeDate:    document.getElementById('m-closeDate').value.slice(0,10),
+    closedShares: sanitizeNumber(document.getElementById('m-closedShares').value, 0, 1e7),
+    exitPrice:    sanitizeNumber(document.getElementById('m-exitPrice').value, 0),
+    ecn:          0,
+    commission:   document.getElementById('m-commission').value !== ''
+                    ? sanitizeNumber(document.getElementById('m-commission').value, 0, 1e6)
+                    : 2.5,
+    notes_keep:    sanitizeText(document.getElementById('m-notes-keep').value, 500),
+    notes_improve: sanitizeText(document.getElementById('m-notes-improve').value, 500),
+    entryReason:  ER_OPTIONS.includes(modalER) ? modalER : '',
+    setupType:    SETUP_OPTIONS.includes(document.getElementById('m-setup-type').value)
+                    ? document.getElementById('m-setup-type').value : '',
+    marketCond:   document.getElementById('m-market-cond').value || '',
+    processScore: modalPS || 0,
+    mood:          (document.getElementById('m-mood').value || '').trim().slice(0, 300)
+  };
+}
+
+// Crypto trades are often closed without ever setting a stop — the exit price
+// IS where the position actually got out, so leaving stop blank makes the row
+// look like it has no risk defined even though it closed cleanly. Only fires
+// for crypto and only when stop is still empty (or was itself last set by
+// this function), so it never overwrites a real stop the user typed in.
+//
+// Bug fixed 2026-09-13 (code-review): checking `stopEl.value !== ''` alone
+// blocked itself after the FIRST keystroke — typing "150" into exit price set
+// stop to "1" on the first key, then every next key saw stop already
+// non-empty and bailed, leaving stop stuck at "1" instead of tracking the
+// full value. The `data-autofilled` marker distinguishes "empty because the
+// user hasn't touched it" from "the user typed a real value here": setting
+// .value from JS doesn't fire m-stop's own oninput, so the marker only ever
+// clears via mUserEditedStop below, i.e. an actual keystroke in that field.
+function mAutoFillStopFromExit() {
+  if (document.getElementById('m-type').value !== 'crypto') return;
+  const stopEl = document.getElementById('m-stop');
+  if (stopEl.value !== '' && stopEl.dataset.autofilled !== '1') return;
+  const exit = document.getElementById('m-exitPrice').value;
+  if (exit === '') return;
+  stopEl.value = exit;
+  stopEl.dataset.autofilled = '1';
+}
+function mUserEditedStop() {
+  document.getElementById('m-stop').dataset.autofilled = '';
+  liveCalc();
+}
+
+function liveCalc() {
+  const tr = getFormTrade();
+  const pl = calcPL(tr);
+  const tot = calcTotal(tr);
+  const risk = calcRisk(tr);
+  const pct = risk ? (tot/risk*100) : 0;
+
+  const set = (id, val, colorFn) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = val;
+    if (colorFn !== undefined) el.style.color = colorFn;
+  };
+
+  const plColor = pl >= 0 ? 'var(--green)' : 'var(--red)';
+  const totColor = tot >= 0 ? 'var(--green)' : 'var(--red)';
+  const pctColor = pct >= 0 ? 'var(--green)' : 'var(--red)';
+
+  set('cp-pl', fmtUSD(pl), plColor);
+  set('cp-total', fmtUSD(tot), totColor);
+  set('cp-risk', risk ? '$'+fmt(risk,0) : '—', 'var(--yellow)');
+  const sr = calcStopRisk(tr);
+  const pt = portfolioTotal();
+  set('cp-stoprisk', sr ? '$'+fmt(sr,0) + (pt ? ' · '+fmt(sr/pt*100,2)+'%' : '') : '—', 'var(--yellow)');
+  set('cp-pct', fmtPct(pct), pctColor);
+  sizerCalc();
+}
+
+// The portfolio total the investments tab already tracks, reused as the sizing
+// base so risk % means something rather than being a free-floating number.
+function portfolioTotal() {
+  const el = document.getElementById('inv-portfolio-total');
+  const v = +(el?.value) || +(_invData?.portfolioTotal) || 0;
+  return v > 0 ? v : 0;
+}
+
+// Quantity is the output of the stop, not an independent guess. 21 of 248
+// trades carried a stop, which is what made R unmeasurable everywhere else.
+let _sizerShares = 0;
+function sizerCalc() {
+  const out = document.getElementById('sizer-out');
+  const btn = document.getElementById('sizer-apply');
+  if (!out) return;
+  const entry = +document.getElementById('m-entryPrice')?.value || 0;
+  const stop  = +document.getElementById('m-stop')?.value || 0;
+  const pctIn = +document.getElementById('m-risk-pct')?.value || 0;
+  const total = portfolioTotal();
+  _sizerShares = 0;
+  if (!total)            { out.textContent = 'הזן סך תיק בטאב ההשקעות'; }
+  else if (!entry || !stop) { out.textContent = 'הזן שער כניסה וסטופ'; }
+  else if (entry === stop)  { out.textContent = 'הסטופ זהה לשער הכניסה'; }
+  else if (!(pctIn > 0))    { out.textContent = 'הזן אחוז סיכון'; }
+  else {
+    const budget = total * pctIn / 100;
+    const perShare = Math.abs(entry - stop);
+    const shares = Math.floor(budget / perShare);
+    _sizerShares = shares;
+    const cost = shares * entry;
+    out.innerHTML = shares > 0
+      ? `סיכון $${fmt(budget,0)} → <strong>${shares.toLocaleString()}</strong> יחידות · עלות $${fmt(cost,0)}`
+        + (cost > total ? ' <span class="num-red">· מעבר לגודל התיק</span>' : '')
+      : 'הסטופ רחוק מדי לתקציב הסיכון הזה';
+  }
+  if (btn) btn.disabled = !_sizerShares;
+}
+
+// Half-Kelly suggestion for m-risk-pct, from the account's own closed-trade
+// history (win rate + avg-win/avg-loss ratio) — full Kelly is a known
+// overbet in practice under real (non-stationary) win-rate estimates, so this
+// suggests half of it, same convention as most retail Kelly calculators.
+// Below 10 closed trades the win-rate estimate is too noisy to act on.
+// Half-Kelly as a risk percentage, split out from the journal lookup below so
+// the sizing maths is testable on its own — this number goes straight into the
+// position sizer, so a sign or inversion error silently suggests a LARGER
+// position, which is the one failure mode that costs real money.
+// f* = W - (1-W)/R, where W is the win rate and R the win/loss ratio; halved,
+// because full Kelly is a known overbet under an estimated (non-stationary) W.
+const KELLY_MIN_TRADES = 10;
+function kellyHalfPct(winRatePct, avgWin, avgLoss) {
+  const w = winRatePct / 100;
+  if (!(w >= 0 && w <= 1)) return null;
+  const r = avgLoss !== 0 ? Math.abs(avgWin / avgLoss) : null;
+  if (!r || !Number.isFinite(r)) return null;
+  const kelly = w - (1 - w) / r;
+  // A negative edge has no Kelly fraction — suggesting the 0.1% floor here
+  // would quietly recommend sizing INTO a losing system.
+  if (!(kelly > 0)) return null;
+  return Math.min(10, Math.max(0.1, kelly / 2 * 100));
+}
+
+function kellySuggestPct() {
+  const trades = [...db.stocks, ...db.crypto].filter(t => !t.deleted && isClosed(t));
+  if (trades.length < KELLY_MIN_TRADES) return null;
+  const st = stats(trades);
+  const adv = advancedStats(trades);
+  return kellyHalfPct(st.wr, adv.avgWin, adv.avgLoss);
+}
+
+function applyKellySizing() {
+  const pct = kellySuggestPct();
+  const el = document.getElementById('m-risk-pct');
+  if (!el) return;
+  if (pct == null) { toast('אין מספיק היסטוריית עסקאות סגורות לחישוב Kelly (נדרשות לפחות 10, וין-רייט>0 מול יחס רווח/הפסד)', 'error'); return; }
+  el.value = pct.toFixed(2);
+  sizerCalc();
+  toast(`הוצע ${pct.toFixed(2)}% סיכון לפי Half-Kelly`, 'success');
+}
+
+function sizerApply() {
+  if (!_sizerShares) return;
+  const el = document.getElementById('m-shares');
+  if (!el) return;
+  el.value = _sizerShares;
+  liveCalc();
+}
+
+// Validation used to be toast-only — the offending field never got a border,
+// focus, or a scroll-into-view, so on a long form the user had to re-scan the
+// whole thing to find what the toast was talking about (impeccable audit,
+// 2026-09-13).
+function _flagInvalidField(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  el.classList.add('invalid');
+  el.focus({ preventScroll: true });
+  el.addEventListener('input', () => el.classList.remove('invalid'), { once: true });
+}
+
+async function saveTrade() {
+  let type = document.getElementById('m-type').value;
+  const idVal = document.getElementById('m-id').value;
+  const data = getFormTrade();
+
+  if (!data.symbol)     { _flagInvalidField('m-symbol');    toast('נא להזין סימבול','error'); return; }
+  if (!data.entryDate)  { _flagInvalidField('m-entryDate'); toast('נא להזין תאריך כניסה','error'); return; }
+  if (!data.entryPrice) { _flagInvalidField('m-entryPrice');toast('נא להזין שער כניסה','error'); return; }
+  // Closing more than was bought silently multiplies the P&L. It happened on 11
+  // rows: a position entered in several tranches got the full exit quantity
+  // written onto every tranche, overstating the book's loss by $615.
+  if ((+data.closedShares || 0) > (+data.shares || 0)) {
+    toast(`כמות סגורה (${+data.closedShares}) גדולה מהכמות שנקנתה (${+data.shares || 0})`, 'error');
+    return;
+  }
+  // The mirror case, which had no check at all and understates instead. A row
+  // with a close date AND an exit price reads as closed everywhere, but P&L is
+  // measured over closedShares alone — so a smaller closedShares with no
+  // partial leg explaining the rest silently drops that volume. Three live rows
+  // are in this state, one book short by ~$244. Either the remainder is still
+  // open (no close date) or it was sold (closedShares is the full size); the
+  // form cannot tell which, so it asks rather than guessing.
+  const legShares = (data.t || []).reduce((s, p) => s + (+p.shares || 0), 0);
+  if (data.closeDate && +data.exitPrice > 0 && !legShares
+      && (+data.closedShares || 0) > 0 && (+data.closedShares || 0) < (+data.shares || 0)) {
+    toast(`נסגרו ${+data.closedShares} מתוך ${+data.shares} — או שהיתרה עדיין פתוחה (הסר תאריך סגירה), או שנמכרה (עדכן כמות סגורה)`, 'error');
+    return;
+  }
+  // Partial legs must fit inside the closed volume, or calcPL derives a
+  // negative final leg and silently drops it.
+  if (legShares > (+data.closedShares || +data.shares || 0)) {
+    toast(`סך היציאות החלקיות (${legShares}) גדול מהכמות הסגורה`, 'error');
+    return;
+  }
+
+  data.type = type;
+  let arr = type==='stock' ? db.stocks : db.crypto;
+
+  if (idVal) {
+    // The modal re-detects stock/crypto from the symbol, so editing a trade whose
+    // ticker looks like the other kind pointed at the wrong array and threw the
+    // user's changes away with "עסקה לא נמצאה". The row's real home wins.
+    if (!arr.some(t=>String(t.id)===String(idVal))) {
+      const other = arr === db.stocks ? db.crypto : db.stocks;
+      if (other.some(t=>String(t.id)===String(idVal))) {
+        arr = other;
+        type = other === db.crypto ? 'crypto' : 'stock';
+        data.type = type;
+      }
+    }
+    // Edit existing trade
+    const i = arr.findIndex(t=>String(t.id)===String(idVal));
+    if (i === -1) { toast('שגיאה: עסקה לא נמצאה','error'); return; }
+    const prev = arr[i];
+    data.id = prev.id;
+    // getFormTrade() builds a fresh object with no broker ids, so replacing the
+    // row wholesale dropped ibkr_id/bybit_id from memory. The next sync then
+    // failed to match the trade and imported it a second time as a duplicate.
+    data.ibkr_id  = prev.ibkr_id  ?? null;
+    data.bybit_id = prev.bybit_id ?? null;
+    // Same reason: the orphan-close idempotency guard compares t._exitDt
+    // against the in-memory row, so losing this on an edit lets the next sync
+    // in the same session re-apply a close it had already booked.
+    data.lastCloseDt = prev.lastCloseDt ?? null;
+    data.deleted   = prev.deleted;
+    data.deletedAt = prev.deletedAt;
+    arr[i] = data; // optimistic
+    renderTable(type); initFilters(); closeModal();
+    const row = _tradeToRow(data);
+    const { error } = await _sb.from('trades').update(row).eq('id', data.id).eq('user_id', _currentUser.id);
+    if (error) { arr[i] = prev; renderTable(type); toast('שגיאה בעדכון עסקה','error'); console.error(error); return; }
+    auditLog('trade_edited', data.symbol);
+    toast('עסקה עודכנה','success');
+  } else {
+    // New trade
+    const row = _tradeToRow(data);
+    closeModal();
+    const { data: inserted, error } = await _sb.from('trades').insert(row).select().single();
+    if (error) { toast('שגיאה בהוספת עסקה','error'); console.error(error); return; }
+    data.id = inserted.id;
+    arr.push(data);
+    auditLog('trade_added', data.symbol);
+    renderTable(type); initFilters();
+    toast('עסקה נוספה','success');
+  }
+}
+
+function editTrade(type, id) {
+  const arr = type==='stock' ? db.stocks : db.crypto;
+  const tr = arr.find(t=>String(t.id)===String(id));
+  if (tr) openModal(type, tr);
+}
+
+async function deleteTrade(type, id) {
+  if (!confirm('למחוק עסקה זו? היא תועבר לאשפה')) return;
+  const arr = type==='stock' ? db.stocks : db.crypto;
+  const tr = arr.find(t => String(t.id) === String(id));
+  if (!tr) return;
+  // Optimistic
+  tr.deleted = true;
+  tr.deletedAt = new Date().toISOString();
+  renderTable(type);
+  toast('עסקה נמחקה', 'success');
+  const { error } = await _sb.from('trades')
+    .update({ deleted: true, deleted_at: new Date().toISOString() })
+    .eq('id', tr.id).eq('user_id', _currentUser.id);
+  if (error) {
+    tr.deleted = false; tr.deletedAt = null;
+    renderTable(type);
+    toast('שגיאה במחיקה','error');
+    console.error(error);
+    return;
+  }
+  auditLog('trade_deleted', `${tr.symbol} #${tr.id}`);
+}
+
+// ─────────────────────────────────────────────
+// CALCULATORS
+// ─────────────────────────────────────────────
+function calcPS() {
+  const account  = +document.getElementById('ps-account').value;
+  const riskPct  = +document.getElementById('ps-riskpct').value;
+  let   risk     = +document.getElementById('ps-risk').value;
+  const entry    = +document.getElementById('ps-entry').value;
+  const stop     = +document.getElementById('ps-stop').value;
+  const dir      = document.getElementById('ps-dir').value;
+  const result   = document.getElementById('ps-result');
+
+  // Auto-fill risk $ from account + risk%
+  if (account > 0 && riskPct > 0) {
+    risk = account * riskPct / 100;
+    document.getElementById('ps-risk').value = risk.toFixed(2);
+  }
+
+  if (!risk||!entry||!stop||entry<=0||stop<=0) { result.style.display='none'; return; }
+  const stopDist = Math.abs(entry-stop);
+  if (!stopDist) { result.style.display='none'; return; }
+  if (dir==='L' && stop>=entry) { result.style.display='none'; return; }
+  if (dir==='S' && stop<=entry) { result.style.display='none'; return; }
+
+  const shares = Math.floor(risk/stopDist);
+  document.getElementById('ps-shares').textContent = shares.toLocaleString();
+  document.getElementById('ps-sdollar').textContent = '$'+stopDist.toFixed(4);
+  document.getElementById('ps-size').textContent = '$'+(shares*entry).toFixed(2);
+  document.getElementById('ps-spct').textContent = (stopDist/entry*100).toFixed(2)+'%';
+  result.style.display = 'block';
+}
+
+function calcPctChange() {
+  const from = +document.getElementById('pct-from').value;
+  const to   = +document.getElementById('pct-to').value;
+  const result = document.getElementById('pct-result');
+  if (!from) { result.style.display='none'; return; }
+  const pct = (to-from)/from*100;
+  const usd = to-from;
+  const pEl = document.getElementById('pct-pct');
+  const uEl = document.getElementById('pct-usd');
+  pEl.textContent = fmtPct(pct);
+  pEl.style.color = pct>=0?'var(--green)':'var(--red)';
+  uEl.textContent = fmtUSD(usd);
+  uEl.style.color = usd>=0?'var(--green)':'var(--red)';
+  result.style.display = 'block';
+}
+
+function calcRM() {
+  const entry  = +document.getElementById('rm-entry').value;
+  const stop   = +document.getElementById('rm-stop').value;
+  const target = +document.getElementById('rm-target').value;
+  const result = document.getElementById('rm-result');
+  if (!entry||!stop||!target) { result.style.display='none'; return; }
+  const r = Math.abs(entry-stop);
+  const rw = Math.abs(target-entry);
+  if (!r) { result.style.display='none'; return; }
+  const ratio = rw/r;
+  const isLong = entry > stop;
+
+  // Gauge: cap at 4R for visual
+  const gaugePct = Math.min(ratio/4*100, 100);
+  const gaugeColor = ratio>=3?'var(--green)':ratio>=2?'var(--green)':ratio>=1?'var(--yellow)':'var(--red)';
+  const gaugeFill = document.getElementById('rm-gauge-fill');
+  gaugeFill.style.width = gaugePct+'%';
+  gaugeFill.style.background = gaugeColor;
+
+  const rEl = document.getElementById('rm-r');
+  rEl.textContent = ratio.toFixed(2)+'R';
+  rEl.style.color = gaugeColor;
+
+  // T2 = entry + 2R, T3 = entry + 3R
+  const dir = isLong ? 1 : -1;
+  const t2 = entry + dir*r*2;
+  const t3 = entry + dir*r*3;
+
+  document.getElementById('rm-risk').textContent = '$'+r.toFixed(4)+'/מניה';
+  document.getElementById('rm-reward').textContent = '$'+rw.toFixed(4)+'/מניה ('+ratio.toFixed(2)+'R)';
+  document.getElementById('rm-t2').textContent = '$'+t2.toFixed(2);
+  document.getElementById('rm-t3').textContent = '$'+t3.toFixed(2);
+  result.style.display = 'block';
+}
+
+function calcBreakeven() {
+  const loss = +document.getElementById('be-loss').value || 10;
+  document.getElementById('be-pct-display').textContent = loss+'%';
+  document.getElementById('be-loss-val').textContent = '-'+loss+'%';
+
+  const needed = (loss/(100-loss)*100);
+  document.getElementById('be-need-val').textContent = '+'+needed.toFixed(1)+'%';
+
+  const msgEl = document.getElementById('be-message');
+  if (loss <= 5)       msgEl.textContent = 'הפסד קטן — קל להחזיר. שמור על גודל פוזיציה נכון.';
+  else if (loss <= 10) msgEl.textContent = 'הפסד ניהול נסבל. מינרוויני: לא לנקום על ההפסד.';
+  else if (loss <= 20) msgEl.textContent = 'קשה להחזיר. חשוב לחתוך הפסדים מוקדם.';
+  else if (loss <= 30) msgEl.textContent = '⚠ הפסד גדול מאוד. צריך ריצה מצוינת רק כדי לחזור.';
+  else                 msgEl.textContent = '🚨 הרסני. כלל מינרוויני: לעולם אל תפסיד יותר מ-7-8% בעסקה.';
+}
+
+// ─────────────────────────────────────────────
+// EXPORT
+// ─────────────────────────────────────────────
+const csvSafe = s => {
+  const str = String(s == null ? '' : s);
+  const escaped = str.replace(/"/g, '""');
+  return /^[=+\-@\t]/.test(escaped) ? `"\t${escaped}"` : `"${escaped}"`;
+};
+function exportCSV(type) {
+  // Deleted rows are hidden everywhere else in the app; an export that carries
+  // them out is a backup you cannot restore from cleanly.
+  const live = arr => arr.filter(t => !t.deleted);
+  const all = type === 'stock'  ? live(db.stocks).map(t=>({...t,assetType:'stock'}))
+            : type === 'crypto' ? live(db.crypto).map(t=>({...t,assetType:'crypto'}))
+            : [
+                ...live(db.stocks).map(t=>({...t,assetType:'stock'})),
+                ...live(db.crypto).map(t=>({...t,assetType:'crypto'}))
+              ];
+  if (!all.length) { toast('אין נתונים לייצוא','error'); return; }
+
+  const hdrs = ['ID','סוג','תאריך כניסה','L/S','סיבת כניסה','סטאפ','סימבול','שער כניסה','מניות','סטופ','יעדים','תאריך סגירה','מניות סגירה','מחיר יציאה','סקטור','עמלה','ימי החזקה','P/L','סה"כ','$ בעסקה','% תשואה','R','מה לשמר','מה לשפר'];
+  const rows = all.map(t => {
+    const pl  = calcPL(t);
+    const tot = calcTotal(t);
+    const risk= calcRisk(t);
+    const pct = risk ? tot/risk*100 : 0;
+    const sr  = calcStopRisk(t);
+    const days= _holdDays(t);
+    const tgts= (t.t||[]).map((tg,i)=>`T${i+1}:${tg.shares}@${tg.price}`).join(';');
+    return [
+      t.id, t.assetType, t.entryDate, t.ls, csvSafe(t.entryReason||''),
+      csvSafe(SETUP_LABELS[t.setupType] || t.setupType || ''), csvSafe(t.symbol),
+      t.entryPrice, t.shares, t.stop, tgts,
+      t.closeDate, t.closedShares, t.exitPrice,
+      csvSafe(SECTOR_MAP[(t.symbol||'').toUpperCase().replace(/USDT\.P|USDT|\.P$/,'')] || ''), t.commission,
+      days == null ? '' : days,
+      pl.toFixed(2), tot.toFixed(2), risk.toFixed(2), pct.toFixed(2),
+      sr ? (tot/sr).toFixed(2) : '',
+      csvSafe(t.notes_keep||''),
+      csvSafe(t.notes_improve||'')
+    ];
+  });
+
+  // The '\u05E1\u05D4"\u05DB' header carries a bare quote \u2014 unquoted it breaks any strict CSV
+  // parser at the very first line.
+  const csv = '\uFEFF' + [hdrs.map(csvSafe), ...rows].map(r=>r.join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const suffix = type === 'stock' ? '-stocks' : type === 'crypto' ? '-crypto' : '';
+  a.href=url; a.download=`trading-journal${suffix}-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  auditLog('export_csv');
+  toast('CSV יוצא בהצלחה','success');
+}
+
+// ─────────────────────────────────────────────
+// TOAST
+// ─────────────────────────────────────────────
+function toast(msg, type='success') {
+  const c = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  // שימוש ב-textContent ולא innerHTML למניעת XSS
+  const icon = document.createElement('span');
+  icon.textContent = type === 'error' ? '❌' : type === 'warning' ? '⚠️' : type === 'info' ? 'ℹ️' : '✅';
+  el.appendChild(icon);
+  // 100 chars used to cut mid-instruction on several real error messages
+  // (e.g. the IBKR retry-exhausted toast, which ends with the one line that
+  // actually tells the user how to fix the recurring 29-day Flex window
+  // issue) with no visual sign anything was cut. 240 covers every current
+  // toast call whole; the ellipsis is a safety net if a future one is longer.
+  const full = String(msg);
+  const shown = full.length > 240 ? full.slice(0, 239) + '…' : full;
+  el.appendChild(document.createTextNode(' ' + shown));
+  c.appendChild(el);
+  // Longer messages get more time on screen — a one-word "success" toast
+  // doesn't need 3s any more than a full sentence needs less.
+  const dismissMs = Math.min(3000 + Math.max(0, shown.length - 40) * 40, 9000);
+  setTimeout(()=>{ el.style.transition='opacity 0.18s ease-out, transform 0.18s ease-out'; el.style.opacity='0'; el.style.transform='translateX(-16px)'; setTimeout(()=>el.remove(),180); }, dismissMs);
+}
+
+// ─────────────────────────────────────────────
+// KEYBOARD
+// ─────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (document.getElementById('ss-lightbox')?.classList.contains('open')) { closeLightbox(); return; }
+  if (document.getElementById('sector-modal')?.style.display === 'block') { sectorModalClose(); return; }
+  if (document.getElementById('inv-position-modal')?.classList.contains('open')) { invClosePositionModal(); return; }
+  if (document.getElementById('inv-calc-modal')?.classList.contains('open')) { invCalcClose(); return; }
+  if (document.getElementById('inv-portfolio-name-modal')?.classList.contains('open')) { invPortfolioNameClose(); return; }
+  if (document.getElementById('cal-trade-modal')?.classList.contains('open')) { closeCalTradeModal(); return; }
+  if (document.getElementById('ss-modal')?.classList.contains('open')) { closeSSModal(); return; }
+  if (document.getElementById('qa-modal')?.classList.contains('open')) { fabToggle(); return; }
+  closeModal();
+});
+
+// Focus trap (WCAG 2.4.3) — keep keyboard focus inside the open modal.
+function _topOpenModal() {
+  for (const id of ['trade-modal','qa-modal','cal-trade-modal','ss-modal','inv-position-modal','inv-calc-modal','inv-portfolio-name-modal']) {
+    const el = document.getElementById(id);
+    if (el && el.classList.contains('open')) return el;
+  }
+  const sm = document.getElementById('sector-modal');
+  return (sm && sm.style.display === 'block') ? sm : null;
+}
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Tab') return;
+  const modal = _topOpenModal();
+  if (!modal) return;
+  const list = Array.from(modal.querySelectorAll(
+    'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
+  )).filter(el => el.offsetParent !== null);
+  if (!list.length) return;
+  const first = list[0], last = list[list.length - 1];
+  if (!modal.contains(document.activeElement)) { e.preventDefault(); first.focus(); return; }
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+});
+
+// ══════════════════════════════════════════════
+// PIN LOCK — נעילת יומן עם קוד PIN
+// ══════════════════════════════════════════════
+const PIN_KEY        = 'tj-pin-hash';
+const PIN_SETUP_KEY  = 'tj-pin-setup';
+const AUTO_LOCK_MS   = 10 * 60 * 1000;   // 10 דקות חוסר פעילות
+const WARN_BEFORE_MS = 2 * 60 * 1000;     // אזהרה 2 דקות לפני
+
+let pinBuffer        = '';
+let pinSetupMode     = false;
+let pinSetupFirst    = '';
+let lastActivity     = Date.now();
+let autoLockTimer    = null;
+let countdownTimer   = null;
+
+// PBKDF2 PIN hash via SubtleCrypto — military-grade KDF, 200k iterations
+// Format stored: "pbkdf2v3:<hex-salt>:<hex-hash>"
+const PIN_PBKDF2_ITERATIONS = 200000;
+const PIN_PBKDF2_PREFIX     = 'pbkdf2v3:';
+
+async function hashPIN(pin) {
+  // Generate a random 16-byte salt each time (stored alongside hash)
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const km   = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(pin), 'PBKDF2', false, ['deriveBits']
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt, iterations: PIN_PBKDF2_ITERATIONS, hash: 'SHA-256' },
+    km, 256
+  );
+  const hex  = s => Array.from(new Uint8Array(s)).map(b => b.toString(16).padStart(2,'0')).join('');
+  return PIN_PBKDF2_PREFIX + hex(salt) + ':' + hex(bits);
+}
+
+async function verifyPIN(pin, stored) {
+  if (!stored) return false;
+  // Legacy v2: plain SHA-256 hex (64 chars) — migrate on verify
+  if (!stored.startsWith(PIN_PBKDF2_PREFIX)) {
+    const legacyHash = await _sha256Legacy(pin);
+    return legacyHash === stored;
+  }
+  // v3 PBKDF2 — extract salt and re-derive
+  const parts = stored.split(':');
+  if (parts.length !== 3) return false;
+  const salt = new Uint8Array(parts[1].match(/../g).map(h => parseInt(h, 16)));
+  const km   = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(pin), 'PBKDF2', false, ['deriveBits']
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt, iterations: PIN_PBKDF2_ITERATIONS, hash: 'SHA-256' },
+    km, 256
+  );
+  const hex  = Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2,'0')).join('');
+  return hex === parts[2];
+}
+
+// SHA-256 fallback for legacy hash comparison only (not stored)
+async function _sha256Legacy(pin) {
+  const buf = await crypto.subtle.digest(
+    'SHA-256', new TextEncoder().encode('trading-journal-pin-v2:' + pin)
+  );
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// Detect and migrate: FNV-style (≤8 hex chars) and SHA-256 v2 (64 hex chars) → force re-hash on next login
+
+function hasPIN() { return !!localStorage.getItem(PIN_KEY); }
+
+function pinUpdateDots(color = null) {
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById('pd' + i);
+    d.className = 'pin-dot' + (i < pinBuffer.length ? ' filled' : '') + (color ? ' ' + color : '');
+  }
+}
+
+function pinMsg(msg) { document.getElementById('pin-msg').textContent = msg; }
+function pinClear()     { pinBuffer = ''; pinUpdateDots(); pinMsg(''); }
+
+function pinPress(digit) {
+  if (isLockedOut()) { showLockoutMsg(); return; }
+  // Anti-bot: block suspiciously fast key presses (< 80ms = automated)
+  const now = Date.now();
+  if (pinBuffer.length > 0 && now - _lastPinAttempt < 80) return;
+  _lastPinAttempt = now;
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += digit;
+  pinUpdateDots();
+  if (pinBuffer.length === 4) {
+    setTimeout(async () => {
+      if (pinSetupMode) {
+        if (!pinSetupFirst) {
+          pinSetupFirst = pinBuffer;
+          pinBuffer = '';
+          pinUpdateDots();
+          document.getElementById('pin-sub-text').textContent = 'הכנס שוב לאישור';
+          pinMsg('');
+        } else {
+          if (pinBuffer === pinSetupFirst) {
+            localStorage.setItem(PIN_KEY, await hashPIN(pinBuffer));
+            localStorage.setItem(PIN_SETUP_KEY, '1');
+            setPinAttempts(0);
+            pinBuffer = ''; pinSetupFirst = '';
+            pinSetupMode = false;
+            pinMsg('');
+            pinUnlock();
+            // Re-encrypt stored credentials with new PIN-derived key
+            reEncryptCredentials().catch(e => console.warn('[Security] re-encrypt failed:', e));
+            toast('קוד PIN הוגדר בהצלחה ✅','success');
+          } else {
+            pinBuffer = ''; pinSetupFirst = '';
+            pinUpdateDots('error');
+            pinMsg('הקודים אינם תואמים — נסה שוב');
+            document.getElementById('pin-sub-text').textContent = 'הכנס קוד חדש';
+            setTimeout(() => pinUpdateDots(), 700);
+          }
+        }
+      } else {
+        if (await verifyPIN(pinBuffer, localStorage.getItem(PIN_KEY))) {
+          // Silently upgrade legacy SHA-256 hash to PBKDF2 on successful login
+          const stored = localStorage.getItem(PIN_KEY);
+          if (stored && !stored.startsWith(PIN_PBKDF2_PREFIX)) {
+            localStorage.setItem(PIN_KEY, await hashPIN(pinBuffer));
+            reEncryptCredentials().catch(e => console.warn('[Security] re-encrypt after upgrade:', e));
+          }
+          setPinAttempts(0);
+          localStorage.removeItem(PIN_LOCKOUT_KEY);
+          pinBuffer = '';
+          pinMsg('');
+          auditLog('pin_correct');
+          // If TOTP enabled → second factor step
+          if (totpEnabled()) { await totpStep(); }
+          else { auditLog('pin_unlocked'); pinUnlock(); }
+        } else {
+          // Anti-bot: enforce minimum interval between attempts
+          const now = Date.now();
+          if (now - _lastPinAttempt < MIN_ATTEMPT_INTERVAL_MS) { pinBuffer = ''; return; }
+          _lastPinAttempt = now;
+          pinUpdateDots('error');
+          const attempts = getPinAttempts() + 1;
+          setPinAttempts(attempts);
+          auditLog('pin_failed', String(attempts));
+          if (attempts >= MAX_ATTEMPTS) {
+            const lockMs = getLockoutDuration(attempts);
+            localStorage.setItem(PIN_LOCKOUT_KEY, String(Date.now() + lockMs));
+            // Don't reset attempts — keep accumulating for exponential backoff
+            auditLog('pin_lockout', `${Math.round(lockMs/60000)}min`);
+            pinMsg('');
+            showLockoutMsg();
+          } else {
+            pinMsg(`קוד שגוי — נסה שוב (${attempts}/${MAX_ATTEMPTS})`);
+          }
+          pinBuffer = '';
+          setTimeout(() => pinUpdateDots(), 700);
+        }
+      }
+    }, 80);
+  }
+}
+
+function pinBackspace() {
+  if (pinBuffer.length > 0) { pinBuffer = pinBuffer.slice(0,-1); pinUpdateDots(); pinMsg(''); }
+}
+
+function pinUnlock() {
+  const overlay = document.getElementById('pin-overlay');
+  if (overlay) overlay.classList.remove('open');
+  document.body.style.overflow = '';
+  lastActivity = Date.now();
+  startAutoLock();
+  const link = document.getElementById('pin-toggle-link');
+  if (link) link.textContent = hasPIN() ? 'שנה / מחק PIN' : 'הגדר קוד PIN';
+  // Auto-sync Flex + Bybit on unlock — runs silently in background
+  _autoFlexSync();
+  _autoBybitSync();
+}
+
+async function _flexFetch(jwt, { debug } = {}) {
+  // IBKR temporary error codes — safe to retry (busy / generating / throttled)
+  const RETRYABLE = new Set(['1001','1004','1005','1006','1007','1008','1009','1018','1019','1021']);
+
+  // Step 1: SendRequest — usually succeeds first try; retry temporary errors
+  // (1001 etc.) with backoff so a brief IBKR "busy" state self-heals.
+  const SEND_DELAYS = [0, 6000, 12000, 20000];
+  let refCode = '';
+  let sendErr = 'שגיאה לא ידועה';
+  let sendCode = '';
+  let sendTs = '';
+  for (let i = 0; i < SEND_DELAYS.length; i++) {
+    if (SEND_DELAYS[i] > 0) {
+      flexSetStatus('מסנכרן עם IBKR...', 'var(--text2)');
+      await new Promise(r => setTimeout(r, SEND_DELAYS[i]));
+    }
+    const sendRes = await fetch(`${SUPABASE_URL}/functions/v1/ibkr?action=send`, { headers: { 'Authorization': `Bearer ${jwt}` } });
+    if (!sendRes.ok) throw new Error(`שגיאת רשת בשליחה: ${sendRes.status}`);
+    const sendXml = await sendRes.text();
+    refCode = flexExtractTag(sendXml, 'ReferenceCode');
+    if (refCode && flexExtractTag(sendXml, 'Status') !== 'Fail') break;
+    refCode  = '';
+    sendCode = flexExtractTag(sendXml, 'ErrorCode');
+    sendErr  = flexExtractTag(sendXml, 'ErrorMessage') || 'שגיאה לא ידועה';
+    sendTs   = (sendXml.match(/timestamp='([^']*)'/) || [])[1] || '';
+    if (!RETRYABLE.has(sendCode)) throw new Error(`שליחה נכשלה: ${sendErr} [IBKR ${sendCode}] [שעת IBKR: ${sendTs}]`);
+  }
+  if (!refCode) {
+    const isBusy = ['1001', '1009', '1018', '1021'].includes(sendCode);
+    const err = new Error(isBusy
+      ? 'IBKR עמוס כרגע ולא הצליח להפיק את הדוח. ננסה שוב אוטומטית בקרוב. אם זה חוזר שוב ושוב — ודא שה‑Flex Query מוגדר על "Last 365 Calendar Days" (לא 30).'
+      : `שליחה נכשלה: ${sendErr} [IBKR ${sendCode}]`);
+    err.busy = isBusy;
+    throw err;
+  }
+
+  // Step 2: Poll GetStatement — a full 365-day statement can take a few minutes
+  // to generate for an active account, so give IBKR up to ~4 minutes.
+  const DELAYS = [3000,5000,5000,8000,8000,10000,12000,15000,15000,20000,20000,25000,25000,30000,30000];
+  let xml = '';
+  let getErr = 'IBKR לא הצליח ליצור את הדוח';
+  let getCode = '';
+  for (let i = 0; i < DELAYS.length; i++) {
+    flexSetStatus('מכין נתונים ב-IBKR...', 'var(--text2)');
+    await new Promise(r => setTimeout(r, DELAYS[i]));
+    const getRes = await fetch(
+      `${SUPABASE_URL}/functions/v1/ibkr?action=get&ref=${encodeURIComponent(refCode)}`,
+      { headers: { 'Authorization': `Bearer ${jwt}` } }
+    );
+    if (!getRes.ok) throw new Error(`שגיאת רשת בקבלה: ${getRes.status}`);
+    xml = await getRes.text();
+    if (flexExtractTag(xml, 'Status') !== 'Fail') break;
+    getCode = flexExtractTag(xml, 'ErrorCode');
+    getErr  = flexExtractTag(xml, 'ErrorMessage') || 'שגיאה לא ידועה';
+    if (!RETRYABLE.has(getCode)) throw new Error(`קבלת הדוח נכשלה: ${getErr} [IBKR ${getCode}]`);
+  }
+  if (flexExtractTag(xml, 'Status') === 'Fail') {
+    const err = new Error('IBKR עמוס כרגע והדוח לא היה מוכן בזמן. ננסה שוב אוטומטית בקרוב. אם זה חוזר שוב ושוב — ודא שה‑Flex Query מוגדר על "Last 365 Calendar Days" (לא 30).');
+    err.busy = true;
+    throw err;
+  }
+  if (debug) return { xml, trades: flexParseXML(xml) };
+  return flexParseXML(xml);
+}
+
+// Import synced trades into the journal: dedup, persist to Supabase, then
+// refresh every view (tables, dashboard, statistics) so data appears with no
+// extra clicks. Shared by the automatic sync and the manual Sync button.
+let _flexImporting = false;
+async function _flexImport(trades) {
+  // Re-entrancy guard: if a manual and an automatic import overlap, both could
+  // pass the in-memory dedup before either inserts → duplicates. Run one at a time.
+  if (_flexImporting) return { imported: 0, updated: 0, newlyImported: [], insertFailed: 0 };
+  // Same reason as the Bybit guard: dedup reads db.stocks/db.crypto, so an
+  // import that beats loadDB() sees an empty journal and re-imports everything.
+  if (!_dbLoaded) return { imported: 0, updated: 0, newlyImported: [], insertFailed: 0 };
+  _flexImporting = true;
+  try {
+    return await _flexImportInner(trades);
+  } finally {
+    _flexImporting = false;
+  }
+}
+async function _flexImportInner(trades) {
+  const { imported, updated, newlyImported, insertFailed, updateFailed } = await FlexImport._flexImportInner(trades, {
+    db, _sb, _currentUser, _tradeToRow, _rowToTrade, _isDeletedImport, _dedupeTrades,
+  });
+  if (updateFailed) toast(`${updateFailed} עדכוני סנכרון נכשלו — הנתונים לא נשמרו`, 'error');
+  if (insertFailed) toast(`${insertFailed} עסקאות מ-IBKR נכשלו בייבוא`, 'error');
+  if (imported > 0 || updated > 0) {
+    initFilters();
+    if (imported > 0) {
+      ['st', 'cr'].forEach(p => {
+        const ys = document.getElementById(p + '-year');  if (ys) ys.value = '';
+        const ms = document.getElementById(p + '-month'); if (ms) ms.value = '';
+      });
+    }
+    renderTable('stock');
+    renderTable('crypto');
+    renderOverview();
+    if (document.getElementById('tab-statistics')?.classList.contains('active')) renderStatistics();
+  }
+  return { imported, updated, newlyImported, insertFailed };
+}
+
+// Smart sync throttle. Record each attempt's outcome and compute when the next
+// automatic attempt is allowed: 6h after success (IBKR activity data updates
+// ~once daily), and a backoff after consecutive failures (15min → 30, capped at
+// 30min) so a busy token gets some room without leaving the badge stuck for hours.
+function _flexMarkSync(ok) {
+  if (!_currentUser) return;
+  const id = _currentUser.id;
+  localStorage.setItem('flex_sync_ts_' + id, String(Date.now()));
+  localStorage.setItem('flex_sync_ok_' + id, ok ? '1' : '0');
+  const failKey = 'flex_sync_fails_' + id;
+  const fails = parseInt(localStorage.getItem(failKey) || '0', 10);
+  localStorage.setItem(failKey, ok ? '0' : String(fails + 1));
+}
+
+function _flexSyncCooldownLeft() {
+  if (!_currentUser) return 0;
+  const id = _currentUser.id;
+  const last = parseInt(localStorage.getItem('flex_sync_ts_' + id) || '0', 10);
+  if (localStorage.getItem('flex_sync_ok_' + id) !== '0') {
+    return Math.max(0, 6 * 60 * 60 * 1000 - (Date.now() - last)); // 6h after success
+  }
+  const fails = parseInt(localStorage.getItem('flex_sync_fails_' + id) || '0', 10);
+  const wait = Math.min(15 * 60 * 1000 * Math.pow(2, Math.max(0, fails - 1)), 30 * 60 * 1000);
+  return Math.max(0, wait - (Date.now() - last));
+}
+
+// Both this and _maybeShowFlexWindowNotice() fire at boot and each used to run
+// its own full select against flex_statement_cache for the same user — a
+// wasted duplicate round trip of the (potentially large) XML column every
+// login. Memoized per boot cycle so whichever caller runs first fetches once
+// and the other reuses the same promise; _currentUser.id changing (a fresh
+// login after logout) naturally invalidates it since the id in the cache key
+// won't match.
+let _flexCacheRowPromise = null, _flexCacheRowPromiseUser = null;
+function _fetchFlexCacheRow() {
+  if (_flexCacheRowPromise && _flexCacheRowPromiseUser === _currentUser.id) return _flexCacheRowPromise;
+  _flexCacheRowPromiseUser = _currentUser.id;
+  _flexCacheRowPromise = _sb.from('flex_statement_cache')
+    .select('xml, fetched_at, imported_at, xml_confirm, confirm_fetched_at, confirm_imported_at')
+    .eq('user_id', _currentUser.id).maybeSingle()
+    .then(({ data }) => data);
+  return _flexCacheRowPromise;
+}
+
+// Import the statement that the scheduled server job pre-fetched at a good time
+// (flex_statement_cache). Reuses the existing parse + import path, so there is
+// no live IBKR call and no 1001. Returns true if a fresh cache was used.
+async function _flexImportFromCache(manual = false) {
+  if (!_currentUser) return false;
+  let row;
+  try {
+    row = await _fetchFlexCacheRow();
+  } catch (e) { return false; }
+  if (!row || (!row.xml && !row.xml_confirm)) return false;
+
+  const STALE = 30 * 60 * 60 * 1000;
+  const activityUsable = !!row.xml && (Date.now() - new Date(row.fetched_at).getTime() <= STALE);
+  const activityFresh  = activityUsable && (!row.imported_at || new Date(row.imported_at) < new Date(row.fetched_at));
+  const confirmFresh   = !!row.xml_confirm && (!row.confirm_imported_at || new Date(row.confirm_imported_at) < new Date(row.confirm_fetched_at));
+
+  if (!activityFresh && !confirmFresh) {
+    // A cache that was already imported is "up to date" only for the background
+    // pass. On a manual press it must fall through to a live fetch — otherwise
+    // pressing סנכרן after closing a position reports "✓ עדכני" and pulls nothing.
+    if (manual) return false;
+    if (activityUsable || row.xml_confirm) { _flexMarkSync(true); _setBrokerBadge('ibkr', 'ok'); flexSetStatus('✓ עדכני', 'var(--text3)'); return true; }
+    return false;
+  }
+
+  try {
+    const trades = [];
+    if (activityFresh) trades.push(...flexParseXML(row.xml));
+    if (confirmFresh)  trades.push(...flexParseXML(row.xml_confirm));
+    const { imported, updated, insertFailed } = await _flexImport(trades);
+    const stamp = {};
+    // A statement whose import dropped at least one insert must stay
+    // unstamped, or it is never retried and that trade is lost for good.
+    if (activityFresh && !insertFailed) stamp.imported_at = new Date().toISOString();
+    if (confirmFresh && !insertFailed)  stamp.confirm_imported_at = new Date().toISOString();
+    if (Object.keys(stamp).length) await _sb.from('flex_statement_cache').update(stamp).eq('user_id', _currentUser.id);
+    _flexMarkSync(true);
+    _setBrokerBadge('ibkr', 'ok');
+    if (imported > 0 || updated > 0) {
+      const msg = [imported ? `${imported} חדשות` : '', updated ? `${updated} עודכנו` : ''].filter(Boolean).join(' | ');
+      flexSetStatus(`✓ ${msg}`, 'var(--green)');
+      toast(`✓ IBKR: ${msg}`, 'success');
+      auditLog('flex_cache_import', `imported:${imported} updated:${updated}`);
+    } else {
+      flexSetStatus('✓ סונכרן — אין עסקאות חדשות', 'var(--text3)');
+    }
+    return true;
+  } catch (e) { return false; }
+}
+
+// Live Flex generation is only reliable after IBKR's once-daily EOD batch.
+// Restrict live attempts to weekday US business hours (the scheduled cron+cache
+// covers everything else) so we stop hitting 1001 at bad times.
+function _flexLiveWindowOpen() {
+  const et = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  const day = et.getDay();
+  if (day === 0 || day === 6) return false;       // weekend
+  return et.getHours() >= 10 && et.getHours() < 23; // after EOD processing
+}
+
+async function _autoFlexSync() {
+  if (!_currentUser) return;
+  if (!_userSettings.flex_token) return;
+  // 1) Prefer the server pre-fetched statement — instant, no IBKR call, no 1001.
+  if (await _flexImportFromCache()) return;
+  // 2) No usable cache → live fallback, throttled and only in a good window.
+  if (_flexSyncCooldownLeft() > 0) {
+    if (localStorage.getItem('flex_sync_ok_' + _currentUser.id) === '1') _setBrokerBadge('ibkr', 'ok');
+    else _brokerBadgeFromStore('ibkr', true);
+    return;
+  }
+  if (!_flexLiveWindowOpen()) { _brokerBadgeFromStore('ibkr', true); return; }
+  const jwt = await _getToken();
+  if (!jwt) return;
+  _setBrokerBadge('ibkr', 'syncing');
+  flexSetStatus('מסנכרן עם IBKR...', 'var(--text2)');
+  try {
+    const trades = await _flexFetch(jwt);
+    _flexMarkSync(true);
+    _setBrokerBadge('ibkr', 'ok');
+    const { imported, updated, newlyImported } = await _flexImport(trades);
+    if (imported > 0 || updated > 0) {
+      const msg = [imported ? `${imported} חדשות` : '', updated ? `${updated} עודכנו` : ''].filter(Boolean).join(' | ');
+      flexSetStatus(`✓ ${msg}`, 'var(--green)');
+      toast(`✓ IBKR: ${msg}`, 'success');
+      auditLog('flex_auto_import', `imported:${imported} updated:${updated}`);
+      const openNeedStop = newlyImported
+        .filter(tr => !tr.stop)
+        .map(tr => ({ type: tr.type, id: tr.id, symbol: tr.symbol, entryPrice: tr.entryPrice, entryDate: tr.entryDate }));
+      if (openNeedStop.length) setTimeout(() => stopPromptShow(openNeedStop), 800);
+    } else {
+      flexSetStatus('✓ סונכרן — אין עסקאות חדשות', 'var(--text3)');
+    }
+  } catch(e) {
+    // Background sync — record the failure (extends the backoff) and retry later.
+    _flexMarkSync(false);
+    if (e.busy) _brokerBadgeFromStore('ibkr', true); // busy = still connected
+    else _setBrokerBadge('ibkr', 'error');
+    // Stay quiet for the odd transient failure, but after several in a row the
+    // cause is almost always a mis-set query period — guide the user to fix it.
+    const fails = parseInt(localStorage.getItem('flex_sync_fails_' + _currentUser.id) || '0', 10);
+    flexSetStatus(
+      fails >= 3 ? 'הסנכרון נכשל שוב ושוב — ודא שה‑Flex Query מוגדר על "Last 365 Calendar Days" (לא 30)' : '',
+      fails >= 3 ? 'var(--text2)' : 'var(--text3)');
+  }
+}
+
+// True if a Bybit trade already exists locally (so skip insert). Prefers the
+// stable bybit_id; falls back to the entry fingerprint and backfills bybit_id
+// onto a matched legacy row so future syncs (and the server cron) dedup cleanly.
+async function _bybitExisting(t, fp) {
+  if (t.bybit_id && db.crypto.some(e => !e.deleted && e.bybit_id === t.bybit_id)) return true;
+  const byFp = db.crypto.find(e => !e.deleted &&
+    `${e.symbol}||${e.entryDate}||${Math.round((e.entryPrice||0)*1000)}||${Math.round((e.shares||0)*1000)}` === fp
+  );
+  if (!byFp) return false;
+  if (t.bybit_id && !byFp.bybit_id) {
+    _rtSuppress('trades');
+    const { error } = await _sb.from('trades').update({ bybit_id: t.bybit_id }).eq('id', byFp.id).eq('user_id', _currentUser.id);
+    if (!error) byFp.bybit_id = t.bybit_id;
+    else console.error('[bybit backfill]', error);
+  }
+  return true;
+}
+
+async function _autoBybitSync() {
+  if (!_currentUser) return;
+  if (!_dbLoaded) return;   // dedup needs the journal in memory first
+  if (!_userSettings.bybit_api_key) return;
+  const COOLDOWN_MS = 6 * 60 * 60 * 1000;
+  const lastKey = 'bybit_sync_ts_' + _currentUser.id;
+  const last = parseInt(localStorage.getItem(lastKey) || '0', 10);
+  if (Date.now() - last < COOLDOWN_MS) {
+    // Skipped by cooldown — the timestamp is only set on success, so reflect 'ok'.
+    if (last > 0) _setBrokerBadge('bybit', 'ok');
+    return;
+  }
+  const jwt = await _getToken();
+  if (!jwt) return;
+  _setBrokerBadge('bybit', 'syncing');
+  bybitSetStatus('מסנכרן עם Bybit...', 'var(--text2)');
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/bybit`, {
+      headers: { Authorization: `Bearer ${jwt}` }
+    });
+    const json = await res.json();
+    if (!res.ok || json.error) throw new Error(json.error || 'שגיאה');
+    _setBrokerBadge('bybit', 'ok');
+
+    const trades = json.trades || [];
+    let imported = 0, insFailed = 0;
+    for (const t of trades) {
+      const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
+      if (_isDeletedImport(t)) continue;
+      if (await _bybitExisting(t, fp)) continue;
+      const { data, error } = await _sb.from('trades').insert(_tradeToRow({ ...t, closedShares: t.shares, deleted: false })).select().single();
+      if (error) { insFailed++; console.error('[bybit insert]', error); continue; }
+      db.crypto.unshift(_rowToTrade(data)); imported++;
+    }
+    // The cooldown blocks retries for 6h, so only claim a successful run once the
+    // inserts actually landed — otherwise a failed sync locked itself out.
+    if (!insFailed) localStorage.setItem(lastKey, String(Date.now()));
+    else toast(`Bybit: ${insFailed} עסקאות לא נשמרו`, 'error');
+    if (imported > 0) {
+      initFilters();
+      renderTable('crypto');
+      renderOverview();
+      bybitSetStatus(`✓ ${imported} עסקאות חדשות`, 'var(--green)');
+      toast(`✓ Bybit: ${imported} עסקאות יובאו`, 'success');
+      auditLog('bybit_auto_import', `imported:${imported}`);
+    } else {
+      bybitSetStatus('✓ סונכרן — אין עסקאות חדשות', 'var(--text3)');
+    }
+  } catch(e) {
+    _setBrokerBadge('bybit', 'error');
+    bybitSetStatus('', 'var(--text3)');
+  }
+}
+
+// ── Stop Loss Prompt Queue ──────────────────────
+let _stopQueue = [];   // [{type, id, symbol, entryPrice, entryDate}, ...]
+
+function stopPromptShow(queue) {
+  _stopQueue = queue;
+  _stopPromptNext();
+}
+
+function _stopPromptNext() {
+  if (!_stopQueue.length) return;
+  const t = _stopQueue[0];
+  document.getElementById('stop-prompt-symbol').textContent = t.symbol;
+  document.getElementById('stop-prompt-detail').textContent =
+    `כניסה $${fmtPrice(t.entryPrice)} · ${fmtDate(t.entryDate)}`;
+  document.getElementById('stop-prompt-input').value = '';
+  document.getElementById('stop-prompt-overlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('stop-prompt-input').focus(), 80);
+}
+
+function _stopPromptClose() {
+  document.getElementById('stop-prompt-overlay').style.display = 'none';
+  _stopQueue.shift();
+  if (_stopQueue.length) setTimeout(_stopPromptNext, 200);
+}
+
+function stopPromptSave() {
+  const t   = _stopQueue[0];
+  const val = parseFloat(document.getElementById('stop-prompt-input').value);
+  if (!val || val <= 0) { toast('הכנס מחיר stop תקין', 'error'); return; }
+  const arr = t.type === 'crypto' ? db.crypto : db.stocks;
+  const tr  = arr.find(x => x.id === t.id);
+  if (tr) {
+    const prevStop = tr.stop;
+    tr.stop = val;
+    renderTable(t.type); // optimistic — מיד
+    _sb.from('trades').update({ stop: val }).eq('id', tr.id).eq('user_id', _currentUser.id)
+      .then(({ error, data }) => {
+        // An unreverted stop keeps feeding the R column and the Avg-R KPI all
+        // session from a value that was never written.
+        if (error) { tr.stop = prevStop; renderTable(t.type); toast('שגיאה בשמירת stop', 'error'); }
+        else { toast('Stop loss נשמר ✓', 'success'); }
+      });
+  }
+  _stopPromptClose();
+}
+
+function stopPromptSkip() { _stopPromptClose(); }
+// ────────────────────────────────────────────────
+
+function lockNow() {
+  if (!hasPIN()) { toast('הגדר PIN תחילה — לחץ על 🔒','error'); return; }
+  stopAutoLock();
+  pinBuffer = '';
+  pinSetupMode = false;
+  pinSetupFirst = '';
+  pinUpdateDots();
+  pinMsg('');
+  document.getElementById('pin-sub-text').textContent = 'הכנס קוד PIN לכניסה';
+  document.getElementById('pin-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function toggleLock() {
+  if (hasPIN()) {
+    lockNow();
+  } else {
+    pinSetupMode = true;
+    pinSetupFirst = '';
+    pinBuffer = '';
+    pinUpdateDots();
+    pinMsg('');
+    document.getElementById('pin-sub-text').textContent = 'הכנס קוד PIN חדש (4 ספרות)';
+    const link = document.getElementById('pin-toggle-link');
+    if (link) link.textContent = '';
+    document.getElementById('pin-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function pinToggleSetup() {
+  pinSetupMode = true;
+  pinSetupFirst = '';
+  pinBuffer = '';
+  pinUpdateDots();
+  pinMsg('');
+  document.getElementById('pin-sub-text').textContent = 'הכנס קוד PIN חדש (4 ספרות)';
+  const link = document.getElementById('pin-toggle-link');
+  if (link) link.textContent = '';
+}
+
+function startAutoLock() {
+  stopAutoLock();
+  const badge   = document.getElementById('inactivity-badge');
+  const cdEl    = document.getElementById('inactivity-countdown');
+
+  autoLockTimer = setInterval(() => {
+    const idle = Date.now() - lastActivity;
+    const remaining = AUTO_LOCK_MS - idle;
+    if (remaining <= 0 && hasPIN()) {
+      lockNow();
+      return;
+    }
+    if (remaining <= WARN_BEFORE_MS) {
+      badge.classList.add('visible');
+      const secs = Math.ceil(remaining / 1000);
+      cdEl.textContent = secs + ' שניות';
+    } else {
+      badge.classList.remove('visible');
+    }
+  }, 1000);
+}
+
+function stopAutoLock() {
+  if (autoLockTimer) { clearInterval(autoLockTimer); autoLockTimer = null; }
+}
+
+// עדכן lastActivity בכל אינטראקציה
+['mousemove','mousedown','keydown','touchstart','scroll'].forEach(ev => {
+  document.addEventListener(ev, () => { lastActivity = Date.now(); }, { passive: true });
+});
+
+// ══════════════════════════════════════════════
+// DATA INTEGRITY — checksum על localStorage
+// מונע שינוי ידני של הנתונים מחוץ לאפליקציה
+// ══════════════════════════════════════════════
+const CHECKSUM_KEY = 'tj-checksum';
+
+function saveDB() { /* no-op — CRUD functions write directly to Supabase */ }
+
+// ══════════════════════════════════════════════
+// INTERACTIVE ISRAEL — TLG FILE IMPORT
+// ══════════════════════════════════════════════
+function tlgLoadFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => tlgParse(e.target.result);
+  reader.readAsText(file, 'utf-8');
+}
+
+function tlgParse(text) {
+  const status  = document.getElementById('tlg-status');
+  const preview = document.getElementById('tlg-preview');
+  if (status)  status.textContent = '';
+  if (preview) preview.innerHTML  = '';
+
+  const lines = text.split(/\r?\n/).filter(l => l.startsWith('STK_TRD|'));
+  if (!lines.length) {
+    if (status) status.textContent = '❌ לא נמצאו עסקאות בקובץ';
+    return;
+  }
+
+  // Parse each row
+  const rows = lines.map(line => {
+    const p = line.split('|');
+    // STK_TRD|OrderID|Symbol|Name|Exchange|Action|OC|Date|Time|Currency|Qty|Mult|Price|Value|Commission|...
+    const action = (p[5] || '').toUpperCase();
+    const oc     = (p[6] || '').toUpperCase();
+    const rawDate = p[7] || '';
+    const entryDate = rawDate.length === 8
+      ? `${rawDate.slice(0,4)}-${rawDate.slice(4,6)}-${rawDate.slice(6,8)}`
+      : '';
+    return {
+      orderId:    p[1] || '',
+      symbol:     (p[2] || '').toUpperCase().replace(/[^A-Z0-9._\-]/g,'').slice(0,10),
+      name:       p[3] || '',
+      action,
+      oc,
+      entryDate,
+      price:      Math.abs(parseFloat(p[12]) || 0),
+      time:       p[8] || "",
+      qty:        Math.abs(parseFloat(p[10]) || 0),
+      commission: Math.abs(parseFloat(p[14]) || 0),
+      isBuy:      action.includes('BUY'),
+    };
+  }).filter(r => r.symbol && r.price && r.qty);
+
+  // FIFO-match each symbol's fills against each other.
+  //
+  // This used to bucket fills into buys/sells and then, for every buy, scan the
+  // WHOLE sells list for anything dated on or after it. Nothing was ever
+  // consumed, so two buys of one symbol followed by a single sell closed BOTH
+  // buys against that same sell — the P&L and the sell's commission were
+  // counted once per buy. It also hardcoded ls:'L', so a short's opening SELL
+  // landed in the sells bucket, silently vanished as a position, and corrupted
+  // the matching of the real buys around it.
+  const bySymbol = {};
+  rows.forEach(r => { (bySymbol[r.symbol] = bySymbol[r.symbol] || []).push(r); });
+
+  const trades = [];
+  Object.entries(bySymbol).forEach(([sym, fills]) => {
+    // FIFO is meaningless on file order and the export is not guaranteed sorted.
+    fills.sort((a, b) => (a.entryDate + a.time).localeCompare(b.entryDate + b.time));
+    const lots = [];
+    fills.forEach(f => {
+      let qty = f.qty;
+      // The broker's O/C column decides when it is filled in; direction against
+      // what is actually open is the fallback for rows that leave it blank.
+      const opensOnly = f.oc.startsWith('O');
+      const want = f.isBuy ? 'S' : 'L';   // a buy closes shorts, a sell closes longs
+      if (!opensOnly) {
+        for (const lot of lots) {
+          if (qty <= 1e-9) break;
+          if (lot.ls !== want || lot.left <= 1e-9) continue;
+          const take = Math.min(lot.left, qty);
+          lot.left -= take;
+          qty -= take;
+          lot.closedShares += take;
+          lot.legs.push({ shares: take, price: f.price });
+          lot.closeDate = f.entryDate;
+          lot.exitPrice = f.price;
+          // The fill is charged one commission for its whole size; give each
+          // lot it closed only that lot's share.
+          lot.commission += f.commission * take / f.qty;
+        }
+      }
+      // Whatever is left opens a position — a plain open, or the far side of a
+      // reversal that closed more than was on the books.
+      if (qty > 1e-9) {
+        lots.push({
+          symbol: sym, name: f.name, entryDate: f.entryDate, entryPrice: f.price,
+          shares: qty, ls: f.isBuy ? 'L' : 'S', left: qty,
+          commission: f.commission * qty / f.qty,
+          closedShares: 0, closeDate: '', exitPrice: 0, legs: [],
+        });
+      }
+    });
+    lots.forEach(l => trades.push({
+      symbol: l.symbol, name: l.name,
+      entryDate: l.entryDate, entryPrice: l.entryPrice, shares: l.shares,
+      commission: Math.round(l.commission * 10000) / 10000,
+      closeDate: l.closedShares > 0 ? l.closeDate : '',
+      exitPrice: l.closedShares > 0 ? l.exitPrice : 0,
+      closedShares: l.closedShares,
+      // closedShares is TOTAL closed volume and calcPL prices the remainder
+      // (closedShares - sum(targets[].shares)) at exitPrice, so the final leg
+      // must NOT also be listed as a target or it is counted twice.
+      targets: l.legs.length > 1 ? l.legs.slice(0, -1) : [],
+      ls: l.ls,
+    }));
+  });
+
+  if (!trades.length) {
+    if (status) status.textContent = '❌ לא ניתן לבנות עסקאות מהקובץ';
+    return;
+  }
+
+  if (status) status.innerHTML = `<span style="color:var(--green)">✅ נמצאו ${trades.length} עסקאות — בחר אילו לייבא:</span>`;
+
+  // Store for confirmation
+  window._tlgPending = trades;
+
+  // Render preview
+  if (!preview) return;
+  preview.innerHTML = '';
+  trades.forEach((t, i) => {
+    // calcPL, not a long-only one-liner: this preview now shows shorts (whose
+    // P&L runs the other way) and multi-leg exits (which live in targets and
+    // were priced at the final exit by the subtraction below).
+    const pnl = t.closedShares > 0 ? (calcPL({ ...t, t: t.targets }) - t.commission).toFixed(2) : null;
+    const pnlHtml = pnl !== null
+      ? `<span style="color:${+pnl >= 0 ? 'var(--green)' : 'var(--red)'};">${+pnl >= 0 ? '+' : ''}$${pnl}</span>`
+      : '<span style="color:var(--text3)">פתוח</span>';
+    const safeEntryDate  = /^\d{4}-\d{2}-\d{2}$/.test(t.entryDate) ? t.entryDate : '—';
+    const safeEntryPrice = parseFloat(t.entryPrice||0).toFixed(4);
+    const safeShares     = parseFloat(t.shares||0);
+    const safeTargets    = Number.isInteger(t.targets?.length) ? t.targets.length : 0;
+    const div = document.createElement('div');
+    div.className = 'ibkr-trade-preview';
+    div.innerHTML = `
+      <div>
+        <span class="sym">${esc(t.symbol)}</span>
+        <span style="font-size:11px;color:var(--text3);margin-right:8px;">${esc(t.name)}</span>
+      </div>
+      <div class="det">
+        ${safeEntryDate} &nbsp;|&nbsp; כניסה: $${safeEntryPrice} &nbsp;|&nbsp;
+        ${safeShares} מניות &nbsp;|&nbsp; P&L: ${pnlHtml}
+        ${safeTargets ? ` &nbsp;|&nbsp; ${safeTargets} יציאות חלקיות` : ''}
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="tlgConfirm(${i})" id="tlg-btn-${i}">+ ייבא</button>
+    `;
+    preview.appendChild(div);
+  });
+
+  const allBtn = document.createElement('button');
+  allBtn.className = 'btn btn-primary';
+  allBtn.style.marginTop = '12px';
+  allBtn.textContent = `📥 ייבא הכל (${trades.length})`;
+  allBtn.onclick = () => trades.forEach((_, i) => tlgConfirm(i));
+  preview.appendChild(allBtn);
+}
+
+async function deduplicateDB(type) {
+  const arr = type === 'stock' ? db.stocks : db.crypto;
+  // Group by symbol+entryDate+entryPrice+shares. Share count is part of the
+  // identity: two lots of the same symbol/day/price with different sizes are
+  // different positions, not copies of one.
+  const groups = {};
+  arr.filter(t => !t.deleted).forEach(t => {
+    const key = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(t);
+  });
+  const brokerId = t => t.ibkr_id || t.bybit_id || null;
+  const toRemove = [];
+  Object.values(groups).forEach(group => {
+    if (group.length < 2) return;
+    // Prefer keeping a broker-tagged row (the broker's own record), then one
+    // carrying an exit, then one carrying a stop.
+    group.sort((a, b) => {
+      if (!!brokerId(b) !== !!brokerId(a)) return brokerId(b) ? 1 : -1;
+      if (!!b.exitPrice !== !!a.exitPrice) return b.exitPrice ? 1 : -1;
+      if (!!b.stop !== !!a.stop) return b.stop ? 1 : -1;
+      return 0;
+    });
+    // A broker execution id is unique per fill, so two rows carrying different
+    // ids are different executions — never copies of each other. IBKR's SMART
+    // router routinely produces several same-symbol/day/price fills, and this
+    // grouping saw 73 of those real trades across two accounts as "duplicates"
+    // and offered to delete them. Only untagged rows can be redundant copies.
+    group.slice(1).filter(t => !brokerId(t)).forEach(t => toRemove.push(t.id));
+  });
+  const removed = toRemove.length;
+  if (removed === 0) { toast('לא נמצאו כפילויות', 'success'); return; }
+  if (!confirm(`נמצאו ${removed} עסקאות כפולות ב${type==='stock'?'מניות':'קריפטו'}. למחוק לצמיתות?`)) return;
+  const keepIds = new Set(toRemove);
+  const prevStocks = db.stocks, prevCrypto = db.crypto;
+  if (type === 'stock') db.stocks = db.stocks.filter(t => !keepIds.has(t.id));
+  else db.crypto = db.crypto.filter(t => !keepIds.has(t.id));
+  if (_currentUser) {
+    // deleted_at must be set alongside deleted — it is the only record of when
+    // the row was removed, and the rollback scripts key off it.
+    const { error } = await _sb.from('trades').update({ deleted: true, deleted_at: new Date().toISOString() }).in('id', toRemove).eq('user_id', _currentUser.id);
+    // Without this the rows stayed dropped from memory on failure, so the next
+    // re-render made trades that still exist in Supabase vanish from the journal.
+    if (error) {
+      db.stocks = prevStocks; db.crypto = prevCrypto;
+      renderTable(type);
+      toast('שגיאה בנקה כפילויות', 'error'); console.error(error); return;
+    }
+  }
+  renderTable(type);
+  toast(`הוסרו ${removed} כפילויות`, 'success');
+}
+
+function tlgIsDuplicate(t) {
+  const type = symIsCrypto(t.symbol) ? 'crypto' : 'stock';
+  const arr  = type === 'crypto' ? db.crypto : db.stocks;
+  return arr.some(x =>
+    x.symbol === t.symbol &&
+    x.entryDate === t.entryDate &&
+    Math.abs(x.entryPrice - t.entryPrice) < 0.001
+  );
+}
+
+function tlgConfirm(idx) {
+  const pending = window._tlgPending;
+  if (!pending || !pending[idx]) return;
+  const t = pending[idx];
+
+  if (tlgIsDuplicate(t)) {
+    toast(`${t.symbol} כבר קיים ביומן — דילוג`, 'error');
+    const btn = document.getElementById(`tlg-btn-${idx}`);
+    if (btn) { btn.disabled = true; btn.textContent = '⚠ כפילות'; }
+    return;
+  }
+
+  const type = symIsCrypto(t.symbol) ? 'crypto' : 'stock';
+  const arr  = type === 'crypto' ? db.crypto : db.stocks;
+
+  const trade = {
+    type,
+    entryDate:    t.entryDate,
+    ls:           t.ls,
+    symbol:       t.symbol,
+    entryPrice:   t.entryPrice,
+    shares:       t.shares,
+    stop:         0,
+    t:            t.targets,
+    closeDate:    t.closeDate,
+    closedShares: t.closedShares,
+    exitPrice:    t.exitPrice,
+    ecn:          0,
+    commission:   t.commission,
+    notes_keep:   'יובא מאינטראקטיב ישראל',
+    notes_improve: '',
+  };
+
+  const btn = document.getElementById(`tlg-btn-${idx}`);
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+
+  _sb.from('trades').insert(_tradeToRow(trade)).select().single().then(({ data, error }) => {
+    if (error) {
+      if (btn) { btn.disabled = false; btn.textContent = '+ ייבא'; }
+      toast('שגיאה בשמירה: ' + error.message, 'error');
+      return;
+    }
+    arr.unshift(_rowToTrade(data));
+    if (btn) btn.textContent = '✓ נוסף';
+    toast(`${t.symbol} נוסף ל${type === 'crypto' ? 'קריפטו' : 'מניות'}`, 'success');
+    auditLog('trade_added', t.symbol + ' (TLG import)');
+    renderTable(type);
+    renderOverview();
+    initFilters();
+  });
+}
+// ────────────────────────────────────────────────────────────────
+
+// ══════════════════════════════════════════════
+// TRADE SCREENSHOTS — IndexedDB
+// ══════════════════════════════════════════════
+const DB_NAME = 'trading-journal-media';
+const DB_VERSION = 1;
+let mediaDB = null;
+let currentSSKey = '';
+let currentSSSymbol = '';
+
+function initMediaDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => {
+      const db2 = e.target.result;
+      if (!db2.objectStoreNames.contains('screenshots')) {
+        db2.createObjectStore('screenshots', { keyPath: 'key' });
+      }
+    };
+    req.onsuccess = e => { mediaDB = e.target.result; resolve(); };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function saveScreenshot(key, dataObj) {
+  if (!mediaDB) return;
+  return new Promise((resolve, reject) => {
+    const tx = mediaDB.transaction('screenshots', 'readwrite');
+    tx.objectStore('screenshots').put(dataObj);
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function getScreenshots(tradeKey) {
+  if (!mediaDB) return [];
+  return new Promise((resolve, reject) => {
+    const tx = mediaDB.transaction('screenshots', 'readonly');
+    const store = tx.objectStore('screenshots');
+    const results = [];
+    const req = store.openCursor();
+    req.onsuccess = e => {
+      const cursor = e.target.result;
+      if (cursor) {
+        if (cursor.value.tradeKey === tradeKey) results.push(cursor.value);
+        cursor.continue();
+      } else {
+        resolve(results.sort((a,b) => (a.timestamp||0)-(b.timestamp||0)));
+      }
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function getScreenshotCount(tradeKey) {
+  if (!mediaDB) return 0;
+  const shots = await getScreenshots(tradeKey);
+  return shots.length;
+}
+
+async function deleteScreenshot(key) {
+  if (!mediaDB) return;
+  return new Promise((resolve, reject) => {
+    const tx = mediaDB.transaction('screenshots', 'readwrite');
+    tx.objectStore('screenshots').delete(key);
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function refreshScreenshotCount(tradeKey) {
+  if (!mediaDB) return;
+  const count = await getScreenshotCount(tradeKey);
+  const badge = document.getElementById('ss-count-' + tradeKey);
+  if (badge) {
+    if (count > 0) {
+      badge.textContent = count;
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+}
+
+async function compressImage(file) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const MAX = 1200;
+      let w = img.width, h = img.height;
+      if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/jpeg', 0.80));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+
+function dataURLBytes(dataURL) {
+  // Estimate byte size from base64 string
+  const base64 = dataURL.split(',')[1] || '';
+  return Math.round(base64.length * 0.75);
+}
+
+function fmtBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(2) + ' MB';
+}
+
+// Open Screenshot Modal
+async function openSSModal(tradeKey, symbol) {
+  currentSSKey = tradeKey;
+  currentSSSymbol = symbol;
+  const title = document.getElementById('ss-modal-title');
+  if (title) title.textContent = 'צילומי מסך — ' + symbol;
+  document.getElementById('ss-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  await renderSSGrid();
+}
+
+function closeSSModal() {
+  document.getElementById('ss-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  currentSSKey = '';
+}
+
+function onSSOverlayClick(e) {
+  if (e.target === document.getElementById('ss-modal')) closeSSModal();
+}
+
+async function renderSSGrid() {
+  const grid = document.getElementById('ss-grid');
+  if (!grid) return;
+  const shots = await getScreenshots(currentSSKey);
+  if (!shots.length) {
+    grid.innerHTML = '<div class="ss-empty">📷<br>אין צילומי מסך עדיין</div>';
+    return;
+  }
+  grid.innerHTML = '';
+  shots.forEach(shot => {
+    const wrap = document.createElement('div');
+    wrap.className = 'ss-thumb-wrap';
+    const img = document.createElement('img');
+    img.src = shot.dataURL;
+    img.alt = 'screenshot';
+    img.onclick = () => openLightbox(shot.dataURL);
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'ss-thumb-del';
+    delBtn.title = 'מחק';
+    delBtn.textContent = '✕';
+    delBtn.onclick = async (e) => {
+      e.stopPropagation();
+      await deleteScreenshot(shot.key);
+      await renderSSGrid();
+      await refreshScreenshotCount(currentSSKey);
+    };
+
+    const info = document.createElement('div');
+    info.className = 'ss-thumb-info';
+    const bytes = dataURLBytes(shot.dataURL);
+    const date = shot.timestamp ? new Date(shot.timestamp).toLocaleDateString('he-IL') : '';
+    info.textContent = fmtBytes(bytes) + (date ? ' · ' + date : '');
+
+    wrap.appendChild(img);
+    wrap.appendChild(delBtn);
+    wrap.appendChild(info);
+    grid.appendChild(wrap);
+  });
+}
+
+// Drag and drop
+function ssDragOver(e) {
+  e.preventDefault();
+  document.getElementById('ss-drop-zone').classList.add('drag-over');
+}
+function ssDragLeave() {
+  document.getElementById('ss-drop-zone').classList.remove('drag-over');
+}
+async function ssDrop(e) {
+  e.preventDefault();
+  document.getElementById('ss-drop-zone').classList.remove('drag-over');
+  const files = [...(e.dataTransfer.files||[])].filter(f => f.type.startsWith('image/'));
+  await ssUploadFiles(files);
+}
+
+async function ssFileSelected(e) {
+  const files = [...(e.target.files||[])];
+  e.target.value = '';
+  await ssUploadFiles(files);
+}
+
+async function ssUploadFiles(files) {
+  if (!files.length) return;
+  if (!currentSSKey) { toast('שגיאה: לא נבחרה עסקה', 'error'); return; }
+  for (const file of files) {
+    const dataURL = await compressImage(file);
+    if (!dataURL) { toast('שגיאה בטעינת ' + file.name, 'error'); continue; }
+    const key = currentSSKey + '-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+    await saveScreenshot(key, { key, tradeKey: currentSSKey, dataURL, timestamp: Date.now(), name: file.name });
+    toast('תמונה נשמרה', 'success');
+  }
+  await renderSSGrid();
+  await refreshScreenshotCount(currentSSKey);
+}
+
+async function ssCaptureScreen() {
+  if (!currentSSKey) { toast('שגיאה: לא נבחרה עסקה', 'error'); return; }
+  try {
+    const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+    const track = stream.getVideoTracks()[0];
+    const imageCapture = new ImageCapture(track);
+    const bitmap = await imageCapture.grabFrame();
+    track.stop();
+    stream.getTracks().forEach(t => t.stop());
+    const canvas = document.createElement('canvas');
+    canvas.width = bitmap.width; canvas.height = bitmap.height;
+    canvas.getContext('2d').drawImage(bitmap, 0, 0);
+    const dataURL = canvas.toDataURL('image/jpeg', 0.80);
+    const key = currentSSKey + '-' + Date.now();
+    await saveScreenshot(key, { key, tradeKey: currentSSKey, dataURL, timestamp: Date.now(), name: 'screen-capture' });
+    await renderSSGrid();
+    await refreshScreenshotCount(currentSSKey);
+    toast('צילום מסך נשמר', 'success');
+  } catch(e) {
+    toast('לא ניתן לצלם מסך: ' + e.message, 'error');
+  }
+}
+
+// Lightbox
+function openLightbox(src) {
+  document.getElementById('ss-lightbox-img').src = src;
+  document.getElementById('ss-lightbox').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('ss-lightbox').classList.remove('open');
+  document.getElementById('ss-lightbox-img').src = '';
+}
+
+// ══════════════════════════════════════════════
+// FEATURE 1 — PRIVACY MODE
+// ══════════════════════════════════════════════
+let privacyMode = localStorage.getItem('tj-privacy') === '1';
+function applyPrivacy() {
+  document.body.classList.toggle('privacy-on', privacyMode);
+  const btn = document.getElementById('privacy-btn');
+  if (btn) btn.innerHTML = privacyMode
+    ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
+    : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+}
+function togglePrivacy() {
+  privacyMode = !privacyMode;
+  localStorage.setItem('tj-privacy', privacyMode ? '1' : '0');
+  applyPrivacy();
+  auditLog(privacyMode ? 'privacy_on' : 'privacy_off');
+}
+
+// ══════════════════════════════════════════════
+// FEATURE 2 — PIN RATE LIMITING + BOT PROTECTION
+// ══════════════════════════════════════════════
+const PIN_ATTEMPTS_KEY = 'tj-pin-attempts';
+const PIN_LOCKOUT_KEY  = 'tj-pin-lockout';
+const MAX_ATTEMPTS = 5;
+// Exponential backoff: after 5 fails → 5min, after 10 → 30min, after 15 → 2hr
+function getLockoutDuration(attempts) {
+  if (attempts >= 15) return 2 * 60 * 60 * 1000;   // 2 hours
+  if (attempts >= 10) return 30 * 60 * 1000;         // 30 minutes
+  return 5 * 60 * 1000;                              // 5 minutes
+}
+// Anti-bot: enforce minimum delay between PIN attempts (human can't press < 300ms)
+let _lastPinAttempt = 0;
+const MIN_ATTEMPT_INTERVAL_MS = 300;
+
+function getPinAttempts() { return parseInt(localStorage.getItem(PIN_ATTEMPTS_KEY) || '0'); }
+function setPinAttempts(n) { localStorage.setItem(PIN_ATTEMPTS_KEY, String(n)); }
+function isLockedOut() {
+  const until = parseInt(localStorage.getItem(PIN_LOCKOUT_KEY) || '0');
+  return Date.now() < until;
+}
+function getLockoutRemaining() {
+  const until = parseInt(localStorage.getItem(PIN_LOCKOUT_KEY) || '0');
+  return Math.max(0, Math.ceil((until - Date.now()) / 1000));
+}
+
+let lockoutCountdownTimer = null;
+
+function showLockoutMsg() {
+  const msg = document.getElementById('pin-lockout-msg');
+  const cd  = document.getElementById('pin-lockout-cd');
+  if (!msg || !cd) return;
+  msg.style.display = 'block';
+  // Disable all pin keys
+  document.querySelectorAll('.pin-key').forEach(k => k.disabled = true);
+  if (lockoutCountdownTimer) clearInterval(lockoutCountdownTimer);
+  function update() {
+    const rem = getLockoutRemaining();
+    if (rem <= 0) {
+      clearInterval(lockoutCountdownTimer);
+      lockoutCountdownTimer = null;
+      msg.style.display = 'none';
+      document.querySelectorAll('.pin-key').forEach(k => k.disabled = false);
+      pinMsg('');
+      return;
+    }
+    const m = Math.floor(rem / 60);
+    const s = rem % 60;
+    cd.textContent = m > 0 ? `${m}:${String(s).padStart(2,'0')} דקות` : `${s} שניות`;
+  }
+  update();
+  lockoutCountdownTimer = setInterval(update, 1000);
+}
+
+// ══════════════════════════════════════════════
+// FEATURE 3 — AUDIT LOG
+// ══════════════════════════════════════════════
+const AUDIT_KEY = 'tj-audit';
+
+// Dual hash-chain audit log
+// h  = FNV-32  — sync, written immediately, provides instant tamper detection
+// sh = SHA-256 — async, written after, provides cryptographic non-repudiation
+// Any modification of a past record breaks both chains (detectable on verify)
+function auditLog(action, details = '') {
+  const logs = JSON.parse(localStorage.getItem(AUDIT_KEY) || '[]');
+  const prevFnv = logs.length ? (logs[0].h  || '0000000000000000') : '0000000000000000';
+  const prevSha = logs.length ? (logs[0].sh || '0'.repeat(64))     : '0'.repeat(64);
+  const entry = { ts: Date.now(), action, details: String(details).slice(0, 200) };
+
+  // FNV-32 — synchronous, immediate
+  let h = 0x811c9dc5;
+  for (const c of (prevFnv + entry.ts + entry.action + entry.details)) {
+    h ^= c.charCodeAt(0); h = (h * 0x01000193) >>> 0;
+  }
+  entry.h = h.toString(16).padStart(8, '0');
+
+  logs.unshift(entry);
+  if (logs.length > 500) logs.length = 500;
+  localStorage.setItem(AUDIT_KEY, JSON.stringify(logs));
+
+  // SHA-256 — async, non-blocking enhancement
+  const payload = prevSha + String(entry.ts) + entry.action + entry.details;
+  crypto.subtle.digest('SHA-256', new TextEncoder().encode(payload))
+    .then(buf => {
+      const sh = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+      const fresh = JSON.parse(localStorage.getItem(AUDIT_KEY) || '[]');
+      if (fresh.length && fresh[0].ts === entry.ts && fresh[0].action === action) {
+        fresh[0].sh = sh;
+        localStorage.setItem(AUDIT_KEY, JSON.stringify(fresh));
+      }
+    })
+    .catch(() => {});
+}
+
+// SHA-256 chain verification (async — call separately for deep audit)
+
+function fmtAuditTs(ts) {
+  const d = new Date(ts);
+  const pad = n => String(n).padStart(2,'0');
+  return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(d.getFullYear()).slice(2)} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+const ACTION_LABELS = {
+  pin_unlocked: 'PIN — כניסה',
+  pin_failed:   'PIN — נכשל',
+  pin_lockout:  'PIN — נעילה',
+  trade_added:  'עסקה נוספה',
+  trade_edited: 'עסקה עודכנה',
+  trade_deleted:'עסקה נמחקה',
+  privacy_on:   'פרטיות הופעלה',
+  privacy_off:  'פרטיות כובה',
+  export_csv:   'יוצא CSV',
+  ibkr_connected: 'IBKR חובר',
+  ibkr_import:  'IBKR ייבוא'
+};
+
+// ══════════════════════════════════════════════
+// FEATURE 4 — SOFT DELETE / RECYCLE BIN
+// ══════════════════════════════════════════════
+
+// ─────────────────────────────────────────────
+// REAL-TIME MARKET DATA (Yahoo Finance)
+// ─────────────────────────────────────────────
+const RT_CACHE    = {};   // symbol → { price, name, currency, ts }
+const RT_DEBOUNCE = {};   // inputId → timeoutId
+const RT_TTL      = 5 * 60 * 1000; // 5 min cache
+
+// Normalize symbol for Yahoo Finance
+// Crypto: BTC → BTC-USD, ETH → ETH-USD (unless already has hyphen pair)
+function rtYahooSym(raw, isCrypto) {
+  const s = raw.toUpperCase().trim();
+  if (!s) return '';
+  if (isCrypto) {
+    if (s.includes('-')) return s;          // already BTC-USD style
+    if (s.endsWith('USDT')) return s.slice(0, -4) + '-USD';
+    if (s.endsWith('USD'))  return s.slice(0, -3) + '-USD';
+    return s + '-USD';
+  }
+  return s;
+}
+
+// Validate symbol against loaded symbol lists (no API call needed)
+async function rtFetchQuote(yahooSym) {
+  if (!yahooSym) return null;
+  const cached = RT_CACHE[yahooSym];
+  if (cached && Date.now() - cached.ts < RT_TTL) return cached;
+
+  const s = yahooSym.toUpperCase().trim();
+
+  // Check crypto symbols (BTC-USD → BTC)
+  const cryptoBase = s.includes('-') ? s.split('-')[0] : s.replace(/USDT?$/, '');
+  const isCryptoSym = CRYPTO_SYMBOLS.has(cryptoBase) || CRYPTO_SYMBOLS.has(s);
+
+  // Check stock symbols
+  const stockBase = s.split(':')[0];
+  const isStockSym = STOCK_SYMBOLS.has(stockBase) || STOCK_SYMBOLS.has(s);
+
+  if (isCryptoSym || isStockSym) {
+    const entry = { symbol: s, price: 0, name: s, currency: 'USD', ts: Date.now() };
+    RT_CACHE[yahooSym] = entry;
+    return entry;
+  }
+
+  return null;
+}
+
+// Validate symbol input with 700ms debounce + visual feedback
+// isCryptoCheckId: id of crypto checkbox element (or null), isCryptoOverride: boolean override
+function rtValidate(inputId, statusId, isCryptoCheckId, isCryptoOverride) {
+  clearTimeout(RT_DEBOUNCE[inputId]);
+  const inp = document.getElementById(inputId);
+  const st  = document.getElementById(statusId);
+  if (!inp || !st) return;
+  const raw = inp.value.trim();
+  if (!raw) { st.textContent = ''; st.className = 'sym-status'; inp.dataset.symValid = ''; return; }
+
+  st.textContent = '⏳ מאמת...';
+  st.className = 'sym-status loading';
+
+  RT_DEBOUNCE[inputId] = setTimeout(async () => {
+    const isCrypto = isCryptoOverride !== undefined
+      ? isCryptoOverride
+      : (isCryptoCheckId ? (document.getElementById(isCryptoCheckId)?.checked || false) : false);
+    const ySym = rtYahooSym(raw, isCrypto);
+    const q = await rtFetchQuote(ySym);
+    if (!q) {
+      st.innerHTML = '✗ סימבול לא נמצא';
+      st.className = 'sym-status invalid';
+      inp.dataset.symValid = '0';
+    } else {
+      st.innerHTML = `✓ סימבול מזוהה`;
+      st.className = 'sym-status valid';
+      inp.dataset.symValid = '1';
+      inp.dataset.symPrice = q.price;
+    }
+  }, 700);
+}
+
+// ─────────────────────────────────────────────
+// SYMBOL AUTOCOMPLETE
+// ─────────────────────────────────────────────
+let _symAcIdx = -1;
+
+function symAcShow(inputId, dropId) {
+  const inp = document.getElementById(inputId);
+  const drop = document.getElementById(dropId);
+  if (!inp || !drop) return;
+  const q = inp.value.trim().toUpperCase();
+  if (!q || q.length < 1) { drop.style.display = 'none'; return; }
+
+  // Gather matches: stocks first, then crypto
+  const stockMatches = [...STOCK_SYMBOLS].filter(s => s.startsWith(q)).slice(0, 8);
+  const cryptoMatches = [...CRYPTO_SYMBOLS].filter(s => s.startsWith(q) && !stockMatches.includes(s)).slice(0, 4);
+  const all = [
+    ...stockMatches.map(s => ({ s, type: 'מניה' })),
+    ...cryptoMatches.map(s => ({ s, type: 'קריפטו' }))
+  ];
+
+  if (!all.length) { drop.style.display = 'none'; return; }
+
+  drop.innerHTML = all.map((item, i) =>
+    `<div class="sym-ac-item" data-sym="${item.s}" onmousedown="symAcPick('${inputId}','${dropId}','${item.s}')">${item.s}<span class="sym-ac-tag">${item.type}</span></div>`
+  ).join('');
+  drop.style.display = 'block';
+  _symAcIdx = -1;
+}
+
+function symAcPick(inputId, dropId, sym) {
+  const inp = document.getElementById(inputId);
+  const drop = document.getElementById(dropId);
+  if (inp) { inp.value = sym; inp.dispatchEvent(new Event('input')); }
+  if (drop) drop.style.display = 'none';
+}
+
+function symAcKey(e, inputId, dropId) {
+  const drop = document.getElementById(dropId);
+  if (!drop || drop.style.display === 'none') return;
+  const items = drop.querySelectorAll('.sym-ac-item');
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    _symAcIdx = Math.min(_symAcIdx + 1, items.length - 1);
+    items.forEach((el, i) => el.classList.toggle('active', i === _symAcIdx));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    _symAcIdx = Math.max(_symAcIdx - 1, 0);
+    items.forEach((el, i) => el.classList.toggle('active', i === _symAcIdx));
+  } else if (e.key === 'Enter' && _symAcIdx >= 0) {
+    e.preventDefault();
+    const sym = items[_symAcIdx]?.dataset?.sym;
+    if (sym) symAcPick(inputId, dropId, sym);
+  } else if (e.key === 'Escape') {
+    drop.style.display = 'none';
+  }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', e => {
+  document.querySelectorAll('.sym-ac-drop').forEach(d => {
+    if (!d.parentElement?.contains(e.target)) d.style.display = 'none';
+  });
+});
+
+// Auto-fill the price input that's in the same widget as the symbol input
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+
+// ══════════════════════════════════════════════
+// FLEX WEB SERVICE — IBKR סנכרון אוטומטי
+// ══════════════════════════════════════════════
+const FLEX_TOKEN_KEY = 'flex-token';
+const FLEX_QID_KEY   = 'flex-query-id';
+
+function toggleReveal(id, btn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const hide = el.type === 'password';
+  el.type = hide ? 'text' : 'password';
+  btn.querySelector('svg').innerHTML = hide
+    ? '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>'
+    : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+}
+
+// Broker connection badge — reflects the REAL last-sync outcome, not just
+// "credentials saved". States: ok (verified), pending (saved, not yet synced),
+// error (a real connection/auth failure), none (no credentials → hidden).
+// The Overview KPIs re-render with fresh numbers whenever a background broker
+// sync (_autoFlexSync/_autoBybitSync) finishes right after login — correct
+// behavior, but with no visual cue it reads as the page unexpectedly
+// "jumping". This funnels through _setBrokerBadge (the one place both sync
+// paths already report their state) rather than adding a second tracking
+// mechanism.
+const _syncingBrokers = new Set();
+function _updateOverviewSyncPill(broker, state) {
+  if (state === 'syncing') _syncingBrokers.add(broker); else _syncingBrokers.delete(broker);
+  const pill = document.getElementById('overview-sync-pill');
+  if (pill) pill.style.display = _syncingBrokers.size ? 'inline-flex' : 'none';
+}
+
+function _setBrokerBadge(broker, state) {
+  _updateOverviewSyncPill(broker, state);
+  const el = document.getElementById(broker + '-conn-dot');
+  if (!el) return;
+  // 'syncing' is a transient live state — never persist it.
+  if (_currentUser && state !== 'none' && state !== 'syncing') localStorage.setItem(broker + '_conn_' + _currentUser.id, state);
+  const map = {
+    ok:      { t: 'מחובר',        bg: 'rgba(63,185,80,0.15)',  fg: '#0d9488', bd: 'rgba(63,185,80,0.3)' },
+    syncing: { t: 'מסנכרן…',      bg: 'rgba(79,131,255,0.15)', fg: '#4f83ff', bd: 'rgba(79,131,255,0.35)' },
+    pending: { t: 'ממתין לסנכרון', bg: 'rgba(210,153,34,0.15)', fg: '#d29922', bd: 'rgba(210,153,34,0.3)' },
+    error:   { t: 'בעיית חיבור',   bg: 'rgba(248,81,73,0.15)',  fg: '#e11d48', bd: 'rgba(248,81,73,0.3)' },
+  };
+  const m = map[state];
+  // Mirror IBKR (primary broker) status onto the always-visible header dot.
+  if (broker === 'ibkr') {
+    const hd = document.getElementById('header-broker-dot');
+    if (hd) {
+      if (!m) hd.style.display = 'none';
+      else {
+        hd.style.background = m.fg; hd.style.display = 'inline-block';
+        // A color-only dot has no accessible name — pair it with the same
+        // label the settings-page badge shows, not just its color.
+        hd.title = 'IBKR: ' + m.t;
+        hd.setAttribute('aria-label', 'IBKR: ' + m.t);
+      }
+    }
+  }
+  if (!m) { el.style.display = 'none'; el.classList.remove('broker-badge-syncing'); return; }
+  el.textContent = m.t;
+  el.style.background = m.bg;
+  el.style.color = m.fg;
+  el.style.borderColor = m.bd;
+  el.style.display = 'inline-block';
+  el.classList.toggle('broker-badge-syncing', state === 'syncing');
+}
+
+function _brokerBadgeFromStore(broker, hasCreds) {
+  if (!hasCreds) { _setBrokerBadge(broker, 'none'); return; }
+  const stored = _currentUser ? localStorage.getItem(broker + '_conn_' + _currentUser.id) : null;
+  _setBrokerBadge(broker, stored || 'pending');
+}
+
+function flexInit() {
+  const hasToken = !!_userSettings.flex_token;
+  const statusEl = document.getElementById('flex-status');
+  if (statusEl && hasToken) flexSetStatus('פרטי IBKR שמורים ✓', 'var(--green)');
+  _brokerBadgeFromStore('ibkr', hasToken);
+}
+
+function toggleFlexAdvanced() {
+  const adv = document.getElementById('flex-advanced');
+  if (adv) adv.style.display = adv.style.display === 'none' ? 'block' : 'none';
+}
+
+function _setAvatar(url) {
+  ['nav-avatar-img','avatar-preview-img','header-avatar-img'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (url) { el.src = url; el.style.display = 'block'; }
+    else { el.src = ''; el.style.display = 'none'; }
+  });
+  ['nav-avatar-placeholder','avatar-preview-placeholder','header-avatar-placeholder'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = url ? 'none' : '';
+  });
+  const hav = document.getElementById('header-avatar');
+  if (hav) hav.style.borderColor = url ? 'rgba(129,140,248,0.5)' : 'rgba(129,140,248,0.25)';
+}
+
+async function settingsChangePassword() {
+  const pw  = document.getElementById('pw-new')?.value?.trim();
+  const pw2 = document.getElementById('pw-confirm')?.value?.trim();
+  const st  = document.getElementById('pw-change-status');
+  if (!pw) { st.textContent = 'Enter a new password.'; st.style.color = 'var(--red)'; return; }
+  if (pw !== pw2) { st.textContent = 'Passwords do not match.'; st.style.color = 'var(--red)'; return; }
+  if (pw.length < 6) { st.textContent = 'Minimum 6 characters.'; st.style.color = 'var(--red)'; return; }
+  st.textContent = 'Saving…'; st.style.color = 'var(--text3)';
+  const { error } = await _sb.auth.updateUser({ password: pw });
+  if (error) { st.textContent = error.message; st.style.color = 'var(--red)'; return; }
+  st.textContent = 'Password updated.'; st.style.color = 'var(--green)';
+  document.getElementById('pw-new').value = '';
+  document.getElementById('pw-confirm').value = '';
+  setTimeout(() => { st.textContent = ''; }, 3000);
+}
+
+function toggleExpand(bodyId, rowId) {
+  const body = document.getElementById(bodyId);
+  const row  = document.getElementById(rowId);
+  if (!body || !row) return;
+  const isOpen = body.classList.toggle('open');
+  row.classList.toggle('open', isOpen);
+  row.setAttribute('aria-expanded', String(isOpen));
+}
+
+async function flexSave() {
+  const t = document.getElementById('flex-token')?.value.trim();
+  const q = document.getElementById('flex-query-id')?.value.trim();
+  const qc = document.getElementById('flex-confirm-query-id')?.value.trim();
+  if (!t || !q) { toast('נא להזין Token ו-Query ID', 'error'); return; }
+  if (!/^[a-zA-Z0-9]{6,64}$/.test(t)) { toast('Token לא תקין — מספרים ואותיות בלבד, לפחות 6 תווים', 'error'); return; }
+  if (!/^\d{4,15}$/.test(q)) { toast('Query ID לא תקין — מספרים בלבד (לדוגמה: 1462900)', 'error'); return; }
+  if (qc && !/^\d{4,15}$/.test(qc)) { toast('Confirm Query ID לא תקין — מספרים בלבד', 'error'); return; }
+  const { error: _secErr } = await _sb.rpc('set_broker_secret', { p_field: 'flex_token', p_value: t });
+  if (_secErr) { toast('שמירת הטוקן נכשלה: ' + _secErr.message, 'error'); return; }
+  if (!await _saveUserSettings({ flex_query_id: q, flex_confirm_query_id: qc || null })) return;
+  _userSettings.flex_token = true;
+  const _ft = document.getElementById('flex-token');
+  if (_ft) { _ft.value = ''; _ft.placeholder = 'טוקן שמור ✓'; }
+  toast('פרטי IBKR נשמרו ✓', 'success');
+  flexSetStatus('פרטים נשמרו — יסונכרן אוטומטית', 'var(--text2)');
+  _setBrokerBadge('ibkr', 'pending');
+}
+
+function flexSetStatus(msg, color) {
+  const el = document.getElementById('flex-status');
+  if (el) { el.textContent = msg; el.style.color = color || 'var(--text3)'; }
+}
+
+async function flexSync() {
+  const jwt = await _getToken();
+  if (!jwt) { toast('נא להתחבר תחילה', 'error'); return; }
+
+  const btn = document.getElementById('flex-sync-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ מסנכרן...'; }
+  _setBrokerBadge('ibkr', 'syncing');
+  flexSetStatus('מסנכרן עם IBKR...', 'var(--text2)');
+
+  try {
+    // Prefer the server pre-fetched statement — instant, no 1001.
+    if (await _flexImportFromCache(true)) return;
+    const trades = await _flexFetch(jwt);
+    _flexMarkSync(true);
+    _setBrokerBadge('ibkr', 'ok');
+    const { imported, updated } = await _flexImport(trades);
+    if (imported > 0 || updated > 0) {
+      const msg = [imported ? `${imported} נוספו` : '', updated ? `${updated} עודכנו` : ''].filter(Boolean).join(' | ');
+      flexSetStatus(`✓ ${msg}`, 'var(--green)');
+      toast(`✓ IBKR: ${msg}`, 'success');
+    } else {
+      flexSetStatus('✓ סונכרן — אין עסקאות חדשות', 'var(--text3)');
+    }
+  } catch(e) {
+    // Record the failure so the background backoff extends too.
+    _flexMarkSync(false);
+    if (e.busy) {
+      // IBKR temporarily busy — calm note, still connected; restore last state.
+      _brokerBadgeFromStore('ibkr', true);
+      flexSetStatus('IBKR עמוס כרגע — ננסה אוטומטית בקרוב 🕐  (אם זה חוזר: ודא שה‑Query על "Last 365 Calendar Days")', 'var(--text2)');
+    } else {
+      _setBrokerBadge('ibkr', 'error');
+      flexSetStatus('שגיאה: ' + e.message, 'var(--red)');
+      toast('סנכרון נכשל: ' + e.message, 'error');
+    }
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'סנכרן'; }
+  }
+}
+
+function flexExtractTag(xml, tag) {
+  const m = xml.match(new RegExp(`<${tag}>([^<]*)</${tag}>`));
+  return m ? m[1].trim() : '';
+}
+
+// Init on tab open — pre-fill saved credentials
+document.addEventListener('DOMContentLoaded', flexInit);
+
+// ══════════════════════════════════════════════
+// BYBIT SYNC
+// ══════════════════════════════════════════════
+
+function bybitInit() {
+  const hasKey = !!_userSettings.bybit_api_key;
+  if (hasKey) bybitSetStatus('פרטי Bybit שמורים ✓', 'var(--green)');
+  _brokerBadgeFromStore('bybit', hasKey);
+}
+
+function bybitSetStatus(msg, color) {
+  const el = document.getElementById('bybit-status');
+  if (el) { el.textContent = msg; el.style.color = color || 'var(--text3)'; }
+}
+
+async function bybitSave() {
+  const k = document.getElementById('bybit-api-key')?.value.trim();
+  const s = document.getElementById('bybit-api-secret')?.value.trim();
+  if (!k || !s) { toast('נא להזין API Key ו-Secret', 'error'); return; }
+  const r1 = await _sb.rpc('set_broker_secret', { p_field: 'bybit_api_key',    p_value: k });
+  const r2 = await _sb.rpc('set_broker_secret', { p_field: 'bybit_api_secret', p_value: s });
+  if (r1.error || r2.error) { toast('שמירת פרטי Bybit נכשלה: ' + (r1.error || r2.error).message, 'error'); return; }
+  _userSettings.bybit_api_key = true; _userSettings.bybit_api_secret = true;
+  const _bk = document.getElementById('bybit-api-key');
+  if (_bk) { _bk.value = ''; _bk.placeholder = 'מפתח שמור ✓'; }
+  const _bs = document.getElementById('bybit-api-secret');
+  if (_bs) { _bs.value = ''; _bs.placeholder = 'סוד שמור ✓'; }
+  toast('פרטי Bybit נשמרו ✓', 'success');
+  bybitSetStatus('פרטים נשמרו — יסונכרן אוטומטית', 'var(--text2)');
+  _setBrokerBadge('bybit', 'pending');
+}
+
+async function bybitSync() {
+  const jwt = await _getToken();
+  if (!jwt) { toast('נא להתחבר תחילה', 'error'); return; }
+  const btn = document.getElementById('bybit-sync-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ מסנכרן...'; }
+  _setBrokerBadge('bybit', 'syncing');
+  bybitSetStatus('מסנכרן עם Bybit...', 'var(--text2)');
+  document.getElementById('bybit-preview').innerHTML = '';
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/bybit`, {
+      headers: { Authorization: `Bearer ${jwt}` }
+    });
+    const json = await res.json();
+    if (!res.ok || json.error) throw new Error(json.error || 'שגיאה');
+    _setBrokerBadge('bybit', 'ok');
+    const trades = (json.trades || []).filter(t => !_isDeletedImport(t));
+    bybitSetStatus(`נמצאו ${trades.length} עסקאות`, 'var(--green)');
+    bybitRenderPreview(trades);
+  } catch(e) {
+    _setBrokerBadge('bybit', 'error');
+    bybitSetStatus('שגיאה: ' + e.message, 'var(--red)');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Sync'; }
+  }
+}
+
+function bybitRenderPreview(trades) {
+  const container = document.getElementById('bybit-preview');
+  if (!trades.length) {
+    container.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:10px 0;">לא נמצאו עסקאות סגורות</div>';
+    return;
+  }
+  const rows = trades.map((t, i) => {
+    const pnl = t.pnl >= 0 ? `+$${t.pnl.toFixed(2)}` : `-$${Math.abs(t.pnl).toFixed(2)}`;
+    const pnlColor = t.pnl >= 0 ? 'var(--green)' : 'var(--red)';
+    return `
+      <div class="ibkr-trade-preview">
+        <div>
+          <div class="sym">${esc(t.symbol)}</div>
+          <div class="det">${t.ls} · ${t.entryDate} → ${t.closeDate}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:12px;color:var(--text2);">${t.shares} @ ${t.entryPrice} → ${t.exitPrice}</div>
+          <div style="font-weight:700;color:${pnlColor}">${pnl}</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="bybit-btn-${i}" onclick="bybitImportOne(${i})" style="font-size:11px;padding:4px 10px;">Import</button>
+      </div>`;
+  }).join('');
+  container.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;margin-top:8px;">
+      <span style="font-size:12px;color:var(--text2);">${trades.length} עסקאות נמצאו</span>
+      <button class="btn btn-primary btn-sm" onclick="bybitImportAll()">Import All</button>
+    </div>` + rows;
+  window._bybitPendingTrades = trades;
+}
+
+async function bybitImportOne(idx) {
+  const t = window._bybitPendingTrades?.[idx];
+  if (!t) return;
+  const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
+  if (_isDeletedImport(t) || await _bybitExisting(t, fp)) {
+    toast(`${t.symbol} כבר קיים ביומן`, 'error');
+    return;
+  }
+  const btn = document.getElementById(`bybit-btn-${idx}`);
+  if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
+  const { data: inserted, error } = await _sb.from('trades').insert(_tradeToRow({ ...t, closedShares: t.shares, deleted: false })).select().single();
+  if (error) {
+    toast('שגיאה בשמירה: ' + error.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Import'; }
+    return;
+  }
+  db.crypto.unshift(_rowToTrade(inserted));
+  renderTable('crypto');
+  if (btn) { btn.textContent = '✓ Imported'; }
+  toast(`${t.symbol} יובא בהצלחה`, 'success');
+}
+
+async function bybitImportAll() {
+  const trades = window._bybitPendingTrades || [];
+  if (!trades.length) return;
+  let imported = 0, dupes = 0;
+  for (const t of trades) {
+    const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
+    if (_isDeletedImport(t)) { dupes++; continue; }
+    if (await _bybitExisting(t, fp)) { dupes++; continue; }
+    const { data, error } = await _sb.from('trades').insert(_tradeToRow({ ...t, closedShares: t.shares, deleted: false })).select().single();
+    if (!error) { db.crypto.unshift(_rowToTrade(data)); imported++; }
+  }
+  renderTable('crypto');
+  toast(`יובאו ${imported} עסקאות${dupes ? ` (${dupes} כפולות דולגו)` : ''}`, 'success');
+}
+
+// ══════════════════════════════════════════════
+// TOTP 2FA — RFC 6238 — גורם שני לאימות
+// ══════════════════════════════════════════════
+const TOTP_KEY         = 'tj-totp-secret';
+const TOTP_ENABLED_KEY = 'tj-totp-enabled';
+const B32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+
+function b32Encode(bytes) {
+  let bits = 0, val = 0, out = '';
+  for (const b of bytes) { val = (val<<8)|b; bits+=8; while(bits>=5){out+=B32[(val>>>(bits-5))&31];bits-=5;} }
+  if (bits>0) out+=B32[(val<<(5-bits))&31];
+  return out;
+}
+function b32Decode(s) {
+  s = s.replace(/=+$/,'').toUpperCase();
+  let bits=0,val=0; const out=[];
+  for(const c of s){const i=B32.indexOf(c);if(i<0)throw new Error('bad b32');val=(val<<5)|i;bits+=5;if(bits>=8){out.push((val>>>(bits-8))&255);bits-=8;}}
+  return new Uint8Array(out);
+}
+async function _totpCode(secret, ts=Date.now()) {
+  const ctr = Math.floor(ts/30000);
+  const key = await crypto.subtle.importKey('raw',b32Decode(secret),{name:'HMAC',hash:'SHA-1'},false,['sign']);
+  const buf = new ArrayBuffer(8);
+  new DataView(buf).setUint32(4,ctr>>>0,false);
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC',key,buf));
+  const off = sig[19]&0xf;
+  const num = ((sig[off]&0x7f)<<24)|((sig[off+1]&0xff)<<16)|((sig[off+2]&0xff)<<8)|(sig[off+3]&0xff);
+  return String(num%1000000).padStart(6,'0');
+}
+async function totpVerify(secret, code) {
+  const now = Date.now();
+  for(const d of[-1,0,1]) { if(await _totpCode(secret,now+d*30000)===code) return true; }
+  return false;
+}
+function totpEnabled() { return localStorage.getItem(TOTP_ENABLED_KEY)==='1'; }
+
+// TOTP overlay step (shown after PIN)
+let _totpPendingUnlock = false;
+async function totpStep() {
+  if (!totpEnabled()) { pinUnlock(); return; }
+  // #pin-totp-row and #totp-input were never added to the markup, so this threw
+  // inside the unlock timeout and pinUnlock() never ran: turning 2FA on locked
+  // the user out of their own journal with no code field to type into and no
+  // way back except clearing localStorage. Until the UI exists, a correct PIN
+  // unlocks and the user is told the second factor could not be shown.
+  const row = document.getElementById('pin-totp-row');
+  const input = document.getElementById('totp-input');
+  if (!row || !input) {
+    console.error('TOTP prompt markup missing — unlocking on PIN alone');
+    pinUnlock();
+    return;
+  }
+  _totpPendingUnlock = true;
+  document.getElementById('pin-sub-text').textContent = 'הכנס קוד 6 ספרות מה-Authenticator';
+  row.style.display = 'flex';
+  input.focus();
+}
+const TOTP_ATTEMPTS_KEY = 'tj-totp-attempts';
+const TOTP_LOCKOUT_KEY  = 'tj-totp-lockout';
+const TOTP_MAX_ATTEMPTS = 5;
+
+function getTotpAttempts() { return parseInt(localStorage.getItem(TOTP_ATTEMPTS_KEY)||'0'); }
+function setTotpAttempts(n) { localStorage.setItem(TOTP_ATTEMPTS_KEY, String(n)); }
+function isTotpLockedOut() {
+  const until = parseInt(localStorage.getItem(TOTP_LOCKOUT_KEY)||'0');
+  return Date.now() < until;
+}
+
+async function totpSubmit() {
+  if (!_totpPendingUnlock) return;
+  if (isTotpLockedOut()) { pinMsg('2FA נעול — נסה שוב עוד מספר דקות'); return; }
+  const code  = (document.getElementById('totp-input')?.value||'').trim();
+  const secret= await secLoad(TOTP_KEY);
+  if (!secret||code.length!==6) { pinMsg('קוד לא תקין'); return; }
+  if (await totpVerify(secret,code)) {
+    _totpPendingUnlock = false;
+    document.getElementById('pin-totp-row').style.display='none';
+    document.getElementById('totp-input').value='';
+    setPinAttempts(0);
+    setTotpAttempts(0);
+    localStorage.removeItem(TOTP_LOCKOUT_KEY);
+    auditLog('2fa_unlocked');
+    pinUnlock();
+  } else {
+    pinMsg('קוד שגוי — נסה שוב');
+    document.getElementById('totp-input').value='';
+    const a = getTotpAttempts() + 1; setTotpAttempts(a);
+    auditLog('2fa_failed');
+    if (a >= TOTP_MAX_ATTEMPTS) {
+      const ms = getLockoutDuration(a);
+      localStorage.setItem(TOTP_LOCKOUT_KEY, String(Date.now() + ms));
+      showLockoutMsg();
+    }
+  }
+}
+
+// TOTP setup — secret lives only in this closure, not on window
+let _totpSetupSecret = null;
+async function totpSetupInit() {
+  const bytes = crypto.getRandomValues(new Uint8Array(20));
+  const secret = b32Encode(bytes);
+  _totpSetupSecret = secret;
+  const uri = `otpauth://totp/Trading%20Journal%202.0?secret=${secret}&issuer=TradingJournal&algorithm=SHA1&digits=6&period=30`;
+  const div = document.getElementById('totp-setup-area');
+  if (!div) return;
+  div.style.display = 'block';
+  div.innerHTML = `
+    <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">
+      <strong>1.</strong> פתח את Google Authenticator / Authy<br>
+      <strong>2.</strong> לחץ "+" → "הכנס מפתח ידנית"<br>
+      <strong>3.</strong> הכנס את הסוד הבא:
+    </div>
+    <div style="font-family:monospace;font-size:14px;background:rgba(0,0,0,0.3);padding:10px;border-radius:var(--r-sm);letter-spacing:2px;color:var(--accent);word-break:break-all;margin-bottom:10px;">${secret}</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">
+      <a href="${esc(uri)}" style="color:var(--accent)">לחץ לפתיחה באפליקציה</a> &nbsp;|&nbsp; Algorithm: SHA1 · Digits: 6 · Period: 30s
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input id="totp-verify-input" class="form-control" type="text" inputmode="numeric" maxlength="6"
+        placeholder="קוד 6 ספרות לאימות" style="width:160px;font-size:14px;letter-spacing:3px;">
+      <button class="btn btn-primary btn-sm" onclick="totpSetupConfirm()">אמת והפעל</button>
+      <button class="btn btn-secondary btn-sm" onclick="totpSetupCancel()">ביטול</button>
+    </div>
+    <div id="totp-verify-msg" style="margin-top:6px;font-size:12px;color:var(--red);"></div>`;
+}
+async function totpSetupConfirm() {
+  const code   = (document.getElementById('totp-verify-input')?.value||'').trim();
+  const secret = _totpSetupSecret;
+  if (!secret) return;
+  if (await totpVerify(secret,code)) {
+    await secStore(TOTP_KEY,secret);
+    localStorage.setItem(TOTP_ENABLED_KEY,'1');
+    _totpSetupSecret=null;
+    document.getElementById('totp-setup-area').style.display='none';
+    document.getElementById('totp-status-text').textContent='🟢 פעיל';
+    document.getElementById('totp-toggle-btn').textContent='🔴 בטל 2FA';
+    auditLog('2fa_enabled');
+    toast('אימות דו-שלבי הופעל ✅','success');
+  } else {
+    document.getElementById('totp-verify-msg').textContent='קוד שגוי — נסה שוב';
+  }
+}
+function totpSetupCancel() {
+  _totpSetupSecret=null;
+  const d=document.getElementById('totp-setup-area'); if(d) d.style.display='none';
+}
+async function totpToggle() {
+  if(totpEnabled()){
+    if(!confirm(_lang==='he'?'לבטל אימות דו-שלבי? הגנת החשבון תפחת':'Disable two-factor authentication? This reduces account security.'))return;
+    localStorage.removeItem(TOTP_ENABLED_KEY);
+    localStorage.removeItem(TOTP_KEY);
+    document.getElementById('totp-status-text').textContent='🔴 כבוי';
+    document.getElementById('totp-toggle-btn').textContent='🟢 הפעל 2FA';
+    auditLog('2fa_disabled');
+    toast('2FA בוטל','warning');
+  } else {
+    if (!hasPIN()) {
+      toast('יש להגדיר קוד PIN לפני הפעלת 2FA — האבטחה תלויה ב-PIN', 'error');
+      return;
+    }
+    await totpSetupInit();
+  }
+}
+
+// ══════════════════════════════════════════════
+// SECURITY LAYER — הצפנת credentials + נעילה
+// ══════════════════════════════════════════════
+
+// ── AES-GCM encryption for sensitive localStorage values ──
+// Key = PBKDF2( pinHash + origin, salt, 100k rounds )
+// Without PIN: origin-only key (weaker but better than plaintext)
+// v2 used a hardcoded salt shared by every install — a precomputed rainbow
+// table against it would work for all users at once. v3 salts per-device
+// (random, generated once, stored locally) so each install must be attacked
+// individually. v2 entries are transparently decrypted with the legacy salt
+// and re-encrypted under v3 on next read.
+const SEC_SALT_LEGACY_V2 = new TextEncoder().encode('tj-credentials-v2');
+const SEC_SALT_KEY = 'tj-sec-salt-v3';
+function _secSaltV3() {
+  let stored = localStorage.getItem(SEC_SALT_KEY);
+  if (!stored) {
+    const bytes = crypto.getRandomValues(new Uint8Array(16));
+    stored = btoa(String.fromCharCode(...bytes));
+    localStorage.setItem(SEC_SALT_KEY, stored);
+  }
+  return Uint8Array.from(atob(stored), c => c.charCodeAt(0));
+}
+
+async function _secKey(salt) {
+  const pinHash = localStorage.getItem(PIN_KEY) || 'no-pin';
+  const raw = new TextEncoder().encode(pinHash + 'tj-local-app');
+  const km  = await crypto.subtle.importKey('raw', raw, 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+    km,
+    { name: 'AES-GCM', length: 256 },
+    false, ['encrypt','decrypt']
+  );
+}
+
+async function secStore(lsKey, value) {
+  if (!value) { localStorage.removeItem(lsKey); return; }
+  const key = await _secKey(_secSaltV3());
+  const iv  = crypto.getRandomValues(new Uint8Array(12));
+  const enc = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    new TextEncoder().encode(value)
+  );
+  localStorage.setItem(lsKey, JSON.stringify({
+    v: 3,
+    iv:   Array.from(iv),
+    data: Array.from(new Uint8Array(enc))
+  }));
+}
+
+async function secLoad(lsKey) {
+  const raw = localStorage.getItem(lsKey);
+  if (!raw) return '';
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed.v || parsed.v < 2) return ''; // plaintext remnant → ignore
+    const salt = parsed.v >= 3 ? _secSaltV3() : SEC_SALT_LEGACY_V2;
+    const key = await _secKey(salt);
+    const dec = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: new Uint8Array(parsed.iv) },
+      key,
+      new Uint8Array(parsed.data)
+    );
+    const value = new TextDecoder().decode(dec);
+    if (parsed.v < 3) await secStore(lsKey, value); // migrate to per-device salt
+    return value;
+  } catch(e) {
+    console.warn('[Security] Failed to decrypt credential:', lsKey);
+    localStorage.removeItem(lsKey); // wipe corrupted/unreadable data
+    return '';
+  }
+}
+
+// Re-encrypt credentials after PIN change (called from pinUnlock after setup)
+async function reEncryptCredentials() {
+  for (const key of [FLEX_TOKEN_KEY, FLEX_QID_KEY, FINNHUB_KEY_LS]) {
+    const val = await secLoad(key);
+    if (val) await secStore(key, val); // re-encrypt with new PIN-derived key
+  }
+}
+
+// ── Auto-lock when tab is hidden ──
+// If PIN is set: lock immediately when user switches away
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && hasPIN()) {
+    lockNow();
+  }
+});
+
+// An open Realtime WebSocket makes a page ineligible for Chrome's back/forward
+// cache. That is why switching to another browser tab and coming back discarded
+// and fully reloaded the app every single time — taking the embedded screener
+// iframe with it, so it looked like the screener was re-scanning from scratch.
+// Drop the socket while hidden so the page can be bfcached, and reconnect on
+// return. Reconnecting does NOT replay events missed while disconnected —
+// Supabase Realtime only resubscribes going forward — so a change made
+// elsewhere in the exact window this tab was backgrounded stays unseen until
+// the next real event or a manual reload. Accepted tradeoff: a background
+// refetch-on-return would close that gap but reintroduces the every-alt-tab
+// reload this file has twice been fixed to stop doing (see the commit
+// removing that from Missed Opportunities/Investments).
+let _rtResumeTimer = null;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    clearTimeout(_rtResumeTimer);
+    _teardownRealtimeSync();
+  } else if (_currentUser) {
+    clearTimeout(_rtResumeTimer);
+    // Reconnecting the socket is enough — its own postgres_changes handlers
+    // (reloadMissed / the investments listeners in _setupRealtimeSync) already
+    // catch up on anything that actually changed elsewhere. Forcing
+    // _missedLoaded/_invData to null and re-rendering unconditionally here,
+    // every single time the tab regained visibility, is what made Missed
+    // Opportunities and Investments visibly reload on every alt-tab back —
+    // trades never did this dance and never had the complaint.
+    _rtResumeTimer = setTimeout(() => { _setupRealtimeSync(); }, 150);
+  }
+});
+// Restored straight out of bfcache — no scripts re-run, so the socket closed on
+// hide has to be re-established explicitly.
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted && _currentUser) { _setupRealtimeSync(); }
+});
+
+// ── Clear all sensitive fields from DOM on lock ──
+// Prevents shoulder-surfing or form autofill leakage after unlock
+const _origLockNow = lockNow;
+lockNow = function() {
+  _origLockNow();
+  // Wipe token/key fields from DOM
+  ['flex-token','flex-query-id','flex-confirm-query-id','finnhub-key-input'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+};
+
+// ── Re-fill credentials only when IBKR tab is opened (after unlock) ──
+// (already handled by flexInit() + saveFinnhubKey() calling on tab switch)
+
+// ══════════════════════════════════════════════
+// SECURITY: No broker credentials stored in clear
+// ══════════════════════════════════════════════
+// Flex Token  → AES-GCM encrypted in localStorage (key derived from PIN+origin)
+// Finnhub key → AES-GCM encrypted in localStorage (key derived from PIN+origin)
+// PIN         → SHA-256 hashed with salt (never stored in clear)
+// Account ID  → never stored (only appears in API responses, used transiently)
+// Password    → never stored anywhere in this app
+// ── Security status renderer ──
+function renderSecurityStatus() {
+  const setDot = (id, ok) => {
+    const el = document.getElementById(id);
+    if (el) el.className = 'sec-dot' + (ok ? '' : ' warn');
+  };
+  setDot('sec-pin-dot', hasPIN());
+  setDot('sec-2fa-dot', totpEnabled());
+  const pinLbl = document.getElementById('sec-pin-lbl');
+  const he = _lang === 'he';
+  if (pinLbl) pinLbl.textContent = hasPIN() ? (he?'PIN — פעיל':'PIN — Active') : (he?'PIN — לא מוגדר':'PIN — Not set');
+  const pinBtn = document.getElementById('pin-setup-btn');
+  if (pinBtn) pinBtn.textContent = hasPIN() ? (he?'שנה / מחק':'Change / Remove') : (he?'הגדר PIN':'Set PIN');
+  const lbl2 = document.getElementById('sec-2fa-lbl');
+  if (lbl2) lbl2.textContent = totpEnabled() ? (he?'TOTP — פעיל':'TOTP — Active') : (he?'TOTP — לא פעיל':'TOTP — Inactive');
+  const tBtn = document.getElementById('totp-toggle-btn');
+  const tTxt = document.getElementById('totp-status-text');
+  if (tBtn && tTxt) {
+    if (totpEnabled()) {
+      tTxt.textContent = he?'פעיל':'Active';
+      tBtn.textContent = he?'בטל 2FA':'Disable 2FA';
+      tBtn.className = 'btn btn-danger btn-sm';
+    } else {
+      tTxt.textContent = he?'לא פעיל':'Inactive';
+      tBtn.textContent = he?'הפעל 2FA':'Enable 2FA';
+      tBtn.className = 'btn btn-primary btn-sm';
+    }
+  }
+}
+
+// ── PWA Service Worker ─────────────────────────────
+// ── Sidebar Toggle (handled by merged function below) ──
+// Close sidebar when a tab is clicked on mobile
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (window.innerWidth <= 768) toggleSidebar();
+    });
+  });
+  calcBreakeven();
+  // The portfolio total is restored by invInit from user_settings once the user
+  // is known. Prefilling it here from the legacy `inv_data_v1` key ran before
+  // sign-in and showed the previous user of this browser their predecessor's
+  // portfolio size.
+});
+
+// ── Theme System — Dynamic Stylesheet ──
+// Injected <style> always wins cascade (comes after all static CSS)
+function _buildLightCSS() {
+  return `
+    :root {
+      color-scheme: light;
+      --bg:#dde4ee; --bg2:#cdd6e2; --card:#f3f6fb; --card2:#eef2f8;
+      --border:rgba(14,14,18,0.08); --border2:rgba(14,14,18,0.13);
+      --text:#0f172a; --text2:#334155; --text3:#64748b;
+      --accent:#4f46e5; --accent2:#6366f1; --accent-glow:rgba(14,165,233,0.12);
+      --green:#0b8a7a; --green-bg:rgba(5,150,105,0.1);
+      --red:#e11d48; --red-bg:rgba(225,29,72,0.08);
+      --yellow:#b45309; --yellow-bg:rgba(180,83,9,0.08);
+      --sidebar-bg: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+      --sidebar-border: #dde3ed;
+    }
+    body { background:#dde4ee !important; color:#0f172a !important;
+      background-image: radial-gradient(ellipse 100% 50% at 50% -5%, rgba(14,165,233,0.05) 0%, transparent 60%) !important; }
+    header { background:#eef2f8 !important; border-bottom:1px solid #e2e8f0 !important;
+      box-shadow:0 1px 0 rgba(14,165,233,0.07),0 2px 12px rgba(0,0,0,0.06) !important; }
+    .header-title { color:#0f172a !important; }
+    .btn-secondary { background:#f1f5f9 !important; border:1px solid #cbd5e1 !important; color:#475569 !important; }
+    .btn-export    { background:#f1f5f9 !important; border:1px solid #cbd5e1 !important; color:#475569 !important; }
+    .inactivity-badge { background:#f1f5f9 !important; border-color:#cbd5e1 !important; color:var(--text3) !important; }
+
+    /* Sidebar — high specificity to override base dark rule */
+    html[data-theme="light"] .sidebar { background:linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%) !important; border-inline-end:1px solid #e2e8f0 !important; }
+    html[data-theme="light"] #main-sidebar > * { background:transparent !important; }
+    html[data-theme="light"] #main-sidebar .tab-btn { background:transparent !important; color:#475569 !important; }
+    @media (hover: hover) and (pointer: fine) { html[data-theme="light"] #main-sidebar .tab-btn:hover { background:rgba(14,165,233,0.08) !important; color:#0284c7 !important; } }
+    html[data-theme="light"] #main-sidebar .tab-btn.active { background:rgba(14,165,233,0.12) !important; color:#0284c7 !important; box-shadow:inset 0 0 0 1px rgba(14,165,233,0.2) !important; }
+    html[data-theme="light"] .sidebar-brand { border-bottom-color:#e2e8f0 !important; }
+    html[data-theme="light"] .sidebar-brand-name { color:#4f46e5 !important; }
+    html[data-theme="light"] .sidebar-brand-dot { background:#0ea5e9 !important; }
+    html[data-theme="light"] .sidebar-section-label { color:#64748b !important; }
+    html[data-theme="light"] .sidebar-footer { border-top-color:#e2e8f0 !important; background:transparent !important; }
+    html[data-theme="light"] .sidebar-footer-text { color:#64748b !important; }
+    html[data-theme="light"] .tab-btn { color:#475569 !important; }
+    @media (hover: hover) and (pointer: fine) { html[data-theme="light"] .tab-btn:hover { color:#0f172a !important; background:rgba(14,165,233,0.07) !important; } }
+    html[data-theme="light"] .tab-btn.active { background:rgba(14,165,233,0.12) !important; color:#0284c7 !important; box-shadow:inset 0 0 0 1px rgba(14,165,233,0.2) !important; }
+    html[data-theme="light"] .theme-toggle { background:#e9eef5 !important; border-color:#dde3ed !important; color:#64748b !important; }
+    html[data-theme="light"] .nav-icon svg { stroke:#64748b !important; }
+    html[data-theme="light"] .tab-btn.active .nav-icon svg { stroke:#0284c7 !important; }
+
+    /* Cards */
+    .kpi-card { background:#f3f6fb !important; border:1px solid #e2e8f0 !important; box-shadow:0 1px 6px rgba(0,0,0,0.06) !important; }
+    .kpi-card::before,.kpi-card::after { display:none !important; }
+    /* Colored top border removed (2026-08-26) — see the dark-mode note above. */
+    .kpi-label { color:#64748b !important; }
+    .kpi-value { color:#0f172a !important; }
+    .kpi-value.green { color:#0b8a7a !important; }
+    .kpi-value.red   { color:#e11d48 !important; }
+    .kpi-sub { color:#64748b !important; }
+    .kpi-trend.up   { color:#0b8a7a !important; background:rgba(5,150,105,0.1) !important; }
+    .kpi-trend.down { color:#e11d48 !important; background:rgba(225,29,72,0.08) !important; }
+    .kpi-trend.flat { color:#64748b !important; background:rgba(0,0,0,0.05) !important; }
+
+    .chart-card { background:#f3f6fb !important; border:1px solid #e2e8f0 !important; box-shadow:0 2px 12px rgba(0,0,0,0.05) !important; }
+    .chart-card::before { display:none !important; }
+    .chart-title { color:#586475 !important; }
+    .donut-stat-value.green { color:#0b8a7a !important; }
+    .donut-stat-value.red   { color:#be123c !important; }
+    .comp-card  { background:#f3f6fb !important; border:1px solid #e2e8f0 !important; box-shadow:0 2px 12px rgba(0,0,0,0.05) !important; }
+    .comp-card::before { display:none !important; }
+    .comp-card h4 { color:#0f172a !important; }
+    .comp-stat  { border-bottom-color:#f1f5f9 !important; }
+    .comp-stat-label { color:#64748b !important; }
+    .comp-stat-val { color:#0f172a !important; }
+    .calc-card  { background:#f3f6fb !important; border:1px solid #e2e8f0 !important; box-shadow:0 2px 12px rgba(0,0,0,0.05) !important; }
+    .calc-card h3 { color:#0ea5e9 !important; }
+    .calc-divider { border-top-color:#e2e8f0 !important; }
+    .overview-section { background:#f3f6fb !important; border:1px solid #e2e8f0 !important; }
+    .ov-section-title { color:#64748b !important; }
+    .ibkr-card  { background:#f3f6fb !important; border:1px solid #e2e8f0 !important; }
+    .ibkr-card-header { border-bottom-color:#e2e8f0 !important; }
+    .ibkr-card-title  { color:#0f172a !important; }
+    /* Secondary labels darkened slightly to keep AA contrast on off-white cards */
+    .kpi-label, .kpi-sub, .chart-title, .comp-stat-label, .ov-section-title { color:#586475 !important; }
+
+    /* Table — use html[data-theme] prefix to beat specificity of static dark rules */
+    html[data-theme="light"] .table-wrap { background:#f3f6fb !important; border:1px solid #e2e8f0 !important; box-shadow:0 2px 12px rgba(0,0,0,0.05) !important; }
+    html[data-theme="light"] thead tr { background:#f8fafc !important; border-bottom:1px solid #e2e8f0 !important; }
+    html[data-theme="light"] thead th { background:#f8fafc !important; }
+    html[data-theme="light"] th { color:#64748b !important; }
+    html[data-theme="light"] td { color:#0f172a !important; border-bottom-color:#f1f5f9 !important; }
+    @media (hover: hover) and (pointer: fine) { html[data-theme="light"] tbody tr.data-row:hover td { background:#f0f6ff !important; } }
+    html[data-theme="light"] tbody tr.profit td { background:rgba(5,150,105,0.03) !important; }
+    @media (hover: hover) and (pointer: fine) { html[data-theme="light"] tbody tr.profit:hover td { background:rgba(5,150,105,0.08) !important; } }
+    html[data-theme="light"] tbody tr.loss td { background:rgba(225,29,72,0.03) !important; }
+    @media (hover: hover) and (pointer: fine) { html[data-theme="light"] tbody tr.loss:hover td { background:rgba(225,29,72,0.07) !important; } }
+    html[data-theme="light"] .year-group-row td { background:#f8fafc !important; border-color:#e2e8f0 !important; }
+    html[data-theme="light"] .year-group-label { color:#64748b !important; }
+    html[data-theme="light"] .num-green  { color:#0b8a7a !important; }
+    html[data-theme="light"] .num-red    { color:#be123c !important; }
+    html[data-theme="light"] .num-yellow { color:#b45309 !important; }
+    html[data-theme="light"] .badge-L { background:rgba(5,150,105,0.12) !important; color:#0b8a7a !important; border-color:rgba(5,150,105,0.28) !important; }
+    html[data-theme="light"] .badge-S { background:rgba(225,29,72,0.1) !important; color:#e11d48 !important; border-color:rgba(225,29,72,0.25) !important; }
+
+    /* Forms & Inputs */
+    .month-filter { background:transparent !important; border-color:rgba(14,14,18,0.08) !important; }
+    .month-filter label { color:#64748b !important; }
+    select,select.form-control { background:#ffffff !important; border-color:#cbd5e1 !important; color:#0f172a !important; }
+    select option { background:#ffffff !important; color:#0f172a !important; }
+    input,textarea,.form-control,.qa-input { background:#ffffff !important; border-color:#cbd5e1 !important; color:#0f172a !important; }
+    input::placeholder,.qa-input::placeholder { color:#94a3b8 !important; }
+    .form-label { color:#0369a1 !important; }
+    .qa-type-badge.stock  { background:rgba(4,120,87,0.1) !important;  border-color:rgba(4,120,87,0.35) !important;  color:#0b8a7a !important; }
+    .qa-type-badge.crypto { background:rgba(180,83,9,0.1) !important; border-color:rgba(180,83,9,0.35) !important; color:#b45309 !important; }
+    .search-input { background:#ffffff !important; border-color:#cbd5e1 !important; color:#0f172a !important; }
+
+    /* Buttons & Pills */
+    .er-pill { background:#f1f5f9 !important; border-color:#cbd5e1 !important; color:#475569 !important; }
+    .er-pill.active-bo     { background:rgba(5,150,105,0.1) !important; border-color:#0b8a7a !important; color:#0b8a7a !important; }
+    .er-pill.active-handle { background:rgba(234,88,12,0.1) !important; border-color:#ea580c !important; color:#ea580c !important; }
+    .er-pill.active-cheath { background:rgba(180,83,9,0.1) !important; border-color:#b45309 !important; color:#b45309 !important; }
+    .er-pill.active-cheatl { background:rgba(14,165,233,0.1) !important; border-color:#0284c7 !important; color:#0284c7 !important; }
+    .er-pill.active-lps    { background:rgba(124,58,237,0.1) !important; border-color:#7c3aed !important; color:#7c3aed !important; }
+    /* Quick Add */
+    .quick-add { background:#ffffff !important; border-color:rgba(14,165,233,0.2) !important; }
+    .quick-add-title { color:#0ea5e9 !important; }
+    .qa-label { color:#64748b !important; }
+    .qa-ls-btn { background:#f1f5f9 !important; border-color:#e2e8f0 !important; color:#64748b !important; }
+    .qa-ls-btn.active-l { background:rgba(5,150,105,0.1) !important; color:#0b8a7a !important; border-color:rgba(5,150,105,0.3) !important; }
+    .qa-ls-btn.active-s { background:rgba(225,29,72,0.08) !important; color:#e11d48 !important; border-color:rgba(225,29,72,0.25) !important; }
+
+    /* Expanded rows, notes */
+    .expanded-inner { background:#f8fafc !important; border-top-color:#e2e8f0 !important; }
+    .notes-box { background:#f1f5f9 !important; border-color:#e2e8f0 !important; color:#334155 !important; }
+    .target-pill { background:#f1f5f9 !important; border-color:#e2e8f0 !important; color:#334155 !important; }
+
+    /* Modal */
+    .modal { background:#ffffff !important; border:1px solid #e2e8f0 !important; box-shadow:0 24px 64px rgba(0,0,0,0.14) !important; }
+    .modal::before { display:none !important; }
+    .modal-overlay { background:rgba(14,14,18,0.5) !important; }
+    .modal-header { background:#f8fafc !important; border-bottom:1px solid #e2e8f0 !important; }
+    .modal-footer { background:#f8fafc !important; border-top:1px solid #e2e8f0 !important; }
+    .modal-title  { color:#0f172a !important; }
+    .modal-close  { color:#64748b !important; }
+
+    /* Toast */
+    .toast { background:#ffffff !important; border:1px solid #e2e8f0 !important; box-shadow:0 8px 32px rgba(0,0,0,0.1) !important; color:#0f172a !important; }
+    .toast.success { border:1px solid rgba(5,150,105,0.35) !important; background:rgba(5,150,105,0.07) !important; }
+    .toast.error   { border:1px solid rgba(220,38,38,0.35) !important; background:rgba(220,38,38,0.07) !important; }
+
+    /* Mood pills */
+    .mood-pill { background:#f1f5f9 !important; border-color:#cbd5e1 !important; color:#475569 !important; }
+    .mood-pill.active-focused   { background:rgba(14,165,233,0.1) !important; border-color:#0284c7 !important; color:#0284c7 !important; }
+    .mood-pill.active-calm      { background:rgba(5,150,105,0.1) !important;  border-color:#0b8a7a !important; color:#0b8a7a !important; }
+    .mood-pill.active-confident { background:rgba(124,58,237,0.1) !important; border-color:#7c3aed !important; color:#7c3aed !important; }
+    .mood-pill.active-stressed  { background:rgba(220,38,38,0.1) !important;  border-color:#e11d48 !important; color:#e11d48 !important; }
+    .mood-pill.active-impatient { background:rgba(234,88,12,0.1) !important;  border-color:#ea580c !important; color:#ea580c !important; }
+    .mood-pill.active-doubtful  { background:rgba(100,116,139,0.1) !important; border-color:#64748b !important; color:#64748b !important; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.15) !important; }
+    @media (hover: hover) and (pointer: fine) { ::-webkit-scrollbar-thumb:hover { background:rgba(0,0,0,0.25) !important; } }
+
+    /* Calendar — override dark html body .cal-* rules (specificity 0-1-2) with 0-2-1 */
+    html[data-theme="light"] .cal-wrap { background:#ffffff !important; }
+    html[data-theme="light"] .cal-header { background:#ffffff !important; border-bottom:1px solid #e2e8f0 !important; }
+    html[data-theme="light"] .cal-title-month { color:#0f172a !important; }
+    html[data-theme="light"] .cal-trade-count { color:#64748b !important; }
+    html[data-theme="light"] .cal-divider { background:rgba(0,0,0,0.12) !important; }
+    html[data-theme="light"] .cal-nav-btn { background:#f1f5f9 !important; border:1px solid #e2e8f0 !important; color:#475569 !important; }
+    @media (hover: hover) and (pointer: fine) { html[data-theme="light"] .cal-nav-btn:hover { background:#e2e8f0 !important; color:#1e293b !important; } }
+    html[data-theme="light"] .cal-grid { background:rgba(14,14,18,0.08) !important; border-color:rgba(14,14,18,0.1) !important; }
+    html[data-theme="light"] .cal-day-hdr { background:#e8edf5 !important; color:#586475 !important; }
+    html[data-theme="light"] .cal-cell { background:#ffffff !important; }
+    html[data-theme="light"] .cal-cell.weekend { background:#f8fafc !important; }
+    html[data-theme="light"] .cal-cell.has-trades { background:#f0f7ff !important; }
+    html[data-theme="light"] .cal-cell.has-trades.weekend { background:#edf6ff !important; }
+    html[data-theme="light"] .cal-empty { background:#f1f5f9 !important; }
+    html[data-theme="light"] .cal-empty.weekend { background:#edf2f8 !important; }
+    html[data-theme="light"] .cal-week-sum { background:#eef2f8 !important; border-left-color:rgba(14,14,18,0.06) !important; }
+    html[data-theme="light"] .cal-date { color:#64748b !important; }
+    html[data-theme="light"] .cal-cell.has-trades .cal-date { color:#475569 !important; }
+    html[data-theme="light"] .cal-cell.today .cal-date { color:#0284c7 !important; }
+    html[data-theme="light"] .cal-day-pl { border-top-color:rgba(14,14,18,0.07) !important; }
+    html[data-theme="light"] .cal-week-count { color:#94a3b8 !important; }
+    html[data-theme="light"] .cal-week-empty { color:rgba(14,14,18,0.12) !important; }
+
+    /* Expanded trade review panel */
+    .tr-review { background:#f8fafc !important; border-top:1px solid #e2e8f0 !important; }
+    .tr-tile { background:rgba(0,0,0,0.03) !important; border-color:rgba(0,0,0,0.08) !important; }
+    .tr-tile-label { color:#94a3b8 !important; }
+    .tr-flow-row { background:rgba(0,0,0,0.025) !important; border-color:rgba(0,0,0,0.07) !important; }
+    .tr-flow-label { color:#94a3b8 !important; }
+    .tr-flow-arrow { color:rgba(0,0,0,0.22) !important; }
+    .tr-flow-sub { color:#94a3b8 !important; }
+    .tr-target-pill { background:rgba(124,58,237,0.09) !important; color:#7c3aed !important; }
+    .tr-note-text { color:#475569 !important; }
+
+    /* Entry reason badges — light-mode contrast */
+    .er-badge.lps    { background:rgba(124,58,237,0.1) !important; color:#7c3aed !important; }
+    .er-badge.cheatl { background:rgba(14,165,233,0.1) !important; color:#0284c7 !important; }
+    .er-badge.cheath { background:rgba(180,83,9,0.1)   !important; color:#b45309 !important; }
+    .er-badge.handle { background:rgba(234,88,12,0.1)  !important; color:#ea580c !important; }
+    .er-badge.bo     { background:rgba(5,150,105,0.1)  !important; color:#0b8a7a !important; }
+
+    /* Market condition badges — light-mode contrast */
+    .mc-badge.easy  { background:rgba(5,150,105,0.1)  !important; color:#0b8a7a !important; }
+    .mc-badge.hard  { background:rgba(220,38,38,0.1)  !important; color:#e11d48 !important; }
+    .mc-badge.up    { background:rgba(14,165,233,0.1) !important; color:#0284c7 !important; }
+    .mc-badge.press { background:rgba(180,83,9,0.1)   !important; color:#b45309 !important; }
+    .mc-badge.down  { background:rgba(124,58,237,0.1) !important; color:#7c3aed !important; }
+
+    /* Status badges — light-mode contrast */
+    .status-badge.open    { background:rgba(14,165,233,0.12) !important; color:#0284c7 !important; border-color:rgba(14,165,233,0.3) !important; }
+    .status-badge.closed  { background:rgba(5,150,105,0.12)  !important; color:#065f46 !important; }
+    .status-badge.partial { background:rgba(180,83,9,0.1)    !important; color:#b45309 !important; }
+
+    /* Action buttons */
+    .btn-icon   { background:rgba(0,0,0,0.03) !important; border-color:rgba(0,0,0,0.1) !important; color:#475569 !important; }
+    .btn-camera { background:rgba(0,0,0,0.03) !important; border-color:rgba(0,0,0,0.1) !important; color:#475569 !important; }
+
+    /* Full-bleed dark overlays — these four carry their own dark card on an
+       inline style no selector can reach, so light mode only ever recoloured
+       their text and left it near-black on near-black. The login card was the
+       worst of it: _initTheme() restores the saved theme before sign-in, so a
+       returning light-mode user met an unreadable form. Keep them dark, like
+       the sector modal already does deliberately, and pin the text to match. */
+    #auth-overlay, #name-gate, #ob-overlay, #stop-prompt-overlay {
+      --text:#f1f5f9; --text1:#f1f5f9; --text2:#a8b8cc; --text3:#8896a8;
+      --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.11);
+    }
+    #auth-overlay, #auth-overlay *,
+    #name-gate, #name-gate *,
+    #ob-overlay, #ob-overlay *,
+    #stop-prompt-overlay, #stop-prompt-overlay * { color:#f1f5f9; }
+    #auth-overlay .form-label, #name-gate .form-label,
+    #ob-overlay .form-label, #stop-prompt-overlay .form-label { color:#a8b8cc !important; }
+    /* #auth-showcase sits outside the dark login card, directly on the themed
+       page background — it must follow the theme normally, not the card's
+       pinned-dark palette above. */
+    #auth-showcase, #auth-showcase * { color:#0f172a !important; }
+    #auth-showcase .auth-showcase-sub,
+    #auth-showcase .kpi-label,
+    #auth-showcase .kpi-sub { color:#475569 !important; }
+    #auth-showcase .kpi-value.green { color:#0b8a7a !important; }
+    #auth-overlay input, #auth-overlay .form-control,
+    #name-gate input, #name-gate .form-control,
+    #ob-overlay input, #ob-overlay .form-control,
+    #stop-prompt-overlay input, #stop-prompt-overlay .form-control {
+      background:rgba(255,255,255,0.06) !important;
+      border-color:rgba(255,255,255,0.12) !important;
+      color:#f1f5f9 !important;
+    }
+    #auth-overlay input::placeholder, #name-gate input::placeholder,
+    #ob-overlay input::placeholder, #stop-prompt-overlay input::placeholder { color:#8896a8 !important; }
+  `;
+}
+
+const _THEME_SVG_SUN  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/></svg>`;
+const _THEME_SVG_MOON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+
+function _applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  let el = document.getElementById('tj-dynamic-theme');
+  if (!el) { el = document.createElement('style'); el.id = 'tj-dynamic-theme'; document.head.appendChild(el); }
+  el.textContent = theme === 'light' ? _buildLightCSS() : '';
+  // Force sidebar + all children via JS — same fix that worked in console
+  const sidebar = document.getElementById('main-sidebar');
+  if (sidebar) {
+    sidebar.style.background = theme === 'light'
+      ? 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)'
+      : '#0b0b0e';
+    sidebar.style.borderLeft = theme === 'light' ? '1px solid #dde3ed' : '1px solid rgba(255,255,255,0.07)';
+    sidebar.querySelectorAll('*').forEach(el => {
+      el.style.background = 'transparent';
+      if (theme === 'light') el.style.color = el.classList.contains('active') ? '#0284c7' : '#475569';
+      else el.style.color = '';
+    });
+    // Restore colored elements
+    const mark = sidebar.querySelector('.sidebar-brand-mark');
+    if (mark) mark.style.background = 'linear-gradient(135deg, #818cf8 0%, #6366f1 100%)';
+    const activeBtns = sidebar.querySelectorAll('.tab-btn.active');
+    activeBtns.forEach(btn => { btn.style.background = theme === 'light' ? 'rgba(14,165,233,0.12)' : 'rgba(129,140,248,0.14)'; });
+  }
+  // Force table-wrap, cal-panel, cal-header backgrounds via JS
+  document.querySelectorAll('.table-wrap, .ov-cal-panel').forEach(el => {
+    if (theme === 'light') {
+      el.style.setProperty('background', '#f3f6fb', 'important');
+      el.style.setProperty('border-color', '#e2e8f0', 'important');
+    } else {
+      el.style.removeProperty('background');
+      el.style.removeProperty('border-color');
+    }
+  });
+  document.querySelectorAll('.cal-header, .cal-wrap').forEach(el => {
+    if (theme === 'light') {
+      el.style.setProperty('background', '#f3f6fb', 'important');
+    } else {
+      el.style.removeProperty('background');
+    }
+  });
+
+  const icon = document.getElementById('theme-icon'), label = document.getElementById('theme-label');
+  if (icon)  icon.innerHTML  = theme === 'light' ? _THEME_SVG_MOON : _THEME_SVG_SUN;
+  if (label) label.textContent = theme === 'light' ? 'מצב כהה' : 'מצב בהיר';
+  const hIcon = document.getElementById('header-theme-icon');
+  if (hIcon) hIcon.innerHTML = theme === 'light' ? _THEME_SVG_MOON : _THEME_SVG_SUN;
+}
+
+function toggleSidebar() {
+  const sidebar = document.getElementById('main-sidebar');
+  if (window.innerWidth <= 768) {
+    const overlay = document.getElementById('sidebar-overlay');
+    const isOpen = sidebar.classList.toggle('open');
+    overlay?.classList.toggle('open', isOpen);
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+  } else {
+    const collapsed = sidebar.classList.toggle('collapsed');
+    localStorage.setItem('tj-sidebar-collapsed', collapsed ? '1' : '0');
+  }
+}
+
+function toggleTheme() {
+  const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+  localStorage.setItem('tj-theme', next);
+  _applyTheme(next);
+  try{ const f=document.getElementById('screener-frame'); if(f?.src) f.contentDocument.documentElement.dataset.theme = next==='light'?'tj-light':'tj'; }catch(e){}
+}
+(function _initTheme() {
+  const saved = localStorage.getItem('tj-theme') || 'dark';
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => _applyTheme(saved));
+  } else {
+    _applyTheme(saved);
+  }
+})();
+(function _initSidebar() {
+  const apply = () => {
+    if (localStorage.getItem('tj-sidebar-collapsed') === '1') {
+      document.getElementById('main-sidebar')?.classList.add('collapsed');
+    }
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply);
+  else apply();
+})();
+
+// ─── Cookie Consent ─────────────────────────────────────────────────────────
+
+(function _cookieInit() {
+  const consent = localStorage.getItem('tj-cookie-consent');
+  if (!consent) {
+    setTimeout(() => {
+      const b = document.getElementById('cookie-banner');
+      b.style.display = '';
+    }, 800);
+  }
+})();
+
+function cookieAccept() {
+  const aiOn = document.getElementById('cookie-ai-toggle')?.checked !== false;
+  localStorage.setItem('tj-cookie-consent', JSON.stringify({ necessary: true, ai: aiOn, ts: Date.now() }));
+  _cookieHide();
+}
+
+function cookieDecline() {
+  localStorage.setItem('tj-cookie-consent', JSON.stringify({ necessary: true, ai: false, ts: Date.now() }));
+  localStorage.removeItem('tj-ai-key');
+  localStorage.removeItem('groq-inv-key');
+  _cookieHide();
+}
+
+function cookieToggleSettings() {
+  const panel = document.getElementById('cookie-settings-panel');
+  panel.classList.toggle('open');
+}
+
+function _cookieHide() {
+  const b = document.getElementById('cookie-banner');
+  b.classList.add('hide');
+  setTimeout(() => { b.style.display = 'none'; b.classList.remove('hide'); }, 320);
+}
+
+// ─── Missed Opportunities ────────────────────────────────────────────────────
+
+const MISSED_KEY = 'tj-missed-v1';
+
+// Sector lookup — common symbols → Hebrew sector name
+const SECTOR_MAP = {
+  // Technology
+  AAPL:'Technology',MSFT:'Technology',GOOGL:'Technology',GOOG:'Technology',META:'Technology',
+  NVDA:'Technology',AMD:'Technology',INTC:'Technology',AVGO:'Technology',QCOM:'Technology',
+  CRM:'Technology',ORCL:'Technology',IBM:'Technology',SAP:'Technology',SNOW:'Technology',
+  PLTR:'Technology',DDOG:'Technology',CRWD:'Technology',ZS:'Technology',NET:'Technology',
+  PANW:'Technology',FTNT:'Technology',S:'Technology',MDB:'Technology',ESTC:'Technology',
+  ADBE:'Technology',NOW:'Technology',INTU:'Technology',ANSS:'Technology',CDNS:'Technology',
+  KLAC:'Semiconductors',LRCX:'Semiconductors',AMAT:'Semiconductors',MRVL:'Semiconductors',SMCI:'Technology',
+  ARM:'Semiconductors',AEHR:'Semiconductors',TSM:'Semiconductors',ASML:'Semiconductors',
+  // Internet / E-commerce
+  AMZN:'Internet / E-Commerce',SHOP:'Internet / E-Commerce',ETSY:'Internet / E-Commerce',EBAY:'Internet / E-Commerce',
+  BABA:'Internet / E-Commerce',JD:'Internet / E-Commerce',PDD:'Internet / E-Commerce',SE:'Internet / E-Commerce',
+  MELI:'Internet / E-Commerce',GRAB:'Internet / E-Commerce',RDDT:'Internet / E-Commerce',SNAP:'Internet / E-Commerce',
+  PINS:'Internet / E-Commerce',LYFT:'Internet / E-Commerce',UBER:'Internet / E-Commerce',DASH:'Internet / E-Commerce',
+  // Financials
+  JPM:'Financials',BAC:'Financials',GS:'Financials',MS:'Financials',WFC:'Financials',C:'Financials',
+  AXP:'Financials',V:'Financials',MA:'Financials',PYPL:'Financials',SQ:'Financials',AFRM:'Financials',
+  COIN:'Financials',HOOD:'Financials',PJT:'Financials',JOE:'Financials',AHR:'Financials',
+  // Healthcare / Biotech
+  JNJ:'Healthcare',PFE:'Healthcare',MRK:'Healthcare',ABBV:'Healthcare',LLY:'Healthcare',BMY:'Healthcare',
+  AMGN:'Healthcare',GILD:'Healthcare',BIIB:'Healthcare',MRNA:'Healthcare',BNTX:'Healthcare',
+  ANAB:'Biotech',REGN:'Biotech',VRTX:'Biotech',SGEN:'Biotech',
+  EXAS:'Biotech',PACB:'Biotech',BEAM:'Biotech',CRSP:'Biotech',
+  // Energy
+  XOM:'Energy',CVX:'Energy',COP:'Energy',SLB:'Energy',HAL:'Energy',
+  OXY:'Energy',DVN:'Energy',MPC:'Energy',PSX:'Energy',
+  // EV / Auto
+  TSLA:'EV / Auto',RIVN:'EV / Auto',LCID:'EV / Auto',NIO:'EV / Auto',LI:'EV / Auto',
+  GM:'EV / Auto',F:'EV / Auto',QS:'EV / Auto',
+  // Consumer
+  COST:'Consumer',WMT:'Consumer',TGT:'Consumer',HD:'Consumer',LOW:'Consumer',
+  NKE:'Consumer',LULU:'Consumer',TJX:'Consumer',SBUX:'Consumer',MCD:'Consumer',
+  // Communications / Media
+  NFLX:'Media / Entertainment',DIS:'Media / Entertainment',PARA:'Media / Entertainment',WBD:'Media / Entertainment',
+  SPOT:'Media / Entertainment',T:'Telecom',VZ:'Telecom',TMUS:'Telecom',
+  // ETFs — Blue (broad market / safe haven)
+  SPY:'ETF',VOO:'ETF',VTI:'ETF',IVV:'ETF',DIA:'ETF',
+  GLD:'ETF',TLT:'ETF',AGG:'ETF',BND:'ETF',SCHD:'ETF',VYM:'ETF',VIG:'ETF',
+  // ETFs — Green (growth / sector)
+  QQQ:'ETF',IWM:'Growth ETF',ARKK:'Growth ETF',ARKG:'Growth ETF',
+  VGT:'Growth ETF',XLK:'Growth ETF',SOXX:'Growth ETF',SMH:'Growth ETF',
+  IBB:'Growth ETF',XBI:'Growth ETF',WCLD:'Growth ETF',CIBR:'Growth ETF',
+  // ETFs — Leveraged (speculative)
+  TQQQ:'Leveraged ETF',SQQQ:'Leveraged ETF',UPRO:'Leveraged ETF',SPXL:'Leveraged ETF',
+  SOXL:'Leveraged ETF',LABU:'Leveraged ETF',CONL:'Leveraged ETF',FNGU:'Leveraged ETF',
+  // Crypto-related stocks
+  MSTR:'Crypto / Bitcoin',MARA:'Crypto / Bitcoin',RIOT:'Crypto / Bitcoin',HUT:'Crypto / Bitcoin',
+  CLSK:'Crypto / Bitcoin',
+  // Spot crypto ETFs — Finnhub's profile2 is company fundamentals only, so it
+  // never returns an industry for these; they can only ever be filled locally.
+  IBIT:'Crypto / Bitcoin',FBTC:'Crypto / Bitcoin',GBTC:'Crypto / Bitcoin',ARKB:'Crypto / Bitcoin',
+  BITB:'Crypto / Bitcoin',HODL:'Crypto / Bitcoin',ETHA:'Crypto / Bitcoin',FETH:'Crypto / Bitcoin',
+  // Real Estate
+  OPEN:'Real Estate',AMT:'Real Estate',EQIX:'Real Estate',PLD:'Real Estate',
+  // Industrial
+  GE:'Industrials',HON:'Industrials',CAT:'Industrials',DE:'Industrials',BA:'Industrials',RTX:'Industrials',
+  AIR:'Industrials',
+  // Crypto
+  BTC:'Crypto',ETH:'Crypto',SOL:'Crypto',XRP:'Crypto',BNB:'Crypto',DOGE:'Crypto',
+  HIPPO:'Crypto',
+  // Materials / Mining
+  GROY:'Materials',NEM:'Materials',GOLD:'Materials',WPM:'Materials',MAG:'Materials',USAR:'Materials',
+  // Healthcare / Instruments
+  A:'Healthcare',SOLS:'Energy',
+  // Misc
+  NEGG:'Internet / E-Commerce',
+  // Leveraged single-stock / commodity ETFs — pulled from live trade symbols
+  // (2026-08-25 audit). These are the highest-value additions: Finnhub's
+  // profile2 is company fundamentals only and can NEVER return an industry
+  // for an ETF, so an unmapped one has no working fallback at all — it isn't
+  // "eventually resolves," it silently never does, which is what happened to
+  // IBIT before it was added.
+  MSTU:'Leveraged ETF',MSTZ:'Leveraged ETF',ETHU:'Leveraged ETF',AGQ:'Leveraged ETF',
+  SCO:'Leveraged ETF',UCO:'Leveraged ETF',
+  SLV:'ETF',USO:'ETF',VXUS:'ETF',
+  // Real stocks pulled from live trade symbols, added where the company is
+  // unambiguous. Deliberately NOT exhaustive: a wrong sector here is worse
+  // than falling through to Finnhub, so anything not confidently identifiable
+  // (AMDL, FGI, QTTB, SNDQ, SNDU, SPCX, EM as seen in the trades table) was
+  // left out rather than guessed.
+  AAOI:'Technology',GLW:'Technology',LAES:'Technology',NOK:'Technology',
+  ONDS:'Technology',OUST:'Technology',POET:'Technology',RGTI:'Technology',RR:'Technology',
+  SKYT:'Technology',TRMB:'Technology',CRWV:'Technology',
+  ABOS:'Biotech',IMTX:'Biotech',PTGX:'Biotech',
+  MD:'Healthcare',UNH:'Healthcare',STVN:'Healthcare',
+  BULL:'Financials',CRCL:'Financials',DLO:'Financials',IFS:'Financials',NDAQ:'Financials',PAYS:'Financials',
+  BATL:'Energy',EOSE:'Energy',NNE:'Energy',OKLO:'Energy',PLUG:'Energy',SEDG:'Energy',
+  CIFR:'Crypto / Bitcoin',
+  CR:'Industrials',DLX:'Industrials',SGBX:'Industrials',
+  AS:'Consumer',EAT:'Consumer',SGHC:'Consumer',
+  QTUM:'Growth ETF',   // Defiance Quantum ETF, not the Qtum coin — see collision note below
+  ZETA:'Technology',   // Zeta Global stock, not the ZetaChain coin — see collision note below
+  // Known ticker collisions between a stock/ETF above and an unrelated crypto
+  // token sharing the same symbol (audited against CRYPTO_SYMBOLS 2026-08-25
+  // — the class of bug that caused BEAM to silently read "Crypto" for anyone
+  // entering the biotech stock, fixed the same day). This map has exactly one
+  // entry per key, so it can only ever hold one meaning; each collision below
+  // was resolved to whichever meaning actually appears in this app's own
+  // trade history, not by ticker popularity in general:
+  //   DASH (line ~14801, Internet / E-Commerce) — DoorDash, not the DASH coin
+  //   CVX  (line ~14812, Energy)                — Chevron, not the Convex Finance token
+  //   DIA  (line ~14824, ETF)                    — SPDR Dow Jones ETF, not the Diadata token
+  //   QTUM (above)                               — Defiance Quantum ETF, not the Qtum coin
+  //   ZETA (above)                               — Zeta Global, not the ZetaChain coin
+  // Verify a new addition against CRYPTO_SYMBOLS before assuming it's safe.
+};
+
+const SECTOR_TO_CAT = {
+  'Technology':'green','Semiconductors':'green','Internet / E-Commerce':'green',
+  'Media / Entertainment':'green','ETF':'blue','Growth ETF':'green',
+  'Biotech':'yellow','EV / Auto':'yellow','Crypto':'yellow','Crypto / Bitcoin':'yellow','Leveraged ETF':'yellow',
+  'Financials':'blue','Healthcare':'blue','Consumer':'blue','Industrials':'blue',
+  'Energy':'blue','Real Estate':'blue','Telecom':'blue','Materials':'blue',
+};
+
+// A plain SECTOR_TO_CAT[sector] lookup only matches the ~19 category names
+// SECTOR_MAP itself uses. Most rows get their sector from Finnhub instead
+// (finnhubIndustry — a much more granular string like "Biotechnology",
+// "Aerospace & Defense", "Banking") which never matches those exact keys, so
+// the risk-category select silently never auto-filled for anything not in
+// the local map. Audited against 12 real finnhubIndustry values pulled from
+// the live missed_opportunities table (2026-08-25): 0 of 12 matched.
+// Falls back to keyword matching on Finnhub's actual vocabulary; returns ''
+// (leave it for the user) only when nothing matches at all — a wrong color
+// on someone's own risk view is worse than a blank one, so this is a
+// best-effort default, not a guarantee, and the select stays user-editable.
+// \b<word>\b for a short/whole-word keyword ('spac' must not match inside
+// "aerospace" — the exact false positive stress-testing against ~130
+// realistic Finnhub industry strings caught before this shipped); plain
+// prefix matching for the rest, which is intentional ('biotech' is meant to
+// catch "biotechnology" too).
+const _wholeWord = w => new RegExp(`\\b${w}\\b`);
+function _sectorRiskCat(sector) {
+  if (!sector) return '';
+  if (SECTOR_TO_CAT[sector]) return SECTOR_TO_CAT[sector];
+  const s = sector.toLowerCase();
+  // Deliberately NOT 'drug' or 'pharma' — that also matches "Drug
+  // Manufacturers—General" and "Pharmaceutical Retailers", both established,
+  // revenue-generating businesses this app's own SECTOR_MAP already treats as
+  // blue (PFE/MRK/LLY/ABBV are 'Healthcare', not 'Biotech'). 'biotech' and
+  // 'clinical' are the actual pipeline-risk signal; a profitable drugmaker
+  // isn't the same bet as a clinical-stage biotech and must not read as one.
+  const yellow = ['biotech','clinical','gene therap','crypto','bitcoin','leveraged',
+    'exploration','clean energy','solar','electric vehicle',' ev ','cannabis', _wholeWord('spac')];
+  const green = ['technology','software','internet','semiconductor','media','entertainment',
+    'e-commerce','saas','cloud','gaming','robotic','quantum'];
+  const hit = k => k instanceof RegExp ? k.test(s) : s.includes(k);
+  // 'junior mining' in real feeds is usually phrased with the commodity in
+  // between ("Junior Gold Mining", "Junior Silver Mining"), so a single
+  // contiguous phrase misses it — an AND of the two tokens does not.
+  const juniorMining = s.includes('junior') && (s.includes('min')||s.includes('exploration'));
+  if (juniorMining || yellow.some(hit)) return 'yellow';
+  if (green.some(hit)) return 'green';
+  // Everything else Finnhub actually returns for real holdings — banking,
+  // insurance, aerospace & defense, real estate, utilities, machinery,
+  // construction, transportation, drug manufacturers, healthcare providers,
+  // retail, food — reads as the stable/blue-chip default rather than blank.
+  return 'blue';
+}
+
+// Cleans a raw symbol input the same way for both the initial lookup AND the
+// 600ms-later "did the user change it since?" re-check. Those two cleanings
+// used to be done separately per call site and drifted apart — the re-check
+// in the missed-opportunities form never stripped the USDT/.P perp suffix,
+// so a Bybit-style symbol like XRPUSDT.P (cleaned to XRP for the lookup)
+// could never match itself again and the Finnhub result was silently
+// dropped even though the user never touched the field.
+function _cleanSectorSym(raw) {
+  return (raw || '').trim().toUpperCase().replace(/[^A-Z0-9._\-]/g,'').replace(/USDT\.P|USDT|\.P$/,'');
+}
+
+const _sectorFillTimers = {};
+// Shared by missedAutoSector and invAutoSector. Split out 2026-08-25 after a
+// silent-failure bug (a swallowed Finnhub error/rate-limit, with nothing
+// shown to the user either way) was fixed in one copy and left live in the
+// other — one implementation now, so a future fix reaches both call sites.
+// `timerKey` debounces each caller independently (a per-row key for the
+// investments table, since several rows can be edited at once).
+function autoFillSector(timerKey, symEl, sectorEl, onFill) {
+  const sym = _cleanSectorSym(symEl?.value);
+  if (!sectorEl || !sym) return;
+
+  const local = SECTOR_MAP[sym];
+  if (local) { onFill(local); return; }
+
+  clearTimeout(_sectorFillTimers[timerKey]);
+  if (sym.length < 2) return;
+  _sectorFillTimers[timerKey] = setTimeout(async () => {
+    try {
+      const token = await _getToken();
+      if (!token) { console.warn(`[autoFillSector] no session token — can't look up sector for ${sym}`); return; }
+      const url = `${SUPABASE_URL}/functions/v1/finnhub?path=stock%2Fprofile2&symbol=${encodeURIComponent(sym)}`;
+      const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (!res.ok) {
+        console.warn(`[autoFillSector] Finnhub lookup failed for ${sym}: HTTP ${res.status}`);
+        if (res.status === 429) toast('הגעת למגבלת הבקשות ל-Finnhub — נסה שוב בעוד דקה', 'error');
+        return;
+      }
+      const data = await res.json();
+      const sector = data.finnhubIndustry || '';
+      if (!sector) { console.warn(`[autoFillSector] Finnhub has no sector data for ${sym}`); return; }
+      if (_cleanSectorSym(symEl?.value) === sym) onFill(sector);
+    } catch (e) { console.warn(`[autoFillSector] network error looking up ${sym}:`, e); }
+  }, 600);
+}
+
+function missedAutoSector() {
+  const symEl = document.getElementById('missed-sym');
+  const sectorEl = document.getElementById('missed-sector');
+  autoFillSector('missed', symEl, sectorEl, sector => { sectorEl.value = sector; });
+}
+
+// In-memory cache for missed opportunities
+let _missedList = [];
+let _missedLoaded = false;
+
+async function missedLoad() {
+  if (!_currentUser) return [];
+  const { data, error } = await _sb.from('missed_opportunities')
+    .select('*')
+    .eq('user_id', _currentUser.id)
+    .order('date', { ascending: false });
+  if (error) { console.error('[missedLoad]', error); return []; }
+  return (data || []).map(r => ({ id: r.id, sym: r.symbol, date: r.date, price: r.price, sector: r.sector || '', note: r.note || '' }));
+}
+
+async function missedAdd() {
+  if (!_currentUser) { toast('לא מחובר','error'); return; }
+  const sym    = document.getElementById('missed-sym').value.trim().toUpperCase().replace(/[^A-Z0-9._\-]/g,'');
+  const date   = document.getElementById('missed-date').value;
+  const price  = parseFloat(document.getElementById('missed-price').value);
+  const sector = document.getElementById('missed-sector').value.trim().slice(0, 40);
+  const note   = document.getElementById('missed-note').value.trim().slice(0, 120);
+
+  if (!sym)                    { toast('הכנס סימבול','error'); return; }
+  if (!date)                   { toast('הכנס תאריך','error'); return; }
+  if (isNaN(price)||price<=0)  { toast('הכנס מחיר תקין','error'); return; }
+
+  _rtSuppress('missed_opportunities');
+  const { data, error } = await _sb.from('missed_opportunities')
+    .insert({ user_id: _currentUser.id, symbol: sym, date, price, sector, note })
+    .select().single();
+  if (error) { toast('שגיאה בהוספה: ' + (error.message || error.code || 'unknown'), 'error'); console.error('[missedAdd]', error); return; }
+
+  document.getElementById('missed-sym').value    = '';
+  document.getElementById('missed-date').value   = '';
+  document.getElementById('missed-price').value  = '';
+  document.getElementById('missed-sector').value = '';
+  document.getElementById('missed-note').value   = '';
+
+  // Optimistic: add to local list and render immediately without re-fetching
+  const newItem = { id: data.id, sym: data.symbol, date: data.date, price: data.price, sector: data.sector || '', note: data.note || '' };
+  _missedList = [newItem, ...(_missedList || [])].sort((a,b) => b.date.localeCompare(a.date));
+  missedRenderList(_missedList);
+  // renderList rebuilds innerHTML, so every .missed-since is now an empty div —
+  // adding one row used to wipe the "% since" off all the others until a reload.
+  missedFollowUp(_missedList);
+  _fetchMissedMonthHistory(_missedList);
+  toast('נוסף ✓','success');
+}
+
+async function missedDelete(id) {
+  if (!confirm('למחוק הזדמנות זו? הפעולה אינה הפיכה')) return;
+  if (!_currentUser) { toast('לא מחובר — התחבר מחדש ונסה שוב','error'); return; }
+  _rtSuppress('missed_opportunities');
+  // .select() so we can tell "deleted nothing" from "deleted successfully".
+  // A DELETE that matches no row is NOT an error in PostgREST — it returns 204
+  // with no error object, so the old code silently re-rendered the unchanged
+  // list and the button looked dead.
+  const { data, error } = await _sb.from('missed_opportunities')
+    .delete().eq('id', id).eq('user_id', _currentUser.id).select('id');
+  if (error) {
+    console.error('[missedDelete]', error);
+    toast('שגיאה במחיקה: ' + (error.message || error.code || 'unknown'), 'error');
+    return;
+  }
+  if (!data || !data.length) {
+    console.warn('[missedDelete] matched no row', { id, user: _currentUser.id });
+    toast('לא נמחק — השורה לא נמצאה תחת המשתמש הזה','error');
+    await missedRender(true);
+    return;
+  }
+  await missedRender(true);
+  toast('נמחק ✓','success');
+}
+
+// Collapse state (both year and month sections) is a single set of keys the
+// user has explicitly toggled AWAY from their default — remembered per user
+// so it survives a reload. Default state is computed fresh on every render
+// (see _missedDefaultCollapsed), so a toggle just flips it once.
+const _MISSED_COLLAPSE_KEY = () => 'missed_toggled_' + (_currentUser?.id || 'anon');
+const _MISSED_MONTH_THRESHOLD = 8; // a month with fewer cards than this always starts open
+function _missedLoadToggled() {
+  try { return new Set(JSON.parse(localStorage.getItem(_MISSED_COLLAPSE_KEY())) || []); } catch { return new Set(); }
+}
+function _missedSaveToggled(set) {
+  try { localStorage.setItem(_MISSED_COLLAPSE_KEY(), JSON.stringify([...set])); } catch {}
+}
+function missedToggleSection(key) {
+  const toggled = _missedLoadToggled();
+  if (toggled.has(key)) toggled.delete(key); else toggled.add(key);
+  _missedSaveToggled(toggled);
+  document.getElementById('missed-section-' + key)?.classList.toggle('collapsed');
+}
+
+// Cross-check: was a symbol logged as a missed opportunity eventually traded?
+// Matches by symbol against every entry strictly after the missed date and
+// returns the earliest such trade — a later re-entry doesn't change the
+// answer to "did this ever get acted on". No new field needed: symbol+date
+// is already on both sides.
+function missedFollowThrough(missedItem, trades) {
+  const later = trades.filter(t => t.symbol === missedItem.sym && t.entryDate && t.entryDate > missedItem.date);
+  if (!later.length) return null;
+  return later.reduce((a, b) => a.entryDate < b.entryDate ? a : b);
+}
+
+function missedRenderList(list) {
+  const container = document.getElementById('missed-tbody');
+  if (!container) return;
+  if (!list.length) {
+    container.innerHTML = `<div class="missed-empty">${t('missed_empty')}</div>`;
+    return;
+  }
+  const allTrades = [...db.stocks, ...db.crypto].filter(t => !t.deleted);
+  const sorted = [...list].sort((a, b) => b.date.localeCompare(a.date));
+  // Two-level grouping: year (the archive — every past year starts collapsed
+  // so old history doesn't dominate the page but is always one click away)
+  // then month within the year (the current month always starts open; a
+  // heavy past month inside the current year also starts collapsed).
+  const byYear = {};
+  sorted.forEach(r => {
+    const y = r.date.slice(0, 4);
+    (byYear[y] ??= []).push(r);
+  });
+  const thisYear = String(new Date().getFullYear());
+  const thisMonthKey = new Date().toISOString().slice(0, 7);
+  const toggled = _missedLoadToggled();
+  const byMonthCount = {};
+  sorted.forEach(r => { const k = r.date.slice(0, 7); byMonthCount[k] = (byMonthCount[k] || 0) + 1; });
+  const collapsed = key => {
+    const defaultCollapsed = key.length === 4
+      ? key !== thisYear                                                    // year key
+      : key !== thisMonthKey && byMonthCount[key] >= _MISSED_MONTH_THRESHOLD; // month key
+    return toggled.has(key) ? !defaultCollapsed : defaultCollapsed;
+  };
+
+  const cardHtml = r => `
+      <div class="missed-card" id="missed-row-${r.id}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
+          <div class="missed-card-sym">${esc(r.sym)}</div>
+          <div class="missed-card-actions">
+            <button class="missed-del-btn edit" onclick="missedEdit('${r.id}')" title="ערוך">✏</button>
+            <button class="missed-del-btn" onclick="missedDelete('${r.id}')" title="מחק">✕</button>
+          </div>
+        </div>
+        <div class="missed-card-price sensitive">$${fmtPrice(r.price)}</div>
+        <div class="missed-card-meta">${r.sector ? esc(r.sector)+' · ' : ''}${fmtDate(r.date)}</div>
+        <div class="missed-since sensitive" id="missed-since-${r.id}"></div>
+        ${(() => { const ft = missedFollowThrough(r, allTrades); return ft
+          ? `<div class="missed-card-meta" style="color:var(--green)">✓ בסוף נסחר ב-${fmtDate(ft.entryDate)}</div>` : ''; })()}
+        ${r.note ? `<div class="missed-card-note">${esc(r.note)}</div>` : ''}
+      </div>`;
+
+  const sectionHtml = (key, label, count, depth, innerHtml) => `
+      <div class="missed-${depth}-section${collapsed(key) ? ' collapsed' : ''}" id="missed-section-${key}">
+        <div class="missed-${depth}-label" onclick="missedToggleSection('${key}')">
+          <svg class="missed-month-chevron" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
+          ${label} <span style="color:var(--accent);font-size:10px;font-weight:800">${count}</span>
+          ${depth === 'month' ? `<span class="missed-month-pnl sensitive" id="missed-month-pnl-${key}"></span>` : ''}
+        </div>
+        <div class="missed-${depth}-body">${innerHtml}</div>
+      </div>`;
+
+  // Object.entries on numeric-looking keys ("2025","2026") always iterates
+  // ascending regardless of insertion order — that's a JS engine rule, not a
+  // sort this code was doing — so the oldest year rendered first (top) no
+  // matter what. Sorted explicitly descending here: newest year on top,
+  // oldest (2025) at the bottom.
+  container.innerHTML = Object.entries(byYear).sort((a, b) => b[0].localeCompare(a[0])).map(([year, yearItems]) => {
+    // Months and their cards read newest-first, same direction as the
+    // year-level order above.
+    const byMonth = {};
+    [...yearItems].sort((a, b) => b.date.localeCompare(a.date))
+      .forEach(r => { const k = r.date.slice(0, 7); (byMonth[k] ??= []).push(r); });
+    const monthsHtml = Object.entries(byMonth).sort((a, b) => b[0].localeCompare(a[0])).map(([key, items]) => {
+      const label = months()[+key.slice(5, 7) - 1];
+      const cards = `<div class="missed-cards">${items.map(cardHtml).join('')}</div>`;
+      return sectionHtml(key, label, items.length, 'month', cards);
+    }).join('');
+    return sectionHtml(year, year, yearItems.length, 'year', monthsHtml);
+  }).join('');
+
+  container.querySelectorAll('.missed-card').forEach((el, i) => {
+    el.style.setProperty('--i', i);
+    el.classList.add('animate-in');
+  });
+  // Whatever quotes are already warm in the cache (e.g. a re-render within
+  // the TTL) paint immediately; missedFollowUp repaints once fresh ones land.
+  _paintMissedMonthSummaries(list);
+}
+
+// "Was this month, across everything I passed on, actually a good one?" —
+// the average % move from the logged price to the latest quote, over every
+// row in the month that has both. No position size is recorded here (these
+// were never bought), so a dollar total isn't answerable — the average % is.
+// Last calendar day of a 'YYYY-MM' month key, as 'YYYY-MM-DD'. Day 0 of the
+// following month is the trick — Date normalizes a 0 day back into the last
+// day of the month before it.
+function _monthEndDate(monthKey) {
+  const [y, m] = monthKey.split('-').map(Number);
+  const d = new Date(Date.UTC(y, m, 0));
+  return d.toISOString().slice(0, 10);
+}
+function _missedIsCurrentMonth(monthKey) {
+  return monthKey === new Date().toISOString().slice(0, 7);
+}
+// The month's OWN move, not the drift since the user happened to log it — a
+// row from March read against today's price mixes six months of unrelated
+// market movement into "was March good". Past months compare against the
+// close on that month's last trading day (_missedHistClose, fetched once,
+// never stale — history doesn't change); the still-open current month has no
+// "end" yet, so it uses the same live quote the per-row "% since" already shows.
+function _missedMonthAvgPct(items, monthKey) {
+  const current = _missedIsCurrentMonth(monthKey);
+  const pts = items.map(r => {
+    const sym = (r.sym || '').toUpperCase();
+    const base = +r.price || 0;
+    if (!base) return null;
+    const price = current ? _missedQuotes[sym]?.p : _missedHistClose[sym + '|' + monthKey];
+    return price ? (price - base) / base * 100 : null;
+  }).filter(v => v !== null);
+  return pts.length ? { avg: pts.reduce((a, b) => a + b, 0) / pts.length, n: pts.length, of: items.length } : null;
+}
+function _paintMissedMonthSummaries(list) {
+  const byMonth = {};
+  list.forEach(r => { const k = (r.date || '').slice(0, 7); if (k.length === 7) (byMonth[k] ??= []).push(r); });
+  Object.entries(byMonth).forEach(([key, items]) => {
+    const el = document.getElementById('missed-month-pnl-' + key);
+    if (!el) return;
+    const s = _missedMonthAvgPct(items, key);
+    if (!s) { el.textContent = ''; el.title = ''; return; }
+    const good = s.avg >= 0;
+    const scope = _missedIsCurrentMonth(key) ? 'עד היום' : 'במהלך החודש עצמו';
+    el.innerHTML = `<span class="${good ? 'num-green' : 'num-red'}">${good ? '📈' : '📉'} ${fmtPct(s.avg)} בממוצע</span>`;
+    el.title = (s.n < s.of ? `מבוסס על ${s.n} מתוך ${s.of} — לחלק אין מחיר זמין. ` : `על ${s.n} עסקאות. `)
+      + `שינוי ${scope}, לא מהיום שנרשם.`;
+  });
+  applyPrivacy();
+}
+
+// Historical closes are immutable once the month is over — no TTL, unlike
+// _missedQuotes. Keyed 'SYM|YYYY-MM' since the same symbol can appear in
+// several months.
+const _missedHistClose = {};
+async function _fetchMissedMonthHistory(list) {
+  const need = [];
+  const seen = new Set();
+  list.forEach(r => {
+    const monthKey = (r.date || '').slice(0, 7);
+    const sym = (r.sym || '').toUpperCase();
+    if (monthKey.length !== 7 || !sym || _missedIsCurrentMonth(monthKey) || symIsCrypto(sym)) return;
+    const key = sym + '|' + monthKey;
+    if (seen.has(key) || key in _missedHistClose) return;
+    seen.add(key);
+    need.push({ sym, monthKey, key });
+  });
+  if (!need.length) return;
+  const token = await _getToken();
+  await Promise.all(need.map(async ({ sym, monthKey, key }) => {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=history&symbol=${encodeURIComponent(sym)}&date=${_monthEndDate(monthKey)}`,
+        { headers: { 'Authorization': `Bearer ${token}` } });
+      if (res.ok) { const data = await res.json(); _missedHistClose[key] = data?.c || null; }
+    } catch { /* leaves the key unset — next visit retries rather than caching a failure */ }
+  }));
+  _paintMissedMonthSummaries(list);
+}
+
+async function missedRender(force = false) {
+  if (_missedLoaded && !force) {
+    missedRenderList(_missedList);
+    missedFollowUp(_missedList);
+    _fetchMissedMonthHistory(_missedList);
+    return;
+  }
+  const list = await missedLoad();
+  _missedList = list;
+  _missedLoaded = true;
+  missedRenderList(list);
+  _paintMissedReasons(list);
+  missedFollowUp(list);
+  _fetchMissedMonthHistory(list);
+}
+
+// A missed-opportunity log without an outcome is a list of regrets. This says
+// what the trade would have done, which is the only part worth learning from.
+// Quotes are cached with a timestamp, not forever. The old cache keyed on
+// `=== undefined`, so the "% since" froze at whatever the price was the first
+// time the tab opened — and the socket teardown on visibilitychange keeps this
+// page alive in bfcache for days, so "first time" could be days ago.
+// A failed fetch is never written to the cache either: the shared Finnhub key
+// is rate-limited to 30/min per user and missedFollowUp fires every symbol at
+// once, so a single 429 used to blank that symbol's percentage permanently.
+const _missedQuotes = {};
+// Why a setup was missed, read off the free-text note. Order matters: "didn't
+// act because of the market" is a market call, not hesitation.
+function _missedReason(note) {
+  const n = (note || '').trim();
+  if (!n) return 'none';
+  if (/זוהה אוטומטית/.test(n)) return 'auto';
+  if (/שוק|ריבית|תנודתי/.test(n)) return 'market';
+  if (/לא שמתי לב|שכחתי|לא ראיתי|ברח לי|מילואים|לא סיננתי/.test(n)) return 'noticed';
+  if (/גאפ|ניעור|ממוצע|סיכון|lps|נר /i.test(n)) return 'setup';
+  if (/ביטחון|לא פעלתי|לא הייתי סגור|שאנן|היסוס|פחד/.test(n)) return 'doubt';
+  return 'other';
+}
+const _MISSED_REASON_LBL = { market: 'שוק / ריבית', noticed: 'לא שמתי לב', doubt: 'היסוס', setup: 'בעיה בסטאפ', auto: 'זוהה אוטומטית', other: 'אחר', none: 'בלי הערה' };
+// Grouped by reason, each with what those trades did since: the log itself
+// shows the pattern only one card at a time.
+function _paintMissedReasons(list) {
+  const el = document.getElementById('missed-reasons');
+  if (!el) return;
+  if (!list.length) { el.innerHTML = ''; return; }
+  const g = {};
+  for (const r of list) {
+    const k = _missedReason(r.note), p = _missedQuotes[(r.sym || '').toUpperCase()]?.p, base = +r.price || 0;
+    (g[k] ??= { n: 0, chg: [] }).n++;
+    if (p && base) g[k].chg.push((p - base) / base * 100);
+  }
+  const rows = Object.entries(g).sort((a, b) => b[1].n - a[1].n).map(([k, v]) => {
+    const avg = v.chg.length ? v.chg.reduce((s, x) => s + x, 0) / v.chg.length : null;
+    const up = v.chg.length ? Math.round(v.chg.filter(x => x > 0).length / v.chg.length * 100) : null;
+    return `<tr><td>${_MISSED_REASON_LBL[k]}</td><td>${v.n}</td><td>${avg == null ? '—' : `<span class="${avg >= 0 ? 'num-green' : 'num-red'}">${fmtPct(avg)}</span>`}</td><td>${up == null ? '—' : up + '%'}</td></tr>`;
+  }).join('');
+  el.innerHTML = `<div class="missed-reasons-title">למה פספסתי — ומה קרה אחר כך</div>`
+    + `<table class="missed-reasons-table"><thead><tr><th scope="col">סיבה</th><th scope="col">פעמים</th><th scope="col">ממוצע מאז</th><th scope="col">עלו מאז</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+const _MISSED_QUOTE_TTL = 60_000;
+async function missedFollowUp(list) {
+  if (!list.length) return;
+  const token = await _getToken();
+  const syms = [...new Set(list.map(r => (r.sym || '').toUpperCase()).filter(Boolean))];
+  await Promise.all(syms.map(async sym => {
+    // Finnhub answers a crypto ticker with c:0, which looked identical to a
+    // failed request — the card just stayed blank forever with no explanation.
+    if (symIsCrypto(sym)) { _missedQuotes[sym] = { p: null, ts: Infinity }; }
+    const hit = _missedQuotes[sym];
+    if (!hit || Date.now() - hit.ts > _MISSED_QUOTE_TTL) {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=quote&symbol=${encodeURIComponent(sym)}`,
+          { headers: { 'Authorization': `Bearer ${token}` } });
+        if (res.ok) {
+          const data = await res.json();
+          _missedQuotes[sym] = { p: +data.c || null, ts: Date.now() };
+        }
+      } catch { /* keep any previous quote rather than blanking the card */ }
+    }
+    const price = _missedQuotes[sym]?.p;
+    list.filter(r => (r.sym || '').toUpperCase() === sym).forEach(r => {
+      const el = document.getElementById('missed-since-' + r.id);
+      if (!el) return;
+      const base = +r.price || 0;
+      if (!price || !base) {
+        // A known-unquotable symbol says so; a request still in flight stays
+        // blank rather than flashing a dash it will replace a moment later.
+        el.textContent = (_missedQuotes[sym] && _missedQuotes[sym].p === null) ? '—' : '';
+        el.title = el.textContent ? 'אין מקור ציטוט לסימבול הזה' : '';
+        return;
+      }
+      el.title = '';
+      const chg = (price - base) / base * 100;
+      el.innerHTML = `<span class="${chg >= 0 ? 'num-green' : 'num-red'}">${fmtPct(chg)}</span>
+        <span style="color:var(--text3)">מאז · $${fmtPrice(price)}</span>`;
+    });
+  }));
+  _paintMissedMonthSummaries(list);
+  _paintMissedReasons(list);
+  applyPrivacy();
+}
+
+function missedEdit(id) {
+  const r = _missedList.find(x => String(x.id) === String(id));
+  if (!r) return;
+  const card = document.getElementById('missed-row-' + id);
+  if (!card) return;
+  card.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <input class="form-control" style="font-size:12px;padding:4px 8px;text-transform:uppercase" value="${esc(r.sym)}" id="me-sym-${id}" placeholder="סימבול">
+      <input class="form-control" style="font-size:12px;padding:4px 8px" value="${esc(r.sector||'')}" id="me-sec-${id}" placeholder="סקטור">
+      <input class="form-control" type="date" style="font-size:12px;padding:4px 8px" value="${esc(r.date)}" id="me-date-${id}">
+      <input class="form-control" type="number" style="font-size:12px;padding:4px 8px" value="${r.price}" step="0.0001" id="me-price-${id}" placeholder="מחיר">
+      <input class="form-control" style="font-size:12px;padding:4px 8px" value="${esc(r.note||'')}" id="me-note-${id}" placeholder="הערה" maxlength="120">
+      <div style="display:flex;gap:6px;margin-top:2px;">
+        <button class="btn btn-primary btn-sm" style="flex:1;font-size:11px" onclick="missedSaveEdit('${id}')">שמור</button>
+        <button class="btn btn-secondary btn-sm" style="font-size:11px" onclick="missedRender()">ביטול</button>
+      </div>
+    </div>`;
+}
+
+async function missedSaveEdit(id) {
+  const sym   = (document.getElementById('me-sym-'+id)?.value||'').trim().toUpperCase().replace(/[^A-Z0-9._\-]/g,'');
+  const sector= (document.getElementById('me-sec-'+id)?.value||'').trim().slice(0,40);
+  const date  = document.getElementById('me-date-'+id)?.value||'';
+  const price = parseFloat(document.getElementById('me-price-'+id)?.value);
+  const note  = (document.getElementById('me-note-'+id)?.value||'').trim().slice(0,120);
+
+  if (!sym)                   { toast('הכנס סימבול','error'); return; }
+  if (!date)                  { toast('הכנס תאריך','error'); return; }
+  if (isNaN(price)||price<=0) { toast('הכנס מחיר תקין','error'); return; }
+
+  _rtSuppress('missed_opportunities');
+  const { error } = await _sb.from('missed_opportunities')
+    .update({ symbol: sym, sector, date, price, note })
+    .eq('id', id).eq('user_id', _currentUser.id);
+  if (error) { toast('שגיאה בעדכון','error'); console.error(error); return; }
+  await missedRender(true);
+  toast('עודכן ✓','success');
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('[SW] Registered:', reg.scope))
+      .catch(err => console.log('[SW] Registration failed:', err));
+  });
+}
+
+// THEME TRACKER
+// ─────────────────────────────────────────────
+let _ttData = null, _ttIndices = null, _ttPeriod = 'today', _ttLoading = false, _ttTimer = null;
+
+function ttSetPeriod(p, btn) {
+  _ttPeriod = p;
+  document.querySelectorAll('.tt-period').forEach(b => b.classList.toggle('active', b.dataset.p === p));
+  if (_ttData) ttRender(_ttData, _ttIndices);
+  if (_sectorTicker) {
+    if (_sectorCache[_sectorTicker]) _renderHoldingsForPeriod(_sectorCache[_sectorTicker], p);
+    else _fetchAndRender(_sectorTicker, false);
+  }
+}
+
+function ttStartTimer() {
+  ttStopTimer();
+  _ttTimer = setInterval(() => ttLoad(true), 60000);
+}
+
+function ttScheduleMidnight() {
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(24, 0, 30, 0); // 00:00:30 Israel time next day
+  const ms = next - now;
+  setTimeout(() => {
+    _ttData = null; // force fresh fetch
+    if (document.getElementById('tab-themes')?.classList.contains('active')) ttLoad(true);
+    ttScheduleMidnight(); // reschedule for next day
+  }, ms);
+}
+
+function ttStopTimer() {
+  if (_ttTimer) { clearInterval(_ttTimer); _ttTimer = null; }
+}
+
+async function ttLoad(force = false) {
+  if (_ttLoading) return;
+  if (_ttData && !force) { ttRender(_ttData, _ttIndices); return; }
+  _ttLoading = true;
+  let silent = !!_ttData;
+  // Paint the last payload from localStorage first. _ttData is in-memory only,
+  // so every page reload previously sat on "Loading..." for the length of a
+  // cold 37-ticker Yahoo fan-out.
+  if (!silent) {
+    const cachedTT = _pulseCacheRead('theme-tracker', 24 * 60 * 60 * 1000);
+    if (cachedTT?.payload?.themes) {
+      _ttData = cachedTT.payload.themes;
+      _ttIndices = cachedTT.payload.indices || [];
+      const _ttU = document.getElementById('tt-updated');
+      if (_ttU) _ttU.textContent = 'עודכן: ' + new Date(cachedTT.payload.ts || cachedTT.ts).toLocaleTimeString('he-IL', { hour:'2-digit', minute:'2-digit' });
+      ttRender(_ttData, _ttIndices);
+      silent = true;
+    }
+  }
+  if (!silent) {
+    document.getElementById('tt-grid').innerHTML = '<div class="tt-loading">Loading...</div>';
+    const _idxEl = document.getElementById('tt-indices');
+    if (_idxEl) _idxEl.innerHTML = '';
+    const _metaEl = document.getElementById('tt-meta');
+    if (_metaEl) _metaEl.innerHTML = '';
+  }
+  try {
+    const _ttToken = await _getToken();
+    // No timeout here meant a stalled theme-tracker response (cache miss,
+    // Yahoo slow) left the tab stuck on "Loading..." indefinitely. 15s covers
+    // the edge function's own worst case (a 6s-per-ticker timeout across two
+    // host attempts) plus network overhead.
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 15000);
+    const res = await fetch(
+      `${SUPABASE_URL}/functions/v1/theme-tracker`,
+      { headers: { 'Authorization': `Bearer ${_ttToken}` }, signal: controller.signal }
+    );
+    clearTimeout(tid);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    _pulseCacheWrite('theme-tracker', json);
+    _ttData = json.themes;
+    _ttIndices = json.indices || [];
+    const ts = new Date(json.ts);
+    const el = document.getElementById('tt-updated');
+    if (el) el.textContent = 'עודכן: ' + ts.toLocaleTimeString('he-IL', { hour:'2-digit', minute:'2-digit' });
+    ttRender(_ttData, _ttIndices);
+  } catch(e) {
+    if (!silent) document.getElementById('tt-grid').innerHTML = '<div class="tt-loading">שגיאה בטעינת נתונים — <button onclick="ttLoad(true)" style="background:none;border:none;color:var(--accent);text-decoration:underline;cursor:pointer;font:inherit;padding:0;">נסה שוב</button></div>';
+  } finally {
+    _ttLoading = false;
+  }
+}
+
+function ttRender(themes, indices) {
+  const grid = document.getElementById('tt-grid');
+  if (!grid) return;
+  const pKey = _ttPeriod;
+
+  // ── Indices bar ──
+  const indicesEl = document.getElementById('tt-indices');
+  if (indicesEl && indices?.length) {
+    indicesEl.innerHTML = indices.map(idx => {
+      const pct = idx[pKey];
+      const cls = pct == null ? 'flat' : pct > 0 ? 'pos' : pct < 0 ? 'neg' : 'flat';
+      const sign = pct != null && pct > 0 ? '+' : '';
+      const display = pct != null ? sign + pct.toFixed(2) + '%' : '—';
+      return `<div class="tt-index-card">
+        <div class="tt-index-name">${esc(idx.name)}</div>
+        <div class="tt-index-pct ${cls}">${display}</div>
+        <div class="tt-index-ticker">${esc(idx.ticker)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Theme list ──
+  const valid = themes.filter(t => t[pKey] != null);
+  const sorted = [...valid].sort((a, b) => b[pKey] - a[pKey]);
+  if (!sorted.length) { grid.innerHTML = '<div class="tt-loading">אין נתונים לתקופה זו</div>'; return; }
+
+  // ── Sentiment Score (overview widget only) ──
+  {
+    const green = sorted.filter(t => t[pKey] >= 0).length;
+    const total = sorted.length;
+    const breadthScore = (green / total) * 100;
+    const avgPct = sorted.reduce((s, t) => s + t[pKey], 0) / total;
+    const momentumScore = Math.min(Math.max((avgPct + 5) / 10 * 100, 0), 100);
+    const score = Math.round(breadthScore * 0.5 + momentumScore * 0.5);
+    const [label, color] = score >= 80 ? ['Extreme Greed', '#0d9488']
+      : score >= 60 ? ['Greed', '#84cc16']
+      : score >= 40 ? ['Neutral', '#94a3b8']
+      : score >= 20 ? ['Fear', '#f97316']
+      : ['Extreme Fear', '#e11d48'];
+  }
+
+  // ── Meta: Top3/Bottom3 + Breadth ──
+  const metaEl = document.getElementById('tt-meta');
+  if (metaEl) {
+    const _ttN = window.innerWidth <= 768 ? 3 : 5;
+    const top3 = sorted.slice(0, _ttN);
+    const bot3 = sorted.slice(-_ttN).reverse();
+    const green = sorted.filter(t => t[pKey] >= 0).length;
+    const red   = sorted.filter(t => t[pKey] <  0).length;
+    const total = sorted.length;
+    const greenPct = Math.round((green / total) * 100);
+    const redPct   = 100 - greenPct;
+
+    const podiumRow = t => {
+      const pct = t[pKey];
+      const pos = pct >= 0;
+      const sign = pos ? '+' : '';
+      return `<div class="tt-podium-row">
+        <span class="tt-podium-name">${esc(t.name)}</span>
+        <span class="tt-podium-pct ${pos?'pos':'neg'}">${sign}${pct.toFixed(2)}%</span>
+      </div>`;
+    };
+
+    metaEl.innerHTML = `
+      <div class="tt-meta-card">
+        <div class="tt-meta-title">Top ${_ttN} &nbsp;·&nbsp; Bottom ${_ttN}</div>
+        <div class="tt-podium">${top3.map(podiumRow).join('')}</div>
+        <div style="height:8px"></div>
+        <div class="tt-podium">${bot3.map(podiumRow).join('')}</div>
+      </div>
+      <div class="tt-meta-card">
+        <div class="tt-meta-title">Market Breadth</div>
+        <div class="tt-breadth-bar-wrap" style="background:linear-gradient(to right,#0d9488 ${greenPct}%,#e11d48 ${greenPct}%)"></div>
+        <div class="tt-breadth-labels">
+          <span class="tt-breadth-red">▼ ${red} <span style="opacity:0.7">(${redPct}%)</span></span>
+          <span class="tt-breadth-neutral">${total} themes</span>
+          <span class="tt-breadth-green">▲ ${green} <span style="opacity:0.7">(${greenPct}%)</span></span>
+        </div>
+        <div class="tt-breadth-chips" id="tt-breadth-chips-inner"></div>
+      </div>`;
+    const chipsEl = document.getElementById('tt-breadth-chips-inner');
+    if (chipsEl) {
+      const greens = sorted.filter(t => t[pKey] > 0).slice(0, 7);
+      const reds   = sorted.filter(t => t[pKey] < 0).slice(-7).reverse();
+      const rows = Math.max(greens.length, reds.length);
+      let chipsHtml = '';
+      for (let i = 0; i < rows; i++) {
+        const g = greens[i], r = reds[i];
+        chipsHtml += r
+          ? `<div class="tt-chip red" role="button" tabindex="0" style="cursor:pointer" onclick="sectorModalOpen('${esc(r.ticker)}','${esc(r.name)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sectorModalOpen('${esc(r.ticker)}','${esc(r.name)}')}"><span>${esc(r.name)}</span><span>${r[pKey].toFixed(1)}%</span></div>`
+          : '<div></div>';
+        chipsHtml += g
+          ? `<div class="tt-chip green" role="button" tabindex="0" style="cursor:pointer" onclick="sectorModalOpen('${esc(g.ticker)}','${esc(g.name)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sectorModalOpen('${esc(g.ticker)}','${esc(g.name)}')}"><span>${esc(g.name)}</span><span>+${g[pKey].toFixed(1)}%</span></div>`
+          : '<div></div>';
+      }
+      chipsEl.innerHTML = chipsHtml;
+    }
+  }
+
+  const maxAbs = Math.max(...sorted.map(t => Math.abs(t[pKey])), 0.01);
+  const renderRow = t => {
+    const pct = t[pKey];
+    const pos = pct >= 0;
+    const barW = Math.min((Math.abs(pct) / maxAbs) * 48, 48);
+    const sign = pos ? '+' : '';
+    return `<div class="tt-row" role="button" tabindex="0" onclick="sectorModalOpen('${esc(t.ticker)}','${esc(t.name)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sectorModalOpen('${esc(t.ticker)}','${esc(t.name)}')}">
+      <div class="tt-name">${esc(t.name)}</div>
+      <div class="tt-bar-wrap">
+        <div class="tt-bar-bg"></div>
+        <div class="tt-bar ${pos?'pos':'neg'}" style="width:${barW}%"></div>
+      </div>
+      <div class="tt-pct ${pos?'pos':'neg'}">${sign}${pct.toFixed(2)}%</div>
+    </div>`;
+  };
+  const half = Math.ceil(sorted.length / 2);
+  grid.innerHTML = `<div class="tt-col">${sorted.slice(half).map(renderRow).join('')}</div>`
+                 + `<div class="tt-col">${sorted.slice(0, half).map(renderRow).join('')}</div>`;
+}
+
+// ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// SECTOR HOLDINGS MODAL
+// ─────────────────────────────────────────────
+let _sectorTimer = null, _sectorTicker = null;
+
+function _renderHoldingsForPeriod(allHoldings, period) {
+  const body = document.getElementById('sector-modal-body');
+  if (!body) return;
+  const key = period || 'today';
+  const sorted = allHoldings
+    .filter(h => h[key] != null)
+    .sort((a, b) => b[key] - a[key])
+    .slice(0, 10);
+  if (!sorted.length) { body.innerHTML = '<div class="sector-modal-loading">אין נתונים לתקופה זו</div>'; return; }
+  body.innerHTML = sorted.map(h => {
+    const pct = h[key];
+    const pos = pct > 0, neg = pct < 0;
+    const cls = pos ? 'pos' : neg ? 'neg' : '';
+    const sign = pos ? '+' : '';
+    return '<div class="sector-holding-row">'
+      + '<span class="sector-holding-sym">' + esc(h.symbol) + '</span>'
+      + '<span class="sector-holding-name">' + esc(h.name) + '</span>'
+      + '<span class="sector-holding-pct ' + cls + '">' + sign + pct.toFixed(2) + '%</span>'
+      + '</div>';
+  }).join('');
+}
+
+async function _fetchAndRender(ticker, showLoading) {
+  const body = document.getElementById('sector-modal-body');
+  if (!body) return;
+  if (showLoading) body.innerHTML = '<div class="sector-modal-loading">Loading...</div>';
+  try {
+    const _shToken = await _getToken();
+    const res = await fetch(
+      `${SUPABASE_URL}/functions/v1/sector-holdings?ticker=${encodeURIComponent(ticker)}`,
+      { headers: { 'Authorization': `Bearer ${_shToken}` } }
+    );
+    const json = await res.json();
+    if (json.error) { body.innerHTML = `<div class="sector-modal-loading">${json.error}</div>`; return; }
+    if (!json.holdings?.length) { body.innerHTML = '<div class="sector-modal-loading">No holdings data</div>'; return; }
+    _sectorCache[ticker] = json.holdings;
+    _sectorSaveLS(ticker, json.holdings);
+    _renderHoldingsForPeriod(json.holdings, _ttPeriod);
+    const sub = document.getElementById('sector-modal-sub');
+    if (sub) sub.textContent = ticker + ' — updated ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  } catch {
+    if (showLoading) body.innerHTML = '<div class="sector-modal-loading">Error loading data</div>';
+  }
+}
+
+async function sectorModalOpen(ticker, name) {
+  const overlay = document.getElementById('sector-modal-overlay');
+  const modal   = document.getElementById('sector-modal');
+  const title   = document.getElementById('sector-modal-title');
+  if (!modal) return;
+
+  _sectorTicker = ticker;
+  title.textContent = name;
+  overlay.style.display = 'block';
+  modal.style.display   = 'block';
+
+  clearInterval(_sectorTimer);
+  // Stale-while-revalidate: show any cached data (memory → localStorage)
+  // instantly, then refresh in the background. Only show a spinner on a true
+  // first open with nothing cached.
+  const lsHit = !_sectorCache[ticker] && _sectorLoadLS()[ticker];
+  if (lsHit?.holdings?.length) _sectorCache[ticker] = lsHit.holdings;
+  if (_sectorCache[ticker]) {
+    _renderHoldingsForPeriod(_sectorCache[ticker], _ttPeriod);
+    _fetchAndRender(ticker, false); // refresh in background, no spinner
+  } else {
+    await _fetchAndRender(ticker, true);
+  }
+  _sectorTimer = setInterval(() => _fetchAndRender(_sectorTicker, false), 60000);
+}
+
+function sectorModalClose() {
+  clearInterval(_sectorTimer);
+  _sectorTimer = null;
+  _sectorTicker = null;
+  document.getElementById('sector-modal-overlay').style.display = 'none';
+  document.getElementById('sector-modal').style.display = 'none';
+}
+
+// BROKER CSV IMPORT
+// ─────────────────────────────────────────────
+const BROKER_DEFS = {
+  colmex: {
+    name: 'Colmex Pro',
+    cols: {
+      symbol:     ['Symbol','Ticker','Instrument','Description','Sym'],
+      side:       ['Side','Direction','Action','Type','Buy/Sell','B/S'],
+      shares:     ['Quantity','Qty','Volume','Size','Amount','Shares'],
+      entryPrice: ['Open Price','Entry Price','Price','Open','Bought'],
+      exitPrice:  ['Close Price','Exit Price','Close','Sold'],
+      entryDate:  ['Date/Time','DateTime','Open Date','Date','Time','Open Time','Trade Date'],
+      commission: ['Execution fee','Commission','Fee','Fees','Commissions','Exec Fee'],
+      pnl:        ['Net P/L','Net PL','NetPL','P/L','PnL','Profit','Gross P/L','Net Profit'],
+    },
+    sideMap: { 'buy':'L','long':'L','b':'L','l':'L','sell':'S','short':'S','s':'S' },
+  }
+};
+
+let _biRows = null, _biMapping = null, _biTrades = null;
+
+function brokerLoadFile(input) {
+  const file = (input.files || input)[0];
+  if (!file) return;
+  const broker = document.getElementById('bi-broker').value;
+  if (!broker) { toast('בחר ברוקר תחילה', true); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      _biRows = biParseCSV(e.target.result);
+      if (!_biRows.length) { toast('לא נמצאו שורות בקובץ', true); return; }
+      const def = BROKER_DEFS[broker];
+      _biMapping = biDetectCols(Object.keys(_biRows[0]), def.cols);
+      biShowMapping(_biMapping, Object.keys(_biRows[0]));
+    } catch(err) { toast('שגיאה בקריאת הקובץ', true); }
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function biParseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const headers = biSplitLine(lines[0]);
+  return lines.slice(1).filter(l => l.trim()).map(line => {
+    const vals = biSplitLine(line);
+    const obj = {};
+    headers.forEach((h, i) => { obj[h.trim()] = (vals[i] || '').trim(); });
+    return obj;
+  });
+}
+
+function biSplitLine(line) {
+  const r = []; let cur = '', q = false;
+  for (const c of line) {
+    if (c === '"') q = !q;
+    else if (c === ',' && !q) { r.push(cur); cur = ''; }
+    else cur += c;
+  }
+  r.push(cur);
+  return r;
+}
+
+function biDetectCols(headers, colDefs) {
+  const map = {};
+  for (const [field, candidates] of Object.entries(colDefs)) {
+    for (const c of candidates) {
+      const found = headers.find(h => h.toLowerCase().trim() === c.toLowerCase().trim());
+      if (found) { map[field] = found; break; }
+    }
+  }
+  return map;
+}
+
+function biShowMapping(mapping, headers) {
+  const labels = {
+    symbol:'סימבול *', side:'כיוון (L/S) *', shares:'כמות *',
+    entryPrice:'מחיר כניסה *', exitPrice:'מחיר יציאה',
+    entryDate:'תאריך *', commission:'עמלה', pnl:'P&L'
+  };
+  let h = `<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">מיפוי עמודות (ניתן לשנות):</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">`;
+  for (const [field, label] of Object.entries(labels)) {
+    const sel = mapping[field] || '';
+    h += `<div>
+      <div class="ibkr-field-label">${label}</div>
+      <select class="form-control" style="font-size:12px;padding:4px 8px;"
+        onchange="_biMapping['${field}']=this.value">
+        <option value="">— לא ממופה —</option>
+        ${headers.map(hd => `<option value="${esc(hd)}"${hd===sel?' selected':''}>${esc(hd)}</option>`).join('')}
+      </select>
+    </div>`;
+  }
+  h += `</div><button class="btn btn-secondary btn-sm" onclick="biPreview()">👁 תצוגה מקדימה</button></div>`;
+  const el = document.getElementById('bi-mapping');
+  el.innerHTML = h; el.style.display = 'block';
+  document.getElementById('bi-preview').style.display = 'none';
+  document.getElementById('bi-import-btn').style.display = 'none';
+}
+
+function biPreview() {
+  const broker = document.getElementById('bi-broker').value;
+  const def = BROKER_DEFS[broker];
+  _biTrades = biParseRows(_biRows, _biMapping, def);
+  if (!_biTrades.length) { toast('לא זוהו עסקאות — בדוק מיפוי עמודות', true); return; }
+  const show = _biTrades.slice(0, 5);
+  let h = `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">
+      ${_biTrades.length} עסקאות זוהו — מוצגות 5 ראשונות:
+    </div>
+    <div class="table-wrap" style="margin-bottom:12px;max-height:220px;overflow-y:auto;">
+    <table><thead><tr><th>סימבול</th><th>כיוון</th><th>תאריך</th><th>כניסה</th><th>יציאה</th><th>כמות</th><th>עמלה</th></tr></thead><tbody>`;
+  for (const t of show) {
+    h += `<tr class="data-row">
+      <td><strong>${esc(t.symbol)}</strong></td>
+      <td><span class="badge badge-${t.ls}">${t.ls}</span></td>
+      <td>${fmtDate(t.entryDate)}</td>
+      <td>$${fmtPrice(t.entryPrice)}</td>
+      <td>${t.exitPrice ? '$'+fmtPrice(t.exitPrice) : '—'}</td>
+      <td>${t.shares}</td>
+      <td>$${fmt(t.commission||0)}</td>
+    </tr>`;
+  }
+  h += `</tbody></table></div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="ibkr-field-label" style="margin:0;">סוג נכס:</div>
+      <select id="bi-asset-type" class="form-control" style="font-size:12px;padding:4px 8px;width:130px;">
+        <option value="stock">מניות</option>
+        <option value="crypto">קריפטו</option>
+      </select>
+    </div>
+  </div>`;
+  const el = document.getElementById('bi-preview');
+  el.innerHTML = h; el.style.display = 'block';
+  document.getElementById('bi-import-btn').style.display = 'inline-flex';
+}
+
+function biParseRows(rows, mapping, def) {
+  const trades = [];
+  for (const row of rows) {
+    try {
+      const symbol = (row[mapping.symbol] || '').trim().toUpperCase().replace(/\s+/g,'');
+      if (!symbol) continue;
+      const sideRaw = (row[mapping.side] || '').trim().toLowerCase();
+      const ls = def.sideMap[sideRaw] || (sideRaw.startsWith('b') || sideRaw.startsWith('l') ? 'L' : 'S');
+      const shares = parseFloat(row[mapping.shares]) || 0;
+      if (shares <= 0) continue;
+      let entryPrice = parseFloat(row[mapping.entryPrice]) || 0;
+      const rawDate = (row[mapping.entryDate] || '').trim();
+      const entryDate = biParseDate(rawDate);
+      if (!entryDate) continue;
+      let exitPrice = mapping.exitPrice ? (parseFloat(row[mapping.exitPrice]) || 0) : 0;
+      const commission = mapping.commission ? (parseFloat(row[mapping.commission]) || 0) : 0;
+      const pnl = mapping.pnl ? (parseFloat(row[mapping.pnl]) || 0) : 0;
+      // Colmex "Bought"/"Sold" may be total values — detect and convert to price
+      if (entryPrice > shares * 1000 && shares > 0) entryPrice = entryPrice / shares;
+      if (exitPrice > shares * 1000 && shares > 0) exitPrice = exitPrice / shares;
+      // Back-calc exit price from P/L if missing
+      if (!exitPrice && pnl && entryPrice && shares) {
+        const dir = ls === 'L' ? 1 : -1;
+        exitPrice = entryPrice + (pnl + commission) / shares * dir;
+        if (exitPrice < 0) exitPrice = 0;
+      }
+      // A row carrying an exit price is a closed position, so record how much
+      // of it closed — every other import path (Bybit, and the manual broker
+      // paths) sets closedShares explicitly. Leaving it null made these trades
+      // invisible to renderMonthlyTracker, which selects on closedShares > 0,
+      // so a CSV-imported month showed no performance at all.
+      trades.push({ symbol, ls, entryDate, entryPrice, exitPrice: exitPrice > 0 ? exitPrice : null, shares, commission,
+                    closedShares: exitPrice > 0 ? shares : null });
+    } catch(e) { /* skip bad row */ }
+  }
+  return trades;
+}
+
+function biParseDate(raw) {
+  if (!raw) return null;
+  // YYYY-MM-DD or YYYY/MM/DD
+  let m = raw.match(/^(\d{4})[-\/\.](\d{1,2})[-\/\.](\d{1,2})/);
+  if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  // DD/MM/YYYY or MM/DD/YYYY
+  m = raw.match(/^(\d{1,2})[-\/\.](\d{1,2})[-\/\.](\d{4})/);
+  if (m) {
+    const d1 = +m[1], d2 = +m[2];
+    if (d1 > 12) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+    return `${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+  }
+  return null;
+}
+
+async function brokerImport() {
+  if (!_biTrades?.length) return;
+  const type = document.getElementById('bi-asset-type').value;
+  const btn = document.getElementById('bi-import-btn');
+  btn.disabled = true; btn.textContent = 'מייבא...';
+  let added = 0, skipped = 0, dupes = 0;
+  for (const t of _biTrades) {
+    t.type = type;
+    const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
+    if (db._deletedFingerprints?.has(fp)) { dupes++; continue; }
+    const existing = (type==='stock'?db.stocks:db.crypto).find(x =>
+      x.symbol===t.symbol && x.entryDate===t.entryDate &&
+      Math.abs((x.entryPrice||0)-(t.entryPrice||0)) < 0.001 &&
+      Math.abs((x.shares||0)-(t.shares||0)) < 0.001);
+    if (existing) { dupes++; continue; }
+    try {
+      const row = _tradeToRow(t);
+      const { data, error } = await _sb.from('trades').insert(row).select().single();
+      if (error) { skipped++; continue; }
+      const trade = _rowToTrade(data);
+      (type==='stock' ? db.stocks : db.crypto).push(trade);
+      added++;
+    } catch(e) { skipped++; }
+  }
+  btn.disabled = false; btn.textContent = 'ייבא עסקאות';
+  toast(`ייבוא הסתיים: ${added} נוספו${dupes?' | '+dupes+' כפולות':''}${skipped?' | '+skipped+' שגיאות':''}`);
+  if (added) { renderTable(type); renderOverview(); }
+  _biTrades = null;
+  document.getElementById('bi-preview').style.display = 'none';
+  document.getElementById('bi-import-btn').style.display = 'none';
+}

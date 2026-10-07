@@ -16,7 +16,7 @@
 
 changed=$(git diff --cached --name-only)
 
-if echo "$changed" | grep -qE '^(dashboard\.html|tests/(logic\.test\.mjs|harness\.mjs))$'; then
+if echo "$changed" | grep -qE '^(dashboard\.html|assets/js/.*\.js|tests/(logic\.test\.mjs|harness\.mjs))$'; then
   echo "pre-commit: dashboard.html or the test harness changed — running tests/logic.test.mjs"
   if ! node --test tests/logic.test.mjs; then
     echo ""

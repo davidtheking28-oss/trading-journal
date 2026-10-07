@@ -1,6 +1,6 @@
 # Tests
 
-No build step, no dependencies. Node's built-in runner only.
+No build step. Logic tests use Node's built-in runner; browser tests use Playwright.
 
 ```bash
 node --test tests/logic.test.mjs
@@ -27,7 +27,7 @@ writes every diff to this file) could silently skip or claim was done.
 
 ## Layer 1 — logic (`logic.test.mjs`)
 
-`harness.mjs` reads `dashboard.html`, pulls individual functions out of the
+`harness.mjs` reads `dashboard.html` and its ordered scripts in `assets/js/`, pulls individual functions out of the
 inline script by name, and evaluates just those against small stubs (including a
 minimal `DOMParser` so `flexParseXML` can run headless). The app boots straight
 into the DOM and Supabase, so importing it wholesale is not possible — this is
@@ -68,3 +68,44 @@ Related: `detect_fragmented_trades(uuid)` flags symbol/day clusters of ≥3 IBKR
 rows as a re-fragmentation early warning. A nonzero result is not proof of a bug
 on its own — genuine high-frequency day trading looks the same. Verify against
 the raw Flex XML before acting.
+
+## Browser regressions
+
+```bash
+npm install --prefix tests --ignore-scripts --no-package-lock
+cd tests
+npx playwright install chromium
+cd ..
+node --test tests/browser.test.cjs
+```
+
+The runner starts its own localhost HTTP server and loads the real dashboard,
+including the external frontend scripts. Supabase authentication and data calls
+are mocked in `fixtures/supabase-browser.js`; no live trading accounts or credentials
+are needed. Chart.js is stubbed because these cases test account/portfolio workflows,
+not chart rendering. They cover login, account replacement, portfolio switching during
+a delayed save, offline saving, retry, save status and leaving with unsaved edits.
+CI runs this suite before either deployment. Browser installation needs network access;
+the test process and browser need localhost access.
+
+## Atomic investment persistence
+
+`atomic-investments.sql` tests the deployed `save_investment_portfolio` RPC under the
+authenticated role. Run it through the Supabase MCP SQL tool. It creates temporary
+test portfolios for an existing account inside a transaction and ends with `ROLLBACK`.
+It checks full rollback after an invalid holding, stale-version rejection, cross-account
+access denial, cross-portfolio holding protection, stable IDs, deleting the last holding,
+and anonymous execution denial. It never commits test rows.
+
+The client suite also checks that acknowledged saves clear unsaved state, failed saves
+retain edits and offer retry, older acknowledgements leave newer input pending, and
+session changes invalidate queued or in-flight responses.
+
+## Recovery and monitoring drills
+
+Run `backup-restore.sql` and `monitoring.sql` through Supabase MCP.
+Both end in `ROLLBACK`. The recovery drill restores private pre-rollout snapshots into
+temporary tables with current schema constraints and checks identical data and valid
+relationships. The monitoring drill confirms a synthetic investment-save failure is
+included in the existing scheduled health report without sending a notification.
+See `docs/OPERATIONS.md` for rollout checks and the recovery scope.

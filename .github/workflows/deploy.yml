@@ -26,6 +26,16 @@ jobs:
       - name: Run logic regression suite
         run: node --test tests/logic.test.mjs
 
+      - name: Install browser test dependencies
+        run: npm install --prefix tests --ignore-scripts --no-package-lock
+
+      - name: Install test browser
+        working-directory: tests
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser regression suite
+        run: node --test tests/browser.test.cjs
+
       # The edge functions are TypeScript on Deno, so the Node suite above cannot
       # reach them. This covers the stale-while-revalidate contract the market
       # pulse widgets depend on: its failure mode is silent — the page still
@@ -61,14 +71,22 @@ jobs:
           sed -i "s|__SUPABASE_URL__|${{ secrets.SUPABASE_URL }}|g" dashboard.html
           sed -i "s|__SUPABASE_ANON__|${{ secrets.SUPABASE_ANON_KEY }}|g" dashboard.html
           sed -i "s|tj-v[0-9]*|tj-$(git rev-parse --short HEAD)|g" sw.js
+          sed -i "s|__APP_VERSION__|$(git rev-parse --short HEAD)|g" dashboard.html sw.js
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: Stage public website files
+        run: |
+          mkdir -p _site/supabase/functions/_shared
+          cp *.html sw.js manifest.json robots.txt sitemap.xml llms.txt _site/
+          cp -R assets _site/assets
+          cp supabase/functions/_shared/flex-import.mjs _site/supabase/functions/_shared/
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '_site'
 
       - name: Deploy to GitHub Pages
         id: deployment

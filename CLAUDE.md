@@ -4,7 +4,7 @@
 Personal trading journal web app — multi-user SaaS built on Supabase.
 
 **Stack:**
-- Frontend: Single HTML file (`dashboard.html`) — all CSS, HTML, JS
+- Frontend: dashboard.html (HTML/CSS) and assets/js/ (auth, dashboard, investments, bootstrap)
 - Backend: Supabase (auth, database, Edge Functions)
 - Hosting: GitHub Pages → `https://davidtheking28-oss.github.io/trading-journal/`
 - Supabase project ref: `fnklrqxwyeibfptaxewf`
@@ -15,11 +15,7 @@ Personal trading journal web app — multi-user SaaS built on Supabase.
 
 ## Rules
 
-@C:\Users\david\.claude\rules\behavior.md
-@C:\Users\david\.claude\rules\code-style.md
-@C:\Users\david\.claude\rules\frontend.md
-@C:\Users\david\.claude\rules\git-workflow.md
-@C:\Users\david\.claude\rules\supabase.md
+See AGENTS.md for current project rules, frontend layout, atomic investment persistence and browser test commands.
 
 ---
 

@@ -1,6 +1,10 @@
 const CACHE = 'tj-v31';
 const PRECACHE = [
   './dashboard.html',
+  './assets/js/auth.js?v=__APP_VERSION__',
+  './assets/js/dashboard.js?v=__APP_VERSION__',
+  './assets/js/investments.js?v=__APP_VERSION__',
+  './assets/js/bootstrap.js?v=__APP_VERSION__',
   './manifest.json',
   './assets/icon.svg',
   './assets/icon-192.png',

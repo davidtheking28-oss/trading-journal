@@ -10,7 +10,10 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-export const SOURCE = readFileSync(join(ROOT, 'dashboard.html'), 'utf8');
+const HTML = readFileSync(join(ROOT, 'dashboard.html'), 'utf8');
+const appScripts = [...HTML.matchAll(/<script defer src="\.\/(assets\/js\/[^?]+)\?v=[^"]+"><\/script>/g)]
+  .map(m => readFileSync(join(ROOT, m[1]), 'utf8'));
+export const SOURCE = [HTML, ...appScripts].join('\n');
 
 // Pull `function name(...) { ... }` out of the source by matching braces. Skips
 // occurrences inside the seed-data blob, which never contains a declaration.
