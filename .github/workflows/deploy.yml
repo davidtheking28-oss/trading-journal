@@ -34,7 +34,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run browser regression suite
-        run: node --test tests/browser.test.cjs
+        run: npm test --prefix tests
 
       # The edge functions are TypeScript on Deno, so the Node suite above cannot
       # reach them. This covers the stale-while-revalidate contract the market

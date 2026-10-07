@@ -194,3 +194,21 @@ components:
 - **Don't** צפוף widgets — spacing נדיב הוא לא בזבוז, הוא רוגע
 - **Don't** הוסף צללים דקורטיביים — צל מופיע רק כתגובה למצב
 - **Don't** שנה את סדר הקומפוננטים או מבנה הנתונים הקיים — עקביות מעל חידוש
+
+
+## Dashboard refinement — October 2026
+
+- Keep Heebo, the existing theme variables, RTL layout and privacy masking.
+- Show portfolio input, cash, allocation and investment summary before holdings; put allocation targets and deposits below holdings.
+- At 768px and below, render the existing holding rows as cards. Keep value and P&L visible; reveal secondary fields through Details and show all fields while editing. Reuse the same inputs and actions so save behavior stays consistent.
+- Use 44px mobile action targets and scroll margins above the fixed navigation.
+- Keep the mobile cookie summary short; expose the full storage explanation through Settings and the privacy page.
+- Use SVG for calculator/privacy icons and text labels beside allocation dots. Reserve the strongest accent for primary actions and active states.
+- Reduce chart height only when empty; restore the regular chart layout once data is available.
+
+- The primary portfolio summary contains exactly four figures: editable portfolio total, free cash, holdings value and unrealised P&L. Cost basis, allocation percentage and quote timestamp are secondary.
+- Table density is a saved browser preference; mobile holding controls keep their touch sizes.
+- Mobile navigation exposes Investments directly. Market Pulse remains available in the full navigation.
+- The cumulative chart includes realised P&L amounts for the selected period and previous calendar month/year, scoped to the same assets and entry-date grouping. Missing periods do not imply zero; partial-period wording stays visible.
+
+ניגודיות במחשב: טקסט רווח/הפסד משתמש בגוונים בהירים במצב כהה (#2dd4bf / #fb7185) ובגוונים כהים במצב בהיר (#087568 / #be123c), כדי לשמור על קריאות ברקעים צבועים. כפתורי מצבים ריקים ובחירת תקופה במצב כהה משתמשים ב-#4f46e5 עם טקסט לבן.

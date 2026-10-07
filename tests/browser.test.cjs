@@ -53,7 +53,8 @@ async function open(t) {
   await page.route('**/*', async route => {
     const url = route.request().url();
     if (url.includes('supabase-js@')) return route.fulfill({ contentType: 'text/javascript', body: sdk });
-    if (url.includes('chart.js@')) return route.fulfill({ contentType: 'text/javascript', body: 'window.Chart=class { static defaults={};static getChart(){return null} constructor(el,cfg){this.data=cfg.data;this.options=cfg.options;this.canvas=el;} update(){}destroy(){} };' });
+    if (url.includes('chart.js@') && process.env.DESKTOP_REAL_CHARTS) return route.continue();
+    if (url.includes('chart.js@')) return route.fulfill({ contentType: 'text/javascript', body: 'window.Chart=class { static defaults={};static getChart(){return null} constructor(el,cfg){this.data=cfg.data;this.options=cfg.options;this.canvas=el;} update(){}resize(){}destroy(){} };' });
     if (!url.startsWith(base)) return route.fulfill({ contentType: 'application/json', body: '{}' });
     await route.continue();
   });
@@ -152,4 +153,168 @@ test('holding edits show unsaved state and commit with the same row identity', a
     const h = __testDB.investment_holdings.find(r => r.portfolio_id === 'portfolio-a');
     return { id: h.id, symbol: h.symbol };
   }), { id: 'holding-a', symbol: 'XYZ' });
+});
+
+
+test('mobile holding cards expand and remain editable without horizontal page overflow', async t => {
+  const page = await open(t);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await login(page);
+  await page.evaluate(() => cookieDecline());
+  await page.locator('#cookie-banner').waitFor({ state: 'hidden' });
+  await page.evaluate(() => switchTab('investments'));
+  const row = page.locator('#inv-tbody tr[data-idx]').first();
+  await row.waitFor();
+  const details = row.locator('.inv-card-toggle');
+  assert.equal(await row.locator('td').nth(3).isVisible(), false);
+  await details.click();
+  assert.equal(await details.getAttribute('aria-expanded'), 'true');
+  assert.equal(await row.locator('td').nth(3).isVisible(), true);
+  await details.click();
+  await row.locator('.inv-edit-btn').click();
+  assert.equal(await page.locator('#inv-tbody tr[data-idx]').first().locator('td').nth(3).isVisible(), true);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+});
+
+
+test('investment summary precedes configuration in desktop and mobile themes', async t => {
+  const page = await open(t); await login(page);
+  await page.evaluate(() => cookieDecline());
+  await page.locator('#cookie-banner').waitFor({ state: 'hidden' });
+  await page.evaluate(() => switchTab('investments'));
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const theme of ['dark', 'light']) {
+      await page.evaluate(theme => _applyTheme(theme), theme);
+      const summary = await page.locator('.inv-summary-bar').boundingBox();
+      const config = await page.locator('.inv-config-grid').boundingBox();
+      assert.ok(summary.y < config.y);
+      assert.ok((await page.locator('.inv-table-wrap').boundingBox()).y < config.y);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      if (process.env.VISUAL_REVIEW_DIR) await page.screenshot({ path: process.env.VISUAL_REVIEW_DIR + '/investments-' + width + '-' + theme + '.png', fullPage: true, animations: 'disabled', timeout: 15000 });
+    }
+  }
+});
+
+
+test('mobile investments navigation and density preference survive reload', async t => {
+  const page = await open(t); await page.setViewportSize({ width: 390, height: 844 });
+  await login(page); await page.evaluate(() => cookieDecline());
+  await page.locator('#cookie-banner').waitFor({ state: 'hidden' });
+  await page.locator('.mnav-btn[data-tab="investments"]').click();
+  await page.locator('#inv-tbody .inv-sym-chip').first().waitFor();
+  assert.equal(await page.locator('.inv-summary-unified > div').count(), 4);
+  await page.locator('#table-density').selectOption('compact');
+  assert.equal(await page.evaluate(() => document.documentElement.dataset.tableDensity), 'compact');
+  await page.reload(); await page.waitForLoadState('networkidle');
+  assert.equal(await page.evaluate(() => document.documentElement.dataset.tableDensity), 'compact');
+  assert.equal(await page.locator('#table-density').inputValue(), 'compact');
+});
+
+test('period comparison handles year rollover, fees, scope and absent data', async t => {
+  const page = await open(t); await login(page);
+  const result = await page.evaluate(() => {
+    const tr = (date, exitPrice, commission = 0) => ({ entryDate: date, entryPrice: 10, shares: 10, closedShares: 10, exitPrice, ls: 'L', commission });
+    db.stocks = [tr('2026-01-04', 20, 2), tr('2025-12-04', 15, 1)];
+    db.crypto = [tr('2026-01-05', 12), tr('2025-12-05', 11)];
+    document.getElementById('ov-year').innerHTML = '<option value="2026">2026</option>';
+    document.getElementById('ov-month').value = '1';
+    ovScope = 'stock'; _tradesScope = 'crypto'; renderPeriodComparison(filterTrades('stock', '1', '2026', true));
+    const stock = document.getElementById('cum-period-comparison').textContent;
+    ovScope = 'crypto'; _tradesScope = 'stock'; renderPeriodComparison(filterTrades('crypto', '1', '2026', true));
+    const crypto = document.getElementById('cum-period-comparison').textContent;
+    db.crypto = []; renderPeriodComparison([]);
+    const empty = document.getElementById('cum-period-comparison').textContent;
+    document.getElementById('ov-year').value = ''; renderPeriodComparison([]);
+    return { stock, crypto, empty, all: document.getElementById('cum-period-comparison').textContent, rollover: previousChartPeriod('1', '2026'), annual: previousChartPeriod('', '2026') };
+  });
+  assert.match(result.stock, /2025-12/); assert.match(result.stock, /\+\$98/); assert.match(result.stock, /\+\$49/);
+  assert.match(result.crypto, /\+\$20/); assert.match(result.crypto, /\+\$10/);
+  assert.match(result.empty, /שתי התקופות/); assert.equal(result.all, '');
+  assert.deepEqual(result.rollover, { month: 12, year: 2025 });
+  assert.deepEqual(result.annual, { month: '', year: 2025 });
+});
+
+
+test('desktop tabs render empty and representative data in both themes', async t => {
+  const page = await open(t); await page.setViewportSize({ width: 1440, height: 1000 });
+  await login(page); await page.evaluate(() => cookieDecline());
+  await page.locator('#cookie-banner').waitFor({ state: 'hidden' });
+  for (const populated of [false, true]) {
+    await page.evaluate(populated => {
+      const date = new Date(), month = date.getFullYear() + '-' + String(date.getMonth()+1).padStart(2, '0');
+      db.stocks = populated ? Array.from({ length: 12 }, (_, i) => ({ id: 10000 + i, type: 'stock', symbol: ['AAPL','MSFT','NVDA'][i%3], entryDate: month + '-' + String(i+1).padStart(2,'0'), ls: 'L', entryPrice: 100+i, shares: 10, stop: 95, exitPrice: i%4 ? 110-i : 0, closedShares: i%4 ? 10 : 0, closeDate: i%4 ? month+'-15' : '', t: [], commission: 1, ecn: 0, setupType: 'Breakout', entryReason: 'פריצה מעל בסיס', sector: 'Technology', notes_keep: '', notes_improve: '' })) : [];
+      _invData = null;
+      __testDB.investment_holdings = populated ? [{id:'desktop-holding',user_id:'user-a',portfolio_id:'portfolio-a',symbol:'AAPL',entry_shares:10,entry_price:100,position:0}] : [];
+      db.crypto = populated ? [{ ...db.stocks[1], id: 20000, type: 'crypto', symbol: 'BTC' }] : [];
+      _missedList = populated ? [{ id:'missed-demo',sym:'AMD',date:month+'-02',price:100,sector:'Technology',note:'פספסתי את הפריצה' }] : [];
+      _missedLoaded = true;
+      _ttData = populated ? Array.from({length:12},(_,i)=>({name:['Technology','Energy','Financials','Healthcare'][i%4]+' '+(i+1),ticker:'XL'+i,today:(i-5)/3,w1:(i-5)/2,m1:i-5,m3:i-5,ytd:i-5})) : [];
+      _ttIndices = populated ? [{name:'S&P 500',ticker:'SPY',today:0.5,w1:1,m1:2,m3:3,ytd:4}] : [];
+    }, populated);
+    for (const tab of ['overview','stocks','statistics','themes','missed','ibkr','investments','screener']) {
+      await page.evaluate(tab => switchTab(tab), tab);
+      await page.waitForTimeout(200);
+      await page.evaluate(() => { document.getElementById('main-content').scrollTop = 0; });
+      assert.equal(await page.locator('#tab-'+tab).isVisible(), true);
+      for (const theme of ['dark','light']) {
+        await page.evaluate(theme => _applyTheme(theme),theme);
+        const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
+        assert.equal(overflow, false, tab+' page overflow');
+        if(process.env.DESKTOP_REVIEW_DIR) await page.screenshot({path:process.env.DESKTOP_REVIEW_DIR+'/'+tab+'-'+(populated?'data':'empty')+'-'+theme+'.png',animations:'disabled',timeout:15000});
+      }
+      if (tab === 'stocks' && populated) {
+        const table = await page.locator('#stocks-wrap table').boundingBox();
+        const lastHeader = await page.locator('#stocks-wrap th').last().boundingBox();
+        assert.ok(Math.abs(table.x-lastHeader.x) < 3, 'no unused column at the table edge');
+        assert.ok(lastHeader.width < table.width * 0.2, 'actions do not consume the spare table width');
+        assert.equal(await page.locator('#stocks-wrap').evaluate(el=>el.scrollWidth <= el.clientWidth), true, 'compact table fits desktop width');
+        await page.locator('#stocks-wrap .data-row').first().click();
+        await page.locator('#stocks-wrap .expanded-row').first().waitFor();
+        assert.equal(await page.locator('#stocks-wrap .expanded-row td').first().getAttribute('colspan'), '12');
+        await page.locator('#stocks-wrap .data-row').first().click();
+        await page.locator('#st-search').fill('MSFT');
+        assert.doesNotMatch(await page.locator('#stocks-wrap').innerText(), /NVDA/);
+        assert.match(await page.locator('#trade-filter-summary').innerText(), /MSFT/);
+        await page.locator('#trade-filter-summary button').click();
+        assert.equal(await page.locator('#st-search').inputValue(), '');
+        assert.match(await page.locator('#stocks-wrap').innerText(), /NVDA/);
+        await page.locator('#trade-secondary-actions summary').click();
+        assert.equal(await page.locator('#st-archive-btn').isVisible(), true);
+        await page.locator('#trade-secondary-actions summary').click();
+      }
+      if (tab === 'investments' && populated) {
+        assert.match(await page.locator('#inv-tbody').innerText(), /AAPL/);
+        assert.equal(await page.locator('[data-i18n="inv_cash_explanation"]').isVisible(), true);
+        assert.match(await page.locator('[data-i18n="inv_cash_explanation"]').innerText(), /אומדן/);
+        assert.match(await page.locator('[data-i18n="inv_allocation_explanation"]').innerText(), /היעד/);
+      }
+      if (tab === 'themes' && populated) {
+        await page.locator('#tab-themes .tt-period[data-p="w1"]').click();
+        assert.equal(await page.locator('#tt-grid .tt-pct').first().evaluate(el => getComputedStyle(el).direction), 'ltr');
+        await page.locator('#tab-themes .tt-period[data-p="today"]').click();
+      }
+      if (tab === 'statistics' && populated) {
+        const toggle = page.locator('#stats-secondary-toggle');
+        assert.equal(await toggle.getAttribute('aria-expanded'), 'true');
+        await toggle.click();
+        assert.equal(await page.locator('#stats-secondary-content').isVisible(), false);
+        assert.equal(await toggle.getAttribute('aria-expanded'), 'false');
+        await toggle.click();
+        assert.equal(await page.locator('#stats-secondary-content').isVisible(), true);
+
+        assert.match(await page.locator('#donut-legend-win').innerText(), /33\.3%/);
+        assert.match(await page.locator('#donut-legend-loss').innerText(), /66\.7%/);
+      }
+      if(process.env.DESKTOP_REVIEW_DIR) {
+        await page.evaluate(() => {const el=document.getElementById('main-content');el.scrollTop=el.scrollHeight;});
+        await page.screenshot({path:process.env.DESKTOP_REVIEW_DIR+'/'+tab+'-'+(populated?'data':'empty')+'-bottom.png',animations:'disabled',timeout:15000});
+      }
+      if(process.env.DESKTOP_REVIEW_DIR) console.log(tab, populated?'data':'empty', (await page.locator('#tab-'+tab).innerText()).slice(0,550));
+    }
+    if(populated) {
+      await page.evaluate(() => { _tradesScope='crypto';switchTab('stocks'); });
+      assert.match(await page.locator('#stocks-wrap').innerText(),/BTC/);
+    }
+  }
 });

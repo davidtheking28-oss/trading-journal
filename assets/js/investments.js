@@ -427,7 +427,7 @@ function invRenderRows(holdings) {
       : `<input class="inv-sym-input" type="text" value="${esc(h.symbol||'')}" placeholder="AAPL" list="inv-sym-list" oninput="this.value=this.value.toUpperCase();invRecalc();invMarkDirty();invAutoSector(${i});">`;
     return `
     <tr data-idx="${i}" class="${locked?'inv-row-locked':'inv-row-edit'}">
-      <td ${locked&&h.symbol?`onclick="invToggleBuyRow(${i})" style="cursor:pointer"`:''}>${symCell}</td>
+      <td ${locked&&h.symbol?`onclick="invToggleBuyRow(${i})" style="cursor:pointer"`:''}>${symCell}<button class="inv-card-toggle" onclick="event.stopPropagation();invToggleCard(this)" aria-expanded="false">${_lang === 'he' ? 'פרטים' : 'Details'}</button></td>
       <td><input class="inv-sector-input" type="text" value="${esc(h.sector||'')}" title="${esc(h.sector||'')}" placeholder="טכנולוגיה" data-sector-idx="${i}" ${ro} ${locked?'':'oninput="invAutoSave();this.title=this.value"'}></td>
       <td>
         <select class="inv-cat-sel" ${ro} onchange="invRecalc();${locked?'':'invAutoSave()'}">
@@ -460,7 +460,22 @@ function invRenderRows(holdings) {
       </td>
     </tr>`;
   }).join('');
+  const labels = Array.from(document.querySelectorAll('.inv-table thead th'), th => th.textContent.trim());
+  tbody.querySelectorAll('tr[data-idx]').forEach(row => {
+    Array.from(row.cells).forEach((cell, index) => {
+      cell.dataset.label = labels[index] || '';
+      cell.querySelectorAll('input:not([type="hidden"]),select').forEach(control => {
+        control.setAttribute('aria-label', labels[index] || (_lang === 'he' ? 'שדה אחזקה' : 'Holding field'));
+      });
+    });
+  });
   invRecalc();
+}
+
+function invToggleCard(button) {
+  const expanded = button.closest('tr').classList.toggle('inv-card-expanded');
+  button.setAttribute('aria-expanded', String(expanded));
+  button.textContent = _lang === 'he' ? (expanded ? 'פחות פרטים' : 'פרטים') : (expanded ? 'Less' : 'Details');
 }
 
 const ALLOC_DEFAULTS = { blue: 0.60, green: 0.35, yellow: 0.05, cash: 0.05 };

@@ -1803,7 +1803,7 @@ function _expandedRowHTML(tr, key) {
     ? `<span style="color:var(--text3);font-size:12px;">${t('tile_no_notes')}</span>` : '';
 
   return `<tr class="expanded-row" data-expkey="${key}">
-    <td colspan="20">
+    <td colspan="${_compactColsOn() ? 12 : 19}">
       <div class="tr-review">
 
         <!-- Metric tiles -->
@@ -1889,6 +1889,8 @@ function renderTable(type) {
   const compactBtn = document.getElementById('st-compact-toggle');
   if (compactBtn) compactBtn.textContent = _compactColsOn() ? 'עמודות מלאות' : 'עמודות בסיס';
 
+  if (type === 'stock') renderTradeFilterSummary();
+
   // Calendar mode
   if (tableViewMode[type] === 'calendar') { renderCalendar(type); return; }
 
@@ -1903,7 +1905,7 @@ function renderTable(type) {
   const el = document.getElementById(p+'-stats');
   if (el) {
     const totalColor = st.total >= 0 ? 'var(--green)' : 'var(--red)';
-    el.innerHTML = `${trades.length} trades &nbsp;|&nbsp; P&amp;L: <strong style="color:${totalColor}">${fmtUSD(st.total)}</strong> &nbsp;|&nbsp; Win: <strong>${fmt(st.wr,1)}%</strong> &nbsp;|&nbsp; ${st.wins}W / ${st.losses}L`;
+    el.innerHTML = `${trades.length} ${_lang === 'he' ? 'עסקאות' : 'trades'} &nbsp;|&nbsp; ${_lang === 'he' ? 'רווח/הפסד' : 'P&amp;L'}: <strong style="color:${totalColor}">${fmtUSD(st.total)}</strong> &nbsp;|&nbsp; ${_lang === 'he' ? 'הצלחה' : 'Win'}: <strong>${fmt(st.wr,1)}%</strong> &nbsp;|&nbsp; ${st.wins}W / ${st.losses}L`;
   }
 
   // info
@@ -1924,19 +1926,19 @@ function renderTable(type) {
            <button onclick="openModal('${type}')" style="margin-top:20px;padding:9px 22px;background:var(--accent);color:#fff;border:none;border-radius:var(--r-md);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s;" onmouseenter="this.style.opacity='.85'" onmouseleave="this.style.opacity='1'">+ הוסף עסקה ראשונה</button>
          </div>`
       : `<div class="empty-state"><div class="empty-icon">${_emptyIcon}</div><p>${t('no_trades')}</p>
-           <button onclick="resetFilter('${p}')" style="margin-top:16px;padding:8px 18px;background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:var(--r-md);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition: background-color .15s, border-color .15s, color .15s, opacity .15s, transform .15s, box-shadow .15s;" onmouseenter="this.style.background='var(--accent)';this.style.color='#fff'" onmouseleave="this.style.background='transparent';this.style.color='var(--accent)'">${_lang==='he'?'נקה סינון':'Clear filter'}</button>
+           <button onclick="${p === 'st' ? 'resetTradeFilters()' : `resetFilter('${p}')`}" style="margin-top:16px;padding:8px 18px;background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:var(--r-md);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition: background-color .15s, border-color .15s, color .15s, opacity .15s, transform .15s, box-shadow .15s;" onmouseenter="this.style.background='var(--accent)';this.style.color='#fff'" onmouseleave="this.style.background='transparent';this.style.color='var(--accent)'">${_lang==='he'?'נקה סינון':'Clear filter'}</button>
          </div>`;
     return;
   }
 
   let h = `<table><colgroup>
     <col style="width:44px"><col style="width:110px"><col style="width:54px">
-    <col style="width:90px"><col style="width:110px">
+    <col style="width:90px"><col class="col-adv" style="width:110px">
     <col style="width:90px"><col style="width:90px"><col style="width:80px">
-    <col style="width:80px"><col style="width:70px"><col style="width:110px">
-    <col style="width:100px"><col style="width:90px"><col style="width:70px">
-    <col style="width:80px"><col style="width:90px"><col style="width:70px">
-    <col style="width:60px"><col style="min-width:100px">
+    <col class="col-adv" style="width:80px"><col class="col-adv" style="width:70px"><col class="col-adv" style="width:110px">
+    <col class="col-adv" style="width:100px"><col style="width:90px"><col class="col-adv" style="width:70px">
+    <col class="col-adv" style="width:80px"><col style="width:90px"><col style="width:70px">
+    <col style="width:60px"><col style="width:110px">
   </colgroup><thead><tr>
     <th>#</th>
     ${thSort(type,'entryDate',t('col_entry_date'),sc,sd)}
@@ -1997,7 +1999,7 @@ function renderTable(type) {
         lastRenderedYear = trYear;
         const yst = stats(yearStatsMap[trYear]);
         const ytc = yst.total >= 0 ? 'var(--green)' : 'var(--red)';
-        h += `<tr class="year-group-row"><td colspan="20">
+        h += `<tr class="year-group-row"><td colspan="${_compactColsOn() ? 12 : 19}">
           <span class="year-group-label">📅 ${trYear}</span>
           <span class="year-group-stats">${yearStatsMap[trYear].length} ${t('trades')} &nbsp;|&nbsp; P&L: <strong style="color:${ytc}">${fmtUSD(yst.total)}</strong> &nbsp;|&nbsp; Win: <strong>${fmt(yst.wr,1)}%</strong> &nbsp;|&nbsp; ${yst.wins}W / ${yst.losses}L</span>
         </td></tr>`;
@@ -3271,12 +3273,13 @@ const LANG_STRINGS = {
     qa_pos_size:'Position', qa_risk_pct:'Risk %', qa_stop_from:'Stop from Entry',
     qa_select:'— Select —', qa_mood_ph:'How did you feel...', qa_note_ph:'Trade description...',
     inv_title:'Investment Portfolio', inv_portfolio_total:'Portfolio Total', inv_cash_label:'Cash',
+    table_density:'Table density', density_comfortable:'Comfortable', density_compact:'Compact',
     inv_free_cash:'Free Cash', inv_total_value:'Total',
     inv_allocated:'Invested', inv_alloc_title:'Portfolio Allocation — Target',
     inv_available:'Available:', inv_donut_allocated:'Allocated',
-    inv_blue:'🔵 Value — Target', inv_green:'🟢 Growth — Target',
-    inv_yellow:'🟡 Speculative — Target',
-    inv_cat_blue:'🔵 Value', inv_cat_green:'🟢 Growth', inv_cat_yellow:'🟡 Speculative',
+    inv_blue:'Value — Target', inv_green:'Growth — Target',
+    inv_yellow:'Speculative — Target',
+    inv_cat_blue:'Value', inv_cat_green:'Growth', inv_cat_yellow:'Speculative',
     inv_col_symbol:'Symbol', inv_col_sector:'Sector', inv_col_category:'Category',
     inv_col_qty:'Qty', inv_col_entry_price:'Entry Price', inv_col_stop:'Stop Loss',
     inv_col_cur_price:'Current Price',
@@ -3285,7 +3288,7 @@ const LANG_STRINGS = {
     inv_add_holding:'+ Add Holding', inv_save:'💾 Save',
     inv_deposits:'Monthly Deposits', inv_add_deposit:'+ Add Deposit',
     inv_total_dep:'Total Deposited', inv_portfolio_now:'Portfolio Value Now',
-    inv_pnl:'P&L vs Deposits', inv_unrealized:'Unrealized P&L', inv_refresh_prices:'Refresh Prices', inv_over:'Exceeded', inv_overby:'Exceeded by', inv_free:'Available', inv_saved:'Portfolio saved ✓', inv_cash_label:'Cash', inv_sum_invested:'Total Invested', inv_sum_value:'Current Value', inv_sum_pnl:'Unrealized P&L', inv_sum_updated:'Prices updated', inv_just_now:'just now', inv_dep_month:'Month', inv_dep_amount:'Deposit',
+    inv_pnl:'P&L vs Deposits', inv_unrealized:'Unrealized P&L', inv_refresh_prices:'Refresh Prices', inv_over:'Exceeded', inv_overby:'Exceeded by', inv_free:'Available', inv_saved:'Portfolio saved ✓', inv_cash_label:'Cash', inv_sum_invested:'Total Invested', inv_sum_value:'Holdings Value', inv_sum_pnl:'Unrealized P&L', inv_sum_updated:'Prices updated', inv_just_now:'just now', inv_dep_month:'Month', inv_dep_amount:'Deposit',
     inv_dep_cumulative:'Cumulative', inv_cash:'Cash',
     inv_legend_blue:'Value', inv_legend_green:'Growth', inv_legend_yellow:'Speculative',
     missed_title:'Missed Opportunities', missed_symbol:'Symbol',
@@ -3300,7 +3303,10 @@ const LANG_STRINGS = {
     settings_pw_new_ph:'New password', settings_pw_confirm_ph:'Confirm password',
     set_pw_new:'New Password', set_pw_confirm:'Confirm Password', set_pw_update:'Update Password',
     settings_email:'Email', settings_save_profile:'Save Profile',
-    settings_lang:'Language', settings_export:'Export Data',
+    inv_cash_explanation:'Available cash is an estimate: the portfolio total you entered minus holdings value. It is not a broker-synced cash balance. Invested percentage uses holdings value; entry price is used when a current price is missing.',
+    inv_allocation_explanation:'Target is your chosen allocation; actual percentage is category value divided by portfolio total. The bar shows progress toward the target. Available is room below the target, not cash available to buy.',
+    settings_lang:'Language', settings_export:'Export Data', trade_more_actions:'More actions', monthly_tracker:'Monthly tracker',
+set_data_sub:'Stocks & crypto market data', set_import_sub:'Broker connection & file import', set_export_sub:'Download your trade data as CSV',
     export_stocks:'Export Stocks', export_crypto:'Export Crypto', export_all:'Export All',
     mc_green:'🟢 Green', mc_orange:'🟠 Orange', mc_red:'🔴 Red',
     mc_easy:'Easy Market', mc_hard:'Hard Market', mc_up:'Uptrend',
@@ -3352,17 +3358,17 @@ const LANG_STRINGS = {
     set_crypto_desc:'CoinGecko · No key required, works automatically',
     set_finnhub_desc:'Required for real-time stock prices. Register free at finnhub.io — enter your key and click Save.',
     set_av_desc:'Financial data for all stocks including small caps.',
-    inv_cash_row:'💵 Cash — target', inv_col_pnl:'P&L',
+    inv_cash_row:'Cash — target', inv_col_pnl:'P&L',
     scr_lookup_lbl:'Check a date:',
   },
   he: {
     nav_overview:'ראשי', nav_stocks:'מניות / קריפטו', nav_crypto:'קריפטו',
     set_crypto_desc:'CoinGecko · ללא מפתח, עובד אוטומטית',
-    set_finnhub_desc:'נדרש לנתוני מחיר מניות בזמן אמת. הרשם חינם ב-finnhub.io — הכנס את המפתח ולחץ Save.',
+    set_finnhub_desc:'נדרש לנתוני מחיר מניות בזמן אמת. הרשם חינם ב-finnhub.io — הזן את המפתח ולחץ שמור.',
     set_av_desc:'נתוני פיננסים לכל המניות כולל Small Cap.',
-    inv_cash_row:'💵 מזומן — יעד', inv_col_pnl:'רווח/הפסד',
+    inv_cash_row:'מזומן — יעד', inv_col_pnl:'רווח/הפסד',
     scr_lookup_lbl:'בדיקת תאריך:',
-    nav_statistics:'סטטיסטיקות', nav_settings:'פרופיל', nav_themes:'Market Pulse',
+    nav_statistics:'סטטיסטיקות', nav_settings:'פרופיל', nav_themes:'מגמות השוק',
     nav_ai:'Minervini', nav_screener:'מסנן מניות', nav_missed:'פוספסו', nav_investments:'השקעות',
     nav_section:'ניווט', add_trade:'הוסף עסקה',
     filter_label:'סינון:', all_time:'כל הזמן', archive:'📅 ארכיון',
@@ -3409,12 +3415,13 @@ const LANG_STRINGS = {
     qa_pos_size:"גודל פוז'", qa_risk_pct:'סיכון %', qa_stop_from:'סטופ מ-כניסה',
     qa_select:'— בחר —', qa_mood_ph:'איך הרגשת...', qa_note_ph:'תיאור הכניסה...',
     inv_title:'תיק השקעות', inv_portfolio_total:'סך התיק', inv_cash_label:'מזומן',
+    table_density:'צפיפות טבלאות', density_comfortable:'מרווחת', density_compact:'צפופה',
     inv_free_cash:'מזומן פנוי', inv_total_value:'סך התיק',
     inv_allocated:'מושקע', inv_alloc_title:'הקצאת תיק — יעד',
     inv_available:'זמין:', inv_donut_allocated:'מוקצה',
-    inv_blue:'🔵 מניות ערך — יעד', inv_green:'🟢 צמיחה — יעד',
-    inv_yellow:'🟡 ספקולציה — יעד',
-    inv_cat_blue:'🔵 מניות ערך', inv_cat_green:'🟢 צמיחה', inv_cat_yellow:'🟡 ספקולציה',
+    inv_blue:'מניות ערך — יעד', inv_green:'צמיחה — יעד',
+    inv_yellow:'ספקולציה — יעד',
+    inv_cat_blue:'מניות ערך', inv_cat_green:'צמיחה', inv_cat_yellow:'ספקולציה',
     inv_col_symbol:'סימבול', inv_col_sector:'סקטור', inv_col_category:'קטגוריה',
     inv_col_qty:'כמות', inv_col_entry_price:'מחיר כניסה', inv_col_stop:'סטופ לוס',
     inv_col_cur_price:'מחיר נוכחי',
@@ -3423,7 +3430,7 @@ const LANG_STRINGS = {
     inv_add_holding:'+ הוסף אחזקה', inv_save:'💾 שמור',
     inv_deposits:'הפקדות חודשיות', inv_add_deposit:'+ הוסף הפקדה',
     inv_total_dep:'סה"כ הופקד', inv_portfolio_now:'שווי תיק כעת',
-    inv_pnl:'רווח/הפסד vs הפקדות', inv_unrealized:'רווח לא ממומש', inv_refresh_prices:'רענן מחירים', inv_over:'חרגת', inv_overby:'חרגת ב-', inv_free:'פנוי', inv_saved:'תיק ההשקעות נשמר ✓', inv_cash_label:'מזומן', inv_sum_invested:'סה"כ הושקע', inv_sum_value:'שווי נוכחי', inv_sum_pnl:'רווח לא ממומש', inv_sum_updated:'מחירים עודכנו', inv_just_now:'הרגע', inv_dep_month:'חודש', inv_dep_amount:'הפקדה',
+    inv_pnl:'רווח/הפסד vs הפקדות', inv_unrealized:'רווח לא ממומש', inv_refresh_prices:'רענן מחירים', inv_over:'חרגת', inv_overby:'חרגת ב-', inv_free:'פנוי', inv_saved:'תיק ההשקעות נשמר ✓', inv_cash_label:'מזומן', inv_sum_invested:'סה"כ הושקע', inv_sum_value:'שווי אחזקות', inv_sum_pnl:'רווח לא ממומש', inv_sum_updated:'מחירים עודכנו', inv_just_now:'הרגע', inv_dep_month:'חודש', inv_dep_amount:'הפקדה',
     inv_dep_cumulative:'מצטבר', inv_cash:'מזומן',
     inv_legend_blue:'מניות ערך', inv_legend_green:'צמיחה', inv_legend_yellow:'ספקולציה',
     missed_title:'הזדמנויות שפוספסו', missed_symbol:'סימבול',
@@ -3438,7 +3445,10 @@ const LANG_STRINGS = {
     settings_pw_new_ph:'סיסמה חדשה', settings_pw_confirm_ph:'אישור סיסמה',
     set_pw_new:'סיסמה חדשה', set_pw_confirm:'אישור סיסמה', set_pw_update:'עדכן סיסמה',
     settings_email:'אימייל', settings_save_profile:'שמור פרופיל',
-    settings_lang:'שפה', settings_export:'ייצוא נתונים',
+    inv_cash_explanation:'מזומן פנוי הוא אומדן: סך התיק שהזנת פחות שווי האחזקות. זו אינה יתרת מזומן מסונכרנת מהברוקר. האחוז המושקע מבוסס על שווי האחזקות; בהיעדר מחיר נוכחי נעשה שימוש במחיר הכניסה.',
+    inv_allocation_explanation:'היעד הוא החלוקה שבחרת; האחוז בפועל הוא שווי הקטגוריה מתוך סך התיק. הפס מציג כמה מהיעד נוצל, והסכום הפנוי הוא המרווח עד היעד — לא יתרת מזומן לקנייה.',
+    settings_lang:'שפה', settings_export:'ייצוא נתונים', trade_more_actions:'פעולות נוספות', monthly_tracker:'מעקב חודשי',
+set_data_sub:'נתוני שוק למניות ולקריפטו', set_import_sub:'חיבור לברוקר וייבוא קבצים', set_export_sub:'הורדת העסקאות כקובץ CSV',
     export_stocks:'ייצא מניות', export_crypto:'ייצא קריפטו', export_all:'ייצא הכל',
     mc_green:'🟢 ירוק', mc_orange:'🟠 כתום', mc_red:'🔴 אדום',
     mc_easy:'שוק קל', mc_hard:'שוק קשה', mc_up:'מגמה עולה',
@@ -3670,7 +3680,7 @@ function _fgPlaceholder(el, label) {
   el.innerHTML = `<div class="fg-bar-wrap"><div class="fg-bar-score"><span class="fg-score" style="color:var(--text2)">…</span></div><div class="fg-bar-track"></div></div><div class="fg-info"><div class="fg-label">${label}</div><div class="fg-rating" style="color:var(--text2);font-size:13px;">Loading</div></div>`;
 }
 function _fgUnavailable(el, label) {
-  el.innerHTML = `<div class="fg-bar-wrap"><div class="fg-bar-score"><span class="fg-score" style="color:var(--text2)">—</span></div><div class="fg-bar-track"></div></div><div class="fg-info"><div class="fg-label">${label}</div><div class="fg-rating" style="color:var(--text2);font-size:13px;">Unavailable</div></div>`;
+  el.innerHTML = `<div class="fg-bar-wrap"><div class="fg-bar-score"><span class="fg-score" style="color:var(--text2)">—</span></div><div class="fg-bar-track"></div></div><div class="fg-info"><div class="fg-label">${label}</div><div class="fg-rating" style="color:var(--text2);font-size:13px;">${_lang === 'he' ? 'הנתון אינו זמין כרגע' : 'Unavailable'}</div></div>`;
 }
 
 async function loadFearGreed() {
@@ -4170,6 +4180,13 @@ function _setBrokerEquitySelected(broker, btn) {
 }
 
 function renderStatistics() {
+ const secondaryToggle=document.getElementById('stats-secondary-toggle');
+ if(secondaryToggle && window.matchMedia('(min-width:769px)').matches) {
+ const open=!document.getElementById('stats-secondary-content').classList.contains('stats-desktop-collapsed');
+ secondaryToggle.setAttribute('aria-expanded',String(open));
+ secondaryToggle.textContent=_lang === 'he' ? (open?'הסתר סטטיסטיקות נוספות ▴':'הצג סטטיסטיקות נוספות ▾') : (open?'Hide additional statistics ▴':'Show additional statistics ▾');
+ }
+
   _restoreStatsState();
   _loadBrokerEquity();
   const { month, year } = getFilter('stats');
@@ -4528,6 +4545,7 @@ function setCumMode(mode) {
 // closed trade, left the chart showing "no closed trades" forever even
 // though the calendar right next to it correctly showed the trade.
 function _showChartEmpty(canvasEl, message) {
+  canvasEl.parentElement.classList.add('chart-is-empty');
   canvasEl.style.display = 'none';
   let el = canvasEl.parentElement.querySelector(':scope > .chart-empty-state');
   if (!el) {
@@ -4539,6 +4557,7 @@ function _showChartEmpty(canvasEl, message) {
   el.style.display = '';
 }
 function _hideChartEmpty(canvasEl) {
+  canvasEl.parentElement.classList.remove('chart-is-empty');
   canvasEl.style.display = '';
   const el = canvasEl.parentElement.querySelector(':scope > .chart-empty-state');
   if (el) el.style.display = 'none';
@@ -4546,7 +4565,52 @@ function _hideChartEmpty(canvasEl) {
 
 let _cumResizeObserver = null;
 
+
+function setTableDensity(value) {
+  const density = value === 'compact' ? 'compact' : 'comfortable';
+  document.documentElement.dataset.tableDensity = density;
+  localStorage.setItem('tj-table-density', density);
+  const select = document.getElementById('table-density');
+  if (select) select.value = density;
+}
+
+function previousChartPeriod(month, year) {
+  const y = Number(year), m = Number(month);
+  if (!Number.isInteger(y) || y < 1) return null;
+  if (!month) return { month: '', year: y - 1 };
+  if (!Number.isInteger(m) || m < 1 || m > 12) return null;
+  return { month: m === 1 ? 12 : m - 1, year: m === 1 ? y - 1 : y };
+}
+
+function renderPeriodComparison(trades) {
+  const el = document.getElementById('cum-period-comparison');
+  if (!el) return;
+  const filter = getFilter('ov');
+  const previous = previousChartPeriod(filter.month, filter.year);
+  if (!previous) { el.textContent = ''; return; }
+  const closed = trades.filter(isClosed);
+  const priorStocks = filterTrades('stock', previous.month, previous.year, true);
+  const priorCrypto = filterTrades('crypto', previous.month, previous.year, true);
+  const older = (ovScope === 'stock' ? priorStocks : ovScope === 'crypto' ? priorCrypto : [...priorStocks, ...priorCrypto]).filter(isClosed);
+  const he = _lang === 'he';
+  if (!closed.length || !older.length) {
+    el.textContent = he ? 'השוואה לתקופה הקודמת תופיע כשיש עסקאות סגורות בשתי התקופות.' : 'Comparison requires closed trades in both periods.';
+    return;
+  }
+  const total = closed.reduce((sum, trade) => sum + calcTotal(trade), 0);
+  const prior = older.reduce((sum, trade) => sum + calcTotal(trade), 0);
+  const money = value => (value < 0 ? '−' : '+') + '$' + Math.abs(value).toLocaleString('en-US', { maximumFractionDigits: 2 });
+  const label = previous.month ? previous.year + '-' + String(previous.month).padStart(2, '0') : String(previous.year);
+  // Match the chart's entry-date grouping and selected trading scope.
+  el.innerHTML = (he ? 'רווח ממומש בתקופה הנבחרת: ' : 'Selected period realised P&L: ') +
+    '<span class="sensitive" dir="ltr">' + money(total) + '</span> · ' + label + ': ' +
+    '<span class="sensitive" dir="ltr">' + money(prior) + '</span> · ' + (he ? 'הפרש: ' : 'Difference: ') +
+    '<span class="sensitive" dir="ltr">' + money(total - prior) + '</span>' +
+    '<br>' + (he ? 'לפי תאריך כניסה ומסנן הנכסים; התקופה הנוכחית עשויה להיות חלקית.' : 'By entry date and asset filter; the current period may be partial.');
+}
+
 function renderCumChart(trades) {
+  renderPeriodComparison(trades);
   _cumTrades = trades;
   destroyChart('cum');
   if (_cumResizeObserver) { _cumResizeObserver.disconnect(); _cumResizeObserver = null; }
@@ -4843,8 +4907,9 @@ function renderDonut(st, adv, trades) {
   if (rowEl) rowEl.style.display = 'flex';
   const donutEl = document.getElementById('chart-donut'); if (!donutEl) return;
   const ctx = donutEl.getContext('2d');
-  const winPct  = st.n ? (st.wins / st.n * 100).toFixed(1)   : '0.0';
-  const lossPct = st.n ? (st.losses / st.n * 100).toFixed(1) : '0.0';
+  const closedCount = st.nClosed ?? ((st.wins || 0) + (st.losses || 0));
+  const winPct = closedCount ? (st.wins / closedCount * 100).toFixed(1) : '0.0';
+  const lossPct = closedCount ? (st.losses / closedCount * 100).toFixed(1) : '0.0';
   const winEl  = document.getElementById('donut-legend-win');
   const lossEl = document.getElementById('donut-legend-loss');
   if (winEl) winEl.innerHTML = `
@@ -4871,7 +4936,7 @@ function renderDonut(st, adv, trades) {
       plugins: {
         legend: { display: false },
         tooltip: {
-          callbacks: { label: c => ` ${c.label}: ${c.raw} (${st.n ? (c.raw/st.n*100).toFixed(1) : 0}%)` }
+          callbacks: { label: c => ` ${c.label}: ${c.raw} (${closedCount ? (c.raw/closedCount*100).toFixed(1) : 0}%)` }
         }
       },
       cutout: '70%',
@@ -4955,7 +5020,9 @@ function renderComparison(stTrades, crTrades) {
 // ─────────────────────────────────────────────
 // MODAL
 // ─────────────────────────────────────────────
+let _tradeModalReturnFocus = null;
 function openModal(type, tr=null) {
+  _tradeModalReturnFocus = document.activeElement;
   document.getElementById('tgt-list').innerHTML = '';
   document.getElementById('m-type').value = type;
   document.getElementById('modal-title').textContent = tr ? t('modal_edit') : t('modal_add');
@@ -4997,11 +5064,15 @@ function openModal(type, tr=null) {
   else mAutoType();
   document.getElementById('trade-modal').classList.add('open');
   document.body.style.overflow = 'hidden';
+  document.getElementById('m-symbol')?.focus?.();
 }
 
 function closeModal() {
+  const wasOpen = document.getElementById('trade-modal').classList.contains('open');
   document.getElementById('trade-modal').classList.remove('open');
   document.body.style.overflow = '';
+  if (wasOpen && _tradeModalReturnFocus?.isConnected) _tradeModalReturnFocus.focus?.();
+  _tradeModalReturnFocus = null;
 }
 
 function onOverlayClick(e) {
@@ -8057,6 +8128,7 @@ function toggleTheme() {
   const consent = localStorage.getItem('tj-cookie-consent');
   if (!consent) {
     setTimeout(() => {
+      if (localStorage.getItem('tj-cookie-consent')) return;
       const b = document.getElementById('cookie-banner');
       b.style.display = '';
     }, 800);
@@ -8775,7 +8847,7 @@ async function ttLoad(force = false) {
     }
   }
   if (!silent) {
-    document.getElementById('tt-grid').innerHTML = '<div class="tt-loading">Loading...</div>';
+    document.getElementById('tt-grid').innerHTML = `<div class="tt-loading">${t('set_loading')}</div>`;
     const _idxEl = document.getElementById('tt-indices');
     if (_idxEl) _idxEl.innerHTML = '';
     const _metaEl = document.getElementById('tt-meta');
@@ -8881,11 +8953,11 @@ function ttRender(themes, indices) {
         <div class="tt-podium">${bot3.map(podiumRow).join('')}</div>
       </div>
       <div class="tt-meta-card">
-        <div class="tt-meta-title">Market Breadth</div>
+        <div class="tt-meta-title">${_lang === 'he' ? 'רוחב השוק — סקטורים עולים ויורדים' : 'Market Breadth'}</div>
         <div class="tt-breadth-bar-wrap" style="background:linear-gradient(to right,#0d9488 ${greenPct}%,#e11d48 ${greenPct}%)"></div>
         <div class="tt-breadth-labels">
           <span class="tt-breadth-red">▼ ${red} <span style="opacity:0.7">(${redPct}%)</span></span>
-          <span class="tt-breadth-neutral">${total} themes</span>
+          <span class="tt-breadth-neutral">${total} ${_lang === 'he' ? 'סקטורים' : 'sectors'}</span>
           <span class="tt-breadth-green">▲ ${green} <span style="opacity:0.7">(${greenPct}%)</span></span>
         </div>
         <div class="tt-breadth-chips" id="tt-breadth-chips-inner"></div>
@@ -8960,7 +9032,7 @@ function _renderHoldingsForPeriod(allHoldings, period) {
 async function _fetchAndRender(ticker, showLoading) {
   const body = document.getElementById('sector-modal-body');
   if (!body) return;
-  if (showLoading) body.innerHTML = '<div class="sector-modal-loading">Loading...</div>';
+  if (showLoading) body.innerHTML = `<div class="sector-modal-loading">${t('set_loading')}</div>`;
   try {
     const _shToken = await _getToken();
     const res = await fetch(
@@ -8968,15 +9040,15 @@ async function _fetchAndRender(ticker, showLoading) {
       { headers: { 'Authorization': `Bearer ${_shToken}` } }
     );
     const json = await res.json();
-    if (json.error) { body.innerHTML = `<div class="sector-modal-loading">${json.error}</div>`; return; }
-    if (!json.holdings?.length) { body.innerHTML = '<div class="sector-modal-loading">No holdings data</div>'; return; }
+    if (json.error) { body.innerHTML = `<div class="sector-modal-loading">${esc(json.error)}</div>`; return; }
+    if (!json.holdings?.length) { body.innerHTML = `<div class="sector-modal-loading">${_lang === 'he' ? 'אין נתוני אחזקות לסקטור זה' : 'No holdings data'}</div>`; return; }
     _sectorCache[ticker] = json.holdings;
     _sectorSaveLS(ticker, json.holdings);
     _renderHoldingsForPeriod(json.holdings, _ttPeriod);
     const sub = document.getElementById('sector-modal-sub');
-    if (sub) sub.textContent = ticker + ' — updated ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    if (sub) sub.textContent = ticker + (_lang === 'he' ? ' — עודכן ' : ' — updated ') + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   } catch {
-    if (showLoading) body.innerHTML = '<div class="sector-modal-loading">Error loading data</div>';
+    if (showLoading) body.innerHTML = `<div class="sector-modal-loading">${_lang === 'he' ? 'לא ניתן לטעון את הנתונים כרגע' : 'Error loading data'}</div>`;
   }
 }
 
@@ -9234,4 +9306,31 @@ async function brokerImport() {
   _biTrades = null;
   document.getElementById('bi-preview').style.display = 'none';
   document.getElementById('bi-import-btn').style.display = 'none';
+}
+
+function toggleSecondaryStats(button) {
+ const content=document.getElementById('stats-secondary-content');
+ const desktop=window.matchMedia('(min-width:769px)').matches;
+ const open=desktop ? !content.classList.toggle('stats-desktop-collapsed') : content.classList.toggle('stats-secondary-open');
+ button.setAttribute('aria-expanded',String(open));
+ button.textContent=_lang === 'he' ? (open?'הסתר סטטיסטיקות נוספות ▴':'הצג סטטיסטיקות נוספות ▾') : (open?'Hide additional statistics ▴':'Show additional statistics ▾');
+ if(open) renderStatistics();
+}
+
+function renderTradeFilterSummary() {
+ const el=document.getElementById('trade-filter-summary');
+ if(!el) return;
+ const {month,year}=getFilter('st');
+ const he=_lang==='he';
+ const scope=he ? {all:'כל הנכסים',stock:'מניות',crypto:'קריפטו'} : {all:'All assets',stock:'Stocks',crypto:'Crypto'};
+ const period=(month||year) ? [month?months()[+month-1]:'',year].filter(Boolean).join(' ') : (he?'כל הזמן':'All time');
+ const query=searchQuery.stock.trim();
+ const label=[scope[_tradesScope],period,query?(he?'חיפוש: ':'Search: ')+query:''].filter(Boolean).join(' · ');
+ el.innerHTML='<span>'+esc(label)+'</span>'+((month||year||query)?'<button class="btn btn-secondary btn-sm" onclick="resetTradeFilters()">'+(he?'איפוס תקופה וחיפוש':'Reset period and search')+'</button>':'');
+}
+function resetTradeFilters() {
+ searchQuery.stock='';
+ const search=document.getElementById('st-search');
+ if(search) search.value='';
+ resetFilter('st');
 }
