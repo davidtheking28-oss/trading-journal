@@ -1201,6 +1201,22 @@ describe('invParseTotal — the total is typed, not picked', () => {
   });
 });
 
+// ── The stop alert on the investments table ────────────────────────────────
+const { invStopHit } = load('INV_STOP_FACTOR', 'invStopHit');
+
+describe('invStopHit — price at or under 8% below entry', () => {
+  test('at the stop and below it counts, above it does not', () => {
+    assert.equal(invStopHit(92, 100), true);
+    assert.equal(invStopHit(80, 100), true);
+    assert.equal(invStopHit(92.01, 100), false);
+  });
+  test('no entry or no quote is never a hit', () => {
+    assert.equal(invStopHit(50, 0), false);
+    assert.equal(invStopHit(0, 100), false);
+    assert.equal(invStopHit(NaN, 100), false);
+  });
+});
+
 // ── What the stop costs on each tranche ─────────────────────────────────────
 const { invTrancheRisk } = load('invTrancheRisk');
 

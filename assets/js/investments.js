@@ -773,7 +773,14 @@ function invRecalc() {
     const inputs = tbody.querySelector(`tr[data-idx="${i}"]`)?.querySelectorAll('input');
     const entryPrice = +(inputs?.[3]?.value) || 0;
     if (avgEl) avgEl.textContent = entryPrice > 0 ? cur + entryPrice.toFixed(2) : '—';
-    if (stopEl) stopEl.textContent = entryPrice > 0 ? cur + (entryPrice * 0.92).toFixed(2) : '—';
+    const livePrice = +(inputs?.[4]?.value) || 0;
+    const stopHit = invStopHit(livePrice, entryPrice);
+    if (stopEl) {
+      stopEl.textContent = entryPrice > 0 ? (stopHit ? '🛑 ' : '') + cur + (entryPrice * INV_STOP_FACTOR).toFixed(2) : '—';
+      stopEl.classList.toggle('inv-stop-hit', stopHit);
+      if (stopHit) stopEl.title = 'המחיר הגיע לסטופ';
+    }
+    if (stopHit) invNotifyStopHit(inputs?.[0]?.value?.trim().toUpperCase(), livePrice, entryPrice * INV_STOP_FACTOR);
     if (valEl) valEl.textContent = value > 0 ? cur + value.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
     if (pnlEl) {
       if (pnlAmt !== null) {
@@ -1011,6 +1018,19 @@ function invAddRow() {
     const newRow = tbody.querySelector('tr[data-idx="' + (data.holdings.length - 1) + '"]');
     newRow?.querySelector('input')?.focus();
   }
+}
+
+// 8% under the entry. supabase/functions/_shared/stop_alert.ts holds the same
+// number for the Telegram alert; change both.
+const INV_STOP_FACTOR = 0.92;
+function invStopHit(price, entry) {
+  return +entry > 0 && +price > 0 && +price <= +entry * INV_STOP_FACTOR;
+}
+const _invStopNotified = new Set();
+function invNotifyStopHit(sym, price, stop) {
+  if (!sym || _invStopNotified.has(sym)) return;
+  _invStopNotified.add(sym);
+  toast(`${sym} הגיעה לסטופ — מחיר ${price.toFixed(2)}, סטופ ${stop.toFixed(2)}`, 'error');
 }
 
 async function invFetchPrices(save = true) {
