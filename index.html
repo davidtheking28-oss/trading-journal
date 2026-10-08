@@ -1181,6 +1181,58 @@ html.a11y-underline a { text-decoration: underline !important; }
 @media(max-width:900px) { .hero-wrap { grid-template-columns:1fr; gap:32px; } #hero { padding-top:110px; } .hero-product { max-width:760px; } }
 </style>
 <style>.demo-app{position:relative}.demo-nav{padding-inline-end:54px}.demo-app>.demo-tab-pause{position:absolute;top:10px;inset-inline-end:12px;z-index:2}</style>
+<style id="landing-motion">
+#hero{min-height:0;padding-top:132px;padding-bottom:88px}
+.hero-wrap{gap:56px}
+.hero-wrap>div:first-child{animation:hero-copy-in .7s cubic-bezier(.2,.7,.2,1) both}
+.hero-product{position:relative;isolation:isolate;animation:hero-preview-in .9s cubic-bezier(.2,.7,.2,1) .12s both}
+.hero-product::before{content:'';position:absolute;z-index:-1;inset:8% -4% 18%;background:radial-gradient(ellipse,rgba(79,131,255,.22),transparent 70%);filter:blur(24px);pointer-events:none}
+.hero-product>a{display:block;border-radius:14px;transition:transform .4s cubic-bezier(.2,.7,.2,1),box-shadow .4s ease;box-shadow:0 0 0 1px rgba(145,180,255,.12)}
+.hero-product img{border-color:rgba(145,180,255,.24)}
+.hero-product>a:focus-visible{outline:3px solid var(--accent);outline-offset:6px}
+.btn-hero-primary,.btn-hero-ghost,.nav-cta{transition:transform .2s ease,box-shadow .2s ease,background-color .2s ease}
+.btn-hero-primary:focus-visible,.btn-hero-ghost:focus-visible{outline:3px solid var(--accent);outline-offset:5px}
+.feat-card{transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}
+.feat-num{color:var(--accent);opacity:.7}
+.section-pill{border-color:rgba(145,180,255,.3)}
+.demo-screen{transition-duration:.4s;transform:translateY(8px) scale(.995)}
+.demo-screen.active{transform:translateY(0) scale(1)}
+@media(hover:hover) and (pointer:fine){
+ .hero-product>a:hover{transform:perspective(1200px) rotateY(-2deg) translateY(-5px);box-shadow:0 24px 70px rgba(79,131,255,.16)}
+ html[dir="ltr"] .hero-product>a:hover{transform:perspective(1200px) rotateY(2deg) translateY(-5px)}
+ .btn-hero-primary:hover,.nav-cta:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(79,131,255,.3)}
+ .btn-hero-ghost:hover{transform:translateY(-2px)}
+ .feat-card:hover{transform:translateY(-5px);border-color:rgba(145,180,255,.35);box-shadow:0 16px 40px rgba(0,0,0,.18)}
+}
+@keyframes hero-copy-in{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes hero-preview-in{from{opacity:0;transform:translateY(24px) scale(.98)}to{opacity:1;transform:none}}
+@media(max-width:900px){#hero{padding-top:110px;padding-bottom:56px}.hero-wrap{gap:32px}}
+@media(prefers-reduced-motion:reduce){
+ .hero-wrap>div:first-child,.hero-product{animation:none!important}
+ .hero-product>a,.btn-hero-primary,.btn-hero-ghost,.nav-cta,.feat-card,.demo-screen{transition:none!important;transform:none!important}
+}
+</style>
+<style id="landing-typography">
+:root{--text2:#acbad0;--text3:#94a6bf}
+body{font-size:16px;line-height:1.8;font-weight:400}
+.hero-title{font-weight:700;font-size:clamp(36px,3.4vw,50px);line-height:1.23;letter-spacing:0;text-wrap:balance;margin-bottom:22px}
+html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
+.hero-sub{font-size:18px;line-height:1.85;max-width:48ch;text-wrap:pretty}
+.section-title{font-size:clamp(28px,3vw,40px);line-height:1.3;font-weight:700;letter-spacing:0;text-wrap:balance}
+.section-sub{font-size:17px;line-height:1.85;text-wrap:pretty}
+.feat-row-title,.step-title{font-size:21px;font-weight:600;line-height:1.5;letter-spacing:0}
+.feat-card:first-child .feat-row-title{font-size:26px;font-weight:600;line-height:1.4}
+.feat-row-desc,.feat-card:first-child .feat-row-desc,.step-desc{font-size:16px;line-height:1.9;text-wrap:pretty}
+.faq-q{font-size:17px;font-weight:500;line-height:1.6;letter-spacing:0}
+.faq-a-pad{font-size:16px;line-height:1.9}
+.nav-link,.nav-cta{font-size:14px;letter-spacing:0}
+.btn-hero-primary,.btn-hero-ghost,.btn-cta-dark{font-size:16px;font-weight:600;letter-spacing:0}
+.hero-trust-line,.hero-security,.hero-product figcaption{font-size:14px;line-height:1.8}
+.demo-tab{font-size:14px;line-height:1.5;font-weight:500}
+.price-list li{font-size:16px;line-height:1.8}
+.footer-brand-desc{font-size:15px;line-height:1.85}
+@media(max-width:900px){.hero-title{font-size:clamp(34px,5.8vw,48px)}.hero-sub{font-size:17px}.feat-card:first-child .feat-row-title{font-size:23px}}
+</style>
 </head>
 <body>
 
