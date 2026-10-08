@@ -22,14 +22,14 @@
 </script>
 <meta name="google-site-verification" content="FSusm5X2VDUsrsnZfnk_L_4V8STvBITiGc044BZ2eC0">
 <title>Free Trading Journal | Automatic IBKR &amp; Bybit Import | ChartRoom</title>
-<meta name="description" content="Free trading journal for active traders — automatic import from IBKR and Bybit, a Trend Template stock screener, real-time Market Pulse and win-rate breakdowns for every trade. Try it free today.">
+<meta name="description" content="Free trading journal for active traders — automatic import from IBKR and Bybit, a Trend Template stock screener, Market Pulse overview and win-rate breakdowns for every trade. Try it free today.">
 <meta name="keywords" content="trading journal, free trading journal, trade analytics, stock trading journal, crypto trading journal, risk management, interactive brokers import, bybit journal, win rate trading, profit factor, market pulse, fear greed index, stock screener, trend template, swing trading journal">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://davidtheking28-oss.github.io/trading-journal/index-en.html">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://davidtheking28-oss.github.io/trading-journal/">
 <meta property="og:title" content="Stop Guessing Why Your Trades Win or Lose | ChartRoom">
-<meta property="og:description" content="Automatic import from IBKR and Bybit, real-time Market Pulse and a Trend Template stock screener — free forever, no credit card.">
+<meta property="og:description" content="Automatic import from IBKR and Bybit, Market Pulse overview and a Trend Template stock screener — free signup, no credit card.">
 <meta property="og:locale" content="en_US">
 <meta property="og:site_name" content="ChartRoom">
 <meta property="og:image" content="https://davidtheking28-oss.github.io/trading-journal/assets/og-image.png">
@@ -37,7 +37,7 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Stop Guessing Why Your Trades Win or Lose | ChartRoom">
-<meta name="twitter:description" content="Automatic import from IBKR and Bybit, real-time Market Pulse and a Trend Template stock screener — free forever, no credit card.">
+<meta name="twitter:description" content="Automatic import from IBKR and Bybit, Market Pulse overview and a Trend Template stock screener — free signup, no credit card.">
 <meta name="twitter:image" content="https://davidtheking28-oss.github.io/trading-journal/assets/og-image.png">
 <meta name="theme-color" content="#0c1022">
 <meta name="author" content="ChartRoom">
@@ -1148,6 +1148,23 @@ html.a11y-underline a { text-decoration: underline !important; }
 @media (max-width: 480px) { .cookie-banner { bottom: 12px; padding: 14px 16px; } }
 </style>
 <noscript><style>.reveal { opacity:1; transform:none; }</style></noscript>
+
+<style>
+#hero { padding-top:140px; padding-bottom:70px; }
+#hero-bg-3d { opacity:.18; }
+.hero-wrap { max-width:1240px; display:grid; grid-template-columns:minmax(0, .85fr) minmax(0, 1.15fr); gap:48px; align-items:center; text-align:start; }
+.hero-title { font-size:clamp(36px,3.6vw,52px); line-height:1.17; letter-spacing:-.7px; }
+.hero-sub { margin:0 0 24px; font-size:17px; }
+.hero-actions { justify-content:flex-start; }
+.hero-trust-line { text-align:start; color:var(--text2); }
+.hero-security { margin-top:10px; font-size:13px; line-height:1.7; color:var(--text2); }
+.hero-security a,.hero-product a { color:var(--accent); text-underline-offset:3px; }
+.hero-product { margin:0; min-width:0; }
+.hero-product img { display:block; width:100%; height:auto; border:1px solid var(--border); border-radius:14px; box-shadow:0 24px 60px rgba(0,0,0,.3); }
+.hero-product figcaption { margin-top:14px; font-size:13px; line-height:1.7; color:var(--text2); }
+@media(max-width:900px) { .hero-wrap { grid-template-columns:1fr; gap:32px; } #hero { padding-top:110px; } .hero-product { max-width:760px; } }
+</style>
+<style>.demo-app{position:relative}.demo-nav{padding-inline-end:54px}.demo-app>.demo-tab-pause{position:absolute;top:10px;inset-inline-end:12px;z-index:2}</style>
 </head>
 <body>
 
@@ -1247,9 +1264,9 @@ html.a11y-underline a { text-decoration: underline !important; }
   <div class="hero-wrap">
     <div>
       <h1 class="hero-title" id="hero-heading">
-        <span class="hero-title-lead">Stop <span class="hl-accent">guessing</span> why your trades win or lose.</span>
+        <span class="hero-title-lead">Find the trades that <span class="hl-accent">work for you</span> — and the ones that cost you.</span>
       </h1>
-      <p class="hero-sub">Connects to your IBKR or Bybit and breaks down every trade by win rate, profit factor and setup — so you know exactly what's working and what's costing you money.</p>
+      <p class="hero-sub">Import trades from IBKR or Bybit, review your performance and discover the setups that work over time.</p>
       <div class="hero-actions">
         <a href="dashboard.html" class="btn-hero-primary">
           Start Free
@@ -1257,8 +1274,9 @@ html.a11y-underline a { text-decoration: underline !important; }
         </a>
         <a href="#demo" class="btn-hero-ghost">See It In Action</a>
       </div>
-      <p class="hero-trust-line">No credit card · Free forever, not just at signup</p>
+      <p class="hero-trust-line">Free signup · No credit card required</p><p class="hero-security">Read-only broker connection. <a href="broker-guide.html">How does it work?</a></p>
     </div>
+<figure class="hero-product"><a href="#demo" aria-label="Explore the product preview"><img src="assets/demo/demo-stats.jpg" width="1600" height="900" fetchpriority="high" decoding="async" alt="Trading journal preview with performance metrics and calendar"></a><figcaption>Your journal at a glance · <a href="#demo">Explore the product views</a></figcaption></figure>
   </div>
 </section>
 
@@ -1312,10 +1330,11 @@ html.a11y-underline a { text-decoration: underline !important; }
           <button class="demo-tab" id="dt2" role="tab" aria-selected="false" aria-controls="ds2" tabindex="-1">Market Pulse</button>
           <button class="demo-tab" id="dt3" role="tab" aria-selected="false" aria-controls="ds3" tabindex="-1">Screener</button>
           <button class="demo-tab" id="dt4" role="tab" aria-selected="false" aria-controls="ds4" tabindex="-1">Statistics</button>
-          <button type="button" class="demo-tab-pause" id="demo-pause-btn" aria-label="Pause auto-switching">⏸</button>
+
         </div>
 
-        <div class="demo-stage">
+        <button type="button" class="demo-tab-pause" id="demo-pause-btn" aria-label="Pause auto-switching">⏸</button>
+<div class="demo-stage">
           <!-- Screen 1: Dashboard overview -->
           <div class="demo-body demo-screen active" id="ds0" role="tabpanel" aria-labelledby="dt0" style="padding:0">
             <img src="assets/demo/demo-stats.jpg" alt="Dashboard — statistics and monthly calendar" loading="lazy" decoding="async">
@@ -1414,13 +1433,13 @@ html.a11y-underline a { text-decoration: underline !important; }
     </div>
     <div class="feat-card reveal">
       <span class="feat-num" aria-hidden="true">02</span>
-      <h3 class="feat-row-title">The market's pulse, live</h3>
+      <h3 class="feat-row-title">Understand the market context</h3>
       <p class="feat-row-desc">Sector performance, <span class="kw">Fear &amp; Greed Index</span> and leading stocks — all in one place, so you know where the money's flowing before you enter a position.</p>
     </div>
     <div class="feat-card reveal">
       <span class="feat-num" aria-hidden="true">03</span>
       <h3 class="feat-row-title">Built-in stock screener</h3>
-      <p class="feat-row-desc">Scans the whole market and surfaces only stocks with a strong technical structure (<span class="kw">Trend Template</span>) — right inside the journal.</p>
+      <p class="feat-row-desc">Find stocks that match your criteria, compare their technical structure and add them to your watchlist — right inside the journal.</p>
     </div>
     <div class="feat-card reveal">
       <span class="feat-num" aria-hidden="true">04</span>
@@ -1447,13 +1466,13 @@ html.a11y-underline a { text-decoration: underline !important; }
 <section id="pricing" class="centered" aria-labelledby="pricing-heading">
   <div class="reveal">
     <div class="section-pill">Pricing</div>
-    <h2 class="section-title" id="pricing-heading">Completely free. Not for now — forever.</h2>
+    <h2 class="section-title" id="pricing-heading">All your tools in one place. Start free.</h2>
     <p class="section-sub">No credit card, no "basic" tier pushing you to upgrade.</p>
   </div>
 
   <div class="pricing-outer reveal">
     <div class="pricing-card">
-      <div class="price-label">Free Forever</div>
+      <div class="price-label">Free access</div>
       <div class="price-amount"><span class="cur">$</span>0 <span class="per">/ month</span></div>
       <div class="price-note">Every feature unlocked. Nothing to upgrade.</div>
       <ul class="price-list" aria-label="What's included">
@@ -1486,7 +1505,7 @@ html.a11y-underline a { text-decoration: underline !important; }
       </div>
       <div class="faq-item reveal" role="listitem">
         <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a2">
-          Is the real-time data and stock screener really free?
+          Is the market data and stock screener really free?
           <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
         </button>
         <div class="faq-a" id="faq-a2" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">Yes. Every tool is fully unlocked, no credit card required.</div></div></div>
@@ -1549,7 +1568,7 @@ html.a11y-underline a { text-decoration: underline !important; }
         </svg>
         <span class="footer-logo-text">ChartRoom</span>
       </div>
-      <p class="footer-brand-desc">Free trading journal for active traders. Automatic broker import, real-time market data and a built-in stock screener.</p>
+      <p class="footer-brand-desc">Free trading journal for active traders. Automatic broker import, market data and a built-in stock screener.</p>
     </div>
     <div class="footer-cols">
       <div class="footer-col" role="navigation" aria-label="Product">
@@ -1888,7 +1907,7 @@ html.a11y-underline a { text-decoration: underline !important; }
   "@type": "FAQPage",
   "mainEntity": [
     {"@type":"Question","name":"Is the broker connection safe?","acceptedAnswer":{"@type":"Answer","text":"Yes. Read-only connection only — the system has no access to place trades or withdraw funds. Data is traffic is encrypted over HTTPS, and each user sees only their own data."}},
-    {"@type":"Question","name":"Is the real-time data and stock screener really free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Every tool is fully unlocked, no credit card required."}},
+    {"@type":"Question","name":"Is the market data and stock screener really free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Every tool is fully unlocked, no credit card required."}},
     {"@type":"Question","name":"How does the portfolio tracking category help me specifically?","acceptedAnswer":{"@type":"Answer","text":"Shows you live capital allocation, so you catch over-exposure to one asset before it already happened."}},
     {"@type":"Question","name":"How long does setup take?","acceptedAnswer":{"@type":"Answer","text":"Sign up — under a minute. Connecting a broker — about 10 minutes the first time, then it's automatic."}},
     {"@type":"Question","name":"Does it work on mobile?","acceptedAnswer":{"@type":"Answer","text":"Yes, the app is responsive and works in a mobile browser. It can be installed as a PWA directly from the browser."}},

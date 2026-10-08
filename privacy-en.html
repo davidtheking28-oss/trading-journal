@@ -56,11 +56,38 @@ a:hover{text-decoration:underline}
 
 @media(max-width:600px){.container{padding:32px 16px 60px}.data-table{font-size:12px}}
 </style>
+<style>
+:root{--bg:#0c1022;--card:#111a2c;--text:#e4ecf8;--text2:#afbdd1;--text3:#96a7bf;--border:rgba(255,255,255,.12);--accent:#91b4ff}
+body{font-size:16px;line-height:1.85}
+body>nav{height:68px;background:rgba(12,16,34,.94);padding-inline:max(24px,calc((100vw - 1160px)/2));}
+.layout{display:grid;align-items:start;margin:0 auto;padding:56px 24px 80px;max-width:1160px;grid-template-columns:230px minmax(0,1fr);gap:56px;padding-top:56px}
+.content{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:36px 40px;box-shadow:0 16px 48px rgba(0,0,0,.15)}
+.toc{display:flex;flex-direction:column;position:sticky;top:96px;max-height:calc(100vh - 120px);overflow-y:auto;height:auto;background:transparent;border:0;padding:12px 0;backdrop-filter:none;justify-content:flex-start;align-items:stretch;gap:4px}
+.toc a{font-size:14px;padding:9px 12px;color:var(--text2)}
+.toc a:hover,.toc a.active{color:var(--accent);background:rgba(79,131,255,.12)}
+.toc-label{font-size:12px;color:var(--text2);margin-bottom:12px}
+.page-title{font-family:var(--display);font-size:clamp(32px,3.5vw,44px);line-height:1.25;letter-spacing:-.5px}
+.page-date{line-height:1.8;margin-bottom:28px}
+.content p,.content li{font-size:15px;line-height:1.9;color:var(--text2)}
+.content h2{font-size:21px;line-height:1.5;margin-top:32px;scroll-margin-top:100px}
+.content h2:first-of-type{margin-top:0}
+.content a{text-decoration:underline;text-underline-offset:4px}
+.content ul{padding-inline-start:24px;padding-inline-end:0}
+.data-table{display:block;overflow-x:auto;max-width:100%;line-height:1.7}
+.data-table th,.data-table td{text-align:start;border-color:var(--border);font-size:14px}
+.legal-footer{max-width:1160px;margin:0 auto;padding:0 24px 40px;display:flex;gap:24px;flex-wrap:wrap;font-size:14px;color:var(--text2)}
+.legal-footer a{color:var(--accent);text-underline-offset:4px}
+.skip-link{position:fixed;top:-80px;inset-inline-start:20px;z-index:200;background:var(--card);color:var(--text);padding:12px 20px;border:2px solid var(--accent);border-radius:8px}
+.skip-link:focus{top:12px}
+@media(max-width:850px){.layout{grid-template-columns:1fr;gap:20px;padding:30px 20px 60px}.toc{position:static;display:flex;max-height:none}.content{padding:26px 22px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
 </head>
 <body>
+<a class="skip-link" href="#main-content">Skip to content</a>
 
 <nav>
-  <a href="/" class="nav-logo" aria-label="ChartRoom">
+  <a href="index-en.html" class="nav-logo" aria-label="ChartRoom">
     <div class="nav-logo-icon" aria-hidden="true">
       <svg width="28" height="28" viewBox="0 0 200 200" style="filter:drop-shadow(0 0 6px rgba(129,140,248,0.4))" aria-hidden="true">
         <defs>
@@ -79,8 +106,8 @@ a:hover{text-decoration:underline}
   </a>
 </nav>
 
-<main>
-<div class="container">
+<main id="main-content">
+<div class="layout"><nav class="toc" aria-label="Contents"><div class="toc-label">ON THIS PAGE</div><a href="#privacy-section-1">1. Who is responsible for the data</a><a href="#privacy-section-2">2. What data is collected</a><a href="#privacy-section-3">3. How the data is stored</a><a href="#privacy-section-4">4. Third parties</a><a href="#privacy-section-5">5. Your rights</a><a href="#privacy-section-6">6. Data retention</a><a href="#privacy-section-7">7. Children</a><a href="#privacy-section-8">8. Changes to this policy</a><a href="#privacy-section-9">9. Contact</a></nav><div class="content">
 
   <div class="page-badge">Privacy</div>
   <h1 class="page-title">Privacy Policy</h1>
@@ -89,10 +116,10 @@ a:hover{text-decoration:underline}
 
   <p>This policy explains what data is collected when you use ChartRoom, how it is stored, and what your rights are. Your privacy matters to us — the Service does not sell data and does not use it for advertising.</p>
 
-  <h2>1. Who is responsible for the data</h2>
+  <h2 id="privacy-section-1">1. Who is responsible for the data</h2>
   <p>ChartRoom is operated by an individual (not a registered company). For questions: <a href="mailto:davidtheking27@gmail.com">davidtheking27@gmail.com</a></p>
 
-  <h2>2. What data is collected</h2>
+  <h2 id="privacy-section-2">2. What data is collected</h2>
   <table class="data-table" aria-label="Types of data collected">
     <thead>
       <tr><th>Data</th><th>What is stored</th><th>Purpose</th></tr>
@@ -109,14 +136,14 @@ a:hover{text-decoration:underline}
   </table>
   <p>We do <strong>not</strong> collect location data, tracking cookies, or biometric information.</p>
 
-  <h2>3. How the data is stored</h2>
+  <h2 id="privacy-section-3">3. How the data is stored</h2>
   <p>All data is stored on <strong>Supabase</strong> (servers in the European Union — Frankfurt). Supabase implements Row-Level Security: only you can access your data. Communication is encrypted with TLS/HTTPS everywhere.</p>
 
   <div class="info-box">
     Broker API keys (IBKR, Bybit) are stored encrypted. We pass them only to import trades via a Supabase Edge Function — they are never stored on external servers.
   </div>
 
-  <h2>4. Third parties</h2>
+  <h2 id="privacy-section-4">4. Third parties</h2>
   <table class="data-table" aria-label="Third parties that receive data">
     <thead>
       <tr><th>Service</th><th>What is shared</th><th>Their privacy policy</th></tr>
@@ -141,7 +168,7 @@ a:hover{text-decoration:underline}
   </table>
   <p>We do <strong>not</strong> sell, transfer, or share data with advertisers.</p>
 
-  <h2>5. Your rights</h2>
+  <h2 id="privacy-section-5">5. Your rights</h2>
   <p>In accordance with Israeli privacy law and GDPR (to the extent applicable):</p>
   <ul>
     <li><strong>Access</strong> — you can export all your data from the app via Settings → Export Data</li>
@@ -149,20 +176,22 @@ a:hover{text-decoration:underline}
     <li><strong>Correction</strong> — you can edit and delete trades directly in the app</li>
   </ul>
 
-  <h2>6. Data retention</h2>
+  <h2 id="privacy-section-6">6. Data retention</h2>
   <p>Active account data is retained for as long as the account is active. After a deletion request, data is deleted within 14 days.</p>
 
-  <h2>7. Children</h2>
+  <h2 id="privacy-section-7">7. Children</h2>
   <p>The Service is not intended for users aged 16 and under. We are not aware of any data collected from children. If you become aware of such a case — contact us for immediate deletion.</p>
 
-  <h2>8. Changes to this policy</h2>
+  <h2 id="privacy-section-8">8. Changes to this policy</h2>
   <p>Material changes will be posted on this page with an updated date at the top. Continued use after an update constitutes agreement.</p>
 
-  <h2>9. Contact</h2>
+  <h2 id="privacy-section-9">9. Contact</h2>
   <p>For any privacy question: <a href="mailto:davidtheking27@gmail.com">davidtheking27@gmail.com</a></p>
 
 </div>
+</div>
 </main>
+<footer class="legal-footer"><a href="index-en.html">Back to ChartRoom</a><a href="terms-en.html">Terms of use</a><a href="privacy-en.html">Privacy policy</a></footer>
 
 </body>
 </html>

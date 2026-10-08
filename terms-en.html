@@ -74,11 +74,38 @@ a:hover{text-decoration:underline}
   .page-title{font-size:28px}
 }
 </style>
+<style>
+:root{--bg:#0c1022;--card:#111a2c;--text:#e4ecf8;--text2:#afbdd1;--text3:#96a7bf;--border:rgba(255,255,255,.12);--accent:#91b4ff}
+body{font-size:16px;line-height:1.85}
+body>nav{height:68px;background:rgba(12,16,34,.94);padding-inline:max(24px,calc((100vw - 1160px)/2));}
+.layout{display:grid;align-items:start;margin:0 auto;padding:56px 24px 80px;max-width:1160px;grid-template-columns:230px minmax(0,1fr);gap:56px;padding-top:56px}
+.content{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:36px 40px;box-shadow:0 16px 48px rgba(0,0,0,.15)}
+.toc{display:flex;flex-direction:column;position:sticky;top:96px;max-height:calc(100vh - 120px);overflow-y:auto;height:auto;background:transparent;border:0;padding:12px 0;backdrop-filter:none;justify-content:flex-start;align-items:stretch;gap:4px}
+.toc a{font-size:14px;padding:9px 12px;color:var(--text2)}
+.toc a:hover,.toc a.active{color:var(--accent);background:rgba(79,131,255,.12)}
+.toc-label{font-size:12px;color:var(--text2);margin-bottom:12px}
+.page-title{font-family:var(--display);font-size:clamp(32px,3.5vw,44px);line-height:1.25;letter-spacing:-.5px}
+.page-date{line-height:1.8;margin-bottom:28px}
+.content p,.content li{font-size:15px;line-height:1.9;color:var(--text2)}
+.content h2{font-size:21px;line-height:1.5;margin-top:32px;scroll-margin-top:100px}
+.content h2:first-of-type{margin-top:0}
+.content a{text-decoration:underline;text-underline-offset:4px}
+.content ul{padding-inline-start:24px;padding-inline-end:0}
+.data-table{display:block;overflow-x:auto;max-width:100%;line-height:1.7}
+.data-table th,.data-table td{text-align:start;border-color:var(--border);font-size:14px}
+.legal-footer{max-width:1160px;margin:0 auto;padding:0 24px 40px;display:flex;gap:24px;flex-wrap:wrap;font-size:14px;color:var(--text2)}
+.legal-footer a{color:var(--accent);text-underline-offset:4px}
+.skip-link{position:fixed;top:-80px;inset-inline-start:20px;z-index:200;background:var(--card);color:var(--text);padding:12px 20px;border:2px solid var(--accent);border-radius:8px}
+.skip-link:focus{top:12px}
+@media(max-width:850px){.layout{grid-template-columns:1fr;gap:20px;padding:30px 20px 60px}.toc{position:static;display:flex;max-height:none}.content{padding:26px 22px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
 </head>
 <body>
+<a class="skip-link" href="#main-content">Skip to content</a>
 
 <nav>
-  <a href="/" class="nav-logo" aria-label="ChartRoom">
+  <a href="index-en.html" class="nav-logo" aria-label="ChartRoom">
     <div class="nav-logo-icon" aria-hidden="true">
       <svg width="28" height="28" viewBox="0 0 200 200" style="filter:drop-shadow(0 0 6px rgba(129,140,248,0.4))" aria-hidden="true">
         <defs>
@@ -97,7 +124,7 @@ a:hover{text-decoration:underline}
   </a>
 </nav>
 
-<main>
+<main id="main-content">
 <div class="layout">
 
   <nav class="toc" aria-label="Section navigation">
@@ -249,6 +276,7 @@ a:hover{text-decoration:underline}
   </div>
 </div>
 </main>
+<footer class="legal-footer"><a href="index-en.html">Back to ChartRoom</a><a href="terms-en.html">Terms of use</a><a href="privacy-en.html">Privacy policy</a></footer>
 
 <script>
 (function(){

@@ -38,14 +38,14 @@
 </script>
 <meta name="google-site-verification" content="FSusm5X2VDUsrsnZfnk_L_4V8STvBITiGc044BZ2eC0">
 <title>יומן מסחר חינמי | ייבוא אוטומטי מ-IBKR ו-Bybit | ChartRoom</title>
-<meta name="description" content="יומן מסחר חינמי לסוחרים ישראלים — ייבוא אוטומטי מ-IBKR ו-Bybit, מסנן מניות Trend Template, Market Pulse בזמן אמת וניתוח win rate לכל עסקה. נסה חינם היום.">
+<meta name="description" content="יומן מסחר חינמי לסוחרים ישראלים — ייבוא אוטומטי מ-IBKR ו-Bybit, מסנן מניות Trend Template, סקירת שוק Market Pulse וניתוח win rate לכל עסקה. נסה חינם היום.">
 <meta name="keywords" content="יומן מסחר, trading journal, יומן מסחר חינמי, ניתוח עסקאות, מסחר במניות, מסחר בקריפטו, ניהול סיכונים, interactive brokers ייבוא, bybit יומן, win rate מסחר, profit factor, market pulse, fear greed index, מסנן מניות, trend template, stock screener, סוחר יומי ישראל, swing trading יומן">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://davidtheking28-oss.github.io/trading-journal/">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://davidtheking28-oss.github.io/trading-journal/">
 <meta property="og:title" content="תפסיק לנחש למה אתה מרוויח או מפסיד | ChartRoom">
-<meta property="og:description" content="ייבוא אוטומטי מ-IBKR ו-Bybit, Market Pulse בזמן אמת ומסנן מניות Trend Template — חינם לתמיד, בלי כרטיס אשראי.">
+<meta property="og:description" content="ייבוא אוטומטי מ-IBKR ו-Bybit, סקירת שוק Market Pulse ומסנן מניות Trend Template — הרשמה חינם, בלי כרטיס אשראי.">
 <meta property="og:locale" content="he_IL">
 <meta property="og:site_name" content="ChartRoom">
 <meta property="og:image" content="https://davidtheking28-oss.github.io/trading-journal/assets/og-image.png">
@@ -53,7 +53,7 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="תפסיק לנחש למה אתה מרוויח או מפסיד | ChartRoom">
-<meta name="twitter:description" content="ייבוא אוטומטי מ-IBKR ו-Bybit, Market Pulse בזמן אמת ומסנן מניות Trend Template — חינם לתמיד, בלי כרטיס אשראי.">
+<meta name="twitter:description" content="ייבוא אוטומטי מ-IBKR ו-Bybit, סקירת שוק Market Pulse ומסנן מניות Trend Template — הרשמה חינם, בלי כרטיס אשראי.">
 <meta name="twitter:image" content="https://davidtheking28-oss.github.io/trading-journal/assets/og-image.png">
 <meta name="theme-color" content="#0c1022">
 <meta name="author" content="ChartRoom">
@@ -1164,6 +1164,23 @@ html.a11y-underline a { text-decoration: underline !important; }
 @media (max-width: 480px) { .cookie-banner { bottom: 12px; padding: 14px 16px; } }
 </style>
 <noscript><style>.reveal { opacity:1; transform:none; }</style></noscript>
+
+<style>
+#hero { padding-top:140px; padding-bottom:70px; }
+#hero-bg-3d { opacity:.18; }
+.hero-wrap { max-width:1240px; display:grid; grid-template-columns:minmax(0, .85fr) minmax(0, 1.15fr); gap:48px; align-items:center; text-align:start; }
+.hero-title { font-size:clamp(36px,3.6vw,52px); line-height:1.17; letter-spacing:-.7px; }
+.hero-sub { margin:0 0 24px; font-size:17px; }
+.hero-actions { justify-content:flex-start; }
+.hero-trust-line { text-align:start; color:var(--text2); }
+.hero-security { margin-top:10px; font-size:13px; line-height:1.7; color:var(--text2); }
+.hero-security a,.hero-product a { color:var(--accent); text-underline-offset:3px; }
+.hero-product { margin:0; min-width:0; }
+.hero-product img { display:block; width:100%; height:auto; border:1px solid var(--border); border-radius:14px; box-shadow:0 24px 60px rgba(0,0,0,.3); }
+.hero-product figcaption { margin-top:14px; font-size:13px; line-height:1.7; color:var(--text2); }
+@media(max-width:900px) { .hero-wrap { grid-template-columns:1fr; gap:32px; } #hero { padding-top:110px; } .hero-product { max-width:760px; } }
+</style>
+<style>.demo-app{position:relative}.demo-nav{padding-inline-end:54px}.demo-app>.demo-tab-pause{position:absolute;top:10px;inset-inline-end:12px;z-index:2}</style>
 </head>
 <body>
 
@@ -1263,9 +1280,9 @@ html.a11y-underline a { text-decoration: underline !important; }
   <div class="hero-wrap">
     <div>
       <h1 class="hero-title" id="hero-heading">
-        <span class="hero-title-lead">תפסיק <span class="hl-accent">לנחש</span> למה עסקאות שלך מרוויחות או מפסידות.</span>
+        <span class="hero-title-lead">גלה אילו עסקאות <span class="hl-accent">עובדות בשבילך</span> — ואילו עולות לך כסף.</span>
       </h1>
-      <p class="hero-sub">מחבר את IBKR או Bybit שלך ומפרק כל עסקה לפי win rate, profit factor ותבנית מסחר — כדי שתדע בדיוק מה עובד לך ומה עולה לך כסף.</p>
+      <p class="hero-sub">ייבא עסקאות מ־IBKR או Bybit, נתח את הביצועים שלך וזהה את תבניות המסחר שעובדות לאורך זמן.</p>
       <div class="hero-actions">
         <a href="dashboard.html" class="btn-hero-primary">
           התחל בחינם
@@ -1273,8 +1290,9 @@ html.a11y-underline a { text-decoration: underline !important; }
         </a>
         <a href="#demo" class="btn-hero-ghost">צפה במערכת</a>
       </div>
-      <p class="hero-trust-line">ללא כרטיס אשראי · חינם לתמיד, לא רק בהרשמה</p>
+      <p class="hero-trust-line">הרשמה חינם · ללא כרטיס אשראי</p><p class="hero-security">חיבור לברוקר לקריאה בלבד. <a href="broker-guide.html">איך החיבור עובד?</a></p>
     </div>
+<figure class="hero-product"><a href="#demo" aria-label="לצפייה בהדגמת המערכת"><img src="assets/demo/demo-stats.jpg" width="1600" height="900" fetchpriority="high" decoding="async" alt="תצוגת יומן המסחר: נתוני ביצועים ולוח שנה"></a><figcaption>כך נראה היומן שלך · <a href="#demo">עבור בין תצוגות המערכת</a></figcaption></figure>
   </div>
 </section>
 
@@ -1328,10 +1346,11 @@ html.a11y-underline a { text-decoration: underline !important; }
           <button class="demo-tab" id="dt2" role="tab" aria-selected="false" aria-controls="ds2" tabindex="-1">Market Pulse</button>
           <button class="demo-tab" id="dt3" role="tab" aria-selected="false" aria-controls="ds3" tabindex="-1">מסנן מניות</button>
           <button class="demo-tab" id="dt4" role="tab" aria-selected="false" aria-controls="ds4" tabindex="-1">סטטיסטיקות</button>
-          <button type="button" class="demo-tab-pause" id="demo-pause-btn" aria-label="השהה החלפה אוטומטית">⏸</button>
+
         </div>
 
-        <div class="demo-stage">
+        <button type="button" class="demo-tab-pause" id="demo-pause-btn" aria-label="השהה החלפה אוטומטית">⏸</button>
+<div class="demo-stage">
           <!-- Screen 1: Dashboard overview -->
           <div class="demo-body demo-screen active" id="ds0" role="tabpanel" aria-labelledby="dt0" style="padding:0">
             <img src="assets/demo/demo-stats.jpg" alt="דשבורד — סטטיסטיקה ולוח שנה חודשי" loading="lazy" decoding="async">
@@ -1430,13 +1449,13 @@ html.a11y-underline a { text-decoration: underline !important; }
     </div>
     <div class="feat-card reveal">
       <span class="feat-num" aria-hidden="true">02</span>
-      <h3 class="feat-row-title">דופק השוק בזמן אמת</h3>
+      <h3 class="feat-row-title">להבין את מצב השוק</h3>
       <p class="feat-row-desc">ביצועי סקטורים, <span class="kw">Fear &amp; Greed Index</span> ומניות מובילות — במקום אחד, כדי שתדע לאן הכסף זורם לפני שאתה נכנס לפוזיציה.</p>
     </div>
     <div class="feat-card reveal">
       <span class="feat-num" aria-hidden="true">03</span>
       <h3 class="feat-row-title">מסנן מניות מובנה</h3>
-      <p class="feat-row-desc">הסורק סורק את כל השוק ומציג רק מניות עם מבנה טכני חזק (<span class="kw">Trend Template</span>) — ישר בתוך היומן.</p>
+      <p class="feat-row-desc">מצא מניות שמתאימות לקריטריונים שלך, השווה את המבנה הטכני שלהן והוסף אותן למעקב — ישר בתוך היומן.</p>
     </div>
     <div class="feat-card reveal">
       <span class="feat-num" aria-hidden="true">04</span>
@@ -1463,13 +1482,13 @@ html.a11y-underline a { text-decoration: underline !important; }
 <section id="pricing" class="centered" aria-labelledby="pricing-heading">
   <div class="reveal">
     <div class="section-pill">תמחור</div>
-    <h2 class="section-title" id="pricing-heading">חינמי לחלוטין. לא בינתיים — תמיד.</h2>
+    <h2 class="section-title" id="pricing-heading">כל הכלים במקום אחד. הרשמה חינם.</h2>
     <p class="section-sub">בלי כרטיס אשראי, בלי תוכנית "בסיס" שדוחפת לשדרג.</p>
   </div>
 
   <div class="pricing-outer reveal">
     <div class="pricing-card">
-      <div class="price-label">חינם לתמיד</div>
+      <div class="price-label">גישה חינמית</div>
       <div class="price-amount"><span class="cur">₪</span>0 <span class="per">/ חודש</span></div>
       <div class="price-note">כל הפיצ'רים פתוחים. אין מה לשדרג.</div>
       <ul class="price-list" aria-label="מה כלול">
@@ -1502,7 +1521,7 @@ html.a11y-underline a { text-decoration: underline !important; }
       </div>
       <div class="faq-item reveal" role="listitem">
         <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a2">
-          האם נתונים בזמן אמת ומסנן המניות באמת בחינם?
+          האם נתוני השוק ומסנן המניות באמת בחינם?
           <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
         </button>
         <div class="faq-a" id="faq-a2" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">כן. כל הכלים פתוחים לגמרי, ללא כרטיס אשראי.</div></div></div>
@@ -1565,7 +1584,7 @@ html.a11y-underline a { text-decoration: underline !important; }
         </svg>
         <span class="footer-logo-text">ChartRoom</span>
       </div>
-      <p class="footer-brand-desc">יומן מסחר חינמי לסוחרים ישראלים. ייבוא אוטומטי מהברוקר, נתוני שוק בזמן אמת ומסנן מניות מובנה.</p>
+      <p class="footer-brand-desc">יומן מסחר חינמי לסוחרים ישראלים. ייבוא אוטומטי מהברוקר, נתוני שוק ומסנן מניות מובנה.</p>
     </div>
     <div class="footer-cols">
       <div class="footer-col" role="navigation" aria-label="מוצר">
@@ -1904,7 +1923,7 @@ html.a11y-underline a { text-decoration: underline !important; }
   "@type": "FAQPage",
   "mainEntity": [
     {"@type":"Question","name":"האם החיבור לברוקר בטוח?","acceptedAnswer":{"@type":"Answer","text":"כן. חיבור Read-Only בלבד — אין למערכת גישה לביצוע פעולות או משיכת כספים. התקשורת מוצפנת ב-HTTPS, וכל משתמש רואה רק את הנתונים שלו."}},
-    {"@type":"Question","name":"האם נתונים בזמן אמת ומסנן המניות באמת בחינם?","acceptedAnswer":{"@type":"Answer","text":"כן. כל הכלים פתוחים לגמרי, ללא כרטיס אשראי."}},
+    {"@type":"Question","name":"האם נתוני השוק ומסנן המניות באמת בחינם?","acceptedAnswer":{"@type":"Answer","text":"כן. כל הכלים פתוחים לגמרי, ללא כרטיס אשראי."}},
     {"@type":"Question","name":"איך קטגוריית בניית התיק עוזרת לי ספציפית?","acceptedAnswer":{"@type":"Answer","text":"מראה לך פיזור הון בלייב, כדי שלא תגלה חשיפת יתר לנכס אחד אחרי שכבר קרה."}},
     {"@type":"Question","name":"כמה זמן לוקח להגדיר?","acceptedAnswer":{"@type":"Answer","text":"הרשמה — פחות מדקה. חיבור ברוקר — כ-10 דקות בפעם הראשונה, ואז זה אוטומטי."}},
     {"@type":"Question","name":"האם עובד בנייד?","acceptedAnswer":{"@type":"Answer","text":"כן, האפליקציה רספונסיבית ועובדת בדפדפן בנייד. אפשר להתקין כ-PWA ישירות מהדפדפן."}},
