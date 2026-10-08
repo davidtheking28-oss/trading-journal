@@ -1,0 +1,32 @@
+[
+  {
+    "ticker": "STX",
+    "status": 200,
+    "bars": 252
+  },
+  {
+    "ticker": "SNDK",
+    "status": 200,
+    "bars": 252
+  },
+  {
+    "ticker": "IESC",
+    "status": 200,
+    "bars": 252
+  },
+  {
+    "ticker": "REX",
+    "status": 200,
+    "bars": 252
+  },
+  {
+    "ticker": "CSTL",
+    "status": 200,
+    "bars": 252
+  },
+  {
+    "ticker": "SPCX",
+    "status": 200,
+    "bars": 82
+  }
+]

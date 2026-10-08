@@ -52,3 +52,11 @@ Found another missing refresh trigger: switching CSS tabs inside the journal doe
 Journal iframe URLs now include the deployment's injected release ID to avoid reusing the unchanged iframe URL across journal releases. Moved the existing save-status indicator into the topbar so it is visible even without a results panel. These changes remain local, while the earlier status feature is already deployed.
 
 Validation: watchlist integration test passed; 350 screener checks passed; journal logic 228 tests and browser 11 tests passed. Physical tablet and actual user's cloud membership still need confirmation after deployment.
+
+## Removal restored by a stale read
+
+Reproduced the reported reappearance with the real screener functions and a delayed synthetic database snapshot. A read started before a removal returned after the DELETE acknowledgement; the existing pending-write map was already empty, so the older snapshot re-added the ticker locally.
+
+Added a watchlist mutation revision and a read sequence. A response is applied only if its account, revision and read sequence remain current. Starting and completing a write invalidates earlier reads, including a read started while the write was pending. Newer reads also invalidate older in-flight reads. Local optimistic edits and account guards remain intact.
+
+Regression reproduced failure before the fix and passed afterward. Tested both stale snapshots that re-add acknowledged removals and stale empty snapshots that erase acknowledged additions. Existing 350 screener checks passed. This follow-up is local and not yet deployed; its successful mock tests do not establish the user's live database state.

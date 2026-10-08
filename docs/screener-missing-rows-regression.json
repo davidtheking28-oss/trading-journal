@@ -1,0 +1,400 @@
+{
+  "existing": {
+    "passed": 258,
+    "total": 258,
+    "failures": []
+  },
+  "newChecks": [
+    {
+      "name": "account guard accepts original account",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "account guard rejects changed account",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "account guard rejects A-B-A generation change",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "account guard rejects signout",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "checkAndSaveHistory: delayed A response after B switch is discarded",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "loadUserData: delayed A response after B switch is discarded",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "gallery reuses validated bars in a 90-day window",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "gallery reuse does not trim source validation history",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "gallery rejects expired validation data",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "gallery missing data preserves normal network fallback",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "gallery shares in-flight validation instead of a second fetch",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "warm batches: aborted work stops before starting",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "exact validation: aborted work stops before starting",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "warm batches: cancellation prevents remaining chunks",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "incomplete universe fails instead of ranking partial data",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "stock and ADR overlap is deduplicated",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "partial validation is explicitly labelled",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "verified price data includes date",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "unknown validation is not advertised as verified",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "screen switching remains outside collapsed criteria",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "expanded criteria have no fixed clipping height",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "login email field has usable height",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "light chart modal follows theme",
+      "pass": true
+    },
+    {
+      "name": "chart iframe has accessible title",
+      "pass": true
+    },
+    {
+      "name": "modal receives keyboard focus",
+      "pass": true
+    },
+    {
+      "name": "modal restores original keyboard focus",
+      "pass": true
+    },
+    {
+      "name": "tj/sepa/screen/table",
+      "pass": true
+    },
+    {
+      "name": "tj/sepa/screen/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj/sepa/watch/table",
+      "pass": true
+    },
+    {
+      "name": "tj/sepa/watch/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj/power/screen/table",
+      "pass": true
+    },
+    {
+      "name": "tj/power/screen/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj/power/watch/table",
+      "pass": true
+    },
+    {
+      "name": "tj/power/watch/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj/vcp/screen/table",
+      "pass": true
+    },
+    {
+      "name": "tj/vcp/screen/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj/vcp/watch/table",
+      "pass": true
+    },
+    {
+      "name": "tj/vcp/watch/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj/cleanbase/screen/table",
+      "pass": true
+    },
+    {
+      "name": "tj/cleanbase/screen/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj/cleanbase/watch/table",
+      "pass": true
+    },
+    {
+      "name": "tj/cleanbase/watch/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj/qulla/screen/table",
+      "pass": true
+    },
+    {
+      "name": "tj/qulla/screen/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj/qulla/watch/table",
+      "pass": true
+    },
+    {
+      "name": "tj/qulla/watch/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj/finviz/screen/table",
+      "pass": true
+    },
+    {
+      "name": "tj/finviz/screen/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj/finviz/watch/table",
+      "pass": true
+    },
+    {
+      "name": "tj/finviz/watch/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj/growth/screen/table",
+      "pass": true
+    },
+    {
+      "name": "tj/growth/screen/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj/growth/watch/table",
+      "pass": true
+    },
+    {
+      "name": "tj/growth/watch/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj/commodities/screen/table",
+      "pass": true
+    },
+    {
+      "name": "tj/commodities/screen/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj/commodities/watch/table",
+      "pass": true
+    },
+    {
+      "name": "tj/commodities/watch/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj-light/sepa/screen/table",
+      "pass": true
+    },
+    {
+      "name": "tj-light/sepa/screen/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj-light/sepa/watch/table",
+      "pass": true
+    },
+    {
+      "name": "tj-light/sepa/watch/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj-light/power/screen/table",
+      "pass": true
+    },
+    {
+      "name": "tj-light/power/screen/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj-light/power/watch/table",
+      "pass": true
+    },
+    {
+      "name": "tj-light/power/watch/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj-light/vcp/screen/table",
+      "pass": true
+    },
+    {
+      "name": "tj-light/vcp/screen/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj-light/vcp/watch/table",
+      "pass": true
+    },
+    {
+      "name": "tj-light/vcp/watch/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj-light/cleanbase/screen/table",
+      "pass": true
+    },
+    {
+      "name": "tj-light/cleanbase/screen/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj-light/cleanbase/watch/table",
+      "pass": true
+    },
+    {
+      "name": "tj-light/cleanbase/watch/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj-light/qulla/screen/table",
+      "pass": true
+    },
+    {
+      "name": "tj-light/qulla/screen/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj-light/qulla/watch/table",
+      "pass": true
+    },
+    {
+      "name": "tj-light/qulla/watch/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj-light/finviz/screen/table",
+      "pass": true
+    },
+    {
+      "name": "tj-light/finviz/screen/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj-light/finviz/watch/table",
+      "pass": true
+    },
+    {
+      "name": "tj-light/finviz/watch/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj-light/growth/screen/table",
+      "pass": true
+    },
+    {
+      "name": "tj-light/growth/screen/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj-light/growth/watch/table",
+      "pass": true
+    },
+    {
+      "name": "tj-light/growth/watch/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj-light/commodities/screen/table",
+      "pass": true
+    },
+    {
+      "name": "tj-light/commodities/screen/gallery",
+      "pass": true
+    },
+    {
+      "name": "tj-light/commodities/watch/table",
+      "pass": true
+    },
+    {
+      "name": "tj-light/commodities/watch/gallery",
+      "pass": true
+    },
+    {
+      "name": "inactive fundamental fields are disabled for keyboard",
+      "pass": true
+    },
+    {
+      "name": "fundamental fields re-enable correctly",
+      "pass": true
+    }
+  ],
+  "errors": []
+}

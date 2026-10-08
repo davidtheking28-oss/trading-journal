@@ -1,0 +1,13 @@
+✔ tablet 768 tabs render empty and representative data in both themes (14059.1438ms)
+✔ tablet 820 tabs render empty and representative data in both themes (7941.7662ms)
+✔ tablet 1024 tabs render empty and representative data in both themes (7926.1317ms)
+✔ tablet 1180 tabs render empty and representative data in both themes (7975.4209ms)
+✔ tablet quick trade dialog fits portrait and landscape (3707.1976ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 42058.6672

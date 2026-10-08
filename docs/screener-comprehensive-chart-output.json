@@ -1,0 +1,21 @@
+{
+  "scenario": "six real charts after exact validation, synthetic OHLC with 75ms response latency",
+  "measurements": [
+    {
+      "version": "before",
+      "requests": 6,
+      "milliseconds": 324,
+      "charts": 6,
+      "sourceBars": 250,
+      "errors": []
+    },
+    {
+      "version": "after",
+      "requests": 0,
+      "milliseconds": 23,
+      "charts": 6,
+      "sourceBars": 250,
+      "errors": []
+    }
+  ]
+}

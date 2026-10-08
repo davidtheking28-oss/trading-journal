@@ -1,0 +1,10 @@
+✔ tablet accessibility and layout audit (20236.0761ms)
+✔ tablet summary and table overflow hints follow the actual layout (2206.3029ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22965.443

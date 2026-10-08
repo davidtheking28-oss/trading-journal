@@ -1,0 +1,30 @@
+[
+  {
+    "name": "invalid RS blocks network scan",
+    "pass": true
+  },
+  {
+    "name": "network failure displays retry",
+    "pass": true
+  },
+  {
+    "name": "failed scan clears skeleton",
+    "pass": true
+  },
+  {
+    "name": "failed scan re-enables scan",
+    "pass": true
+  },
+  {
+    "name": "retry completes empty scan",
+    "pass": true
+  },
+  {
+    "name": "older scan cannot replace newer status",
+    "pass": true
+  },
+  {
+    "name": "newer scan owns enabled controls",
+    "pass": true
+  }
+]
