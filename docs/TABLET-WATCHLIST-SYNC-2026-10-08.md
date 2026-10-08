@@ -34,3 +34,11 @@ The user clarified that watchlist is a separate category and must include every 
 The watch view hides the screener criteria/preset panel, offers its own quote-refresh action, and clears a search inherited from scan results on entry. A deliberate search within the watchlist remains available. Cached rows appear in the table/gallery even when technical criteria fail; saved symbols without cached price data remain named in the missing-data notice.
 
 The expanded browser test verifies both views against all eight screener selections, including failed validation and a leftover scan search. The 350 existing checks pass under the revised policy. These changes are also local and not yet published.
+
+## Save-status follow-up
+
+Added an atomic polite live status in the results header. It distinguishes pending writes, acknowledged account synchronization, rejected writes, read/network failures and device-only storage without a signed-in account. Save failures remain visible until the affected ticker is retried; another ticker's successful save does not erase them. Account changes reset the status and stale responses cannot update it.
+
+Rejected write promises use the existing optimistic rollback behavior. A failed removal preserves the original added-at date. Server reads and local-to-account migration now handle rejected promises, and migration is not labeled synchronized before its upsert succeeds. The watchlist refresh control reads account state before refreshing quote data.
+
+The synthetic browser test verifies delayed-write status, acknowledgement, failed removal, rejected read, read recovery, signed-out status and delayed local-list migration. All 350 regression checks and automated accessibility scans across 32 existing states passed (zero violations). This follow-up is local and has not yet been deployed; the independent-watchlist and visibility-sync changes above have already been published.
