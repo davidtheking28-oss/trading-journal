@@ -42,3 +42,13 @@ Added an atomic polite live status in the results header. It distinguishes pendi
 Rejected write promises use the existing optimistic rollback behavior. A failed removal preserves the original added-at date. Server reads and local-to-account migration now handle rejected promises, and migration is not labeled synchronized before its upsert succeeds. The watchlist refresh control reads account state before refreshing quote data.
 
 The synthetic browser test verifies delayed-write status, acknowledgement, failed removal, rejected read, read recovery, signed-out status and delayed local-list migration. All 350 regression checks and automated accessibility scans across 32 existing states passed (zero violations). This follow-up is local and has not yet been deployed; the independent-watchlist and visibility-sync changes above have already been published.
+
+## Reported live mismatch: tablet additions absent on computer
+
+User confirmed both devices use the same journal account and reported not seeing the save status. This does not establish whether the tablet write reached Supabase. No live account/database write was performed during diagnosis.
+
+Found another missing refresh trigger: switching CSS tabs inside the journal does not emit document visibility-change for the screener iframe. Added a trusted-parent `tj:screener-visible` message on entering the journal screener tab and a membership read on entering watchlist. Browser regression verifies both entry refresh and trusted-message refresh against a shared synthetic store.
+
+Journal iframe URLs now include the deployment's injected release ID to avoid reusing the unchanged iframe URL across journal releases. Moved the existing save-status indicator into the topbar so it is visible even without a results panel. These changes remain local, while the earlier status feature is already deployed.
+
+Validation: watchlist integration test passed; 350 screener checks passed; journal logic 228 tests and browser 11 tests passed. Physical tablet and actual user's cloud membership still need confirmation after deployment.

@@ -36,7 +36,9 @@ test('tablet watchlist persists and syncs across device sessions',async t=>{
  await desktop.waitForFunction(()=>_wlPending.size===1);releaseWrite();
  await desktop.waitForFunction(()=>_wlPending.size===0);assert.equal(store.has('tablet-user:AAPL'),true);
  assert.equal(await desktop.locator('#wlSyncStatus').getAttribute('data-state'),'saved');
- await tablet.evaluate(()=>loadUserData());await tablet.locator('#tabWatch').click();assert.match(await tablet.locator('#tableView').innerText(),/AAPL/);
+ await tablet.locator('#tabWatch').click();
+ await tablet.waitForFunction(()=>document.querySelector('#tableView').innerText.includes('AAPL'));
+ assert.match(await tablet.locator('#tableView').innerText(),/AAPL/);
  await tablet.locator('#tableView .star-btn').first().click();await tablet.waitForFunction(()=>_wlPending.size===0);assert.equal(store.has('tablet-user:AAPL'),false);
  await desktop.evaluate(()=>loadUserData());assert.equal(await desktop.evaluate(()=>watchlist.has('AAPL')),false);
  await tablet.locator('#tabScreen').click();await tablet.locator('#tableView .star-btn').first().click();await tablet.waitForFunction(()=>_wlPending.size===0);
@@ -61,6 +63,12 @@ test('tablet watchlist persists and syncs across device sessions',async t=>{
   await tablet.waitForFunction(()=>document.querySelector('#galleryView').innerText.includes('MSFT'),null,{timeout:3000});
   await tablet.evaluate(()=>setLayout('table'));
  }
+ const savedMsft=store.get('tablet-user:MSFT');store.delete('tablet-user:MSFT');
+ await tablet.evaluate(()=>window.dispatchEvent(new MessageEvent('message',{source:window.parent,origin:'https://davidtheking28-oss.github.io',data:{type:'tj:screener-visible',visible:true}})));
+ await tablet.waitForFunction(()=>!watchlist.has('MSFT'));
+ store.set('tablet-user:MSFT',savedMsft);
+ await tablet.evaluate(()=>window.dispatchEvent(new MessageEvent('message',{source:window.parent,origin:'https://davidtheking28-oss.github.io',data:{type:'tj:screener-visible',visible:true}})));
+ await tablet.waitForFunction(()=>watchlist.has('MSFT'));
  // A saved ticker with no cached price data must still be named to the user.
  await tablet.evaluate(()=>{delete ttUniverse.MSFT;_wlDataGen++;render();});
  assert.equal(await tablet.locator('#wlMissing').isVisible(),true);

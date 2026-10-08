@@ -681,8 +681,9 @@ function switchTab(name, btn) {
     const f=document.getElementById('screener-frame');
     const scrTheme = document.documentElement.getAttribute('data-theme')==='light' ? 'tj-light' : 'tj';
     if (!f._loaded) _showScreenerLoading();
-    if(!f.src) f.src='https://davidtheking28-oss.github.io/stock-screener/?theme='+scrTheme;
+    if(!f.src) f.src='https://davidtheking28-oss.github.io/stock-screener/?theme='+scrTheme+'&v='+encodeURIComponent(f.dataset.release||'local');
     else try{ f.contentDocument.documentElement.dataset.theme=scrTheme; }catch(e){}
+    f.contentWindow?.postMessage({type:'tj:screener-visible',visible:true},'https://davidtheking28-oss.github.io');
     const fit=()=>{ f.style.height=Math.max(520, window.innerHeight - f.getBoundingClientRect().top)+'px'; };
     fit(); requestAnimationFrame(fit); setTimeout(fit,120);
     if(!f._fitBound){ f._fitBound=true; window.addEventListener('resize', fit); }
@@ -799,7 +800,7 @@ function _retryScreener() {
   f._loaded = false;
   _showScreenerLoading();
   const scrTheme = document.documentElement.getAttribute('data-theme')==='light' ? 'tj-light' : 'tj';
-  f.src = 'https://davidtheking28-oss.github.io/stock-screener/?theme=' + scrTheme + '&_r=' + Date.now();
+  f.src = 'https://davidtheking28-oss.github.io/stock-screener/?theme=' + scrTheme + '&v='+encodeURIComponent(f.dataset.release||'local')+'&_r=' + Date.now();
 }
 
 // Mobile bottom-nav: route a tap to the real sidebar tab button (keeps the
@@ -812,7 +813,7 @@ function _retryScreener() {
 window.addEventListener('load', () => {
   const warm = () => {
     const f = document.getElementById('screener-frame');
-    if (f && !f.src) f.src = 'https://davidtheking28-oss.github.io/stock-screener/?theme=' + (document.documentElement.getAttribute('data-theme')==='light' ? 'tj-light' : 'tj');
+    if (f && !f.src) f.src = 'https://davidtheking28-oss.github.io/stock-screener/?theme=' + (document.documentElement.getAttribute('data-theme')==='light' ? 'tj-light' : 'tj')+'&v='+encodeURIComponent(f.dataset.release||'local');
   };
   if (window.requestIdleCallback) requestIdleCallback(warm, { timeout: 10000 });
   else setTimeout(warm, 5000);
