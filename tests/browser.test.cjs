@@ -318,3 +318,19 @@ test('desktop tabs render empty and representative data in both themes', async t
     }
   }
 });
+
+test('a holding at its stop is marked in the table and announced once', async t => {
+  const page = await open(t); await login(page); await investments(page);
+  const row = page.locator('#inv-tbody tr[data-idx]').first();
+  const setPrices = (entry, live) => page.evaluate(([e, l]) => {
+    const inp = document.querySelectorAll('#inv-tbody tr[data-idx]')[0].querySelectorAll('input');
+    inp[3].value = e; inp[4].value = l; invRecalc();
+  }, [entry, live]);
+  await setPrices('100', '90');
+  assert.match(await row.locator('.inv-stop-label').textContent(), /🛑/);
+  assert.equal(await page.locator('#toasts .toast').filter({ hasText: 'הגיעה לסטופ' }).count(), 1);
+  await page.evaluate(() => invRecalc());
+  assert.equal(await page.locator('#toasts .toast').filter({ hasText: 'הגיעה לסטופ' }).count(), 1);
+  await setPrices('100', '95');
+  assert.doesNotMatch(await row.locator('.inv-stop-label').textContent(), /🛑/);
+});
