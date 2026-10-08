@@ -1227,6 +1227,19 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
 .footer-cols{gap:clamp(32px,4vw,60px)}
 </style>
 <style id="landing-small-text">.kw{font-family:var(--body);font-size:1em;font-weight:600}.a11y-panel .a11y-label{font-family:var(--body);font-size:13px;letter-spacing:0;text-transform:none;line-height:1.6}.cm-label,.d-kpi-lbl,.d-chart-lbl,.d-idx-name{font-family:var(--body);letter-spacing:0;text-transform:none;font-size:12px;line-height:1.5}.card-period{font-family:var(--body);letter-spacing:0;font-size:13px}</style>
+<style id="demo-preview-upgrade">
+.demo-preview-tools{display:flex;gap:20px;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);background:rgba(79,131,255,.04)}
+.demo-preview-tools p{font:400 16px/1.7 var(--body);color:var(--text2);margin:0}
+.demo-preview-tools button,.preview-dialog-header button{font:600 14px/1.5 var(--body);color:var(--text);background:rgba(79,131,255,.12);border:1px solid var(--border2);border-radius:10px;padding:10px 14px;cursor:pointer;flex-shrink:0}
+#demo-preview-dialog{width:min(1500px,94vw);max-width:94vw;max-height:94vh;margin:auto;padding:22px;background:var(--bg);color:var(--text);border:1px solid var(--border2);border-radius:18px;box-shadow:0 30px 100px rgba(0,0,0,.5)}
+#demo-preview-dialog::backdrop{background:rgba(3,8,18,.85)}
+.preview-dialog-header{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:12px}
+.preview-dialog-header h2{font:600 22px/1.5 var(--display);margin:0}
+#demo-preview-description{font:400 16px/1.7 var(--body);color:var(--text2);margin-bottom:18px}
+#demo-preview-image{display:block;width:100%;height:auto;border-radius:10px}
+.feat-card svg,.step svg{flex-shrink:0}
+@media(max-width:900px){.demo-preview-tools{flex-wrap:wrap;padding:16px}.demo-preview-tools p{font-size:15px}}
+</style>
 </head>
 <body>
 
@@ -1396,6 +1409,7 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
         </div>
 
         <button type="button" class="demo-tab-pause" id="demo-pause-btn" aria-label="Pause auto-switching">⏸</button>
+<div class="demo-preview-tools"><p id="demo-caption">Review performance and your trading calendar in one view.</p><button id="demo-expand" type="button" aria-haspopup="dialog">Enlarge preview</button></div>
 <div class="demo-stage">
           <!-- Screen 1: Dashboard overview -->
           <div class="demo-body demo-screen active" id="ds0" role="tabpanel" aria-labelledby="dt0" style="padding:0">
@@ -1482,9 +1496,7 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
     <div class="section-pill">Why It Works</div>
     <h2 class="section-title" id="features-heading">Everything a spreadsheet can't show you</h2>
     <p class="section-sub">Broker, market, stock screener and portfolio — all in one place, no jumping between ten tabs</p>
-    <p class="section-sub" style="max-width:58ch;margin:14px auto 0;">
-      Your broker's report shows how much you made, but not which setups keep winning for you or when you close too early. ChartRoom computes real win rate, profit factor and average win/loss from your trades, so your next decision rests on what worked, not a gut feeling.
-    </p>
+
   </div>
 
   <div class="feat-grid">
@@ -1618,6 +1630,7 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
 </section>
 
 </main>
+<dialog id="demo-preview-dialog" aria-labelledby="demo-preview-title"><div class="preview-dialog-header"><h2 id="demo-preview-title">Product preview</h2><button id="demo-preview-close" type="button" autofocus>Close</button></div><p id="demo-preview-description"></p><img id="demo-preview-image" alt=""></dialog>
 
 <!-- FOOTER -->
 <footer>
@@ -1837,6 +1850,10 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
     const screens = document.querySelectorAll('.demo-screen');
     const tabs = document.querySelectorAll('.demo-tab');
     const pauseBtn = document.getElementById('demo-pause-btn');
+    const captions = ["Review performance and your trading calendar in one view.","Review each trade, its entry, exit and outcome.","Compare indices and sectors before planning a trade.","Find stocks that match your technical criteria.","Compare your winning and losing trades to spot recurring patterns."];
+    const caption = document.getElementById("demo-caption");
+    const dialog = document.getElementById("demo-preview-dialog");
+    const expand = document.getElementById("demo-expand");
     const total = screens.length;
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let cur = 0, timer = null, paused = reduceMotion; // WCAG 2.2.2: never auto-start when the user asked for less motion
@@ -1846,6 +1863,7 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
       tabs[cur].setAttribute('aria-selected', 'false');
       tabs[cur].setAttribute('tabindex', '-1');
       cur = idx;
+      caption.textContent = captions[cur];
       screens[cur].classList.add('active');
       tabs[cur].classList.add('active');
       tabs[cur].setAttribute('aria-selected', 'true');
@@ -1872,6 +1890,16 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
       start();
     }));
     if (pauseBtn) pauseBtn.addEventListener('click', () => setPaused(!paused));
+    expand.addEventListener('click', () => {
+      const source=screens[cur].querySelector('img');
+      const image=document.getElementById('demo-preview-image');
+      image.src=source.currentSrc || source.src || source.dataset.src;
+      image.alt=source.alt;
+      document.getElementById('demo-preview-description').textContent=captions[cur];
+      stop();dialog.showModal();
+    });
+    document.getElementById('demo-preview-close').addEventListener('click',()=>dialog.close());
+    dialog.addEventListener('close',()=>{expand.focus();start();});
     setPaused(paused);
   })();
 
@@ -1977,5 +2005,6 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
   ]
 }
 </script>
+
 </body>
 </html>
