@@ -14,6 +14,7 @@
 
   // Always-on initializations (don't need auth)
   qaInit();
+  initTabletTableHints();
   setTableDensity(localStorage.getItem('tj-table-density'));
   initMediaDB().catch(e => console.warn('[Screenshots] IndexedDB init failed:', e));
   ttScheduleMidnight();

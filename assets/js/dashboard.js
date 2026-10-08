@@ -3225,6 +3225,7 @@ function t(k) { return (LANG_STRINGS[_lang] || LANG_STRINGS.en)[k] || k; }
 
 const LANG_STRINGS = {
   en: {
+    tablet_scroll_hint:'↔ Scroll horizontally to see all columns',
     nav_overview:'Home', nav_stocks:'Stocks / Crypto', nav_crypto:'Crypto',
     nav_statistics:'Statistics', nav_settings:'Profile', nav_themes:'Market Pulse',
     nav_ai:'Minervini', nav_screener:'Screener', nav_missed:'Missed', nav_investments:'Investments',
@@ -3362,6 +3363,7 @@ set_data_sub:'Stocks & crypto market data', set_import_sub:'Broker connection & 
     scr_lookup_lbl:'Check a date:',
   },
   he: {
+    tablet_scroll_hint:'↔ אפשר לגלול לרוחב לצפייה בכל העמודות',
     nav_overview:'ראשי', nav_stocks:'מניות / קריפטו', nav_crypto:'קריפטו',
     set_crypto_desc:'CoinGecko · ללא מפתח, עובד אוטומטית',
     set_finnhub_desc:'נדרש לנתוני מחיר מניות בזמן אמת. הרשם חינם ב-finnhub.io — הזן את המפתח ולחץ שמור.',
@@ -7943,7 +7945,7 @@ function _buildLightCSS() {
     html[data-theme="light"] .cal-wrap { background:#ffffff !important; }
     html[data-theme="light"] .cal-header { background:#ffffff !important; border-bottom:1px solid #e2e8f0 !important; }
     html[data-theme="light"] .cal-title-month { color:#0f172a !important; }
-    html[data-theme="light"] .cal-trade-count { color:#64748b !important; }
+    html[data-theme="light"] .cal-trade-count { color:#475569 !important; }
     html[data-theme="light"] .cal-divider { background:rgba(0,0,0,0.12) !important; }
     html[data-theme="light"] .cal-nav-btn { background:#f1f5f9 !important; border:1px solid #e2e8f0 !important; color:#475569 !important; }
     @media (hover: hover) and (pointer: fine) { html[data-theme="light"] .cal-nav-btn:hover { background:#e2e8f0 !important; color:#1e293b !important; } }
@@ -9333,4 +9335,41 @@ function resetTradeFilters() {
  const search=document.getElementById('st-search');
  if(search) search.value='';
  resetFilter('st');
+}
+
+// Observe actual table overflow rather than showing a scroll instruction
+// whenever the viewport happens to be narrow. One frame handles each burst
+// of row changes; no scroll handler or table rebuild is needed.
+function initTabletTableHints() {
+  const wrappers = document.querySelectorAll('#stocks-wrap, .inv-table-wrap');
+  for (const wrapper of wrappers) {
+    if (wrapper.dataset.scrollHintReady) continue;
+    wrapper.dataset.scrollHintReady = 'true';
+    const hint = document.createElement('p');
+    hint.className = 'tablet-scroll-hint';
+    hint.dataset.i18n = 'tablet_scroll_hint';
+    hint.textContent = _lang === 'he' ? '↔ אפשר לגלול לרוחב לצפייה בכל העמודות' : '↔ Scroll horizontally to see all columns';
+    wrapper.before(hint);
+    let pending = false;
+    let observedTable = null;
+    const schedule = () => {
+      if (pending) return;
+      pending = true;
+      requestAnimationFrame(() => {
+        pending = false;
+        const table = wrapper.querySelector('table');
+        if (table !== observedTable) {
+          if (observedTable) resize.unobserve(observedTable);
+          if (table) resize.observe(table);
+          observedTable = table;
+        }
+        hint.dataset.overflow = String(wrapper.clientWidth > 0 && wrapper.scrollWidth > wrapper.clientWidth + 1);
+      });
+    };
+    const resize = new ResizeObserver(schedule);
+    resize.observe(wrapper);
+    const rows = new MutationObserver(schedule);
+    rows.observe(wrapper, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+    schedule();
+  }
 }

@@ -28,14 +28,14 @@ async function main() {
         await page.locator('#scanBtnPanel').click();
       }
       await page.evaluate(()=>{setMode('watch');$('filterPanel').classList.remove('open');});
-      await page.locator('#scanBtnPanel').click();
-      assert.equal(await page.evaluate(()=>mode),'screen');
+      await page.locator('#watchRefreshBtn').click();
+      assert.equal(await page.evaluate(()=>mode),'watch');
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
     }
     assert.equal(await page.evaluate(()=>__scanCalls),36);
     await page.screenshot({path:'C:/Users/david/.codex/visualizations/2026/10/07/01a115e6-dc97-7531-898c-51ac761a03aa/screener-tablet-scan-fixed.png',fullPage:true});
     assert.deepEqual(errors,[]);
-    console.log('PASS: 32 collapsed-filter scan clicks, 4 watchlist-to-scan clicks, 4 tablet widths');
+    console.log('PASS: 32 collapsed-filter scan clicks, 4 independent watchlist refresh clicks, 4 tablet widths');
   } finally { await browser.close(); await new Promise(resolve=>server.close(resolve)); }
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});
