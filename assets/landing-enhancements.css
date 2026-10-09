@@ -9,7 +9,7 @@
 .demo-dialog img { display:block; width:100%; height:auto; }
 .manual-entry-note { font-size:15px; line-height:1.7; color:var(--text2); margin-top:14px; }
 #how,#features,#testimonial,#pricing,#faq { padding-block:64px; }
-.feature-preview { display:block; width:100%; height:auto; border:1px solid var(--border); border-radius:10px; margin-top:18px; }
+.feature-preview { display:block; width:100%; height:180px; object-fit:cover; object-position:top; border:1px solid var(--border); border-radius:10px; margin-top:18px; }
 .allocation-preview { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
 .allocation-preview span { border:1px solid var(--border); padding:8px 12px; border-radius:8px; font-size:14px; color:var(--text2); }
 @media(max-width:900px) { #how,#features,#testimonial,#pricing,#faq { padding-block:44px; } .hero-wrap { gap:24px; } }

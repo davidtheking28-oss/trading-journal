@@ -88,4 +88,9 @@ test('landing registration links, demo controls and accessible enlargement',asyn
  await page.goto(base+'/dashboard.html?mode=register');
  await page.waitForFunction(()=>typeof _authMode!=='undefined');assert.equal(await page.evaluate(()=>_authMode),'register');
  assert.equal(await page.locator('#auth-first').isVisible(),true);
+ await page.goto(base+'/index-en.html');assert.equal(await page.locator('.btn-hero-primary').getAttribute('href'),'dashboard.html?mode=register');
+ await page.locator('#demo-play').click();await page.waitForFunction(()=>!document.getElementById('hero-video').paused);
+ await page.locator('#demo-play').click();assert.equal(await page.locator('#hero-video').evaluate(v=>v.paused),true);
+ await page.locator('#demo-enlarge').click();assert.equal(await page.locator('#demo-dialog').isVisible(),true);await page.locator('#demo-dialog button').click();
+ assert.equal(await page.locator('#demo-dialog').isVisible(),false);
 });
