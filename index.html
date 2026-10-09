@@ -1343,6 +1343,21 @@ html[lang="en"] #hero .hero-title{letter-spacing:-.02em;line-height:1.08}
 #hero .hero-security svg{flex:none;color:#8fb0ff}
 @media(max-width:600px){#hero .hero-actions{flex-direction:column;align-items:stretch}#hero .hero-security{border-radius:14px;text-align:start}}
 </style>
+<style id="features-layout">
+@media (min-width:901px){
+#features .feat-grid{max-width:1100px;grid-template-columns:repeat(3,1fr);grid-template-rows:none}
+#features .feat-grid .feat-card:first-child{grid-column:1/-1;grid-row:auto;display:grid;grid-template-columns:1fr 1fr;column-gap:56px;align-items:center;padding:40px 48px}
+#features .feat-grid .feat-card:first-child .feat-visual{grid-column:2;grid-row:1/span 2;margin:0}
+#features .feat-grid .feat-card:first-child .feat-row-title{grid-column:1;grid-row:1;align-self:end;margin-bottom:12px}
+#features .feat-grid .feat-card:first-child .feat-row-desc{grid-column:1;grid-row:2;align-self:start;max-width:none}
+#features .feat-grid .feat-card:nth-child(n+2){grid-column:auto;grid-row:auto}
+}
+@media (min-width:701px) and (max-width:900px){
+#features .feat-grid{grid-template-columns:1fr;grid-template-rows:none}
+#features .feat-grid .feat-card:nth-child(n){grid-column:1;grid-row:auto}
+}
+</style>
+
 
 <style id="demo-preview-upgrade">
 .demo-preview-tools{display:flex;gap:20px;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);background:rgba(79,131,255,.04)}
@@ -1558,12 +1573,12 @@ html[lang="en"] #hero .hero-title{letter-spacing:-.02em;line-height:1.08}
     <div class="feat-card reveal">
       <svg class="feat-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
       <h3 class="feat-row-title">להבין את מצב השוק</h3>
-      <p class="feat-row-desc">ביצועי סקטורים, <span class="kw">Fear &amp; Greed Index</span> ומניות מובילות — במקום אחד, כדי שתדע לאן הכסף זורם לפני שאתה נכנס לפוזיציה.</p><img class="feature-preview" src="assets/demo/demo-pulse.webp" width="900" height="500" alt="דוגמה לתמונת מצב השוק" loading="lazy">
+      <p class="feat-row-desc">ביצועי סקטורים, <span class="kw">Fear &amp; Greed Index</span> ומניות מובילות — במקום אחד, כדי שתדע לאן הכסף זורם לפני שאתה נכנס לפוזיציה.</p>
     </div>
     <div class="feat-card reveal">
       <svg class="feat-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></svg>
       <h3 class="feat-row-title">מסנן מניות מובנה</h3>
-      <p class="feat-row-desc">מצא מניות שמתאימות לקריטריונים שלך, השווה את המבנה הטכני שלהן והוסף אותן למעקב — ישר בתוך היומן.</p><img class="feature-preview" src="assets/demo/demo-screener.webp" width="900" height="500" alt="דוגמה לתוצאות מסנן המניות" loading="lazy">
+      <p class="feat-row-desc">מצא מניות שמתאימות לקריטריונים שלך, השווה את המבנה הטכני שלהן והוסף אותן למעקב — ישר בתוך היומן.</p>
     </div>
     <div class="feat-card reveal">
       <svg class="feat-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v9h9"/></svg>
