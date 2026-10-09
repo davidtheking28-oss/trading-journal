@@ -105,3 +105,13 @@ test('the hero video starts by itself, muted, and respects a manual pause', asyn
   assert.equal(await page.locator('#hero-video').evaluate(v => v.paused), true, 'a manual pause is not undone by the page');
  }
 });
+
+test('both landing pages carry a CSP that allows nothing off-site', () => {
+  for (const file of ['index.html', 'index-en.html']) {
+    const html = readFileSync(resolve(root, file), 'utf8');
+    const csp = html.match(/http-equiv="Content-Security-Policy" content="([^"]+)"/)?.[1];
+    assert.ok(csp, file + ' has no CSP');
+    assert.ok(/default-src 'self'/.test(csp) && /object-src 'none'/.test(csp) && /base-uri 'none'/.test(csp), file + ' CSP is too loose');
+    assert.ok(!/unsafe-eval|https?:/.test(csp.replace('upgrade-insecure-requests', '')), file + ' CSP allows an external origin or eval');
+  }
+});
