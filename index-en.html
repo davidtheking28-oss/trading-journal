@@ -1195,6 +1195,17 @@ html.a11y-underline a { text-decoration: underline !important; }
 .hero-tags span{font-size:12px;font-weight:700;padding:6px 14px;border-radius:999px;color:#cfe0ff;background:rgba(10,20,46,.94);border:1px solid rgba(145,180,255,.35);box-shadow:0 6px 18px rgba(0,0,0,.35);white-space:nowrap}
 .hero-product figcaption{margin-top:34px!important}
 @media(max-width:480px){.hero-tags span{font-size:11px;padding:5px 10px}}
+/* Background: glows are anchored to the page and scroll with it (they were fixed to the viewport, so they slid behind the content); the strip seams fade instead of cutting a hard line */
+body{position:relative}
+body::before{position:absolute;inset:0;background:
+ radial-gradient(900px 620px at 100% 3%,rgba(79,127,255,.20),transparent 70%),
+ radial-gradient(760px 560px at 0% 13%,rgba(155,114,255,.12),transparent 70%),
+ radial-gradient(820px 600px at 100% 38%,rgba(79,127,255,.10),transparent 70%),
+ radial-gradient(760px 560px at 0% 64%,rgba(155,114,255,.09),transparent 70%),
+ radial-gradient(900px 600px at 50% 97%,rgba(79,127,255,.12),transparent 70%)}
+body::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(rgba(145,180,255,.09) 1px,transparent 1.3px);background-size:28px 28px;-webkit-mask-image:linear-gradient(to bottom,#000 0,rgba(0,0,0,.55) 900px,transparent 1900px);mask-image:linear-gradient(to bottom,#000 0,rgba(0,0,0,.55) 900px,transparent 1900px)}
+.broker-strip{border-top-color:transparent;border-bottom-color:transparent;background:linear-gradient(to bottom,transparent,rgba(7,16,31,.55) 28%,rgba(7,16,31,.55) 72%,transparent)}
+#hero-bg-3d{opacity:.26}
 .btn-hero-primary,.btn-hero-ghost,.nav-cta{transition:transform .2s ease,box-shadow .2s ease,background-color .2s ease}
 .btn-hero-primary:focus-visible,.btn-hero-ghost:focus-visible{outline:3px solid var(--accent);outline-offset:5px}
 .feat-card{transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}
