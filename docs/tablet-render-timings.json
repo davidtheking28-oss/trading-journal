@@ -7,92 +7,92 @@
     {
       "tab": "overview",
       "round": 0,
-      "syncMs": 18.1,
-      "throughTwoFramesMs": 22.1
+      "syncMs": 43.7,
+      "throughTwoFramesMs": 55.3
     },
     {
       "tab": "stocks",
       "round": 0,
-      "syncMs": 117.4,
-      "throughTwoFramesMs": 313.9
+      "syncMs": 320.6,
+      "throughTwoFramesMs": 831.7
     },
     {
       "tab": "statistics",
       "round": 0,
-      "syncMs": 47.8,
-      "throughTwoFramesMs": 100.7
+      "syncMs": 158.3,
+      "throughTwoFramesMs": 312.3
     },
     {
       "tab": "overview",
       "round": 1,
-      "syncMs": 11.2,
-      "throughTwoFramesMs": 33
+      "syncMs": 36.3,
+      "throughTwoFramesMs": 53.7
     },
     {
       "tab": "stocks",
       "round": 1,
-      "syncMs": 130,
-      "throughTwoFramesMs": 295.3
+      "syncMs": 519.8,
+      "throughTwoFramesMs": 1042.6
     },
     {
       "tab": "statistics",
       "round": 1,
-      "syncMs": 24.2,
-      "throughTwoFramesMs": 38
+      "syncMs": 109.5,
+      "throughTwoFramesMs": 188.3
     },
     {
       "tab": "overview",
       "round": 2,
-      "syncMs": 10.5,
-      "throughTwoFramesMs": 33.7
+      "syncMs": 30.9,
+      "throughTwoFramesMs": 74
     },
     {
       "tab": "stocks",
       "round": 2,
-      "syncMs": 146.8,
-      "throughTwoFramesMs": 303.7
+      "syncMs": 600.1,
+      "throughTwoFramesMs": 1083.5
     },
     {
       "tab": "statistics",
       "round": 2,
-      "syncMs": 28,
-      "throughTwoFramesMs": 64
+      "syncMs": 106.9,
+      "throughTwoFramesMs": 150
     },
     {
       "tab": "overview",
       "round": 3,
-      "syncMs": 12.1,
-      "throughTwoFramesMs": 31.5
+      "syncMs": 34.1,
+      "throughTwoFramesMs": 58.5
     },
     {
       "tab": "stocks",
       "round": 3,
-      "syncMs": 111.6,
-      "throughTwoFramesMs": 296.4
+      "syncMs": 483.4,
+      "throughTwoFramesMs": 1125.3
     },
     {
       "tab": "statistics",
       "round": 3,
-      "syncMs": 29,
-      "throughTwoFramesMs": 56.1
+      "syncMs": 114.9,
+      "throughTwoFramesMs": 162.4
     },
     {
       "tab": "overview",
       "round": 4,
-      "syncMs": 11.7,
-      "throughTwoFramesMs": 47.7
+      "syncMs": 30.1,
+      "throughTwoFramesMs": 58.3
     },
     {
       "tab": "stocks",
       "round": 4,
-      "syncMs": 132.3,
-      "throughTwoFramesMs": 304.9
+      "syncMs": 513.3,
+      "throughTwoFramesMs": 1111
     },
     {
       "tab": "statistics",
       "round": 4,
-      "syncMs": 30.2,
-      "throughTwoFramesMs": 62.2
+      "syncMs": 114.9,
+      "throughTwoFramesMs": 180
     }
   ]
 }

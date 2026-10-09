@@ -1,0 +1,31 @@
+✔ login and investment editing render without script-loading errors (19690.2385ms)
+✔ switch while saving persists changes only in the original portfolio (7672.2484ms)
+✔ offline save shows failure, warns on unload, and retry persists the edit (8049.963ms)
+✔ signing into a second account replaces portfolio choices and holdings (5929.1157ms)
+✔ sign-out warns about an unsaved edit and cancel keeps the account open (8135.659ms)
+✔ holding edits show unsaved state and commit with the same row identity (7998.2321ms)
+✔ mobile holding cards expand and remain editable without horizontal page overflow (9111.1382ms)
+✔ investment summary precedes configuration in desktop and mobile themes (11504.7303ms)
+✔ mobile investments navigation and density preference survive reload (10470.2136ms)
+✔ period comparison handles year rollover, fees, scope and absent data (7753.2281ms)
+✔ desktop tabs render empty and representative data in both themes (14926.7008ms)
+✔ a holding at its stop is marked in the table and announced once (5868.1517ms)
+[]
+✔ desktop contrast and accessible labels audit (40338.5693ms)
+✔ desktop keyboard focus, settings order and zoomed navigation (19619.5885ms)
+✔ tablet accessibility and layout audit (43148.369ms)
+✔ tablet summary and table overflow hints follow the actual layout (9808.1963ms)
+✔ tablet populated tab render timing reference (14431.1461ms)
+✔ tablet 768 tabs render empty and representative data in both themes (27652.0055ms)
+✔ tablet 820 tabs render empty and representative data in both themes (14725.9881ms)
+✔ tablet 1024 tabs render empty and representative data in both themes (16154.4677ms)
+✔ tablet 1180 tabs render empty and representative data in both themes (19471.2688ms)
+✔ tablet quick trade dialog fits portrait and landscape (9900.6559ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 120011.3709
