@@ -5,7 +5,7 @@
     "test": "node --test browser.test.cjs desktop-accessibility.test.cjs contrast-audit.test.cjs"
   },
   "devDependencies": {
-    "playwright": "1.62.1",
+    "playwright": "1.63.0",
     "axe-core": "4.14.0"
   }
 }
