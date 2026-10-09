@@ -696,6 +696,16 @@ section { padding: 72px max(28px, 5vw); position: relative; z-index: 1; }
   margin-bottom: 18px;
   transition: color .25s;
 }
+.feat-visual { margin-bottom: 30px; padding: 16px; border-radius: 14px; border: 1px solid rgba(79,127,255,0.2); background: rgba(8,18,42,0.7); direction: ltr; }
+.fv-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.fv-chip { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; color: #9bb4ff; border: 1px solid rgba(79,127,255,0.35); background: rgba(79,127,255,0.1); }
+.fv-chip.fv-bybit { color: #c4a8ff; border-color: rgba(155,114,255,0.35); background: rgba(155,114,255,0.1); }
+.fv-sync { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--green); }
+.fv-row { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 13px; padding: 9px 2px; border-top: 1px solid rgba(79,127,255,0.14); color: var(--text); }
+.fv-row b { font-weight: 700; }
+.fv-up { color: var(--green); }
+.fv-down { color: var(--red); }
+.feat-ico { position: absolute; top: 28px; left: 28px; width: 26px; height: 26px; fill: none; stroke: rgba(79,127,255,0.5); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .feat-row-title {
   font-family: var(--display); font-size: 19px; font-weight: 700;
   color: var(--text); letter-spacing: -0.4px; margin-bottom: 9px;
@@ -1146,6 +1156,12 @@ html.a11y-underline a { text-decoration: underline !important; }
   background: transparent; color: var(--text3); font-size: 13px; cursor: pointer;
 }
 @media (max-width: 480px) { .cookie-banner { bottom: 12px; padding: 14px 16px; } }
+@media (min-width: 700px) {
+  .cookie-banner { width: min(860px, calc(100vw - 48px)); padding: 12px 20px; align-items: center; }
+  .cookie-body { display: grid; grid-template-columns: 1fr auto; column-gap: 24px; align-items: center; }
+  .cookie-title { margin-bottom: 2px; }
+  .cookie-actions { grid-column: 2; grid-row: 1 / span 2; margin-top: 0; flex-wrap: nowrap; }
+}
 </style>
 <noscript><style>.reveal { opacity:1; transform:none; }</style></noscript>
 
@@ -1493,22 +1509,22 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
 
   <div class="feat-grid">
     <div class="feat-card reveal">
-      <span class="feat-num" aria-hidden="true">01</span>
+      <div class="feat-visual" aria-hidden="true"><div class="fv-head"><span class="fv-chip">IBKR</span><span class="fv-chip fv-bybit">Bybit</span><span class="fv-sync">● Synced</span></div><div class="fv-row"><b>NVDA</b><span>×20</span><span class="fv-up">+$1,240</span></div><div class="fv-row"><b>BTC</b><span>×0.5</span><span class="fv-up">+$890</span></div><div class="fv-row"><b>TSLA</b><span>×15</span><span class="fv-down">−$210</span></div></div><span class="feat-num" aria-hidden="true">01</span>
       <h3 class="feat-row-title">Forget spreadsheets</h3>
       <p class="feat-row-desc">Connect <span class="kw">Interactive Brokers</span> or <span class="kw">Bybit</span> once — read-only, no access to place or execute trades — and every trade logs itself.</p>
     </div>
     <div class="feat-card reveal">
-      <span class="feat-num" aria-hidden="true">02</span>
+      <svg class="feat-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><span class="feat-num" aria-hidden="true">02</span>
       <h3 class="feat-row-title">Understand the market context</h3>
       <p class="feat-row-desc">Sector performance, <span class="kw">Fear &amp; Greed Index</span> and leading stocks — all in one place, so you know where the money's flowing before you enter a position.</p>
     </div>
     <div class="feat-card reveal">
-      <span class="feat-num" aria-hidden="true">03</span>
+      <svg class="feat-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></svg><span class="feat-num" aria-hidden="true">03</span>
       <h3 class="feat-row-title">Built-in stock screener</h3>
       <p class="feat-row-desc">Find stocks that match your criteria, compare their technical structure and add them to your watchlist — right inside the journal.</p>
     </div>
     <div class="feat-card reveal">
-      <span class="feat-num" aria-hidden="true">04</span>
+      <svg class="feat-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v9h9"/></svg><span class="feat-num" aria-hidden="true">04</span>
       <h3 class="feat-row-title">Portfolio tracking</h3>
       <p class="feat-row-desc">Capital allocation across stocks, crypto and ETFs, total return at a glance — so you spot over-exposure to a single asset before it turns into a big loss.</p>
     </div>
