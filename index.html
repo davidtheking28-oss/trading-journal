@@ -1322,6 +1322,12 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
 .hero-product figcaption{margin-top:16px!important}
 </style>
 <style id="landing-small-text">.kw{font-family:var(--body);font-size:1em;font-weight:600}.a11y-panel .a11y-label{font-family:var(--body);font-size:13px;letter-spacing:0;text-transform:none;line-height:1.6}.cm-label,.d-kpi-lbl,.d-chart-lbl,.d-idx-name{font-family:var(--body);letter-spacing:0;text-transform:none;font-size:12px;line-height:1.5}.card-period{font-family:var(--body);letter-spacing:0;font-size:13px}</style>
+<style id="cta-points-css">
+.cta-points{list-style:none;display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-start;margin:26px 0 28px;padding:0}
+.cta-points li{font-size:14px;font-weight:600;line-height:1.4;color:#fff;padding:8px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.1)}
+@media(max-width:768px){.cta-points{margin:22px 0 24px;justify-content:center}}
+</style>
+
 <style id="hero-upgrade">
 #hero .hero-wrap>div:first-child{max-width:1000px}
 #hero .hero-title{font-size:clamp(40px,4.6vw,64px);line-height:1.1;letter-spacing:-.02em;font-weight:800;margin-bottom:26px;text-wrap:balance}
@@ -1616,7 +1622,7 @@ html[lang="en"] #hero .hero-title{letter-spacing:-.02em;line-height:1.08}
           האם החיבור לברוקר בטוח?
           <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
         </button>
-        <div class="faq-a" id="faq-a1" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">כן. חיבור Read-Only בלבד — אין למערכת גישה לביצוע פעולות או משיכת כספים. התקשורת מוצפנת ב-HTTPS, וכל משתמש רואה רק את הנתונים שלו.</div></div></div>
+        <div class="faq-a" id="faq-a1" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">כן. החיבור הוא לקריאה בלבד: הטוקן של IBKR ומפתח Bybit (שנוצר בהרשאות קריאה בלבד) מושכים רק את דוח העסקאות, ואין למערכת גישה לביצוע פעולות או משיכת כספים. המפתחות נשמרים מוצפנים, הנתונים בשרתי Supabase באיחוד האירופי, התקשורת מוצפנת ב-HTTPS, וכל משתמש רואה רק את הנתונים שלו. לא מוכרים נתונים ולא משתמשים בהם לפרסום.</div></div></div>
       </div>
       <div class="faq-item reveal" role="listitem">
         <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a2">
@@ -1662,6 +1668,7 @@ html[lang="en"] #hero .hero-title{letter-spacing:-.02em;line-height:1.08}
     <div class="cta-bg" aria-hidden="true"></div>
     <h2 class="cta-title">בעוד חודש יהיו לך עוד עשרות עסקאות. תדע עליהן משהו?</h2>
     <p class="cta-sub">כל יום בלי תיעוד הוא עוד יום שאתה לא רואה את הדפוסים האמיתיים שלך.</p>
+    <ul class="cta-points"><li>ייבוא אוטומטי מ־IBKR ומ־Bybit</li><li>סטטיסטיקה לכל עסקה</li><li>דופק שוק וסורק מניות</li></ul>
     <a href="dashboard.html" class="btn-cta-dark">
       גלה מה עובד לך — בחינם
       <svg width="15" height="15" aria-hidden="true"><use href="#i-arr"/></svg>
@@ -1983,7 +1990,7 @@ html[lang="en"] #hero .hero-title{letter-spacing:-.02em;line-height:1.08}
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
-    {"@type":"Question","name":"האם החיבור לברוקר בטוח?","acceptedAnswer":{"@type":"Answer","text":"כן. חיבור Read-Only בלבד — אין למערכת גישה לביצוע פעולות או משיכת כספים. התקשורת מוצפנת ב-HTTPS, וכל משתמש רואה רק את הנתונים שלו."}},
+    {"@type":"Question","name":"האם החיבור לברוקר בטוח?","acceptedAnswer":{"@type":"Answer","text":"כן. החיבור הוא לקריאה בלבד: הטוקן של IBKR ומפתח Bybit (שנוצר בהרשאות קריאה בלבד) מושכים רק את דוח העסקאות, ואין למערכת גישה לביצוע פעולות או משיכת כספים. המפתחות נשמרים מוצפנים, הנתונים בשרתי Supabase באיחוד האירופי, התקשורת מוצפנת ב-HTTPS, וכל משתמש רואה רק את הנתונים שלו. לא מוכרים נתונים ולא משתמשים בהם לפרסום."}},
     {"@type":"Question","name":"האם נתוני השוק ומסנן המניות באמת בחינם?","acceptedAnswer":{"@type":"Answer","text":"כן. כל הכלים פתוחים לגמרי."}},
     {"@type":"Question","name":"איך בניית תיק ההשקעות עוזרת לי?","acceptedAnswer":{"@type":"Answer","text":"היא מראה לך את פיזור ההון בין הנכסים בזמן אמת, כדי שתזהה חשיפת יתר לנכס אחד לפני שהיא הופכת להפסד גדול."}},
     {"@type":"Question","name":"כמה זמן לוקח להגדיר?","acceptedAnswer":{"@type":"Answer","text":"הרשמה — פחות מדקה. חיבור ברוקר — כ-10 דקות בפעם הראשונה, ואז זה אוטומטי."}},
