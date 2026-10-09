@@ -1220,8 +1220,7 @@ body::before{position:absolute;inset:0;background:
  radial-gradient(760px 560px at 0% 64%,rgba(155,114,255,.09),transparent 70%),
  radial-gradient(900px 600px at 50% 97%,rgba(79,127,255,.12),transparent 70%)}
 body::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(rgba(145,180,255,.08) 1px,transparent 1.3px);background-size:28px 28px;-webkit-mask-image:linear-gradient(to right,transparent,#000 14%,#000 86%,transparent);mask-image:linear-gradient(to right,transparent,#000 14%,#000 86%,transparent)}
-#demo::before,#how::before,#features::before,#pricing::before,#cta::before{content:'';position:absolute;z-index:-1;pointer-events:none}
-#demo::before{top:-80px;left:50%;width:min(1000px,100%);height:520px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(79,127,255,.16),transparent)}
+#how::before,#features::before,#pricing::before,#cta::before{content:'';position:absolute;z-index:-1;pointer-events:none}
 #how::before{top:60px;right:0;width:min(760px,90%);height:520px;background:radial-gradient(closest-side,rgba(155,114,255,.15),transparent)}
 #features::before{top:140px;left:0;width:min(760px,90%);height:620px;background:radial-gradient(closest-side,rgba(79,127,255,.14),transparent)}
 #pricing::before{top:6%;left:50%;width:min(900px,100%);height:560px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(79,127,255,.15),transparent)}
@@ -1327,12 +1326,8 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
 .demo-preview-tools{display:flex;gap:20px;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);background:rgba(79,131,255,.04)}
 .demo-preview-tools p{font:400 16px/1.7 var(--body);color:var(--text2);margin:0}
 .demo-preview-tools button,.preview-dialog-header button{font:600 14px/1.5 var(--body);color:var(--text);background:rgba(79,131,255,.12);border:1px solid var(--border2);border-radius:10px;padding:10px 14px;cursor:pointer;flex-shrink:0}
-#demo-preview-dialog{width:min(1500px,94vw);max-width:94vw;max-height:94vh;margin:auto;padding:22px;background:var(--bg);color:var(--text);border:1px solid var(--border2);border-radius:18px;box-shadow:0 30px 100px rgba(0,0,0,.5)}
-#demo-preview-dialog::backdrop{background:rgba(3,8,18,.85)}
 .preview-dialog-header{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:12px}
 .preview-dialog-header h2{font:600 22px/1.5 var(--display);margin:0}
-#demo-preview-description{font:400 16px/1.7 var(--body);color:var(--text2);margin-bottom:18px}
-#demo-preview-image{display:block;width:100%;height:auto;border-radius:10px}
 .feat-card svg,.step svg{flex-shrink:0}
 @media(max-width:900px){.demo-preview-tools{flex-wrap:wrap;padding:16px}.demo-preview-tools p{font-size:15px}}
 </style>
@@ -1436,11 +1431,11 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
           התחל בחינם
           <svg width="14" height="14" aria-hidden="true"><use href="#i-arr"/></svg>
         </a>
-        <a href="#demo" class="btn-hero-ghost">צפה במערכת</a>
+        <a href="#how" class="btn-hero-ghost">איך זה עובד</a>
       </div>
       <p class="hero-trust-line">הרשמה חינם · ללא כרטיס אשראי</p><p class="hero-security">חיבור לברוקר לקריאה בלבד. <a href="broker-guide.html">איך החיבור עובד?</a></p>
     </div>
-<figure class="hero-product"><video id="hero-video" muted loop playsinline preload="none" width="1280" height="720" poster="assets/demo/hero-poster.webp" aria-label="סרטון קצר של יומן המסחר: סטטיסטיקה, ייבוא עסקאות, רווח והפסד, דופק השוק וסורק המניות"><source src="assets/demo/hero-clip.webm" type="video/webm"><source src="assets/demo/hero-clip.mp4" type="video/mp4"></video><figcaption>כך נראה היומן שלך · <a href="#demo">עבור בין תצוגות המערכת</a></figcaption></figure>
+<figure class="hero-product"><video id="hero-video" muted loop playsinline preload="none" width="1280" height="720" poster="assets/demo/hero-poster.webp" aria-label="סרטון קצר של יומן המסחר: סטטיסטיקה, ייבוא עסקאות, רווח והפסד, דופק השוק וסורק המניות"><source src="assets/demo/hero-clip.webm" type="video/webm"><source src="assets/demo/hero-clip.mp4" type="video/mp4"></video><figcaption>כך נראה היומן שלך</figcaption></figure>
   </div>
 </section>
 
@@ -1470,65 +1465,6 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
     </div>
   </div>
 </div>
-
-<!-- DEMO SHOWCASE -->
-<section id="demo" aria-labelledby="demo-heading">
-  <div class="centered reveal">
-    <div class="section-pill">הצצה לדשבורד</div>
-    <h2 class="section-title" id="demo-heading">הצצה למערכת</h2>
-    <p class="section-sub" style="margin:0 auto;">הכלים שיראו לך למה אתה באמת מרוויח ומפסיד</p>
-  </div>
-  <div class="demo-showcase-wrap reveal">
-    <div class="hero-visual-glow"></div>
-    <div class="hero-card" style="padding:0;overflow:hidden;">
-      <div class="card-topbar browser-topbar">
-        <span class="browser-dots" aria-hidden="true"><span></span><span></span><span></span></span>
-        <span class="browser-url">davidtheking28-oss.github.io/trading-journal</span>
-        <span class="browser-topbar-spacer" aria-hidden="true"></span>
-      </div>
-
-      <div class="demo-app">
-        <div class="demo-nav" role="tablist" aria-label="הדגמת מערכת">
-          <button class="demo-tab active" id="dt0" role="tab" aria-selected="true" aria-controls="ds0" tabindex="0">דשבורד</button>
-          <button class="demo-tab" id="dt1" role="tab" aria-selected="false" aria-controls="ds1" tabindex="-1">עסקאות</button>
-          <button class="demo-tab" id="dt2" role="tab" aria-selected="false" aria-controls="ds2" tabindex="-1">Market Pulse</button>
-          <button class="demo-tab" id="dt3" role="tab" aria-selected="false" aria-controls="ds3" tabindex="-1">מסנן מניות</button>
-          <button class="demo-tab" id="dt4" role="tab" aria-selected="false" aria-controls="ds4" tabindex="-1">סטטיסטיקות</button>
-
-        </div>
-
-        <button type="button" class="demo-tab-pause" id="demo-pause-btn" aria-label="השהה החלפה אוטומטית">⏸</button>
-<div class="demo-preview-tools"><p id="demo-caption">ביצועי המסחר ולוח השנה שלך במבט אחד.</p><button id="demo-expand" type="button" aria-haspopup="dialog">הגדל את התצוגה</button></div>
-<div class="demo-stage">
-          <!-- Screen 1: Dashboard overview -->
-          <div class="demo-body demo-screen active" id="ds0" role="tabpanel" aria-labelledby="dt0" style="padding:0">
-            <img src="assets/demo/demo-stats.webp" alt="דשבורד — סטטיסטיקה ולוח שנה חודשי" loading="lazy" decoding="async">
-          </div>
-
-          <!-- Screen 2: Trades table -->
-          <div class="demo-body demo-screen" id="ds1" role="tabpanel" aria-labelledby="dt1" style="padding:0">
-            <img data-src="assets/demo/demo-trades.webp" alt="טבלת עסקאות ביומן המסחר">
-          </div>
-
-          <!-- Screen 3: Market Pulse -->
-          <div class="demo-body demo-screen" id="ds2" role="tabpanel" aria-labelledby="dt2" style="padding:0">
-            <img data-src="assets/demo/demo-pulse.webp" alt="Market Pulse — מדדים ורוחב שוק">
-          </div>
-
-          <!-- Screen 4: Stock screener -->
-          <div class="demo-body demo-screen" id="ds3" role="tabpanel" aria-labelledby="dt3" style="padding:0">
-            <img data-src="assets/demo/demo-screener.webp" alt="מסנן מניות — Trend Template + SEPA">
-          </div>
-
-          <!-- Screen 5: Statistics -->
-          <div class="demo-body demo-screen" id="ds4" role="tabpanel" aria-labelledby="dt4" style="padding:0">
-            <img data-src="assets/demo/demo-winloss.webp" alt="סטטיסטיקות — Profit Factor, ממוצעי רווח/הפסד ויחס נצחונות מול הפסדים">
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
 
 <!-- HOW -->
 <section id="how" aria-labelledby="how-heading">
@@ -1719,7 +1655,6 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
 </section>
 
 </main>
-<dialog id="demo-preview-dialog" aria-labelledby="demo-preview-title"><div class="preview-dialog-header"><h2 id="demo-preview-title">תצוגת המערכת</h2><button id="demo-preview-close" type="button" autofocus>סגור</button></div><p id="demo-preview-description"></p><img id="demo-preview-image" alt=""></dialog>
 
 <!-- FOOTER -->
 <footer>
@@ -1933,63 +1868,6 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
     io.observe(root);
   })();
 
-  // Demo slideshow
-  (function() {
-    const screens = document.querySelectorAll('.demo-screen');
-    const tabs = document.querySelectorAll('.demo-tab');
-    const pauseBtn = document.getElementById('demo-pause-btn');
-    const captions = ["ביצועי המסחר ולוח השנה שלך במבט אחד.","בדוק כל עסקה, את הכניסה, היציאה והתוצאה שלה.","השווה מדדים וסקטורים לפני תכנון עסקה.","מצא מניות שמתאימות לקריטריונים הטכניים שלך.","השווה עסקאות מרוויחות ומפסידות כדי לזהות דפוסים חוזרים."];
-    const caption = document.getElementById("demo-caption");
-    const dialog = document.getElementById("demo-preview-dialog");
-    const expand = document.getElementById("demo-expand");
-    const total = screens.length;
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let cur = 0, timer = null, paused = reduceMotion; // WCAG 2.2.2: never auto-start when the user asked for less motion
-    function go(idx) {
-      screens[cur].classList.remove('active');
-      tabs[cur].classList.remove('active');
-      tabs[cur].setAttribute('aria-selected', 'false');
-      tabs[cur].setAttribute('tabindex', '-1');
-      cur = idx;
-      caption.textContent = captions[cur];
-      screens[cur].classList.add('active');
-      tabs[cur].classList.add('active');
-      tabs[cur].setAttribute('aria-selected', 'true');
-      tabs[cur].setAttribute('tabindex', '0');
-      const img = screens[cur].querySelector('img[data-src]');
-      if (img) { img.src = img.dataset.src; img.removeAttribute('data-src'); }
-    }
-    function start() { if (paused) return; clearInterval(timer); timer = setInterval(() => go((cur + 1) % total), 5000); }
-    function stop() { clearInterval(timer); timer = null; }
-    function setPaused(v) {
-      paused = v;
-      if (pauseBtn) { pauseBtn.textContent = paused ? '▶' : '⏸'; pauseBtn.setAttribute('aria-label', paused ? 'המשך החלפה אוטומטית' : 'השהה החלפה אוטומטית'); }
-      if (paused) stop(); else start();
-    }
-    tabs.forEach((tab, i) => tab.addEventListener('click', () => { go(i); start(); }));
-    // Roving tabindex + arrow keys, per the ARIA APG Tabs pattern — RTL, so
-    // the visual "next" direction (ArrowLeft) is the one that increments.
-    tabs.forEach((tab, i) => tab.addEventListener('keydown', e => {
-      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-      e.preventDefault();
-      const next = e.key === 'ArrowLeft' ? (i + 1) % total : (i - 1 + total) % total;
-      go(next);
-      tabs[next].focus();
-      start();
-    }));
-    if (pauseBtn) pauseBtn.addEventListener('click', () => setPaused(!paused));
-    expand.addEventListener('click', () => {
-      const source=screens[cur].querySelector('img');
-      const image=document.getElementById('demo-preview-image');
-      image.src=source.currentSrc || source.src || source.dataset.src;
-      image.alt=source.alt;
-      document.getElementById('demo-preview-description').textContent=captions[cur];
-      stop();dialog.showModal();
-    });
-    document.getElementById('demo-preview-close').addEventListener('click',()=>dialog.close());
-    dialog.addEventListener('close',()=>{expand.focus();start();});
-    setPaused(paused);
-  })();
 
 </script>
 <!-- Three.js is ESM-only from r150+, so it can't carry the SRI-hash pattern used on
