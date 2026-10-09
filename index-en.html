@@ -1968,8 +1968,8 @@ html[lang="en"] #hero .hero-title{letter-spacing:-.02em;line-height:1.08}
     }).observe(hero);
   }).catch(() => {});
 
-  if ('requestIdleCallback' in window) requestIdleCallback(loadThree, { timeout: 2000 });
-  else setTimeout(loadThree, 300);
+  const laterThree = () => { if ('requestIdleCallback' in window) requestIdleCallback(loadThree, { timeout: 2000 }); else loadThree(); };
+  addEventListener('load', () => setTimeout(laterThree, 3000), { once: true });
 })();
 </script>
 <script type="application/ld+json">
