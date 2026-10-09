@@ -94,3 +94,21 @@ test('landing registration links, demo controls and accessible enlargement',asyn
  await page.locator('#demo-enlarge').click();assert.equal(await page.locator('#demo-dialog').isVisible(),true);await page.locator('#demo-dialog button').click();
  assert.equal(await page.locator('#demo-dialog').isVisible(),false);
 });
+
+test('the hero video starts by itself, muted, and respects a manual pause', async t => {
+ const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: 'block' });
+ t.after(() => context.close());
+ const page = await context.newPage();
+ page.setDefaultTimeout(10000);
+ for (const file of ['index.html', 'index-en.html']) {
+  await page.goto(base + '/' + file);
+  await page.waitForFunction(() => !document.getElementById('hero-video').paused);
+  assert.equal(await page.locator('#hero-video').evaluate(v => v.muted), true);
+  await page.locator('#demo-play').click();
+  assert.equal(await page.locator('#hero-video').evaluate(v => v.paused), true);
+  await page.locator('#demo-enlarge').click();
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(600);
+  assert.equal(await page.locator('#hero-video').evaluate(v => v.paused), true, 'a manual pause survives the enlargement dialog');
+ }
+});
