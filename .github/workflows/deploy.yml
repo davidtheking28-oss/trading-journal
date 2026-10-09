@@ -42,7 +42,7 @@ jobs:
       # works, it just goes back to paying the cold upstream fetch in the
       # foreground on every visit, which is exactly what it was built to stop.
       - name: Setup Deno
-        uses: denoland/setup-deno@v1
+        uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
 
