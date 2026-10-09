@@ -1,0 +1,76 @@
+running 8 tests from ./supabase/functions/_shared/bybit_test.ts
+a 730-day backfill never asks for a startTime at or past 2 years ... ok (236ms)
+a short window is left exactly as asked ... ok (3ms)
+a lone open lot is surfaced with the right entry/qty, not discarded ... ok (5ms)
+two fills average-weight into one open entry ... ok (1ms)
+a partial close leaves the correct remainder as the open row ... ok (1ms)
+a fully closed position leaves no open row ... ok (1ms)
+computeBybitTrades on the same data still returns only the closed leg ... ok (1ms)
+openPositionRow sets close_date to null, not the table default ... ok (483µs)
+running 7 tests from ./supabase/functions/_shared/flex-import_test.ts
+flexParseXML runs against the injected deno-dom DOMParser ... ok (66ms)
+computeShadowDiff reports a trade missing from existing rows ... ok (2ms)
+computeShadowDiff reports nothing when the trade already exists ... ok (978µs)
+computeShadowDiff reads raw trades rows, so an unchanged closed trade is not an update ... ok (439µs)
+computeShadowDiff does not report a trade the user deleted as missing ... ok (683µs)
+ibkr-import never writes to the trades table while in shadow mode ... ok (13ms)
+computeShadowDiff says which columns a planned update would write ... ok (1ms)
+running 10 tests from ./supabase/functions/_shared/quote_test.ts
+a working Finnhub answer is used as-is, with no fallback call ... ok (3ms)
+a transient Finnhub failure is retried before giving up on it ... ok (442µs)
+Yahoo covers the symbol when Finnhub keeps failing ... ok (575µs)
+a share class keeps Yahoo spelling so the fallback can find it ... ok (333µs)
+both sources down reports null rather than inventing a price ... ok (896µs)
+yahooHistoricalClose picks the last bar at or before the target date ... ok (95ms)
+yahooHistoricalClose ignores bars after the target date ... ok (1ms)
+yahooHistoricalClose returns the newest bar when the target is after all of them ... ok (586µs)
+yahooHistoricalClose returns null when every bar is after the target ... ok (1ms)
+yahooHistoricalClose returns null on an unparseable date rather than guessing ... ok (332µs)
+running 8 tests from ./supabase/functions/_shared/stop_alert_test.ts
+the stop is 8% under the entry price ... ok (2ms)
+no entry price means no stop, never a hit ... ok (352µs)
+a price exactly at the stop counts, one cent above does not ... ok (173µs)
+a missing or zero quote is not a hit ... ok (353µs)
+a symbol at the stop fires once, and stays quiet while already alerted ... ok (1ms)
+recovery above the stop re-arms the symbol ... ok (699µs)
+a failed quote neither fires nor re-arms ... ok (475µs)
+two lots of one symbol: the higher stop decides, one message ... ok (465µs)
+running 6 tests from ./supabase/functions/_shared/swr_test.ts
+a fresh row is served without refreshing at all ... ok (3ms)
+a stale row is returned immediately and refreshed behind the response ... ok (1ms)
+past the staleness bound it blocks on a real fetch ... ok (1ms)
+a missing row blocks on a real fetch ... ok (292µs)
+a background refresh that throws still leaves the caller a payload ...
+------- post-test output -------
+[k] background refresh failed: Error: upstream down
+    at file:///C:/Users/david/trading-journal/supabase/functions/_shared/swr_test.ts:71:126
+    at serveCached (file:///C:/Users/david/trading-journal/supabase/functions/_shared/swr.ts:31:15)
+    at async file:///C:/Users/david/trading-journal/supabase/functions/_shared/swr_test.ts:71:13
+    at async innerWrapped (ext:cli/40_test.js:300:5)
+    at async exitSanitizer (ext:cli/40_test.js:201:27)
+    at async outerWrapped (ext:cli/40_test.js:239:22)
+----- post-test output end -----
+a background refresh that throws still leaves the caller a payload ... ok (28ms)
+no row and a failed fetch yields null so the caller can error ... ok (37ms)
+running 11 tests from ./supabase/functions/_shared/sym_cache_test.ts
+a warm symbol is neither refetched nor refreshed ... ok (3ms)
+a symbol past the TTL is served stale and refreshed in the background ... ok (818µs)
+a symbol past the staleness bound is refetched in the foreground ... ok (615µs)
+an unknown symbol is missing, not fresh ... ok (517µs)
+a malformed entry is refetched rather than served as a reading ... ok (599µs)
+a strict isValid rejects a value the generic default would accept ... ok (37ms)
+one request splits a mixed focus list three ways ... ok (1ms)
+a zero return is a real reading, not a falsy miss ... ok (533µs)
+an array-shaped entry (ohlc candles) is validated by its own predicate ... ok (742µs)
+pruning drops only entries past the bound ... ok (921µs)
+pruning survives a malformed entry instead of throwing ... ok (678µs)
+running 6 tests from ./supabase/functions/sector-holdings/calc_test.ts
+calcPct: measures from exactly daysBack sessions ago ... ok (1ms)
+calcPct: not enough history returns null instead of a wrong window ... ok (280µs)
+calcPct: a zero base returns null instead of Infinity ... ok (209µs)
+calcYtd: measures from the last close before the first bar of the year ... ok (570µs)
+calcYtd: no bar in the current year yet returns null ... ok (521µs)
+calcYtd: the very first bar available already falls on/after year start ... ok (500µs)
+
+ok | 56 passed | 0 failed (2s)
+
