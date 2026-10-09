@@ -1,3 +1,0 @@
-{"screenerTests":258,"passed":258,"failures":[]}
-{"url":"https://davidtheking28-oss.github.io/trading-journal/","samples":[{"ttfb":197,"fcp":504,"load":888,"requests":6,"reportedTransferBytes":260629,"errors":[]},{"ttfb":79,"fcp":416,"load":597,"requests":7,"reportedTransferBytes":429773,"errors":[]},{"ttfb":76,"fcp":404,"load":559,"requests":6,"reportedTransferBytes":260629,"errors":[]}]}
-{"url":"https://davidtheking28-oss.github.io/stock-screener/","samples":[{"ttfb":211,"fcp":800,"load":1003,"requests":5,"reportedTransferBytes":130598,"errors":[]},{"ttfb":65,"fcp":660,"load":719,"requests":5,"reportedTransferBytes":130598,"errors":[]},{"ttfb":75,"fcp":616,"load":676,"requests":5,"reportedTransferBytes":130598,"errors":[]}]}
