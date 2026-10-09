@@ -5359,56 +5359,66 @@ async function saveTrade() {
     return;
   }
 
-  data.type = type;
-  let arr = type==='stock' ? db.stocks : db.crypto;
+  const saveButton=document.querySelector('#trade-modal [onclick="saveTrade()"]');
+  if(saveButton?.disabled) return;
+  const saveUserId=_currentUser?.id, saveDB=db;
+  if(!saveUserId) { toast('יש להתחבר לפני שמירת עסקה','error'); return; }
+  if(saveButton) saveButton.disabled=true;
+  try {
+    data.type = type;
+    let arr = type==='stock' ? db.stocks : db.crypto;
 
-  if (idVal) {
-    // The modal re-detects stock/crypto from the symbol, so editing a trade whose
-    // ticker looks like the other kind pointed at the wrong array and threw the
-    // user's changes away with "עסקה לא נמצאה". The row's real home wins.
-    if (!arr.some(t=>String(t.id)===String(idVal))) {
-      const other = arr === db.stocks ? db.crypto : db.stocks;
-      if (other.some(t=>String(t.id)===String(idVal))) {
-        arr = other;
-        type = other === db.crypto ? 'crypto' : 'stock';
-        data.type = type;
+    if (idVal) {
+      // The modal re-detects stock/crypto from the symbol, so editing a trade whose
+      // ticker looks like the other kind pointed at the wrong array and threw the
+      // user's changes away with "עסקה לא נמצאה". The row's real home wins.
+      if (!arr.some(t=>String(t.id)===String(idVal))) {
+        const other = arr === db.stocks ? db.crypto : db.stocks;
+        if (other.some(t=>String(t.id)===String(idVal))) {
+          arr = other;
+          type = other === db.crypto ? 'crypto' : 'stock';
+          data.type = type;
+        }
       }
+      // Edit existing trade
+      const i = arr.findIndex(t=>String(t.id)===String(idVal));
+      if (i === -1) { toast('שגיאה: עסקה לא נמצאה','error'); return; }
+      const prev = arr[i];
+      data.id = prev.id;
+      // getFormTrade() builds a fresh object with no broker ids, so replacing the
+      // row wholesale dropped ibkr_id/bybit_id from memory. The next sync then
+      // failed to match the trade and imported it a second time as a duplicate.
+      data.ibkr_id  = prev.ibkr_id  ?? null;
+      data.bybit_id = prev.bybit_id ?? null;
+      // Same reason: the orphan-close idempotency guard compares t._exitDt
+      // against the in-memory row, so losing this on an edit lets the next sync
+      // in the same session re-apply a close it had already booked.
+      data.lastCloseDt = prev.lastCloseDt ?? null;
+      data.deleted   = prev.deleted;
+      data.deletedAt = prev.deletedAt;
+      arr[i] = data; // optimistic
+      renderTable(type); initFilters();
+      const row = _tradeToRow(data);
+      const { error } = await Promise.resolve(_sb.from('trades').update(row).eq('id', data.id).eq('user_id', saveUserId)).catch(error=>({error}));
+      if(_currentUser?.id!==saveUserId || db!==saveDB) return;
+      if (error) { arr[i] = prev; renderTable(type); toast('שגיאה בעדכון עסקה','error'); console.error(error); return; }
+      closeModal();
+      auditLog('trade_edited', data.symbol);
+      toast('עסקה עודכנה','success');
+    } else {
+      // New trade
+      const row = _tradeToRow(data);
+      const { data: inserted, error } = await Promise.resolve(_sb.from('trades').insert(row).select().single()).catch(error=>({error}));
+      if(_currentUser?.id!==saveUserId || db!==saveDB) return;
+      if (error) { toast('שגיאה בהוספת עסקה','error'); console.error(error); return; }
+      closeModal();
+      data.id = inserted.id;
+      arr.push(data);
+      auditLog('trade_added', data.symbol);
+      renderTable(type); initFilters();
+      toast('עסקה נוספה','success');
     }
-    // Edit existing trade
-    const i = arr.findIndex(t=>String(t.id)===String(idVal));
-    if (i === -1) { toast('שגיאה: עסקה לא נמצאה','error'); return; }
-    const prev = arr[i];
-    data.id = prev.id;
-    // getFormTrade() builds a fresh object with no broker ids, so replacing the
-    // row wholesale dropped ibkr_id/bybit_id from memory. The next sync then
-    // failed to match the trade and imported it a second time as a duplicate.
-    data.ibkr_id  = prev.ibkr_id  ?? null;
-    data.bybit_id = prev.bybit_id ?? null;
-    // Same reason: the orphan-close idempotency guard compares t._exitDt
-    // against the in-memory row, so losing this on an edit lets the next sync
-    // in the same session re-apply a close it had already booked.
-    data.lastCloseDt = prev.lastCloseDt ?? null;
-    data.deleted   = prev.deleted;
-    data.deletedAt = prev.deletedAt;
-    arr[i] = data; // optimistic
-    renderTable(type); initFilters(); closeModal();
-    const row = _tradeToRow(data);
-    const { error } = await _sb.from('trades').update(row).eq('id', data.id).eq('user_id', _currentUser.id);
-    if (error) { arr[i] = prev; renderTable(type); toast('שגיאה בעדכון עסקה','error'); console.error(error); return; }
-    auditLog('trade_edited', data.symbol);
-    toast('עסקה עודכנה','success');
-  } else {
-    // New trade
-    const row = _tradeToRow(data);
-    closeModal();
-    const { data: inserted, error } = await _sb.from('trades').insert(row).select().single();
-    if (error) { toast('שגיאה בהוספת עסקה','error'); console.error(error); return; }
-    data.id = inserted.id;
-    arr.push(data);
-    auditLog('trade_added', data.symbol);
-    renderTable(type); initFilters();
-    toast('עסקה נוספה','success');
-  }
+  } finally { if(saveButton) saveButton.disabled=false; }
 }
 
 function editTrade(type, id) {
