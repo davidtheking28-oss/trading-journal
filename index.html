@@ -474,7 +474,7 @@ section { padding: 72px max(28px, 5vw); position: relative; z-index: 1; }
   box-shadow: 0 20px 30px rgba(0,0,0,0.35), 0 0 0 1px rgba(79,127,255,0.06), inset 0 1px 0 rgba(255,255,255,0.06);
 }
 .testimonial-proof-img {
-  display: block; width: 100%; border-radius: 10px;
+  display: block; width: 100%; height: auto; border-radius: 10px;
 }
 
 .card-topbar {
@@ -1359,7 +1359,7 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
       </div>
       <p class="hero-trust-line">הרשמה חינם · ללא כרטיס אשראי</p><p class="hero-security">חיבור לברוקר לקריאה בלבד. <a href="broker-guide.html">איך החיבור עובד?</a></p>
     </div>
-<figure class="hero-product"><a href="#demo" aria-label="לצפייה בהדגמת המערכת"><img src="assets/demo/demo-stats.jpg" width="1600" height="900" fetchpriority="high" decoding="async" alt="תצוגת יומן המסחר: נתוני ביצועים ולוח שנה"></a><figcaption>כך נראה היומן שלך · <a href="#demo">עבור בין תצוגות המערכת</a></figcaption></figure>
+<figure class="hero-product"><a href="#demo" aria-label="לצפייה בהדגמת המערכת"><img src="assets/demo/demo-stats.webp" width="1600" height="900" fetchpriority="high" decoding="async" alt="תצוגת יומן המסחר: נתוני ביצועים ולוח שנה"></a><figcaption>כך נראה היומן שלך · <a href="#demo">עבור בין תצוגות המערכת</a></figcaption></figure>
   </div>
 </section>
 
@@ -1421,27 +1421,27 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
 <div class="demo-stage">
           <!-- Screen 1: Dashboard overview -->
           <div class="demo-body demo-screen active" id="ds0" role="tabpanel" aria-labelledby="dt0" style="padding:0">
-            <img src="assets/demo/demo-stats.jpg" alt="דשבורד — סטטיסטיקה ולוח שנה חודשי" loading="lazy" decoding="async">
+            <img src="assets/demo/demo-stats.webp" alt="דשבורד — סטטיסטיקה ולוח שנה חודשי" loading="lazy" decoding="async">
           </div>
 
           <!-- Screen 2: Trades table -->
           <div class="demo-body demo-screen" id="ds1" role="tabpanel" aria-labelledby="dt1" style="padding:0">
-            <img data-src="assets/demo/demo-trades.jpg" alt="טבלת עסקאות ביומן המסחר">
+            <img data-src="assets/demo/demo-trades.webp" alt="טבלת עסקאות ביומן המסחר">
           </div>
 
           <!-- Screen 3: Market Pulse -->
           <div class="demo-body demo-screen" id="ds2" role="tabpanel" aria-labelledby="dt2" style="padding:0">
-            <img data-src="assets/demo/demo-pulse.png" alt="Market Pulse — מדדים ורוחב שוק">
+            <img data-src="assets/demo/demo-pulse.webp" alt="Market Pulse — מדדים ורוחב שוק">
           </div>
 
           <!-- Screen 4: Stock screener -->
           <div class="demo-body demo-screen" id="ds3" role="tabpanel" aria-labelledby="dt3" style="padding:0">
-            <img data-src="assets/demo/demo-screener.png" alt="מסנן מניות — Trend Template + SEPA">
+            <img data-src="assets/demo/demo-screener.webp" alt="מסנן מניות — Trend Template + SEPA">
           </div>
 
           <!-- Screen 5: Statistics -->
           <div class="demo-body demo-screen" id="ds4" role="tabpanel" aria-labelledby="dt4" style="padding:0">
-            <img data-src="assets/demo/demo-winloss.jpg" alt="סטטיסטיקות — Profit Factor, ממוצעי רווח/הפסד ויחס נצחונות מול הפסדים">
+            <img data-src="assets/demo/demo-winloss.webp" alt="סטטיסטיקות — Profit Factor, ממוצעי רווח/הפסד ויחס נצחונות מול הפסדים">
           </div>
         </div>
       </div>
@@ -1539,7 +1539,7 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
   </div>
   <div class="testimonial-grid reveal">
     <div class="testimonial-proof-card">
-      <img class="testimonial-proof-img" src="assets/demo/testimonial-amit.jpg" alt="הודעת וואטסאפ מעמית, סוחר ב-Interactive Brokers, על ChartRoom: הפלטפורמה החדשה באמת ברמה גבוהה, יומן מסחר מעולה ששדרג לי את העבודה, משתמש בו ברמה יומיומית" loading="lazy">
+      <img class="testimonial-proof-img" width="807" height="232" src="assets/demo/testimonial-amit.webp" alt="הודעת וואטסאפ מעמית, סוחר ב-Interactive Brokers, על ChartRoom: הפלטפורמה החדשה באמת ברמה גבוהה, יומן מסחר מעולה ששדרג לי את העבודה, משתמש בו ברמה יומיומית" loading="lazy">
     </div>
   </div>
 </section>
@@ -1979,7 +1979,7 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
       return;
     }
 
-    let raf;
+    let raf = 0;
     function tick(t) {
       const time = t * 0.001;
       ripple(grid, time, 0.55, 1, 0);
@@ -1988,7 +1988,12 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
       renderer.render(scene, camera);
       raf = requestAnimationFrame(tick);
     }
-    raf = requestAnimationFrame(tick);
+    // The loop used to run forever, burning battery on a phone long after the
+    // hero had scrolled out of view. The observer's first callback starts it.
+    new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { if (!raf) raf = requestAnimationFrame(tick); }
+      else { cancelAnimationFrame(raf); raf = 0; }
+    }).observe(hero);
   }).catch(() => {});
 
   if ('requestIdleCallback' in window) requestIdleCallback(loadThree, { timeout: 2000 });
