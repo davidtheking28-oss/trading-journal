@@ -1296,6 +1296,16 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
 .footer-col a{font-family:var(--body);font-size:15px;line-height:1.6;min-height:42px;color:var(--text2)}
 .footer-cols{gap:clamp(32px,4vw,60px)}
 </style>
+<style id="hero-video-css">
+.hero-wrap{grid-template-columns:1fr;max-width:1180px;text-align:center;gap:52px}
+.hero-wrap>div:first-child{max-width:860px;margin-inline:auto}
+.hero-sub{margin-inline:auto}
+.hero-actions{justify-content:center}
+.hero-trust-line,.hero-security{text-align:center}
+.hero-product{width:100%;max-width:1100px;margin-inline:auto}
+.hero-product video{display:block;width:100%;height:auto;aspect-ratio:16/9;border:1px solid rgba(145,180,255,.24);border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.4);background:#0d1526}
+.hero-product figcaption{margin-top:16px!important}
+</style>
 <style id="landing-small-text">.kw{font-family:var(--body);font-size:1em;font-weight:600}.a11y-panel .a11y-label{font-family:var(--body);font-size:13px;letter-spacing:0;text-transform:none;line-height:1.6}.cm-label,.d-kpi-lbl,.d-chart-lbl,.d-idx-name{font-family:var(--body);letter-spacing:0;text-transform:none;font-size:12px;line-height:1.5}.card-period{font-family:var(--body);letter-spacing:0;font-size:13px}</style>
 <style id="demo-preview-upgrade">
 .demo-preview-tools{display:flex;gap:20px;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);background:rgba(79,131,255,.04)}
@@ -1310,6 +1320,7 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
 .feat-card svg,.step svg{flex-shrink:0}
 @media(max-width:900px){.demo-preview-tools{flex-wrap:wrap;padding:16px}.demo-preview-tools p{font-size:15px}}
 </style>
+<link rel="preload" as="image" href="assets/demo/hero-poster-en.webp" fetchpriority="high">
 </head>
 <body>
 
@@ -1413,7 +1424,7 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
       </div>
       <p class="hero-trust-line">Free signup · No credit card required</p><p class="hero-security">Read-only broker connection. <a href="broker-guide.html">How does it work?</a></p>
     </div>
-<figure class="hero-product"><a href="#demo"><img src="assets/demo/demo-stats-900.webp" srcset="assets/demo/demo-stats-900.webp 900w, assets/demo/demo-stats.webp 1816w" sizes="(max-width:900px) 100vw, 700px" width="1816" height="804" fetchpriority="high" decoding="async" alt="Trading journal preview with performance metrics and calendar"><div class="hero-tags"><span>Per-trade statistics</span><span>P&amp;L curve</span><span>Monthly calendar</span></div></a><figcaption>Your journal at a glance · <a href="#demo">Explore the product views</a></figcaption></figure>
+<figure class="hero-product"><video id="hero-video" muted loop playsinline preload="none" width="1280" height="720" poster="assets/demo/hero-poster-en.webp" aria-label="Short video of the trading journal: statistics, trade import, P&amp;L, Market Pulse and the stock screener"><source src="assets/demo/hero-clip-en.webm" type="video/webm"><source src="assets/demo/hero-clip-en.mp4" type="video/mp4"></video><figcaption>Your journal at a glance · <a href="#demo">Explore the product views</a></figcaption></figure>
   </div>
 </section>
 
@@ -2072,5 +2083,6 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
 }
 </script>
 
+<script>(()=>{const v=document.getElementById('hero-video');if(!v)return;const m=matchMedia('(prefers-reduced-motion: reduce)');const sync=()=>{if(m.matches){v.pause()}else{v.play().catch(()=>{})}};const start=()=>setTimeout(()=>{sync();m.addEventListener('change',sync)},300);document.readyState==='complete'?start():addEventListener('load',start,{once:true})})();</script>
 </body>
 </html>

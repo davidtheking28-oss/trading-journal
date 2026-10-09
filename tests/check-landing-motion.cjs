@@ -10,7 +10,7 @@ const fs=require('node:fs');const http=require('node:http');const path=require('
   await page.screenshot({path:'C:/Users/david/.codex/visualizations/2026/10/07/01a115e6-dc97-7531-898c-51ac761a03aa/motion-'+file+'.png'});
   await page.emulateMedia({reducedMotion:'reduce'});
   assert.equal(await page.locator('.hero-product').evaluate(el=>getComputedStyle(el).animationName),'none');
-  assert.equal(await page.locator('.hero-product>a').evaluate(el=>getComputedStyle(el).transitionDuration),'0s');
+  await page.waitForTimeout(200);assert.equal(await page.locator('#hero-video').evaluate(el=>el.paused),true);
   assert.equal(await page.locator('.hero-product').evaluate(el=>getComputedStyle(el).opacity),'1');
   await page.close();console.log(file+': entrance visible; reduced-motion disables new animations');
  }}finally{await browser.close();await new Promise(r=>server.close(r));}
