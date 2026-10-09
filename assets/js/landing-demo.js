@@ -26,8 +26,8 @@
   const observer = new IntersectionObserver(entries => { inView = entries[0].isIntersecting; if (inView) tryPlay(); else video.pause(); });
   observer.observe(video);
   motion.addEventListener('change', () => { if (motion.matches) video.pause(); else tryPlay(); });
-  const start = () => setTimeout(() => { ready = true; tryPlay(); }, 300);
-  if (document.readyState === 'complete') start(); else addEventListener('load', start, { once: true });
+  ready = true;
+  tryPlay();
   enlarge.addEventListener('click', () => { video.pause(); dialog.showModal(); });
   dialog.querySelector('button').addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
