@@ -1353,7 +1353,8 @@ html[lang="en"] #hero .hero-title{letter-spacing:-.02em;line-height:1.08}
 .feat-card svg,.step svg{flex-shrink:0}
 @media(max-width:900px){.demo-preview-tools{flex-wrap:wrap;padding:16px}.demo-preview-tools p{font-size:15px}}
 </style>
-<link rel="preload" as="image" href="assets/demo/hero-poster.webp" fetchpriority="high">
+<link rel="preload" as="image" href="assets/demo/demo-stats.webp" fetchpriority="high">
+<link rel="stylesheet" href="assets/landing-enhancements.css?v=__APP_VERSION__">
 </head>
 <body>
 
@@ -1422,7 +1423,7 @@ html[lang="en"] #hero .hero-title{letter-spacing:-.02em;line-height:1.08}
   <div class="nav-right">
     <a href="index-en.html" class="nav-link" onclick="try{localStorage.setItem('tj_landing_lang_choice','en')}catch(e){}">English</a>
     <a href="dashboard.html" class="nav-link">כניסה</a>
-    <a href="dashboard.html" class="nav-cta">הרשמה חינם</a>
+    <a href="dashboard.html?mode=register" class="nav-cta">הרשמה חינם</a>
     <button class="nav-menu-btn" onclick="toggleMobileNav()" aria-label="תפריט ניווט" aria-expanded="false" aria-controls="mobile-nav-panel">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
     </button>
@@ -1447,9 +1448,9 @@ html[lang="en"] #hero .hero-title{letter-spacing:-.02em;line-height:1.08}
       <h1 class="hero-title" id="hero-heading">
         <span class="hero-title-lead">גלה אילו עסקאות <span class="hl-accent">עובדות בשבילך</span> — ואילו עולות לך כסף.</span>
       </h1>
-      <p class="hero-sub">ייבא עסקאות מ־IBKR או Bybit, נתח את הביצועים שלך וזהה את תבניות המסחר שעובדות לאורך זמן.</p>
+      <p class="hero-sub">ייבא עסקאות מ־IBKR או Bybit, נתח את הביצועים שלך וזהה את תבניות המסחר שעובדות לאורך זמן.</p><p class="manual-entry-note">אפשר גם להזין עסקאות ידנית. אין חובה לחבר ברוקר.</p>
       <div class="hero-actions">
-        <a href="dashboard.html" class="btn-hero-primary">
+        <a href="dashboard.html?mode=register" class="btn-hero-primary">
           התחל בחינם
           <svg width="14" height="14" aria-hidden="true"><use href="#i-arr"/></svg>
         </a>
@@ -1457,10 +1458,11 @@ html[lang="en"] #hero .hero-title{letter-spacing:-.02em;line-height:1.08}
       </div>
       <p class="hero-security"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>חיבור לברוקר לקריאה בלבד. <a href="broker-guide.html">איך החיבור עובד?</a></p>
     </div>
-<figure class="hero-product"><video id="hero-video" muted loop playsinline preload="none" width="1280" height="720" poster="assets/demo/hero-poster.webp" aria-label="סרטון קצר של יומן המסחר: סטטיסטיקה, ייבוא עסקאות, רווח והפסד, דופק השוק וסורק המניות"><source src="assets/demo/hero-clip.webm" type="video/webm"><source src="assets/demo/hero-clip.mp4" type="video/mp4"></video><figcaption>כך נראה היומן שלך</figcaption></figure>
+<figure class="hero-product"><video id="hero-video" muted loop playsinline preload="none" width="1280" height="720" poster="assets/demo/demo-stats.webp" aria-label="סרטון קצר של יומן המסחר: סטטיסטיקה, ייבוא עסקאות, רווח והפסד, דופק השוק וסורק המניות"><source src="assets/demo/hero-clip.webm" type="video/webm"><source src="assets/demo/hero-clip.mp4" type="video/mp4"></video><figcaption>תצוגת המוצר · נתוני הדגמה</figcaption><div class="demo-controls"><button id="demo-play" type="button" aria-controls="hero-video" aria-pressed="false">הפעל הדגמה</button><button id="demo-enlarge" type="button" aria-haspopup="dialog">הגדל תצוגה</button></div></figure>
   </div>
 </section>
 
+<dialog id="demo-dialog" class="demo-dialog" aria-labelledby="demo-dialog-title"><header><h2 id="demo-dialog-title">תצוגת המוצר · נתוני הדגמה</h2><button type="button" autofocus>סגור תצוגה</button></header><img src="assets/demo/demo-stats.webp" width="1816" height="804" alt="נתוני הדגמה של סטטיסטיקות, גרף רווח והפסד ולוח עסקאות" loading="lazy"></dialog>
 <!-- BROKER TRUST STRIP -->
 <div class="broker-strip">
   <span class="broker-strip-label">מתחברים לברוקרים המובילים</span>
@@ -1549,23 +1551,23 @@ html[lang="en"] #hero .hero-title{letter-spacing:-.02em;line-height:1.08}
   <div class="feat-grid">
     <div class="feat-card reveal">
       <div class="feat-visual" aria-hidden="true"><div class="fv-head"><span class="fv-chip">IBKR</span><span class="fv-chip fv-bybit">Bybit</span><span class="fv-sync">● מסונכרן</span></div><div class="fv-row"><b>NVDA</b><span>×20</span><span class="fv-up">+$1,240</span></div><div class="fv-row"><b>BTC</b><span>×0.5</span><span class="fv-up">+$890</span></div><div class="fv-row"><b>TSLA</b><span>×15</span><span class="fv-down">−$210</span></div><div class="fv-row"><b>META</b><span>×8</span><span class="fv-up">+$1,810</span></div><div class="fv-row"><b>AMD</b><span>×30</span><span class="fv-down">−$420</span></div></div>
-      <h3 class="feat-row-title">שכח מטבלאות</h3>
+      <h3 class="feat-row-title">הבן מה מניע את התוצאות שלך</h3>
       <p class="feat-row-desc">חבר את <span class="kw">Interactive Brokers</span> או <span class="kw">Bybit</span> פעם אחת — חיבור קורא-בלבד, ללא גישה לביצוע פעולות — וכל עסקה נכנסת לבד.</p>
     </div>
     <div class="feat-card reveal">
       <svg class="feat-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
       <h3 class="feat-row-title">להבין את מצב השוק</h3>
-      <p class="feat-row-desc">ביצועי סקטורים, <span class="kw">Fear &amp; Greed Index</span> ומניות מובילות — במקום אחד, כדי שתדע לאן הכסף זורם לפני שאתה נכנס לפוזיציה.</p>
+      <p class="feat-row-desc">ביצועי סקטורים, <span class="kw">Fear &amp; Greed Index</span> ומניות מובילות — במקום אחד, כדי שתדע לאן הכסף זורם לפני שאתה נכנס לפוזיציה.</p><img class="feature-preview" src="assets/demo/demo-pulse.webp" width="900" height="500" alt="דוגמה לתמונת מצב השוק" loading="lazy">
     </div>
     <div class="feat-card reveal">
       <svg class="feat-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></svg>
       <h3 class="feat-row-title">מסנן מניות מובנה</h3>
-      <p class="feat-row-desc">מצא מניות שמתאימות לקריטריונים שלך, השווה את המבנה הטכני שלהן והוסף אותן למעקב — ישר בתוך היומן.</p>
+      <p class="feat-row-desc">מצא מניות שמתאימות לקריטריונים שלך, השווה את המבנה הטכני שלהן והוסף אותן למעקב — ישר בתוך היומן.</p><img class="feature-preview" src="assets/demo/demo-screener.webp" width="900" height="500" alt="דוגמה לתוצאות מסנן המניות" loading="lazy">
     </div>
     <div class="feat-card reveal">
       <svg class="feat-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v9h9"/></svg>
       <h3 class="feat-row-title">בניית תיק השקעות</h3>
-      <p class="feat-row-desc">הקצאת הון בין מניות, קריפטו ו-ETFs, תשואה כוללת במבט אחד — כדי לראות חשיפת יתר לנכס בודד לפני שהיא הופכת להפסד גדול.</p>
+      <p class="feat-row-desc">הקצאת הון בין מניות, קריפטו ו-ETFs, תשואה כוללת במבט אחד — כדי לראות חשיפת יתר לנכס בודד לפני שהיא הופכת להפסד גדול.</p><div class="allocation-preview" aria-label="קטגוריות נכסים"><span>מניות</span><span>קריפטו</span><span>ETFs</span></div>
     </div>
   </div>
 </section>
@@ -1603,7 +1605,7 @@ html[lang="en"] #hero .hero-title{letter-spacing:-.02em;line-height:1.08}
         <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>מסנן מניות מובנה — Trend Template</li>
         <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>גיבוי ענן מאובטח — תקשורת מוצפנת, וכל משתמש רואה רק את הנתונים שלו</li>
       </ul>
-      <a href="dashboard.html" class="btn-solid" style="width:100%;">
+      <a href="dashboard.html?mode=register" class="btn-solid" style="width:100%;">
         התחל בחינם
       </a>
     </div>
@@ -1669,7 +1671,7 @@ html[lang="en"] #hero .hero-title{letter-spacing:-.02em;line-height:1.08}
     <h2 class="cta-title">בעוד חודש יהיו לך עוד עשרות עסקאות. תדע עליהן משהו?</h2>
     <p class="cta-sub">כל יום בלי תיעוד הוא עוד יום שאתה לא רואה את הדפוסים האמיתיים שלך.</p>
     <ul class="cta-points"><li>ייבוא אוטומטי מ־IBKR ומ־Bybit</li><li>סטטיסטיקה לכל עסקה</li><li>דופק שוק וסורק מניות</li></ul>
-    <a href="dashboard.html" class="btn-cta-dark">
+    <a href="dashboard.html?mode=register" class="btn-cta-dark">
       גלה מה עובד לך — בחינם
       <svg width="15" height="15" aria-hidden="true"><use href="#i-arr"/></svg>
     </a>
@@ -2000,6 +2002,6 @@ html[lang="en"] #hero .hero-title{letter-spacing:-.02em;line-height:1.08}
 }
 </script>
 
-<script>(()=>{const v=document.getElementById('hero-video');if(!v)return;const m=matchMedia('(prefers-reduced-motion: reduce)');const sync=()=>{if(m.matches){v.pause()}else{v.play().catch(()=>{})}};const start=()=>setTimeout(()=>{sync();m.addEventListener('change',sync)},300);document.readyState==='complete'?start():addEventListener('load',start,{once:true})})();</script>
+<script src="assets/js/landing-demo.js?v=__APP_VERSION__" defer></script>
 </body>
 </html>
