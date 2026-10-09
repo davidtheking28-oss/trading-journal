@@ -1,9 +1,7 @@
 (() => {
   const video = document.getElementById('hero-video');
   const play = document.getElementById('demo-play');
-  const enlarge = document.getElementById('demo-enlarge');
-  const dialog = document.getElementById('demo-dialog');
-  if (!video || !play || !enlarge || !dialog) return;
+  if (!video || !play) return;
   const english = document.documentElement.lang === 'en';
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
   const sync = () => {
@@ -28,9 +26,5 @@
   motion.addEventListener('change', () => { if (motion.matches) video.pause(); else tryPlay(); });
   ready = true;
   tryPlay();
-  enlarge.addEventListener('click', () => { video.pause(); dialog.showModal(); });
-  dialog.querySelector('button').addEventListener('click', () => dialog.close());
-  dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
-  dialog.addEventListener('close', () => { enlarge.focus(); tryPlay(); });
   sync();
 })();

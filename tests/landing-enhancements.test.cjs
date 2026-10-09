@@ -77,13 +77,10 @@ async function investments(page) {
 }
 
 
-test('landing registration links, demo controls and accessible enlargement',async t=>{
+test('landing registration links and the demo play control',async t=>{
  const page=await open(t);
  await page.goto(base+'/index.html');
  assert.equal(await page.locator('.btn-hero-primary').getAttribute('href'),'dashboard.html?mode=register');
- await page.locator('#demo-enlarge').click();assert.equal(await page.locator('#demo-dialog').isVisible(),true);
- await page.keyboard.press('Escape');assert.equal(await page.locator('#demo-dialog').isVisible(),false);
- assert.equal(await page.locator('#demo-enlarge').evaluate(e=>e===document.activeElement),true);
  assert.equal(await page.locator('#hero-video').evaluate(v=>v.paused),true);
  await page.goto(base+'/dashboard.html?mode=register');
  await page.waitForFunction(()=>typeof _authMode!=='undefined');assert.equal(await page.evaluate(()=>_authMode),'register');
@@ -91,8 +88,6 @@ test('landing registration links, demo controls and accessible enlargement',asyn
  await page.goto(base+'/index-en.html');assert.equal(await page.locator('.btn-hero-primary').getAttribute('href'),'dashboard.html?mode=register');
  await page.locator('#demo-play').click();await page.waitForFunction(()=>!document.getElementById('hero-video').paused);
  await page.locator('#demo-play').click();assert.equal(await page.locator('#hero-video').evaluate(v=>v.paused),true);
- await page.locator('#demo-enlarge').click();assert.equal(await page.locator('#demo-dialog').isVisible(),true);await page.locator('#demo-dialog button').click();
- assert.equal(await page.locator('#demo-dialog').isVisible(),false);
 });
 
 test('the hero video starts by itself, muted, and respects a manual pause', async t => {
@@ -106,9 +101,7 @@ test('the hero video starts by itself, muted, and respects a manual pause', asyn
   assert.equal(await page.locator('#hero-video').evaluate(v => v.muted), true);
   await page.locator('#demo-play').click();
   assert.equal(await page.locator('#hero-video').evaluate(v => v.paused), true);
-  await page.locator('#demo-enlarge').click();
-  await page.keyboard.press('Escape');
   await page.waitForTimeout(600);
-  assert.equal(await page.locator('#hero-video').evaluate(v => v.paused), true, 'a manual pause survives the enlargement dialog');
+  assert.equal(await page.locator('#hero-video').evaluate(v => v.paused), true, 'a manual pause is not undone by the page');
  }
 });
