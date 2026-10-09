@@ -721,7 +721,7 @@ section { padding: 72px max(28px, 5vw); position: relative; z-index: 1; }
 .fv-row b { font-weight: 700; }
 .fv-up { color: var(--green); }
 .fv-down { color: var(--red); }
-.feat-ico { position: absolute; top: 28px; left: 28px; width: 26px; height: 26px; fill: none; stroke: rgba(79,127,255,0.5); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.feat-ico { position: absolute; top: 28px; inset-inline-end: 28px; width: 26px; height: 26px; fill: none; stroke: rgba(79,127,255,0.5); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .feat-row-title {
   font-family: var(--display); font-size: 19px; font-weight: 700;
   color: var(--text); letter-spacing: -0.4px; margin-bottom: 9px;
@@ -1235,7 +1235,6 @@ body::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;b
 main .section-title{font-size:clamp(32px,4vw,50px);line-height:1.14;font-weight:800;letter-spacing:-.8px;text-wrap:balance}
 main .section-sub{font-size:18px;max-width:60ch}
 .hl-accent::after{display:none}
-.feat-card:first-child{justify-content:flex-start}
 @media(min-width:1000px){
   #how{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);column-gap:72px;align-items:start;padding-inline:max(28px,calc((100% - 1180px)/2));text-align:start}
   #how>.centered{grid-column:1;text-align:start}
@@ -1250,10 +1249,10 @@ main .section-sub{font-size:18px;max-width:60ch}
 .cta-inner::before{background:linear-gradient(90deg,transparent,rgba(255,255,255,.55) 40%,rgba(255,255,255,.35) 60%,transparent)}
 .cta-bg{background:radial-gradient(circle,rgba(255,255,255,.16) 0%,transparent 65%)}
 .cta-title{max-width:700px;font-size:clamp(28px,4vw,46px);line-height:1.15;letter-spacing:-.8px;color:#fff;text-wrap:balance}
-.cta-sub{max-width:520px;font-size:18px;color:rgba(255,255,255,.9)}
+.cta-sub{max-width:520px;font-size:18px;color:rgba(255,255,255,.96)}
 .cta-inner .btn-cta-dark{background:#fff;color:#1f3fbf;box-shadow:0 10px 30px rgba(8,16,60,.35)}
 @media (hover:hover) and (pointer:fine){.cta-inner .btn-cta-dark:hover{background:#eef3ff;box-shadow:0 14px 38px rgba(8,16,60,.45)}}
-.cta-inner p[style]{color:rgba(255,255,255,.82)!important}
+.cta-inner p[style]{color:rgba(255,255,255,.95)!important}
 .broker-strip{border-top-color:transparent;border-bottom-color:transparent;background:linear-gradient(to bottom,transparent,rgba(7,16,31,.55) 28%,rgba(7,16,31,.55) 72%,transparent)}
 #hero-bg-3d{opacity:.26}
 .btn-hero-primary,.btn-hero-ghost,.nav-cta{transition:transform .2s ease,box-shadow .2s ease,background-color .2s ease}
@@ -1575,7 +1574,7 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
 
   <div class="feat-grid">
     <div class="feat-card reveal">
-      <div class="feat-visual" aria-hidden="true"><div class="fv-head"><span class="fv-chip">IBKR</span><span class="fv-chip fv-bybit">Bybit</span><span class="fv-sync">● מסונכרן</span></div><div class="fv-row"><b>NVDA</b><span>×20</span><span class="fv-up">+$1,240</span></div><div class="fv-row"><b>BTC</b><span>×0.5</span><span class="fv-up">+$890</span></div><div class="fv-row"><b>TSLA</b><span>×15</span><span class="fv-down">−$210</span></div></div><span class="feat-num" aria-hidden="true">01</span>
+      <div class="feat-visual" aria-hidden="true"><div class="fv-head"><span class="fv-chip">IBKR</span><span class="fv-chip fv-bybit">Bybit</span><span class="fv-sync">● מסונכרן</span></div><div class="fv-row"><b>NVDA</b><span>×20</span><span class="fv-up">+$1,240</span></div><div class="fv-row"><b>BTC</b><span>×0.5</span><span class="fv-up">+$890</span></div><div class="fv-row"><b>TSLA</b><span>×15</span><span class="fv-down">−$210</span></div><div class="fv-row"><b>META</b><span>×8</span><span class="fv-up">+$1,810</span></div><div class="fv-row"><b>AMD</b><span>×30</span><span class="fv-down">−$420</span></div></div><span class="feat-num" aria-hidden="true">01</span>
       <h3 class="feat-row-title">שכח מטבלאות</h3>
       <p class="feat-row-desc">חבר את <span class="kw">Interactive Brokers</span> או <span class="kw">Bybit</span> פעם אחת — חיבור קורא-בלבד, ללא גישה לביצוע פעולות — וכל עסקה נכנסת לבד.</p>
     </div>
