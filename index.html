@@ -1322,6 +1322,22 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
 .hero-product figcaption{margin-top:16px!important}
 </style>
 <style id="landing-small-text">.kw{font-family:var(--body);font-size:1em;font-weight:600}.a11y-panel .a11y-label{font-family:var(--body);font-size:13px;letter-spacing:0;text-transform:none;line-height:1.6}.cm-label,.d-kpi-lbl,.d-chart-lbl,.d-idx-name{font-family:var(--body);letter-spacing:0;text-transform:none;font-size:12px;line-height:1.5}.card-period{font-family:var(--body);letter-spacing:0;font-size:13px}</style>
+<style id="hero-upgrade">
+#hero .hero-wrap>div:first-child{max-width:1000px}
+#hero .hero-title{font-size:clamp(40px,4.6vw,64px);line-height:1.1;letter-spacing:-.02em;font-weight:800;margin-bottom:26px;text-wrap:balance}
+html[lang="en"] #hero .hero-title{letter-spacing:-.02em;line-height:1.08}
+#hero .hl-accent{background:linear-gradient(100deg,#b69bff 0%,#7aa2ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+#hero .hero-sub{font-size:clamp(17px,1.5vw,21px);line-height:1.75;color:var(--text2);max-width:56ch;margin:0 auto 34px}
+#hero .hero-actions{gap:14px;margin-bottom:22px}
+#hero .btn-hero-primary,#hero .btn-hero-ghost{min-height:56px;padding:0 34px;font-size:17px;font-weight:700;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;gap:10px}
+#hero .btn-hero-primary{background:linear-gradient(135deg,#6a4cf0,#3a66e8);color:#fff;box-shadow:0 10px 32px rgba(79,100,255,.35),inset 0 1px 0 rgba(255,255,255,.18)}
+#hero .btn-hero-ghost{background:rgba(255,255,255,.04);border:1px solid rgba(180,200,255,.28);color:var(--text)}
+@media (hover:hover) and (pointer:fine){#hero .btn-hero-primary:hover{background:linear-gradient(135deg,#5a3df0,#3862e4);box-shadow:0 14px 38px rgba(79,100,255,.45),inset 0 1px 0 rgba(255,255,255,.22)}#hero .btn-hero-ghost:hover{background:rgba(255,255,255,.09);border-color:rgba(200,215,255,.5)}}
+#hero .hero-security{display:inline-flex;align-items:center;gap:8px;margin:0;padding:8px 16px;font-size:14px;line-height:1.5;color:var(--text2);border:1px solid rgba(145,180,255,.18);border-radius:999px;background:rgba(10,20,46,.5)}
+#hero .hero-security svg{flex:none;color:#8fb0ff}
+@media(max-width:600px){#hero .hero-actions{flex-direction:column;align-items:stretch}#hero .hero-security{border-radius:14px;text-align:start}}
+</style>
+
 <style id="demo-preview-upgrade">
 .demo-preview-tools{display:flex;gap:20px;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);background:rgba(79,131,255,.04)}
 .demo-preview-tools p{font:400 16px/1.7 var(--body);color:var(--text2);margin:0}
@@ -1433,7 +1449,7 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
         </a>
         <a href="#how" class="btn-hero-ghost">איך זה עובד</a>
       </div>
-      <p class="hero-trust-line">הרשמה חינם · ללא כרטיס אשראי</p><p class="hero-security">חיבור לברוקר לקריאה בלבד. <a href="broker-guide.html">איך החיבור עובד?</a></p>
+      <p class="hero-security"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>חיבור לברוקר לקריאה בלבד. <a href="broker-guide.html">איך החיבור עובד?</a></p>
     </div>
 <figure class="hero-product"><video id="hero-video" muted loop playsinline preload="none" width="1280" height="720" poster="assets/demo/hero-poster.webp" aria-label="סרטון קצר של יומן המסחר: סטטיסטיקה, ייבוא עסקאות, רווח והפסד, דופק השוק וסורק המניות"><source src="assets/demo/hero-clip.webm" type="video/webm"><source src="assets/demo/hero-clip.mp4" type="video/mp4"></video><figcaption>כך נראה היומן שלך</figcaption></figure>
   </div>
