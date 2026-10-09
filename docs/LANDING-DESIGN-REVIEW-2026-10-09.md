@@ -13,4 +13,4 @@ Read-only review of the current Hebrew landing page at desktop 1440 and tablet 8
 
 Typography is already coherent; preserve the Hebrew font family and focus on comfortable line lengths and readable secondary text rather than another font change. Local screenshots may show missing SVG icons because the audit helper serves SVG as generic binary; that artifact is not reported as a live defect. The testimonial image is lazy-loaded, so full-page capture alone is insufficient to judge its loaded tablet state.
 
-Evidence: `LANDING-REVIEW-2026-10-09.json`, `landing-review-2026-10-09-output.json`, and `landing-2026-10-09-{1440,820}.png` in the session visualization directory. Recommendations are editorial/design judgments, not measured conversion gains. No live-account or real-device checks were performed.
+Evidence: `LANDING-REVIEW-2026-10-09.json` and `landing-2026-10-09-{1440,820}.png` in the session visualization directory. Recommendations are editorial/design judgments, not measured conversion gains. No live-account or real-device checks were performed.
