@@ -84,7 +84,7 @@ jobs:
           cp supabase/functions/_shared/flex-import.mjs _site/supabase/functions/_shared/
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: '_site'
 
