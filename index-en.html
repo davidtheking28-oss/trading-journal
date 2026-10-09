@@ -1203,7 +1203,7 @@ body::before{position:absolute;inset:0;background:
  radial-gradient(820px 600px at 100% 38%,rgba(79,127,255,.10),transparent 70%),
  radial-gradient(760px 560px at 0% 64%,rgba(155,114,255,.09),transparent 70%),
  radial-gradient(900px 600px at 50% 97%,rgba(79,127,255,.12),transparent 70%)}
-body::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(rgba(145,180,255,.08) 1px,transparent 1.3px),linear-gradient(rgba(145,180,255,.045) 1px,transparent 1px);background-size:28px 28px,100% 140px;-webkit-mask-image:linear-gradient(to right,transparent,#000 14%,#000 86%,transparent);mask-image:linear-gradient(to right,transparent,#000 14%,#000 86%,transparent)}
+body::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(rgba(145,180,255,.08) 1px,transparent 1.3px);background-size:28px 28px;-webkit-mask-image:linear-gradient(to right,transparent,#000 14%,#000 86%,transparent);mask-image:linear-gradient(to right,transparent,#000 14%,#000 86%,transparent)}
 #demo::before,#how::before,#features::before,#pricing::before,#cta::before{content:'';position:absolute;z-index:-1;pointer-events:none}
 #demo::before{top:-80px;left:50%;width:min(1000px,100%);height:520px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(79,127,255,.16),transparent)}
 #how::before{top:60px;right:0;width:min(760px,90%);height:520px;background:radial-gradient(closest-side,rgba(155,114,255,.15),transparent)}
@@ -1215,6 +1215,27 @@ body::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;b
 #features::after{top:40px;transform:scaleX(-1)}
 #pricing::after{bottom:0}
 #cta::after{top:-40px;transform:scaleX(-1)}
+/* Bolder rhythm: bigger section titles, a split "how" layout, a banded pricing section and a committed-colour closing block */
+.section-title{font-size:clamp(32px,4.4vw,54px);line-height:1.12;font-weight:800;letter-spacing:-.8px;text-wrap:balance}
+.section-sub{font-size:18px;max-width:60ch}
+@media(min-width:1000px){
+  #how{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);column-gap:72px;align-items:start;padding-inline:max(28px,calc((100% - 1180px)/2));text-align:start}
+  #how>.centered{grid-column:1;text-align:start}
+  #how>.centered .section-sub{margin:0!important}
+  #how>.steps-row{grid-column:1;max-width:none;margin:40px 0 0}
+  #how>.flow-demo{grid-column:2;grid-row:1 / span 2;position:sticky;top:110px;margin:0;max-width:none;align-self:start}
+}
+#pricing{background:linear-gradient(180deg,transparent,rgba(79,127,255,.06) 18%,rgba(79,127,255,.06) 82%,transparent)}
+.price-amount{font-family:var(--display);font-size:clamp(64px,8vw,92px);font-weight:800;letter-spacing:-2px}
+.pricing-card{box-shadow:0 0 0 1px rgba(145,180,255,.2),0 30px 90px rgba(47,95,224,.2)}
+.cta-inner{background:linear-gradient(135deg,#2f5fe0 0%,#5a52e6 58%,#6b50e8 100%);border:0;padding:clamp(44px,7vw,84px) clamp(28px,6vw,72px);box-shadow:0 30px 100px rgba(47,95,224,.38)}
+.cta-inner::before{background:linear-gradient(90deg,transparent,rgba(255,255,255,.55) 40%,rgba(255,255,255,.35) 60%,transparent)}
+.cta-bg{background:radial-gradient(circle,rgba(255,255,255,.16) 0%,transparent 65%)}
+.cta-title{max-width:700px;font-size:clamp(28px,4vw,46px);line-height:1.15;letter-spacing:-.8px;color:#fff;text-wrap:balance}
+.cta-sub{max-width:520px;font-size:18px;color:rgba(255,255,255,.9)}
+.cta-inner .btn-cta-dark{background:#fff;color:#1f3fbf;box-shadow:0 10px 30px rgba(8,16,60,.35)}
+@media (hover:hover) and (pointer:fine){.cta-inner .btn-cta-dark:hover{background:#eef3ff;box-shadow:0 14px 38px rgba(8,16,60,.45)}}
+.cta-inner p[style]{color:rgba(255,255,255,.82)!important}
 .broker-strip{border-top-color:transparent;border-bottom-color:transparent;background:linear-gradient(to bottom,transparent,rgba(7,16,31,.55) 28%,rgba(7,16,31,.55) 72%,transparent)}
 #hero-bg-3d{opacity:.26}
 .btn-hero-primary,.btn-hero-ghost,.nav-cta{transition:transform .2s ease,box-shadow .2s ease,background-color .2s ease}
