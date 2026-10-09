@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="frame" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9b72ff"/><stop offset="1" stop-color="#4f83ff"/></linearGradient>
+    <linearGradient id="wl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#16224a"/><stop offset="1" stop-color="#0b1328"/></linearGradient>
+    <linearGradient id="wr" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#132a5e"/><stop offset="1" stop-color="#0b1328"/></linearGradient>
+  </defs>
+  <polygon points="27.3,58 100,16 100,100 27.3,142" fill="url(#wl)"/>
+  <polygon points="100,16 172.7,58 172.7,142 100,100" fill="url(#wr)"/>
+  <polygon points="27.3,142 100,100 172.7,142 100,184" fill="#0d1a3a"/>
+  <polygon points="58,122 68,127.8 68,145.8 58,140" fill="#9b72ff"/><polygon points="68,127.8 78,122 78,140 68,145.8" fill="#7a52e0"/><polygon points="68,116.2 78,122 68,127.8 58,122" fill="#c4a8ff"/><polygon points="90,101 100,106.8 100,140.8 90,135" fill="#4f83ff"/><polygon points="100,106.8 110,101 110,135 100,140.8" fill="#3463d6"/><polygon points="100,95.2 110,101 100,106.8 90,101" fill="#8fb0ff"/><polygon points="122,76 132,81.8 132,135.8 122,130" fill="#00e676"/><polygon points="132,81.8 142,76 142,130 132,135.8" fill="#00b85c"/><polygon points="132,70.2 142,76 132,81.8 122,76" fill="#7dffb8"/>
+  <polygon points="100,16 172.7,58 172.7,142 100,184 27.3,142 27.3,58" fill="none" stroke="url(#frame)" stroke-width="7" stroke-linejoin="round"/>
+</svg>
