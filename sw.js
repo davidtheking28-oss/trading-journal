@@ -1,4 +1,4 @@
-const CACHE = 'tj-v31';
+const CACHE = 'tj-v32';
 const PRECACHE = [
   './dashboard.html',
   './assets/js/auth.js?v=__APP_VERSION__',
@@ -6,7 +6,7 @@ const PRECACHE = [
   './assets/js/investments.js?v=__APP_VERSION__',
   './assets/js/bootstrap.js?v=__APP_VERSION__',
   './manifest.json',
-  './assets/icon.svg',
+  './assets/icon-room.svg',
   './assets/icon-192.png',
   './assets/icon-512.png',
   './assets/icon-maskable-512.png',
