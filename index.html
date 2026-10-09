@@ -1232,8 +1232,10 @@ body::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;b
 #pricing::after{bottom:0}
 #cta::after{top:-40px;transform:scaleX(-1)}
 /* Bolder rhythm: bigger section titles, a split "how" layout, a banded pricing section and a committed-colour closing block */
-.section-title{font-size:clamp(32px,4.4vw,54px);line-height:1.12;font-weight:800;letter-spacing:-.8px;text-wrap:balance}
-.section-sub{font-size:18px;max-width:60ch}
+main .section-title{font-size:clamp(32px,4vw,50px);line-height:1.14;font-weight:800;letter-spacing:-.8px;text-wrap:balance}
+main .section-sub{font-size:18px;max-width:60ch}
+.hl-accent::after{display:none}
+.feat-card:first-child{justify-content:flex-start}
 @media(min-width:1000px){
   #how{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);column-gap:72px;align-items:start;padding-inline:max(28px,calc((100% - 1180px)/2));text-align:start}
   #how>.centered{grid-column:1;text-align:start}
