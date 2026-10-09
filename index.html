@@ -1253,6 +1253,11 @@ main .section-sub{font-size:18px;max-width:60ch}
 .cta-inner .btn-cta-dark{background:#fff;color:#1f3fbf;box-shadow:0 10px 30px rgba(8,16,60,.35)}
 @media (hover:hover) and (pointer:fine){.cta-inner .btn-cta-dark:hover{background:#eef3ff;box-shadow:0 14px 38px rgba(8,16,60,.45)}}
 .cta-inner p[style]{color:rgba(255,255,255,.95)!important}
+/* Motion: after the entrance a card hovers at 250ms with no delay; the closing block enters with a slight scale */
+.reveal.settled{transition:border-color .25s ease,transform .25s ease}
+#cta .cta-inner.reveal{transform:translateY(24px) scale(.97)}
+#cta .cta-inner.reveal.in{transform:none}
+@media (prefers-reduced-motion:reduce){.reveal.settled{transition:none}#cta .cta-inner.reveal{transform:none}}
 .broker-strip{border-top-color:transparent;border-bottom-color:transparent;background:linear-gradient(to bottom,transparent,rgba(7,16,31,.55) 28%,rgba(7,16,31,.55) 72%,transparent)}
 #hero-bg-3d{opacity:.26}
 .btn-hero-primary,.btn-hero-ghost,.nav-cta{transition:transform .2s ease,box-shadow .2s ease,background-color .2s ease}
@@ -1847,9 +1852,12 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
   const revealObs = new IntersectionObserver(entries => {
     entries.forEach((e, i) => {
       if (e.isIntersecting) {
-        e.target.style.transitionDelay = (i * 60) + 'ms';
-        e.target.classList.add('in');
-        revealObs.unobserve(e.target);
+        const t = e.target;
+        t.style.transitionDelay = (i * 60) + 'ms';
+        t.classList.add('in');
+        revealObs.unobserve(t);
+        // Once the entrance has played, drop its delay and slow curve so hover feedback is immediate
+        setTimeout(() => { t.style.transitionDelay = ''; t.classList.add('settled'); }, 900 + i * 60);
       }
     });
   }, { threshold: 0.08 });
