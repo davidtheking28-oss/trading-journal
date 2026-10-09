@@ -1190,6 +1190,11 @@ html.a11y-underline a { text-decoration: underline !important; }
 .hero-product>a{display:block;border-radius:14px;transition:transform .4s cubic-bezier(.2,.7,.2,1),box-shadow .4s ease;box-shadow:0 0 0 1px rgba(145,180,255,.12)}
 .hero-product img{border-color:rgba(145,180,255,.24)}
 .hero-product>a:focus-visible{outline:3px solid var(--accent);outline-offset:6px}
+.hero-product>a{position:relative}
+.hero-tags{position:absolute;left:0;right:0;bottom:0;transform:translateY(50%);display:flex;justify-content:center;gap:8px;flex-wrap:wrap;pointer-events:none}
+.hero-tags span{font-size:12px;font-weight:700;padding:6px 14px;border-radius:999px;color:#cfe0ff;background:rgba(10,20,46,.94);border:1px solid rgba(145,180,255,.35);box-shadow:0 6px 18px rgba(0,0,0,.35);white-space:nowrap}
+.hero-product figcaption{margin-top:34px!important}
+@media(max-width:480px){.hero-tags span{font-size:11px;padding:5px 10px}}
 .btn-hero-primary,.btn-hero-ghost,.nav-cta{transition:transform .2s ease,box-shadow .2s ease,background-color .2s ease}
 .btn-hero-primary:focus-visible,.btn-hero-ghost:focus-visible{outline:3px solid var(--accent);outline-offset:5px}
 .feat-card{transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}
@@ -1359,7 +1364,7 @@ html[lang="en"] .hero-title{letter-spacing:-.6px;line-height:1.16}
       </div>
       <p class="hero-trust-line">Free signup · No credit card required</p><p class="hero-security">Read-only broker connection. <a href="broker-guide.html">How does it work?</a></p>
     </div>
-<figure class="hero-product"><a href="#demo" aria-label="Explore the product preview"><img src="assets/demo/demo-stats.webp" width="1600" height="900" fetchpriority="high" decoding="async" alt="Trading journal preview with performance metrics and calendar"></a><figcaption>Your journal at a glance · <a href="#demo">Explore the product views</a></figcaption></figure>
+<figure class="hero-product"><a href="#demo" aria-label="Explore the product preview"><img src="assets/demo/demo-stats.webp" width="1600" height="900" fetchpriority="high" decoding="async" alt="Trading journal preview with performance metrics and calendar"><div class="hero-tags" aria-hidden="true"><span>Per-trade statistics</span><span>P&amp;L curve</span><span>Monthly calendar</span></div></a><figcaption>Your journal at a glance · <a href="#demo">Explore the product views</a></figcaption></figure>
   </div>
 </section>
 
