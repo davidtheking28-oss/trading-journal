@@ -8840,6 +8840,13 @@ function ttStopTimer() {
   if (_ttTimer) { clearInterval(_ttTimer); _ttTimer = null; }
 }
 
+function _ttRefreshOnReturn() {
+  if (document.hidden) return;
+  if (document.getElementById('tab-themes')?.classList.contains('active')) ttLoad(true);
+}
+document.addEventListener('visibilitychange', _ttRefreshOnReturn);
+window.addEventListener('pageshow', e => { if (e.persisted) _ttRefreshOnReturn(); });
+
 async function ttLoad(force = false) {
   if (_ttLoading) return;
   if (_ttData && !force) { ttRender(_ttData, _ttIndices); return; }

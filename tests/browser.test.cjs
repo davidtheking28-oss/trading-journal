@@ -334,3 +334,18 @@ test('a holding at its stop is marked in the table and announced once', async t 
   await setPrices('100', '95');
   assert.doesNotMatch(await row.locator('.inv-stop-label').textContent(), /🛑/);
 });
+
+test('Market Pulse refetches the moment the tab becomes visible again (tablet wake-up)', async t => {
+  const page = await open(t); await login(page);
+  let calls = 0;
+  await page.route('**/functions/v1/theme-tracker', route => { calls++; route.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ ts: Date.now(), indices: [], themes: [{ name: 'Tech', ticker: 'XLK', today: calls, w1: 1, m1: 1, m3: 1, ytd: 1 }] }) }); });
+  await page.evaluate(() => switchTab('themes'));
+  await page.waitForFunction(() => document.querySelector('#tt-grid .tt-row'));
+  const first = calls;
+  await page.evaluate(() => { Object.defineProperty(document, 'hidden', { value: true, configurable: true }); document.dispatchEvent(new Event('visibilitychange')); });
+  await page.waitForTimeout(300);
+  assert.equal(calls, first, 'hiding the tab must not fetch');
+  await page.evaluate(() => { Object.defineProperty(document, 'hidden', { value: false, configurable: true }); document.dispatchEvent(new Event('visibilitychange')); });
+  await page.waitForTimeout(600);
+  assert.equal(calls, first + 1, 'returning to the tab must refetch once');
+});
