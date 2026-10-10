@@ -377,6 +377,23 @@ test('closed stock trades automatically display one entry and exit image and ref
   assert.notEqual(await page.locator('#ss-grid .ss-auto-chart img').getAttribute('src'),source);
   await page.evaluate(()=>closeSSModal());await page.locator('#cam-btn-stock-902').click();
   assert.equal(await page.locator('#ss-grid .ss-auto-chart').count(),0,'partial closure has no completed trade chart');
+  await page.evaluate(()=>{
+    closeSSModal();
+    db.crypto=[{...db.stocks[0],id:901,type:'crypto',symbol:'BTCUSDT.P',entryPrice:0.007672,exitPrice:0.007554}];
+    window.__cryptoFeedSymbol='';
+    const original=_fetchPivotBars;
+    _fetchPivotBars=async symbol=>{window.__cryptoFeedSymbol=symbol;return original(symbol);};
+    _tradesScope='all';renderTable('stock');
+  });
+  await page.locator('#cam-btn-crypto-901').click();
+  await page.locator('#ss-grid .ss-auto-chart img').waitFor();
+  assert.equal(await page.evaluate(()=>__cryptoFeedSymbol),'BTC-USD','crypto uses a crypto market symbol rather than a stock ticker');
+  await page.locator('#ss-grid .ss-auto-chart-button').click();
+  await page.locator('#ss-lightbox.open').waitFor();
+  await page.evaluate(()=>{closeLightbox();closeSSModal();db.crypto[0].closedShares=2;});
+  await page.locator('#cam-btn-crypto-901').click();
+  assert.equal(await page.locator('#ss-grid .ss-auto-chart').count(),0,'partial crypto close has no completed chart');
+
 });
 
 test('automatic trade image reports unavailable data and retries without stale account rendering',async t=>{
