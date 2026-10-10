@@ -9383,7 +9383,7 @@ function tradeSnapshotData(tr, bars) {
   const toTime = timestamp => new Date(timestamp*1000).toISOString().slice(0,10);
   // Focus on the trade, with a short context before entry and after exit.
   // Keep the full holding period so both markers remain visible.
-  const selected = clean.filter(b => b.t >= entry - 21*86400 && b.t <= exit + 10*86400);
+  const selected = clean.filter(b => b.t >= entry - (tr.type === 'crypto' ? 28 : 42)*86400 && b.t <= exit + 10*86400);
   if (!selected.length) return null;
   // Date-only trades may fall on a non-session day; the marker attaches to the
   // closest daily bar; stored trade dates remain unchanged.
@@ -9419,14 +9419,14 @@ async function tradeSnapshotImage(tr, bars) {
       width:960,height:320,
       layout:{background:{color:'#101116'},textColor:'#8898b2',fontSize:14,fontFamily:'JetBrains Mono, monospace',attributionLogo:true},
       grid:{vertLines:{color:'rgba(255,255,255,0.035)'},horzLines:{color:'rgba(255,255,255,0.035)'}},
-      rightPriceScale:{borderColor:'rgba(255,255,255,0.06)',scaleMargins:{top:0.12,bottom:0.18}},
+      rightPriceScale:{borderColor:'rgba(255,255,255,0.06)',scaleMargins:{top:0.1,bottom:0.1}},
       timeScale:{borderColor:'rgba(255,255,255,0.06)',rightOffset:0},
       handleScroll:false,handleScale:false
     });
     const series=chart.addBarSeries({upColor:'#ffffff',downColor:'#ffffff',openVisible:true,thinBars:true,priceLineVisible:false,lastValueVisible:false,...(tr.type==='crypto' ? {priceFormat:{type:'price',precision:Math.min(+tr.entryPrice < 1 ? 8 : 2,8),minMove:+tr.entryPrice < 1 ? 0.00000001 : 0.01}} : {})});
     series.setData(data.prices);
     const volume=chart.addHistogramSeries({priceFormat:{type:'volume'},priceScaleId:'',lastValueVisible:false,priceLineVisible:false});
-    volume.priceScale().applyOptions({scaleMargins:{top:0.83,bottom:0}});
+    volume.priceScale().applyOptions({scaleMargins:{top:0.82,bottom:0}});
     volume.setData(data.volume.map(b=>({...b,color:'rgba(255,255,255,0.25)'})));
     series.setMarkers([
       {time:data.entry.time,position:data.short?'aboveBar':'belowBar',color:'#34d399',shape:data.short?'arrowDown':'arrowUp',text:(_lang==='he'?'כניסה ':'Entry ')+String.fromCharCode(36)+data.entry.price.toFixed(data.entry.price < 1 ? 8 : 2)},

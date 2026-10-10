@@ -20,6 +20,6 @@ test('same day and short trade retain independent entry and exit markers',()=>{
 
 test('trade chart focuses on entry and exit while preserving long-trade entry',()=>{
  const history=Array.from({length:270},(_,i)=>({...bars[0],t:Date.parse('2026-01-01T00:00:00Z')/1000+i*86400})).filter(b=>![0,6].includes(new Date(b.t*1000).getUTCDay()));
- const data=chartData(trade,history);assert.ok(data.prices.length>=20);assert.ok(data.prices.length<=30);assert.equal(data.entry.date,trade.entryDate);assert.equal(data.exit.date,trade.closeDate);
+ const data=chartData(trade,history);assert.ok(data.prices.length>=35);assert.ok(data.prices.length<=45);assert.equal(data.entry.date,trade.entryDate);assert.equal(data.exit.date,trade.closeDate);
  const long=chartData({...trade,entryDate:'2026-01-20'},history);assert.ok(long.prices.some(b=>b.time==='2026-01-20'));
 });
