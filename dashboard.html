@@ -855,11 +855,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     font-size: 13px; font-weight: 800; color: var(--accent);
     letter-spacing: 0.5px; margin-left: 16px;
   }
-  #tab-stocks .table-toolbar { justify-content: flex-start; gap: 12px; }
+  #tab-stocks .table-toolbar { justify-content: flex-start; gap: 12px; margin-bottom: 12px; }
   #tab-stocks .table-toolbar > .btn,
   #tab-stocks .trade-secondary-actions > summary { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 10px 16px; border-radius: 12px; }
   #tab-stocks .table-toolbar > .search-input-wrap { margin-inline-start: auto; }
-  #tab-stocks .trade-summary-item { flex: 0 0 152px; min-width: 0; box-sizing: border-box; }
+  #tab-stocks .trade-summary-item { flex: 1 1 0; min-width: 0; box-sizing: border-box; }
   @media (max-width: 768px) {
     #tab-stocks .table-toolbar > .search-input-wrap { margin-inline-start: 0; }
     #tab-stocks .trade-summary-item { flex: 1 1 136px; }
@@ -3967,6 +3967,29 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   @media (hover: hover) and (pointer: fine) { .missed-del-btn:hover { color: var(--red); background: rgba(255,107,138,0.12); } }
   @media (hover: hover) and (pointer: fine) { .missed-del-btn.edit:hover { color: var(--accent); background: rgba(129,140,248,0.1); } }
 
+  /* Overview: readable controls without stretching the chart to calendar height. */
+  #tab-overview .ov-main-grid { align-items: start; }
+  #tab-overview .ov-main-grid > .chart-card { padding: 20px; }
+  #tab-overview .chart-title { font-size: 16px; line-height: 1.5; }
+  #tab-overview #cum-mode-pct, #tab-overview #cum-mode-usd { min-height: 36px; min-width: 40px; font-size: 13px !important; }
+  #tab-overview .kpi-label { font-size: 13px; letter-spacing: 0; line-height: 1.5; }
+  #tab-overview .kpi-sub { font-size: 12px; line-height: 1.6; }
+  #tab-overview .cal-day-hdr { font-size: 12px; letter-spacing: 0; }
+
+  /* Settings: consistent text hierarchy and control spacing. */
+  #tab-ibkr .s-section-header { padding: 18px 20px; gap: 14px; }
+  #tab-ibkr .s-section-title { font-size: 16px; line-height: 1.5; }
+  #tab-ibkr .s-section-sub { font-size: 13px; line-height: 1.6; margin-top: 4px; }
+  #tab-ibkr .s-row { padding: 16px 20px; min-height: 64px; gap: 20px; }
+  #tab-ibkr .s-row-label { font-size: 14px; font-weight: 600; line-height: 1.5; }
+  #tab-ibkr .s-row-desc { font-size: 13px; line-height: 1.6; margin-top: 4px; }
+  #tab-ibkr .s-row-ctrl { gap: 10px; }
+  #tab-ibkr .profile-label { font-size: 13px; color: var(--text2); }
+  #tab-ibkr .profile-field-row { gap: 16px; margin-bottom: 16px; }
+  #tab-ibkr .profile-input { min-height: 44px; font-size: 14px; padding: 10px 12px; }
+  #tab-ibkr .s-expand-inner { padding-inline: 20px; }
+  #tab-ibkr .s-row-ctrl .btn { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; }
+
   /* Statistics and missed opportunities: shared readable hierarchy. */
   #tab-statistics .ov-section { font-size: 14px; letter-spacing: 0; line-height: 1.5; margin-top: 24px; color: var(--text2); }
   #tab-statistics .chart-title { font-size: 15px; line-height: 1.5; }
@@ -3988,6 +4011,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   #tab-missed .missed-reasons { background: var(--card); padding: 18px; }
   #tab-missed .missed-reasons-title { font-size: 14px; margin-bottom: 12px; }
   #tab-missed .missed-reasons-table { font-size: 13px; }
+  #tab-missed .missed-reasons-table thead th { position: static; top: auto; z-index: auto; }
   #tab-missed .missed-reasons-table th, #tab-missed .missed-reasons-table td { padding: 10px 12px; }
 
   /* Investment tab — light mode */
@@ -5933,7 +5957,7 @@ html[data-theme="light"] #app .num-green, html[data-theme="light"] #app .donut-s
           </div>
           <div id="cum-period-comparison" class="period-comparison" role="status" aria-live="polite"></div>
           <div class="chart-skeleton" id="skel-cum" style="height:180px;"></div>
-          <div style="min-height:200px;flex:1;position:relative;width:100%;"><canvas id="chart-cum" style="display:none"></canvas></div>
+          <div style="height:320px;position:relative;width:100%;"><canvas id="chart-cum" style="display:none"></canvas></div>
         </div>
         <div id="ov-calendar" class="ov-cal-panel"></div>
       </div>
