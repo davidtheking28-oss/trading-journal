@@ -56,6 +56,7 @@
       document.getElementById('pw-new')?.focus();
     }
     if (event === 'SIGNED_OUT') {
+      resetTradeSnapshots();
       _teardownRealtimeSync();
       _invResetSession();
       _currentUser = null;

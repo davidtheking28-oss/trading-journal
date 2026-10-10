@@ -1804,7 +1804,7 @@ function _expandedRowHTML(tr, key) {
     ? `<span style="color:var(--text3);font-size:12px;">${t('tile_no_notes')}</span>` : '';
 
   return `<tr class="expanded-row" data-expkey="${key}">
-    <td colspan="${(_compactColsOn() ? 12 : 19) + (key.startsWith('stock-') ? 1 : 0)}">
+    <td colspan="${_compactColsOn() ? 12 : 19}">
       <div class="tr-review">
 
         <!-- Metric tiles -->
@@ -1940,7 +1940,6 @@ function renderTable(type) {
     <col class="col-adv" style="width:100px"><col style="width:90px"><col class="col-adv" style="width:70px">
     <col class="col-adv" style="width:80px"><col style="width:90px"><col style="width:70px">
     <col style="width:60px"><col style="width:110px">
-    ${type === 'stock' ? '<col style="width:150px">' : ''}
   </colgroup><thead><tr>
     <th>#</th>
     ${thSort(type,'entryDate',t('col_entry_date'),sc,sd)}
@@ -1961,7 +1960,6 @@ function renderTable(type) {
     <th class="calc-cell">${thSort(type,'pct','%',sc,sd).replace('<th','<span').replace('</th>','</span>')}</th>
     <th class="calc-cell">${thSort(type,'r','R',sc,sd).replace('<th','<span').replace('</th>','</span>')}</th>
     <th>${t('col_actions')}</th>
-    ${type === 'stock' ? `<th>${_lang === 'he' ? 'גרף העסקה' : 'Trade chart'}</th>` : ''}
   </tr></thead><tbody>`;
 
   // Pre-compute per-year stats when no year filter (for group headers)
@@ -2002,7 +2000,7 @@ function renderTable(type) {
         lastRenderedYear = trYear;
         const yst = stats(yearStatsMap[trYear]);
         const ytc = yst.total >= 0 ? 'var(--green)' : 'var(--red)';
-        h += `<tr class="year-group-row"><td colspan="${(_compactColsOn() ? 12 : 19) + (type === 'stock' ? 1 : 0)}">
+        h += `<tr class="year-group-row"><td colspan="${_compactColsOn() ? 12 : 19}">
           <span class="year-group-label">📅 ${trYear}</span>
           <span class="year-group-stats">${yearStatsMap[trYear].length} ${t('trades')} &nbsp;|&nbsp; P&L: <strong style="color:${ytc}">${fmtUSD(yst.total)}</strong> &nbsp;|&nbsp; Win: <strong>${fmt(yst.wr,1)}%</strong> &nbsp;|&nbsp; ${yst.wins}W / ${yst.losses}L</span>
         </td></tr>`;
@@ -2046,7 +2044,6 @@ function renderTable(type) {
           <button class="btn-camera" id="cam-btn-${key}" title="צילומי מסך" onclick="openSSModal('${key}','${esc(tr.symbol)}')" aria-label="צילומי מסך"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span class="screenshot-badge" id="ss-count-${key}" style="display:none">0</span></button>
         </div>
       </td>
-      ${type === 'stock' ? `<td class="trade-snapshot-cell sensitive" data-snapshot-type="${tr._tt || type}" data-snapshot-id="${esc(String(tr.id))}" onclick="event.stopPropagation()">${tradeSnapshotEligible(tr) && (tr._tt || type) === 'stock' ? (_lang === 'he' ? 'טוען גרף…' : 'Loading chart…') : '—'}</td>` : ''}
     </tr>`;
 
     if (isExp) h += _expandedRowHTML(tr, key);
@@ -2066,7 +2063,6 @@ function renderTable(type) {
     refreshScreenshotCount(key);
   });
 
-  if (type === 'stock') renderTradeSnapshots(wrap, trades);
 
   // Recycle bin hidden — deleted trades are excluded from view
 
@@ -6596,6 +6592,7 @@ const DB_VERSION = 1;
 let mediaDB = null;
 let currentSSKey = '';
 let currentSSSymbol = '';
+let _ssGridRenderSeq = 0;
 
 function initMediaDB() {
   return new Promise((resolve, reject) => {
@@ -6706,6 +6703,8 @@ function fmtBytes(bytes) {
 async function openSSModal(tradeKey, symbol) {
   currentSSKey = tradeKey;
   currentSSSymbol = symbol;
+  const grid = document.getElementById('ss-grid');
+  if (grid) grid.textContent = _lang === 'he' ? 'טוען תמונות…' : 'Loading images…';
   const title = document.getElementById('ss-modal-title');
   if (title) title.textContent = 'צילומי מסך — ' + symbol;
   document.getElementById('ss-modal').classList.add('open');
@@ -6714,9 +6713,11 @@ async function openSSModal(tradeKey, symbol) {
 }
 
 function closeSSModal() {
+  _ssGridRenderSeq++;
   document.getElementById('ss-modal').classList.remove('open');
   document.body.style.overflow = '';
   currentSSKey = '';
+  document.getElementById('ss-grid')?.replaceChildren();
 }
 
 function onSSOverlayClick(e) {
@@ -6726,42 +6727,20 @@ function onSSOverlayClick(e) {
 async function renderSSGrid() {
   const grid = document.getElementById('ss-grid');
   if (!grid) return;
-  const shots = await getScreenshots(currentSSKey);
-  if (!shots.length) {
-    grid.innerHTML = '<div class="ss-empty">📷<br>אין צילומי מסך עדיין</div>';
+  const key = currentSSKey;
+  const userId = _currentUser?.id;
+  const seq = ++_ssGridRenderSeq;
+  const trade = key.startsWith('stock-') ? db.stocks.find(tr => String(tr.id) === key.slice(6) && !tr.deleted) : null;
+  if (!trade || !tradeSnapshotEligible(trade)) {
+    grid.textContent = _lang === 'he' ? 'גרף העסקה יופיע לאחר סגירה מלאה של עסקת מניות.' : 'The trade chart appears after a stock trade is fully closed.';
     return;
   }
-  grid.innerHTML = '';
-  shots.forEach(shot => {
-    const wrap = document.createElement('div');
-    wrap.className = 'ss-thumb-wrap';
-    const img = document.createElement('img');
-    img.src = shot.dataURL;
-    img.alt = 'screenshot';
-    img.onclick = () => openLightbox(shot.dataURL);
-
-    const delBtn = document.createElement('button');
-    delBtn.className = 'ss-thumb-del';
-    delBtn.title = 'מחק';
-    delBtn.textContent = '✕';
-    delBtn.onclick = async (e) => {
-      e.stopPropagation();
-      await deleteScreenshot(shot.key);
-      await renderSSGrid();
-      await refreshScreenshotCount(currentSSKey);
-    };
-
-    const info = document.createElement('div');
-    info.className = 'ss-thumb-info';
-    const bytes = dataURLBytes(shot.dataURL);
-    const date = shot.timestamp ? new Date(shot.timestamp).toLocaleDateString('he-IL') : '';
-    info.textContent = fmtBytes(bytes) + (date ? ' · ' + date : '');
-
-    wrap.appendChild(img);
-    wrap.appendChild(delBtn);
-    wrap.appendChild(info);
-    grid.appendChild(wrap);
-  });
+  grid.replaceChildren();
+  const autoHost = document.createElement('div');
+  autoHost.className = 'ss-auto-chart sensitive';
+  autoHost.textContent = _lang === 'he' ? 'טוען גרף עסקה…' : 'Loading trade chart…';
+  grid.append(autoHost);
+  await renderAutomaticTradeShot(autoHost,trade,key,userId,seq);
 }
 
 // Drag and drop
@@ -9417,7 +9396,7 @@ function tradeSnapshotData(tr, bars) {
   const selected = clean.filter(b => b.t >= Math.min(entry - 30*86400, exit - 180*86400) && b.t <= exit + 14*86400);
   if (!selected.length) return null;
   // Date-only trades may fall on a non-session day; the marker attaches to the
-  // closest daily bar, while its text preserves the original recorded date.
+  // closest daily bar; stored trade dates remain unchanged.
   const nearest = timestamp => selected.reduce((best,b)=>Math.abs(b.t-timestamp)<Math.abs(best.t-timestamp)?b:best,selected[0]);
   if (Math.abs(nearest(entry).t-entry)>3*86400 || Math.abs(nearest(exit).t-exit)>3*86400) return null;
   return {
@@ -9454,20 +9433,15 @@ async function tradeSnapshotImage(tr, bars) {
       timeScale:{borderColor:'rgba(255,255,255,0.06)',rightOffset:0},
       handleScroll:false,handleScale:false
     });
-    const series=chart.addBarSeries({upColor:'#ffffff',downColor:'#ffffff',openVisible:true,thinBars:true,priceLineVisible:false,lastValueVisible:false,
-      autoscaleInfoProvider:original=>{const info=original();if(!info)return null;return {...info,priceRange:{minValue:Math.min(info.priceRange.minValue,data.entry.price,data.exit.price),maxValue:Math.max(info.priceRange.maxValue,data.entry.price,data.exit.price)}};}});
+    const series=chart.addBarSeries({upColor:'#ffffff',downColor:'#ffffff',openVisible:true,thinBars:true,priceLineVisible:false,lastValueVisible:false});
     series.setData(data.prices);
     const volume=chart.addHistogramSeries({priceFormat:{type:'volume'},priceScaleId:'',lastValueVisible:false,priceLineVisible:false});
     volume.priceScale().applyOptions({scaleMargins:{top:0.83,bottom:0}});
     volume.setData(data.volume.map(b=>({...b,color:'rgba(255,255,255,0.25)'})));
-    const entryLabel=_lang==='he'?'כניסה':'Entry', exitLabel=_lang==='he'?'יציאה':'Exit';
     series.setMarkers([
-      {time:data.entry.time,position:data.short?'aboveBar':'belowBar',color:'#78a6ff',shape:data.short?'arrowDown':'arrowUp',text:entryLabel+' $'+data.entry.price.toFixed(2)+' · '+data.entry.date},
-      {time:data.exit.time,position:data.short?'belowBar':'aboveBar',color:'#ffd479',shape:data.short?'arrowUp':'arrowDown',text:exitLabel+' $'+data.exit.price.toFixed(2)+' · '+data.exit.date}
+      {time:data.entry.time,position:data.short?'aboveBar':'belowBar',color:'#78a6ff',shape:data.short?'arrowDown':'arrowUp'},
+      {time:data.exit.time,position:data.short?'belowBar':'aboveBar',color:'#ffd479',shape:data.short?'arrowUp':'arrowDown'}
     ].sort((a,b)=>a.time.localeCompare(b.time)));
-    for (const [point,color,title] of [[data.entry,'#78a6ff',entryLabel],[data.exit,'#ffd479',exitLabel]]) {
-      series.createPriceLine({price:point.price,color,lineWidth:1,lineStyle:LightweightCharts.LineStyle.Dashed,axisLabelVisible:true,title});
-    }
     tradeSnapshotFit(chart,data.prices.length);
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
     const screenshot=chart.takeScreenshot();
@@ -9481,66 +9455,52 @@ async function tradeSnapshotImage(tr, bars) {
   } finally { chart?.remove();box.remove(); }
 }
 
-let _tradeSnapshotObserver = null;
 const _tradeSnapshotImages = new Map();
+let _tradeSnapshotSession = 0;
+function resetTradeSnapshots() {
+  _tradeSnapshotSession++;
+  _tradeSnapshotImages.clear();
+  closeLightbox();
+  closeSSModal();
+}
 function tradeSnapshotFingerprint(tr) {
   return JSON.stringify([tr.id,tr.symbol,tr.entryDate,tr.entryPrice,tr.closeDate,tr.exitPrice,tr.shares,tr.closedShares,tr.t]);
 }
-function renderTradeSnapshots(wrap, trades) {
-  _tradeSnapshotObserver?.disconnect();
-  const userId = _currentUser?.id;
+async function renderAutomaticTradeShot(host,trade,key,userId,seq) {
+  const session = _tradeSnapshotSession;
   const sourceDB = db;
-  const queue = [];
-  let active = 0;
-  const load = async (cell,trade) => {
-    const tr = { ...trade, t: (trade.t || []).map(target => ({ ...target })) };
-    const fingerprint = tradeSnapshotFingerprint(tr);
-    try {
-      let url = _tradeSnapshotImages.get(fingerprint);
-      if (!url) {
-        const image = await tradeSnapshotImage(tr,await _fetchPivotBars(tr.symbol));
-        if (image) {
-          url = image;
-          if (_tradeSnapshotImages.size >= 100) _tradeSnapshotImages.delete(_tradeSnapshotImages.keys().next().value);
-          _tradeSnapshotImages.set(fingerprint,url);
-        }
-      }
-      const latest = sourceDB.stocks.find(item => String(item.id) === String(tr.id));
-      if (!cell.isConnected || _currentUser?.id !== userId || db !== sourceDB || !latest ||
-          !tradeSnapshotEligible(latest) || tradeSnapshotFingerprint(latest) !== fingerprint) return;
-      cell.replaceChildren();
-      if (!url) {
-        const retry = document.createElement('button');
-        retry.className = 'btn btn-secondary btn-sm';
-        retry.textContent = _lang === 'he' ? 'אין נתוני גרף · נסה שוב' : 'Chart unavailable · Retry';
-        retry.onclick = () => { retry.disabled=true; _pivotBarsCache.delete(latest.symbol); queue.push([cell,latest]); pump(); };
-        cell.append(retry);
-        return;
-      }
-      const button = document.createElement('button');
-      button.className = 'trade-snapshot-button';
-      button.setAttribute('aria-label', (_lang === 'he' ? 'הגדל גרף כניסה ויציאה — ' : 'Enlarge entry and exit chart — ') + tr.symbol);
-      const img = document.createElement('img');
-      img.src=url; img.alt=(_lang === 'he' ? 'גרף עם כניסה ויציאה — ' : 'Entry and exit chart — ')+tr.symbol;
-      img.width=140; img.height=62;
-      button.append(img); button.onclick=()=>openLightbox(url); cell.append(button);
-    } catch {
-      if(cell.isConnected && _currentUser?.id === userId && db === sourceDB) cell.textContent = _lang === 'he' ? 'הגרף אינו זמין' : 'Chart unavailable';
-    } finally { active--; pump(); }
+  const tr = {...trade,t:(trade.t || []).map(target=>({...target}))};
+  const fingerprint = tradeSnapshotFingerprint(tr);
+  const cacheKey = userId+'|'+_lang+'|'+fingerprint;
+  const valid = () => {
+    const latest=sourceDB.stocks.find(item=>String(item.id)===String(tr.id));
+    return host.isConnected && currentSSKey===key && _ssGridRenderSeq===seq && session===_tradeSnapshotSession &&
+      _currentUser?.id===userId && db===sourceDB && latest && tradeSnapshotEligible(latest) && tradeSnapshotFingerprint(latest)===fingerprint;
   };
-  const pump = () => {
-    while(active < 3 && queue.length) {
-      const [cell,tr] = queue.shift();
-      if(!cell.isConnected || _currentUser?.id !== userId || db !== sourceDB) continue;
-      active++; void load(cell,tr);
+  try {
+    let url=_tradeSnapshotImages.get(cacheKey);
+    if(!url) {
+      url=await tradeSnapshotImage(tr,await _fetchPivotBars(tr.symbol));
+      if(!valid()) return;
+      if(url) {
+        if(_tradeSnapshotImages.size>=100) _tradeSnapshotImages.delete(_tradeSnapshotImages.keys().next().value);
+        _tradeSnapshotImages.set(cacheKey,url);
+      }
     }
-  };
-  _tradeSnapshotObserver = new IntersectionObserver(entries => {
-    entries.filter(e=>e.isIntersecting).forEach(({target}) => {
-      _tradeSnapshotObserver.unobserve(target);
-      const tr=trades.find(item=>(item._tt || item.type || 'stock') === target.dataset.snapshotType && String(item.id)===target.dataset.snapshotId);
-      if(tr && (tr._tt || tr.type || 'stock') === 'stock' && tradeSnapshotEligible(tr)) queue.push([target,tr]);
-    }); pump();
-  },{rootMargin:'300px'});
-  wrap.querySelectorAll('.trade-snapshot-cell[data-snapshot-type="stock"]').forEach(cell=>_tradeSnapshotObserver.observe(cell));
+    if(!valid()) return;
+    host.replaceChildren();
+    if(!url) {
+      const message=document.createElement('p');message.textContent=_lang==='he'?'נתוני הגרף אינם זמינים':'Chart data unavailable';
+      const retry=document.createElement('button');retry.className='btn btn-secondary btn-sm';retry.textContent=_lang==='he'?'נסה שוב':'Retry';
+      retry.onclick=()=>{if(!valid())return;retry.disabled=true;_pivotBarsCache.delete(tr.symbol);void renderSSGrid();};
+      host.append(message,retry);return;
+    }
+    const button=document.createElement('button');button.className='ss-auto-chart-button';
+    button.setAttribute('aria-label',(_lang==='he'?'הגדל גרף עסקה — ':'Enlarge trade chart — ')+tr.symbol);
+    const img=document.createElement('img');img.src=url;img.alt=(_lang==='he'?'גרף עסקה עם חצי כניסה ויציאה — ':'Trade chart with entry and exit arrows — ')+tr.symbol;
+    button.append(img);button.onclick=()=>{if(valid())openLightbox(url);};host.append(button);
+    applyPrivacy();
+  } catch {
+    if(valid())host.textContent=_lang==='he'?'הגרף אינו זמין':'Chart unavailable';
+  }
 }

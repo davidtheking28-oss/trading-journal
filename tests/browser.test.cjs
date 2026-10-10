@@ -271,7 +271,7 @@ test('desktop tabs render empty and representative data in both themes', async t
         assert.equal(await page.locator('#stocks-wrap').evaluate(el=>el.scrollWidth <= el.clientWidth), true, 'compact table fits desktop width');
         await page.locator('#stocks-wrap .data-row').first().click();
         await page.locator('#stocks-wrap .expanded-row').first().waitFor();
-        assert.equal(await page.locator('#stocks-wrap .expanded-row td').first().getAttribute('colspan'), '13');
+        assert.equal(await page.locator('#stocks-wrap .expanded-row td').first().getAttribute('colspan'), '12');
         await page.locator('#stocks-wrap .data-row').first().click();
         await page.locator('#st-search').fill('MSFT');
         assert.doesNotMatch(await page.locator('#stocks-wrap').innerText(), /NVDA/);
@@ -359,19 +359,24 @@ test('closed stock trades automatically display one entry and exit image and ref
       {id:902,type:'stock',symbol:'MSFT',ls:'L',entryDate:'2026-09-02',closeDate:'2026-09-06',entryPrice:100,exitPrice:110,shares:5,closedShares:2,t:[]}];
     db.crypto=[];switchTab('stocks');renderTable('stock');
   });
-  const cell=page.locator('[data-snapshot-id="901"]');await cell.scrollIntoViewIfNeeded();
-  await cell.locator('img').waitFor();
-  const source=await cell.locator('img').getAttribute('src');
+  assert.equal(await page.locator('.trade-snapshot-cell').count(),0,'no separate chart column');
+  await page.locator('#cam-btn-stock-901').click();
+  await page.locator('#ss-grid .ss-auto-chart img').waitFor();
+  const source=await page.locator('#ss-grid .ss-auto-chart img').getAttribute('src');
   assert.match(source,/^data:image\/png;base64,/);
-  assert.equal(await page.evaluate(async()=>tradeSnapshotData(db.stocks[0],await _fetchPivotBars('AAPL')).exit.price),110);
-  assert.equal(await page.locator('[data-snapshot-id="902"] img').count(),0);
-  await cell.locator('button').click();await page.locator('#ss-lightbox.open').waitFor();
   if(process.env.TRADE_SNAPSHOT_REVIEW) await page.screenshot({path:process.env.TRADE_SNAPSHOT_REVIEW,animations:'disabled'});
+  await page.locator('#ss-grid .ss-auto-chart-button').click();await page.locator('#ss-lightbox.open').waitFor();
   await page.evaluate(()=>closeLightbox());
-  await page.evaluate(()=>{db.stocks[0].exitPrice=112;renderTable('stock');});
-  await cell.scrollIntoViewIfNeeded();await cell.locator('img').waitFor();
-  assert.notEqual(await cell.locator('img').getAttribute('src'),source);
-  assert.equal(await page.evaluate(async()=>tradeSnapshotData(db.stocks[0],await _fetchPivotBars('AAPL')).exit.price),112);
+  await page.evaluate(async source=>{await saveScreenshot('manual-photo',{key:'manual-photo',tradeKey:'stock-901',dataURL:source,timestamp:Date.now(),name:'manual'});await renderSSGrid();},source);
+  assert.equal(await page.locator('#ss-grid .ss-thumb-wrap').count(),0,'modal shows only the automatic chart');
+  assert.equal(await page.evaluate(async()=> (await getScreenshots('stock-901')).length),1,'previous manual attachments remain stored');
+  assert.equal(await page.locator('#ss-drop-zone, #ss-file-input, #ss-modal .ss-upload-btns').count(),0,'manual upload controls are removed');
+  assert.equal(await page.locator('#ss-grid .ss-auto-chart .ss-thumb-del').count(),0,'automatic chart is not deletable as an uploaded screenshot');
+  await page.evaluate(()=>{closeSSModal();db.stocks[0].closeDate='2026-09-10';renderTable('stock');});
+  await page.locator('#cam-btn-stock-901').click();await page.locator('#ss-grid .ss-auto-chart img').waitFor();
+  assert.notEqual(await page.locator('#ss-grid .ss-auto-chart img').getAttribute('src'),source);
+  await page.evaluate(()=>closeSSModal());await page.locator('#cam-btn-stock-902').click();
+  assert.equal(await page.locator('#ss-grid .ss-auto-chart').count(),0,'partial closure has no completed trade chart');
 });
 
 test('automatic trade image reports unavailable data and retries without stale account rendering',async t=>{
@@ -381,7 +386,8 @@ test('automatic trade image reports unavailable data and retries without stale a
     db.stocks=[{id:903,type:'stock',symbol:'AAPL',ls:'L',entryDate:'2026-09-02',closeDate:'2026-09-06',entryPrice:100,exitPrice:110,shares:5,closedShares:5,t:[]}];
     db.crypto=[];switchTab('stocks');renderTable('stock');
   });
-  const cell=page.locator('[data-snapshot-id="903"]');await cell.scrollIntoViewIfNeeded();
+  await page.locator('#cam-btn-stock-903').click();
+  const cell=page.locator('#ss-grid .ss-auto-chart');
   await cell.getByRole('button',{name:/נסה שוב|Retry/}).waitFor();
   await page.evaluate(()=>{
     _fetchPivotBars=()=>new Promise(resolve=>window.__resolveSnapshot=resolve);
@@ -393,4 +399,33 @@ test('automatic trade image reports unavailable data and retries without stale a
     __resolveSnapshot(Array.from({length:10},(_,i)=>({t:Date.parse('2026-09-01T00:00:00Z')/1000+i*86400,o:100,h:115,l:98,c:110})));
   });
   await page.waitForTimeout(150);assert.equal(await cell.locator('img').count(),0);
+});
+
+test('trade-chart API path works for two regular accounts and clears the previous account image on sign-out',async t=>{
+  const page=await open(t);
+  const requests=[];
+  const market=Array.from({length:70},(_,i)=>({t:Date.parse('2026-08-01T00:00:00Z')/1000+i*86400,o:100+i*.1,h:102+i*.1,l:98+i*.1,c:101+i*.1,v:100000+i*100})).filter(b=>![0,6].includes(new Date(b.t*1000).getUTCDay()));
+  await page.route('**/functions/v1/ohlc*',async route=>{
+    requests.push({symbol:new URL(route.request().url()).searchParams.get('symbol'),authorization:route.request().headers().authorization});
+    await route.fulfill({contentType:'application/json',body:JSON.stringify({bars:market})});
+  });
+  const setTrade=async symbol=>{
+    await page.evaluate(symbol=>{
+      db.stocks=[{id:904,type:'stock',symbol,ls:'L',entryDate:'2026-09-02',closeDate:'2026-09-04',entryPrice:100,exitPrice:110,shares:5,closedShares:5,t:[]}];db.crypto=[];
+      switchTab('stocks');renderTable('stock');
+    },symbol);
+    await page.locator('#cam-btn-stock-904').click();await page.locator('#ss-grid .ss-auto-chart img').waitFor();
+    await page.locator('#ss-grid .ss-auto-chart-button').click();await page.locator('#ss-lightbox.open').waitFor();
+    return page.locator('#ss-lightbox-img').getAttribute('src');
+  };
+  await login(page,'a@example.test');assert.equal(await page.evaluate(()=>_currentUser.id),'user-a');
+  const firstImage=await setTrade('AAPL');assert.match(firstImage,/^data:image\/png;base64,/);
+  await page.evaluate(()=>authSignOut());
+  assert.equal(await page.locator('#ss-lightbox').evaluate(el=>el.classList.contains('open')),false,'sign-out must hide the old account chart');
+  assert.equal(await page.locator('#ss-lightbox-img').getAttribute('src'),'','sign-out clears the previous image');
+  assert.equal(await page.locator('#ss-modal').evaluate(el=>el.classList.contains('open')),false,'sign-out closes screenshots too');
+  await login(page,'b@example.test');assert.equal(await page.evaluate(()=>_currentUser.id),'user-b');
+  const secondImage=await setTrade('MSFT');assert.match(secondImage,/^data:image\/png;base64,/);assert.notEqual(secondImage,firstImage);
+  assert.deepEqual(requests.map(r=>r.symbol),['AAPL','MSFT']);assert.ok(requests.every(r=>r.authorization==='Bearer test-token'),'uses the regular authenticated session token');
+  assert.equal(await page.locator('.trade-snapshot-cell img').count(),0);
 });

@@ -381,10 +381,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .expanded-row td { padding: 0 !important; }
   .expanded-inner { padding: 16px 20px; background: rgba(129,140,248,0.03); border-top: 1px solid var(--border2); }
 
-  .trade-snapshot-cell { min-width: 150px; max-width: 190px; white-space: normal; }
-  .trade-snapshot-button { display: block; padding: 0; border: 1px solid var(--border); border-radius: var(--r-sm); overflow: hidden; cursor: pointer; background: var(--card); }
-  .trade-snapshot-button img { display: block; object-fit: contain; }
-  .trade-snapshot-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .ss-auto-chart { grid-column: 1 / -1; }
+  .ss-auto-chart-button { display: block; width: 100%; padding: 0; border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--card); overflow: hidden; cursor: zoom-in; }
+  .ss-auto-chart-button img { display: block; width: 100%; height: auto; }
+  .ss-auto-chart-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   /* Trade review panel */
   .tr-review {
     padding: 20px 22px;
@@ -6822,18 +6822,7 @@ html[data-theme="light"] #app .num-green, html[data-theme="light"] #app .donut-s
     </div>
     <div class="modal-body">
       <div class="ss-grid" id="ss-grid"></div>
-      <!-- Upload area -->
-      <div class="ss-upload-area" id="ss-drop-zone"
-           ondragover="ssDragOver(event)" ondragleave="ssDragLeave(event)" ondrop="ssDrop(event)"
-           onclick="document.getElementById('ss-file-input').click()">
-        <div style="font-size:28px;margin-bottom:8px;">📁</div>
-        גרור קבצי תמונה לכאן או לחץ לבחירת קובץ
-        <input type="file" id="ss-file-input" accept="image/*" multiple style="display:none" onchange="ssFileSelected(event)">
-      </div>
-      <div class="ss-upload-btns">
-        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('ss-file-input').click()">📁 בחר קובץ</button>
-        <button class="btn btn-secondary btn-sm" onclick="ssCaptureScreen()">📷 צלם מסך</button>
-      </div>
+
     </div>
   </div>
 </div>

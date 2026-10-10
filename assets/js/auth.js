@@ -205,6 +205,7 @@ async function authSignOut() {
   if (invHasUnsavedChanges() && !confirm('יש שינויים בהשקעות שטרם נשמרו. לצאת ולבטל אותם?')) return;
   _teardownRealtimeSync();
   _invResetSession();
+  resetTradeSnapshots();
   await _sb.auth.signOut();
   _currentUser = null;
   if (_ovLiveTimer) { clearInterval(_ovLiveTimer); _ovLiveTimer = null; }
@@ -334,7 +335,7 @@ function _logBootTiming(t0) {
 
 async function _onAuthSuccess(user) {
   const _bootT0 = performance.now();
-  if (_currentUser?.id !== user.id) _invResetSession();
+  if (_currentUser?.id !== user.id) { _invResetSession(); resetTradeSnapshots(); }
   _currentUser = user;
   const _displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'ChartRoom';
   _setHeaderGreeting(_firstName(user));
