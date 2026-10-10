@@ -381,6 +381,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   .expanded-row td { padding: 0 !important; }
   .expanded-inner { padding: 16px 20px; background: rgba(129,140,248,0.03); border-top: 1px solid var(--border2); }
 
+  .trade-snapshot-cell { min-width: 150px; max-width: 190px; white-space: normal; }
+  .trade-snapshot-button { display: block; padding: 0; border: 1px solid var(--border); border-radius: var(--r-sm); overflow: hidden; cursor: pointer; background: var(--card); }
+  .trade-snapshot-button img { display: block; object-fit: contain; }
+  .trade-snapshot-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   /* Trade review panel */
   .tr-review {
     padding: 20px 22px;

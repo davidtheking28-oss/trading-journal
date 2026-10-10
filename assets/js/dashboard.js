@@ -1804,7 +1804,7 @@ function _expandedRowHTML(tr, key) {
     ? `<span style="color:var(--text3);font-size:12px;">${t('tile_no_notes')}</span>` : '';
 
   return `<tr class="expanded-row" data-expkey="${key}">
-    <td colspan="${_compactColsOn() ? 12 : 19}">
+    <td colspan="${(_compactColsOn() ? 12 : 19) + (key.startsWith('stock-') ? 1 : 0)}">
       <div class="tr-review">
 
         <!-- Metric tiles -->
@@ -1940,6 +1940,7 @@ function renderTable(type) {
     <col class="col-adv" style="width:100px"><col style="width:90px"><col class="col-adv" style="width:70px">
     <col class="col-adv" style="width:80px"><col style="width:90px"><col style="width:70px">
     <col style="width:60px"><col style="width:110px">
+    ${type === 'stock' ? '<col style="width:150px">' : ''}
   </colgroup><thead><tr>
     <th>#</th>
     ${thSort(type,'entryDate',t('col_entry_date'),sc,sd)}
@@ -1960,6 +1961,7 @@ function renderTable(type) {
     <th class="calc-cell">${thSort(type,'pct','%',sc,sd).replace('<th','<span').replace('</th>','</span>')}</th>
     <th class="calc-cell">${thSort(type,'r','R',sc,sd).replace('<th','<span').replace('</th>','</span>')}</th>
     <th>${t('col_actions')}</th>
+    ${type === 'stock' ? `<th>${_lang === 'he' ? 'גרף העסקה' : 'Trade chart'}</th>` : ''}
   </tr></thead><tbody>`;
 
   // Pre-compute per-year stats when no year filter (for group headers)
@@ -2000,7 +2002,7 @@ function renderTable(type) {
         lastRenderedYear = trYear;
         const yst = stats(yearStatsMap[trYear]);
         const ytc = yst.total >= 0 ? 'var(--green)' : 'var(--red)';
-        h += `<tr class="year-group-row"><td colspan="${_compactColsOn() ? 12 : 19}">
+        h += `<tr class="year-group-row"><td colspan="${(_compactColsOn() ? 12 : 19) + (type === 'stock' ? 1 : 0)}">
           <span class="year-group-label">📅 ${trYear}</span>
           <span class="year-group-stats">${yearStatsMap[trYear].length} ${t('trades')} &nbsp;|&nbsp; P&L: <strong style="color:${ytc}">${fmtUSD(yst.total)}</strong> &nbsp;|&nbsp; Win: <strong>${fmt(yst.wr,1)}%</strong> &nbsp;|&nbsp; ${yst.wins}W / ${yst.losses}L</span>
         </td></tr>`;
@@ -2044,6 +2046,7 @@ function renderTable(type) {
           <button class="btn-camera" id="cam-btn-${key}" title="צילומי מסך" onclick="openSSModal('${key}','${esc(tr.symbol)}')" aria-label="צילומי מסך"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span class="screenshot-badge" id="ss-count-${key}" style="display:none">0</span></button>
         </div>
       </td>
+      ${type === 'stock' ? `<td class="trade-snapshot-cell sensitive" data-snapshot-type="${tr._tt || type}" data-snapshot-id="${esc(String(tr.id))}" onclick="event.stopPropagation()">${tradeSnapshotEligible(tr) && (tr._tt || type) === 'stock' ? (_lang === 'he' ? 'טוען גרף…' : 'Loading chart…') : '—'}</td>` : ''}
     </tr>`;
 
     if (isExp) h += _expandedRowHTML(tr, key);
@@ -2062,6 +2065,8 @@ function renderTable(type) {
     const key = type+'-'+tr.id;
     refreshScreenshotCount(key);
   });
+
+  if (type === 'stock') renderTradeSnapshots(wrap, trades);
 
   // Recycle bin hidden — deleted trades are excluded from view
 
@@ -9390,4 +9395,108 @@ function initTabletTableHints() {
     rows.observe(wrapper, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
     schedule();
   }
+}
+
+// A derived image, rebuilt from the trade and daily market bars; no image upload needed.
+function tradeSnapshotEligible(tr) {
+  return !tr.deleted && tr.type !== 'crypto' && !!tr.symbol && !!tr.entryDate && !!tr.closeDate &&
+    +tr.entryPrice > 0 && +tr.exitPrice > 0 && !isOpenPosition(tr);
+}
+
+function tradeSnapshotSVG(tr, bars) {
+  if (!tradeSnapshotEligible(tr) || !Array.isArray(bars)) return null;
+  const entry = Date.parse(tr.entryDate.slice(0,10) + 'T00:00:00Z') / 1000;
+  const exit = Date.parse(tr.closeDate.slice(0,10) + 'T00:00:00Z') / 1000;
+  const clean = bars.filter(b => Number.isFinite(b.t) && [b.o,b.h,b.l,b.c].every(v => Number.isFinite(v) && v > 0))
+    .sort((a,b) => a.t-b.t);
+  if (!Number.isFinite(entry) || !Number.isFinite(exit) || exit < entry || !clean.length ||
+      clean[0].t > entry + 86400 || clean.at(-1).t < exit - 86400) return null;
+  const selected = clean.filter(b => b.t >= entry - 12*86400 && b.t <= exit + 8*86400);
+  if (!selected.length) return null;
+  const minT = Math.min(entry,selected[0].t)-86400, maxT = Math.max(exit,selected.at(-1).t)+86400;
+  const low = Math.min(+tr.entryPrice,+tr.exitPrice,...selected.map(b=>b.l));
+  const high = Math.max(+tr.entryPrice,+tr.exitPrice,...selected.map(b=>b.h));
+  const pad = Math.max((high-low)*0.14,high*0.015);
+  const x = t => 56 + (t-minT)/(maxT-minT)*608;
+  const y = price => 246 - (price-low+pad)/(high-low+2*pad)*182;
+  const width = Math.max(1,Math.min(7,440/selected.length));
+  const xml = text => String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+  let body = '';
+  for(let i=0;i<4;i++) {
+    const price = low-pad+(high-low+2*pad)*i/3;
+    body += `<path d="M56 ${y(price)}H664" stroke="#253044"/><text x="8" y="${y(price)+4}" fill="#a7b5c9" font-size="10">${price.toFixed(2)}</text>`;
+  }
+  for(const b of selected) {
+    const color = b.c>=b.o?'#27c9a5':'#f0718c';
+    body += `<path d="M${x(b.t)} ${y(b.h)}V${y(b.l)}" stroke="${color}"/><rect x="${x(b.t)-width/2}" y="${Math.min(y(b.o),y(b.c))}" width="${width}" height="${Math.max(1,Math.abs(y(b.o)-y(b.c)))}" fill="${color}"/>`;
+  }
+  for(const [date,price,color,label] of [[entry,+tr.entryPrice,'#78a6ff','Entry'],[exit,+tr.exitPrice,'#ffd479','Exit']]) {
+    body += `<path d="M${x(date)} 64V246" stroke="${color}" stroke-dasharray="3 4" opacity=".5"/><circle cx="${x(date)}" cy="${y(price)}" r="6" fill="${color}" stroke="#0e1726" stroke-width="2"/>`;
+    body += `<text x="${x(date)}" y="${label==='Entry'?280:298}" text-anchor="middle" fill="${color}" font-size="12">${label} $${price.toFixed(2)} · ${new Date(date*1000).toISOString().slice(0,10)}</text>`;
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="720" height="320" viewBox="0 0 720 320"><rect width="720" height="320" rx="14" fill="#0e1726"/><g font-family="Arial,sans-serif"><text x="28" y="32" fill="#e6edf7" font-size="17">${xml(tr.symbol)} · ${xml(tr.ls || 'L')} · Daily candles</text>${body}</g></svg>`;
+}
+
+let _tradeSnapshotObserver = null;
+const _tradeSnapshotImages = new Map();
+function tradeSnapshotFingerprint(tr) {
+  return JSON.stringify([tr.id,tr.symbol,tr.entryDate,tr.entryPrice,tr.closeDate,tr.exitPrice,tr.shares,tr.closedShares,tr.t]);
+}
+function renderTradeSnapshots(wrap, trades) {
+  _tradeSnapshotObserver?.disconnect();
+  const userId = _currentUser?.id;
+  const sourceDB = db;
+  const queue = [];
+  let active = 0;
+  const load = async (cell,trade) => {
+    const tr = { ...trade, t: (trade.t || []).map(target => ({ ...target })) };
+    const fingerprint = tradeSnapshotFingerprint(tr);
+    try {
+      let url = _tradeSnapshotImages.get(fingerprint);
+      if (!url) {
+        const svg = tradeSnapshotSVG(tr,await _fetchPivotBars(tr.symbol));
+        if (svg) {
+          url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+          if (_tradeSnapshotImages.size >= 100) _tradeSnapshotImages.delete(_tradeSnapshotImages.keys().next().value);
+          _tradeSnapshotImages.set(fingerprint,url);
+        }
+      }
+      const latest = sourceDB.stocks.find(item => String(item.id) === String(tr.id));
+      if (!cell.isConnected || _currentUser?.id !== userId || db !== sourceDB || !latest ||
+          !tradeSnapshotEligible(latest) || tradeSnapshotFingerprint(latest) !== fingerprint) return;
+      cell.replaceChildren();
+      if (!url) {
+        const retry = document.createElement('button');
+        retry.className = 'btn btn-secondary btn-sm';
+        retry.textContent = _lang === 'he' ? 'אין נתוני גרף · נסה שוב' : 'Chart unavailable · Retry';
+        retry.onclick = () => { retry.disabled=true; _pivotBarsCache.delete(latest.symbol); queue.push([cell,latest]); pump(); };
+        cell.append(retry);
+        return;
+      }
+      const button = document.createElement('button');
+      button.className = 'trade-snapshot-button';
+      button.setAttribute('aria-label', (_lang === 'he' ? 'הגדל גרף כניסה ויציאה — ' : 'Enlarge entry and exit chart — ') + tr.symbol);
+      const img = document.createElement('img');
+      img.src=url; img.alt=(_lang === 'he' ? 'גרף עם כניסה ויציאה — ' : 'Entry and exit chart — ')+tr.symbol;
+      img.width=140; img.height=62;
+      button.append(img); button.onclick=()=>openLightbox(url); cell.append(button);
+    } catch {
+      if(cell.isConnected && _currentUser?.id === userId && db === sourceDB) cell.textContent = _lang === 'he' ? 'הגרף אינו זמין' : 'Chart unavailable';
+    } finally { active--; pump(); }
+  };
+  const pump = () => {
+    while(active < 3 && queue.length) {
+      const [cell,tr] = queue.shift();
+      if(!cell.isConnected || _currentUser?.id !== userId || db !== sourceDB) continue;
+      active++; void load(cell,tr);
+    }
+  };
+  _tradeSnapshotObserver = new IntersectionObserver(entries => {
+    entries.filter(e=>e.isIntersecting).forEach(({target}) => {
+      _tradeSnapshotObserver.unobserve(target);
+      const tr=trades.find(item=>(item._tt || item.type || 'stock') === target.dataset.snapshotType && String(item.id)===target.dataset.snapshotId);
+      if(tr && (tr._tt || tr.type || 'stock') === 'stock' && tradeSnapshotEligible(tr)) queue.push([target,tr]);
+    }); pump();
+  },{rootMargin:'300px'});
+  wrap.querySelectorAll('.trade-snapshot-cell[data-snapshot-type="stock"]').forEach(cell=>_tradeSnapshotObserver.observe(cell));
 }

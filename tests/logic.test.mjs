@@ -2342,3 +2342,6 @@ describe('invRoomInfo — what is left of a category target, in money, shares an
     assert.equal(r.tranches, null);
   });
 });
+
+// Automatic trade-chart regressions are part of the standard CI logic suite.
+import './trade-snapshot.test.mjs';

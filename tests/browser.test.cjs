@@ -271,7 +271,7 @@ test('desktop tabs render empty and representative data in both themes', async t
         assert.equal(await page.locator('#stocks-wrap').evaluate(el=>el.scrollWidth <= el.clientWidth), true, 'compact table fits desktop width');
         await page.locator('#stocks-wrap .data-row').first().click();
         await page.locator('#stocks-wrap .expanded-row').first().waitFor();
-        assert.equal(await page.locator('#stocks-wrap .expanded-row td').first().getAttribute('colspan'), '12');
+        assert.equal(await page.locator('#stocks-wrap .expanded-row td').first().getAttribute('colspan'), '13');
         await page.locator('#stocks-wrap .data-row').first().click();
         await page.locator('#st-search').fill('MSFT');
         assert.doesNotMatch(await page.locator('#stocks-wrap').innerText(), /NVDA/);
@@ -348,4 +348,47 @@ test('Market Pulse refetches the moment the tab becomes visible again (tablet wa
   await page.evaluate(() => { Object.defineProperty(document, 'hidden', { value: false, configurable: true }); document.dispatchEvent(new Event('visibilitychange')); });
   await page.waitForTimeout(600);
   assert.equal(calls, first + 1, 'returning to the tab must refetch once');
+});
+
+test('closed stock trades automatically display one entry and exit image and refresh after editing', async t => {
+  const page=await open(t);await login(page);
+  await page.evaluate(()=>{
+    window.__snapshotCalls=0;
+    _fetchPivotBars=async()=>{ __snapshotCalls++;return Array.from({length:10},(_,i)=>({t:Date.parse('2026-09-01T00:00:00Z')/1000+i*86400,o:100,h:115,l:98,c:110})); };
+    db.stocks=[{id:901,type:'stock',symbol:'AAPL',ls:'L',entryDate:'2026-09-02',closeDate:'2026-09-06',entryPrice:100,exitPrice:110,shares:5,closedShares:5,t:[]},
+      {id:902,type:'stock',symbol:'MSFT',ls:'L',entryDate:'2026-09-02',closeDate:'2026-09-06',entryPrice:100,exitPrice:110,shares:5,closedShares:2,t:[]}];
+    db.crypto=[];switchTab('stocks');renderTable('stock');
+  });
+  const cell=page.locator('[data-snapshot-id="901"]');await cell.scrollIntoViewIfNeeded();
+  await cell.locator('img').waitFor();
+  const source=decodeURIComponent((await cell.locator('img').getAttribute('src')).split(',').slice(1).join(','));
+  assert.match(source,/Entry \$100.00/);assert.match(source,/Exit \$110.00/);
+  assert.equal(await page.locator('[data-snapshot-id="902"] img').count(),0);
+  await cell.locator('button').click();await page.locator('#ss-lightbox.open').waitFor();
+  if(process.env.TRADE_SNAPSHOT_REVIEW) await page.screenshot({path:process.env.TRADE_SNAPSHOT_REVIEW,animations:'disabled'});
+  await page.evaluate(()=>closeLightbox());
+  await page.evaluate(()=>{db.stocks[0].exitPrice=112;renderTable('stock');});
+  await cell.scrollIntoViewIfNeeded();await cell.locator('img').waitFor();
+  assert.match(decodeURIComponent(await cell.locator('img').getAttribute('src')),/Exit \$112.00/);
+});
+
+test('automatic trade image reports unavailable data and retries without stale account rendering',async t=>{
+  const page=await open(t);await login(page);
+  await page.evaluate(()=>{
+    _fetchPivotBars=async()=>null;
+    db.stocks=[{id:903,type:'stock',symbol:'AAPL',ls:'L',entryDate:'2026-09-02',closeDate:'2026-09-06',entryPrice:100,exitPrice:110,shares:5,closedShares:5,t:[]}];
+    db.crypto=[];switchTab('stocks');renderTable('stock');
+  });
+  const cell=page.locator('[data-snapshot-id="903"]');await cell.scrollIntoViewIfNeeded();
+  await cell.getByRole('button',{name:/נסה שוב|Retry/}).waitFor();
+  await page.evaluate(()=>{
+    _fetchPivotBars=()=>new Promise(resolve=>window.__resolveSnapshot=resolve);
+  });
+  await cell.locator('button').click();
+  await page.waitForFunction(()=>!!window.__resolveSnapshot);
+  await page.evaluate(()=>{
+    _currentUser={id:'different-user'};
+    __resolveSnapshot(Array.from({length:10},(_,i)=>({t:Date.parse('2026-09-01T00:00:00Z')/1000+i*86400,o:100,h:115,l:98,c:110})));
+  });
+  await page.waitForTimeout(150);assert.equal(await cell.locator('img').count(),0);
 });

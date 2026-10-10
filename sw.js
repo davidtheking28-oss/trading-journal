@@ -1,4 +1,4 @@
-const CACHE = 'tj-v33';
+const CACHE = 'tj-v34';
 const PRECACHE = [
   './dashboard.html',
   './assets/js/auth.js?v=__APP_VERSION__',
