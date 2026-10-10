@@ -855,6 +855,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     font-size: 13px; font-weight: 800; color: var(--accent);
     letter-spacing: 0.5px; margin-left: 16px;
   }
+  .trade-summary { display: flex; flex: 1 1 100%; order: 10; flex-wrap: wrap; gap: 10px; align-items: stretch; margin-top: 4px; }
+  .trade-summary-item { display: flex; flex-direction: column; gap: 6px; min-width: 112px; padding: 12px 16px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r-sm); text-align: start; }
+  .trade-summary-label { color: var(--text2); font-size: 12px; font-weight: 500; line-height: 1.5; }
+  .trade-summary-value { align-self: flex-start; color: var(--text); font-size: 19px; font-weight: 700; line-height: 1.3; font-variant-numeric: tabular-nums; }
   .year-group-stats {
     font-size: 12px; color: var(--text2);
   }
@@ -2185,7 +2189,12 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
      SEARCH INPUT
   ══════════════════════════════════════════════ */
   .search-input-wrap { position: relative; display: inline-flex; align-items: center; }
-  .search-input-wrap::before { content: '🔍'; position: absolute; inset-inline-end: 9px; font-size: 12px; pointer-events: none; }
+  .search-input-icon { position: absolute; inset-inline-start: 14px; width: 18px; height: 18px; color: var(--text2); pointer-events: none; transition: color 0.2s; }
+  .search-input-wrap:focus-within .search-input-icon { color: var(--accent); }
+  .search-input-wrap .search-input { width: 260px; max-width: 100%; min-height: 44px; padding: 11px 14px; padding-inline-start: 44px; font-size: 14px; font-weight: 500; border-radius: 12px; }
+  .search-input-wrap .search-input::placeholder { color: var(--text2); font-weight: 400; }
+  .search-input-wrap { max-width: 100%; }
+  @media (prefers-reduced-motion: reduce) { .search-input-wrap .search-input, .search-input-icon { transition: none; } }
   .search-input {
     background: var(--bg);
     border: 1px solid var(--border2);
@@ -5934,8 +5943,9 @@ html[data-theme="light"] #app .num-green, html[data-theme="light"] #app .donut-s
         <button class="btn btn-secondary btn-sm" id="st-archive-btn" onclick="toggleInlineArchive('stock')" data-i18n="archive">📅 Archive</button>
 </div>
         </details>
-        <span id="st-stats" style="color:var(--text2);font-size:12px;flex:1;text-align:center;direction:ltr;"></span>
+        <div id="st-stats" class="trade-summary"></div>
         <div class="search-input-wrap">
+          <svg class="search-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
           <input class="search-input" id="st-search" aria-label="Search symbol" placeholder="Search symbol..."
             data-i18n-ph="search"
             oninput="searchQuery.stock=this.value; renderTable('stock')" autocomplete="off">

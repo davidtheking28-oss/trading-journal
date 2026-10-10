@@ -1906,7 +1906,16 @@ function renderTable(type) {
   const el = document.getElementById(p+'-stats');
   if (el) {
     const totalColor = st.total >= 0 ? 'var(--green)' : 'var(--red)';
-    el.innerHTML = `${trades.length} ${_lang === 'he' ? 'עסקאות' : 'trades'} &nbsp;|&nbsp; ${_lang === 'he' ? 'רווח/הפסד' : 'P&amp;L'}: <strong style="color:${totalColor}">${fmtUSD(st.total)}</strong> &nbsp;|&nbsp; ${_lang === 'he' ? 'הצלחה' : 'Win'}: <strong>${fmt(st.wr,1)}%</strong> &nbsp;|&nbsp; ${st.wins}W / ${st.losses}L`;
+    const summaryItems = [
+      [_lang === 'he' ? 'סה״כ עסקאות' : 'Total trades', String(trades.length)],
+      [_lang === 'he' ? 'רווח / הפסד' : 'Profit / loss', fmtUSD(st.total), totalColor],
+      [_lang === 'he' ? 'שיעור הצלחה' : 'Win rate', fmt(st.wr,1)+'%'],
+      [_lang === 'he' ? 'עסקאות מרוויחות' : 'Winning trades', String(st.wins)],
+      [_lang === 'he' ? 'עסקאות מפסידות' : 'Losing trades', String(st.losses)]
+    ];
+    el.classList.add('trade-summary');
+    el.dir = _lang === 'he' ? 'rtl' : 'ltr';
+    el.innerHTML = summaryItems.map(([label,value,color]) => '<div class="trade-summary-item"><span class="trade-summary-label">'+label+'</span><strong class="trade-summary-value sensitive" dir="ltr"'+(color ? ' style="color:'+color+'"' : '')+'>'+value+'</strong></div>').join('');
   }
 
   // info
@@ -9421,12 +9430,12 @@ async function tradeSnapshotImage(tr, bars) {
   const data = tradeSnapshotData(tr,bars);
   if (!data || !window.LightweightCharts) return null;
   const box = document.createElement('div');
-  box.style.cssText='position:fixed;left:-10000px;top:0;width:960px;height:436px;pointer-events:none;';
+  box.style.cssText='position:fixed;left:-10000px;top:0;width:960px;height:260px;pointer-events:none;';
   box.setAttribute('aria-hidden','true'); document.body.append(box);
   let chart;
   try {
     chart=LightweightCharts.createChart(box,{
-      width:960,height:436,
+      width:960,height:260,
       layout:{background:{color:'#101116'},textColor:'#5b6b85',fontSize:10,fontFamily:'JetBrains Mono, monospace',attributionLogo:true},
       grid:{vertLines:{color:'rgba(255,255,255,0.035)'},horzLines:{color:'rgba(255,255,255,0.035)'}},
       rightPriceScale:{borderColor:'rgba(255,255,255,0.06)',scaleMargins:{top:0.12,bottom:0.18}},
@@ -9439,8 +9448,8 @@ async function tradeSnapshotImage(tr, bars) {
     volume.priceScale().applyOptions({scaleMargins:{top:0.83,bottom:0}});
     volume.setData(data.volume.map(b=>({...b,color:'rgba(255,255,255,0.25)'})));
     series.setMarkers([
-      {time:data.entry.time,position:data.short?'aboveBar':'belowBar',color:'#78a6ff',shape:data.short?'arrowDown':'arrowUp'},
-      {time:data.exit.time,position:data.short?'belowBar':'aboveBar',color:'#ffd479',shape:data.short?'arrowUp':'arrowDown'}
+      {time:data.entry.time,position:data.short?'aboveBar':'belowBar',color:'#34d399',shape:data.short?'arrowDown':'arrowUp',text:(_lang==='he'?'כניסה ':'Entry ')+String.fromCharCode(36)+data.entry.price.toFixed(2)},
+      {time:data.exit.time,position:data.short?'belowBar':'aboveBar',color:'#fb7185',shape:data.short?'arrowUp':'arrowDown',text:(_lang==='he'?'יציאה ':'Exit ')+String.fromCharCode(36)+data.exit.price.toFixed(2)}
     ].sort((a,b)=>a.time.localeCompare(b.time)));
     tradeSnapshotFit(chart,data.prices.length);
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
