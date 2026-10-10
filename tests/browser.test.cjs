@@ -354,22 +354,24 @@ test('closed stock trades automatically display one entry and exit image and ref
   const page=await open(t);await login(page);
   await page.evaluate(()=>{
     window.__snapshotCalls=0;
-    _fetchPivotBars=async()=>{ __snapshotCalls++;return Array.from({length:10},(_,i)=>({t:Date.parse('2026-09-01T00:00:00Z')/1000+i*86400,o:100,h:115,l:98,c:110})); };
+    _fetchPivotBars=async()=>{ __snapshotCalls++;return Array.from({length:70},(_,i)=>{const close=93+i*.23+Math.sin(i*.38)*2.2;return {t:Date.parse('2026-08-01T00:00:00Z')/1000+i*86400,o:close+Math.sin(i)*.6,h:close+1.2,l:close-1.1,c:close,v:200000+Math.round(Math.abs(Math.sin(i*.9))*300000)};}); };
     db.stocks=[{id:901,type:'stock',symbol:'AAPL',ls:'L',entryDate:'2026-09-02',closeDate:'2026-09-06',entryPrice:100,exitPrice:110,shares:5,closedShares:5,t:[]},
       {id:902,type:'stock',symbol:'MSFT',ls:'L',entryDate:'2026-09-02',closeDate:'2026-09-06',entryPrice:100,exitPrice:110,shares:5,closedShares:2,t:[]}];
     db.crypto=[];switchTab('stocks');renderTable('stock');
   });
   const cell=page.locator('[data-snapshot-id="901"]');await cell.scrollIntoViewIfNeeded();
   await cell.locator('img').waitFor();
-  const source=decodeURIComponent((await cell.locator('img').getAttribute('src')).split(',').slice(1).join(','));
-  assert.match(source,/Entry \$100.00/);assert.match(source,/Exit \$110.00/);
+  const source=await cell.locator('img').getAttribute('src');
+  assert.match(source,/^data:image\/png;base64,/);
+  assert.equal(await page.evaluate(async()=>tradeSnapshotData(db.stocks[0],await _fetchPivotBars('AAPL')).exit.price),110);
   assert.equal(await page.locator('[data-snapshot-id="902"] img').count(),0);
   await cell.locator('button').click();await page.locator('#ss-lightbox.open').waitFor();
   if(process.env.TRADE_SNAPSHOT_REVIEW) await page.screenshot({path:process.env.TRADE_SNAPSHOT_REVIEW,animations:'disabled'});
   await page.evaluate(()=>closeLightbox());
   await page.evaluate(()=>{db.stocks[0].exitPrice=112;renderTable('stock');});
   await cell.scrollIntoViewIfNeeded();await cell.locator('img').waitFor();
-  assert.match(decodeURIComponent(await cell.locator('img').getAttribute('src')),/Exit \$112.00/);
+  assert.notEqual(await cell.locator('img').getAttribute('src'),source);
+  assert.equal(await page.evaluate(async()=>tradeSnapshotData(db.stocks[0],await _fetchPivotBars('AAPL')).exit.price),112);
 });
 
 test('automatic trade image reports unavailable data and retries without stale account rendering',async t=>{

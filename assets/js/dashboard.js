@@ -7976,7 +7976,7 @@ function _buildLightCSS() {
     html[data-theme="light"] .cal-week-sum { background:#eef2f8 !important; border-left-color:rgba(14,14,18,0.06) !important; }
     html[data-theme="light"] .cal-date { color:#64748b !important; }
     html[data-theme="light"] .cal-cell.has-trades .cal-date { color:#475569 !important; }
-    html[data-theme="light"] .cal-cell.today .cal-date { color:#0284c7 !important; }
+    html[data-theme="light"] .cal-cell.today .cal-date { color:#0369a1 !important; }
     html[data-theme="light"] .cal-day-pl { border-top-color:rgba(14,14,18,0.07) !important; }
     html[data-theme="light"] .cal-week-count { color:#94a3b8 !important; }
     html[data-theme="light"] .cal-week-empty { color:rgba(14,14,18,0.12) !important; }
@@ -9403,38 +9403,70 @@ function tradeSnapshotEligible(tr) {
     +tr.entryPrice > 0 && +tr.exitPrice > 0 && !isOpenPosition(tr);
 }
 
-function tradeSnapshotSVG(tr, bars) {
+function tradeSnapshotData(tr, bars) {
   if (!tradeSnapshotEligible(tr) || !Array.isArray(bars)) return null;
   const entry = Date.parse(tr.entryDate.slice(0,10) + 'T00:00:00Z') / 1000;
   const exit = Date.parse(tr.closeDate.slice(0,10) + 'T00:00:00Z') / 1000;
-  const clean = bars.filter(b => Number.isFinite(b.t) && [b.o,b.h,b.l,b.c].every(v => Number.isFinite(v) && v > 0))
-    .sort((a,b) => a.t-b.t);
+  const clean = [...new Map(bars.filter(b => Number.isFinite(b.t) && [b.o,b.h,b.l,b.c].every(v => Number.isFinite(v) && v > 0)).map(b=>[Math.floor(b.t/86400),b])).values()].sort((a,b)=>a.t-b.t);
   if (!Number.isFinite(entry) || !Number.isFinite(exit) || exit < entry || !clean.length ||
       clean[0].t > entry + 86400 || clean.at(-1).t < exit - 86400) return null;
-  const selected = clean.filter(b => b.t >= entry - 12*86400 && b.t <= exit + 8*86400);
+  const toTime = timestamp => new Date(timestamp*1000).toISOString().slice(0,10);
+  const selected = clean.filter(b => b.t >= entry - 70*86400 && b.t <= exit + 14*86400);
   if (!selected.length) return null;
-  const minT = Math.min(entry,selected[0].t)-86400, maxT = Math.max(exit,selected.at(-1).t)+86400;
-  const low = Math.min(+tr.entryPrice,+tr.exitPrice,...selected.map(b=>b.l));
-  const high = Math.max(+tr.entryPrice,+tr.exitPrice,...selected.map(b=>b.h));
-  const pad = Math.max((high-low)*0.14,high*0.015);
-  const x = t => 56 + (t-minT)/(maxT-minT)*608;
-  const y = price => 246 - (price-low+pad)/(high-low+2*pad)*182;
-  const width = Math.max(1,Math.min(7,440/selected.length));
-  const xml = text => String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
-  let body = '';
-  for(let i=0;i<4;i++) {
-    const price = low-pad+(high-low+2*pad)*i/3;
-    body += `<path d="M56 ${y(price)}H664" stroke="#253044"/><text x="8" y="${y(price)+4}" fill="#a7b5c9" font-size="10">${price.toFixed(2)}</text>`;
-  }
-  for(const b of selected) {
-    const color = b.c>=b.o?'#27c9a5':'#f0718c';
-    body += `<path d="M${x(b.t)} ${y(b.h)}V${y(b.l)}" stroke="${color}"/><rect x="${x(b.t)-width/2}" y="${Math.min(y(b.o),y(b.c))}" width="${width}" height="${Math.max(1,Math.abs(y(b.o)-y(b.c)))}" fill="${color}"/>`;
-  }
-  for(const [date,price,color,label] of [[entry,+tr.entryPrice,'#78a6ff','Entry'],[exit,+tr.exitPrice,'#ffd479','Exit']]) {
-    body += `<path d="M${x(date)} 64V246" stroke="${color}" stroke-dasharray="3 4" opacity=".5"/><circle cx="${x(date)}" cy="${y(price)}" r="6" fill="${color}" stroke="#0e1726" stroke-width="2"/>`;
-    body += `<text x="${x(date)}" y="${label==='Entry'?280:298}" text-anchor="middle" fill="${color}" font-size="12">${label} $${price.toFixed(2)} · ${new Date(date*1000).toISOString().slice(0,10)}</text>`;
-  }
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="720" height="320" viewBox="0 0 720 320"><rect width="720" height="320" rx="14" fill="#0e1726"/><g font-family="Arial,sans-serif"><text x="28" y="32" fill="#e6edf7" font-size="17">${xml(tr.symbol)} · ${xml(tr.ls || 'L')} · Daily candles</text>${body}</g></svg>`;
+  // Date-only trades may fall on a non-session day; the marker attaches to the
+  // closest daily bar, while its text preserves the original recorded date.
+  const nearest = timestamp => selected.reduce((best,b)=>Math.abs(b.t-timestamp)<Math.abs(best.t-timestamp)?b:best,selected[0]);
+  if (Math.abs(nearest(entry).t-entry)>3*86400 || Math.abs(nearest(exit).t-exit)>3*86400) return null;
+  return {
+    prices:selected.map(b=>({time:toTime(b.t),open:b.o,high:b.h,low:b.l,close:b.c})),
+    volume:selected.map(b=>({time:toTime(b.t),value:Number.isFinite(b.v)&&b.v>0?b.v:0})),
+    entry:{time:toTime(nearest(entry).t),date:tr.entryDate.slice(0,10),price:+tr.entryPrice},
+    exit:{time:toTime(nearest(exit).t),date:tr.closeDate.slice(0,10),price:+tr.exitPrice},
+    short:tr.ls==='S'
+  };
+}
+
+async function tradeSnapshotImage(tr, bars) {
+  const data = tradeSnapshotData(tr,bars);
+  if (!data || !window.LightweightCharts) return null;
+  const box = document.createElement('div');
+  box.style.cssText='position:fixed;left:-10000px;top:0;width:960px;height:480px;pointer-events:none;';
+  box.setAttribute('aria-hidden','true'); document.body.append(box);
+  let chart;
+  try {
+    chart=LightweightCharts.createChart(box,{
+      width:960,height:480,
+      layout:{background:{color:'#101116'},textColor:'#8997ad',fontSize:12,fontFamily:'Arial, sans-serif',attributionLogo:true},
+      grid:{vertLines:{color:'rgba(255,255,255,0.035)'},horzLines:{color:'rgba(255,255,255,0.035)'}},
+      rightPriceScale:{borderColor:'rgba(255,255,255,0.06)',scaleMargins:{top:0.17,bottom:0.25}},
+      timeScale:{borderColor:'rgba(255,255,255,0.06)',rightOffset:3},
+      handleScroll:false,handleScale:false
+    });
+    const series=chart.addBarSeries({upColor:'#ffffff',downColor:'#ffffff',thinBars:true,priceLineVisible:false,lastValueVisible:false,
+      autoscaleInfoProvider:original=>{const info=original();if(!info)return null;return {...info,priceRange:{minValue:Math.min(info.priceRange.minValue,data.entry.price,data.exit.price),maxValue:Math.max(info.priceRange.maxValue,data.entry.price,data.exit.price)}};}});
+    series.setData(data.prices);
+    const volume=chart.addHistogramSeries({priceFormat:{type:'volume'},priceScaleId:'',lastValueVisible:false,priceLineVisible:false});
+    volume.priceScale().applyOptions({scaleMargins:{top:0.83,bottom:0}});
+    volume.setData(data.volume.map(b=>({...b,color:'rgba(255,255,255,0.25)'})));
+    const entryLabel=_lang==='he'?'כניסה':'Entry', exitLabel=_lang==='he'?'יציאה':'Exit';
+    series.setMarkers([
+      {time:data.entry.time,position:data.short?'aboveBar':'belowBar',color:'#78a6ff',shape:data.short?'arrowDown':'arrowUp',text:entryLabel+' $'+data.entry.price.toFixed(2)+' · '+data.entry.date},
+      {time:data.exit.time,position:data.short?'belowBar':'aboveBar',color:'#ffd479',shape:data.short?'arrowUp':'arrowDown',text:exitLabel+' $'+data.exit.price.toFixed(2)+' · '+data.exit.date}
+    ].sort((a,b)=>a.time.localeCompare(b.time)));
+    for (const [point,color,title] of [[data.entry,'#78a6ff',entryLabel],[data.exit,'#ffd479',exitLabel]]) {
+      series.createPriceLine({price:point.price,color,lineWidth:1,lineStyle:LightweightCharts.LineStyle.Dashed,axisLabelVisible:true,title});
+    }
+    chart.timeScale().fitContent();
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    const screenshot=chart.takeScreenshot();
+    const scale=screenshot.width/960;
+    const canvas=document.createElement('canvas');canvas.width=screenshot.width;canvas.height=screenshot.height+38*scale;
+    const ctx=canvas.getContext('2d');ctx.fillStyle='#101116';ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.font=(16*scale)+'px Arial';ctx.fillStyle='#e6edf7';
+    ctx.fillText(tr.symbol+' · '+(_lang==='he'?'גרף עסקה · נרות יומיים':'Trade chart · Daily bars'),20*scale,25*scale);
+    ctx.drawImage(screenshot,0,38*scale);
+    return canvas.toDataURL('image/png');
+  } finally { chart?.remove();box.remove(); }
 }
 
 let _tradeSnapshotObserver = null;
@@ -9454,9 +9486,9 @@ function renderTradeSnapshots(wrap, trades) {
     try {
       let url = _tradeSnapshotImages.get(fingerprint);
       if (!url) {
-        const svg = tradeSnapshotSVG(tr,await _fetchPivotBars(tr.symbol));
-        if (svg) {
-          url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+        const image = await tradeSnapshotImage(tr,await _fetchPivotBars(tr.symbol));
+        if (image) {
+          url = image;
           if (_tradeSnapshotImages.size >= 100) _tradeSnapshotImages.delete(_tradeSnapshotImages.keys().next().value);
           _tradeSnapshotImages.set(fingerprint,url);
         }
