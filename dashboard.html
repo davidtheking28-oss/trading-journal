@@ -3986,10 +3986,10 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   #tab-overview .ov-top-bar .stem-pill-label { font-size: 12px; letter-spacing: 0; }
   #tab-overview .month-filter { min-height: 56px; padding: 12px 20px; gap: 12px; }
   @media (min-width: 1101px) {
-    #tab-overview .ov-top-bar { display: grid !important; grid-template-columns: auto minmax(240px, 1fr) minmax(240px, 1fr) minmax(190px, 1fr); align-items: center; }
+    #tab-overview .ov-top-bar { display: flex !important; flex-wrap: wrap; justify-content: flex-start; align-items: center; }
     #tab-overview .ov-top-bar .ov-bar-divider { display: none; }
-    #tab-overview .ov-top-bar .fg-widget { justify-content: space-between; padding-inline: 20px !important; border-inline-start: 1px solid var(--border) !important; min-width: 0; }
-    #tab-overview .ov-top-bar .stem-badge-stack { justify-self: end; }
+    #tab-overview .ov-top-bar .fg-widget { flex: 0 0 auto; justify-content: flex-start; gap: 16px; width: auto; padding-inline: 16px !important; border-inline-start: 1px solid var(--border) !important; min-width: 0; }
+    #tab-overview .ov-top-bar .stem-badge-stack { margin-inline-start: 0; }
   }
 
   /* Overview: readable controls without stretching the chart to calendar height. */
