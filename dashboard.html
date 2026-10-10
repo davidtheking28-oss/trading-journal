@@ -3977,6 +3977,21 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   #app header .header-actions { gap: 10px; }
   @media (max-width: 1100px) { #app #top-nav .tnav-btn { padding-inline: 10px; font-size: 13px !important; } }
 
+  #tab-overview .ov-top-bar { gap: 16px; padding: 16px 20px; }
+  #tab-overview .ov-top-bar .fg-label { font-size: 12px; letter-spacing: 0; line-height: 1.5; }
+  #tab-overview .ov-top-bar .fg-source { font-size: 11px; font-weight: 500; }
+  #tab-overview .ov-top-bar .fg-info { gap: 6px; }
+  #tab-overview .ov-top-bar .fg-bar-wrap { width: 100px; }
+  #tab-overview .ov-top-bar .stem-badge-stack { gap: 8px; }
+  #tab-overview .ov-top-bar .stem-pill-label { font-size: 12px; letter-spacing: 0; }
+  #tab-overview .month-filter { min-height: 56px; padding: 12px 20px; gap: 12px; }
+  @media (min-width: 1101px) {
+    #tab-overview .ov-top-bar { display: grid !important; grid-template-columns: auto minmax(240px, 1fr) minmax(240px, 1fr) minmax(190px, 1fr); align-items: center; }
+    #tab-overview .ov-top-bar .ov-bar-divider { display: none; }
+    #tab-overview .ov-top-bar .fg-widget { justify-content: space-between; padding-inline: 20px !important; border-inline-start: 1px solid var(--border) !important; min-width: 0; }
+    #tab-overview .ov-top-bar .stem-badge-stack { justify-self: end; }
+  }
+
   /* Overview: readable controls without stretching the chart to calendar height. */
   #tab-overview .ov-main-grid { align-items: start; }
   #tab-overview .ov-main-grid > .chart-card { padding: 20px; }
