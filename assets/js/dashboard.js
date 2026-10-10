@@ -9411,7 +9411,10 @@ function tradeSnapshotData(tr, bars) {
   if (!Number.isFinite(entry) || !Number.isFinite(exit) || exit < entry || !clean.length ||
       clean[0].t > entry + 86400 || clean.at(-1).t < exit - 86400) return null;
   const toTime = timestamp => new Date(timestamp*1000).toISOString().slice(0,10);
-  const selected = clean.filter(b => b.t >= entry - 70*86400 && b.t <= exit + 14*86400);
+  // At the enlarged 960px width, about six months of daily bars gives the
+  // same visual spacing as the screener's three-month 440px chart cards.
+  // Extend farther back when necessary so long-held trades keep their entry.
+  const selected = clean.filter(b => b.t >= Math.min(entry - 30*86400, exit - 180*86400) && b.t <= exit + 14*86400);
   if (!selected.length) return null;
   // Date-only trades may fall on a non-session day; the marker attaches to the
   // closest daily bar, while its text preserves the original recorded date.
@@ -9426,23 +9429,32 @@ function tradeSnapshotData(tr, bars) {
   };
 }
 
+function tradeSnapshotFit(chart, count) {
+  const timeScale=chart.timeScale();timeScale.fitContent();
+  const spacing=timeScale.options().barSpacing;
+  const width=spacing*count;
+  if(count && Number.isFinite(spacing) && width>14) {
+    timeScale.setVisibleLogicalRange({from:0,to:count-1+14*count/(width-14)});
+  }
+}
+
 async function tradeSnapshotImage(tr, bars) {
   const data = tradeSnapshotData(tr,bars);
   if (!data || !window.LightweightCharts) return null;
   const box = document.createElement('div');
-  box.style.cssText='position:fixed;left:-10000px;top:0;width:960px;height:480px;pointer-events:none;';
+  box.style.cssText='position:fixed;left:-10000px;top:0;width:960px;height:436px;pointer-events:none;';
   box.setAttribute('aria-hidden','true'); document.body.append(box);
   let chart;
   try {
     chart=LightweightCharts.createChart(box,{
-      width:960,height:480,
-      layout:{background:{color:'#101116'},textColor:'#8997ad',fontSize:12,fontFamily:'Arial, sans-serif',attributionLogo:true},
+      width:960,height:436,
+      layout:{background:{color:'#101116'},textColor:'#5b6b85',fontSize:10,fontFamily:'JetBrains Mono, monospace',attributionLogo:true},
       grid:{vertLines:{color:'rgba(255,255,255,0.035)'},horzLines:{color:'rgba(255,255,255,0.035)'}},
-      rightPriceScale:{borderColor:'rgba(255,255,255,0.06)',scaleMargins:{top:0.17,bottom:0.25}},
-      timeScale:{borderColor:'rgba(255,255,255,0.06)',rightOffset:3},
+      rightPriceScale:{borderColor:'rgba(255,255,255,0.06)',scaleMargins:{top:0.12,bottom:0.18}},
+      timeScale:{borderColor:'rgba(255,255,255,0.06)',rightOffset:0},
       handleScroll:false,handleScale:false
     });
-    const series=chart.addBarSeries({upColor:'#ffffff',downColor:'#ffffff',thinBars:true,priceLineVisible:false,lastValueVisible:false,
+    const series=chart.addBarSeries({upColor:'#ffffff',downColor:'#ffffff',openVisible:true,thinBars:true,priceLineVisible:false,lastValueVisible:false,
       autoscaleInfoProvider:original=>{const info=original();if(!info)return null;return {...info,priceRange:{minValue:Math.min(info.priceRange.minValue,data.entry.price,data.exit.price),maxValue:Math.max(info.priceRange.maxValue,data.entry.price,data.exit.price)}};}});
     series.setData(data.prices);
     const volume=chart.addHistogramSeries({priceFormat:{type:'volume'},priceScaleId:'',lastValueVisible:false,priceLineVisible:false});
@@ -9456,7 +9468,7 @@ async function tradeSnapshotImage(tr, bars) {
     for (const [point,color,title] of [[data.entry,'#78a6ff',entryLabel],[data.exit,'#ffd479',exitLabel]]) {
       series.createPriceLine({price:point.price,color,lineWidth:1,lineStyle:LightweightCharts.LineStyle.Dashed,axisLabelVisible:true,title});
     }
-    chart.timeScale().fitContent();
+    tradeSnapshotFit(chart,data.prices.length);
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
     const screenshot=chart.takeScreenshot();
     const scale=screenshot.width/960;

@@ -1,4 +1,4 @@
-const CACHE = 'tj-v35';
+const CACHE = 'tj-v36';
 const PRECACHE = [
   './dashboard.html',
   './assets/vendor/lightweight-charts-4.2.0.js?v=__APP_VERSION__',
