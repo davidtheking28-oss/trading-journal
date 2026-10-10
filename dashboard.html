@@ -3967,6 +3967,29 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
   @media (hover: hover) and (pointer: fine) { .missed-del-btn:hover { color: var(--red); background: rgba(255,107,138,0.12); } }
   @media (hover: hover) and (pointer: fine) { .missed-del-btn.edit:hover { color: var(--accent); background: rgba(129,140,248,0.1); } }
 
+  /* Statistics and missed opportunities: shared readable hierarchy. */
+  #tab-statistics .ov-section { font-size: 14px; letter-spacing: 0; line-height: 1.5; margin-top: 24px; color: var(--text2); }
+  #tab-statistics .chart-title { font-size: 15px; line-height: 1.5; }
+  #tab-statistics .chart-card { border-radius: var(--r-lg); padding: 20px; }
+  #tab-statistics #setup-breakdown-wrap,
+  #tab-statistics #hold-breakdown-wrap,
+  #tab-statistics #monthly-tracker-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: auto; }
+  #tab-statistics .comp-stat { padding-block: 12px; gap: 20px; }
+  #tab-statistics .comp-stat-label { font-size: 13px; }
+  #tab-statistics .comp-stat-val { font-size: 15px; }
+  #tab-missed .missed-cards { grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 16px; }
+  #tab-missed .missed-card { padding: 20px; background: var(--card); border-color: var(--border); }
+  #tab-missed .missed-card-sym { font-size: 18px; letter-spacing: 0; }
+  #tab-missed .missed-card-price { font-size: 18px; margin-top: 10px; font-variant-numeric: tabular-nums; }
+  #tab-missed .missed-card-meta { font-size: 13px; line-height: 1.6; margin-top: 6px; }
+  #tab-missed .missed-card-note { font-size: 13px; line-height: 1.7; font-style: normal; padding-top: 12px; margin-top: 12px; }
+  #tab-missed .missed-year-label, #tab-missed .missed-month-label { font-size: 14px; letter-spacing: 0; }
+  #tab-missed .missed-add-form .form-label { font-size: 13px; letter-spacing: 0; color: var(--text2); }
+  #tab-missed .missed-reasons { background: var(--card); padding: 18px; }
+  #tab-missed .missed-reasons-title { font-size: 14px; margin-bottom: 12px; }
+  #tab-missed .missed-reasons-table { font-size: 13px; }
+  #tab-missed .missed-reasons-table th, #tab-missed .missed-reasons-table td { padding: 10px 12px; }
+
   /* Investment tab — light mode */
   html[data-theme="light"] .inv-table-wrap { background: #fff; border-color: #e2e8f0; }
   html[data-theme="light"] .inv-table th { color: #475569; background: #f8fafc; border-bottom-color: #e2e8f0; }
