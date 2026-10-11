@@ -408,7 +408,12 @@ async function invInit() {
   // Keep holdings P&L live: refresh quotes every 60s while on this tab
   // (cleared in switchTab when leaving). No DB write on these ticks.
   if (_invPriceTimer) clearInterval(_invPriceTimer);
-  _invPriceTimer = setInterval(() => invFetchPrices(false), 60000);
+  _invPriceTimer = null;
+  if (document.getElementById('tab-investments')?.classList.contains('active')) {
+    _invPriceTimer = setInterval(() => {
+      if (!document.hidden && document.getElementById('tab-investments')?.classList.contains('active')) invFetchPrices(false);
+    }, 60000);
+  }
 }
 let _invPriceTimer = null;
 
@@ -1045,26 +1050,32 @@ async function invFetchPrices(save = true) {
   });
   if (!symbols.length) return;
 
+  const userId = _currentUser?.id;
+  const gen = _invReloadGen;
   const token = await _getToken();
-  if (!token) return;
-  let updated = 0;
-  await Promise.all(symbols.map(async ({ row, sym }) => {
+  if (!token || _currentUser?.id !== userId || gen !== _invReloadGen) return;
+  const unique = [...new Set(symbols.map(item=>item.sym))];
+  const quotes = {};
+  await Promise.all(Array.from({length:Math.ceil(unique.length/50)},async (_,i)=>{
+    const controller = new AbortController();
+    const timeout = setTimeout(()=>controller.abort(),12000);
     try {
-      const r = await fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=quote&symbol=${encodeURIComponent(sym)}`,
-        { headers: { 'Authorization': `Bearer ${token}` } });
-      const data = await r.json();
-      const price = data.c || data.pc;
-      if (!price) return;
-      // invRenderRows() replaces #inv-tbody wholesale, so a row captured before
-      // the await can be detached by the time the quote lands. Writing to it
-      // updated nothing, then invRecalc()+invAutoSave() persisted the live DOM
-      // with the prices still at 0.
-      if (!row.isConnected) return;
-      const inputs = row.querySelectorAll('input');
-      const priceInput = inputs[4];
-      if (priceInput) { priceInput.value = price; updated++; }
-    } catch {}
+      const r=await fetch(SUPABASE_URL+'/functions/v1/finnhub?path=quote&symbols='+encodeURIComponent(unique.slice(i*50,(i+1)*50).join(',')),
+        {headers:{Authorization:'Bearer '+token},signal:controller.signal});
+      if (r.ok) Object.assign(quotes,await r.json());
+    } catch {} finally {clearTimeout(timeout);}
   }));
+  if (_currentUser?.id !== userId || gen !== _invReloadGen) return;
+  let updated = 0;
+  symbols.forEach(({row,sym})=>{
+    const data=quotes[sym];
+    const price=Number(data?.c || data?.pc);
+    if (!Number.isFinite(price) || price<=0 || !row.isConnected) return;
+    const inputs=row.querySelectorAll('input');
+    if (inputs[0]?.value.trim().toUpperCase() !== sym) return;
+    const priceInput=inputs[4];
+    if (priceInput) {priceInput.value=price;updated++;}
+  });
 
   if (updated > 0) {
     _invPricesUpdatedAt = Date.now();

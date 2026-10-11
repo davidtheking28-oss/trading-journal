@@ -357,7 +357,7 @@ async function _onAuthSuccess(user) {
   }
   document.getElementById('auth-overlay').style.display = 'none';
   _maybeRequireName(user);
-  await Promise.all([loadDB(), loadUserSettings()]);
+  await Promise.all([loadDB(false), loadUserSettings()]);
   _setupRealtimeSync(); // keep every open device in step (computer ⇆ phone)
   loadCryptoSymbolsFromCoinGecko(); // background — don't delay startup or broker sync
 

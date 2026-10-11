@@ -2345,3 +2345,5 @@ describe('invRoomInfo — what is left of a category target, in money, shares an
 
 // Automatic trade-chart regressions are part of the standard CI logic suite.
 import './trade-snapshot.test.mjs';
+
+import './missed-loading.test.mjs';

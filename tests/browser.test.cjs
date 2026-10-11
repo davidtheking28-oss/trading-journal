@@ -76,6 +76,70 @@ async function investments(page) {
   await page.locator('#inv-tbody .inv-sym-chip').first().waitFor();
 }
 
+test('investment quotes batch unique symbols and ignore obsolete portfolio responses', async t => {
+  const page = await open(t);
+  await login(page); await investments(page);
+  await page.evaluate(() => {
+    clearInterval(_invPriceTimer);
+    invRenderRows(['AAA', 'BBB', 'AAA'].map(symbol => ({ symbol, entryShares: 1, entryPrice: 100, currentPrice: 100 })));
+  });
+  const requests = [];
+  await page.route('**/functions/v1/finnhub?**', async route => {
+    requests.push(new URL(route.request().url()).searchParams.get('symbols'));
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ AAA: { c: 120 }, BBB: { c: 140 } }) });
+  });
+  await page.evaluate(() => invFetchPrices(false));
+  assert.deepEqual(requests, ['AAA,BBB']);
+  const prices = () => page.evaluate(() => [...document.querySelectorAll('#inv-tbody tr[data-idx]')].map(row => Number(row.querySelectorAll('input')[4].value)));
+  assert.deepEqual(await prices(), [120, 140, 120]);
+  let release, announce;
+  const requested = new Promise(resolve => { announce = resolve; });
+  await page.route('**/functions/v1/finnhub?**', async route => {
+    await new Promise(resolve => { release = resolve; announce(); });
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ AAA: { c: 999 }, BBB: { c: 999 } }) });
+  });
+  const pending = page.evaluate(() => invFetchPrices(false));
+  await requested;
+  await page.evaluate(() => { _invReloadGen++; });
+  release();
+  await pending;
+  assert.deepEqual(await prices(), [120, 140, 120]);
+});
+
+test('investment refresh avoids hidden pages and inactive tabs', async t => {
+  const page = await open(t);
+  await login(page); await investments(page);
+  const result = await page.evaluate(async () => {
+    clearInterval(_invPriceTimer);
+    const originalInterval = window.setInterval;
+    const originalFetch = invFetchPrices;
+    let tick, calls = 0;
+    window.setInterval = callback => { tick = callback; return 0; };
+    invFetchPrices = () => { calls++; };
+    try {
+      await invInit();
+      calls = 0;
+      Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+      tick();
+      const hiddenCalls = calls;
+      Object.defineProperty(document, 'hidden', { configurable: true, value: false });
+      tick();
+      const visibleCalls = calls;
+      document.getElementById('tab-investments').classList.remove('active');
+      tick();
+      const inactiveCalls = calls;
+      tick = null;
+      await invInit();
+      return { hiddenCalls, visibleCalls, inactiveCalls, inactiveTimer: tick === null };
+    } finally {
+      delete document.hidden;
+      window.setInterval = originalInterval;
+      invFetchPrices = originalFetch;
+    }
+  });
+  assert.deepEqual(result, { hiddenCalls: 0, visibleCalls: 1, inactiveCalls: 1, inactiveTimer: true });
+});
+
 test('login and investment editing render without script-loading errors', async t => {
   const page = await open(t);
   await login(page); await investments(page);
@@ -300,7 +364,10 @@ test('desktop tabs render empty and representative data in both themes', async t
         await toggle.click();
         assert.equal(await page.locator('#stats-secondary-content').isVisible(), false);
         assert.equal(await toggle.getAttribute('aria-expanded'), 'false');
+        await page.evaluate(()=>{window.__monthlyBuilds=0;const original=renderMonthlyTracker;renderMonthlyTracker=(...args)=>{__monthlyBuilds++;return original(...args);};renderStatistics();});
+        assert.equal(await page.evaluate(()=>__monthlyBuilds),0,'hidden statistics do not build secondary tables');
         await toggle.click();
+        assert.equal(await page.evaluate(()=>__monthlyBuilds),1,'opening builds current secondary tables');
         assert.equal(await page.locator('#stats-secondary-content').isVisible(), true);
 
         assert.match(await page.locator('#donut-legend-win').innerText(), /33\.3%/);
@@ -445,4 +512,17 @@ test('trade-chart API path works for two regular accounts and clears the previou
   const secondImage=await setTrade('MSFT');assert.match(secondImage,/^data:image\/png;base64,/);assert.notEqual(secondImage,firstImage);
   assert.deepEqual(requests.map(r=>r.symbol),['AAPL','MSFT']);assert.ok(requests.every(r=>r.authorization==='Bearer test-token'),'uses the regular authenticated session token');
   assert.equal(await page.locator('.trade-snapshot-cell img').count(),0);
+});
+
+test('large trade journals paginate rows while keeping full summaries and search',async t=>{
+ const page=await open(t);await login(page);
+ await page.evaluate(()=>{const date=new Date().toISOString().slice(0,10);db.stocks=Array.from({length:250},(_,i)=>({id:50000+i,type:'stock',symbol:i===249?'NVDA':'AAPL',entryDate:date,closeDate:date,entryPrice:100,exitPrice:105,shares:10,closedShares:10,commission:0,ls:'L',t:[]}));switchTab('stocks');});
+ assert.equal(await page.locator('#stocks-wrap tr.data-row').count(),100);
+ assert.match(await page.locator('#st-stats').innerText(),/250/);
+ await page.evaluate(()=>changeTradePage('stock',2));
+ assert.equal(await page.locator('#stocks-wrap tr.data-row').count(),50);
+ await page.locator('#st-search').fill('NVDA');
+ assert.equal(await page.locator('#stocks-wrap tr.data-row').count(),1);
+ assert.equal(await page.locator('#stocks-wrap .trade-pagination').count(),0);
+ assert.match(await page.locator('#stocks-wrap').innerText(),/NVDA/);
 });

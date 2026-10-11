@@ -180,7 +180,7 @@ function _tradeToRow(trade) {
 // is set, and it is cleared whenever a load fails or a user signs out.
 let _dbLoaded = false;
 
-async function loadDB() {
+async function loadDB(render = true) {
   if (!_currentUser) { db = JSON.parse(JSON.stringify(SEED)); _dbLoaded = false; return; }
   const { data, error } = await _sb.from('trades').select('*')
     .eq('user_id', _currentUser.id)
@@ -200,7 +200,7 @@ async function loadDB() {
   );
   await _dedupeTrades(); // always keep the journal free of duplicates
   _dbLoaded = true;
-  initFilters(); renderOverview(); renderTable('stock');
+  if (render) { initFilters(); renderOverview(); renderTable('stock'); }
 }
 
 // ── Live cross-device sync (Supabase Realtime) ───────────────────────────
@@ -1870,6 +1870,12 @@ function _symLogoUrl(tr, type) {
   return `https://images.financialmodelingprep.com/symbol/${encodeURIComponent(_cryptoBaseSymbol(tr.symbol))}USD.png`;
 }
 
+const _tradePages = { stock: {page:0,key:''}, crypto:{page:0,key:''} };
+function changeTradePage(type, delta) {
+  _tradePages[type].page = Math.max(0, _tradePages[type].page + delta);
+  renderTable(type);
+  document.getElementById(type==='stock'?'stocks-wrap':'crypto-wrap')?.scrollTo({top:0});
+}
 function renderTable(type) {
   const p = type==='stock' ? 'st' : 'cr';
   const wrap = document.getElementById(type==='stock' ? 'stocks-wrap' : 'crypto-wrap');
@@ -2001,7 +2007,13 @@ function renderTable(type) {
       });
   });
 
-  trades.forEach(tr => {
+  const pageState = _tradePages[type];
+  const pageKey = JSON.stringify([_currentUser?.id,month,year,searchQuery[type],sc,sd,_tradesScope,trades.map(tr=>(tr._tt||type)+'-'+tr.id)]);
+  if (pageState.key !== pageKey) { pageState.key=pageKey; pageState.page=0; }
+  const pageCount = Math.ceil(trades.length/100);
+  pageState.page = Math.min(pageState.page,Math.max(0,pageCount-1));
+  const visibleTrades = trades.slice(pageState.page*100,(pageState.page+1)*100);
+  visibleTrades.forEach(tr => {
     // Year group header when no year filter is active
     if (!year) {
       const trYear = tr.entryDate ? tr.entryDate.slice(0,4) : '—';
@@ -2060,19 +2072,17 @@ function renderTable(type) {
   });
 
   h += '</tbody></table>';
+  if (pageCount > 1) h += '<div class="trade-pagination"><button class="btn btn-secondary btn-sm" onclick="changeTradePage(\''+type+'\',-1)" '+(pageState.page===0?'disabled':'')+'>'+(_lang==='he'?'הקודם':'Previous')+'</button><span role="status">'+(_lang==='he'?'עמוד ':'Page ')+(pageState.page+1)+' / '+pageCount+' · '+(pageState.page*100+1)+'–'+Math.min((pageState.page+1)*100,trades.length)+' / '+trades.length+'</span><button class="btn btn-secondary btn-sm" onclick="changeTradePage(\''+type+'\',1)" '+(pageState.page===pageCount-1?'disabled':'')+'>'+(_lang==='he'?'הבא':'Next')+'</button></div>';
+
   _prevTradeIds[type] = _fullIds;
   wrap.innerHTML = h;
   wrap.classList.toggle('compact-cols', _compactColsOn());
   wrap.querySelectorAll('tr.data-row').forEach((row, i) => {
+    if (i >= 40) return;
     row.style.setProperty('--i', Math.min(i, 14));
     row.classList.add('animate-in');
   });
-  // Load screenshot counts for each trade row
-  trades.forEach(tr => {
-    const key = (tr._tt || type)+'-'+tr.id;
-    refreshScreenshotCount(key);
-  });
-
+  // Automatic trade charts load on camera click; no attachment-count reads per row.
 
   // Recycle bin hidden — deleted trades are excluded from view
 
@@ -4365,11 +4375,14 @@ function renderStatistics() {
   renderDonut(st, adv, trades);
   renderDrawdownChart(trades);
   renderRHistogram(trades);
-  renderMonthlyTracker(trades);
-  renderSetupBreakdown(trades);
-  renderHoldBreakdown(trades);
-  renderPivotDistance(trades);
-  renderComparison(stTrades, crTrades);
+  const secondary = document.getElementById('stats-secondary-content');
+  if (secondary && getComputedStyle(secondary).display !== 'none') {
+    renderMonthlyTracker(trades);
+    renderSetupBreakdown(trades);
+    renderHoldBreakdown(trades);
+    renderPivotDistance(trades);
+    renderComparison(stTrades, crTrades);
+  }
   applyPrivacy();
 }
 
@@ -8369,14 +8382,21 @@ function missedAutoSector() {
 let _missedList = [];
 let _missedLoaded = false;
 
+let _missedLoadPending = null;
 async function missedLoad() {
-  if (!_currentUser) return [];
-  const { data, error } = await _sb.from('missed_opportunities')
-    .select('*')
-    .eq('user_id', _currentUser.id)
-    .order('date', { ascending: false });
-  if (error) { console.error('[missedLoad]', error); return []; }
-  return (data || []).map(r => ({ id: r.id, sym: r.symbol, date: r.date, price: r.price, sector: r.sector || '', note: r.note || '' }));
+  const userId = _currentUser?.id;
+  if (!userId) return [];
+  if (_missedLoadPending?.userId === userId) return _missedLoadPending.promise;
+  const pending = { userId, promise: null };
+  pending.promise = (async () => {
+    const { data, error } = await _sb.from('missed_opportunities')
+      .select('*').eq('user_id', userId).order('date', { ascending: false });
+    if (error) { console.error('[missedLoad]', error); return []; }
+    return (data || []).map(r => ({ id: r.id, sym: r.symbol, date: r.date, price: r.price, sector: r.sector || '', note: r.note || '' }));
+  })();
+  _missedLoadPending = pending;
+  try { return await pending.promise; }
+  finally { if (_missedLoadPending === pending) _missedLoadPending = null; }
 }
 
 async function missedAdd() {
@@ -8631,7 +8651,10 @@ async function _fetchMissedMonthHistory(list) {
   _paintMissedMonthSummaries(list);
 }
 
+let _missedRenderSeq = 0;
 async function missedRender(force = false) {
+  const seq = ++_missedRenderSeq;
+  const user = _currentUser;
   if (_missedLoaded && !force) {
     missedRenderList(_missedList);
     missedFollowUp(_missedList);
@@ -8639,6 +8662,7 @@ async function missedRender(force = false) {
     return;
   }
   const list = await missedLoad();
+  if (seq !== _missedRenderSeq || _currentUser !== user) return;
   _missedList = list;
   _missedLoaded = true;
   missedRenderList(list);
@@ -9407,9 +9431,25 @@ function tradeSnapshotFit(chart, count) {
   }
 }
 
+let _tradeChartLibraryPending = null;
+function loadTradeChartLibrary() {
+  if (window.LightweightCharts) return Promise.resolve();
+  if (_tradeChartLibraryPending) return _tradeChartLibraryPending;
+  _tradeChartLibraryPending = new Promise((resolve,reject)=>{
+    const script=document.createElement('script');
+    const owner=document.querySelector('script[src*="assets/js/dashboard.js"]');
+    const version=owner ? new URL(owner.src).search : '';
+    script.src='./assets/vendor/lightweight-charts-4.2.0.js'+version;
+    script.onload=()=>{if(window.LightweightCharts)resolve();else {script.remove();_tradeChartLibraryPending=null;reject(new Error('Chart library unavailable'));}};
+    script.onerror=()=>{script.remove();_tradeChartLibraryPending=null;reject(new Error('Chart library unavailable'));};
+    document.head.append(script);
+  });
+  return _tradeChartLibraryPending;
+}
 async function tradeSnapshotImage(tr, bars) {
   const data = tradeSnapshotData(tr,bars);
-  if (!data || !window.LightweightCharts) return null;
+  if (!data) return null;
+  await loadTradeChartLibrary();
   const box = document.createElement('div');
   box.style.cssText='position:fixed;left:-10000px;top:0;width:960px;height:320px;pointer-events:none;';
   box.setAttribute('aria-hidden','true'); document.body.append(box);

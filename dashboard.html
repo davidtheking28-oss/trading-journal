@@ -64,6 +64,8 @@
      aren't discovered until ~7000 lines in; warming DNS+TLS here takes that
      handshake off the path entirely. -->
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.3/dist/umd/supabase.min.js" integrity="sha384-iWpUQPQzWsFiosLgsS8o+e6E8y3Gm+EW2m/vAAo7A2H3fuc4KOKEx+5CAord2H2z" crossorigin="anonymous">
+<link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" integrity="sha384-NrKB+u6Ts6AtkIhwPixiKTzgSKNblyhlk0Sohlgar9UHUBzai/sgnNNWWd291xqt" crossorigin="anonymous">
 <link rel="preconnect" href="https://fnklrqxwyeibfptaxewf.supabase.co" crossorigin>
 <style>
 @font-face{font-family:'Heebo';font-style:normal;font-weight:400 900;font-display:swap;src:url('assets/fonts/heebo-hebrew.woff2') format('woff2');unicode-range:U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;}
@@ -867,6 +869,8 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     #tab-stocks .table-toolbar > .search-input-wrap { margin-inline-start: 0; }
     #tab-stocks .trade-summary-item { flex: 1 1 136px; }
   }
+  .trade-pagination { display: flex; justify-content: center; align-items: center; gap: 16px; padding: 14px; color: var(--text2); font-size: 13px; }
+  .trade-pagination button { min-height: 40px; }
   .trade-summary { display: flex; flex: 1 1 100%; order: 10; flex-wrap: wrap; gap: 10px; align-items: stretch; margin-top: 4px; }
   .trade-summary-item { display: flex; flex-direction: column; gap: 6px; min-width: 112px; padding: 12px 16px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r-sm); text-align: start; }
   .trade-summary-label { color: var(--text2); font-size: 12px; font-weight: 500; line-height: 1.5; }
@@ -7701,7 +7705,6 @@ html[data-theme="light"] #app .num-green, html[data-theme="light"] #app .donut-s
   window.flexParseXML = flexParseXML;
   window.FlexImport = { _flexImportInner };
 </script>
-<script defer src="./assets/vendor/lightweight-charts-4.2.0.js?v=__APP_VERSION__"></script>
 <script defer src="./assets/js/auth.js?v=__APP_VERSION__"></script>
 <script defer src="./assets/js/dashboard.js?v=__APP_VERSION__"></script>
 <script defer src="./assets/js/investments.js?v=__APP_VERSION__"></script>

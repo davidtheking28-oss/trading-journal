@@ -1,0 +1,15 @@
+# Tab performance review — 2026-10-11
+
+Local Chromium measurement with mocked authentication/API boundaries: 500 stocks, 50 crypto trades, 100 missed opportunities. Three visits per tab; measured synchronous switchTab work and two animation frames. This is not end-to-end network latency. Screener timings cover only the host iframe, not the separate screener application.
+
+Stock-table render/paint times before: 178/506, 337/654, 336/627 ms. After: 120/349, 299/518, 273/539 ms. Median paint time was 627 -> 518 ms in these runs (about 17%); small sample, hardware and background work affect results.
+
+Removed per-row manual screenshot count reads because the camera modal now shows only the generated chart; stored attachments remain intact. Limited entry animation to the first 40 rows. Initial login skips early duplicate overview/table rendering. Concurrent missed-opportunity reads share an account-scoped request and obsolete render completions are ignored.
+
+Other tabs were measured; latest values are in TAB-PERFORMANCE-2026-10-11.json. Remaining measurements: real upstream/cache latency and full embedded screener measurement. Chart CDN dependencies are mocked in tests, so chart drawing performance is not established by this benchmark.
+
+Follow-up: stock/crypto table displays 100 rows per page, while summaries and search use all filtered trades. A separate 500-trade local run measured 45 ms synchronous render and 109 ms to two animation frames (100 DOM rows); this is a single sample, not a guaranteed live speedup. Lightweight Charts is now loaded only when a trade image needs it, sharing one pending script request and preserving the deployment version and service-worker precache. Supabase and Chart.js are preloaded with matching SRI/crossorigin attributes. Large core-script splitting remains deferred because existing shared globals/startup order require a separate architectural change; authenticated upstream latency remains unmeasured without a test account.
+
+Investment quotes now request unique symbols in batches of up to 50, using the existing Finnhub batch endpoint instead of one HTTP request per holding. Requests time out after 12 seconds; obsolete account/portfolio generations and replaced rows cannot apply returned prices. Browser regression verifies duplicate-symbol batching, returned prices and rejection of delayed obsolete responses. The full existing browser suite passed (19 tests), the new focused quote test passed, and all 236 logic tests passed. These changes are local and have not been deployed.
+
+Follow-up validation: the complete browser/accessibility/contrast run passed 20 tests. A subsequently added focused browser regression passed for investment refresh visibility: hidden pages and inactive tabs skip periodic requests, and an initialization finishing with the investments tab inactive does not install its timer. All 236 logic tests passed again. Further opportunities require separate measurement or architectural work: lazy-loading the large shared dashboard script by feature and measuring authenticated screener/API latency. No live-account measurements or deployment were performed.

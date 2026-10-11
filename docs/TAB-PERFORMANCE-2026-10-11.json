@@ -1,0 +1,141 @@
+{
+  "scope": "Local Chromium; 500 stock trades, 50 crypto trades, 100 missed opportunities; mocked data/API boundaries. Screener measures host iframe only; no real upstream latency or physical device measurement.",
+  "measurements": [
+    {
+      "tab": "overview",
+      "runs": [
+        {
+          "renderMs": 20,
+          "paintMs": 23
+        },
+        {
+          "renderMs": 15,
+          "paintMs": 29
+        },
+        {
+          "renderMs": 7,
+          "paintMs": 21
+        }
+      ]
+    },
+    {
+      "tab": "stocks",
+      "runs": [
+        {
+          "renderMs": 120,
+          "paintMs": 349
+        },
+        {
+          "renderMs": 299,
+          "paintMs": 518
+        },
+        {
+          "renderMs": 273,
+          "paintMs": 539
+        }
+      ]
+    },
+    {
+      "tab": "statistics",
+      "runs": [
+        {
+          "renderMs": 53,
+          "paintMs": 102
+        },
+        {
+          "renderMs": 38,
+          "paintMs": 53
+        },
+        {
+          "renderMs": 40,
+          "paintMs": 56
+        }
+      ]
+    },
+    {
+      "tab": "themes",
+      "runs": [
+        {
+          "renderMs": 4,
+          "paintMs": 34
+        },
+        {
+          "renderMs": 3,
+          "paintMs": 25
+        },
+        {
+          "renderMs": 4,
+          "paintMs": 20
+        }
+      ]
+    },
+    {
+      "tab": "missed",
+      "runs": [
+        {
+          "renderMs": 14,
+          "paintMs": 39
+        },
+        {
+          "renderMs": 39,
+          "paintMs": 72
+        },
+        {
+          "renderMs": 40,
+          "paintMs": 68
+        }
+      ]
+    },
+    {
+      "tab": "ibkr",
+      "runs": [
+        {
+          "renderMs": 8,
+          "paintMs": 14
+        },
+        {
+          "renderMs": 4,
+          "paintMs": 18
+        },
+        {
+          "renderMs": 3,
+          "paintMs": 27
+        }
+      ]
+    },
+    {
+      "tab": "investments",
+      "runs": [
+        {
+          "renderMs": 9,
+          "paintMs": 41
+        },
+        {
+          "renderMs": 11,
+          "paintMs": 22
+        },
+        {
+          "renderMs": 12,
+          "paintMs": 22
+        }
+      ]
+    },
+    {
+      "tab": "screener",
+      "runs": [
+        {
+          "renderMs": 5,
+          "paintMs": 23
+        },
+        {
+          "renderMs": 4,
+          "paintMs": 24
+        },
+        {
+          "renderMs": 5,
+          "paintMs": 18
+        }
+      ]
+    }
+  ]
+}
