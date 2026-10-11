@@ -1,0 +1,98 @@
+{
+  "viewport": "820x1180",
+  "syntheticTrades": 200,
+  "chartLibrary": "mocked",
+  "network": "mocked",
+  "samples": [
+    {
+      "tab": "overview",
+      "round": 0,
+      "syncMs": 39.7,
+      "throughTwoFramesMs": 46.9
+    },
+    {
+      "tab": "stocks",
+      "round": 0,
+      "syncMs": 367.9,
+      "throughTwoFramesMs": 903.3
+    },
+    {
+      "tab": "statistics",
+      "round": 0,
+      "syncMs": 112.2,
+      "throughTwoFramesMs": 211.2
+    },
+    {
+      "tab": "overview",
+      "round": 1,
+      "syncMs": 22.2,
+      "throughTwoFramesMs": 46.6
+    },
+    {
+      "tab": "stocks",
+      "round": 1,
+      "syncMs": 379.7,
+      "throughTwoFramesMs": 865.7
+    },
+    {
+      "tab": "statistics",
+      "round": 1,
+      "syncMs": 67.5,
+      "throughTwoFramesMs": 103.7
+    },
+    {
+      "tab": "overview",
+      "round": 2,
+      "syncMs": 38.4,
+      "throughTwoFramesMs": 70.1
+    },
+    {
+      "tab": "stocks",
+      "round": 2,
+      "syncMs": 448.1,
+      "throughTwoFramesMs": 778
+    },
+    {
+      "tab": "statistics",
+      "round": 2,
+      "syncMs": 69.7,
+      "throughTwoFramesMs": 120.2
+    },
+    {
+      "tab": "overview",
+      "round": 3,
+      "syncMs": 25.7,
+      "throughTwoFramesMs": 50.9
+    },
+    {
+      "tab": "stocks",
+      "round": 3,
+      "syncMs": 319.3,
+      "throughTwoFramesMs": 699.2
+    },
+    {
+      "tab": "statistics",
+      "round": 3,
+      "syncMs": 67.4,
+      "throughTwoFramesMs": 118
+    },
+    {
+      "tab": "overview",
+      "round": 4,
+      "syncMs": 17.9,
+      "throughTwoFramesMs": 43.9
+    },
+    {
+      "tab": "stocks",
+      "round": 4,
+      "syncMs": 315.9,
+      "throughTwoFramesMs": 592
+    },
+    {
+      "tab": "statistics",
+      "round": 4,
+      "syncMs": 35.4,
+      "throughTwoFramesMs": 75.2
+    }
+  ]
+}

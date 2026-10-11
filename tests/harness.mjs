@@ -13,7 +13,8 @@ const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const HTML = readFileSync(join(ROOT, 'dashboard.html'), 'utf8');
 const appScripts = [...HTML.matchAll(/<script defer src="\.\/(assets\/js\/[^?]+)\?v=[^"]+"><\/script>/g)]
   .map(m => readFileSync(join(ROOT, m[1]), 'utf8'));
-export const SOURCE = [HTML, ...appScripts].join('\n');
+const lazyScripts = ['assets/js/trade-charts.js', 'assets/js/broker-import.js'].map(path => readFileSync(join(ROOT, path), 'utf8'));
+export const SOURCE = [HTML, ...appScripts, ...lazyScripts].join('\n');
 
 // Pull `function name(...) { ... }` out of the source by matching braces. Skips
 // occurrences inside the seed-data blob, which never contains a declaration.

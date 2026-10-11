@@ -417,6 +417,69 @@ test('Market Pulse refetches the moment the tab becomes visible again (tablet wa
   assert.equal(calls, first + 1, 'returning to the tab must refetch once');
 });
 
+test('broker CSV tools load only on file selection and retry into a working preview', async t => {
+  const page = await open(t); await login(page);
+  assert.equal(await page.evaluate(() => typeof biParseCSV), 'undefined');
+  let requests = 0;
+  await page.route('**/assets/js/broker-import.js*', async route => {
+    requests++;
+    if (requests === 1) return route.abort();
+    await route.continue();
+  });
+  const csv = 'Symbol,Side,Quantity,Open Price,Close Price,Date,Commission\nAAPL,Buy,5,100,110,2026-09-02,1';
+  await page.evaluate(async csv => {
+    document.getElementById('bi-broker').value = 'colmex';
+    await brokerLoadFile({ files: [new File([csv], 'trades.csv', { type: 'text/csv' })] });
+  }, csv);
+  assert.equal(requests, 1);
+  assert.equal(await page.evaluate(() => typeof biParseCSV), 'undefined');
+  await page.locator('#bi-file-input').setInputFiles({ name: 'trades.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+  await page.waitForFunction(() => document.getElementById('bi-mapping').style.display === 'block');
+  await page.evaluate(() => biPreview());
+  assert.match(await page.locator('#bi-preview').textContent(), /AAPL/);
+  assert.deepEqual(await page.evaluate(() => _biTrades.map(({ symbol, entryPrice, exitPrice, closedShares }) => ({ symbol, entryPrice, exitPrice, closedShares }))), [{ symbol: 'AAPL', entryPrice: 100, exitPrice: 110, closedShares: 5 }]);
+  assert.equal(requests, 2);
+});
+
+test('delayed broker tool loading cannot read a file for a replaced account', async t => {
+  const page = await open(t); await login(page);
+  let release, announce;
+  const requested = new Promise(resolve => { announce = resolve; });
+  await page.route('**/assets/js/broker-import.js*', async route => {
+    await new Promise(resolve => { release = resolve; announce(); });
+    await route.continue();
+  });
+  const pending = page.evaluate(async () => {
+    document.getElementById('bi-broker').value = 'colmex';
+    await brokerLoadFile({ files: [new File(['Symbol,Quantity\nAAPL,5'], 'trades.csv')] });
+  });
+  await requested;
+  await page.evaluate(() => { _currentUser = { id: 'replaced-account' }; });
+  release();
+  await pending;
+  assert.equal(await page.evaluate(() => _biRows), null);
+  assert.equal(await page.evaluate(() => document.getElementById('bi-mapping').style.display), 'none');
+});
+
+test('trade chart feature loads on demand, shares requests and retries a failed load', async t => {
+  const page = await open(t); await login(page);
+  assert.equal(await page.evaluate(() => typeof tradeSnapshotImage), 'undefined');
+  assert.equal(await page.locator('script[src*="trade-charts.js"]').count(), 0);
+  let requests = 0;
+  await page.route('**/assets/js/trade-charts.js*', async route => {
+    requests++;
+    if (requests === 1) return route.abort();
+    await route.continue();
+  });
+  assert.deepEqual(await page.evaluate(async () => (await Promise.allSettled([loadTradeSnapshotFeature(), loadTradeSnapshotFeature()])).map(item => item.status)), ['rejected', 'rejected']);
+  assert.equal(requests, 1);
+  await page.evaluate(() => Promise.all([loadTradeSnapshotFeature(), loadTradeSnapshotFeature()]));
+  assert.equal(requests, 2);
+  assert.equal(await page.evaluate(() => typeof tradeSnapshotImage), 'function');
+  await page.evaluate(() => loadTradeSnapshotFeature());
+  assert.equal(requests, 2);
+});
+
 test('closed stock trades automatically display one entry and exit image and refresh after editing', async t => {
   const page=await open(t);await login(page);
   await page.evaluate(()=>{

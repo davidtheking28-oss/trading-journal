@@ -9107,224 +9107,38 @@ function sectorModalClose() {
 
 // BROKER CSV IMPORT
 // ─────────────────────────────────────────────
-const BROKER_DEFS = {
-  colmex: {
-    name: 'Colmex Pro',
-    cols: {
-      symbol:     ['Symbol','Ticker','Instrument','Description','Sym'],
-      side:       ['Side','Direction','Action','Type','Buy/Sell','B/S'],
-      shares:     ['Quantity','Qty','Volume','Size','Amount','Shares'],
-      entryPrice: ['Open Price','Entry Price','Price','Open','Bought'],
-      exitPrice:  ['Close Price','Exit Price','Close','Sold'],
-      entryDate:  ['Date/Time','DateTime','Open Date','Date','Time','Open Time','Trade Date'],
-      commission: ['Execution fee','Commission','Fee','Fees','Commissions','Exec Fee'],
-      pnl:        ['Net P/L','Net PL','NetPL','P/L','PnL','Profit','Gross P/L','Net Profit'],
-    },
-    sideMap: { 'buy':'L','long':'L','b':'L','l':'L','sell':'S','short':'S','s':'S' },
-  }
-};
-
-let _biRows = null, _biMapping = null, _biTrades = null;
-
-function brokerLoadFile(input) {
+let _brokerImportFeaturePending = null;
+function loadBrokerImportFeature() {
+  if (typeof brokerReadFile === 'function') return Promise.resolve();
+  if (_brokerImportFeaturePending) return _brokerImportFeaturePending;
+  _brokerImportFeaturePending = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    const owner = document.querySelector('script[src*="assets/js/dashboard.js"]');
+    script.src = './assets/js/broker-import.js' + (owner ? new URL(owner.src).search : '');
+    const fail = () => {
+      script.remove();
+      _brokerImportFeaturePending = null;
+      reject(new Error('Broker import feature unavailable'));
+    };
+    script.onload = () => { if (typeof brokerReadFile === 'function') resolve(); else fail(); };
+    script.onerror = fail;
+    document.head.append(script);
+  });
+  return _brokerImportFeaturePending;
+}
+async function brokerLoadFile(input) {
   const file = (input.files || input)[0];
   if (!file) return;
+  const user = _currentUser;
   const broker = document.getElementById('bi-broker').value;
   if (!broker) { toast('בחר ברוקר תחילה', true); return; }
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      _biRows = biParseCSV(e.target.result);
-      if (!_biRows.length) { toast('לא נמצאו שורות בקובץ', true); return; }
-      const def = BROKER_DEFS[broker];
-      _biMapping = biDetectCols(Object.keys(_biRows[0]), def.cols);
-      biShowMapping(_biMapping, Object.keys(_biRows[0]));
-    } catch(err) { toast('שגיאה בקריאת הקובץ', true); }
-  };
-  reader.readAsText(file, 'UTF-8');
-}
-
-function biParseCSV(text) {
-  const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
-  const headers = biSplitLine(lines[0]);
-  return lines.slice(1).filter(l => l.trim()).map(line => {
-    const vals = biSplitLine(line);
-    const obj = {};
-    headers.forEach((h, i) => { obj[h.trim()] = (vals[i] || '').trim(); });
-    return obj;
-  });
-}
-
-function biSplitLine(line) {
-  const r = []; let cur = '', q = false;
-  for (const c of line) {
-    if (c === '"') q = !q;
-    else if (c === ',' && !q) { r.push(cur); cur = ''; }
-    else cur += c;
+  try {
+    await loadBrokerImportFeature();
+    if (_currentUser !== user || document.getElementById('bi-broker').value !== broker) return;
+    brokerReadFile({ files: [file] });
+  } catch {
+    if (_currentUser === user) toast(_lang === 'he' ? 'לא ניתן לטעון את כלי הייבוא — נסה לבחור את הקובץ שוב' : 'Import tools could not load — select the file again', true);
   }
-  r.push(cur);
-  return r;
-}
-
-function biDetectCols(headers, colDefs) {
-  const map = {};
-  for (const [field, candidates] of Object.entries(colDefs)) {
-    for (const c of candidates) {
-      const found = headers.find(h => h.toLowerCase().trim() === c.toLowerCase().trim());
-      if (found) { map[field] = found; break; }
-    }
-  }
-  return map;
-}
-
-function biShowMapping(mapping, headers) {
-  const labels = {
-    symbol:'סימבול *', side:'כיוון (L/S) *', shares:'כמות *',
-    entryPrice:'מחיר כניסה *', exitPrice:'מחיר יציאה',
-    entryDate:'תאריך *', commission:'עמלה', pnl:'P&L'
-  };
-  let h = `<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
-    <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">מיפוי עמודות (ניתן לשנות):</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">`;
-  for (const [field, label] of Object.entries(labels)) {
-    const sel = mapping[field] || '';
-    h += `<div>
-      <div class="ibkr-field-label">${label}</div>
-      <select class="form-control" style="font-size:12px;padding:4px 8px;"
-        onchange="_biMapping['${field}']=this.value">
-        <option value="">— לא ממופה —</option>
-        ${headers.map(hd => `<option value="${esc(hd)}"${hd===sel?' selected':''}>${esc(hd)}</option>`).join('')}
-      </select>
-    </div>`;
-  }
-  h += `</div><button class="btn btn-secondary btn-sm" onclick="biPreview()">👁 תצוגה מקדימה</button></div>`;
-  const el = document.getElementById('bi-mapping');
-  el.innerHTML = h; el.style.display = 'block';
-  document.getElementById('bi-preview').style.display = 'none';
-  document.getElementById('bi-import-btn').style.display = 'none';
-}
-
-function biPreview() {
-  const broker = document.getElementById('bi-broker').value;
-  const def = BROKER_DEFS[broker];
-  _biTrades = biParseRows(_biRows, _biMapping, def);
-  if (!_biTrades.length) { toast('לא זוהו עסקאות — בדוק מיפוי עמודות', true); return; }
-  const show = _biTrades.slice(0, 5);
-  let h = `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-    <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">
-      ${_biTrades.length} עסקאות זוהו — מוצגות 5 ראשונות:
-    </div>
-    <div class="table-wrap" style="margin-bottom:12px;max-height:220px;overflow-y:auto;">
-    <table><thead><tr><th>סימבול</th><th>כיוון</th><th>תאריך</th><th>כניסה</th><th>יציאה</th><th>כמות</th><th>עמלה</th></tr></thead><tbody>`;
-  for (const t of show) {
-    h += `<tr class="data-row">
-      <td><strong>${esc(t.symbol)}</strong></td>
-      <td><span class="badge badge-${t.ls}">${t.ls}</span></td>
-      <td>${fmtDate(t.entryDate)}</td>
-      <td>$${fmtPrice(t.entryPrice)}</td>
-      <td>${t.exitPrice ? '$'+fmtPrice(t.exitPrice) : '—'}</td>
-      <td>${t.shares}</td>
-      <td>$${fmt(t.commission||0)}</td>
-    </tr>`;
-  }
-  h += `</tbody></table></div>
-    <div style="display:flex;align-items:center;gap:10px;">
-      <div class="ibkr-field-label" style="margin:0;">סוג נכס:</div>
-      <select id="bi-asset-type" class="form-control" style="font-size:12px;padding:4px 8px;width:130px;">
-        <option value="stock">מניות</option>
-        <option value="crypto">קריפטו</option>
-      </select>
-    </div>
-  </div>`;
-  const el = document.getElementById('bi-preview');
-  el.innerHTML = h; el.style.display = 'block';
-  document.getElementById('bi-import-btn').style.display = 'inline-flex';
-}
-
-function biParseRows(rows, mapping, def) {
-  const trades = [];
-  for (const row of rows) {
-    try {
-      const symbol = (row[mapping.symbol] || '').trim().toUpperCase().replace(/\s+/g,'');
-      if (!symbol) continue;
-      const sideRaw = (row[mapping.side] || '').trim().toLowerCase();
-      const ls = def.sideMap[sideRaw] || (sideRaw.startsWith('b') || sideRaw.startsWith('l') ? 'L' : 'S');
-      const shares = parseFloat(row[mapping.shares]) || 0;
-      if (shares <= 0) continue;
-      let entryPrice = parseFloat(row[mapping.entryPrice]) || 0;
-      const rawDate = (row[mapping.entryDate] || '').trim();
-      const entryDate = biParseDate(rawDate);
-      if (!entryDate) continue;
-      let exitPrice = mapping.exitPrice ? (parseFloat(row[mapping.exitPrice]) || 0) : 0;
-      const commission = mapping.commission ? (parseFloat(row[mapping.commission]) || 0) : 0;
-      const pnl = mapping.pnl ? (parseFloat(row[mapping.pnl]) || 0) : 0;
-      // Colmex "Bought"/"Sold" may be total values — detect and convert to price
-      if (entryPrice > shares * 1000 && shares > 0) entryPrice = entryPrice / shares;
-      if (exitPrice > shares * 1000 && shares > 0) exitPrice = exitPrice / shares;
-      // Back-calc exit price from P/L if missing
-      if (!exitPrice && pnl && entryPrice && shares) {
-        const dir = ls === 'L' ? 1 : -1;
-        exitPrice = entryPrice + (pnl + commission) / shares * dir;
-        if (exitPrice < 0) exitPrice = 0;
-      }
-      // A row carrying an exit price is a closed position, so record how much
-      // of it closed — every other import path (Bybit, and the manual broker
-      // paths) sets closedShares explicitly. Leaving it null made these trades
-      // invisible to renderMonthlyTracker, which selects on closedShares > 0,
-      // so a CSV-imported month showed no performance at all.
-      trades.push({ symbol, ls, entryDate, entryPrice, exitPrice: exitPrice > 0 ? exitPrice : null, shares, commission,
-                    closedShares: exitPrice > 0 ? shares : null });
-    } catch(e) { /* skip bad row */ }
-  }
-  return trades;
-}
-
-function biParseDate(raw) {
-  if (!raw) return null;
-  // YYYY-MM-DD or YYYY/MM/DD
-  let m = raw.match(/^(\d{4})[-\/\.](\d{1,2})[-\/\.](\d{1,2})/);
-  if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
-  // DD/MM/YYYY or MM/DD/YYYY
-  m = raw.match(/^(\d{1,2})[-\/\.](\d{1,2})[-\/\.](\d{4})/);
-  if (m) {
-    const d1 = +m[1], d2 = +m[2];
-    if (d1 > 12) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
-    return `${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
-  }
-  return null;
-}
-
-async function brokerImport() {
-  if (!_biTrades?.length) return;
-  const type = document.getElementById('bi-asset-type').value;
-  const btn = document.getElementById('bi-import-btn');
-  btn.disabled = true; btn.textContent = 'מייבא...';
-  let added = 0, skipped = 0, dupes = 0;
-  for (const t of _biTrades) {
-    t.type = type;
-    const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
-    if (db._deletedFingerprints?.has(fp)) { dupes++; continue; }
-    const existing = (type==='stock'?db.stocks:db.crypto).find(x =>
-      x.symbol===t.symbol && x.entryDate===t.entryDate &&
-      Math.abs((x.entryPrice||0)-(t.entryPrice||0)) < 0.001 &&
-      Math.abs((x.shares||0)-(t.shares||0)) < 0.001);
-    if (existing) { dupes++; continue; }
-    try {
-      const row = _tradeToRow(t);
-      const { data, error } = await _sb.from('trades').insert(row).select().single();
-      if (error) { skipped++; continue; }
-      const trade = _rowToTrade(data);
-      (type==='stock' ? db.stocks : db.crypto).push(trade);
-      added++;
-    } catch(e) { skipped++; }
-  }
-  btn.disabled = false; btn.textContent = 'ייבא עסקאות';
-  toast(`ייבוא הסתיים: ${added} נוספו${dupes?' | '+dupes+' כפולות':''}${skipped?' | '+skipped+' שגיאות':''}`);
-  if (added) { renderTable(type); renderOverview(); }
-  _biTrades = null;
-  document.getElementById('bi-preview').style.display = 'none';
-  document.getElementById('bi-import-btn').style.display = 'none';
 }
 
 function toggleSecondaryStats(button) {
@@ -9397,92 +9211,24 @@ function tradeSnapshotEligible(tr) {
     +tr.entryPrice > 0 && +tr.exitPrice > 0 && !isOpenPosition(tr);
 }
 
-function tradeSnapshotData(tr, bars) {
-  if (!tradeSnapshotEligible(tr) || !Array.isArray(bars)) return null;
-  const entry = Date.parse(tr.entryDate.slice(0,10) + 'T00:00:00Z') / 1000;
-  const exit = Date.parse(tr.closeDate.slice(0,10) + 'T00:00:00Z') / 1000;
-  const clean = [...new Map(bars.filter(b => Number.isFinite(b.t) && [b.o,b.h,b.l,b.c].every(v => Number.isFinite(v) && v > 0)).map(b=>[Math.floor(b.t/86400),b])).values()].sort((a,b)=>a.t-b.t);
-  if (!Number.isFinite(entry) || !Number.isFinite(exit) || exit < entry || !clean.length ||
-      clean[0].t > entry + 86400 || clean.at(-1).t < exit - 86400) return null;
-  const toTime = timestamp => new Date(timestamp*1000).toISOString().slice(0,10);
-  // Focus on the trade, with a short context before entry and after exit.
-  // Keep the full holding period so both markers remain visible.
-  const selected = clean.filter(b => b.t >= entry - (tr.type === 'crypto' ? 28 : 42)*86400 && b.t <= exit + 10*86400);
-  if (!selected.length) return null;
-  // Date-only trades may fall on a non-session day; the marker attaches to the
-  // closest daily bar; stored trade dates remain unchanged.
-  const nearest = timestamp => selected.reduce((best,b)=>Math.abs(b.t-timestamp)<Math.abs(best.t-timestamp)?b:best,selected[0]);
-  if (Math.abs(nearest(entry).t-entry)>3*86400 || Math.abs(nearest(exit).t-exit)>3*86400) return null;
-  return {
-    prices:selected.map(b=>({time:toTime(b.t),open:b.o,high:b.h,low:b.l,close:b.c})),
-    volume:selected.map(b=>({time:toTime(b.t),value:Number.isFinite(b.v)&&b.v>0?b.v:0})),
-    entry:{time:toTime(nearest(entry).t),date:tr.entryDate.slice(0,10),price:+tr.entryPrice},
-    exit:{time:toTime(nearest(exit).t),date:tr.closeDate.slice(0,10),price:+tr.exitPrice},
-    short:tr.ls==='S'
-  };
-}
-
-function tradeSnapshotFit(chart, count) {
-  const timeScale=chart.timeScale();timeScale.fitContent();
-  const spacing=timeScale.options().barSpacing;
-  const width=spacing*count;
-  if(count && Number.isFinite(spacing) && width>14) {
-    timeScale.setVisibleLogicalRange({from:0,to:count-1+14*count/(width-14)});
-  }
-}
-
-let _tradeChartLibraryPending = null;
-function loadTradeChartLibrary() {
-  if (window.LightweightCharts) return Promise.resolve();
-  if (_tradeChartLibraryPending) return _tradeChartLibraryPending;
-  _tradeChartLibraryPending = new Promise((resolve,reject)=>{
-    const script=document.createElement('script');
-    const owner=document.querySelector('script[src*="assets/js/dashboard.js"]');
-    const version=owner ? new URL(owner.src).search : '';
-    script.src='./assets/vendor/lightweight-charts-4.2.0.js'+version;
-    script.onload=()=>{if(window.LightweightCharts)resolve();else {script.remove();_tradeChartLibraryPending=null;reject(new Error('Chart library unavailable'));}};
-    script.onerror=()=>{script.remove();_tradeChartLibraryPending=null;reject(new Error('Chart library unavailable'));};
+let _tradeSnapshotFeaturePending = null;
+function loadTradeSnapshotFeature() {
+  if (typeof tradeSnapshotImage === 'function') return Promise.resolve();
+  if (_tradeSnapshotFeaturePending) return _tradeSnapshotFeaturePending;
+  _tradeSnapshotFeaturePending = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    const owner = document.querySelector('script[src*="assets/js/dashboard.js"]');
+    script.src = './assets/js/trade-charts.js' + (owner ? new URL(owner.src).search : '');
+    const fail = () => {
+      script.remove();
+      _tradeSnapshotFeaturePending = null;
+      reject(new Error('Trade chart feature unavailable'));
+    };
+    script.onload = () => { if (typeof tradeSnapshotImage === 'function') resolve(); else fail(); };
+    script.onerror = fail;
     document.head.append(script);
   });
-  return _tradeChartLibraryPending;
-}
-async function tradeSnapshotImage(tr, bars) {
-  const data = tradeSnapshotData(tr,bars);
-  if (!data) return null;
-  await loadTradeChartLibrary();
-  const box = document.createElement('div');
-  box.style.cssText='position:fixed;left:-10000px;top:0;width:960px;height:320px;pointer-events:none;';
-  box.setAttribute('aria-hidden','true'); document.body.append(box);
-  let chart;
-  try {
-    chart=LightweightCharts.createChart(box,{
-      width:960,height:320,
-      layout:{background:{color:'#101116'},textColor:'#8898b2',fontSize:14,fontFamily:'JetBrains Mono, monospace',attributionLogo:true},
-      grid:{vertLines:{color:'rgba(255,255,255,0.035)'},horzLines:{color:'rgba(255,255,255,0.035)'}},
-      rightPriceScale:{borderColor:'rgba(255,255,255,0.06)',scaleMargins:{top:0.1,bottom:0.1}},
-      timeScale:{borderColor:'rgba(255,255,255,0.06)',rightOffset:0},
-      handleScroll:false,handleScale:false
-    });
-    const series=chart.addBarSeries({upColor:'#ffffff',downColor:'#ffffff',openVisible:true,thinBars:true,priceLineVisible:false,lastValueVisible:false,...(tr.type==='crypto' ? {priceFormat:{type:'price',precision:Math.min(+tr.entryPrice < 1 ? 8 : 2,8),minMove:+tr.entryPrice < 1 ? 0.00000001 : 0.01}} : {})});
-    series.setData(data.prices);
-    const volume=chart.addHistogramSeries({priceFormat:{type:'volume'},priceScaleId:'',lastValueVisible:false,priceLineVisible:false});
-    volume.priceScale().applyOptions({scaleMargins:{top:0.82,bottom:0}});
-    volume.setData(data.volume.map(b=>({...b,color:'rgba(255,255,255,0.25)'})));
-    series.setMarkers([
-      {time:data.entry.time,position:data.short?'aboveBar':'belowBar',color:'#34d399',shape:data.short?'arrowDown':'arrowUp',text:(_lang==='he'?'כניסה ':'Entry ')+String.fromCharCode(36)+data.entry.price.toFixed(data.entry.price < 1 ? 8 : 2)},
-      {time:data.exit.time,position:data.short?'belowBar':'aboveBar',color:'#fb7185',shape:data.short?'arrowUp':'arrowDown',text:(_lang==='he'?'יציאה ':'Exit ')+String.fromCharCode(36)+data.exit.price.toFixed(data.exit.price < 1 ? 8 : 2)}
-    ].sort((a,b)=>a.time.localeCompare(b.time)));
-    tradeSnapshotFit(chart,data.prices.length);
-    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-    const screenshot=chart.takeScreenshot();
-    const scale=screenshot.width/960;
-    const canvas=document.createElement('canvas');canvas.width=screenshot.width;canvas.height=screenshot.height+38*scale;
-    const ctx=canvas.getContext('2d');ctx.fillStyle='#101116';ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.font=(16*scale)+'px Arial';ctx.fillStyle='#e6edf7';
-    ctx.fillText(tr.symbol+' · '+(_lang==='he'?'גרף עסקה · נרות יומיים':'Trade chart · Daily bars'),20*scale,25*scale);
-    ctx.drawImage(screenshot,0,38*scale);
-    return canvas.toDataURL('image/png');
-  } finally { chart?.remove();box.remove(); }
+  return _tradeSnapshotFeaturePending;
 }
 
 const _tradeSnapshotImages = new Map();
@@ -9511,7 +9257,9 @@ async function renderAutomaticTradeShot(host,trade,key,userId,seq) {
     let url=_tradeSnapshotImages.get(cacheKey);
     if(!url) {
       const marketSymbol = key.startsWith('crypto-') ? _cryptoBaseSymbol(tr.symbol.replace(/-USD$/i,'')).toUpperCase()+'-USD' : tr.symbol;
-      url=await tradeSnapshotImage(tr,await _fetchPivotBars(marketSymbol));
+      const [bars] = await Promise.all([_fetchPivotBars(marketSymbol), loadTradeSnapshotFeature()]);
+      if(!valid()) return;
+      url=await tradeSnapshotImage(tr,bars);
       if(!valid()) return;
       if(url) {
         if(_tradeSnapshotImages.size>=100) _tradeSnapshotImages.delete(_tradeSnapshotImages.keys().next().value);
