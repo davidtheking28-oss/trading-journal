@@ -1500,7 +1500,7 @@ describe('statistics KPIs share one population', () => {
   const { advancedStats } = load('calcPL', 'calcTotal', 'isClosed', 'tradeDays', 'advancedStats');
 
   test('renderStatistics filters with isClosed', () => {
-    const src = extractFunction('renderStatistics');
+    const src = extractFunction('renderStatisticsContent');
     assert.match(src, /const closed\s+= trades\.filter\(isClosed\)/);
     assert.doesNotMatch(src, /exitPrice > 0 && t\.closedShares > 0/);
   });

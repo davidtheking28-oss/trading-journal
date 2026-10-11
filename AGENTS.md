@@ -17,6 +17,10 @@ Personal trading journal web app with Supabase authentication and per-user data.
 - assets/js/dashboard.js contains the journal, analytics, broker interfaces and shared UI helpers.
 - assets/js/trade-charts.js generates automatic trade images; load it through loadTradeSnapshotFeature only when needed. It shares the dashboard globals and is precached in sw.js. tests/harness.mjs explicitly includes its source for logic tests.
 - assets/js/broker-import.js owns the manual broker CSV mapping, preview and import; load it through loadBrokerImportFeature when a file is selected. Keep its service-worker precache and test harness source list updated.
+- assets/js/statistics.js owns statistics-only renderers and loads through renderStatistics when its tab is active. Shared overview chart helpers and _holdDays remain in dashboard.js; preserve lazy script precache and test harness coverage.
+- assets/js/themes.js owns market-theme views and sector holdings modals; ttRender loads it on demand. Keep market timers/state in dashboard.js. _sectorHoldingsCache stores holding arrays separately from _sectorCache, which stores symbol sector names.
+- assets/js/missed.js owns missed-opportunity views, analysis and edit controls; missedRender loads it on demand. Account list/quote caches and database load/add/delete boundaries remain in dashboard.js.
+- assets/js/file-import.js parses and previews manual TLG files on selection; confirmation/persistence remain in dashboard.js. All lazy dashboard scripts use loadDashboardFeature for shared requests, retry and versioned URLs.
 - assets/js/investments.js owns portfolios, holdings, investment calculations and save state.
 - assets/js/bootstrap.js starts the app after the other deferred scripts have loaded.
 - Scripts share their existing global bindings. Keep their order in dashboard.html and keep startup in bootstrap.js.

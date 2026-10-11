@@ -2,6 +2,10 @@
 
 No build step. Logic tests use Node's built-in runner; browser tests use Playwright.
 
+Optional loading comparison: run `node tests/profile-loading.cjs` from the repository root. It compares deployed commit 9738a37 with the current working tree, uses 500 synthetic trades and mocked API/auth/chart boundaries, disables service workers, and applies a 4x CPU slowdown. Five measured interleaved pairs follow one excluded warm-up pair. The report is written to docs/LOADING-PROFILE-2026-10-11.json. This is a local diagnostic, not a live-network speed claim or a CI pass/fail threshold.
+
+Set `PROFILE_LAYOUT_READS=1` to record slow explicit layout reads in docs/LAYOUT-READS-2026-10-11.json. Set `PROFILE_REAL_CHARTS=1` to download the same Chart.js 4.4.4 version used by the app once and serve it locally to both variants; results go to docs/REAL-CHART-LOADING-2026-10-11.json. Authentication and market APIs stay mocked in both modes.
+
 ```bash
 node --test tests/logic.test.mjs
 ```

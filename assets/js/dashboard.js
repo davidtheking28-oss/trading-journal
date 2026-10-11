@@ -1,3 +1,24 @@
+const _dashboardFeatures = new Map();
+function loadDashboardFeature(file, ready) {
+  if (ready()) return Promise.resolve();
+  if (_dashboardFeatures.has(file)) return _dashboardFeatures.get(file);
+  const pending = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    const owner = document.querySelector('script[src*="assets/js/dashboard.js"]');
+    script.src = './assets/js/' + file + (owner ? new URL(owner.src).search : '');
+    const fail = () => {
+      script.remove();
+      _dashboardFeatures.delete(file);
+      reject(new Error('Feature unavailable: ' + file));
+    };
+    script.onload = () => { if (ready()) resolve(); else fail(); };
+    script.onerror = fail;
+    document.head.append(script);
+  });
+  _dashboardFeatures.set(file, pending);
+  return pending;
+}
+
 // ─────────────────────────────────────────────
 // ACCESSIBILITY WIDGET
 // ─────────────────────────────────────────────
@@ -3088,106 +3109,6 @@ function _tradePct(t) {
   return base > 0 ? calcTotal(t) / base * 100 : null;
 }
 
-function renderMonthlyTracker(trades) {
-  const wrap = document.getElementById('monthly-tracker-wrap');
-  if (!wrap) return;
-  const effectiveYear = +(document.getElementById('stats-year')?.value) || +(document.getElementById('ov-year')?.value) || new Date().getFullYear();
-  const lbl = document.getElementById('mt-year-label');
-  if (lbl) lbl.textContent = effectiveYear;
-  const closed = trades.filter(t =>
-    t.exitPrice > 0 && t.closedShares > 0 &&
-    +(t.entryDate||'').slice(0,4) === effectiveYear
-  );
-
-  // Build per-month data
-  const byMonth = {}; // key = "MM" (01-12)
-  closed.forEach(t => {
-    const m = (t.entryDate || '').slice(5, 7);
-    if (!m) return;
-    if (!byMonth[m]) byMonth[m] = [];
-    byMonth[m].push(t);
-  });
-
-  const MONTH_KEYS = ['01','02','03','04','05','06','07','08','09','10','11','12'];
-
-  function monthStats(arr) {
-    if (!arr || !arr.length) return null;
-    const winners = arr.filter(t => calcTotal(t) > 0);
-    const losers  = arr.filter(t => calcTotal(t) <= 0);
-    const avgGainPct = winners.length ? winners.reduce((s,t)=>{ const p=_tradePct(t); return p!==null?s+p:s; },0) / winners.length : null;
-    const avgLossPct = losers.length  ? losers.reduce((s,t)=>{ const p=_tradePct(t); return p!==null?s+p:s; },0) / losers.length  : null;
-    const winRate    = arr.length ? winners.length / arr.length * 100 : 0;
-    const lgGain     = winners.length ? Math.max(...winners.map(t=>calcTotal(t))) : null;
-    const lgLoss     = losers.length  ? Math.min(...losers.map(t=>calcTotal(t)))  : null;
-    const avgDaysWin = winners.length ? winners.reduce((s,t)=>s+tradeDays(t),0)/winners.length : null;
-    const avgDaysLoss= losers.length  ? losers.reduce((s,t)=>s+tradeDays(t),0)/losers.length   : null;
-    return { n: arr.length, avgGainPct, avgLossPct, winRate, lgGain, lgLoss, avgDaysWin, avgDaysLoss };
-  }
-
-  function pct(v) { return v === null ? '<span class="mt-empty">—</span>' : `${v>=0?'+':''}${v.toFixed(2)}%`; }
-  function usd(v) { return v === null ? '<span class="mt-empty">—</span>' : fmtUSD(v); }
-  function days(v){ return v === null ? '<span class="mt-empty">—</span>' : Math.round(v); }
-  function clrPct(v, el) { return v === null ? '' : v >= 0 ? 'color:var(--green)' : 'color:var(--red)'; }
-
-  let rows = '';
-  const validMonths = [];
-  MONTH_KEYS.forEach((mk, i) => {
-    const arr = byMonth[mk];
-    const s = monthStats(arr);
-    if (!s) {
-      rows += `<tr><td>${monthsShort()[i]}</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td><td class="mt-empty">—</td></tr>`;
-      return;
-    }
-    validMonths.push(s);
-    rows += `<tr>
-      <td>${monthsShort()[i]}</td>
-      <td class="${s.avgGainPct!==null?(s.avgGainPct>=0?'cl-green':'cl-red'):''} sensitive">${pct(s.avgGainPct)}</td>
-      <td class="${s.avgLossPct!==null?(s.avgLossPct>=0?'cl-green':'cl-red'):''} sensitive">${pct(s.avgLossPct)}</td>
-      <td class="${s.winRate>=50?'cl-green':'cl-red'} sensitive">${fmt(s.winRate,1)}%</td>
-      <td class="sensitive">${s.n}</td>
-      <td class="cl-green sensitive">${usd(s.lgGain)}</td>
-      <td class="cl-red sensitive">${usd(s.lgLoss)}</td>
-      <td class="sensitive">${days(s.avgDaysWin)}</td>
-      <td class="sensitive">${days(s.avgDaysLoss)}</td>
-    </tr>`;
-  });
-
-  // AVG row
-  let avgRow = `<tr><td>${t('mt_avg_row')}</td>`;
-  if (validMonths.length) {
-    const avg = f => { const vals=validMonths.filter(s=>s[f]!==null); return vals.length?vals.reduce((a,s)=>a+s[f],0)/vals.length:null; };
-    const avgWR = validMonths.reduce((a,s)=>a+s.winRate,0)/validMonths.length;
-    const avgN  = Math.round(validMonths.reduce((a,s)=>a+s.n,0)/validMonths.length);
-    const agp = avg('avgGainPct'), alp = avg('avgLossPct');
-    avgRow += `<td class="${agp!==null?(agp>=0?'cl-green':'cl-red'):''} sensitive">${pct(agp)}</td>`;
-    avgRow += `<td class="${alp!==null?(alp>=0?'cl-green':'cl-red'):''} sensitive">${pct(alp)}</td>`;
-    avgRow += `<td class="${avgWR>=50?'cl-green':'cl-red'} sensitive">${fmt(avgWR,1)}%</td>`;
-    avgRow += `<td class="sensitive">${avgN}</td>`;
-    avgRow += `<td class="cl-green sensitive">${usd(avg('lgGain'))}</td>`;
-    avgRow += `<td class="cl-red sensitive">${usd(avg('lgLoss'))}</td>`;
-    avgRow += `<td class="sensitive">${days(avg('avgDaysWin'))}</td>`;
-    avgRow += `<td class="sensitive">${days(avg('avgDaysLoss'))}</td>`;
-  } else {
-    avgRow += '<td colspan="8" class="mt-empty">—</td>';
-  }
-  avgRow += '</tr>';
-
-  wrap.innerHTML = `<table class="mt-table">
-    <thead><tr>
-      <th></th>
-      <th>${t('mt_avg_gain')}</th>
-      <th>${t('mt_avg_loss')}</th>
-      <th>WIN %</th>
-      <th>${t('mt_total_trades')}</th>
-      <th>${t('mt_max_gain')}</th>
-      <th>${t('mt_max_loss')}</th>
-      <th>${t('mt_avg_days_win')}</th>
-      <th>${t('mt_avg_days_loss')}</th>
-    </tr></thead>
-    <tbody>${rows}${avgRow}</tbody>
-  </table>`;
-}
-
 // ─────────────────────────────────────────────
 // PROFILE
 // ─────────────────────────────────────────────
@@ -4203,313 +4124,45 @@ function _setBrokerEquitySelected(broker, btn) {
   renderStatistics();
 }
 
-function renderStatistics() {
- const secondaryToggle=document.getElementById('stats-secondary-toggle');
- if(secondaryToggle && window.matchMedia('(min-width:769px)').matches) {
- const open=!document.getElementById('stats-secondary-content').classList.contains('stats-desktop-collapsed');
- secondaryToggle.setAttribute('aria-expanded',String(open));
- secondaryToggle.textContent=_lang === 'he' ? (open?'הסתר סטטיסטיקות נוספות ▴':'הצג סטטיסטיקות נוספות ▾') : (open?'Hide additional statistics ▴':'Show additional statistics ▾');
- }
-
-  _restoreStatsState();
-  _loadBrokerEquity();
-  const { month, year } = getFilter('stats');
-  let allTrades = [...db.stocks, ...db.crypto].filter(t => !t.deleted && t.entryDate);
-  if (month) allTrades = allTrades.filter(t => +t.entryDate.slice(5, 7) === +month);
-  if (year)  allTrades = allTrades.filter(t => +t.entryDate.slice(0, 4) === +year);
-
-  const stTrades = allTrades.filter(t => t.type === 'stock' || !t.type);
-  const crTrades = allTrades.filter(t => t.type === 'crypto');
-
-  let trades;
-  if (statsScope === 'stock') trades = stTrades;
-  else if (statsScope === 'crypto') trades = crTrades;
-  else trades = allTrades;
-
-  const st  = stats(trades);
-  const adv = advancedStats(trades);
-
-  // Must be the same closed-test stats()/advancedStats() use. This screen shows
-  // both families of KPI side by side, so a row that one counts and the other
-  // doesn't makes win-rate and profit-factor describe different populations.
-  const closed  = trades.filter(isClosed);
-  const winners = closed.filter(t => calcTotal(t) > 0);
-  const losers  = closed.filter(t => calcTotal(t) <= 0);
-  const winSum  = winners.reduce((s, t) => s + calcTotal(t), 0);
-  const lossSum = Math.abs(losers.reduce((s, t) => s + calcTotal(t), 0));
-  const pf      = lossSum > 0 ? winSum / lossSum : null;
-
-  let curW = 0, maxW = 0, curL = 0, maxL = 0;
-  [...closed].sort((a, b) => a.entryDate.localeCompare(b.entryDate)).forEach(t => {
-    if (calcTotal(t) > 0) { curW++; maxW = Math.max(maxW, curW); curL = 0; }
-    else               { curL++; maxL = Math.max(maxL, curL); curW = 0; }
-  });
-
-  // Same risk definition the rest of the app uses — this used to inline its own
-  // and so kept the fee-dominated outliers calcStopRisk already rejects.
-  let rSum = 0, rCount = 0;
-  closed.forEach(t => {
-    const risk = calcStopRisk(t);
-    if (risk > 0) { rSum += calcTotal(t) / risk; rCount++; }
-  });
-  const avgR = rCount > 0 ? rSum / rCount : 0;
-
-  // Negatives dropped their sign entirely and leaned on the red class alone, so
-  // "הפסד ממוצע $44.00" read as a gain in any context where color is lost.
-  const fmt = v => (v >= 0 ? '+' : '-') + '$' + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const pct  = v => v.toFixed(1) + '%';
-
-  // Broker-derived portfolio size gets its own full-width card above the grid.
-  // Locked to the same מניות/קריפטו/הכל filter the KPIs below already use — it
-  // used to run its own independent broker pick, so picking "קריפטו" up top
-  // could still show the IBKR (stock) balance in this card, right above stats
-  // that were only ever measuring the crypto book.
-  const _SCOPE_BROKER = { stock: 'ibkr', crypto: 'bybit' };
-  const scopeBroker = _SCOPE_BROKER[statsScope] || null;
-  const brokerList = Object.keys(_brokerEquityByBroker);
-  let portfolioCard = null;
-  if (scopeBroker) {
-    // Single deterministic broker for this scope — no picker, same as the
-    // existing "only one broker connected" case never showing one either.
-    if (scopeBroker in _brokerEquityByBroker) {
-      portfolioCard = {
-        label: `גודל תיק ${_BROKER_NAMES[scopeBroker] || scopeBroker}`,
-        value: '$' + _brokerEquityByBroker[scopeBroker].toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-        brokerDD: null,
-      };
-    }
-  } else if (_brokerEquityUsd != null) {
-    // statsScope 'all' — combined by default, with the existing dropdown to
-    // peek at one connected broker without leaving the combined stats scope.
-    const selectedEquity = _brokerEquitySelected != null ? _brokerEquityByBroker[_brokerEquitySelected] : _brokerEquityUsd;
-    portfolioCard = {
-      label: _brokerEquitySelected != null
-        ? `גודל תיק ${_BROKER_NAMES[_brokerEquitySelected] || _brokerEquitySelected}`
-        : _brokerEquityLabel,
-      value: '$' + (selectedEquity ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-      brokerDD: brokerList.length > 1 ? brokerList : null,
-    };
-  }
-
-  // Curated down from 15 flat tiles to the 8 numbers that actually drive a
-  // go/no-go read on the book — best/worst trade, avg trade, hold-time and
-  // drawdown stayed available lower in the tab (Trading Summary) instead of
-  // repeating here, per the user's "too crowded" feedback.
-  const maxWin  = winners.length ? Math.max(...winners.map(t => calcTotal(t))) : 0;
-  const maxLoss = losers.length  ? Math.min(...losers.map(t => calcTotal(t)))  : 0;
-  const ICON_DOLLAR = '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>';
-  const ICON_TARGET = '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/>';
-  const ICON_BARS   = '<line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>';
-  const ICON_PCT    = '<line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>';
-  const ICON_UP     = '<path d="M14 9V5a3 3 0 0 0-3-3L7 11v10h10.3a2 2 0 0 0 2-1.7l1.4-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>';
-  const ICON_DOWN   = '<path d="M10 15v4a3 3 0 0 0 3 3l4-8V4H6.7a2 2 0 0 0-2 1.7l-1.4 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/>';
-  const ICON_SWAP   = '<polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>';
-  const ICON_TROPHY = '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M5 4H3v2a4 4 0 0 0 4 4M19 4h2v2a4 4 0 0 1-4 4"/>';
-  const ICON_FROWN  = '<circle cx="12" cy="12" r="9"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>';
-  // No closed trades yet: several of these cards would otherwise show a
-  // fabricated "+$0.00" / "0.0%" (fmt(0) and pct(0) both format fine, they're
-  // just not measuring anything) — matches how fmtR already renders "—" for
-  // an unmeasurable value instead of a real one.
-  const noDataYet = st.nClosed === 0;
-  const kpiCards = [
-    { label: t('kpi_pnl'), tip: 'רווח/הפסד כולל בתקופה ובסקופ הנבחרים (עסקאות סגורות בלבד)', value: noDataYet ? '—' : fmt(st.total), sub: `${st.nClosed} ${t('trades')}${st.nOpen ? ` · ${st.nOpen} פתוחות` : ''}`, cls: st.total >= 0 ? 'c-green' : 'c-red', valCls: noDataYet ? '' : (st.total >= 0 ? 'green' : 'red'), sensitive: true, icon: ICON_DOLLAR },
-    { label: t('st_win_rate'), tip: 'אחוז העסקאות הסגורות שהסתיימו ברווח', value: noDataYet ? '—' : pct(st.wr), sub: `${st.wins}W / ${losers.length}L`, cls: st.wr >= 50 ? 'c-green' : 'c-red', valCls: noDataYet ? '' : (st.wr >= 50 ? 'green' : 'red'), icon: ICON_TARGET },
-    { label: 'Profit Factor', tip: 'סך הרווחים חלקי סך ההפסדים — מעל 1 אומר שהמערכת רווחית', value: pf != null ? pf.toFixed(2) : '—', sub: pf != null ? (pf >= 1 ? 'רווחי' : 'לא רווחי') : '', cls: pf != null ? (pf >= 1 ? 'c-green' : 'c-red') : 'c-blue', valCls: pf != null ? (pf >= 1 ? 'green' : 'red') : '', icon: ICON_BARS },
-    { label: t('st_avg_r'), tip: 'רווח/הפסד ממוצע ביחס לסיכון המתוכנן — סטופ שהוגדר, או אם לא הוגדר סטופ, מרחק הכניסה ממחיר היציאה בפועל', value: rCount ? avgR.toFixed(2) + 'R' : '—', sub: rCount ? `${rCount} עסקאות עם סיכון מדיד` : '', cls: avgR >= 0 ? 'c-green' : 'c-red', valCls: rCount ? (avgR >= 0 ? 'green' : 'red') : '', icon: ICON_PCT },
-    { label: t('st_avg_win'), tip: 'רווח ממוצע בעסקה מנצחת', value: winners.length ? fmt(adv.avgWin) : '—', sub: winners.length ? `מקסימום: ${fmt(maxWin)}` : '', cls: 'c-green', valCls: winners.length ? 'green' : '', sensitive: true, icon: ICON_UP },
-    { label: t('st_avg_loss'), tip: 'הפסד ממוצע בעסקה מפסידה', value: losers.length ? fmt(adv.avgLoss) : '—', sub: losers.length ? `מקסימום: ${fmt(maxLoss)}` : '', cls: 'c-red', valCls: losers.length ? 'red' : '', sensitive: true, icon: ICON_DOWN },
-    { label: t('st_wl_ratio'), tip: 'רווח ממוצע חלקי הפסד ממוצע', value: adv.avgLoss !== 0 ? Math.abs(adv.avgWin / adv.avgLoss).toFixed(2) + 'x' : '—', sub: 'רווח / הפסד ממוצע', cls: 'c-blue', valCls: '', icon: ICON_SWAP },
-    { label: t('st_max_win_streak'), tip: 'הרצף הארוך ביותר של עסקאות מנצחות ברציפות', value: maxW, sub: 'עסקאות רצופות', cls: 'c-green', valCls: 'green', icon: ICON_TROPHY },
-    { label: t('st_max_loss_streak'), tip: 'הרצף הארוך ביותר של עסקאות מפסידות ברציפות', value: maxL, sub: 'עסקאות רצופות', cls: 'c-red', valCls: 'red', icon: ICON_FROWN },
-  ];
-
-  const grid = document.getElementById('stats-kpi-grid');
-  if (grid) {
-    const portfolioHtml = portfolioCard ? `
-      <div class="kpi-card portfolio-hero c-blue" title="שווי התיק כפי שדווח מהברוקר המחובר, לא ערך מוזן ידנית">
-        <div class="kpi-label" style="display:flex;align-items:center;gap:6px;justify-content:center;">
-          <span>${portfolioCard.label}</span>
-          ${portfolioCard.brokerDD ? `
-            <div id="port-equity-dd" class="scope-dd">
-              <button class="scope-dd-btn" onclick="toggleScopeDD('port-equity-dd')" aria-label="בחר ברוקר להצגה" title="בחר ברוקר להצגה">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-              </button>
-              <div class="scope-dd-menu" id="port-equity-menu">
-                <button class="${_brokerEquitySelected == null ? 'active' : ''}" ${_brokerEquitySelected == null ? 'aria-current="true"' : ''} onclick="_setBrokerEquitySelected(null,this)">כל הברוקרים</button>
-                ${portfolioCard.brokerDD.map(b => `<button class="${_brokerEquitySelected === b ? 'active' : ''}" ${_brokerEquitySelected === b ? 'aria-current="true"' : ''} onclick="_setBrokerEquitySelected('${b}',this)">${_BROKER_NAMES[b] || b}</button>`).join('')}
-              </div>
-            </div>` : ''}
-        </div>
-        <div class="kpi-value sensitive">${portfolioCard.value}</div>
-      </div>` : '';
-    const cardHtml = k => `
-      <div class="kpi-card ${k.cls}" title="${k.tip}">
-        <div class="kpi-label">${k.label}</div>
-        <div class="kpi-value ${k.valCls}${k.sensitive ? ' sensitive' : ''}">${k.value}</div>
-        ${k.sub ? `<div class="kpi-sub">${k.sub}</div>` : ''}
-      </div>`;
-    // Spans every column except the last one, placed right before the final
-    // KPI card in DOM order — the grid's auto-placement then has no choice but
-    // to start it on a fresh row (an explicit column-1 start can't land
-    // mid-row) and drop the last card into the one column left beside it,
-    // exactly filling the gap a row of leftover cards would otherwise leave.
-    // Grid-line indices are relative, so this holds at any column count the
-    // responsive auto-fit grid resolves to, not just today's width.
-    const lastCard = kpiCards[kpiCards.length - 1];
-    const cardsHtml = kpiCards.slice(0, -1).map(cardHtml).join('') + `
-      <div style="grid-column:1/-2;padding:6px 2px;">
-        <div class="kpi-label" style="text-align:right;margin-bottom:6px;">משך זמן ממוצע לפי סוג עסקה</div>
-        <div id="hold-compare-wrap"></div>
-      </div>` + cardHtml(lastCard);
-    grid.innerHTML = portfolioHtml + `<div class="kpi-grid-hero">${cardsHtml}</div>`;
-    // Rebuilt fresh on every render, so it has to be reparented here every
-    // time (not just once at DOMContentLoaded like the other scope-dd-menus)
-    // — .kpi-card's fadeUp animation leaves a permanent (fill-mode: both)
-    // transform behind, which makes it a containing block for this
-    // position:fixed menu and detaches it from its trigger button otherwise.
-    const _peMenu = document.getElementById('port-equity-menu');
-    if (_peMenu) document.body.appendChild(_peMenu);
-  }
-
-  renderHoldCompare(adv);
-  renderDonut(st, adv, trades);
-  renderDrawdownChart(trades);
-  renderRHistogram(trades);
-  const secondary = document.getElementById('stats-secondary-content');
-  if (secondary && getComputedStyle(secondary).display !== 'none') {
-    renderMonthlyTracker(trades);
-    renderSetupBreakdown(trades);
-    renderHoldBreakdown(trades);
-    renderPivotDistance(trades);
-    renderComparison(stTrades, crTrades);
-  }
-  applyPrivacy();
-}
-
-// Which setup actually pays. Expectancy is the number that matters here: a
-// setup can win often and still lose money, and with the book's 25.8% hit rate
-// and wins smaller than losses that is exactly the shape to watch for.
-function renderSetupBreakdown(trades) {
-  const host = document.getElementById('setup-breakdown-wrap');
-  if (!host) return;
-  const closed = trades.filter(t => t.closeDate && t.exitPrice);
-  const tagged = closed.filter(t => t.setupType);
-  if (!tagged.length) {
-    host.innerHTML = `<div style="padding:14px 16px;background:var(--card);
-      border:1px solid var(--border);border-radius:var(--r-lg);color:var(--text2);font-size:12px;line-height:1.7">
-      אף עסקה סגורה עדיין לא מתויגת בסוג סטאפ. תייג כמה ב״להשלמה״ שבסקירה הכללית — משם מגיע הפילוח.
-      </div>`;
-    return;
-  }
-  const groups = {};
-  tagged.forEach(t => {
-    const k = t.setupType;
-    (groups[k] = groups[k] || []).push(t);
-  });
-  const rows = Object.entries(groups).map(([k, arr]) => {
-    const pnl = arr.map(calcTotal);
-    const wins = pnl.filter(v => v > 0), losses = pnl.filter(v => v <= 0);
-    const total = pnl.reduce((a, b) => a + b, 0);
-    const wr = arr.length ? wins.length / arr.length * 100 : 0;
-    const avgW = wins.length ? wins.reduce((a, b) => a + b, 0) / wins.length : 0;
-    const avgL = losses.length ? losses.reduce((a, b) => a + b, 0) / losses.length : 0;
-    const exp = arr.length ? total / arr.length : 0;
-    // R only where a stop was recorded, so this stays honest about coverage
-    const rs = arr.map(t => { const r = calcStopRisk(t); return r ? calcTotal(t) / r : null; }).filter(v => v != null);
-    const avgR = rs.length ? rs.reduce((a, b) => a + b, 0) / rs.length : null;
-    return { k, n: arr.length, wr, avgW, avgL, total, exp, avgR, rn: rs.length,
-             nWins: wins.length, nLosses: losses.length };
-  }).sort((a, b) => b.total - a.total);
-
-  const untagged = closed.length - tagged.length;
-  host.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;min-width:0;border-collapse:collapse;font-size:12px">
-    <thead><tr style="color:var(--text3);text-align:right">
-      <th style="padding:7px 8px;font-weight:600">סטאפ</th>
-      <th style="padding:7px 8px;font-weight:600">עסקאות</th>
-      <th style="padding:7px 8px;font-weight:600">הצלחה</th>
-      <th style="padding:7px 8px;font-weight:600">רווח ממוצע</th>
-      <th style="padding:7px 8px;font-weight:600">הפסד ממוצע</th>
-      <th style="padding:7px 8px;font-weight:600">תוחלת</th>
-      <th style="padding:7px 8px;font-weight:600">R ממוצע</th>
-      <th style="padding:7px 8px;font-weight:600">סה״כ</th>
-    </tr></thead><tbody>
-    ${rows.map(r => `<tr style="border-top:1px solid rgba(255,255,255,0.05)">
-      <td style="padding:7px 8px;font-weight:600">${SETUP_LABELS[r.k] || r.k}</td>
-      <td style="padding:7px 8px">${r.n}</td>
-      <td style="padding:7px 8px">${r.wr.toFixed(0)}%</td>
-      <td style="padding:7px 8px" class="num-green sensitive">${r.nWins ? fmtUSD(r.avgW) : '<span style="color:var(--text3)">—</span>'}</td>
-      <td style="padding:7px 8px" class="num-red sensitive">${r.nLosses ? fmtUSD(r.avgL) : '<span style="color:var(--text3)">—</span>'}</td>
-      <td style="padding:7px 8px;font-weight:700" class="${r.exp>=0?'num-green':'num-red'} sensitive">${fmtUSD(r.exp)}</td>
-      <td style="padding:7px 8px">${r.avgR==null?'<span style="color:var(--text3)">—</span>':
-          `<span class="${r.avgR>=0?'num-green':'num-red'}">${r.avgR>=0?'+':''}${r.avgR.toFixed(2)}R</span>
-           <span style="color:var(--text3);font-size:10px">(${r.rn})</span>`}</td>
-      <td style="padding:7px 8px;font-weight:700" class="${r.total>=0?'num-green':'num-red'} sensitive">${fmtUSD(r.total)}</td>
-    </tr>`).join('')}
-    </tbody></table>
-    ${untagged ? `<div style="color:var(--text3);font-size:11px;margin-top:8px">
-      ${untagged} עסקאות סגורות עדיין בלי סטאפ ולא נכללות כאן.</div>` : ''}
-  </div>`;
-}
-
-// How long a position was given to work. Across the book, exits inside two days
-// hit 5% and everything held past three weeks was the only positive bucket, so
-// this is the cut that separates the strategy from the impatience.
-const HOLD_BUCKETS = [
-  { max: 0,        label: 'תוך-יומי' },
-  { max: 2,        label: '1–2 ימים' },
-  { max: 5,        label: '3–5 ימים' },
-  { max: 20,       label: '6–20 ימים' },
-  { max: Infinity, label: '20+ ימים' },
-];
 function _holdDays(t) {
   if (!t.closeDate || !t.entryDate) return null;
   const a = Date.parse(t.entryDate), b = Date.parse(t.closeDate);
   if (isNaN(a) || isNaN(b)) return null;
   return Math.max(0, Math.round((b - a) / 86400000));
 }
-function renderHoldBreakdown(trades) {
-  const host = document.getElementById('hold-breakdown-wrap');
-  if (!host) return;
-  const closed = trades.filter(t => t.closeDate && t.exitPrice && _holdDays(t) !== null);
-  if (!closed.length) {
-    host.innerHTML = `<div style="padding:14px 16px;background:var(--card);
-      border:1px solid var(--border);border-radius:var(--r-lg);color:var(--text2);font-size:12px">
-      אין עסקאות סגורות עם תאריך סגירה בתקופה שנבחרה.</div>`;
-    return;
-  }
-  const rows = HOLD_BUCKETS.map((b, i) => {
-    const lo = i === 0 ? -1 : HOLD_BUCKETS[i - 1].max;
-    const arr = closed.filter(t => { const d = _holdDays(t); return d > lo && d <= b.max; });
-    if (!arr.length) return null;
-    const pnl = arr.map(calcTotal);
-    const total = pnl.reduce((a, c) => a + c, 0);
-    const wins = pnl.filter(v => v > 0).length;
-    return { label: b.label, n: arr.length, wr: wins / arr.length * 100, avg: total / arr.length, total };
-  }).filter(Boolean);
 
-  const worst = Math.max(...rows.map(r => Math.abs(r.total)), 1);
-  host.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;min-width:0;border-collapse:collapse;font-size:12px">
-    <thead><tr style="color:var(--text3);text-align:right">
-      <th style="padding:7px 8px;font-weight:600">זמן החזקה</th>
-      <th style="padding:7px 8px;font-weight:600">עסקאות</th>
-      <th style="padding:7px 8px;font-weight:600">הצלחה</th>
-      <th style="padding:7px 8px;font-weight:600">ממוצע לעסקה</th>
-      <th style="padding:7px 8px;font-weight:600">סה״כ</th>
-      <th style="padding:7px 8px;font-weight:600;width:180px"></th>
-    </tr></thead><tbody>
-    ${rows.map(r => `<tr style="border-top:1px solid rgba(255,255,255,0.05)">
-      <td style="padding:7px 8px;font-weight:600">${r.label}</td>
-      <td style="padding:7px 8px">${r.n}</td>
-      <td style="padding:7px 8px" class="${r.wr>=50?'num-green':r.wr<20?'num-red':''}">${r.wr.toFixed(0)}%</td>
-      <td style="padding:7px 8px" class="${r.avg>=0?'num-green':'num-red'} sensitive">${fmtUSD(r.avg)}</td>
-      <td style="padding:7px 8px;font-weight:700" class="${r.total>=0?'num-green':'num-red'} sensitive">${fmtUSD(r.total)}</td>
-      <td style="padding:7px 8px">
-        <div style="height:6px;border-radius:var(--r-sm);background:rgba(255,255,255,0.05);overflow:hidden">
-          <div style="height:100%;width:${Math.abs(r.total)/worst*100}%;background:${r.total>=0?'var(--green)':'var(--red)'}"></div>
-        </div>
-      </td>
-    </tr>`).join('')}
-    </tbody></table></div>`;
+let _statisticsRenderSeq = 0;
+function loadStatisticsFeature() {
+  return loadDashboardFeature('statistics.js', () => typeof renderStatisticsContent === 'function');
+}
+function renderStatistics() {
+  const seq = ++_statisticsRenderSeq;
+  const tab = document.getElementById('tab-statistics');
+  if (!tab?.classList.contains('active') || !_currentUser) return;
+  if (typeof renderStatisticsContent === 'function') return renderStatisticsContent();
+  const user = _currentUser;
+  let status = document.getElementById('stats-feature-status');
+  if (!status) {
+    status = document.createElement('p');
+    status.id = 'stats-feature-status';
+    status.setAttribute('role', 'status');
+    tab.prepend(status);
+  }
+  status.textContent = _lang === 'he' ? 'טוען סטטיסטיקות…' : 'Loading statistics…';
+  tab.setAttribute('aria-busy', 'true');
+  const current = () => seq === _statisticsRenderSeq && user === _currentUser && tab.classList.contains('active');
+  return loadStatisticsFeature().then(() => {
+    if (current()) renderStatisticsContent();
+    if (seq === _statisticsRenderSeq) status.remove();
+  }).catch(() => {
+    if (!current()) { if (seq === _statisticsRenderSeq) status.remove(); return; }
+    status.textContent = _lang === 'he' ? 'לא ניתן לטעון סטטיסטיקות. ' : 'Statistics could not load. ';
+    const retry = document.createElement('button');
+    retry.className = 'btn btn-secondary btn-sm';
+    retry.textContent = _lang === 'he' ? 'נסה שוב' : 'Retry';
+    retry.onclick = () => renderStatistics();
+    status.append(retry);
+  }).finally(() => { if (seq === _statisticsRenderSeq) tab.removeAttribute('aria-busy'); });
 }
 
 // ── Subtle gridline color per design system recommendation ──
@@ -4699,10 +4352,19 @@ function renderCumChart(trades) {
   const ctx2d = cumEl.getContext('2d');
   // A fill this heavy read as a solid block rather than a trend — softened to
   // the same light-to-nothing taper the rest of the app's charts use.
-  const grad = ctx2d.createLinearGradient(0, 0, 0, cumEl.offsetHeight || 200);
-  grad.addColorStop(0,    `rgba(${colorRgb},0.22)`);
-  grad.addColorStop(0.55, `rgba(${colorRgb},0.06)`);
-  grad.addColorStop(1,    `rgba(${colorRgb},0.00)`);
+  // Chart.js has already measured its canvas. Reading offsetHeight here forced
+  // another synchronous layout after the overview DOM updates.
+  let gradient, gradientHeight;
+  const chartFill = context => {
+    const height = context.chart.height || 200;
+    if (gradient && gradientHeight === height) return gradient;
+    gradientHeight = height;
+    gradient = ctx2d.createLinearGradient(0, 0, 0, height);
+    gradient.addColorStop(0,    `rgba(${colorRgb},0.22)`);
+    gradient.addColorStop(0.55, `rgba(${colorRgb},0.06)`);
+    gradient.addColorStop(1,    `rgba(${colorRgb},0.00)`);
+    return gradient;
+  };
 
   charts.cum = new Chart(ctx2d, {
     type: 'line',
@@ -4712,7 +4374,7 @@ function renderCumChart(trades) {
         label: isPct ? 'P&L %' : 'P&L $',
         data,
         borderColor: color,
-        backgroundColor: grad,
+        backgroundColor: chartFill,
         tension: 0.4, fill: true,
         pointRadius: data.length > 20 ? 0 : 4,
         pointBackgroundColor: color,
@@ -4770,257 +4432,6 @@ function renderCumChart(trades) {
     _cumResizeObserver = new ResizeObserver(() => charts.cum?.resize());
     _cumResizeObserver.observe(wrapEl);
   }
-}
-
-let _ddResizeObserver = null;
-function renderDrawdownChart(trades) {
-  destroyChart('dd');
-  if (_ddResizeObserver) { _ddResizeObserver.disconnect(); _ddResizeObserver = null; }
-  showChart('skel-dd', 'chart-dd');
-  const el = document.getElementById('chart-dd');
-  const statsEl = document.getElementById('dd-stats');
-  if (!el) return;
-  const { points, maxDrawdown, current, pctMode } = calcDrawdownSeries(trades);
-  const wrapEl = el.parentElement;
-  if (!points.length) {
-    _showChartEmpty(el, 'אין עדיין עסקאות סגורות למדידת ירידת הון');
-    if (statsEl) statsEl.innerHTML = '';
-    return;
-  }
-  _hideChartEmpty(el);
-  // MM-DD alone reads as nonsense once the series crosses a year boundary
-  // (07-11 ... 01-15 ... 08-31 looks like it goes backward in time) — fmtDate
-  // includes the 2-digit year so the axis stays chronological to the eye.
-  const labels = ['', ...points.map(p => fmtDate(p.date))];
-  const data = [0, ...points.map(p => +p.drawdown.toFixed(2))];
-  const ctx2d = el.getContext('2d');
-  const ddRgb = cssVarRgb('--red');
-  const grad = ctx2d.createLinearGradient(0, 0, 0, el.offsetHeight || 150);
-  grad.addColorStop(0,    `rgba(${ddRgb},0.00)`);
-  grad.addColorStop(0.55, `rgba(${ddRgb},0.10)`);
-  grad.addColorStop(1,    `rgba(${ddRgb},0.24)`);
-  charts.dd = new Chart(ctx2d, {
-    type: 'line',
-    data: { labels, datasets: [{
-      label: 'Drawdown', data, borderColor: cssVar('--red'), backgroundColor: grad,
-      tension: 0.35, fill: true, pointRadius: data.length > 20 ? 0 : 4,
-      pointBackgroundColor: cssVar('--red'), borderWidth: 2,
-    }] },
-    options: {
-      ...chartDefaults('line'),
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: 'rgba(10,18,36,0.95)', titleColor: '#94a3b8', bodyColor: '#f1f5f9',
-          borderColor: 'rgba(255,255,255,0.12)', borderWidth: 1, padding: 10, cornerRadius: 8, displayColors: false,
-          callbacks: { label: c => ` ${(+c.raw).toFixed(2)}${pctMode ? '%' : '$'}` }
-        }
-      },
-      layout: { padding: { top: 8, right: 12, bottom: 0, left: 0 } },
-      scales: {
-        x: { ticks: { color: getTickColor(), font: CHART_FONT, maxTicksLimit: 8 }, grid: { color: getGridColor(), drawBorder: false } },
-        y: { ticks: { color: getTickColor(), font: CHART_FONT, callback: v => (+v).toFixed(1) + (pctMode ? '%' : '$') }, grid: { color: getGridColor(), drawBorder: false } }
-      }
-    }
-  });
-  if (wrapEl) {
-    _ddResizeObserver = new ResizeObserver(() => charts.dd?.resize());
-    _ddResizeObserver.observe(wrapEl);
-  }
-  if (statsEl) {
-    statsEl.innerHTML = `<div style="display:flex;justify-content:space-between;font-size:12px;">
-      <span style="color:var(--text3)">ירידה נוכחית: <b style="color:var(--red)">${current.toFixed(2)}${pctMode ? '%' : '$'}</b></span>
-      <span style="color:var(--text3)">ירידה מקסימלית: <b style="color:var(--red)">${maxDrawdown.toFixed(2)}${pctMode ? '%' : '$'}</b></span>
-    </div>`;
-  }
-}
-
-function renderRHistogram(trades) {
-  destroyChart('rhist');
-  showChart('skel-rhist', 'chart-rhist');
-  const el = document.getElementById('chart-rhist');
-  const statsEl = document.getElementById('rhist-stats');
-  if (!el) return;
-  const { buckets, counted } = calcRHistogram(trades);
-  const wrapEl = el.parentElement;
-  if (!counted) {
-    _showChartEmpty(el, 'אין עדיין עסקאות סגורות עם סיכון מדיד למדידת R');
-    if (statsEl) statsEl.innerHTML = '';
-    return;
-  }
-  _hideChartEmpty(el);
-  const ctx2d = el.getContext('2d');
-  // A bucket with 1-2 trades renders a near-zero-height bar next to a bucket
-  // with 25 — the count is real but invisible next to the tall bars. Draw the
-  // count above every non-empty bar so a thin sliver still reads as data.
-  const rhistCountLabels = {
-    id: 'rhistCountLabels',
-    afterDatasetsDraw(chart) {
-      const { ctx, data } = chart;
-      const meta = chart.getDatasetMeta(0);
-      ctx.save();
-      ctx.fillStyle = getTickColor();
-      ctx.font = CHART_FONT.weight + ' 11px ' + CHART_FONT.family;
-      ctx.textAlign = 'center';
-      meta.data.forEach((bar, i) => {
-        const count = data.datasets[0].data[i];
-        if (!count) return;
-        ctx.fillText(count, bar.x, bar.y - 6);
-      });
-      ctx.restore();
-    }
-  };
-  charts.rhist = new Chart(ctx2d, {
-    type: 'bar',
-    data: {
-      labels: buckets.map(b => b.label),
-      datasets: [{
-        data: buckets.map(b => b.count),
-        backgroundColor: buckets.map(b => `rgba(${b.max <= 0 ? cssVarRgb('--red') : cssVarRgb('--green')},0.65)`),
-        borderRadius: 4, borderSkipped: false,
-        minBarLength: 3,
-      }]
-    },
-    plugins: [rhistCountLabels],
-    options: {
-      ...chartDefaults('bar'),
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: 'rgba(10,18,36,0.95)', titleColor: '#94a3b8', bodyColor: '#f1f5f9',
-          borderColor: 'rgba(255,255,255,0.12)', borderWidth: 1, padding: 10, cornerRadius: 8, displayColors: false,
-          callbacks: { label: c => ` ${c.raw} עסקאות` }
-        }
-      },
-      layout: { padding: { top: 20, right: 12, bottom: 0, left: 0 } },
-      scales: {
-        x: { ticks: { color: getTickColor(), font: CHART_FONT }, grid: { display: false } },
-        y: { ticks: { color: getTickColor(), font: CHART_FONT, precision: 0 }, grid: { color: getGridColor(), drawBorder: false } }
-      }
-    }
-  });
-  if (statsEl) {
-    statsEl.innerHTML = `<div style="text-align:center;font-size:12px;color:var(--text3)">${counted} עסקאות עם סיכון מדיד נספרו</div>`;
-  }
-}
-
-// Horizontal bar comparison of avg holding time, winners vs losers — reads the
-// same adv (advancedStats) values already computed for the KPI grid, filtered
-// by whatever period/scope renderStatistics is currently showing.
-function renderHoldCompare(adv) {
-  const wrap = document.getElementById('hold-compare-wrap');
-  if (!wrap) return;
-  const win = adv.avgWinDays, loss = adv.avgLossDays;
-  const max = Math.max(win, loss, 0.01);
-  const row = (label, days, color) => `
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
-      <div style="width:40px;flex-shrink:0;font-size:13px;font-weight:600;color:var(--text2);">${label}</div>
-      <div style="flex:1;height:4px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;">
-        <div style="width:${Math.min(days / max * 100, 100)}%;height:100%;background:${color};border-radius:3px;"></div>
-      </div>
-      <div style="width:36px;flex-shrink:0;font-size:13px;font-weight:700;color:var(--text);text-align:left;">${days.toFixed(1)}d</div>
-    </div>`;
-  const ratio = win > 0 && loss > 0
-    ? (win >= loss ? `${(win / loss).toFixed(1)}:1` : `1:${(loss / win).toFixed(1)}`)
-    : '—';
-  wrap.innerHTML = row('מנצחת', win, '#0d9488') + row('הפסד', loss, '#e11d48')
-    + `<div style="text-align:center;font-size:13px;font-weight:700;color:var(--text);margin-top:2px;">יחס: ${ratio}</div>`;
-}
-
-function renderDonut(st, adv, trades) {
-  destroyChart('donut');
-  showChart('skel-donut', 'chart-donut');
-  const rowEl = document.getElementById('donut-row');
-  if (rowEl) rowEl.style.display = 'flex';
-  const donutEl = document.getElementById('chart-donut'); if (!donutEl) return;
-  const ctx = donutEl.getContext('2d');
-  const closedCount = st.nClosed ?? ((st.wins || 0) + (st.losses || 0));
-  const winPct = closedCount ? (st.wins / closedCount * 100).toFixed(1) : '0.0';
-  const lossPct = closedCount ? (st.losses / closedCount * 100).toFixed(1) : '0.0';
-  const winEl  = document.getElementById('donut-legend-win');
-  const lossEl = document.getElementById('donut-legend-loss');
-  if (winEl) winEl.innerHTML = `
-    <div class="donut-legend-lbl"><span class="donut-legend-dot" style="background:var(--green);"></span>${t('donut_wins')}</div>
-    <div class="donut-legend-val" style="color:var(--green);">${st.wins || 0} (${winPct}%)</div>`;
-  if (lossEl) lossEl.innerHTML = `
-    <div class="donut-legend-lbl"><span class="donut-legend-dot" style="background:var(--red);"></span>${t('donut_losses')}</div>
-    <div class="donut-legend-val" style="color:var(--red);">${st.losses || 0} (${lossPct}%)</div>`;
-  charts.donut = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: [t('donut_win'), t('donut_loss')],
-      datasets: [{
-        data: [st.wins || 0, st.losses || 0],
-        backgroundColor: [cssVar('--green'), cssVar('--red')],
-        borderColor: 'rgba(0,0,0,0)',
-        borderWidth: 0,
-        hoverOffset: 6
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: { label: c => ` ${c.label}: ${c.raw} (${closedCount ? (c.raw/closedCount*100).toFixed(1) : 0}%)` }
-        }
-      },
-      cutout: '70%',
-      animation: { duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 300 }
-    }
-  });
-
-  // ── Compute extra stats ──────────────────────────
-  // Profit Factor, W/L Ratio and the win/loss streaks now live in the KPI grid
-  // above — kept here would be the same numbers twice on one tab. Best/worst
-  // trade are the only donut-adjacent numbers not already shown elsewhere.
-  const none = '—';
-  const bestStr  = st.n ? fmtUSD(st.best)  : none;
-  const worstStr = st.n ? fmtUSD(st.worst) : none;
-
-  const el = document.getElementById('donut-stats');
-  if (el) el.innerHTML = `
-    <div class="donut-stat">
-      <div class="donut-stat-label">${t('donut_best')}</div>
-      <div class="donut-stat-value green sensitive">${bestStr}</div>
-    </div>
-    <div class="donut-stat">
-      <div class="donut-stat-label">${t('donut_worst')}</div>
-      <div class="donut-stat-value red sensitive">${worstStr}</div>
-    </div>`;
-  applyPrivacy();
-}
-
-let _compScopeData = { st: [], cr: [] };
-let _compScope = 'all';
-
-function _renderCompBody(scope) {
-  const tr = scope === 'stock' ? _compScopeData.st
-           : scope === 'crypto' ? _compScopeData.cr
-           : [..._compScopeData.st, ..._compScopeData.cr];
-  const accentColor = scope === 'stock' ? '#818cf8' : scope === 'crypto' ? '#f59e0b' : '#4f83ff';
-  const st = stats(tr);
-  const adv = advancedStats(tr);
-  const wl    = adv.avgLoss!==0 ? Math.abs(adv.avgWin/adv.avgLoss).toFixed(2)+'x' : '—';
-  document.getElementById('comp-card-inner').innerHTML = `
-    <div class="comp-stat"><span class="comp-stat-label">${_lang==='he'?'יחס רווח ממוצע להפסד ממוצע':'Average win / loss ratio'}</span><span class="comp-stat-val sensitive">${wl}</span></div>
-    <div class="comp-stat"><span class="comp-stat-label">${t('comp_avg_trade')}</span><span class="comp-stat-val ${clr(st.avg)} sensitive">${st.n?fmtUSD(st.avg):'—'}</span></div>
-  `;
-  document.getElementById('comp-card-wrap').style.borderTopColor = accentColor;
-  applyPrivacy();
-}
-
-function _switchCompScope(scope) {
-  _compScope = scope;
-  _renderCompBody(scope);
-}
-
-function renderComparison(stTrades, crTrades) {
-  _compScopeData = { st: stTrades, cr: crTrades };
-  document.getElementById('comparison-wrap').innerHTML =
-    `<div class="comp-card" id="comp-card-wrap" style="border-top:2px solid #4f83ff;"><div id="comp-card-inner"></div></div>`;
-  _renderCompBody(statsScope);
 }
 
 // ─────────────────────────────────────────────
@@ -6310,164 +5721,19 @@ function saveDB() { /* no-op — CRUD functions write directly to Supabase */ }
 // ══════════════════════════════════════════════
 // INTERACTIVE ISRAEL — TLG FILE IMPORT
 // ══════════════════════════════════════════════
-function tlgLoadFile(input) {
+async function tlgLoadFile(input) {
   const file = input.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => tlgParse(e.target.result);
-  reader.readAsText(file, 'utf-8');
-}
-
-function tlgParse(text) {
-  const status  = document.getElementById('tlg-status');
-  const preview = document.getElementById('tlg-preview');
-  if (status)  status.textContent = '';
-  if (preview) preview.innerHTML  = '';
-
-  const lines = text.split(/\r?\n/).filter(l => l.startsWith('STK_TRD|'));
-  if (!lines.length) {
-    if (status) status.textContent = '❌ לא נמצאו עסקאות בקובץ';
-    return;
+  const user = _currentUser;
+  try {
+    await loadDashboardFeature('file-import.js', () => typeof tlgParse === 'function');
+    if (_currentUser !== user) return;
+    const reader = new FileReader();
+    reader.onload = e => { if (_currentUser === user) tlgParse(e.target.result); };
+    reader.readAsText(file, 'utf-8');
+  } catch {
+    if (_currentUser === user) toast(_lang === 'he' ? 'לא ניתן לטעון את כלי הייבוא — בחר את הקובץ שוב' : 'Import tools could not load — select the file again', 'error');
   }
-
-  // Parse each row
-  const rows = lines.map(line => {
-    const p = line.split('|');
-    // STK_TRD|OrderID|Symbol|Name|Exchange|Action|OC|Date|Time|Currency|Qty|Mult|Price|Value|Commission|...
-    const action = (p[5] || '').toUpperCase();
-    const oc     = (p[6] || '').toUpperCase();
-    const rawDate = p[7] || '';
-    const entryDate = rawDate.length === 8
-      ? `${rawDate.slice(0,4)}-${rawDate.slice(4,6)}-${rawDate.slice(6,8)}`
-      : '';
-    return {
-      orderId:    p[1] || '',
-      symbol:     (p[2] || '').toUpperCase().replace(/[^A-Z0-9._\-]/g,'').slice(0,10),
-      name:       p[3] || '',
-      action,
-      oc,
-      entryDate,
-      price:      Math.abs(parseFloat(p[12]) || 0),
-      time:       p[8] || "",
-      qty:        Math.abs(parseFloat(p[10]) || 0),
-      commission: Math.abs(parseFloat(p[14]) || 0),
-      isBuy:      action.includes('BUY'),
-    };
-  }).filter(r => r.symbol && r.price && r.qty);
-
-  // FIFO-match each symbol's fills against each other.
-  //
-  // This used to bucket fills into buys/sells and then, for every buy, scan the
-  // WHOLE sells list for anything dated on or after it. Nothing was ever
-  // consumed, so two buys of one symbol followed by a single sell closed BOTH
-  // buys against that same sell — the P&L and the sell's commission were
-  // counted once per buy. It also hardcoded ls:'L', so a short's opening SELL
-  // landed in the sells bucket, silently vanished as a position, and corrupted
-  // the matching of the real buys around it.
-  const bySymbol = {};
-  rows.forEach(r => { (bySymbol[r.symbol] = bySymbol[r.symbol] || []).push(r); });
-
-  const trades = [];
-  Object.entries(bySymbol).forEach(([sym, fills]) => {
-    // FIFO is meaningless on file order and the export is not guaranteed sorted.
-    fills.sort((a, b) => (a.entryDate + a.time).localeCompare(b.entryDate + b.time));
-    const lots = [];
-    fills.forEach(f => {
-      let qty = f.qty;
-      // The broker's O/C column decides when it is filled in; direction against
-      // what is actually open is the fallback for rows that leave it blank.
-      const opensOnly = f.oc.startsWith('O');
-      const want = f.isBuy ? 'S' : 'L';   // a buy closes shorts, a sell closes longs
-      if (!opensOnly) {
-        for (const lot of lots) {
-          if (qty <= 1e-9) break;
-          if (lot.ls !== want || lot.left <= 1e-9) continue;
-          const take = Math.min(lot.left, qty);
-          lot.left -= take;
-          qty -= take;
-          lot.closedShares += take;
-          lot.legs.push({ shares: take, price: f.price });
-          lot.closeDate = f.entryDate;
-          lot.exitPrice = f.price;
-          // The fill is charged one commission for its whole size; give each
-          // lot it closed only that lot's share.
-          lot.commission += f.commission * take / f.qty;
-        }
-      }
-      // Whatever is left opens a position — a plain open, or the far side of a
-      // reversal that closed more than was on the books.
-      if (qty > 1e-9) {
-        lots.push({
-          symbol: sym, name: f.name, entryDate: f.entryDate, entryPrice: f.price,
-          shares: qty, ls: f.isBuy ? 'L' : 'S', left: qty,
-          commission: f.commission * qty / f.qty,
-          closedShares: 0, closeDate: '', exitPrice: 0, legs: [],
-        });
-      }
-    });
-    lots.forEach(l => trades.push({
-      symbol: l.symbol, name: l.name,
-      entryDate: l.entryDate, entryPrice: l.entryPrice, shares: l.shares,
-      commission: Math.round(l.commission * 10000) / 10000,
-      closeDate: l.closedShares > 0 ? l.closeDate : '',
-      exitPrice: l.closedShares > 0 ? l.exitPrice : 0,
-      closedShares: l.closedShares,
-      // closedShares is TOTAL closed volume and calcPL prices the remainder
-      // (closedShares - sum(targets[].shares)) at exitPrice, so the final leg
-      // must NOT also be listed as a target or it is counted twice.
-      targets: l.legs.length > 1 ? l.legs.slice(0, -1) : [],
-      ls: l.ls,
-    }));
-  });
-
-  if (!trades.length) {
-    if (status) status.textContent = '❌ לא ניתן לבנות עסקאות מהקובץ';
-    return;
-  }
-
-  if (status) status.innerHTML = `<span style="color:var(--green)">✅ נמצאו ${trades.length} עסקאות — בחר אילו לייבא:</span>`;
-
-  // Store for confirmation
-  window._tlgPending = trades;
-
-  // Render preview
-  if (!preview) return;
-  preview.innerHTML = '';
-  trades.forEach((t, i) => {
-    // calcPL, not a long-only one-liner: this preview now shows shorts (whose
-    // P&L runs the other way) and multi-leg exits (which live in targets and
-    // were priced at the final exit by the subtraction below).
-    const pnl = t.closedShares > 0 ? (calcPL({ ...t, t: t.targets }) - t.commission).toFixed(2) : null;
-    const pnlHtml = pnl !== null
-      ? `<span style="color:${+pnl >= 0 ? 'var(--green)' : 'var(--red)'};">${+pnl >= 0 ? '+' : ''}$${pnl}</span>`
-      : '<span style="color:var(--text3)">פתוח</span>';
-    const safeEntryDate  = /^\d{4}-\d{2}-\d{2}$/.test(t.entryDate) ? t.entryDate : '—';
-    const safeEntryPrice = parseFloat(t.entryPrice||0).toFixed(4);
-    const safeShares     = parseFloat(t.shares||0);
-    const safeTargets    = Number.isInteger(t.targets?.length) ? t.targets.length : 0;
-    const div = document.createElement('div');
-    div.className = 'ibkr-trade-preview';
-    div.innerHTML = `
-      <div>
-        <span class="sym">${esc(t.symbol)}</span>
-        <span style="font-size:11px;color:var(--text3);margin-right:8px;">${esc(t.name)}</span>
-      </div>
-      <div class="det">
-        ${safeEntryDate} &nbsp;|&nbsp; כניסה: $${safeEntryPrice} &nbsp;|&nbsp;
-        ${safeShares} מניות &nbsp;|&nbsp; P&L: ${pnlHtml}
-        ${safeTargets ? ` &nbsp;|&nbsp; ${safeTargets} יציאות חלקיות` : ''}
-      </div>
-      <button class="btn btn-primary btn-sm" onclick="tlgConfirm(${i})" id="tlg-btn-${i}">+ ייבא</button>
-    `;
-    preview.appendChild(div);
-  });
-
-  const allBtn = document.createElement('button');
-  allBtn.className = 'btn btn-primary';
-  allBtn.style.marginTop = '12px';
-  allBtn.textContent = `📥 ייבא הכל (${trades.length})`;
-  allBtn.onclick = () => trades.forEach((_, i) => tlgConfirm(i));
-  preview.appendChild(allBtn);
 }
 
 async function deduplicateDB(type) {
@@ -8401,6 +7667,10 @@ async function missedLoad() {
 
 async function missedAdd() {
   if (!_currentUser) { toast('לא מחובר','error'); return; }
+  const user = _currentUser;
+  try { await loadMissedFeature(); } catch { toast(_lang === 'he' ? 'לא ניתן לטעון את הכלים — נסה שוב' : 'Tools could not load — try again', 'error'); return; }
+  if (_currentUser !== user) return;
+
   const sym    = document.getElementById('missed-sym').value.trim().toUpperCase().replace(/[^A-Z0-9._\-]/g,'');
   const date   = document.getElementById('missed-date').value;
   const price  = parseFloat(document.getElementById('missed-price').value);
@@ -8415,6 +7685,7 @@ async function missedAdd() {
   const { data, error } = await _sb.from('missed_opportunities')
     .insert({ user_id: _currentUser.id, symbol: sym, date, price, sector, note })
     .select().single();
+  if (_currentUser !== user) return;
   if (error) { toast('שגיאה בהוספה: ' + (error.message || error.code || 'unknown'), 'error'); console.error('[missedAdd]', error); return; }
 
   document.getElementById('missed-sym').value    = '';
@@ -8463,337 +7734,35 @@ async function missedDelete(id) {
 // user has explicitly toggled AWAY from their default — remembered per user
 // so it survives a reload. Default state is computed fresh on every render
 // (see _missedDefaultCollapsed), so a toggle just flips it once.
-const _MISSED_COLLAPSE_KEY = () => 'missed_toggled_' + (_currentUser?.id || 'anon');
-const _MISSED_MONTH_THRESHOLD = 8; // a month with fewer cards than this always starts open
-function _missedLoadToggled() {
-  try { return new Set(JSON.parse(localStorage.getItem(_MISSED_COLLAPSE_KEY())) || []); } catch { return new Set(); }
-}
-function _missedSaveToggled(set) {
-  try { localStorage.setItem(_MISSED_COLLAPSE_KEY(), JSON.stringify([...set])); } catch {}
-}
-function missedToggleSection(key) {
-  const toggled = _missedLoadToggled();
-  if (toggled.has(key)) toggled.delete(key); else toggled.add(key);
-  _missedSaveToggled(toggled);
-  document.getElementById('missed-section-' + key)?.classList.toggle('collapsed');
-}
-
-// Cross-check: was a symbol logged as a missed opportunity eventually traded?
-// Matches by symbol against every entry strictly after the missed date and
-// returns the earliest such trade — a later re-entry doesn't change the
-// answer to "did this ever get acted on". No new field needed: symbol+date
-// is already on both sides.
-function missedFollowThrough(missedItem, trades) {
-  const later = trades.filter(t => t.symbol === missedItem.sym && t.entryDate && t.entryDate > missedItem.date);
-  if (!later.length) return null;
-  return later.reduce((a, b) => a.entryDate < b.entryDate ? a : b);
-}
-
-function missedRenderList(list) {
-  const container = document.getElementById('missed-tbody');
-  if (!container) return;
-  if (!list.length) {
-    container.innerHTML = `<div class="missed-empty">${t('missed_empty')}</div>`;
-    return;
-  }
-  const allTrades = [...db.stocks, ...db.crypto].filter(t => !t.deleted);
-  const sorted = [...list].sort((a, b) => b.date.localeCompare(a.date));
-  // Two-level grouping: year (the archive — every past year starts collapsed
-  // so old history doesn't dominate the page but is always one click away)
-  // then month within the year (the current month always starts open; a
-  // heavy past month inside the current year also starts collapsed).
-  const byYear = {};
-  sorted.forEach(r => {
-    const y = r.date.slice(0, 4);
-    (byYear[y] ??= []).push(r);
-  });
-  const thisYear = String(new Date().getFullYear());
-  const thisMonthKey = new Date().toISOString().slice(0, 7);
-  const toggled = _missedLoadToggled();
-  const byMonthCount = {};
-  sorted.forEach(r => { const k = r.date.slice(0, 7); byMonthCount[k] = (byMonthCount[k] || 0) + 1; });
-  const collapsed = key => {
-    const defaultCollapsed = key.length === 4
-      ? key !== thisYear                                                    // year key
-      : key !== thisMonthKey && byMonthCount[key] >= _MISSED_MONTH_THRESHOLD; // month key
-    return toggled.has(key) ? !defaultCollapsed : defaultCollapsed;
-  };
-
-  const cardHtml = r => `
-      <div class="missed-card" id="missed-row-${r.id}">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
-          <div class="missed-card-sym">${esc(r.sym)}</div>
-          <div class="missed-card-actions">
-            <button class="missed-del-btn edit" onclick="missedEdit('${r.id}')" title="ערוך">✏</button>
-            <button class="missed-del-btn" onclick="missedDelete('${r.id}')" title="מחק">✕</button>
-          </div>
-        </div>
-        <div class="missed-card-price sensitive">$${fmtPrice(r.price)}</div>
-        <div class="missed-card-meta">${r.sector ? esc(r.sector)+' · ' : ''}${fmtDate(r.date)}</div>
-        <div class="missed-since sensitive" id="missed-since-${r.id}"></div>
-        ${(() => { const ft = missedFollowThrough(r, allTrades); return ft
-          ? `<div class="missed-card-meta" style="color:var(--green)">✓ בסוף נסחר ב-${fmtDate(ft.entryDate)}</div>` : ''; })()}
-        ${r.note ? `<div class="missed-card-note">${esc(r.note)}</div>` : ''}
-      </div>`;
-
-  const sectionHtml = (key, label, count, depth, innerHtml) => `
-      <div class="missed-${depth}-section${collapsed(key) ? ' collapsed' : ''}" id="missed-section-${key}">
-        <div class="missed-${depth}-label" onclick="missedToggleSection('${key}')">
-          <svg class="missed-month-chevron" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
-          ${label} <span style="color:var(--accent);font-size:10px;font-weight:800">${count}</span>
-          ${depth === 'month' ? `<span class="missed-month-pnl sensitive" id="missed-month-pnl-${key}"></span>` : ''}
-        </div>
-        <div class="missed-${depth}-body">${innerHtml}</div>
-      </div>`;
-
-  // Object.entries on numeric-looking keys ("2025","2026") always iterates
-  // ascending regardless of insertion order — that's a JS engine rule, not a
-  // sort this code was doing — so the oldest year rendered first (top) no
-  // matter what. Sorted explicitly descending here: newest year on top,
-  // oldest (2025) at the bottom.
-  container.innerHTML = Object.entries(byYear).sort((a, b) => b[0].localeCompare(a[0])).map(([year, yearItems]) => {
-    // Months and their cards read newest-first, same direction as the
-    // year-level order above.
-    const byMonth = {};
-    [...yearItems].sort((a, b) => b.date.localeCompare(a.date))
-      .forEach(r => { const k = r.date.slice(0, 7); (byMonth[k] ??= []).push(r); });
-    const monthsHtml = Object.entries(byMonth).sort((a, b) => b[0].localeCompare(a[0])).map(([key, items]) => {
-      const label = months()[+key.slice(5, 7) - 1];
-      const cards = `<div class="missed-cards">${items.map(cardHtml).join('')}</div>`;
-      return sectionHtml(key, label, items.length, 'month', cards);
-    }).join('');
-    return sectionHtml(year, year, yearItems.length, 'year', monthsHtml);
-  }).join('');
-
-  container.querySelectorAll('.missed-card').forEach((el, i) => {
-    el.style.setProperty('--i', i);
-    el.classList.add('animate-in');
-  });
-  // Whatever quotes are already warm in the cache (e.g. a re-render within
-  // the TTL) paint immediately; missedFollowUp repaints once fresh ones land.
-  _paintMissedMonthSummaries(list);
-}
-
-// "Was this month, across everything I passed on, actually a good one?" —
-// the average % move from the logged price to the latest quote, over every
-// row in the month that has both. No position size is recorded here (these
-// were never bought), so a dollar total isn't answerable — the average % is.
-// Last calendar day of a 'YYYY-MM' month key, as 'YYYY-MM-DD'. Day 0 of the
-// following month is the trick — Date normalizes a 0 day back into the last
-// day of the month before it.
-function _monthEndDate(monthKey) {
-  const [y, m] = monthKey.split('-').map(Number);
-  const d = new Date(Date.UTC(y, m, 0));
-  return d.toISOString().slice(0, 10);
-}
-function _missedIsCurrentMonth(monthKey) {
-  return monthKey === new Date().toISOString().slice(0, 7);
-}
-// The month's OWN move, not the drift since the user happened to log it — a
-// row from March read against today's price mixes six months of unrelated
-// market movement into "was March good". Past months compare against the
-// close on that month's last trading day (_missedHistClose, fetched once,
-// never stale — history doesn't change); the still-open current month has no
-// "end" yet, so it uses the same live quote the per-row "% since" already shows.
-function _missedMonthAvgPct(items, monthKey) {
-  const current = _missedIsCurrentMonth(monthKey);
-  const pts = items.map(r => {
-    const sym = (r.sym || '').toUpperCase();
-    const base = +r.price || 0;
-    if (!base) return null;
-    const price = current ? _missedQuotes[sym]?.p : _missedHistClose[sym + '|' + monthKey];
-    return price ? (price - base) / base * 100 : null;
-  }).filter(v => v !== null);
-  return pts.length ? { avg: pts.reduce((a, b) => a + b, 0) / pts.length, n: pts.length, of: items.length } : null;
-}
-function _paintMissedMonthSummaries(list) {
-  const byMonth = {};
-  list.forEach(r => { const k = (r.date || '').slice(0, 7); if (k.length === 7) (byMonth[k] ??= []).push(r); });
-  Object.entries(byMonth).forEach(([key, items]) => {
-    const el = document.getElementById('missed-month-pnl-' + key);
-    if (!el) return;
-    const s = _missedMonthAvgPct(items, key);
-    if (!s) { el.textContent = ''; el.title = ''; return; }
-    const good = s.avg >= 0;
-    const scope = _missedIsCurrentMonth(key) ? 'עד היום' : 'במהלך החודש עצמו';
-    el.innerHTML = `<span class="${good ? 'num-green' : 'num-red'}">${good ? '📈' : '📉'} ${fmtPct(s.avg)} בממוצע</span>`;
-    el.title = (s.n < s.of ? `מבוסס על ${s.n} מתוך ${s.of} — לחלק אין מחיר זמין. ` : `על ${s.n} עסקאות. `)
-      + `שינוי ${scope}, לא מהיום שנרשם.`;
-  });
-  applyPrivacy();
-}
-
-// Historical closes are immutable once the month is over — no TTL, unlike
-// _missedQuotes. Keyed 'SYM|YYYY-MM' since the same symbol can appear in
-// several months.
-const _missedHistClose = {};
-async function _fetchMissedMonthHistory(list) {
-  const need = [];
-  const seen = new Set();
-  list.forEach(r => {
-    const monthKey = (r.date || '').slice(0, 7);
-    const sym = (r.sym || '').toUpperCase();
-    if (monthKey.length !== 7 || !sym || _missedIsCurrentMonth(monthKey) || symIsCrypto(sym)) return;
-    const key = sym + '|' + monthKey;
-    if (seen.has(key) || key in _missedHistClose) return;
-    seen.add(key);
-    need.push({ sym, monthKey, key });
-  });
-  if (!need.length) return;
-  const token = await _getToken();
-  await Promise.all(need.map(async ({ sym, monthKey, key }) => {
-    try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=history&symbol=${encodeURIComponent(sym)}&date=${_monthEndDate(monthKey)}`,
-        { headers: { 'Authorization': `Bearer ${token}` } });
-      if (res.ok) { const data = await res.json(); _missedHistClose[key] = data?.c || null; }
-    } catch { /* leaves the key unset — next visit retries rather than caching a failure */ }
-  }));
-  _paintMissedMonthSummaries(list);
-}
-
-let _missedRenderSeq = 0;
-async function missedRender(force = false) {
-  const seq = ++_missedRenderSeq;
-  const user = _currentUser;
-  if (_missedLoaded && !force) {
-    missedRenderList(_missedList);
-    missedFollowUp(_missedList);
-    _fetchMissedMonthHistory(_missedList);
-    return;
-  }
-  const list = await missedLoad();
-  if (seq !== _missedRenderSeq || _currentUser !== user) return;
-  _missedList = list;
-  _missedLoaded = true;
-  missedRenderList(list);
-  _paintMissedReasons(list);
-  missedFollowUp(list);
-  _fetchMissedMonthHistory(list);
-}
-
-// A missed-opportunity log without an outcome is a list of regrets. This says
-// what the trade would have done, which is the only part worth learning from.
-// Quotes are cached with a timestamp, not forever. The old cache keyed on
-// `=== undefined`, so the "% since" froze at whatever the price was the first
-// time the tab opened — and the socket teardown on visibilitychange keeps this
-// page alive in bfcache for days, so "first time" could be days ago.
-// A failed fetch is never written to the cache either: the shared Finnhub key
-// is rate-limited to 30/min per user and missedFollowUp fires every symbol at
-// once, so a single 429 used to blank that symbol's percentage permanently.
 const _missedQuotes = {};
-// Why a setup was missed, read off the free-text note. Order matters: "didn't
-// act because of the market" is a market call, not hesitation.
-function _missedReason(note) {
-  const n = (note || '').trim();
-  if (!n) return 'none';
-  if (/זוהה אוטומטית/.test(n)) return 'auto';
-  if (/שוק|ריבית|תנודתי/.test(n)) return 'market';
-  if (/לא שמתי לב|שכחתי|לא ראיתי|ברח לי|מילואים|לא סיננתי/.test(n)) return 'noticed';
-  if (/גאפ|ניעור|ממוצע|סיכון|lps|נר /i.test(n)) return 'setup';
-  if (/ביטחון|לא פעלתי|לא הייתי סגור|שאנן|היסוס|פחד/.test(n)) return 'doubt';
-  return 'other';
+let _missedFeatureSeq = 0;
+function loadMissedFeature() {
+  return loadDashboardFeature('missed.js', () => typeof missedRenderContent === 'function');
 }
-const _MISSED_REASON_LBL = { market: 'שוק / ריבית', noticed: 'לא שמתי לב', doubt: 'היסוס', setup: 'בעיה בסטאפ', auto: 'זוהה אוטומטית', other: 'אחר', none: 'בלי הערה' };
-// Grouped by reason, each with what those trades did since: the log itself
-// shows the pattern only one card at a time.
-function _paintMissedReasons(list) {
-  const el = document.getElementById('missed-reasons');
-  if (!el) return;
-  if (!list.length) { el.innerHTML = ''; return; }
-  const g = {};
-  for (const r of list) {
-    const k = _missedReason(r.note), p = _missedQuotes[(r.sym || '').toUpperCase()]?.p, base = +r.price || 0;
-    (g[k] ??= { n: 0, chg: [] }).n++;
-    if (p && base) g[k].chg.push((p - base) / base * 100);
+async function missedRender(force = false) {
+  const seq = ++_missedFeatureSeq;
+  const user = _currentUser;
+  const tab = document.getElementById('tab-missed');
+  if (!user || !tab?.classList.contains('active')) return;
+  try {
+    const [, list] = await Promise.all([
+      loadMissedFeature(),
+      _missedLoaded && !force ? Promise.resolve(undefined) : missedLoad()
+    ]);
+    if (seq !== _missedFeatureSeq || user !== _currentUser || !tab.classList.contains('active')) return;
+    await missedRenderContent(force, list);
+  } catch {
+    if (seq !== _missedFeatureSeq || user !== _currentUser || !tab.classList.contains('active')) return;
+    const host = document.getElementById('missed-tbody');
+    host.replaceChildren();
+    const message = document.createElement('p');
+    message.textContent = _lang === 'he' ? 'לא ניתן לטעון את התצוגה. ' : 'View could not load. ';
+    const retry = document.createElement('button');
+    retry.className = 'btn btn-secondary btn-sm';
+    retry.textContent = _lang === 'he' ? 'נסה שוב' : 'Retry';
+    retry.onclick = () => missedRender(force);
+    message.append(retry); host.append(message);
   }
-  const rows = Object.entries(g).sort((a, b) => b[1].n - a[1].n).map(([k, v]) => {
-    const avg = v.chg.length ? v.chg.reduce((s, x) => s + x, 0) / v.chg.length : null;
-    const up = v.chg.length ? Math.round(v.chg.filter(x => x > 0).length / v.chg.length * 100) : null;
-    return `<tr><td>${_MISSED_REASON_LBL[k]}</td><td>${v.n}</td><td>${avg == null ? '—' : `<span class="${avg >= 0 ? 'num-green' : 'num-red'}">${fmtPct(avg)}</span>`}</td><td>${up == null ? '—' : up + '%'}</td></tr>`;
-  }).join('');
-  el.innerHTML = `<div class="missed-reasons-title">למה פספסתי — ומה קרה אחר כך</div>`
-    + `<table class="missed-reasons-table"><thead><tr><th scope="col">סיבה</th><th scope="col">פעמים</th><th scope="col">ממוצע מאז</th><th scope="col">עלו מאז</th></tr></thead><tbody>${rows}</tbody></table>`;
-}
-const _MISSED_QUOTE_TTL = 60_000;
-async function missedFollowUp(list) {
-  if (!list.length) return;
-  const token = await _getToken();
-  const syms = [...new Set(list.map(r => (r.sym || '').toUpperCase()).filter(Boolean))];
-  await Promise.all(syms.map(async sym => {
-    // Finnhub answers a crypto ticker with c:0, which looked identical to a
-    // failed request — the card just stayed blank forever with no explanation.
-    if (symIsCrypto(sym)) { _missedQuotes[sym] = { p: null, ts: Infinity }; }
-    const hit = _missedQuotes[sym];
-    if (!hit || Date.now() - hit.ts > _MISSED_QUOTE_TTL) {
-      try {
-        const res = await fetch(`${SUPABASE_URL}/functions/v1/finnhub?path=quote&symbol=${encodeURIComponent(sym)}`,
-          { headers: { 'Authorization': `Bearer ${token}` } });
-        if (res.ok) {
-          const data = await res.json();
-          _missedQuotes[sym] = { p: +data.c || null, ts: Date.now() };
-        }
-      } catch { /* keep any previous quote rather than blanking the card */ }
-    }
-    const price = _missedQuotes[sym]?.p;
-    list.filter(r => (r.sym || '').toUpperCase() === sym).forEach(r => {
-      const el = document.getElementById('missed-since-' + r.id);
-      if (!el) return;
-      const base = +r.price || 0;
-      if (!price || !base) {
-        // A known-unquotable symbol says so; a request still in flight stays
-        // blank rather than flashing a dash it will replace a moment later.
-        el.textContent = (_missedQuotes[sym] && _missedQuotes[sym].p === null) ? '—' : '';
-        el.title = el.textContent ? 'אין מקור ציטוט לסימבול הזה' : '';
-        return;
-      }
-      el.title = '';
-      const chg = (price - base) / base * 100;
-      el.innerHTML = `<span class="${chg >= 0 ? 'num-green' : 'num-red'}">${fmtPct(chg)}</span>
-        <span style="color:var(--text3)">מאז · $${fmtPrice(price)}</span>`;
-    });
-  }));
-  _paintMissedMonthSummaries(list);
-  _paintMissedReasons(list);
-  applyPrivacy();
-}
-
-function missedEdit(id) {
-  const r = _missedList.find(x => String(x.id) === String(id));
-  if (!r) return;
-  const card = document.getElementById('missed-row-' + id);
-  if (!card) return;
-  card.innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      <input class="form-control" style="font-size:12px;padding:4px 8px;text-transform:uppercase" value="${esc(r.sym)}" id="me-sym-${id}" placeholder="סימבול">
-      <input class="form-control" style="font-size:12px;padding:4px 8px" value="${esc(r.sector||'')}" id="me-sec-${id}" placeholder="סקטור">
-      <input class="form-control" type="date" style="font-size:12px;padding:4px 8px" value="${esc(r.date)}" id="me-date-${id}">
-      <input class="form-control" type="number" style="font-size:12px;padding:4px 8px" value="${r.price}" step="0.0001" id="me-price-${id}" placeholder="מחיר">
-      <input class="form-control" style="font-size:12px;padding:4px 8px" value="${esc(r.note||'')}" id="me-note-${id}" placeholder="הערה" maxlength="120">
-      <div style="display:flex;gap:6px;margin-top:2px;">
-        <button class="btn btn-primary btn-sm" style="flex:1;font-size:11px" onclick="missedSaveEdit('${id}')">שמור</button>
-        <button class="btn btn-secondary btn-sm" style="font-size:11px" onclick="missedRender()">ביטול</button>
-      </div>
-    </div>`;
-}
-
-async function missedSaveEdit(id) {
-  const sym   = (document.getElementById('me-sym-'+id)?.value||'').trim().toUpperCase().replace(/[^A-Z0-9._\-]/g,'');
-  const sector= (document.getElementById('me-sec-'+id)?.value||'').trim().slice(0,40);
-  const date  = document.getElementById('me-date-'+id)?.value||'';
-  const price = parseFloat(document.getElementById('me-price-'+id)?.value);
-  const note  = (document.getElementById('me-note-'+id)?.value||'').trim().slice(0,120);
-
-  if (!sym)                   { toast('הכנס סימבול','error'); return; }
-  if (!date)                  { toast('הכנס תאריך','error'); return; }
-  if (isNaN(price)||price<=0) { toast('הכנס מחיר תקין','error'); return; }
-
-  _rtSuppress('missed_opportunities');
-  const { error } = await _sb.from('missed_opportunities')
-    .update({ symbol: sym, sector, date, price, note })
-    .eq('id', id).eq('user_id', _currentUser.id);
-  if (error) { toast('שגיאה בעדכון','error'); console.error(error); return; }
-  await missedRender(true);
-  toast('עודכן ✓','success');
 }
 
 if ('serviceWorker' in navigator) {
@@ -8813,14 +7782,14 @@ function ttSetPeriod(p, btn) {
   document.querySelectorAll('.tt-period').forEach(b => b.classList.toggle('active', b.dataset.p === p));
   if (_ttData) ttRender(_ttData, _ttIndices);
   if (_sectorTicker) {
-    if (_sectorCache[_sectorTicker]) _renderHoldingsForPeriod(_sectorCache[_sectorTicker], p);
+    if (_sectorHoldingsCache[_sectorTicker]) _renderHoldingsForPeriod(_sectorHoldingsCache[_sectorTicker], p);
     else _fetchAndRender(_sectorTicker, false);
   }
 }
 
 function ttStartTimer() {
   ttStopTimer();
-  _ttTimer = setInterval(() => ttLoad(true), 60000);
+  _ttTimer = setInterval(() => { if (!document.hidden && document.getElementById('tab-themes')?.classList.contains('active')) ttLoad(true); }, 60000);
 }
 
 function ttScheduleMidnight() {
@@ -8901,200 +7870,31 @@ async function ttLoad(force = false) {
   }
 }
 
-function ttRender(themes, indices) {
-  const grid = document.getElementById('tt-grid');
-  if (!grid) return;
-  const pKey = _ttPeriod;
-
-  // ── Indices bar ──
-  const indicesEl = document.getElementById('tt-indices');
-  if (indicesEl && indices?.length) {
-    indicesEl.innerHTML = indices.map(idx => {
-      const pct = idx[pKey];
-      const cls = pct == null ? 'flat' : pct > 0 ? 'pos' : pct < 0 ? 'neg' : 'flat';
-      const sign = pct != null && pct > 0 ? '+' : '';
-      const display = pct != null ? sign + pct.toFixed(2) + '%' : '—';
-      return `<div class="tt-index-card">
-        <div class="tt-index-name">${esc(idx.name)}</div>
-        <div class="tt-index-pct ${cls}">${display}</div>
-        <div class="tt-index-ticker">${esc(idx.ticker)}</div>
-      </div>`;
-    }).join('');
-  }
-
-  // ── Theme list ──
-  const valid = themes.filter(t => t[pKey] != null);
-  const sorted = [...valid].sort((a, b) => b[pKey] - a[pKey]);
-  if (!sorted.length) { grid.innerHTML = '<div class="tt-loading">אין נתונים לתקופה זו</div>'; return; }
-
-  // ── Sentiment Score (overview widget only) ──
-  {
-    const green = sorted.filter(t => t[pKey] >= 0).length;
-    const total = sorted.length;
-    const breadthScore = (green / total) * 100;
-    const avgPct = sorted.reduce((s, t) => s + t[pKey], 0) / total;
-    const momentumScore = Math.min(Math.max((avgPct + 5) / 10 * 100, 0), 100);
-    const score = Math.round(breadthScore * 0.5 + momentumScore * 0.5);
-    const [label, color] = score >= 80 ? ['Extreme Greed', '#0d9488']
-      : score >= 60 ? ['Greed', '#84cc16']
-      : score >= 40 ? ['Neutral', '#94a3b8']
-      : score >= 20 ? ['Fear', '#f97316']
-      : ['Extreme Fear', '#e11d48'];
-  }
-
-  // ── Meta: Top3/Bottom3 + Breadth ──
-  const metaEl = document.getElementById('tt-meta');
-  if (metaEl) {
-    const _ttN = window.innerWidth <= 768 ? 3 : 5;
-    const top3 = sorted.slice(0, _ttN);
-    const bot3 = sorted.slice(-_ttN).reverse();
-    const green = sorted.filter(t => t[pKey] >= 0).length;
-    const red   = sorted.filter(t => t[pKey] <  0).length;
-    const total = sorted.length;
-    const greenPct = Math.round((green / total) * 100);
-    const redPct   = 100 - greenPct;
-
-    const podiumRow = t => {
-      const pct = t[pKey];
-      const pos = pct >= 0;
-      const sign = pos ? '+' : '';
-      return `<div class="tt-podium-row">
-        <span class="tt-podium-name">${esc(t.name)}</span>
-        <span class="tt-podium-pct ${pos?'pos':'neg'}">${sign}${pct.toFixed(2)}%</span>
-      </div>`;
-    };
-
-    metaEl.innerHTML = `
-      <div class="tt-meta-card">
-        <div class="tt-meta-title">Top ${_ttN} &nbsp;·&nbsp; Bottom ${_ttN}</div>
-        <div class="tt-podium">${top3.map(podiumRow).join('')}</div>
-        <div style="height:8px"></div>
-        <div class="tt-podium">${bot3.map(podiumRow).join('')}</div>
-      </div>
-      <div class="tt-meta-card">
-        <div class="tt-meta-title">${_lang === 'he' ? 'רוחב השוק — סקטורים עולים ויורדים' : 'Market Breadth'}</div>
-        <div class="tt-breadth-bar-wrap" style="background:linear-gradient(to right,#0d9488 ${greenPct}%,#e11d48 ${greenPct}%)"></div>
-        <div class="tt-breadth-labels">
-          <span class="tt-breadth-red">▼ ${red} <span style="opacity:0.7">(${redPct}%)</span></span>
-          <span class="tt-breadth-neutral">${total} ${_lang === 'he' ? 'סקטורים' : 'sectors'}</span>
-          <span class="tt-breadth-green">▲ ${green} <span style="opacity:0.7">(${greenPct}%)</span></span>
-        </div>
-        <div class="tt-breadth-chips" id="tt-breadth-chips-inner"></div>
-      </div>`;
-    const chipsEl = document.getElementById('tt-breadth-chips-inner');
-    if (chipsEl) {
-      const greens = sorted.filter(t => t[pKey] > 0).slice(0, 7);
-      const reds   = sorted.filter(t => t[pKey] < 0).slice(-7).reverse();
-      const rows = Math.max(greens.length, reds.length);
-      let chipsHtml = '';
-      for (let i = 0; i < rows; i++) {
-        const g = greens[i], r = reds[i];
-        chipsHtml += r
-          ? `<div class="tt-chip red" role="button" tabindex="0" style="cursor:pointer" onclick="sectorModalOpen('${esc(r.ticker)}','${esc(r.name)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sectorModalOpen('${esc(r.ticker)}','${esc(r.name)}')}"><span>${esc(r.name)}</span><span>${r[pKey].toFixed(1)}%</span></div>`
-          : '<div></div>';
-        chipsHtml += g
-          ? `<div class="tt-chip green" role="button" tabindex="0" style="cursor:pointer" onclick="sectorModalOpen('${esc(g.ticker)}','${esc(g.name)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sectorModalOpen('${esc(g.ticker)}','${esc(g.name)}')}"><span>${esc(g.name)}</span><span>+${g[pKey].toFixed(1)}%</span></div>`
-          : '<div></div>';
-      }
-      chipsEl.innerHTML = chipsHtml;
-    }
-  }
-
-  const maxAbs = Math.max(...sorted.map(t => Math.abs(t[pKey])), 0.01);
-  const renderRow = t => {
-    const pct = t[pKey];
-    const pos = pct >= 0;
-    const barW = Math.min((Math.abs(pct) / maxAbs) * 48, 48);
-    const sign = pos ? '+' : '';
-    return `<div class="tt-row" role="button" tabindex="0" onclick="sectorModalOpen('${esc(t.ticker)}','${esc(t.name)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sectorModalOpen('${esc(t.ticker)}','${esc(t.name)}')}">
-      <div class="tt-name">${esc(t.name)}</div>
-      <div class="tt-bar-wrap">
-        <div class="tt-bar-bg"></div>
-        <div class="tt-bar ${pos?'pos':'neg'}" style="width:${barW}%"></div>
-      </div>
-      <div class="tt-pct ${pos?'pos':'neg'}">${sign}${pct.toFixed(2)}%</div>
-    </div>`;
-  };
-  const half = Math.ceil(sorted.length / 2);
-  grid.innerHTML = `<div class="tt-col">${sorted.slice(half).map(renderRow).join('')}</div>`
-                 + `<div class="tt-col">${sorted.slice(0, half).map(renderRow).join('')}</div>`;
-}
-
-// ─────────────────────────────────────────────
-// ─────────────────────────────────────────────
-// SECTOR HOLDINGS MODAL
-// ─────────────────────────────────────────────
+let _themeRenderSeq = 0;
 let _sectorTimer = null, _sectorTicker = null;
-
-function _renderHoldingsForPeriod(allHoldings, period) {
-  const body = document.getElementById('sector-modal-body');
-  if (!body) return;
-  const key = period || 'today';
-  const sorted = allHoldings
-    .filter(h => h[key] != null)
-    .sort((a, b) => b[key] - a[key])
-    .slice(0, 10);
-  if (!sorted.length) { body.innerHTML = '<div class="sector-modal-loading">אין נתונים לתקופה זו</div>'; return; }
-  body.innerHTML = sorted.map(h => {
-    const pct = h[key];
-    const pos = pct > 0, neg = pct < 0;
-    const cls = pos ? 'pos' : neg ? 'neg' : '';
-    const sign = pos ? '+' : '';
-    return '<div class="sector-holding-row">'
-      + '<span class="sector-holding-sym">' + esc(h.symbol) + '</span>'
-      + '<span class="sector-holding-name">' + esc(h.name) + '</span>'
-      + '<span class="sector-holding-pct ' + cls + '">' + sign + pct.toFixed(2) + '%</span>'
-      + '</div>';
-  }).join('');
+const _sectorHoldingsCache = {};
+function loadThemeFeature() {
+  return loadDashboardFeature('themes.js', () => typeof ttRenderContent === 'function');
 }
-
-async function _fetchAndRender(ticker, showLoading) {
-  const body = document.getElementById('sector-modal-body');
-  if (!body) return;
-  if (showLoading) body.innerHTML = `<div class="sector-modal-loading">${t('set_loading')}</div>`;
-  try {
-    const _shToken = await _getToken();
-    const res = await fetch(
-      `${SUPABASE_URL}/functions/v1/sector-holdings?ticker=${encodeURIComponent(ticker)}`,
-      { headers: { 'Authorization': `Bearer ${_shToken}` } }
-    );
-    const json = await res.json();
-    if (json.error) { body.innerHTML = `<div class="sector-modal-loading">${esc(json.error)}</div>`; return; }
-    if (!json.holdings?.length) { body.innerHTML = `<div class="sector-modal-loading">${_lang === 'he' ? 'אין נתוני אחזקות לסקטור זה' : 'No holdings data'}</div>`; return; }
-    _sectorCache[ticker] = json.holdings;
-    _sectorSaveLS(ticker, json.holdings);
-    _renderHoldingsForPeriod(json.holdings, _ttPeriod);
-    const sub = document.getElementById('sector-modal-sub');
-    if (sub) sub.textContent = ticker + (_lang === 'he' ? ' — עודכן ' : ' — updated ') + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  } catch {
-    if (showLoading) body.innerHTML = `<div class="sector-modal-loading">${_lang === 'he' ? 'לא ניתן לטעון את הנתונים כרגע' : 'Error loading data'}</div>`;
-  }
-}
-
-async function sectorModalOpen(ticker, name) {
-  const overlay = document.getElementById('sector-modal-overlay');
-  const modal   = document.getElementById('sector-modal');
-  const title   = document.getElementById('sector-modal-title');
-  if (!modal) return;
-
-  _sectorTicker = ticker;
-  title.textContent = name;
-  overlay.style.display = 'block';
-  modal.style.display   = 'block';
-
-  clearInterval(_sectorTimer);
-  // Stale-while-revalidate: show any cached data (memory → localStorage)
-  // instantly, then refresh in the background. Only show a spinner on a true
-  // first open with nothing cached.
-  const lsHit = !_sectorCache[ticker] && _sectorLoadLS()[ticker];
-  if (lsHit?.holdings?.length) _sectorCache[ticker] = lsHit.holdings;
-  if (_sectorCache[ticker]) {
-    _renderHoldingsForPeriod(_sectorCache[ticker], _ttPeriod);
-    _fetchAndRender(ticker, false); // refresh in background, no spinner
-  } else {
-    await _fetchAndRender(ticker, true);
-  }
-  _sectorTimer = setInterval(() => _fetchAndRender(_sectorTicker, false), 60000);
+function ttRender(themes, indices) {
+  const seq = ++_themeRenderSeq;
+  const tab = document.getElementById('tab-themes');
+  if (!tab?.classList.contains('active') || !_currentUser) return;
+  if (typeof ttRenderContent === 'function') return ttRenderContent(themes, indices);
+  const user = _currentUser;
+  const current = () => seq === _themeRenderSeq && user === _currentUser && tab.classList.contains('active');
+  return loadThemeFeature().then(() => { if (current()) ttRenderContent(themes, indices); }).catch(() => {
+    if (!current()) return;
+    const grid = document.getElementById('tt-grid');
+    grid.replaceChildren();
+    const message = document.createElement('p');
+    message.textContent = _lang === 'he' ? 'לא ניתן לטעון את תצוגת המגמות. ' : 'Market view could not load. ';
+    const retry = document.createElement('button');
+    retry.className = 'btn btn-secondary btn-sm';
+    retry.textContent = _lang === 'he' ? 'נסה שוב' : 'Retry';
+    retry.onclick = () => ttRender(_ttData || themes, _ttIndices || indices);
+    message.append(retry); grid.append(message);
+  });
 }
 
 function sectorModalClose() {
@@ -9107,24 +7907,9 @@ function sectorModalClose() {
 
 // BROKER CSV IMPORT
 // ─────────────────────────────────────────────
-let _brokerImportFeaturePending = null;
+
 function loadBrokerImportFeature() {
-  if (typeof brokerReadFile === 'function') return Promise.resolve();
-  if (_brokerImportFeaturePending) return _brokerImportFeaturePending;
-  _brokerImportFeaturePending = new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    const owner = document.querySelector('script[src*="assets/js/dashboard.js"]');
-    script.src = './assets/js/broker-import.js' + (owner ? new URL(owner.src).search : '');
-    const fail = () => {
-      script.remove();
-      _brokerImportFeaturePending = null;
-      reject(new Error('Broker import feature unavailable'));
-    };
-    script.onload = () => { if (typeof brokerReadFile === 'function') resolve(); else fail(); };
-    script.onerror = fail;
-    document.head.append(script);
-  });
-  return _brokerImportFeaturePending;
+  return loadDashboardFeature('broker-import.js', () => typeof brokerReadFile === 'function');
 }
 async function brokerLoadFile(input) {
   const file = (input.files || input)[0];
@@ -9211,24 +7996,9 @@ function tradeSnapshotEligible(tr) {
     +tr.entryPrice > 0 && +tr.exitPrice > 0 && !isOpenPosition(tr);
 }
 
-let _tradeSnapshotFeaturePending = null;
+
 function loadTradeSnapshotFeature() {
-  if (typeof tradeSnapshotImage === 'function') return Promise.resolve();
-  if (_tradeSnapshotFeaturePending) return _tradeSnapshotFeaturePending;
-  _tradeSnapshotFeaturePending = new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    const owner = document.querySelector('script[src*="assets/js/dashboard.js"]');
-    script.src = './assets/js/trade-charts.js' + (owner ? new URL(owner.src).search : '');
-    const fail = () => {
-      script.remove();
-      _tradeSnapshotFeaturePending = null;
-      reject(new Error('Trade chart feature unavailable'));
-    };
-    script.onload = () => { if (typeof tradeSnapshotImage === 'function') resolve(); else fail(); };
-    script.onerror = fail;
-    document.head.append(script);
-  });
-  return _tradeSnapshotFeaturePending;
+  return loadDashboardFeature('trade-charts.js', () => typeof tradeSnapshotImage === 'function');
 }
 
 const _tradeSnapshotImages = new Map();

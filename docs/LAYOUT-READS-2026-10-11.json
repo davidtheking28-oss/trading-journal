@@ -1,0 +1,241 @@
+{
+  "baseline": "9738a37",
+  "cpuSlowdown": 4,
+  "measuredPairs": 5,
+  "trades": 500,
+  "limitations": "Local HTTP, mocked authentication and market APIs, mocked Chart.js drawing, no service worker, no WAN latency. Two animation frames are a paint opportunity, not a measured visual-completeness metric. First pair excluded as warm-up.",
+  "summary": {
+    "baseline": {
+      "readyMs": 857,
+      "paintOpportunityMs": 1016,
+      "domContentLoadedMs": 864,
+      "scriptBytes": 619450,
+      "ScriptDurationMs": 37,
+      "LayoutDurationMs": 314,
+      "RecalcStyleDurationMs": 77,
+      "TaskDurationMs": 981
+    },
+    "current": {
+      "readyMs": 1039,
+      "paintOpportunityMs": 1228,
+      "domContentLoadedMs": 1047,
+      "scriptBytes": 538947,
+      "ScriptDurationMs": 45,
+      "LayoutDurationMs": 382,
+      "RecalcStyleDurationMs": 97,
+      "TaskDurationMs": 1196
+    }
+  },
+  "samples": [
+    {
+      "variant": "current",
+      "pair": 1,
+      "authMs": 531.8000000007451,
+      "readyMs": 797.8000000007451,
+      "paintOpportunityMs": 926.7000000029802,
+      "domContentLoadedMs": 802.3000000007451,
+      "trades": 500,
+      "layoutReads": [
+        {
+          "name": "offsetHeight",
+          "ms": 67.40000000223517,
+          "stack": "Error\n    at record (<anonymous>:6:65)\n    at HTMLCanvasElement.get [as offsetHeight] (<anonymous>:12:165)\n    at renderCumChart (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:4355:58)\n    at renderOverview (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3796:3)\n    at setLang (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3504:32)\n    at langInit (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3551:3)\n    at _onAuthSuccess (http://127.0.0.1:52469/assets/js/auth.js?v=__APP_VERSION__:402:3)\n    at async initApp (http://127.0.0.1:52469/assets/js/bootstrap.js?v=__APP_VERSION__:31:5)"
+        }
+      ],
+      "ScriptDurationMs": 41.845,
+      "LayoutDurationMs": 271.09499999999997,
+      "RecalcStyleDurationMs": 62.863,
+      "TaskDurationMs": 877.0210000000001,
+      "scriptBytes": 538947
+    },
+    {
+      "variant": "baseline",
+      "pair": 1,
+      "authMs": 564.5999999977648,
+      "readyMs": 826.5999999977648,
+      "paintOpportunityMs": 972,
+      "domContentLoadedMs": 832.3000000007451,
+      "trades": 500,
+      "layoutReads": [
+        {
+          "name": "offsetHeight",
+          "ms": 66.5,
+          "stack": "Error\n    at record (<anonymous>:6:65)\n    at HTMLCanvasElement.get [as offsetHeight] (<anonymous>:12:165)\n    at renderCumChart (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:4702:58)\n    at renderOverview (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3875:3)\n    at setLang (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3583:32)\n    at langInit (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3630:3)\n    at _onAuthSuccess (http://127.0.0.1:52469/assets/js/auth.js?v=__APP_VERSION__:402:3)\n    at async initApp (http://127.0.0.1:52469/assets/js/bootstrap.js?v=__APP_VERSION__:31:5)"
+        }
+      ],
+      "ScriptDurationMs": 33.321000000000005,
+      "LayoutDurationMs": 293.717,
+      "RecalcStyleDurationMs": 66.816,
+      "TaskDurationMs": 934.451,
+      "scriptBytes": 619450
+    },
+    {
+      "variant": "baseline",
+      "pair": 2,
+      "authMs": 573.8000000007451,
+      "readyMs": 857,
+      "paintOpportunityMs": 1016.3000000007451,
+      "domContentLoadedMs": 863.6000000014901,
+      "trades": 500,
+      "layoutReads": [
+        {
+          "name": "offsetHeight",
+          "ms": 63.400000002235174,
+          "stack": "Error\n    at record (<anonymous>:6:65)\n    at HTMLCanvasElement.get [as offsetHeight] (<anonymous>:12:165)\n    at renderCumChart (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:4702:58)\n    at renderOverview (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3875:3)\n    at setLang (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3583:32)\n    at langInit (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3630:3)\n    at _onAuthSuccess (http://127.0.0.1:52469/assets/js/auth.js?v=__APP_VERSION__:402:3)\n    at async initApp (http://127.0.0.1:52469/assets/js/bootstrap.js?v=__APP_VERSION__:31:5)"
+        }
+      ],
+      "ScriptDurationMs": 36.294,
+      "LayoutDurationMs": 277.825,
+      "RecalcStyleDurationMs": 79.116,
+      "TaskDurationMs": 981.287,
+      "scriptBytes": 619450
+    },
+    {
+      "variant": "current",
+      "pair": 2,
+      "authMs": 501.19999999925494,
+      "readyMs": 747.2999999970198,
+      "paintOpportunityMs": 893.5999999977648,
+      "domContentLoadedMs": 752.8999999985099,
+      "trades": 500,
+      "layoutReads": [
+        {
+          "name": "offsetHeight",
+          "ms": 57.30000000074506,
+          "stack": "Error\n    at record (<anonymous>:6:65)\n    at HTMLCanvasElement.get [as offsetHeight] (<anonymous>:12:165)\n    at renderCumChart (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:4355:58)\n    at renderOverview (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3796:3)\n    at setLang (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3504:32)\n    at langInit (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3551:3)\n    at _onAuthSuccess (http://127.0.0.1:52469/assets/js/auth.js?v=__APP_VERSION__:402:3)\n    at async initApp (http://127.0.0.1:52469/assets/js/bootstrap.js?v=__APP_VERSION__:31:5)"
+        }
+      ],
+      "ScriptDurationMs": 30.301000000000002,
+      "LayoutDurationMs": 264.851,
+      "RecalcStyleDurationMs": 60.539,
+      "TaskDurationMs": 841.241,
+      "scriptBytes": 538947
+    },
+    {
+      "variant": "current",
+      "pair": 3,
+      "authMs": 897.5,
+      "readyMs": 1409.199999999255,
+      "paintOpportunityMs": 1694.199999999255,
+      "domContentLoadedMs": 1419.5,
+      "trades": 500,
+      "layoutReads": [
+        {
+          "name": "offsetHeight",
+          "ms": 188.69999999925494,
+          "stack": "Error\n    at record (<anonymous>:6:65)\n    at HTMLCanvasElement.get [as offsetHeight] (<anonymous>:12:165)\n    at renderCumChart (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:4355:58)\n    at renderOverview (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3796:3)\n    at setLang (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3504:32)\n    at langInit (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3551:3)\n    at _onAuthSuccess (http://127.0.0.1:52469/assets/js/auth.js?v=__APP_VERSION__:402:3)\n    at async initApp (http://127.0.0.1:52469/assets/js/bootstrap.js?v=__APP_VERSION__:31:5)"
+        }
+      ],
+      "ScriptDurationMs": 53.66,
+      "LayoutDurationMs": 597.414,
+      "RecalcStyleDurationMs": 127.808,
+      "TaskDurationMs": 1707.306,
+      "scriptBytes": 538947
+    },
+    {
+      "variant": "baseline",
+      "pair": 3,
+      "authMs": 514.5,
+      "readyMs": 825.6000000014901,
+      "paintOpportunityMs": 1000.9000000022352,
+      "domContentLoadedMs": 833.2000000029802,
+      "trades": 500,
+      "layoutReads": [
+        {
+          "name": "offsetHeight",
+          "ms": 108.5,
+          "stack": "Error\n    at record (<anonymous>:6:65)\n    at HTMLCanvasElement.get [as offsetHeight] (<anonymous>:12:165)\n    at renderCumChart (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:4702:58)\n    at renderOverview (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3875:3)\n    at setLang (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3583:32)\n    at langInit (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3630:3)\n    at _onAuthSuccess (http://127.0.0.1:52469/assets/js/auth.js?v=__APP_VERSION__:402:3)\n    at async initApp (http://127.0.0.1:52469/assets/js/bootstrap.js?v=__APP_VERSION__:31:5)"
+        }
+      ],
+      "ScriptDurationMs": 37.427,
+      "LayoutDurationMs": 314.135,
+      "RecalcStyleDurationMs": 65.607,
+      "TaskDurationMs": 969.274,
+      "scriptBytes": 619450
+    },
+    {
+      "variant": "baseline",
+      "pair": 4,
+      "authMs": 625.1999999992549,
+      "readyMs": 943.6999999992549,
+      "paintOpportunityMs": 1133.8999999985099,
+      "domContentLoadedMs": 952,
+      "trades": 500,
+      "layoutReads": [
+        {
+          "name": "offsetHeight",
+          "ms": 98.59999999776483,
+          "stack": "Error\n    at record (<anonymous>:6:65)\n    at HTMLCanvasElement.get [as offsetHeight] (<anonymous>:12:165)\n    at renderCumChart (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:4702:58)\n    at renderOverview (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3875:3)\n    at setLang (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3583:32)\n    at langInit (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3630:3)\n    at _onAuthSuccess (http://127.0.0.1:52469/assets/js/auth.js?v=__APP_VERSION__:402:3)\n    at async initApp (http://127.0.0.1:52469/assets/js/bootstrap.js?v=__APP_VERSION__:31:5)"
+        }
+      ],
+      "ScriptDurationMs": 45.072,
+      "LayoutDurationMs": 360.767,
+      "RecalcStyleDurationMs": 76.711,
+      "TaskDurationMs": 1085.338,
+      "scriptBytes": 619450
+    },
+    {
+      "variant": "current",
+      "pair": 4,
+      "authMs": 670.0999999977648,
+      "readyMs": 1038.5,
+      "paintOpportunityMs": 1228.199999999255,
+      "domContentLoadedMs": 1046.5999999977648,
+      "trades": 500,
+      "layoutReads": [
+        {
+          "name": "offsetHeight",
+          "ms": 94.40000000223517,
+          "stack": "Error\n    at record (<anonymous>:6:65)\n    at HTMLCanvasElement.get [as offsetHeight] (<anonymous>:12:165)\n    at renderCumChart (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:4355:58)\n    at renderOverview (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3796:3)\n    at setLang (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3504:32)\n    at langInit (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3551:3)\n    at _onAuthSuccess (http://127.0.0.1:52469/assets/js/auth.js?v=__APP_VERSION__:402:3)\n    at async initApp (http://127.0.0.1:52469/assets/js/bootstrap.js?v=__APP_VERSION__:31:5)"
+        }
+      ],
+      "ScriptDurationMs": 44.708999999999996,
+      "LayoutDurationMs": 382.303,
+      "RecalcStyleDurationMs": 104.316,
+      "TaskDurationMs": 1196.064,
+      "scriptBytes": 538947
+    },
+    {
+      "variant": "current",
+      "pair": 5,
+      "authMs": 672.8000000007451,
+      "readyMs": 1066,
+      "paintOpportunityMs": 1298.5999999977648,
+      "domContentLoadedMs": 1076.0999999977648,
+      "trades": 500,
+      "layoutReads": [
+        {
+          "name": "offsetHeight",
+          "ms": 119.89999999850988,
+          "stack": "Error\n    at record (<anonymous>:6:65)\n    at HTMLCanvasElement.get [as offsetHeight] (<anonymous>:12:165)\n    at renderCumChart (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:4355:58)\n    at renderOverview (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3796:3)\n    at setLang (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3504:32)\n    at langInit (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3551:3)\n    at _onAuthSuccess (http://127.0.0.1:52469/assets/js/auth.js?v=__APP_VERSION__:402:3)\n    at async initApp (http://127.0.0.1:52469/assets/js/bootstrap.js?v=__APP_VERSION__:31:5)"
+        }
+      ],
+      "ScriptDurationMs": 50.052,
+      "LayoutDurationMs": 396.48499999999996,
+      "RecalcStyleDurationMs": 97.03699999999999,
+      "TaskDurationMs": 1255.944,
+      "scriptBytes": 538947
+    },
+    {
+      "variant": "baseline",
+      "pair": 5,
+      "authMs": 867.5,
+      "readyMs": 1210.3999999985099,
+      "paintOpportunityMs": 1365.1000000014901,
+      "domContentLoadedMs": 1221.5,
+      "trades": 500,
+      "layoutReads": [
+        {
+          "name": "offsetHeight",
+          "ms": 89.5,
+          "stack": "Error\n    at record (<anonymous>:6:65)\n    at HTMLCanvasElement.get [as offsetHeight] (<anonymous>:12:165)\n    at renderCumChart (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:4702:58)\n    at renderOverview (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3875:3)\n    at setLang (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3583:32)\n    at langInit (http://127.0.0.1:52469/assets/js/dashboard.js?v=__APP_VERSION__:3630:3)\n    at _onAuthSuccess (http://127.0.0.1:52469/assets/js/auth.js?v=__APP_VERSION__:402:3)\n    at async initApp (http://127.0.0.1:52469/assets/js/bootstrap.js?v=__APP_VERSION__:31:5)"
+        }
+      ],
+      "ScriptDurationMs": 48.902,
+      "LayoutDurationMs": 431.859,
+      "RecalcStyleDurationMs": 97.36200000000001,
+      "TaskDurationMs": 1355.745,
+      "scriptBytes": 619450
+    }
+  ]
+}

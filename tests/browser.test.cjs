@@ -417,6 +417,169 @@ test('Market Pulse refetches the moment the tab becomes visible again (tablet wa
   assert.equal(calls, first + 1, 'returning to the tab must refetch once');
 });
 
+test('overview chart fill avoids forced canvas layout and adapts to chart height', async t => {
+  const page = await open(t); await login(page);
+  const result = await page.evaluate(() => {
+    const canvas = document.getElementById('chart-cum');
+    let reads = 0;
+    Object.defineProperty(canvas, 'offsetHeight', { configurable: true, get() { reads++; return 320; } });
+    try {
+      renderCumChart([{ id: 99001, symbol: 'AAPL', entryDate: '2026-10-01', closeDate: '2026-10-02', entryPrice: 100, exitPrice: 110, shares: 5, closedShares: 5, commission: 1, ls: 'L', t: [] }]);
+      const fill = charts.cum.data.datasets[0].backgroundColor;
+      const first = fill({ chart: { height: 320 } });
+      const same = fill({ chart: { height: 320 } });
+      const resized = fill({ chart: { height: 160 } });
+      return { reads, valid: first instanceof CanvasGradient, reused: same === first, resized: resized !== first };
+    } finally { delete canvas.offsetHeight; }
+  });
+  assert.deepEqual(result, { reads: 0, valid: true, reused: true, resized: true });
+});
+
+test('manual TLG parser loads only on selection and retries into the correct preview', async t => {
+  const page = await open(t); await login(page);
+  assert.equal(await page.evaluate(() => typeof tlgParse), 'undefined');
+  let requests = 0;
+  await page.route('**/assets/js/file-import.js*', async route => {
+    requests++;
+    if (requests === 1) return route.abort();
+    await route.continue();
+  });
+  const contents = 'STK_TRD|1|AAPL|Apple|NASDAQ|BUY|O|20261001|090000|USD|5|1|100|500|1\nSTK_TRD|2|AAPL|Apple|NASDAQ|SELL|C|20261002|090000|USD|5|1|110|550|1';
+  await page.evaluate(async text => { await tlgLoadFile({ files: [new File([text], 'trades.tlg')] }); }, contents);
+  assert.equal(requests, 1);
+  assert.equal(await page.evaluate(() => typeof tlgParse), 'undefined');
+  await page.locator('#tlg-file-input').setInputFiles({ name: 'trades.tlg', mimeType: 'text/plain', buffer: Buffer.from(contents) });
+  await page.waitForFunction(() => document.querySelectorAll('#tlg-preview .ibkr-trade-preview').length === 1);
+  assert.deepEqual(await page.evaluate(() => _tlgPending.map(({ symbol, shares, closedShares, entryPrice, exitPrice, commission }) => ({ symbol, shares, closedShares, entryPrice, exitPrice, commission }))), [{ symbol: 'AAPL', shares: 5, closedShares: 5, entryPrice: 100, exitPrice: 110, commission: 2 }]);
+  assert.match(await page.locator('#tlg-preview').textContent(), /48\.00/);
+  assert.equal(requests, 2);
+});
+
+test('missed opportunity views load on demand and retry without losing cached rows', async t => {
+  const page = await open(t); await login(page);
+  assert.equal(await page.evaluate(() => typeof missedRenderContent), 'undefined');
+  let requests = 0;
+  await page.route('**/assets/js/missed.js*', async route => {
+    requests++;
+    if (requests === 1) return route.abort();
+    await route.continue();
+  });
+  await page.evaluate(() => {
+    _missedList = [{ id: 'lazy-missed', sym: 'AMD', date: new Date().toISOString().slice(0,10), price: 100, sector: 'Technology', note: 'לא שמתי לב' }];
+    _missedLoaded = true;
+    switchTab('missed');
+  });
+  await page.locator('#missed-tbody button').waitFor();
+  assert.equal(requests, 1);
+  await page.locator('#missed-tbody button').click();
+  await page.locator('#missed-row-lazy-missed').waitFor();
+  assert.match(await page.locator('#missed-row-lazy-missed').innerText(), /AMD/);
+  assert.equal(await page.evaluate(() => _missedList.length), 1);
+  await page.evaluate(() => { switchTab('overview'); switchTab('missed'); });
+  await page.locator('#missed-row-lazy-missed').waitFor();
+  assert.equal(requests, 2);
+});
+
+test('delayed missed view loading cannot render a replaced account', async t => {
+  const page = await open(t); await login(page);
+  let release, announce;
+  const requested = new Promise(resolve => { announce = resolve; });
+  await page.route('**/assets/js/missed.js*', async route => {
+    await new Promise(resolve => { release = resolve; announce(); });
+    await route.continue();
+  });
+  const pending = page.evaluate(async () => {
+    document.getElementById('tab-missed').classList.add('active');
+    _missedLoaded = false;
+    window.__missedReads = 0;
+    missedLoad = async () => { __missedReads++; return [{ id: 'old-user-row', sym: 'AMD', date: '2026-10-01', price: 100 }]; };
+    await missedRender();
+  });
+  await requested;
+  assert.equal(await page.evaluate(() => __missedReads), 1, 'data loading starts alongside the feature script');
+  await page.evaluate(() => { _currentUser = { id: 'replacement' }; });
+  release(); await pending;
+  assert.equal(await page.locator('#missed-row-old-user-row').count(), 0);
+});
+
+test('market theme views load on demand and sector holdings use a separate cache', async t => {
+  const page = await open(t); await login(page);
+  assert.equal(await page.evaluate(() => typeof ttRenderContent), 'undefined');
+  let requests = 0;
+  await page.route('**/assets/js/themes.js*', async route => {
+    requests++;
+    if (requests === 1) return route.abort();
+    await route.continue();
+  });
+  await page.route('**/functions/v1/sector-holdings?*', route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ holdings: [{ symbol: 'AAPL', name: 'Apple', today: 1, w1: 2 }] }) }));
+  await page.evaluate(() => {
+    _sectorCache.XLK = 'Technology';
+    _ttData = [{ name: 'Technology', ticker: 'XLK', today: 1, w1: 2 }]; _ttIndices = [];
+    switchTab('themes');
+  });
+  await page.locator('#tt-grid button').waitFor();
+  assert.equal(requests, 1);
+  await page.locator('#tt-grid button').click();
+  await page.locator('#tt-grid .tt-row').waitFor();
+  await page.evaluate(() => sectorModalOpen('XLK', 'Technology'));
+  assert.match(await page.locator('#sector-modal-body').textContent(), /AAPL/);
+  assert.deepEqual(await page.evaluate(() => ({ sector: _sectorCache.XLK, holding: _sectorHoldingsCache.XLK[0].symbol })), { sector: 'Technology', holding: 'AAPL' });
+  await page.evaluate(() => ttSetPeriod('w1'));
+  assert.match(await page.locator('#sector-modal-body').textContent(), /2\.00%/);
+  await page.evaluate(() => sectorModalClose());
+  assert.equal(requests, 2);
+});
+
+test('market theme polling skips hidden pages and inactive tabs', async t => {
+  const page = await open(t); await login(page);
+  const result = await page.evaluate(() => {
+    const interval = window.setInterval, load = ttLoad;
+    let tick, calls = 0;
+    window.setInterval = callback => { tick = callback; return 0; };
+    ttLoad = () => { calls++; };
+    document.getElementById('tab-themes').classList.add('active');
+    try {
+      ttStartTimer();
+      Object.defineProperty(document, 'hidden', { configurable: true, value: true }); tick();
+      const hidden = calls;
+      Object.defineProperty(document, 'hidden', { configurable: true, value: false }); tick();
+      const visible = calls;
+      document.getElementById('tab-themes').classList.remove('active'); tick();
+      return { hidden, visible, inactive: calls };
+    } finally { delete document.hidden; window.setInterval = interval; ttLoad = load; }
+  });
+  assert.deepEqual(result, { hidden: 0, visible: 1, inactive: 1 });
+});
+
+test('statistics load on demand, retry failures and ignore a tab left during loading', async t => {
+  const page = await open(t); await login(page);
+  await page.evaluate(() => { _brokerEquityUsd = 0; _brokerEquityTs = Date.now(); });
+  assert.equal(await page.evaluate(() => typeof renderStatisticsContent), 'undefined');
+  let requests = 0, release, announce;
+  const requested = new Promise(resolve => { announce = resolve; });
+  const source = readFileSync(resolve(root, 'assets/js/statistics.js'), 'utf8');
+  await page.route('**/assets/js/statistics.js*', async route => {
+    requests++;
+    if (requests === 1) return route.abort();
+    await new Promise(resolve => { release = resolve; announce(); });
+    await route.fulfill({ contentType: 'text/javascript', body: source + '\nwindow.__statsRenders=0;const originalStatisticsRender=renderStatisticsContent;renderStatisticsContent=function(){window.__statsRenders++;return originalStatisticsRender();};' });
+  });
+  await page.evaluate(() => { switchTab('statistics'); renderStatistics(); });
+  const retry = page.locator('#stats-feature-status button');
+  await retry.waitFor();
+  assert.equal(requests, 1);
+  await retry.click();
+  await requested;
+  await page.evaluate(() => switchTab('overview'));
+  release();
+  await page.waitForFunction(() => typeof renderStatisticsContent === 'function' && !document.getElementById('tab-statistics').hasAttribute('aria-busy'));
+  assert.equal(await page.evaluate(() => __statsRenders), 0);
+  await page.evaluate(() => switchTab('statistics'));
+  assert.equal(await page.evaluate(() => __statsRenders), 1);
+  assert.equal(requests, 2);
+  assert.equal(await page.locator('#stats-feature-status').count(), 0);
+});
+
 test('broker CSV tools load only on file selection and retry into a working preview', async t => {
   const page = await open(t); await login(page);
   assert.equal(await page.evaluate(() => typeof biParseCSV), 'undefined');
