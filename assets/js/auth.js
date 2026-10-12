@@ -45,11 +45,14 @@ window.addEventListener('unhandledrejection', (e) => {
 // session under that contention → spurious 401s). Fall back to getSession() when
 // the cached token is missing or within 60s of expiry — that path auto-refreshes.
 async function _getToken() {
+  const user = _currentUser;
+  if (!user) return '';
   const now = Math.floor(Date.now() / 1000);
   const s = _currentSession;
-  if (s?.access_token && s.expires_at && s.expires_at > now + 60) return s.access_token;
+  if (s?.user?.id === user.id && s.access_token && s.expires_at && s.expires_at > now + 60) return s.access_token;
   const { data: { session } } = await _sb.auth.getSession();
-  if (session) _currentSession = session;
+  if (_currentUser !== user || session?.user?.id !== user.id) return '';
+  _currentSession = session;
   return session?.access_token ?? '';
 }
 
@@ -57,21 +60,33 @@ async function _getToken() {
 // force one session refresh and retry with the fresh token before the caller sees
 // the error. Covers every edge-function fetch site centrally. Other fetches pass through.
 const _origFetch = window.fetch.bind(window);
-window.fetch = async (input, init) => {
+async function _fetchWithSessionRecovery(input, init) {
+  const user = _currentUser;
+  const originalSession = _currentSession;
+  let headers, retryInput, eligible = false;
+  try {
+    const url = new URL(typeof input === 'string' ? input : input.url, location.href);
+    headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
+    eligible = url.origin === new URL(SUPABASE_URL).origin && url.pathname.startsWith('/functions/v1/') &&
+      user && originalSession?.user?.id === user.id && originalSession.access_token &&
+      headers.get('Authorization') === `Bearer ${originalSession.access_token}`;
+    if (eligible) retryInput = input instanceof Request ? input.clone() : input;
+  } catch { eligible = false; }
   const res = await _origFetch(input, init);
-  const url = typeof input === 'string' ? input : (input?.url ?? '');
-  if (res.status !== 401 || !url.includes('/functions/v1/')) return res;
+  if (res.status !== 401 || !eligible || _currentUser !== user || init?.signal?.aborted) return res;
   try {
     const { data: { session } } = await _sb.auth.refreshSession();
-    if (!session) return res;
+    if (_currentUser !== user || session?.user?.id !== user.id || !session.access_token) return res;
     _currentSession = session;
     const retryInit = { ...(init || {}) };
-    retryInit.headers = { ...(init?.headers || {}), 'Authorization': `Bearer ${session.access_token}` };
-    return await _origFetch(input, retryInit);
+    headers.set('Authorization', `Bearer ${session.access_token}`);
+    retryInit.headers = headers;
+    return await _origFetch(retryInput, retryInit);
   } catch {
     return res;
   }
-};
+}
+window.fetch = _fetchWithSessionRecovery;
 
 // ─────────────────────────────────────────────
 // AUTH

@@ -2451,3 +2451,69 @@ describe('invRoomInfo — what is left of a category target, in money, shares an
 import './trade-snapshot.test.mjs';
 
 import './missed-loading.test.mjs';
+
+describe('session recovery account boundaries', () => {
+  function context() {
+    const ctx = { URL, Headers, Request, location: { href: 'https://app.test/' }, SUPABASE_URL: 'https://project.supabase.co',
+      _currentUser: { id: 'A' }, _currentSession: { user: { id: 'A' }, access_token: 'old' },
+      _sb: { auth: {} }, _origFetch: async () => ({ status: 401 }) };
+    vm.createContext(ctx);
+    vm.runInContext('async ' + extractFunction('_fetchWithSessionRecovery'), ctx);
+    vm.runInContext('async ' + extractFunction('_getToken'), ctx);
+    return ctx;
+  }
+  test('third party URLs never receive refreshed credentials', async () => {
+    const ctx = context(); let refreshes = 0;
+    ctx._sb.auth.refreshSession = async () => { refreshes++; return {}; };
+    await ctx._fetchWithSessionRecovery('https://other.test/functions/v1/test', { headers: { Authorization: 'Bearer old' } });
+    assert.equal(refreshes, 0);
+  });
+  test('retry preserves Headers and uses the refreshed token', async () => {
+    const ctx = context(); const calls = [];
+    ctx._origFetch = async (input, init) => { calls.push(init); return { status: calls.length === 1 ? 401 : 200 }; };
+    ctx._sb.auth.refreshSession = async () => ({ data: { session: { user: { id: 'A' }, access_token: 'new' } } });
+    const result = await ctx._fetchWithSessionRecovery(ctx.SUPABASE_URL + '/functions/v1/test', { headers: new Headers({ Authorization: 'Bearer old', apikey: 'public', 'Content-Type': 'application/json' }) });
+    assert.equal(result.status, 200);
+    assert.equal(calls[1].headers.get('apikey'), 'public');
+    assert.equal(calls[1].headers.get('Content-Type'), 'application/json');
+    assert.equal(calls[1].headers.get('Authorization'), 'Bearer new');
+  });
+  test('account change during refresh cannot overwrite or retry the new session', async () => {
+    const ctx = context(); let resolve, calls = 0;
+    ctx._origFetch = async () => { calls++; return { status: 401 }; };
+    ctx._sb.auth.refreshSession = () => new Promise(r => { resolve = r; });
+    const pending = ctx._fetchWithSessionRecovery(ctx.SUPABASE_URL + '/functions/v1/test', { headers: { Authorization: 'Bearer old' } });
+    await new Promise(r => setImmediate(r));
+    ctx._currentUser = { id: 'B' }; ctx._currentSession = { user: { id: 'B' }, access_token: 'B' };
+    resolve({ data: { session: { user: { id: 'A' }, access_token: 'new' } } });
+    await pending; assert.equal(calls, 1); assert.equal(ctx._currentSession.access_token, 'B');
+  });
+  test('late getSession cannot restore the previous account', async () => {
+    const ctx = context(); let resolve;
+    ctx._sb.auth.getSession = () => new Promise(r => { resolve = r; });
+    const pending = ctx._getToken();
+    ctx._currentUser = { id: 'B' }; ctx._currentSession = null;
+    resolve({ data: { session: { user: { id: 'A' }, access_token: 'old' } } });
+    assert.equal(await pending, ''); assert.equal(ctx._currentSession, null);
+  });
+  test('failed settings save cannot roll back another account', async () => {
+    let resolve;
+    const ctx = { _currentUser: { id: 'A' }, _userSettings: { key: 'old' },
+      _sb: { from: () => ({ upsert: () => new Promise(r => { resolve = r; }) }) }, console, toast() { throw Error('stale toast'); } };
+    vm.createContext(ctx); vm.runInContext('async ' + extractFunction('_saveUserSettings'), ctx);
+    const pending = ctx._saveUserSettings({ key: 'new' });
+    ctx._currentUser = { id: 'B' }; ctx._userSettings = { key: 'B' };
+    resolve({ error: new Error('offline') });
+    assert.equal(await pending, false); assert.equal(ctx._userSettings.key, 'B');
+  });
+});
+
+test('API key forms retain input and do not report success after a failed save', async () => {
+  for (const [name, id] of [['saveFinnhubKey', 'finnhub-key-input'], ['saveFmpKey', 'fmp-key-input'], ['saveAvKey', 'av-key-input']]) {
+    const input = { value: 'test-key' };
+    const ctx = { document: { getElementById: key => key === id ? input : null }, _saveUserSettings: async () => false,
+      toast() { throw Error('false success'); }, localStorage: { removeItem() { throw Error('unexpected cache clear'); } } };
+    vm.createContext(ctx); vm.runInContext('async ' + extractFunction(name), ctx);
+    await ctx[name](); assert.equal(input.value, 'test-key');
+  }
+});

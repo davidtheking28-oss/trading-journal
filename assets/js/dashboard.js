@@ -2738,18 +2738,26 @@ async function loadUserSettings() {
 
 async function _saveUserSettings(patch) {
   if (!_currentUser) return false;
+  const user = _currentUser;
+  const settings = _userSettings;
   const prev = {};
   for (const k in patch) prev[k] = _userSettings[k];
   Object.assign(_userSettings, patch);
   // The error was discarded, so a rejected upsert still left the value in
   // memory and every caller toasted success — an API key looked saved, worked
   // all session, and was gone at next login with nothing having said so.
-  const { error } = await _sb.from('user_settings').upsert(
-    { user_id: _currentUser.id, ...patch },
-    { onConflict: 'user_id' }
-  );
+  let error;
+  try {
+    ({ error } = await _sb.from('user_settings').upsert(
+      { ...patch, user_id: user.id },
+      { onConflict: 'user_id' }
+    ));
+  } catch (failure) { error = failure; }
+  if (_currentUser !== user || _userSettings !== settings) return false;
   if (error) {
-    Object.assign(_userSettings, prev);
+    for (const k in patch) {
+      if (settings[k] === patch[k]) settings[k] = prev[k];
+    }
     console.error('user_settings save failed', error);
     toast('ההגדרה לא נשמרה', 'error');
     return false;
@@ -2761,7 +2769,7 @@ function getFinnhubKey() { return _userSettings.finnhub_key || ''; }
 
 async function saveFinnhubKey() {
   const val = (document.getElementById('finnhub-key-input')?.value || '').trim();
-  await _saveUserSettings({ finnhub_key: val || null });
+  if (!await _saveUserSettings({ finnhub_key: val || null })) return;
   localStorage.removeItem(FINNHUB_CACHE_KEY);
   const inp = document.getElementById('finnhub-key-input');
   if (inp) { inp.value = ''; inp.placeholder = val ? 'מפתח שמור ✓' : 'Finnhub API Key'; }
@@ -2776,7 +2784,7 @@ function getAvKey()  { return _userSettings.av_key  || ''; }
 async function saveFmpKey() {
   const el = document.getElementById('fmp-key-input');
   const val = (el?.value || '').trim();
-  await _saveUserSettings({ fmp_key: val || null });
+  if (!await _saveUserSettings({ fmp_key: val || null })) return;
   if (el) el.value = '';
   toast(val ? 'מפתח FMP נשמר 🔐' : 'מפתח FMP הוסר', 'success');
   renderFmpKeyStatus();
@@ -2792,7 +2800,7 @@ function renderFmpKeyStatus() {
 
 async function saveAvKey() {
   const val = (document.getElementById('av-key-input')?.value || '').trim();
-  await _saveUserSettings({ av_key: val || null });
+  if (!await _saveUserSettings({ av_key: val || null })) return;
   const inp = document.getElementById('av-key-input');
   if (inp) { inp.value = ''; inp.placeholder = val ? 'מפתח שמור ✓' : 'Alpha Vantage API Key'; }
   toast(val ? 'מפתח Alpha Vantage נשמר 🔐' : 'מפתח Alpha Vantage הוסר', 'success');
