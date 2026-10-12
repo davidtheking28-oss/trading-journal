@@ -113,3 +113,10 @@ temporary tables with current schema constraints and checks identical data and v
 relationships. The monitoring drill confirms a synthetic investment-save failure is
 included in the existing scheduled health report without sending a notification.
 See `docs/OPERATIONS.md` for rollout checks and the recovery scope.
+# Legal acknowledgements
+
+The browser fixture provides current acknowledgements for ordinary test accounts. Dedicated browser cases remove them to exercise the age checkbox, save failures, account switching and provider-session entry. `legal-acceptances.sql` checks the deployed acknowledgement RPC under the authenticated role in a rollback-only transaction; it never prints account identifiers or preserves test writes. Run through the Supabase SQL tool against the verified project.
+
+## Broker data audit
+
+`broker-boundaries.sql` verifies broker table isolation and denies another user's credential RPC under an authenticated identity, with no trading-data writes. Run through Supabase MCP. Logic cases cover interrupted imports, credential saves, separate Bybit close IDs and failed IBKR updates remaining eligible for retry. Bybit Edge cases use mocked HTTP only: pagination, duplicate executions, partial-close fees, older positions, and refusing incomplete recent history. See `docs/BROKER-DATA-AUDIT-2026-10-12.md` for findings and live-validation limits.

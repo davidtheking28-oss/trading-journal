@@ -111,75 +111,32 @@ body>nav{height:68px;background:rgba(12,16,34,.94);padding-inline:max(24px,calc(
 
   <div class="page-badge">Privacy</div>
   <h1 class="page-title">Privacy Policy</h1>
-  <p class="page-date">Last updated: October 9, 2026</p>
+  <p class="page-date">Last updated: October 12, 2026</p>
   <p style="font-size:13px;color:var(--text3);margin-bottom:24px;">This is a convenience translation. The <a href="privacy.html">Hebrew original</a> is the binding version; in case of any conflict, the Hebrew text controls.</p>
 
   <p>This policy explains what data is collected when you use ChartRoom, how it is stored, and what your rights are. Your privacy matters to us — the Service does not sell data and does not use it for advertising.</p>
 
   <h2 id="privacy-section-1">1. Who is responsible for the data</h2>
-  <p>ChartRoom is operated by an individual (not a registered company). For questions: <a href="mailto:davidtheking27@gmail.com">davidtheking27@gmail.com</a></p>
+  <p>ChartRoom is the service brand, currently operated by an individual. For privacy enquiries: <a href="mailto:davidtheking27@gmail.com">davidtheking27@gmail.com</a></p>
 
-  <h2 id="privacy-section-2">2. What data is collected</h2>
-  <table class="data-table" aria-label="Types of data collected">
-    <thead>
-      <tr><th>Data</th><th>What is stored</th><th>Purpose</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>Email address</td><td>At signup</td><td>Account identification, verification</td></tr>
-      <tr><td>Trades</td><td>Entry/exit data, P&amp;L, notes</td><td>Personal trading journal</td></tr>
-      <tr><td>API keys</td><td>Encrypted in Supabase Vault</td><td>Importing trades from your broker</td></tr>
-      <tr><td>Broker account equity</td><td>Equity as reported by IBKR/Bybit</td><td>Portfolio-size metric for position sizing and exposure</td></tr>
-      <tr><td>Push notifications</td><td>Browser endpoint and encryption keys</td><td>Sending notifications to your device</td></tr>
-      <tr><td>Technical logs</td><td>Error message, file/line, user agent — never trade content</td><td>Diagnosing and fixing bugs in the code</td></tr>
-      <tr><td>General usage data</td><td>Not collected (no analytics/advertising tracking)</td><td>—</td></tr>
-    </tbody>
-  </table>
-  <p>We do <strong>not</strong> collect location data, tracking cookies, or biometric information.</p>
 
-  <h2 id="privacy-section-3">3. How the data is stored</h2>
-  <p>All data is stored on <strong>Supabase</strong> (servers in the European Union — Frankfurt). Supabase implements Row-Level Security: only you can access your data. Communication is encrypted with TLS/HTTPS everywhere.</p>
-
-  <div class="info-box">
-    Broker API keys (IBKR, Bybit) are stored encrypted. We pass them only to import trades via a Supabase Edge Function — they are never stored on external servers.
-  </div>
-
-  <h2 id="privacy-section-4">4. Third parties</h2>
-  <table class="data-table" aria-label="Third parties that receive data">
-    <thead>
-      <tr><th>Service</th><th>What is shared</th><th>Their privacy policy</th></tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Supabase</td>
-        <td>All account and trade data</td>
-        <td><a href="https://supabase.com/privacy" target="_blank" rel="noopener">supabase.com/privacy</a></td>
-      </tr>
-      <tr>
-        <td>Finnhub / FMP</td>
-        <td>Stock price queries (ticker only, no user identification)</td>
-        <td>—</td>
-      </tr>
-    </tbody>
-  </table>
-  <p>We do <strong>not</strong> sell, transfer, or share data with advertisers.</p>
-
-  <h2 id="privacy-section-5">5. Your rights</h2>
-  <p>In accordance with Israeli privacy law and GDPR (to the extent applicable):</p>
-  <ul>
-    <li><strong>Access</strong> — you can export all your data from the app via Settings → Export Data</li>
-    <li><strong>Deletion</strong> — send a request to <a href="mailto:davidtheking27@gmail.com">davidtheking27@gmail.com</a> and we will delete your account and all your data within 14 days</li>
-    <li><strong>Correction</strong> — you can edit and delete trades directly in the app</li>
-  </ul>
-
-  <h2 id="privacy-section-6">6. Data retention</h2>
-  <p>Active account data is retained for as long as the account is active. After a deletion request, data is deleted within 14 days.</p>
-
-  <h2 id="privacy-section-7">7. Children</h2>
-  <p>The Service is not intended for users aged 16 and under. We are not aware of any data collected from children. If you become aware of such a case — contact us for immediate deletion.</p>
-
-  <h2 id="privacy-section-8">8. Changes to this policy</h2>
-  <p>Material changes will be posted on this page with an updated date at the top. Continued use after an update constitutes agreement.</p>
-
+  <h2 id="privacy-section-2">2. Information and purposes</h2>
+  <p>Providing account details is voluntary, but an email and authentication are necessary for a cloud account. Broker connections, portfolio entries and push notifications are optional; declining them limits the corresponding features. We do not request GPS location or biometric information. We do not operate advertising trackers.</p>
+  <table class="data-table"><thead><tr><th>Data</th><th>What is processed</th><th>Purpose</th></tr></thead><tbody><tr><td>Account and profile</td><td>Email, name, display preferences and Google profile data when signing in with Google</td><td>Account creation, authentication and display</td></tr><tr><td>Journal and portfolios</td><td>Trades, notes, holdings, deposits, missed opportunities and watchlists</td><td>Journal, analysis and cross-device synchronization</td></tr><tr><td>Broker connections</td><td>Broker API credentials encrypted in Supabase Vault, imported reports and equity</td><td>Read-only data import and journal calculations</td></tr><tr><td>Notifications</td><td>Push endpoint and browser encryption keys, when enabled</td><td>Sending requested notifications</td></tr><tr><td>Technical records</td><td>Account identifier, screener visit records, error messages, stack traces and browser information; infrastructure providers may process IP addresses and request logs</td><td>Troubleshooting and operation</td></tr><tr><td>Browser storage</td><td>Session tokens, language, preferences and cached market information</td><td>Sign-in continuity, preferences and performance</td></tr><tr><td>Document acknowledgements</td><td>Terms and privacy versions, server timestamp and declaration of age 18+</td><td>Recording acceptance and managing document updates; not marketing or billing authorization</td></tr></tbody></table>
+  <h2 id="privacy-section-3">3. Storage and access</h2>
+  <p>Account data is stored using Supabase. User-scoped access policies restrict ordinary users to their own data; authorized server processes and administrators may also access data as needed for operation and support. These measures do not guarantee absolute security. Network communication uses HTTPS.</p>
+  <p>Broker credentials are encrypted in Supabase Vault and used for authenticated requests to the relevant broker. Browser storage supports sign-in and preferences; use a trusted device and sign out of shared devices.</p>
+  <h2 id="privacy-section-4">4. Service providers</h2>
+  <table class="data-table"><thead><tr><th>Provider</th><th>Role and data</th></tr></thead><tbody><tr><td>Supabase</td><td>Authentication, database, encrypted broker credentials and server functions</td></tr><tr><td>GitHub Pages / jsDelivr</td><td>Website and library delivery; technical connection data such as IP addresses</td></tr><tr><td>Google</td><td>Authentication when selected by the user</td></tr><tr><td>IBKR / Bybit</td><td>Authenticated requests to retrieve account reports and balances</td></tr><tr><td>Finnhub / FMP / Alpha Vantage / CoinGecko / Yahoo Finance / CNN / Alternative.me</td><td>Market-data requests, symbols and technical request data; direct browser image requests can disclose an IP address</td></tr><tr><td>Browser and push-service providers</td><td>Notification delivery when enabled</td></tr></tbody></table>
+  <p>Providers may process information outside Israel according to their infrastructure and applicable agreements. We do not sell personal data or share it with advertisers. The embedded stock screener is part of the service and stores watchlists and screening preferences. Acknowledging this policy is not consent to marketing messages.</p>
+  <h2 id="privacy-section-5">5. Access, correction and deletion</h2>
+  <p>You may contact <a href="mailto:davidtheking27@gmail.com">davidtheking27@gmail.com</a> to request access, correction or deletion, subject to applicable law. We may request proportionate identity verification. Trade CSV export is available in Settings; it is not an export of every category of personal information. Editable journal records can also be corrected within the app.</p>
+  <h2 id="privacy-section-6">6. Retention</h2>
+  <p>Account records are retained for service operation. Deletion requests are reviewed individually, including related account records. Legal retention requirements, security records and backup cycles may affect deletion. We will explain relevant restrictions and timing when handling a request; deletion of a displayed record does not establish immediate deletion from all backups.</p>
+  <h2 id="privacy-section-7">7. Adults only</h2>
+  <p>The service is intended only for people aged 18 and over. If you believe a minor has created an account, contact us so we can investigate and take appropriate action.</p>
+  <h2 id="privacy-section-8">8. Policy changes</h2>
+  <p>The current version and date are shown on this page. Material changes will be communicated through the service; additional consent will be requested where required. A policy update does not automatically authorize unrelated new uses of personal information.</p>
   <h2 id="privacy-section-9">9. Contact</h2>
   <p>For any privacy question: <a href="mailto:davidtheking27@gmail.com">davidtheking27@gmail.com</a></p>
 

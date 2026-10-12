@@ -1713,6 +1713,9 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
 
   .ibkr-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
   .ibkr-field-label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+  .broker-privacy-note { margin-bottom: 14px; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--r-md); color: var(--text2); font-size: 12px; line-height: 1.7; }
+  .broker-privacy-note strong { display: block; color: var(--text); margin-bottom: 4px; }
+  .broker-privacy-note a { color: var(--accent); text-decoration: underline; }
 
   .ibkr-actions { display: flex; gap: 8px; align-items: center; }
   .ibkr-sync-status { font-size: 12px; color: var(--text3); margin-right: auto; }
@@ -6431,6 +6434,12 @@ html[data-theme="light"] #app .num-green, html[data-theme="light"] #app .donut-s
         </div>
         <div class="s-expand-body" id="s-ibkr-body">
           <div class="s-expand-inner">
+            <aside class="broker-privacy-note" id="ibkr-privacy-note">
+              <strong data-i18n="set_broker_privacy_title">לפני חיבור הברוקר</strong>
+              <span data-i18n="set_broker_privacy_desc">החיבור לבחירתך. בשמירה, פרטי הגישה נשמרים מוצפנים ב־Supabase Vault ומשמשים לקבלת דוחות עסקאות ויתרות מהברוקר לצורך ייבוא, חישובים וסנכרון ביומן. הנתונים נשמרים בשרת גם לסנכרון כשאינך באתר. אפשר להשתמש ביומן גם ללא חיבור ברוקר.</span>
+              <span data-i18n="set_broker_readonly">יש להשתמש בהרשאות קריאה בלבד. היומן אינו שולח פקודות מסחר או משיכה. ניתן לבטל את המפתח אצל הברוקר; ביטולו אינו מוחק מידע שכבר יובא.</span>
+              <a href="privacy.html#privacy-section-5" data-privacy-link data-i18n="set_broker_privacy_link" target="_blank" rel="noopener">פרטיות, עיון ומחיקת מידע</a>
+            </aside>
             <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6;display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px;">
               <a href="broker-guide.html#ibkr" target="_blank" style="font-size:11px;font-weight:600;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;flex-shrink:0;">מדריך מלא <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></a>
             </div>
@@ -6438,7 +6447,7 @@ html[data-theme="light"] #app .num-green, html[data-theme="light"] #app .donut-s
               <div>
                 <div class="ibkr-field-label">Token</div>
                 <div style="position:relative;">
-                  <input id="flex-token" class="form-control" type="password" placeholder="••••••••" autocomplete="off" aria-label="IBKR Token" style="font-size:12px;padding:6px 36px 6px 10px;" onkeydown="if(event.key==='Enter')flexSave()">
+                  <input id="flex-token" aria-describedby="ibkr-privacy-note" class="form-control" type="password" placeholder="••••••••" autocomplete="off" aria-label="IBKR Token" style="font-size:12px;padding:6px 36px 6px 10px;" onkeydown="if(event.key==='Enter')flexSave()">
                   <button type="button" onclick="toggleReveal('flex-token',this)" tabindex="-1" aria-label="הצג/הסתר טוקן" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:2px;color:var(--text3);line-height:0;">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
@@ -6446,7 +6455,7 @@ html[data-theme="light"] #app .num-green, html[data-theme="light"] #app .donut-s
               </div>
               <div>
                 <div class="ibkr-field-label">Query ID</div>
-                <input id="flex-query-id" class="form-control" type="text" placeholder="1462900" autocomplete="off" aria-label="IBKR Query ID" style="font-size:12px;padding:6px 10px;" onkeydown="if(event.key==='Enter')flexSave()" onblur="if(document.getElementById('flex-token').value&&this.value)flexSave()">
+                <input id="flex-query-id" aria-describedby="ibkr-privacy-note" class="form-control" type="text" placeholder="1462900" autocomplete="off" aria-label="IBKR Query ID" style="font-size:12px;padding:6px 10px;" onkeydown="if(event.key==='Enter')flexSave()">
               </div>
               <div class="ibkr-actions" style="margin-bottom:0;">
                 <button class="btn btn-secondary btn-sm" onclick="flexSave()" data-i18n="m_save_short">Save</button>
@@ -6456,7 +6465,7 @@ html[data-theme="light"] #app .num-green, html[data-theme="light"] #app .donut-s
             <a id="flex-advanced-toggle" onclick="toggleFlexAdvanced()" style="font-size:11px;font-weight:600;color:var(--accent);cursor:pointer;display:inline-block;margin-bottom:10px;" data-i18n="set_ibkr_advanced">הגדרות מתקדמות ▾</a>
             <div id="flex-advanced" style="display:none;margin-bottom:12px;max-width:280px;">
               <div class="ibkr-field-label" data-i18n="set_ibkr_confirm_label">Trade Confirmation Query ID — לעדכון כמעט בזמן-אמת (אופציונלי)</div>
-              <input id="flex-confirm-query-id" class="form-control" type="text" aria-label="Trade Confirmation Query ID" placeholder="1462900" autocomplete="off" style="font-size:12px;padding:6px 10px;" onkeydown="if(event.key==='Enter')flexSave()" onblur="if(document.getElementById('flex-token').value&&this.value)flexSave()">
+              <input id="flex-confirm-query-id" aria-describedby="ibkr-privacy-note" class="form-control" type="text" aria-label="Trade Confirmation Query ID" placeholder="1462900" autocomplete="off" style="font-size:12px;padding:6px 10px;" onkeydown="if(event.key==='Enter')flexSave()">
             </div>
             <span class="ibkr-sync-status" id="flex-status"></span>
             <div id="flex-preview" class="ibkr-trades-list"></div>
@@ -6483,6 +6492,12 @@ html[data-theme="light"] #app .num-green, html[data-theme="light"] #app .donut-s
         </div>
         <div class="s-expand-body" id="s-bybit-body">
           <div class="s-expand-inner">
+            <aside class="broker-privacy-note" id="bybit-privacy-note">
+              <strong data-i18n="set_broker_privacy_title">לפני חיבור הברוקר</strong>
+              <span data-i18n="set_broker_privacy_desc">החיבור לבחירתך. בשמירה, פרטי הגישה נשמרים מוצפנים ב־Supabase Vault ומשמשים לקבלת דוחות עסקאות ויתרות מהברוקר לצורך ייבוא, חישובים וסנכרון ביומן. הנתונים נשמרים בשרת גם לסנכרון כשאינך באתר. אפשר להשתמש ביומן גם ללא חיבור ברוקר.</span>
+              <span data-i18n="set_broker_readonly">יש להשתמש בהרשאות קריאה בלבד. היומן אינו שולח פקודות מסחר או משיכה. ניתן לבטל את המפתח אצל הברוקר; ביטולו אינו מוחק מידע שכבר יובא.</span>
+              <a href="privacy.html#privacy-section-5" data-privacy-link data-i18n="set_broker_privacy_link" target="_blank" rel="noopener">פרטיות, עיון ומחיקת מידע</a>
+            </aside>
             <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6;display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px;">
               <a href="broker-guide.html#bybit" target="_blank" style="font-size:11px;font-weight:600;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;flex-shrink:0;">מדריך מלא <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></a>
             </div>
@@ -6490,7 +6505,7 @@ html[data-theme="light"] #app .num-green, html[data-theme="light"] #app .donut-s
               <div>
                 <div class="ibkr-field-label">API Key</div>
                 <div style="position:relative;">
-                  <input id="bybit-api-key" class="form-control" type="password" placeholder="••••••••" autocomplete="off" aria-label="Bybit API Key" style="font-size:12px;padding:6px 36px 6px 10px;" onkeydown="if(event.key==='Enter')bybitSave()">
+                  <input id="bybit-api-key" aria-describedby="bybit-privacy-note" class="form-control" type="password" placeholder="••••••••" autocomplete="off" aria-label="Bybit API Key" style="font-size:12px;padding:6px 36px 6px 10px;" onkeydown="if(event.key==='Enter')bybitSave()">
                   <button type="button" onclick="toggleReveal('bybit-api-key',this)" tabindex="-1" aria-label="הצג/הסתר מפתח API" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:2px;color:var(--text3);line-height:0;">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
@@ -6499,7 +6514,7 @@ html[data-theme="light"] #app .num-green, html[data-theme="light"] #app .donut-s
               <div>
                 <div class="ibkr-field-label">API Secret</div>
                 <div style="position:relative;">
-                  <input id="bybit-api-secret" class="form-control" type="password" placeholder="••••••••" autocomplete="off" aria-label="Bybit API Secret" style="font-size:12px;padding:6px 36px 6px 10px;" onkeydown="if(event.key==='Enter')bybitSave()" onblur="if(document.getElementById('bybit-api-key').value&&this.value)bybitSave()">
+                  <input id="bybit-api-secret" aria-describedby="bybit-privacy-note" class="form-control" type="password" placeholder="••••••••" autocomplete="off" aria-label="Bybit API Secret" style="font-size:12px;padding:6px 36px 6px 10px;" onkeydown="if(event.key==='Enter')bybitSave()">
                   <button type="button" onclick="toggleReveal('bybit-api-secret',this)" tabindex="-1" aria-label="הצג/הסתר סוד API" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:2px;color:var(--text3);line-height:0;">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
@@ -7441,9 +7456,10 @@ html[data-theme="light"] #app .num-green, html[data-theme="light"] #app .donut-s
         onkeydown="if(event.key==='Enter')authSubmit()">
       <label id="auth-consent-row" style="display:none;align-items:flex-start;gap:8px;margin-top:4px;font-size:12px;color:var(--text3);line-height:1.5;cursor:pointer;">
         <input id="auth-consent" type="checkbox" style="margin-top:2px;flex-shrink:0;cursor:pointer;accent-color:var(--accent);">
-        <span id="auth-consent-text">קראתי ואני מסכים/ה ל<a href="terms.html" id="auth-consent-terms-link" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:underline;">תנאי השימוש</a> ול<a href="privacy.html" id="auth-consent-privacy-link" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:underline;">מדיניות הפרטיות</a></span>
+        <span id="auth-consent-text"><span data-i18n="auth_legal_intro">אני בן/בת 18 לפחות, מסכים/ה ל</span> <a href="terms.html" id="auth-consent-terms-link" data-i18n="auth_legal_terms" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:underline;">תנאי השימוש</a> <span data-i18n="auth_legal_read">וקראתי את</span> <a href="privacy.html" id="auth-consent-privacy-link" data-i18n="auth_legal_privacy" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:underline;">מדיניות הפרטיות</a>. <span data-i18n="auth_legal_scope">האישור אינו הסכמה לדיוור שיווקי או לחיוב.</span></span>
       </label>
     </div>
+    <p id="auth-privacy-notice" data-i18n="auth_privacy_notice" style="font-size:12px;color:var(--text2);line-height:1.6;margin-top:10px">פרטי החשבון נמסרים מרצונך ומשמשים ליצירת חשבון ואימות באמצעות Supabase. בהתחברות עם Google מתקבלים גם הדוא״ל ופרטי הפרופיל. ללא הפרטים הנדרשים לא ניתן לפתוח חשבון בענן. חיבור ברוקר והתראות הם לבחירתך. פירוט הספקים וזכויות העיון והתיקון מופיע במדיניות הפרטיות.</p>
 
     <div id="auth-msg" style="display:none;margin-top:12px;padding:10px 12px;border-radius:var(--r-md);font-size:13px;text-align:center;"></div>
 

@@ -37,6 +37,7 @@ async function bybitGet(apiKey: string, apiSecret: string, path: string, params:
   const recvWindow = '5000';
   const signature = await hmacSha256(apiSecret, timestamp + apiKey + recvWindow + queryString);
   const res = await fetch(`${BYBIT_BASE}${path}?${queryString}`, {
+    signal: AbortSignal.timeout(20000),
     headers: {
       'X-BAPI-API-KEY': apiKey,
       'X-BAPI-SIGN': signature,
@@ -45,6 +46,7 @@ async function bybitGet(apiKey: string, apiSecret: string, path: string, params:
       'X-BAPI-RECV-WINDOW': recvWindow,
     },
   });
+  if (!res.ok) throw new Error(`Bybit HTTP ${res.status}`);
   return res.json();
 }
 
@@ -89,23 +91,33 @@ export function openPositionRow(userId: string, p: BybitOpenPosition) {
 // silently lose executions past an arbitrary limit. Throws on a Bybit API error.
 async function fetchExecutions(apiKey: string, apiSecret: string, days: number): Promise<Record<string, string>[]> {
   const all: Record<string, string>[] = [];
+  const seenExecutions = new Set<string>();
   const now = Date.now();
   const oldest = Math.max(now - days * 24 * 60 * 60 * 1000, now - MAX_LOOKBACK_MS);
   for (let winEnd = now; winEnd > oldest; winEnd -= WEEK_MS) {
     const winStart = Math.max(winEnd - WEEK_MS, oldest);
     let cursor = '';
+    const seenCursors = new Set<string>();
     while (true) {
       const params: Record<string, string> = {
-        category: 'linear', limit: '200', execType: 'Trade',
+        category: 'linear', limit: '100', execType: 'Trade',
         startTime: String(winStart), endTime: String(winEnd),
       };
       if (cursor) params.cursor = cursor;
       const json = await bybitGet(apiKey, apiSecret, '/v5/execution/list', params);
       if (json.retCode !== 0) throw new Error(json.retMsg || `Bybit error ${json.retCode}`);
-      const list: Record<string, string>[] = json.result?.list ?? [];
-      all.push(...list);
+      if (!Array.isArray(json.result?.list)) throw new Error('Invalid Bybit execution response');
+      const list: Record<string, string>[] = json.result.list;
+      for (const execution of list) {
+        if (!execution.execId) throw new Error('Invalid Bybit execution response: missing execution ID');
+        if (seenExecutions.has(execution.execId)) continue;
+        seenExecutions.add(execution.execId);
+        all.push(execution);
+      }
       cursor = json.result?.nextPageCursor ?? '';
-      if (!cursor || list.length < 200) break;
+      if (!cursor) break;
+      if (typeof cursor !== 'string' || seenCursors.has(cursor)) throw new Error('Invalid Bybit execution response: repeated cursor');
+      seenCursors.add(cursor);
     }
   }
   return all;
@@ -125,13 +137,15 @@ export async function fetchBybitEquity(apiKey: string, apiSecret: string): Promi
 // function to also surface open positions must not mean a second network
 // fetch or a second copy of this matching logic.
 async function _runBybitFifo(apiKey: string, apiSecret: string, days: number):
-  Promise<{ trades: BybitTrade[]; openPositions: Map<string, OpenPos> }> {
+  Promise<{ trades: BybitTrade[]; openPositions: Map<string, OpenPos>; incomplete: boolean; latestIncomplete: number }> {
   const allExecs = await fetchExecutions(apiKey, apiSecret, days);
   // Sort ascending so we can process FIFO
   allExecs.sort((a, b) => parseInt(a.execTime) - parseInt(b.execTime));
 
   const openPositions = new Map<string, OpenPos>();
   const trades: BybitTrade[] = [];
+  let incomplete = false;
+  let latestIncomplete = 0;
 
   for (const exec of allExecs) {
     const symbol = exec.symbol;
@@ -141,24 +155,40 @@ async function _runBybitFifo(apiKey: string, apiSecret: string, days: number):
     const fee = parseFloat(exec.execFee || '0');
     const time = parseInt(exec.execTime);
     const closedSize = parseFloat(exec.closedSize || '0');
+    if (!symbol.endsWith('USDT') || !['Buy', 'Sell'].includes(side) ||
+      ![qty, price, fee, time, closedSize].every(Number.isFinite) || qty <= 0 || price <= 0 ||
+      closedSize < 0 || closedSize > qty) throw new Error('Unsupported or invalid Bybit execution');
 
     if (closedSize === 0) {
       const ls: 'Long' | 'Short' = side === 'Buy' ? 'Long' : 'Short';
+      if (openPositions.has(symbol) && openPositions.get(symbol)!.side !== ls) {
+        throw new Error('Bybit hedge mode is not supported; use one-way USDT positions');
+      }
       if (!openPositions.has(symbol)) openPositions.set(symbol, { side: ls, entries: [] });
       openPositions.get(symbol)!.entries.push({ qty, price, fee, time });
     } else {
       const pos = openPositions.get(symbol);
       const opened = qty - closedSize;
+      const qtyTolerance = Math.max(1e-12, qty * 1e-9);
       // A flip's execution fee covers both the close and the newly opened
       // leg — split it by quantity so neither side is charged the full fee
       // (the close used to eat 100% of it while the new leg got fee:0).
-      const closeFeeShare = opened > 0.0001 ? fee * (closedSize / qty) : fee;
+      const closeFeeShare = opened > qtyTolerance ? fee * (closedSize / qty) : fee;
       const openFeeShare = fee - closeFeeShare;
 
       if (pos) {
         const ls = pos.side;
+        if ((ls === 'Long' && side !== 'Sell') || (ls === 'Short' && side !== 'Buy')) {
+          throw new Error('Bybit hedge mode is not supported; use one-way USDT positions');
+        }
         const entryTime = pos.entries[0].time;
         const totalQty = pos.entries.reduce((s, e) => s + e.qty, 0);
+        if (closedSize > totalQty + Math.max(1e-12, totalQty * 1e-9)) {
+          incomplete = true;
+          latestIncomplete = Math.max(latestIncomplete, time);
+          openPositions.delete(symbol);
+          continue;
+        }
         const avgEntry = pos.entries.reduce((s, e) => s + e.price * e.qty, 0) / totalQty;
         const totalEntryFees = pos.entries.reduce((s, e) => s + e.fee, 0);
         // Prorate accumulated entry fees by the fraction of the position being
@@ -167,7 +197,7 @@ async function _runBybitFifo(apiKey: string, apiSecret: string, days: number):
         // leave later partial closes of the same lot with none.
         const entryFeeShare = totalEntryFees * (Math.min(closedSize, totalQty) / totalQty);
         const remaining = totalQty - closedSize;
-        if (remaining <= 0.0001) openPositions.delete(symbol);
+        if (remaining <= Math.max(1e-12, totalQty * 1e-9)) openPositions.delete(symbol);
         else pos.entries = [{ qty: remaining, price: avgEntry, fee: totalEntryFees - entryFeeShare, time: pos.entries[0].time }];
 
         const commission = Math.round((entryFeeShare + closeFeeShare) * 10000) / 10000;
@@ -185,18 +215,62 @@ async function _runBybitFifo(apiKey: string, apiSecret: string, days: number):
           stop: null, t: [], bybit_id: exec.execId,
         });
       }
+      else { incomplete = true; latestIncomplete = Math.max(latestIncomplete, time); }
       // else: this execution closes a position whose opening leg isn't in
       // the fetched window (e.g. bybit-cron's short lookback vs. a longer
       // swing hold). We have no real entry price to compute P&L from here —
       // skip rather than fabricate entryPrice = exitPrice (silent zero P&L).
 
-      if (opened > 0.0001) {
+      if (opened > qtyTolerance) {
         const newSide: 'Long' | 'Short' = side === 'Buy' ? 'Long' : 'Short';
         openPositions.set(symbol, { side: newSide, entries: [{ qty: opened, price, fee: openFeeShare, time }] });
       }
     }
   }
-  return { trades, openPositions };
+  return { trades, openPositions, incomplete, latestIncomplete };
+}
+
+// Validate the reconstruction against actual open positions before cron writes
+// or removes placeholders. A short history is not evidence that a holding closed.
+export async function computeBybitSync(apiKey: string, apiSecret: string, days: number):
+  Promise<{ trades: BybitTrade[]; open: BybitOpenPosition[] }> {
+  const actual = new Map<string, { shares: number; ls: string }>();
+  let cursor = '';
+  const cursors = new Set<string>();
+  do {
+    const params: Record<string, string> = { category: 'linear', settleCoin: 'USDT', limit: '200' };
+    if (cursor) params.cursor = cursor;
+    const json = await bybitGet(apiKey, apiSecret, '/v5/position/list', params);
+    if (json.retCode !== 0) throw new Error(json.retMsg || 'Bybit position request failed');
+    if (!Array.isArray(json.result?.list)) throw new Error('Invalid Bybit position response');
+    for (const p of json.result.list) {
+      const shares = Number(p.size);
+      if (!Number.isFinite(shares) || shares < 0) throw new Error('Invalid Bybit position size');
+      if (!shares) continue;
+      if (Number(p.positionIdx) !== 0 || !String(p.symbol).endsWith('USDT') || !['Buy', 'Sell'].includes(p.side)) {
+        throw new Error('Bybit hedge mode is not supported; use one-way USDT positions');
+      }
+      actual.set(p.symbol.replace(/USDT$/, ''), { shares, ls: p.side === 'Buy' ? 'L' : 'S' });
+    }
+    cursor = json.result.nextPageCursor || '';
+    if (cursor && (typeof cursor !== 'string' || cursors.has(cursor))) throw new Error('Invalid Bybit position cursor');
+    cursors.add(cursor);
+  } while (cursor);
+  const matches = (open: BybitOpenPosition[]) => open.length === actual.size && open.every(p => {
+    const a = actual.get(p.symbol);
+    return a && a.ls === p.ls && Math.abs(a.shares - p.shares) <= Math.max(1e-12, a.shares * 1e-9);
+  });
+  let result = await _runBybitFifo(apiKey, apiSecret, days);
+  let open = _openPositionsToRows(result.openPositions);
+  if (result.incomplete || !matches(open)) {
+    result = await _runBybitFifo(apiKey, apiSecret, 725);
+    open = _openPositionsToRows(result.openPositions);
+  }
+  if (!matches(open)) throw new Error('Bybit positions could not be reconciled; no trades were saved. Retry synchronization');
+  if (result.latestIncomplete >= Date.now() - days * 24 * 60 * 60 * 1000) {
+    throw new Error('Bybit closing execution is missing its entry history; no trades were saved');
+  }
+  return { trades: result.trades, open };
 }
 
 function _openPositionsToRows(openPositions: Map<string, OpenPos>): BybitOpenPosition[] {

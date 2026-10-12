@@ -34,28 +34,11 @@
   // else auth overlay stays visible
 
   // Listen for future auth state changes (sign in / sign out / token refresh)
-  _sb.auth.onAuthStateChange(async (event, session) => {
+  _sb.auth.onAuthStateChange((event, session) => {
     if (session) _currentSession = session;
-    if (event === 'SIGNED_IN' && !_currentUser && session?.user) {
-      await _onAuthSuccess(session.user);
-    }
-    if (event === 'TOKEN_REFRESHED' && session) {
-      _currentSession = session;
-    }
-    if (session) _sendSessionToScreener();
-    // A password-reset email link lands here as its own event, not SIGNED_IN —
-    // Supabase's client establishes the session automatically either way, but
-    // without this the user was dropped straight into the dashboard with no
-    // indication the reset link ever did anything: the old password stayed the
-    // password, since nothing ever asked for a new one.
-    if (event === 'PASSWORD_RECOVERY' && session?.user) {
-      if (!_currentUser) await _onAuthSuccess(session.user);
-      const settingsBtn = document.querySelector('.tab-btn[aria-label="Settings"]');
-      switchTab('ibkr', settingsBtn);
-      toast('הקישור אימת אותך — הזן סיסמה חדשה למטה', 'info');
-      document.getElementById('pw-new')?.focus();
-    }
     if (event === 'SIGNED_OUT') {
+      _closeLegalPrompt();
+      _legalReadyUserId = null;
       resetTradeSnapshots();
       _teardownRealtimeSync();
       _invResetSession();
@@ -63,6 +46,34 @@
       _currentSession = null;
       db = { stocks: [], crypto: [] };
       document.getElementById('auth-overlay').style.display = 'flex';
+      return;
     }
+    // Supabase holds its auth lock while delivering this event. Database calls
+    // and waiting for user acknowledgement must run after the callback returns.
+    setTimeout(async () => {
+      if (session && _currentSession?.user?.id !== session.user.id) return;
+      try {
+      if (event === 'SIGNED_IN' && !_currentUser && session?.user) {
+        await _onAuthSuccess(session.user);
+      }
+      if (event === 'TOKEN_REFRESHED' && session) {
+        _currentSession = session;
+      }
+      if (session) _sendSessionToScreener();
+      // A password-reset email link lands here as its own event, not SIGNED_IN —
+      // Supabase's client establishes the session automatically either way, but
+      // without this the user was dropped straight into the dashboard with no
+      // indication the reset link ever did anything: the old password stayed the
+      // password, since nothing ever asked for a new one.
+      if (event === 'PASSWORD_RECOVERY' && session?.user) {
+        if (!_currentUser) await _onAuthSuccess(session.user);
+        if (_legalReadyUserId !== session.user.id) return;
+        const settingsBtn = document.querySelector('.tab-btn[aria-label="Settings"]');
+        switchTab('ibkr', settingsBtn);
+        toast('הקישור אימת אותך — הזן סיסמה חדשה למטה', 'info');
+        document.getElementById('pw-new')?.focus();
+      }
+      } catch { _authMsg('לא ניתן להשלים כניסה. נסה שוב.', 'error'); }
+    }, 0);
   });
 })();

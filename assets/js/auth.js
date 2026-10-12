@@ -77,6 +77,68 @@ window.fetch = async (input, init) => {
 // AUTH
 // ─────────────────────────────────────────────
 let _authMode = 'login';
+const LEGAL_DOCUMENT_VERSION = '2026-10-12';
+let _legalPrompt = null;
+let _legalReadyUserId = null;
+
+function _closeLegalPrompt() {
+  if (!_legalPrompt) return;
+  _legalPrompt.dialog.remove();
+  _legalPrompt.resolve(false);
+  _legalPrompt = null;
+}
+
+async function requireLegalAcceptance(user) {
+  let data, error;
+  try {
+    ({ data, error } = await _sb.from('legal_acceptances').select('accepted_at')
+      .eq('user_id', user.id).eq('terms_version', LEGAL_DOCUMENT_VERSION)
+      .eq('privacy_version', LEGAL_DOCUMENT_VERSION).maybeSingle());
+  } catch { error = true; }
+  if (_currentUser?.id !== user.id) return false;
+  if (!error && data?.accepted_at) return true;
+  if (_legalPrompt?.userId === user.id) return _legalPrompt.promise;
+  _closeLegalPrompt();
+  const en = typeof _lang !== 'undefined' && _lang === 'en';
+  const dialog = document.createElement('dialog');
+  dialog.id = 'legal-acceptance-dialog';
+  dialog.setAttribute('aria-labelledby', 'legal-acceptance-title');
+  dialog.style.cssText = 'margin:auto;width:min(520px,calc(100vw - 32px));max-height:90dvh;overflow:auto;padding:24px;border:1px solid var(--border);border-radius:16px;background:var(--card);color:var(--text);font-family:inherit;line-height:1.7;';
+  const pages = en ? LEGAL_PAGES_EN : LEGAL_PAGES;
+  dialog.innerHTML = `<h2 id="legal-acceptance-title" style="font-size:20px;margin-bottom:12px">${en ? 'Before using ChartRoom' : 'לפני השימוש ב־ChartRoom'}</h2>
+    <p>${en ? 'Please review the current documents. This acknowledgement is not a marketing subscription or a payment authorization.' : 'יש לקרוא ולאשר את המסמכים המעודכנים. האישור אינו הרשמה לדיוור שיווקי ואינו אישור לחיוב כספי.'}</p>
+    <p><a href="${pages.terms}" target="_blank" rel="noopener">${en ? 'Terms of use' : 'תנאי שימוש'}</a> · <a href="${pages.privacy}" target="_blank" rel="noopener">${en ? 'Privacy policy' : 'מדיניות פרטיות'}</a> · ${LEGAL_DOCUMENT_VERSION}</p>
+    <label style="display:flex;gap:10px;margin:18px 0"><input id="legal-acceptance-check" type="checkbox"> <span>${en ? 'I am at least 18, accept the terms and have read the privacy policy.' : 'אני בן/בת 18 לפחות, מסכים/ה לתנאי השימוש וקראתי את מדיניות הפרטיות.'}</span></label>
+    <p id="legal-acceptance-error" role="alert" style="color:var(--red)"></p>
+    <div style="display:flex;gap:12px"><button id="legal-acceptance-save" class="btn btn-primary">${en ? 'Accept and continue' : 'אישור והמשך'}</button><button id="legal-acceptance-leave" class="btn">${en ? 'Sign out' : 'התנתקות'}</button></div>`;
+  document.body.append(dialog);
+  dialog.querySelectorAll('a').forEach(link => { link.style.color = 'var(--accent)'; link.style.textDecoration = 'underline'; });
+  let resolve;
+  const promise = new Promise(done => { resolve = done; });
+  const prompt = { userId: user.id, dialog, promise, resolve };
+  _legalPrompt = prompt;
+  const leave = async () => { _closeLegalPrompt(); await authSignOut(); };
+  dialog.addEventListener('cancel', event => { event.preventDefault(); leave(); });
+  dialog.querySelector('#legal-acceptance-leave').onclick = leave;
+  dialog.querySelector('#legal-acceptance-save').onclick = async () => {
+    const checkbox = dialog.querySelector('#legal-acceptance-check');
+    const message = dialog.querySelector('#legal-acceptance-error');
+    if (!checkbox.checked) { message.textContent = en ? 'Please confirm before continuing.' : 'יש לסמן אישור כדי להמשיך.'; checkbox.focus(); return; }
+    const button = dialog.querySelector('#legal-acceptance-save');
+    button.disabled = true;
+    try {
+      const result = await _sb.rpc('accept_legal_documents', { p_terms_version: LEGAL_DOCUMENT_VERSION, p_privacy_version: LEGAL_DOCUMENT_VERSION, p_age_18: true });
+      if (_legalPrompt !== prompt || _currentUser?.id !== user.id) return;
+      if (result.error || !result.data) throw new Error('Acknowledgement not saved');
+      dialog.remove(); _legalPrompt = null; resolve(true);
+    } catch {
+      if (_legalPrompt === prompt) message.textContent = en ? 'Could not save. Please retry or sign out.' : 'האישור לא נשמר. אפשר לנסות שוב או להתנתק.';
+    } finally { button.disabled = false; }
+  };
+  dialog.showModal();
+  dialog.querySelector('#legal-acceptance-check').focus();
+  return promise;
+}
 
 // ─────────────────────────────────────────────
 // LEGAL / POLICY DOCUMENTS — open standalone pages (single source of truth)
@@ -203,11 +265,14 @@ async function authForgotPassword() {
 
 async function authSignOut() {
   if (invHasUnsavedChanges() && !confirm('יש שינויים בהשקעות שטרם נשמרו. לצאת ולבטל אותם?')) return;
+  _closeLegalPrompt();
+  _legalReadyUserId = null;
   _teardownRealtimeSync();
   _invResetSession();
   resetTradeSnapshots();
   await _sb.auth.signOut();
   _currentUser = null;
+  _currentSession = null;
   if (_ovLiveTimer) { clearInterval(_ovLiveTimer); _ovLiveTimer = null; }
   // Investments kept a 60s quote timer running past sign-out, firing a request
   // per holding every minute with no token. Its caches survived too, so signing
@@ -335,8 +400,13 @@ function _logBootTiming(t0) {
 
 async function _onAuthSuccess(user) {
   const _bootT0 = performance.now();
-  if (_currentUser?.id !== user.id) { _invResetSession(); resetTradeSnapshots(); }
+  if (_currentUser?.id !== user.id) { _legalReadyUserId = null; _closeLegalPrompt(); _invResetSession(); resetTradeSnapshots(); }
   _currentUser = user;
+  _legalReadyUserId = null;
+  document.getElementById('app').inert = true;
+  if (!await requireLegalAcceptance(user) || _currentUser?.id !== user.id) return;
+  _legalReadyUserId = user.id;
+  document.getElementById('app').inert = false;
   const _displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'ChartRoom';
   _setHeaderGreeting(_firstName(user));
   const _nameEl = document.getElementById('header-user-name');

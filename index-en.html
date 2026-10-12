@@ -1340,14 +1340,14 @@ html[lang="en"] #hero .hero-title{letter-spacing:-.02em;line-height:1.08}
   <div class="reveal">
     <div class="section-pill">Pricing</div>
     <h2 class="section-title" id="pricing-heading">All your tools in one place. Start free.</h2>
-    <p class="section-sub">No "basic" tier pushing you to upgrade.</p>
+    <p class="section-sub">All tools are currently available without a subscription charge.</p>
   </div>
 
   <div class="pricing-outer reveal">
     <div class="pricing-card">
       <div class="price-label">Free access</div>
       <div class="price-amount"><span class="cur">$</span>0 <span class="per">/ month</span></div>
-      <div class="price-note">Every feature unlocked. Nothing to upgrade.</div>
+      <div class="price-note">Currently free. Any future paid plan will require a separate purchase authorization.</div>
       <ul class="price-list" aria-label="What's included">
         <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>Automatic import from Interactive Brokers and Bybit</li>
         <li><svg width="14" height="14" class="pl-check" aria-hidden="true"><use href="#i-check"/></svg>Full statistics — win rate, P&amp;L, profit factor</li>
@@ -1374,7 +1374,7 @@ html[lang="en"] #hero .hero-title{letter-spacing:-.02em;line-height:1.08}
           Is the broker connection safe?
           <span class="faq-arrow" aria-hidden="true"><svg width="18" height="18"><use href="#i-chev"/></svg></span>
         </button>
-        <div class="faq-a" id="faq-a1" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">Yes. The connection is read-only: the IBKR token and a Bybit key (created with read-only permissions) only pull your trade report, and the system has no access to place trades or withdraw funds. Keys are stored encrypted, data lives on Supabase servers in the EU, traffic is encrypted over HTTPS, and each user sees only their own data. We do not sell data or use it for advertising.</div></div></div>
+        <div class="faq-a" id="faq-a1" aria-hidden="true"><div class="faq-a-inner"><div class="faq-a-pad">The connection is used to retrieve reports and balances, not to place trades or withdraw funds. Use read-only broker credentials. Broker credentials are encrypted in Supabase Vault and traffic uses HTTPS. User-scoped permissions restrict ordinary users to their own records; authorized server processes and administrators may access data for operation and support. No system guarantees absolute security. See the privacy policy for details.</div></div></div>
       </div>
       <div class="faq-item reveal" role="listitem">
         <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-a2">
@@ -1747,7 +1747,7 @@ html[lang="en"] #hero .hero-title{letter-spacing:-.02em;line-height:1.08}
       "name": "Is the broker connection safe?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes. The connection is read-only: the IBKR token and a Bybit key (created with read-only permissions) only pull your trade report, and the system has no access to place trades or withdraw funds. Keys are stored encrypted, data lives on Supabase servers in the EU, traffic is encrypted over HTTPS, and each user sees only their own data. We do not sell data or use it for advertising."
+        "text": "The connection is used to retrieve reports and balances, not to place trades or withdraw funds. Use read-only broker credentials. Broker credentials are encrypted in Supabase Vault and traffic uses HTTPS. User-scoped permissions restrict ordinary users to their own records; authorized server processes and administrators may access data for operation and support. No system guarantees absolute security. See the privacy policy for details."
       }
     },
     {

@@ -71,6 +71,104 @@ async function login(page, email = 'a@example.test') {
   await page.locator('#auth-submit-btn').waitFor({ state: 'attached' });
   await page.waitForFunction(() => !document.getElementById('auth-submit-btn').disabled);
 }
+
+test('broker collection notices are localized and credentials require an explicit save', async t => {
+  const page = await open(t);
+  assert.equal(await page.locator('#auth-privacy-notice').isVisible(), true);
+  await page.evaluate(() => { setLang('en'); authSetMode('register'); });
+  assert.match(await page.locator('#auth-privacy-notice').innerText(), /Google sign-in/);
+  assert.match(await page.locator('#auth-consent-text').innerText(), /does not authorize marketing messages or charges/);
+  assert.equal(await page.locator('#auth-consent-privacy-link').getAttribute('href'), 'privacy-en.html');
+  await page.evaluate(() => { setLang('he'); authSetMode('login'); });
+  await login(page);
+  await page.evaluate(() => {
+    switchTab('ibkr');
+    toggleExpand('s-bybit-body', 's-bybit-row');
+    window.brokerSecretWrites = 0;
+    const original = _sb.rpc.bind(_sb);
+    _sb.rpc = (name, params) => {
+      if (name === 'set_broker_secret') { window.brokerSecretWrites++; return Promise.resolve({ error: null, data: null }); }
+      return original(name, params);
+    };
+    setLang('he');
+  });
+  assert.match(await page.locator('#bybit-privacy-note').innerText(), /החיבור לבחירתך/);
+  assert.equal(await page.locator('#bybit-privacy-note a').getAttribute('href'), 'privacy.html#privacy-section-5');
+  await page.locator('#bybit-api-key').fill('test-only-key');
+  await page.locator('#bybit-api-secret').fill('test-only-secret');
+  await page.locator('#bybit-api-secret').blur();
+  assert.equal(await page.evaluate(() => window.brokerSecretWrites), 0);
+  await page.locator('#s-bybit-body button[onclick="bybitSave()"]').click();
+  await page.waitForFunction(() => window.brokerSecretWrites === 2);
+  assert.equal(await page.locator('#bybit-api-secret').inputValue(), '');
+  await page.evaluate(() => setLang('en'));
+  assert.match(await page.locator('#bybit-privacy-note').innerText(), /Connecting is optional/);
+  assert.equal(await page.locator('#bybit-privacy-note a').getAttribute('href'), 'privacy-en.html#privacy-section-5');
+  assert.equal(await page.locator('#ibkr-privacy-note a').getAttribute('href'), 'privacy-en.html#privacy-section-5');
+  for (const id of ['flex-query-id', 'flex-confirm-query-id', 'bybit-api-secret']) {
+    assert.equal(await page.locator('#' + id).getAttribute('onblur'), null);
+  }
+});
+
+test('legal acknowledgement requires age confirmation, survives save failure and is account scoped', async t => {
+  const page = await open(t);
+  await page.evaluate(() => { window.__testDB.legal_acceptances = []; window.__test.legalSaveFailure = true; });
+  await page.locator('#auth-email').fill('a@example.test');
+  await page.locator('#auth-pass').fill('test-password');
+  await page.locator('#auth-submit-btn').click();
+  const gate = page.locator('#legal-acceptance-dialog');
+  await gate.waitFor({state:'visible'});
+  assert.equal(await page.locator('#auth-overlay').isVisible(), true, 'no journal access before acknowledgement');
+  assert.equal(await page.locator('#app').evaluate(el => el.inert), true);
+  assert.equal(await page.evaluate(() => _legalReadyUserId), null, 'screener session is not authorized yet');
+  await page.locator('#legal-acceptance-save').click();
+  assert.ok(await page.locator('#legal-acceptance-error').textContent());
+  await page.locator('#legal-acceptance-check').check();
+  await page.locator('#legal-acceptance-save').click();
+  await page.waitForFunction(() => document.getElementById('legal-acceptance-error').textContent.includes('לא נשמר'));
+  assert.equal(await gate.isVisible(), true);
+  await page.evaluate(() => { window.__test.legalSaveFailure = false; });
+  await page.locator('#legal-acceptance-save').click();
+  await page.locator('#auth-overlay').waitFor({state:'hidden'});
+  assert.equal(await page.locator('#app').evaluate(el => el.inert), false);
+  assert.deepEqual(await page.evaluate(() => window.__testDB.legal_acceptances.map(r => r.user_id)), ['user-a']);
+  await page.evaluate(() => authSignOut());
+  await page.locator('#auth-email').fill('b@example.test');
+  await page.locator('#auth-pass').fill('test-password');
+  await page.locator('#auth-submit-btn').click();
+  await gate.waitFor({state:'visible'});
+  assert.equal(await page.locator('#legal-acceptance-check').isChecked(), false);
+  await page.locator('#legal-acceptance-leave').click();
+  await gate.waitFor({state:'detached'});
+  assert.equal(await page.evaluate(() => _currentUser), null);
+});
+
+test('provider sessions cannot skip legal acknowledgement and an obsolete save cannot unlock another account', async t => {
+  const page = await open(t);
+  await login(page);
+  await page.evaluate(() => {
+    window.__testDB.legal_acceptances = [];
+    const rpc = _sb.rpc;
+    _sb.rpc = async (name, params) => {
+      if (name === 'accept_legal_documents') await new Promise(resolve => { window.__finishLegalSave = resolve; });
+      return rpc(name, params);
+    };
+    // The shared post-auth path also handles Google sessions; no password form is involved.
+    window.__providerBoot = _onAuthSuccess({id:'user-a',email:'oauth@example.test',user_metadata:{full_name:'Provider User'}});
+  });
+  await page.locator('#legal-acceptance-dialog').waitFor({state:'visible'});
+  await page.locator('#legal-acceptance-check').check();
+  await page.locator('#legal-acceptance-save').click();
+  await page.waitForFunction(() => typeof window.__finishLegalSave === 'function');
+  await page.evaluate(() => {
+    _currentUser = {id:'user-b'};
+    _closeLegalPrompt();
+    window.__finishLegalSave();
+  });
+  await page.evaluate(() => window.__providerBoot);
+  assert.equal(await page.evaluate(() => _currentUser.id), 'user-b');
+  assert.equal(await page.locator('#legal-acceptance-dialog').count(), 0);
+});
 async function investments(page) {
   await page.locator('[onclick="switchTab(\'investments\',this)"]:visible').first().click();
   await page.locator('#inv-tbody .inv-sym-chip').first().waitFor();

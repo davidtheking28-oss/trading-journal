@@ -14,6 +14,7 @@ Personal trading journal web app with Supabase authentication and per-user data.
 
 - dashboard.html contains the dashboard markup, CSS and public configuration placeholders.
 - assets/js/auth.js owns the Supabase client, authentication, onboarding and session state.
+- auth.js requires a server-recorded legal acknowledgement before starting journal data loads for all auth providers. Keep document versions synchronized with accept_legal_documents and the Hebrew/English pages. Do not infer historical acceptance or rely on editable user metadata. Auth-event callbacks must not await database work or a user prompt while holding Supabase's auth lock.
 - assets/js/dashboard.js contains the journal, analytics, broker interfaces and shared UI helpers.
 - assets/js/trade-charts.js generates automatic trade images; load it through loadTradeSnapshotFeature only when needed. It shares the dashboard globals and is precached in sw.js. tests/harness.mjs explicitly includes its source for logic tests.
 - assets/js/broker-import.js owns the manual broker CSV mapping, preview and import; load it through loadBrokerImportFeature when a file is selected. Keep its service-worker precache and test harness source list updated.

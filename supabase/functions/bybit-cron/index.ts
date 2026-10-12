@@ -8,13 +8,11 @@
 //
 // Auth: same shared secret as ibkr-cron (x-cron-key vs app_secrets.cron_secret).
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
-import { computeBybitTradesAndOpen, fetchBybitEquity, openPositionRow } from '../_shared/bybit.ts';
+import { computeBybitSync, fetchBybitEquity, openPositionRow } from '../_shared/bybit.ts';
 
-// Wide enough to cover the entry leg of most swing holds — computeBybitTrades
-// silently skips (rather than mis-prices) a closing execution whose opening
-// leg falls outside this window, so a too-short window here means missed
-// trades, not wrong ones, but wider is still better. Cheap now that
-// fetchExecutions has no per-window page cap.
+// Start with a recent window. computeBybitSync compares it with actual positions
+// and widens the history when an opening leg is missing; it refuses unreconciled
+// results before any trade or open-position placeholder is changed.
 const RECENT_DAYS = 45;
 
 Deno.serve(async (req: Request) => {
@@ -55,7 +53,7 @@ Deno.serve(async (req: Request) => {
             .upsert({ user_id: u.user_id, broker: 'bybit', equity_usd: equity, fetched_at: new Date().toISOString() }, { onConflict: 'user_id,broker' });
           if (eqErr) console.log(`  equity upsert failed ${who}: ${eqErr.message}`);
         }
-        const { trades, open: openPositions } = await computeBybitTradesAndOpen(u.bybit_api_key, u.bybit_api_secret, RECENT_DAYS);
+        const { trades, open: openPositions } = await computeBybitSync(u.bybit_api_key, u.bybit_api_secret, RECENT_DAYS);
         if (trades.length) {
           const tradeRows = trades.map((t) => ({
             user_id: u.user_id, type: 'crypto', entry_date: t.entryDate, ls: t.ls,
@@ -75,7 +73,7 @@ Deno.serve(async (req: Request) => {
         // once and ignoring. Never touches a bybit_id outside this
         // mechanism's own 'open:' namespace, so a manually-entered or
         // CSV-imported crypto row is never at risk. (openPositions came from
-        // the same computeBybitTradesAndOpen call above — computeBybitTrades
+        // the same validated computeBybitSync call above — computeBybitTrades
         // and computeBybitOpen used to be called separately here, each
         // re-fetching the same 45-day execution history from Bybit.)
         if (openPositions.length) {
@@ -88,8 +86,9 @@ Deno.serve(async (req: Request) => {
         // closed trade already landed above under its own bybit_id, so an
         // un-reconciled placeholder would double-count the position.
         const stillOpenIds = new Set(openPositions.map((p) => p.bybit_id));
-        const { data: existingOpenRows } = await sb.from('trades')
+        const { data: existingOpenRows, error: readErr } = await sb.from('trades')
           .select('bybit_id').eq('user_id', u.user_id).like('bybit_id', 'open:%');
+        if (readErr) throw new Error('open-position read: ' + readErr.message);
         const staleIds = (existingOpenRows ?? [])
           .map((r: any) => r.bybit_id as string)
           .filter((id: string) => !stillOpenIds.has(id));

@@ -18,6 +18,110 @@ import { _flexImportInner, rowToTrade as sharedRowToTrade } from '../supabase/fu
 
 const flexParseXML = loadFlexParseXML();
 
+describe('broker imports — account boundaries and execution deduplication', () => {
+  test('IBKR report requests share briefly, retry failures and refresh after expiry or account change', async () => {
+    let clock = 1000, calls = 0, fail = true;
+    const ctx = { _currentUser: { id: 'A' }, _flexCacheRowPromise: null, _flexCacheRowPromiseUser: null, _flexCacheRowFetchedAt: 0,
+      Date: { now: () => clock },
+      _sb: { from: () => ({ select() { return this; }, eq() { return this; }, maybeSingle: async () => {
+        calls++; return fail ? { error: new Error('offline') } : { data: { xml: '<test/>' }, error: null };
+      } }) },
+    };
+    vm.createContext(ctx); vm.runInContext(extractFunction('_fetchFlexCacheRow'), ctx);
+    await assert.rejects(ctx._fetchFlexCacheRow(), /offline/);
+    fail = false;
+    const request = ctx._fetchFlexCacheRow();
+    assert.equal(ctx._fetchFlexCacheRow(), request); await request;
+    assert.equal(calls, 2);
+    clock += 60001; await ctx._fetchFlexCacheRow(); assert.equal(calls, 3);
+    ctx._currentUser = { id: 'B' }; await ctx._fetchFlexCacheRow(); assert.equal(calls, 4);
+  });
+  test('an old confirmation report cannot claim the broker is up to date', async () => {
+    let successes = 0;
+    const ctx = { _currentUser: { id: 'A' },
+      _fetchFlexCacheRow: async () => ({ xml_confirm: '<test/>', confirm_fetched_at: '2020-01-01T00:00:00Z', confirm_imported_at: '2020-01-01T00:00:00Z' }),
+      _flexMarkSync: () => successes++, _setBrokerBadge() {}, flexSetStatus() {},
+    };
+    vm.createContext(ctx); vm.runInContext('async ' + extractFunction('_flexImportFromCache'), ctx);
+    assert.equal(await ctx._flexImportFromCache(), false); assert.equal(successes, 0);
+  });
+  test('IBKR acknowledges only the fetched report and reuses that acknowledgement locally', async () => {
+    const fetched = new Date(Date.now() - 60000).toISOString();
+    const row = { xml: '<test/>', fetched_at: fetched, imported_at: null };
+    let imports = 0, stamp;
+    const ctx = { _currentUser: { id: 'A' }, _fetchFlexCacheRow: async () => row,
+      flexParseXML: () => [], _flexImport: async () => { imports++; return { imported: 0, updated: 0, insertFailed: 0, updateFailed: 0 }; },
+      _sb: { from: () => ({ update: value => { stamp = value; return { eq: async () => ({ error: null }) }; } }) },
+      _flexMarkSync() {}, _setBrokerBadge() {}, flexSetStatus() {},
+    };
+    vm.createContext(ctx); vm.runInContext('async ' + extractFunction('_flexImportFromCache'), ctx);
+    await ctx._flexImportFromCache();
+    assert.equal(stamp.imported_at, fetched);
+    await ctx._flexImportFromCache();
+    assert.equal(imports, 1);
+  });
+  test('changing account while saving credentials stops the remaining Bybit secret write', async () => {
+    let writes = 0;
+    const ctx = { _currentUser: { id: 'A' }, document: { getElementById: () => ({ value: 'test-only' }) },
+      _sb: { rpc: async () => { writes++; ctx._currentUser = { id: 'B' }; return { error: null }; } },
+    };
+    vm.createContext(ctx); vm.runInContext('async ' + extractFunction('bybitSave'), ctx);
+    await ctx.bybitSave(); assert.equal(writes, 1);
+  });
+  test('an IBKR update failure leaves the cached statement eligible for retry', async () => {
+    let stamps = 0;
+    const states = [];
+    const ctx = { _currentUser: { id: 'A' },
+      _fetchFlexCacheRow: async () => ({ xml: '<test/>', fetched_at: new Date().toISOString(), imported_at: null }),
+      flexParseXML: () => [], _flexImport: async () => ({ imported: 0, updated: 0, insertFailed: 0, updateFailed: 1 }),
+      _sb: { from: () => { stamps++; throw Error('must not stamp failed import'); } },
+      _setBrokerBadge: (_broker, state) => states.push(state), flexSetStatus() {},
+    };
+    vm.createContext(ctx); vm.runInContext('async ' + extractFunction('_flexImportFromCache'), ctx);
+    assert.equal(await ctx._flexImportFromCache(), true);
+    assert.equal(stamps, 0); assert.deepEqual(states, ['error']);
+  });
+  test('a late Bybit response after changing account cannot import or preview trades', async () => {
+    for (const name of ['_autoBybitSync', 'bybitSync']) {
+      let writes = 0, previews = 0;
+      const ctx = { _currentUser: { id: 'A' }, _dbLoaded: true, _userSettings: { bybit_api_key: true },
+        SUPABASE_URL: 'https://example.test', _getToken: async () => 'mock',
+        localStorage: { getItem: () => null }, _setBrokerBadge() {}, bybitSetStatus() {},
+        document: { getElementById: () => ({ innerHTML: '', disabled: false }) },
+        _sb: { from() { writes++; throw Error('unexpected write'); } },
+        bybitRenderPreview() { previews++; },
+        fetch: async () => ({ ok: true, json: async () => {
+          ctx._currentUser = { id: 'B' }; return { trades: [{ symbol: 'BTC' }] };
+        } }),
+      };
+      vm.createContext(ctx); vm.runInContext('async ' + extractFunction(name), ctx);
+      await ctx[name]();
+      assert.equal(writes, 0); assert.equal(previews, 0);
+    }
+  });
+  test('separate Bybit close executions sharing an entry are kept separately', async () => {
+    const ctx = { _currentUser: { id: 'A' }, db: { crypto: [{ bybit_id: 'close-1', symbol: 'BTC', entryDate: '2026-10-01', entryPrice: 70000, shares: 1 }] } };
+    vm.createContext(ctx); vm.runInContext('async ' + extractFunction('_bybitExisting'), ctx);
+    const t = { bybit_id: 'close-2', symbol: 'BTC' };
+    assert.equal(await ctx._bybitExisting(t, 'BTC||2026-10-01||70000000||1000'), false);
+    assert.equal(await ctx._bybitExisting({ bybit_id: 'close-1' }, ''), true);
+  });
+  test('IBKR stops remaining inserts when its original account changes', async () => {
+    let active = true, writes = 0, dedupes = 0;
+    const ctx = { db: { stocks: [], crypto: [] }, _currentUser: { id: 'A' },
+      isCurrent: () => active, _isDeletedImport: () => false, _tradeToRow: t => t, _rowToTrade: t => t,
+      _dedupeTrades: async () => { dedupes++; },
+      _sb: { from: () => ({ insert(row) {
+        writes++; assert.equal(row.user_id, 'A');
+        return { select: () => ({ single: async () => { active = false; return { data: row, error: null }; } }) };
+      } }) },
+    };
+    const trades = ['AAPL', 'MSFT'].map(symbol => ({ type: 'stock', symbol, ls: 'L', entryDate: '2026-10-01', entryPrice: 100, shares: 1, ibkr_id: symbol }));
+    await assert.rejects(_flexImportInner(trades, ctx), /session changed/);
+    assert.equal(writes, 1); assert.equal(dedupes, 0); assert.equal(ctx.db.stocks.length, 0);
+  });
+});
+
 describe('investment saves — atomic RPC and session boundaries', () => {
   function fixture(reply = async () => ({ data: { updated_at: 'new', holdings: [{ id: 'holding', position: 0 }] }, error: null })) {
     const calls = [], notices = [];

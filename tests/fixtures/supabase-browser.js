@@ -1,6 +1,7 @@
 (() => {
   const control = window.__test = { delay: 0, calls: [] };
   const db = window.__testDB = {
+    legal_acceptances: ['user-a','user-b'].map(user_id => ({user_id,terms_version:'2026-10-12',privacy_version:'2026-10-12',accepted_at:'2026-10-12T00:00:00Z'})),
     portfolios: [
       { id: 'portfolio-a', user_id: 'user-a', name: 'תיק א', is_default: true },
       { id: 'portfolio-b', user_id: 'user-a', name: 'תיק ב', is_default: false },
@@ -51,6 +52,12 @@
     channel() { const channel = { on() { return channel; }, subscribe() { return channel; } }; return channel; },
     removeChannel: async () => {},
     rpc: async (name, params) => {
+      if (name === 'accept_legal_documents') {
+        if (control.legalSaveFailure) return {data:null,error:{message:'Unavailable'}};
+        const accepted_at = new Date().toISOString();
+        db.legal_acceptances.push({user_id:current,terms_version:params.p_terms_version,privacy_version:params.p_privacy_version,accepted_at});
+        return {data:accepted_at,error:null};
+      }
       if (name !== 'save_investment_portfolio') return { data: name === 'my_broker_sync_health' ? [] : null, error: null };
       control.calls.push(structuredClone(params));
       if (control.delay) await new Promise(r => setTimeout(r, control.delay));

@@ -324,7 +324,8 @@ async function _setupRealtimeSync() {
 //   • an untagged trade that exactly matches (entry AND exit) a tagged IBKR trade
 //     (a leftover from the old buggy import; the tagged one is canonical)
 async function _dedupeTrades() {
-  if (!_currentUser) return 0;
+  const brokerUser = _currentUser;
+  if (!brokerUser) return 0;
   const fp = t => [t.symbol, t.entryDate, Math.round((t.entryPrice||0)*1000), Math.round((t.shares||0)*1000),
                    Math.round((t.exitPrice||0)*1000), Math.round((t.closedShares||0)*1000)].join('|');
   const toRemove = [];
@@ -346,11 +347,13 @@ async function _dedupeTrades() {
   }
   let removed = 0;
   for (const t of toRemove) {
+    if (_currentUser !== brokerUser) return removed;
     _rtSuppress('trades');
     // Only drop it from memory once the soft-delete actually persisted, or the
     // row reappears on the next load and the journal contradicts itself.
     const { error } = await _sb.from('trades').update({ deleted: true, deleted_at: new Date().toISOString() })
-      .eq('id', t.id).eq('user_id', _currentUser.id);
+      .eq('id', t.id).eq('user_id', brokerUser.id);
+    if (_currentUser !== brokerUser) return removed;
     if (error) { console.error('[dedupe]', error); continue; }
     t.deleted = true;
     removed++;
@@ -849,6 +852,7 @@ window.addEventListener('load', () => {
 // guessing a load-order-safe delay) and gets tj:session back.
 const SCREENER_ORIGIN = 'https://davidtheking28-oss.github.io';
 function _sendSessionToScreener() {
+  if (_legalReadyUserId !== _currentUser?.id) return;
   const frame = document.getElementById('screener-frame');
   if (!frame?.contentWindow || !_currentSession?.access_token) return;
   frame.contentWindow.postMessage({
@@ -3278,6 +3282,12 @@ set_data_sub:'Stocks & crypto market data', set_import_sub:'Broker connection & 
     set_av_key:'Alpha Vantage Key — financial data for all stocks including small caps',
     set_get_free_key:'Get free key',
     set_page_title:'Settings', set_page_sub:'Manage your account, security, and data preferences.',
+    set_broker_privacy_title:'Before connecting your broker',
+    auth_legal_intro:'I am at least 18 and accept the', auth_legal_terms:'terms of use', auth_legal_read:'and have read the', auth_legal_privacy:'privacy policy', auth_legal_scope:'This confirmation does not authorize marketing messages or charges.',
+    auth_privacy_notice:'You provide account details voluntarily to create and authenticate an account through Supabase. Google sign-in also supplies your email and profile details. A cloud account cannot be created without the required details. Broker connections and notifications are optional. Provider information and access and correction rights are described in the privacy policy.',
+    set_broker_privacy_desc:'Connecting is optional. When you save, credentials are encrypted in Supabase Vault and used to retrieve trade reports and balances for journal imports, calculations and synchronization. Data is stored on the server, including for synchronization while you are away. You can use the journal without connecting a broker.',
+    set_broker_readonly:'Use read-only permissions. The journal does not submit trading or withdrawal orders. You can revoke the key at your broker; revoking it does not delete previously imported data.',
+    set_broker_privacy_link:'Privacy, access and data deletion',
     set_grp_account:'Account', set_grp_account_sub:'Name, email',
     set_grp_prefs:'Preferences', set_grp_prefs_sub:'Language and display',
     set_security_sub:'PIN, 2FA, password',
@@ -3421,6 +3431,12 @@ set_data_sub:'נתוני שוק למניות ולקריפטו', set_import_sub:'
     set_av_key:'מפתח Alpha Vantage — נתונים פיננסיים לכל מניה כולל סמולקאפ',
     set_get_free_key:'קבל מפתח חינמי',
     set_page_title:'הגדרות', set_page_sub:'נהל את החשבון, האבטחה והעדפות הנתונים שלך.',
+    set_broker_privacy_title:'לפני חיבור הברוקר',
+    auth_legal_intro:'אני בן/בת 18 לפחות, מסכים/ה ל', auth_legal_terms:'תנאי השימוש', auth_legal_read:'וקראתי את', auth_legal_privacy:'מדיניות הפרטיות', auth_legal_scope:'האישור אינו הסכמה לדיוור שיווקי או לחיוב.',
+    auth_privacy_notice:'פרטי החשבון נמסרים מרצונך ומשמשים ליצירת חשבון ואימות באמצעות Supabase. בהתחברות עם Google מתקבלים גם הדוא״ל ופרטי הפרופיל. ללא הפרטים הנדרשים לא ניתן לפתוח חשבון בענן. חיבור ברוקר והתראות הם לבחירתך. פירוט הספקים וזכויות העיון והתיקון מופיע במדיניות הפרטיות.',
+    set_broker_privacy_desc:'החיבור לבחירתך. בשמירה, פרטי הגישה נשמרים מוצפנים ב־Supabase Vault ומשמשים לקבלת דוחות עסקאות ויתרות מהברוקר לצורך ייבוא, חישובים וסנכרון ביומן. הנתונים נשמרים בשרת גם לסנכרון כשאינך באתר. אפשר להשתמש ביומן גם ללא חיבור ברוקר.',
+    set_broker_readonly:'יש להשתמש בהרשאות קריאה בלבד. היומן אינו שולח פקודות מסחר או משיכה. ניתן לבטל את המפתח אצל הברוקר; ביטולו אינו מוחק מידע שכבר יובא.',
+    set_broker_privacy_link:'פרטיות, עיון ומחיקת מידע',
     set_grp_account:'חשבון', set_grp_account_sub:'שם, אימייל',
     set_grp_prefs:'העדפות', set_grp_prefs_sub:'שפה ותצוגה',
     set_security_sub:'PIN, 2FA, סיסמה',
@@ -3487,6 +3503,9 @@ function setLang(lang) {
     const k = el.dataset.i18nPh;
     if (s[k]) el.placeholder = s[k];
   });
+  document.querySelectorAll('[data-privacy-link]').forEach(el => {
+    el.href = (lang === 'en' ? 'privacy-en.html' : 'privacy.html') + '#privacy-section-5';
+  });
 
   // Toggle buttons
   document.getElementById('lang-en')?.classList.toggle('active', lang === 'en');
@@ -3542,18 +3561,9 @@ function _applyModalLang(s) {
 function langInit() {
   const saved = localStorage.getItem('tj_lang');
   if (saved) { _lang = saved; setLang(saved); return; }
-  // No explicit choice yet (new visitor) — default to Hebrew immediately so
-  // the UI never waits on a network call, then switch to English if the geo
-  // lookup comes back non-Israel. setLang() persists tj_lang on every call,
-  // so this only ever runs once per browser — after that the saved choice
-  // above short-circuits it, same as an explicit manual pick would.
+  // Default locally; language selection does not require sending an IP to a geo service.
   _lang = 'he';
   setLang('he');
-  try {
-    fetch('https://get.geojs.io/v1/ip/country.json').then(r => r.json()).then(d => {
-      if (d && d.country && d.country !== 'IL') setLang('en');
-    }).catch(() => {});
-  } catch (e) {}
 }
 
 // ── Fear & Greed Index ──────────────────────────
@@ -5262,6 +5272,9 @@ function pinUnlock() {
 }
 
 async function _flexFetch(jwt, { debug } = {}) {
+  const brokerUser = _currentUser;
+  const assertCurrent = () => { if (!brokerUser || _currentUser !== brokerUser) throw new Error("Broker sync session changed"); };
+  assertCurrent();
   // IBKR temporary error codes — safe to retry (busy / generating / throttled)
   const RETRYABLE = new Set(['1001','1004','1005','1006','1007','1008','1009','1018','1019','1021']);
 
@@ -5273,13 +5286,16 @@ async function _flexFetch(jwt, { debug } = {}) {
   let sendCode = '';
   let sendTs = '';
   for (let i = 0; i < SEND_DELAYS.length; i++) {
+    assertCurrent();
     if (SEND_DELAYS[i] > 0) {
       flexSetStatus('מסנכרן עם IBKR...', 'var(--text2)');
       await new Promise(r => setTimeout(r, SEND_DELAYS[i]));
+    assertCurrent();
     }
     const sendRes = await fetch(`${SUPABASE_URL}/functions/v1/ibkr?action=send`, { headers: { 'Authorization': `Bearer ${jwt}` } });
     if (!sendRes.ok) throw new Error(`שגיאת רשת בשליחה: ${sendRes.status}`);
     const sendXml = await sendRes.text();
+    assertCurrent();
     refCode = flexExtractTag(sendXml, 'ReferenceCode');
     if (refCode && flexExtractTag(sendXml, 'Status') !== 'Fail') break;
     refCode  = '';
@@ -5304,14 +5320,17 @@ async function _flexFetch(jwt, { debug } = {}) {
   let getErr = 'IBKR לא הצליח ליצור את הדוח';
   let getCode = '';
   for (let i = 0; i < DELAYS.length; i++) {
+    assertCurrent();
     flexSetStatus('מכין נתונים ב-IBKR...', 'var(--text2)');
     await new Promise(r => setTimeout(r, DELAYS[i]));
+    assertCurrent();
     const getRes = await fetch(
       `${SUPABASE_URL}/functions/v1/ibkr?action=get&ref=${encodeURIComponent(refCode)}`,
       { headers: { 'Authorization': `Bearer ${jwt}` } }
     );
     if (!getRes.ok) throw new Error(`שגיאת רשת בקבלה: ${getRes.status}`);
     xml = await getRes.text();
+    assertCurrent();
     if (flexExtractTag(xml, 'Status') !== 'Fail') break;
     getCode = flexExtractTag(xml, 'ErrorCode');
     getErr  = flexExtractTag(xml, 'ErrorMessage') || 'שגיאה לא ידועה';
@@ -5333,10 +5352,10 @@ let _flexImporting = false;
 async function _flexImport(trades) {
   // Re-entrancy guard: if a manual and an automatic import overlap, both could
   // pass the in-memory dedup before either inserts → duplicates. Run one at a time.
-  if (_flexImporting) return { imported: 0, updated: 0, newlyImported: [], insertFailed: 0 };
+  if (_flexImporting) throw new Error('ייבוא IBKR כבר מתבצע — נסה שוב לאחר סיומו');
   // Same reason as the Bybit guard: dedup reads db.stocks/db.crypto, so an
   // import that beats loadDB() sees an empty journal and re-imports everything.
-  if (!_dbLoaded) return { imported: 0, updated: 0, newlyImported: [], insertFailed: 0 };
+  if (!_dbLoaded) throw new Error('יש להמתין לטעינת היומן לפני הייבוא');
   _flexImporting = true;
   try {
     return await _flexImportInner(trades);
@@ -5345,9 +5364,11 @@ async function _flexImport(trades) {
   }
 }
 async function _flexImportInner(trades) {
+  const brokerUser = _currentUser;
   const { imported, updated, newlyImported, insertFailed, updateFailed } = await FlexImport._flexImportInner(trades, {
-    db, _sb, _currentUser, _tradeToRow, _rowToTrade, _isDeletedImport, _dedupeTrades,
+    db, _sb, _currentUser: brokerUser, isCurrent: () => _currentUser === brokerUser, _tradeToRow, _rowToTrade, _isDeletedImport, _dedupeTrades,
   });
+  if (_currentUser !== brokerUser) return;
   if (updateFailed) toast(`${updateFailed} עדכוני סנכרון נכשלו — הנתונים לא נשמרו`, 'error');
   if (insertFailed) toast(`${insertFailed} עסקאות מ-IBKR נכשלו בייבוא`, 'error');
   if (imported > 0 || updated > 0) {
@@ -5363,7 +5384,7 @@ async function _flexImportInner(trades) {
     renderOverview();
     if (document.getElementById('tab-statistics')?.classList.contains('active')) renderStatistics();
   }
-  return { imported, updated, newlyImported, insertFailed };
+  return { imported, updated, newlyImported, insertFailed, updateFailed };
 }
 
 // Smart sync throttle. Record each attempt's outcome and compute when the next
@@ -5395,43 +5416,58 @@ function _flexSyncCooldownLeft() {
 // Both this and _maybeShowFlexWindowNotice() fire at boot and each used to run
 // its own full select against flex_statement_cache for the same user — a
 // wasted duplicate round trip of the (potentially large) XML column every
-// login. Memoized per boot cycle so whichever caller runs first fetches once
-// and the other reuses the same promise; _currentUser.id changing (a fresh
-// login after logout) naturally invalidates it since the id in the cache key
-// won't match.
-let _flexCacheRowPromise = null, _flexCacheRowPromiseUser = null;
+// login. Reuse for one minute within the same session, then refresh so a later
+// server report is visible. Failed reads are released immediately for retry.
+let _flexCacheRowPromise = null, _flexCacheRowPromiseUser = null, _flexCacheRowFetchedAt = 0;
 function _fetchFlexCacheRow() {
-  if (_flexCacheRowPromise && _flexCacheRowPromiseUser === _currentUser.id) return _flexCacheRowPromise;
-  _flexCacheRowPromiseUser = _currentUser.id;
-  _flexCacheRowPromise = _sb.from('flex_statement_cache')
+  const brokerUser = _currentUser;
+  if (!brokerUser) return Promise.resolve(null);
+  if (_flexCacheRowPromise && _flexCacheRowPromiseUser === brokerUser && Date.now() - _flexCacheRowFetchedAt < 60000) return _flexCacheRowPromise;
+  _flexCacheRowPromiseUser = brokerUser;
+  _flexCacheRowFetchedAt = Date.now();
+  const request = _sb.from('flex_statement_cache')
     .select('xml, fetched_at, imported_at, xml_confirm, confirm_fetched_at, confirm_imported_at')
-    .eq('user_id', _currentUser.id).maybeSingle()
-    .then(({ data }) => data);
-  return _flexCacheRowPromise;
+    .eq('user_id', brokerUser.id).maybeSingle()
+    .then(({ data, error }) => { if (error) throw error; return data; })
+    .catch(error => {
+      if (_flexCacheRowPromise === request) _flexCacheRowPromise = null;
+      throw error;
+    });
+  _flexCacheRowPromise = request;
+  return request;
 }
 
 // Import the statement that the scheduled server job pre-fetched at a good time
 // (flex_statement_cache). Reuses the existing parse + import path, so there is
 // no live IBKR call and no 1001. Returns true if a fresh cache was used.
 async function _flexImportFromCache(manual = false) {
-  if (!_currentUser) return false;
+  const brokerUser = _currentUser;
+  if (!brokerUser) return false;
   let row;
   try {
     row = await _fetchFlexCacheRow();
-  } catch (e) { return false; }
+    if (_currentUser !== brokerUser) return;
+  } catch (e) {
+    if (_currentUser !== brokerUser) return;
+    return false;
+  }
   if (!row || (!row.xml && !row.xml_confirm)) return false;
 
   const STALE = 30 * 60 * 60 * 1000;
-  const activityUsable = !!row.xml && (Date.now() - new Date(row.fetched_at).getTime() <= STALE);
+  const now = Date.now();
+  const activityAge = now - new Date(row.fetched_at).getTime();
+  const confirmAge = now - new Date(row.confirm_fetched_at).getTime();
+  const activityUsable = !!row.xml && activityAge >= 0 && activityAge <= STALE;
+  const confirmUsable = !!row.xml_confirm && confirmAge >= 0 && confirmAge <= STALE;
   const activityFresh  = activityUsable && (!row.imported_at || new Date(row.imported_at) < new Date(row.fetched_at));
-  const confirmFresh   = !!row.xml_confirm && (!row.confirm_imported_at || new Date(row.confirm_imported_at) < new Date(row.confirm_fetched_at));
+  const confirmFresh   = confirmUsable && (!row.confirm_imported_at || new Date(row.confirm_imported_at) < new Date(row.confirm_fetched_at));
 
   if (!activityFresh && !confirmFresh) {
     // A cache that was already imported is "up to date" only for the background
     // pass. On a manual press it must fall through to a live fetch — otherwise
     // pressing סנכרן after closing a position reports "✓ עדכני" and pulls nothing.
     if (manual) return false;
-    if (activityUsable || row.xml_confirm) { _flexMarkSync(true); _setBrokerBadge('ibkr', 'ok'); flexSetStatus('✓ עדכני', 'var(--text3)'); return true; }
+    if (activityUsable || confirmUsable) { _flexMarkSync(true); _setBrokerBadge('ibkr', 'ok'); flexSetStatus('✓ עדכני', 'var(--text3)'); return true; }
     return false;
   }
 
@@ -5439,13 +5475,20 @@ async function _flexImportFromCache(manual = false) {
     const trades = [];
     if (activityFresh) trades.push(...flexParseXML(row.xml));
     if (confirmFresh)  trades.push(...flexParseXML(row.xml_confirm));
-    const { imported, updated, insertFailed } = await _flexImport(trades);
+    const { imported, updated, insertFailed, updateFailed } = await _flexImport(trades);
+    if (_currentUser !== brokerUser) return;
     const stamp = {};
     // A statement whose import dropped at least one insert must stay
     // unstamped, or it is never retried and that trade is lost for good.
-    if (activityFresh && !insertFailed) stamp.imported_at = new Date().toISOString();
-    if (confirmFresh && !insertFailed)  stamp.confirm_imported_at = new Date().toISOString();
-    if (Object.keys(stamp).length) await _sb.from('flex_statement_cache').update(stamp).eq('user_id', _currentUser.id);
+    if (activityFresh && !insertFailed && !updateFailed) stamp.imported_at = row.fetched_at;
+    if (confirmFresh && !insertFailed && !updateFailed)  stamp.confirm_imported_at = row.confirm_fetched_at;
+    if (Object.keys(stamp).length) {
+      const { error } = await _sb.from('flex_statement_cache').update(stamp).eq('user_id', brokerUser.id);
+      if (error) throw new Error('לא ניתן לשמור את מצב הייבוא');
+      Object.assign(row, stamp);
+    }
+    if (_currentUser !== brokerUser) return;
+    if (insertFailed || updateFailed) { _setBrokerBadge('ibkr', 'error'); flexSetStatus('חלק מהעסקאות לא נשמרו — יש לנסות שוב', 'var(--red)'); return true; }
     _flexMarkSync(true);
     _setBrokerBadge('ibkr', 'ok');
     if (imported > 0 || updated > 0) {
@@ -5457,7 +5500,10 @@ async function _flexImportFromCache(manual = false) {
       flexSetStatus('✓ סונכרן — אין עסקאות חדשות', 'var(--text3)');
     }
     return true;
-  } catch (e) { return false; }
+  } catch (e) {
+    if (_currentUser !== brokerUser) return;
+    return false;
+  }
 }
 
 // Live Flex generation is only reliable after IBKR's once-daily EOD batch.
@@ -5471,10 +5517,12 @@ function _flexLiveWindowOpen() {
 }
 
 async function _autoFlexSync() {
-  if (!_currentUser) return;
+  const brokerUser = _currentUser;
+  if (!brokerUser) return;
   if (!_userSettings.flex_token) return;
   // 1) Prefer the server pre-fetched statement — instant, no IBKR call, no 1001.
   if (await _flexImportFromCache()) return;
+  if (_currentUser !== brokerUser) return;
   // 2) No usable cache → live fallback, throttled and only in a good window.
   if (_flexSyncCooldownLeft() > 0) {
     if (localStorage.getItem('flex_sync_ok_' + _currentUser.id) === '1') _setBrokerBadge('ibkr', 'ok');
@@ -5483,14 +5531,18 @@ async function _autoFlexSync() {
   }
   if (!_flexLiveWindowOpen()) { _brokerBadgeFromStore('ibkr', true); return; }
   const jwt = await _getToken();
+  if (_currentUser !== brokerUser) return;
   if (!jwt) return;
   _setBrokerBadge('ibkr', 'syncing');
   flexSetStatus('מסנכרן עם IBKR...', 'var(--text2)');
   try {
     const trades = await _flexFetch(jwt);
+    if (_currentUser !== brokerUser) return;
     _flexMarkSync(true);
     _setBrokerBadge('ibkr', 'ok');
-    const { imported, updated, newlyImported } = await _flexImport(trades);
+    const { imported, updated, newlyImported, insertFailed, updateFailed } = await _flexImport(trades);
+    if (_currentUser !== brokerUser) return;
+    if (insertFailed || updateFailed) throw new Error('חלק מהעסקאות לא נשמרו — יש לנסות שוב');
     if (imported > 0 || updated > 0) {
       const msg = [imported ? `${imported} חדשות` : '', updated ? `${updated} עודכנו` : ''].filter(Boolean).join(' | ');
       flexSetStatus(`✓ ${msg}`, 'var(--green)');
@@ -5499,11 +5551,12 @@ async function _autoFlexSync() {
       const openNeedStop = newlyImported
         .filter(tr => !tr.stop)
         .map(tr => ({ type: tr.type, id: tr.id, symbol: tr.symbol, entryPrice: tr.entryPrice, entryDate: tr.entryDate }));
-      if (openNeedStop.length) setTimeout(() => stopPromptShow(openNeedStop), 800);
+      if (openNeedStop.length) setTimeout(() => { if (_currentUser === brokerUser) stopPromptShow(openNeedStop); }, 800);
     } else {
       flexSetStatus('✓ סונכרן — אין עסקאות חדשות', 'var(--text3)');
     }
   } catch(e) {
+    if (_currentUser !== brokerUser) return;
     // Background sync — record the failure (extends the backoff) and retry later.
     _flexMarkSync(false);
     if (e.busy) _brokerBadgeFromStore('ibkr', true); // busy = still connected
@@ -5521,14 +5574,17 @@ async function _autoFlexSync() {
 // stable bybit_id; falls back to the entry fingerprint and backfills bybit_id
 // onto a matched legacy row so future syncs (and the server cron) dedup cleanly.
 async function _bybitExisting(t, fp) {
-  if (t.bybit_id && db.crypto.some(e => !e.deleted && e.bybit_id === t.bybit_id)) return true;
-  const byFp = db.crypto.find(e => !e.deleted &&
+  const brokerUser = _currentUser;
+  if (!brokerUser) return true;
+  if (t.bybit_id && db.crypto.some(e => e.bybit_id === t.bybit_id)) return true;
+  const byFp = db.crypto.find(e => !e.deleted && !e.bybit_id &&
     `${e.symbol}||${e.entryDate}||${Math.round((e.entryPrice||0)*1000)}||${Math.round((e.shares||0)*1000)}` === fp
   );
   if (!byFp) return false;
   if (t.bybit_id && !byFp.bybit_id) {
     _rtSuppress('trades');
-    const { error } = await _sb.from('trades').update({ bybit_id: t.bybit_id }).eq('id', byFp.id).eq('user_id', _currentUser.id);
+    const { error } = await _sb.from('trades').update({ bybit_id: t.bybit_id }).eq('id', byFp.id).eq('user_id', brokerUser.id);
+    if (_currentUser !== brokerUser) return true;
     if (!error) byFp.bybit_id = t.bybit_id;
     else console.error('[bybit backfill]', error);
   }
@@ -5536,6 +5592,8 @@ async function _bybitExisting(t, fp) {
 }
 
 async function _autoBybitSync() {
+  const brokerUser = _currentUser;
+  if (!brokerUser) return;
   if (!_currentUser) return;
   if (!_dbLoaded) return;   // dedup needs the journal in memory first
   if (!_userSettings.bybit_api_key) return;
@@ -5548,6 +5606,7 @@ async function _autoBybitSync() {
     return;
   }
   const jwt = await _getToken();
+  if (_currentUser !== brokerUser) return;
   if (!jwt) return;
   _setBrokerBadge('bybit', 'syncing');
   bybitSetStatus('מסנכרן עם Bybit...', 'var(--text2)');
@@ -5556,23 +5615,33 @@ async function _autoBybitSync() {
       headers: { Authorization: `Bearer ${jwt}` }
     });
     const json = await res.json();
+    if (_currentUser !== brokerUser) return;
     if (!res.ok || json.error) throw new Error(json.error || 'שגיאה');
     _setBrokerBadge('bybit', 'ok');
 
     const trades = json.trades || [];
     let imported = 0, insFailed = 0;
     for (const t of trades) {
+      if (_currentUser !== brokerUser) return;
       const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
       if (_isDeletedImport(t)) continue;
       if (await _bybitExisting(t, fp)) continue;
+      if (_currentUser !== brokerUser) return;
       const { data, error } = await _sb.from('trades').insert(_tradeToRow({ ...t, closedShares: t.shares, deleted: false })).select().single();
+      if (_currentUser !== brokerUser) return;
       if (error) { insFailed++; console.error('[bybit insert]', error); continue; }
       db.crypto.unshift(_rowToTrade(data)); imported++;
     }
+    if (_currentUser !== brokerUser) return;
     // The cooldown blocks retries for 6h, so only claim a successful run once the
     // inserts actually landed — otherwise a failed sync locked itself out.
     if (!insFailed) localStorage.setItem(lastKey, String(Date.now()));
-    else toast(`Bybit: ${insFailed} עסקאות לא נשמרו`, 'error');
+    else {
+      _setBrokerBadge('bybit', 'error');
+      bybitSetStatus(`${insFailed} עסקאות לא נשמרו — נסה שוב`, 'var(--red)');
+      toast(`Bybit: ${insFailed} עסקאות לא נשמרו`, 'error');
+      return;
+    }
     if (imported > 0) {
       initFilters();
       renderTable('crypto');
@@ -5584,6 +5653,7 @@ async function _autoBybitSync() {
       bybitSetStatus('✓ סונכרן — אין עסקאות חדשות', 'var(--text3)');
     }
   } catch(e) {
+    if (_currentUser !== brokerUser) return;
     _setBrokerBadge('bybit', 'error');
     bybitSetStatus('', 'var(--text3)');
   }
@@ -6495,6 +6565,8 @@ function toggleExpand(bodyId, rowId) {
 }
 
 async function flexSave() {
+  const brokerUser = _currentUser;
+  if (!brokerUser) return;
   const t = document.getElementById('flex-token')?.value.trim();
   const q = document.getElementById('flex-query-id')?.value.trim();
   const qc = document.getElementById('flex-confirm-query-id')?.value.trim();
@@ -6503,8 +6575,10 @@ async function flexSave() {
   if (!/^\d{4,15}$/.test(q)) { toast('Query ID לא תקין — מספרים בלבד (לדוגמה: 1462900)', 'error'); return; }
   if (qc && !/^\d{4,15}$/.test(qc)) { toast('Confirm Query ID לא תקין — מספרים בלבד', 'error'); return; }
   const { error: _secErr } = await _sb.rpc('set_broker_secret', { p_field: 'flex_token', p_value: t });
+  if (_currentUser !== brokerUser) return;
   if (_secErr) { toast('שמירת הטוקן נכשלה: ' + _secErr.message, 'error'); return; }
   if (!await _saveUserSettings({ flex_query_id: q, flex_confirm_query_id: qc || null })) return;
+  if (_currentUser !== brokerUser) return;
   _userSettings.flex_token = true;
   const _ft = document.getElementById('flex-token');
   if (_ft) { _ft.value = ''; _ft.placeholder = 'טוקן שמור ✓'; }
@@ -6519,7 +6593,10 @@ function flexSetStatus(msg, color) {
 }
 
 async function flexSync() {
+  const brokerUser = _currentUser;
+  if (!brokerUser) return;
   const jwt = await _getToken();
+  if (_currentUser !== brokerUser) return;
   if (!jwt) { toast('נא להתחבר תחילה', 'error'); return; }
 
   const btn = document.getElementById('flex-sync-btn');
@@ -6530,10 +6607,14 @@ async function flexSync() {
   try {
     // Prefer the server pre-fetched statement — instant, no 1001.
     if (await _flexImportFromCache(true)) return;
+    if (_currentUser !== brokerUser) return;
     const trades = await _flexFetch(jwt);
+    if (_currentUser !== brokerUser) return;
     _flexMarkSync(true);
     _setBrokerBadge('ibkr', 'ok');
-    const { imported, updated } = await _flexImport(trades);
+    const { imported, updated, insertFailed, updateFailed } = await _flexImport(trades);
+    if (_currentUser !== brokerUser) return;
+    if (insertFailed || updateFailed) throw new Error('חלק מהעסקאות לא נשמרו — יש לנסות שוב');
     if (imported > 0 || updated > 0) {
       const msg = [imported ? `${imported} נוספו` : '', updated ? `${updated} עודכנו` : ''].filter(Boolean).join(' | ');
       flexSetStatus(`✓ ${msg}`, 'var(--green)');
@@ -6542,6 +6623,7 @@ async function flexSync() {
       flexSetStatus('✓ סונכרן — אין עסקאות חדשות', 'var(--text3)');
     }
   } catch(e) {
+    if (_currentUser !== brokerUser) return;
     // Record the failure so the background backoff extends too.
     _flexMarkSync(false);
     if (e.busy) {
@@ -6554,7 +6636,7 @@ async function flexSync() {
       toast('סנכרון נכשל: ' + e.message, 'error');
     }
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = 'סנכרן'; }
+    if (btn && _currentUser === brokerUser) { btn.disabled = false; btn.textContent = 'סנכרן'; }
   }
 }
 
@@ -6582,11 +6664,15 @@ function bybitSetStatus(msg, color) {
 }
 
 async function bybitSave() {
+  const brokerUser = _currentUser;
+  if (!brokerUser) return;
   const k = document.getElementById('bybit-api-key')?.value.trim();
   const s = document.getElementById('bybit-api-secret')?.value.trim();
   if (!k || !s) { toast('נא להזין API Key ו-Secret', 'error'); return; }
   const r1 = await _sb.rpc('set_broker_secret', { p_field: 'bybit_api_key',    p_value: k });
+  if (_currentUser !== brokerUser) return;
   const r2 = await _sb.rpc('set_broker_secret', { p_field: 'bybit_api_secret', p_value: s });
+  if (_currentUser !== brokerUser) return;
   if (r1.error || r2.error) { toast('שמירת פרטי Bybit נכשלה: ' + (r1.error || r2.error).message, 'error'); return; }
   _userSettings.bybit_api_key = true; _userSettings.bybit_api_secret = true;
   const _bk = document.getElementById('bybit-api-key');
@@ -6599,7 +6685,10 @@ async function bybitSave() {
 }
 
 async function bybitSync() {
+  const brokerUser = _currentUser;
+  if (!brokerUser) return;
   const jwt = await _getToken();
+  if (_currentUser !== brokerUser) return;
   if (!jwt) { toast('נא להתחבר תחילה', 'error'); return; }
   const btn = document.getElementById('bybit-sync-btn');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ מסנכרן...'; }
@@ -6611,21 +6700,25 @@ async function bybitSync() {
       headers: { Authorization: `Bearer ${jwt}` }
     });
     const json = await res.json();
+    if (_currentUser !== brokerUser) return;
     if (!res.ok || json.error) throw new Error(json.error || 'שגיאה');
     _setBrokerBadge('bybit', 'ok');
     const trades = (json.trades || []).filter(t => !_isDeletedImport(t));
     bybitSetStatus(`נמצאו ${trades.length} עסקאות`, 'var(--green)');
     bybitRenderPreview(trades);
   } catch(e) {
+    if (_currentUser !== brokerUser) return;
     _setBrokerBadge('bybit', 'error');
     bybitSetStatus('שגיאה: ' + e.message, 'var(--red)');
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = 'Sync'; }
+    if (btn && _currentUser === brokerUser) { btn.disabled = false; btn.textContent = 'Sync'; }
   }
 }
 
 function bybitRenderPreview(trades) {
   const container = document.getElementById('bybit-preview');
+  window._bybitPendingTrades = trades;
+  window._bybitPendingUser = _currentUser;
   if (!trades.length) {
     container.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:10px 0;">לא נמצאו עסקאות סגורות</div>';
     return;
@@ -6651,20 +6744,26 @@ function bybitRenderPreview(trades) {
       <span style="font-size:12px;color:var(--text2);">${trades.length} עסקאות נמצאו</span>
       <button class="btn btn-primary btn-sm" onclick="bybitImportAll()">Import All</button>
     </div>` + rows;
-  window._bybitPendingTrades = trades;
 }
 
 async function bybitImportOne(idx) {
+  const brokerUser = _currentUser;
+  if (window._bybitPendingUser !== brokerUser) return;
+  if (!brokerUser) return;
   const t = window._bybitPendingTrades?.[idx];
   if (!t) return;
   const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
-  if (_isDeletedImport(t) || await _bybitExisting(t, fp)) {
+  const exists = await _bybitExisting(t, fp);
+  if (_currentUser !== brokerUser) return;
+  if (_isDeletedImport(t) || exists) {
     toast(`${t.symbol} כבר קיים ביומן`, 'error');
     return;
   }
+  if (_currentUser !== brokerUser) return;
   const btn = document.getElementById(`bybit-btn-${idx}`);
   if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
   const { data: inserted, error } = await _sb.from('trades').insert(_tradeToRow({ ...t, closedShares: t.shares, deleted: false })).select().single();
+  if (_currentUser !== brokerUser) return;
   if (error) {
     toast('שגיאה בשמירה: ' + error.message, 'error');
     if (btn) { btn.disabled = false; btn.textContent = 'Import'; }
@@ -6677,18 +6776,26 @@ async function bybitImportOne(idx) {
 }
 
 async function bybitImportAll() {
+  const brokerUser = _currentUser;
+  if (window._bybitPendingUser !== brokerUser) return;
+  if (!brokerUser) return;
   const trades = window._bybitPendingTrades || [];
   if (!trades.length) return;
-  let imported = 0, dupes = 0;
+  let imported = 0, dupes = 0, failed = 0;
   for (const t of trades) {
+    if (_currentUser !== brokerUser) return;
     const fp = `${t.symbol}||${t.entryDate}||${Math.round((t.entryPrice||0)*1000)}||${Math.round((t.shares||0)*1000)}`;
     if (_isDeletedImport(t)) { dupes++; continue; }
     if (await _bybitExisting(t, fp)) { dupes++; continue; }
+    if (_currentUser !== brokerUser) return;
     const { data, error } = await _sb.from('trades').insert(_tradeToRow({ ...t, closedShares: t.shares, deleted: false })).select().single();
+    if (_currentUser !== brokerUser) return;
     if (!error) { db.crypto.unshift(_rowToTrade(data)); imported++; }
+    else failed++;
   }
+  if (_currentUser !== brokerUser) return;
   renderTable('crypto');
-  toast(`יובאו ${imported} עסקאות${dupes ? ` (${dupes} כפולות דולגו)` : ''}`, 'success');
+  toast(`יובאו ${imported} עסקאות${dupes ? ` (${dupes} כפולות דולגו)` : ''}${failed ? `; ${failed} לא נשמרו — נסה שוב` : ''}`, failed ? 'error' : 'success');
 }
 
 // ══════════════════════════════════════════════

@@ -216,6 +216,9 @@ export function flexParseXML(xml, DOMParserImpl = globalThis.DOMParser) {
 
 export async function _flexImportInner(trades, ctx) {
   const { db, _sb, _currentUser, _tradeToRow, _rowToTrade, _isDeletedImport, _dedupeTrades } = ctx;
+  const isCurrent = ctx.isCurrent || (() => true);
+  const assertCurrent = () => { if (!isCurrent()) throw new Error('Broker import session changed'); };
+  assertCurrent();
   let imported = 0, updated = 0;
   const newlyImported = [];
   const toInsert = [];
@@ -473,6 +476,7 @@ export async function _flexImportInner(trades, ctx) {
 
   let updateFailed = 0;
   for (const { row: trade, prev, patch } of toUpdate) {
+    assertCurrent();
     // Write only the fields this sync actually changed. _tradeToRow builds a
     // FULL row, so persisting it here re-wrote every column from the in-memory
     // copy — silently reverting any change made since the journal was loaded
@@ -480,6 +484,7 @@ export async function _flexImportInner(trades, ctx) {
     // correctly merged trade came back with its old pre-merge shares/entry
     // price while its exit fields stayed current.
     const { error } = await _sb.from('trades').update(patch).eq('id', trade.id).eq('user_id', _currentUser.id);
+    assertCurrent();
     if (error) {
       // The journal already showed the position as closed at the new exit price
       // and recomputed P&L from it. Put the old values back rather than lie.
@@ -490,8 +495,10 @@ export async function _flexImportInner(trades, ctx) {
   }
   let insertFailed = 0;
   for (const t of toInsert) {
-    const row = _tradeToRow({ ...t, deleted: false });
+    assertCurrent();
+    const row = { ..._tradeToRow({ ...t, deleted: false }), user_id: _currentUser.id };
     const { data: inserted, error: insErr } = await _sb.from('trades').insert(row).select().single();
+    assertCurrent();
     if (insErr) { insertFailed++; console.error('[flex insert]', insErr); continue; }
     const newTrade = _rowToTrade(inserted);
     const arr = t.type === 'crypto' ? db.crypto : db.stocks;
@@ -499,7 +506,9 @@ export async function _flexImportInner(trades, ctx) {
     imported++;
     if (!t.exitPrice) newlyImported.push(newTrade);
   }
+  assertCurrent();
   await _dedupeTrades(); // sweep any leftover duplicates right after importing
+  assertCurrent();
 
   return { imported, updated, newlyImported, insertFailed, updateFailed };
 }
