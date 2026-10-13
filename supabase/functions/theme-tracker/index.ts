@@ -110,11 +110,14 @@ async function fetchTheme(theme: { name: string; ticker: string }) {
     const filteredTs     = valid.map(x => x.t);
 
     const todayPct = calcPct(filteredCloses, 1);
+    const lastTs = filteredTs[filteredTs.length - 1];
+    const lastBar = lastTs ? new Date(lastTs * 1000).toLocaleDateString('en-CA', { timeZone: 'America/New_York' }) : null;
 
     return {
       name:   theme.name,
       ticker: theme.ticker,
       today:  todayPct,
+      lastBar,
       w1:     calcPct(filteredCloses, 5),
       m1:     calcPct(filteredCloses, 21),
       m3:     calcPct(filteredCloses, 63),
@@ -179,7 +182,8 @@ serve(async (req: Request) => {
         Promise.all(THEMES.map(fetchTheme)),
         Promise.all(INDICES.map(fetchTheme)),
       ]);
-      const payload = { themes: results, indices, ts: Date.now() };
+      const lastBar = indices.find(i => i.lastBar)?.lastBar ?? null;
+      const payload = { themes: results, indices, lastBar, ts: Date.now() };
       await admin.from('market_cache').upsert({ cache_key: CACHE_KEY, payload, refreshed_at: new Date().toISOString() });
       return payload;
     } catch (e) {

@@ -7890,7 +7890,7 @@ if ('serviceWorker' in navigator) {
 
 // THEME TRACKER
 // ─────────────────────────────────────────────
-let _ttData = null, _ttIndices = null, _ttPeriod = 'today', _ttLoading = false, _ttTimer = null;
+let _ttData = null, _ttIndices = null, _ttLastBar = null, _ttPeriod = 'today', _ttLoading = false, _ttTimer = null;
 
 function ttSetPeriod(p, btn) {
   _ttPeriod = p;
@@ -7943,6 +7943,7 @@ async function ttLoad(force = false) {
     if (cachedTT?.payload?.themes) {
       _ttData = cachedTT.payload.themes;
       _ttIndices = cachedTT.payload.indices || [];
+      _ttLastBar = cachedTT.payload.lastBar || null;
       const _ttU = document.getElementById('tt-updated');
       if (_ttU) _ttU.textContent = 'עודכן: ' + new Date(cachedTT.payload.ts || cachedTT.ts).toLocaleTimeString('he-IL', { hour:'2-digit', minute:'2-digit' });
       ttRender(_ttData, _ttIndices);
@@ -7974,6 +7975,7 @@ async function ttLoad(force = false) {
     _pulseCacheWrite('theme-tracker', json);
     _ttData = json.themes;
     _ttIndices = json.indices || [];
+    _ttLastBar = json.lastBar || null;
     const ts = new Date(json.ts);
     const el = document.getElementById('tt-updated');
     if (el) el.textContent = 'עודכן: ' + ts.toLocaleTimeString('he-IL', { hour:'2-digit', minute:'2-digit' });

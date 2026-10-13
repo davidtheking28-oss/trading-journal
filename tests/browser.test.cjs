@@ -850,3 +850,16 @@ test('large trade journals paginate rows while keeping full summaries and search
  assert.equal(await page.locator('#stocks-wrap .trade-pagination').count(),0);
  assert.match(await page.locator('#stocks-wrap').innerText(),/NVDA/);
 });
+
+test('Market Pulse says so when "Today" is still the previous session, and stays quiet once the session is live', async t => {
+  const page = await open(t); await login(page);
+  let lastBar = '2000-01-03';
+  await page.route('**/functions/v1/theme-tracker', route => route.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ ts: Date.now(), lastBar, indices: [{ name: 'S&P 500', ticker: 'SPY', today: 0.6, w1: 1, m1: 1, m3: 1, ytd: 1 }], themes: [{ name: 'Tech', ticker: 'XLK', today: 1, w1: 1, m1: 1, m3: 1, ytd: 1 }] }) }));
+  await page.evaluate(() => switchTab('themes'));
+  await page.waitForFunction(() => document.querySelector('#tt-grid .tt-row'));
+  assert.equal(await page.locator('#tt-session-note').isVisible(), true, 'stale session must be announced');
+  assert.match(await page.locator('#tt-session-note').textContent(), /03\.01/);
+  lastBar = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+  await page.evaluate(() => ttLoad(true));
+  await page.waitForFunction(() => document.getElementById('tt-session-note').style.display === 'none');
+});

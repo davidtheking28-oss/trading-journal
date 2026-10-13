@@ -4,6 +4,28 @@ function ttRenderContent(themes, indices) {
   if (!grid) return;
   const pKey = _ttPeriod;
 
+  // ── Session note: before the open (or on a closed day) the "Today" figures are the previous session's ──
+  const tabEl = document.getElementById('tab-themes');
+  if (tabEl) {
+    let note = document.getElementById('tt-session-note');
+    if (!note) {
+      note = document.createElement('div');
+      note.id = 'tt-session-note';
+      note.setAttribute('role', 'status');
+      note.style.cssText = 'margin:0 0 12px;padding:8px 12px;border-radius:8px;font-size:12px;color:var(--text2);background:var(--fill, rgba(255,255,255,.05));border:1px solid var(--border, rgba(255,255,255,.08))';
+      document.getElementById('tt-indices')?.before(note);
+    }
+    const etToday = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+    const stale = pKey === 'today' && _ttLastBar && _ttLastBar < etToday;
+    note.style.display = stale ? '' : 'none';
+    if (stale) {
+      const d = _ttLastBar.slice(8, 10) + '.' + _ttLastBar.slice(5, 7);
+      note.textContent = _lang === 'he'
+        ? 'המסחר היום עוד לא התחיל — מוצגת סגירת ' + d + '. נתוני היום יופיעו עם פתיחת המסחר.'
+        : "Today's session has not started — showing the " + d + " close. Today's figures appear at the open.";
+    }
+  }
+
   // ── Indices bar ──
   const indicesEl = document.getElementById('tt-indices');
   if (indicesEl && indices?.length) {
