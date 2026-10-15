@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
 import { serveCached } from '../_shared/swr.ts';
+import { lastSessionBoundaryMs } from '../_shared/market_session.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -75,7 +76,7 @@ Deno.serve(async (req) => {
   // fetch instead of serving it. Inside that window the caller gets the cached
   // payload immediately and the refresh runs behind the response.
   const MAX_STALE_MS = 6 * 60 * 60 * 1000;
-  const jsonHeaders = { ...CORS, 'Content-Type': 'application/json' };
+  const jsonHeaders = { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
 
   const refresh = async () => {
     // Sector breadth is heavier (11 fetches) and doesn't move meaningfully
@@ -125,7 +126,7 @@ Deno.serve(async (req) => {
     }
   };
 
-  const { payload } = await serveCached(admin, CACHE_KEY, CACHE_TTL_MS, MAX_STALE_MS, refresh);
+  const { payload } = await serveCached(admin, CACHE_KEY, CACHE_TTL_MS, MAX_STALE_MS, refresh, lastSessionBoundaryMs(Date.now()));
   if (payload) return new Response(JSON.stringify(payload), { headers: jsonHeaders });
   return new Response(JSON.stringify({ error: 'Failed to fetch data' }), {
     status: 500, headers: jsonHeaders
