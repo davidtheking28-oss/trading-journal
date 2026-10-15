@@ -221,7 +221,7 @@ function labRenderOverview() {
 function labRender() {
   const host = document.getElementById('personal-lab');
   if (!host) return;
-  const reviewDetails=host.querySelector('#lab-review-summary > details');
+  const reviewDetails=host.querySelector('#lab-review-summary > details.lab-recurring-observations');
   if(reviewDetails)_labAuto.summaryOpen=reviewDetails.open;
   host.querySelectorAll('.lab-auto-chart[data-chart-key]').forEach(el=>{
     if(el.open)_labAuto.openCharts.add(el.dataset.chartKey);else _labAuto.openCharts.delete(el.dataset.chartKey);
@@ -318,7 +318,7 @@ async function labRenderAutomatic() {
   await Promise.all([worker(),worker()]);
   if(current()){
     conclusion.removeAttribute('role');conclusion.innerHTML=labReviewSummaryHTML(labReviewSummary(reviewed,trades.length),_labAuto.summaryOpen)+labPersonalComparisonHTML(labPersonalComparison(reviewed));
-    const details=conclusion.querySelector('details');
+    const details=conclusion.querySelector('details.lab-recurring-observations');
     details?.addEventListener('toggle',()=>{if(current())_labAuto.summaryOpen=details.open;});
     conclusion.querySelectorAll('[data-lab-example]').forEach(button=>button.addEventListener('click',()=>{
       if(!current())return;
@@ -378,7 +378,7 @@ function labReviewSummaryHTML(report, expanded = false) {
   let html='<p class="lab-footnote">'+labText('נבדקו ','Reviewed ')+report.reviewed+labText(' מתוך ',' of ')+report.total+labText(' עסקאות סגורות. ',' closed trades. ')+report.unknown+labText(' ללא מספיק מידע לקביעה.',' without enough evidence.')+'</p>';
   if(report.partial)html+='<p class="lab-footnote">'+labText('זהו סיכום חלקי. הצג עוד עסקאות כדי להרחיב את הבדיקה.','This is a partial review. Show more trades to expand coverage.')+'</p>';
   if(!report.patterns.length)return html+'<p class="lab-footnote">'+labText('אין כרגע מספיק דוגמאות לדפוס חוזר בבדיקת המרחק מהשיא. אין בכך אישור שלא היו טעויות.','There are not enough repeated examples in the distance-from-high check. This does not establish that there were no mistakes.')+'</p>';
-  html+='<details'+(expanded?' open':'')+'><summary>'+labText('מה חוזר בעסקאות שנבדקו?','What repeats in reviewed trades?')+' ('+report.patterns.length+')</summary><p class="lab-footnote">'+labText('תצפית חוזרת אינה הוכחה לטעות. הסף של 3% הוא סף הבדיקה, ולא כלל אישי שהגדרת. בדוק את הדוגמאות מול תוכנית הכניסה שלך.','A repeated observation is not proof of a mistake. The 3% threshold belongs to this check, not a personal rule you defined. Compare the examples with your entry plan.')+'</p>';
+  html+='<details class="lab-recurring-observations"'+(expanded?' open':'')+'><summary>'+labText('מה חוזר בעסקאות שנבדקו?','What repeats in reviewed trades?')+' ('+report.patterns.length+')</summary><p class="lab-footnote">'+labText('תצפית חוזרת אינה הוכחה לטעות. הסף של 3% הוא סף הבדיקה, ולא כלל אישי שהגדרת. בדוק את הדוגמאות מול תוכנית הכניסה שלך.','A repeated observation is not proof of a mistake. The 3% threshold belongs to this check, not a personal rule you defined. Compare the examples with your entry plan.')+'</p>';
   for(const pattern of report.patterns){
     html+='<p><strong>'+pattern.count+labText(' מתוך ',' of ')+report.distanceChecked+labText(' עסקאות עם נתוני מרחק מתאימים — ',' trades with comparable distance data — ')+(pattern.key==='above'?labText('כניסה יותר מ־3% מעל שיא 20 הנרות הקודמים','Entry more than 3% above the prior 20-bar high'):labText('כניסה מתחת לשיא 20 הנרות הקודמים','Entry below the prior 20-bar high'))+'</strong></p><div class="lab-actions">';
     html+=pattern.examples.slice(0,3).map(example=>'<button type="button" class="btn btn-secondary btn-sm sensitive" data-lab-example="'+esc(example.type+':'+example.id)+'">'+esc(example.symbol+' · '+example.entryDate)+'</button>').join('')+'</div>';
