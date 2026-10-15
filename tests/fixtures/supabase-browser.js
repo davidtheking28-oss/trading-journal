@@ -19,9 +19,9 @@
   const session = () => current ? { user: user(current), access_token: 'test-token', expires_at: 9999999999 } : null;
   const query = table => {
     const filters = {}, excluded = {}; let rowLimit = Infinity;
-    let single = false, operation = 'select', values;
+    let single = false, operation = 'select', values, rangeFrom = 0;
     const q = {
-      select() { return q; }, eq(k, v) { filters[k] = v; return q; }, order() { return q; }, limit(n) { rowLimit = n; return q; }, neq(k,v) { excluded[k]=v; return q; },
+      select() { return q; }, eq(k, v) { filters[k] = v; return q; }, order() { return q; }, limit(n) { rowLimit = n; return q; }, range(from, to) { rangeFrom = from; rowLimit = to - from + 1; return q; }, neq(k,v) { excluded[k]=v; return q; },
       gte() { return q; }, lte() { return q; }, in() { return q; }, is() { return q; }, not() { return q; },
       single() { single = true; return q; }, maybeSingle() { single = true; return q; },
       insert(v) { operation = 'insert'; values = v; return q; }, update(v) { operation = 'update'; values = v; return q; },
@@ -29,7 +29,7 @@
       then(resolve, reject) {
         return Promise.resolve().then(() => {
           if (table === 'user_settings') return { data: { onboarding_done: true, order_id_notice_seen: true }, error: null };
-          const found = (db[table] || []).filter(row => Object.entries(filters).every(([k,v]) => row[k] === v) && Object.entries(excluded).every(([k,v])=>row[k]!==v)).slice(0,rowLimit);
+          const found = (db[table] || []).filter(row => Object.entries(filters).every(([k,v]) => row[k] === v) && Object.entries(excluded).every(([k,v])=>row[k]!==v)).slice(rangeFrom, rangeFrom + rowLimit);
           if (operation === 'update') found.forEach(row => Object.assign(row, values));
           return { data: structuredClone(single ? found[0] || null : found), error: null, count: found.length };
         }).then(resolve, reject);
