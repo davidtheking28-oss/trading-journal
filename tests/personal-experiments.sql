@@ -1,6 +1,7 @@
 -- Dedicated fake users and trades; every write is rolled back.
 begin;
 insert into auth.users(id,email) values ('11111111-1111-4111-8111-111111111111','lab-a@example.invalid'),('22222222-2222-4222-8222-222222222222','lab-b@example.invalid');
+insert into public.journal_members(user_id) values ('11111111-1111-4111-8111-111111111111'),('22222222-2222-4222-8222-222222222222');
 select set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',true);
 set local role authenticated;
 do $$
