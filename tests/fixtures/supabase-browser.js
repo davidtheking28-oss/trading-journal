@@ -53,6 +53,7 @@
     channel() { const channel = { on() { return channel; }, subscribe() { return channel; } }; return channel; },
     removeChannel: async () => {},
     rpc: async (name, params) => {
+      if(name==='journal_access_allowed') return {data:control.journalDenied!==true,error:control.journalAccessFailure?{message:'offline'}:null};
       if (['start_personal_experiment','finish_personal_experiment','cancel_personal_experiment'].includes(name)) {
         const owner=current;
         if(control.labDelay) await new Promise(r=>setTimeout(r,control.labDelay));

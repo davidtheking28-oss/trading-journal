@@ -138,6 +138,31 @@ test('broker collection notices are localized and credentials require an explici
   }
 });
 
+test('journal registration links cannot create new shared Auth accounts',async t=>{
+ const page=await open(t);
+ await page.evaluate(()=>{window.__signupCalls=0;_sb.auth.signUp=async()=>{__signupCalls++;return {error:null};};authSetMode('register');});
+ assert.equal(await page.evaluate(()=>_authMode),'login');
+ assert.match(await page.locator('#auth-msg').innerText(),/משתמשים קיימים/);
+ assert.equal(await page.locator('#auth-switch-to-register').isVisible(),false);
+ await page.screenshot({path:'docs/private-journal-login.png'});
+ await page.evaluate(()=>{_authMode='register';return authSubmit();});
+ assert.equal(await page.evaluate(()=>__signupCalls),0);
+});
+
+test('journal access denies unapproved accounts before legal or data loading and fails closed',async t=>{
+ const page=await open(t);
+ await page.evaluate(()=>{__test.journalDenied=true;__testDB.legal_acceptances=[];});
+ await page.locator('#auth-email').fill('a@example.test');await page.locator('#auth-pass').fill('test-password');await page.locator('#auth-submit-btn').click();
+ await page.waitForFunction(()=>document.getElementById('auth-msg').textContent.includes('למשתמשים קיימים'));
+ assert.equal(await page.locator('#app').evaluate(el=>el.inert),true);
+ assert.equal(await page.locator('#legal-acceptance-dialog').count(),0);
+ assert.equal(await page.evaluate(()=>_dbLoaded),false);
+ await page.evaluate(()=>{__test.journalDenied=false;__test.journalAccessFailure=true;});
+ await page.locator('#auth-submit-btn').click();
+ await page.waitForFunction(()=>document.getElementById('auth-msg').textContent.includes('לא ניתן לבדוק'));
+ assert.equal(await page.evaluate(()=>_legalReadyUserId),null);
+});
+
 test('legal acknowledgement requires age confirmation, survives save failure and is account scoped', async t => {
   const page = await open(t);
   await page.evaluate(() => { window.__testDB.legal_acceptances = []; window.__test.legalSaveFailure = true; });

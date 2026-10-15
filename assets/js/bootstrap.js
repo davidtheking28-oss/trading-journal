@@ -12,7 +12,7 @@
   const _likelySignedIn = !!localStorage.getItem(_sessionKey);
   if (!_likelySignedIn) document.getElementById('auth-overlay').style.display = 'flex';
 
-  if(new URLSearchParams(location.search).get('mode')==='register') authSetMode('register');
+  authSetMode(new URLSearchParams(location.search).get('mode')==='register'?'register':'login');
 
   // Always-on initializations (don't need auth)
   qaInit();

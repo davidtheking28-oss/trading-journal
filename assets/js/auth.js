@@ -166,6 +166,11 @@ function openLegal(type) {
 }
 
 function authSetMode(mode) {
+  if(mode==='register') {
+    authSetMode('login');
+    _authMsg(_lang==='he'?'היומן פתוח למשתמשים קיימים בלבד.':'The journal is open to existing members only.','error');
+    return;
+  }
   _authMode = mode;
   const isReg = mode === 'register';
   document.getElementById('auth-first').style.display     = isReg ? '' : 'none';
@@ -181,7 +186,7 @@ function authSetMode(mode) {
   document.getElementById('auth-tab-register').style.background = isReg ? '#4f46e5' : 'transparent';
   document.getElementById('auth-tab-register').style.color      = isReg ? '#fff' : 'var(--text2)';
   document.getElementById('auth-tab-login').textContent = isReg ? 'הרשמה' : 'כניסה';
-  document.getElementById('auth-switch-to-register').style.display = isReg ? 'none' : '';
+  document.getElementById('auth-switch-to-register').style.display = 'none';
   document.getElementById('auth-switch-to-login').style.display    = isReg ? '' : 'none';
   document.getElementById('auth-strength').style.display = 'none';
   document.getElementById('auth-strength-bar').style.width = '0';
@@ -219,6 +224,7 @@ function _authMsg(text, type) {
 }
 
 async function authSubmit() {
+  if(_authMode==='register') { authSetMode('register');return; }
   const email = (document.getElementById('auth-email').value || '').trim();
   const pass  = (document.getElementById('auth-pass').value  || '');
   if (!email || !pass) { _authMsg('נא למלא אימייל וסיסמה', 'error'); return; }
@@ -420,6 +426,19 @@ async function _onAuthSuccess(user) {
   _currentUser = user;
   _legalReadyUserId = null;
   document.getElementById('app').inert = true;
+  // Membership is server-managed, not editable Auth metadata. Never sign out a
+  // denied shared-Auth user: their advisor-platform session must remain usable.
+  let membership;
+  try { membership=await _sb.rpc('journal_access_allowed'); }
+  catch { membership={error:true}; }
+  if(_currentUser!==user)return;
+  if(membership.error || membership.data!==true){
+    document.getElementById('auth-overlay').style.display='flex';
+    _authMsg(membership.error
+      ? (_lang==='he'?'לא ניתן לבדוק הרשאת גישה כרגע. נסה להתחבר שוב.':'Access could not be checked. Please try signing in again.')
+      : (_lang==='he'?'היומן פתוח למשתמשים קיימים בלבד. לחשבון זה אין גישה ליומן.':'The journal is open to existing members only. This account does not have journal access.'),'error');
+    return;
+  }
   if (!await requireLegalAcceptance(user) || _currentUser?.id !== user.id) return;
   _legalReadyUserId = user.id;
   document.getElementById('app').inert = false;
