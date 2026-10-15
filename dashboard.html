@@ -174,6 +174,10 @@
 <script>
 const SUPABASE_URL = 'https://fnklrqxwyeibfptaxewf.supabase.co';
 const SUPABASE_ANON = '__SUPABASE_ANON__';
+// Storage can throw (blocked cookies, an embedded browser, a full quota); a top-level read that
+// threw left a blank page, and a write that threw skipped the line after it.
+const _lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const _lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
 </script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1363,6 +1367,11 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     justify-content: space-between;
   }
   .modal-title { font-size: 15px; font-weight: 800; letter-spacing: -0.2px; }
+  /* The close buttons and row buttons measured 20-28px; a thumb needs 44. */
+  @media (pointer: coarse) {
+    .modal-close, .btn-camera, .sector-modal-close { min-width: 44px; min-height: 44px; }
+    .btn-sm { min-height: 44px; }
+  }
   .modal-close {
     background: rgba(255,255,255,0.04); border: 1px solid var(--border);
     color: var(--text2); cursor: pointer; font-size: 16px; line-height: 1;
@@ -3272,7 +3281,7 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     --text2:       #334155;
     /* #8896a8 measured 3.01:1 on the white card — under AA for 10-13px labels,
        which is every secondary label in the app. #64748b clears it at 4.76. */
-    --text3:       #64748b;
+    --text3:       #526071;
     --accent:      #4f46e5;
     --accent2:     #6366f1;
     --accent-glow: rgba(14,165,233,0.12);
@@ -5645,7 +5654,6 @@ const SUPABASE_ANON = '__SUPABASE_ANON__';
     #stocks-wrap table td:nth-child(19) { white-space: nowrap; }
   }
 
-
 /* Visual refinement: data hierarchy and responsive holding cards. */
 .kpi-label,.kpi-grid .kpi-card:first-child .kpi-label{font-size:12px;letter-spacing:.2px}
 .kpi-sub,.kpi-trend{font-size:12px}
@@ -6923,15 +6931,12 @@ html[data-theme="light"] #app .num-green, html[data-theme="light"] #app .donut-s
         </div>
         </div>
 
-
       </div>
     </div>
 
   </main>
   </div><!-- /.app-body -->
 </div>
-
-
 
 <!-- STOP LOSS PROMPT -->
 <div id="stop-prompt-overlay" style="

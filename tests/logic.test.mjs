@@ -2634,6 +2634,58 @@ test('API key forms retain input and do not report success after a failed save',
   }
 });
 
+describe('_fetchAllTrades — journals longer than one PostgREST page', () => {
+  const _fetchAllTrades = new Function('return async ' + extractFunction('_fetchAllTrades'))();
+  const mkSb = total => {
+    const all = Array.from({ length: total }, (_, i) => ({ id: total - i }));
+    const calls = [];
+    const q = { select: () => q, eq: () => q, order: () => q, range: (a, b) => { calls.push([a, b]); return Promise.resolve({ data: all.slice(a, b + 1), error: null }); } };
+    return { sb: { from: () => q }, calls };
+  };
+  const run = async total => { const { sb, calls } = mkSb(total); globalThis._sb = sb; const r = await _fetchAllTrades('u'); delete globalThis._sb; return { r, calls }; };
+
+  test('2345 rows come back whole, in three pages', async () => {
+    const { r, calls } = await run(2345);
+    assert.equal(r.data.length, 2345, 'a single unpaged select stops at 1000');
+    assert.equal(calls.length, 3);
+  });
+
+  test('an exact multiple of the page size still ends', async () => {
+    const { r, calls } = await run(2000);
+    assert.equal(r.data.length, 2000);
+    assert.equal(calls.length, 3, 'a final empty page proves there is no more');
+  });
+
+  test('an error on any page is reported, not a partial list', async () => {
+    const q = { select: () => q, eq: () => q, order: () => q, range: () => Promise.resolve({ data: null, error: { message: 'boom' } }) };
+    globalThis._sb = { from: () => q };
+    const r = await _fetchAllTrades('u'); delete globalThis._sb;
+    assert.equal(r.data, null);
+    assert.equal(r.error.message, 'boom');
+  });
+});
+
+describe('calcPct and deposits', () => {
+  const { calcPct } = load('calcPL', 'calcTotal', 'calcPct');
+  const { invTotalAfterDelete } = load('invTotalAfterDelete');
+
+  test('a partly closed row is measured on the shares that closed, as the monthly tracker does', () => {
+    const t = { ls: 'L', entryPrice: 10, exitPrice: 12, shares: 90, closedShares: 25, commission: 0, ecn: 0 };
+    assert.equal(calcPct(t), 20, 'was 5.6: P&L on 25 shares divided by the cost of all 90');
+  });
+
+  test('a fully closed row is unchanged', () => {
+    const t = { ls: 'L', entryPrice: 10, exitPrice: 12, shares: 100, closedShares: 100, commission: 0, ecn: 0 };
+    assert.equal(calcPct(t), 20);
+  });
+
+  test('deleting a deposit takes it back out of the total, never below zero', () => {
+    assert.equal(invTotalAfterDelete(120000, 20000), 100000);
+    assert.equal(invTotalAfterDelete(5000, 20000), 0);
+    assert.equal(invTotalAfterDelete('100000', 'x'), 100000, 'a bad amount changes nothing');
+  });
+});
+
 describe('invBuyInto — adding from the calculator', () => {
   test('a new symbol becomes a locked row at the quoted price', () => {
     const r = invBuyInto([], { symbol: 'qtum', shares: 11, price: 141.74, cat: 'yellow', sector: 'Tech' });

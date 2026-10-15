@@ -84,9 +84,9 @@ test('personal lab shared server/browser financial fixtures agree',()=>{
 test('personal lab cannot receive journal rows from a late previous-account load',async()=>{
  for(const name of ['loadDB','_syncReloadTrades']) {
   let resolve;const original={stocks:[{symbol:'B'}],crypto:[]};
-  const c={_currentUser:{id:'A'},db:original,_dbLoaded:false,_sb:{from:()=>({select(){return this;},eq(){return this;},order:()=>new Promise(r=>{resolve=r;})})},
+  const c={_currentUser:{id:'A'},db:original,_dbLoaded:false,_sb:{from:()=>({select(){return this;},eq(){return this;},order(){return this;},range:()=>new Promise(r=>{resolve=r;})})},
    _rowToTrade:x=>x,validateTradeSchema:()=>true,_dedupeTrades:async()=>{},initFilters(){},renderOverview(){},renderTable(){}};
-  vm.createContext(c);vm.runInContext('async '+extractFunction(name),c);
+  vm.createContext(c);vm.runInContext('async '+extractFunction('_fetchAllTrades'),c);vm.runInContext('async '+extractFunction(name),c);
   const pending=c[name](false);c._currentUser={id:'B'};resolve({data:[],error:null});await pending;
   assert.equal(c.db.stocks[0]?.symbol,'B');assert.equal(c._dbLoaded,false);
  }

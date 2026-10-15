@@ -1700,13 +1700,23 @@ function invAddDeposit() {
   document.getElementById('inv-dep-amount').value = '';
 }
 
+// Adding a deposit raises the portfolio total by its amount, so removing one has to take
+// it back out, or a mistaken deposit leaves the total (and the return) inflated for good.
+function invTotalAfterDelete(total, amount) {
+  return Math.max(0, (+total || 0) - (+amount || 0));
+}
+
 function invDeleteDeposit(idx) {
   const deposits = invLoad().deposits || [];
   if (!deposits.length) return;
-  if (!confirm('למחוק הפקדה זו?')) return;
-  deposits.splice(idx, 1);
+  if (!confirm('למחוק הפקדה זו ולהפחית אותה מסך התיק?')) return;
+  const [removed] = deposits.splice(idx, 1);
   // Holdings from the DOM (precise) — avoid clobbering DB with stale localStorage.
   const data = invGetCurrentData();
+  const totalElD = document.getElementById('inv-portfolio-total');
+  const newTotal = invTotalAfterDelete(invParseTotal(totalElD?.value), removed?.amount);
+  if (totalElD) totalElD.value = newTotal;
+  data.portfolioTotal = String(newTotal);
   data.deposits = deposits;
   invSaveData(data);
   invRenderDeposits(deposits);

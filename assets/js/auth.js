@@ -323,7 +323,7 @@ async function authSignOut() {
 // ONBOARDING WIZARD
 // ─────────────────────────────────────────────
 function onboardingCheck(userId) {
-  if (localStorage.getItem('ob_done_' + userId)) return;
+  if (_lsGet('ob_done_' + userId)) return;
   const el = document.getElementById('ob-overlay');
   el.style.display = 'flex';
   onboardingStep(1);
@@ -337,7 +337,7 @@ function onboardingStep(n) {
 }
 
 function onboardingDone() {
-  localStorage.setItem('ob_done_' + _currentUser?.id, '1');
+  _lsSet('ob_done_' + _currentUser?.id, '1');
   document.getElementById('ob-overlay').style.display = 'none';
   _saveUserSettings({ onboarding_done: true }); // persist across devices
 }

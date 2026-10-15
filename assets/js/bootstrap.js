@@ -9,7 +9,7 @@
   // session doesn't look present. Genuinely logged-out users still see it
   // immediately, same as before.
   const _sessionKey = 'sb-' + SUPABASE_URL.replace(/^https?:\/\//, '').split('.')[0] + '-auth-token';
-  const _likelySignedIn = !!localStorage.getItem(_sessionKey);
+  const _likelySignedIn = !!_lsGet(_sessionKey);
   if (!_likelySignedIn) document.getElementById('auth-overlay').style.display = 'flex';
 
   authSetMode(new URLSearchParams(location.search).get('mode')==='register'?'register':'login');
@@ -17,7 +17,7 @@
   // Always-on initializations (don't need auth)
   qaInit();
   initTabletTableHints();
-  setTableDensity(localStorage.getItem('tj-table-density'));
+  setTableDensity(_lsGet('tj-table-density'));
   initMediaDB().catch(e => console.warn('[Screenshots] IndexedDB init failed:', e));
   ttScheduleMidnight();
 

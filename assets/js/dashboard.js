@@ -241,12 +241,26 @@ function _tradeToRow(trade) {
 // is set, and it is cleared whenever a load fails or a user signs out.
 let _dbLoaded = false;
 
+// PostgREST returns at most 1000 rows a request, and a longer journal was cut off with
+// no error, which silently wrong-footed every statistic. Read in pages; id breaks the ties
+// between trades sharing an entry date so a page boundary never repeats or skips one.
+async function _fetchAllTrades(userId) {
+  const PAGE = 1000, rows = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await _sb.from('trades').select('*')
+      .eq('user_id', userId)
+      .order('entry_date', { ascending: false }).order('id', { ascending: false })
+      .range(from, from + PAGE - 1);
+    if (error) return { data: null, error };
+    rows.push(...(data || []));
+    if (!data || data.length < PAGE) return { data: rows, error: null };
+  }
+}
+
 async function loadDB(render = true) {
   if (!_currentUser) { db = JSON.parse(JSON.stringify(SEED)); _dbLoaded = false; return; }
   const loadUser = _currentUser;
-  const { data, error } = await _sb.from('trades').select('*')
-    .eq('user_id', loadUser.id)
-    .order('entry_date', { ascending: false });
+  const { data, error } = await _fetchAllTrades(loadUser.id);
   if (_currentUser !== loadUser) return;
   if (error) { _dbLoaded = false; toast('שגיאה בטעינת נתונים — נסה לרענן', 'error'); console.error('[loadDB]', error); return; }
   const all = (data || []).map(_rowToTrade).filter(validateTradeSchema);
@@ -292,8 +306,7 @@ const _rtMuted = table => Date.now() < (_rtSuppressUntil[table] || 0);
 async function _syncReloadTrades() {
   if (!_currentUser) return;
   const loadUser = _currentUser;
-  const { data, error } = await _sb.from('trades').select('*')
-    .eq('user_id', loadUser.id).order('entry_date', { ascending: false });
+  const { data, error } = await _fetchAllTrades(loadUser.id);
   if (_currentUser !== loadUser) return;
   if (error) return;
   const all = (data || []).map(_rowToTrade).filter(validateTradeSchema);
@@ -453,9 +466,12 @@ function calcPL(tr) {
 }
 function calcTotal(tr) { return calcPL(tr) - (+tr.ecn||0) - (+tr.commission||0); }
 function calcRisk(tr) { return (+tr.entryPrice||0) * (+tr.shares||0); }
+// Realised P&L is earned on the shares that closed, so the percentage is measured on
+// that same base. The full position was the base before, which showed 5.6% in the
+// table for a row the monthly tracker (via _tradePct) reported as 20%.
 function calcPct(tr) {
-  const risk = calcRisk(tr);
-  return risk ? (calcTotal(tr) / risk) * 100 : 0;
+  const base = (+tr.entryPrice || 0) * (+tr.closedShares || +tr.shares || 0);
+  return base ? (calcTotal(tr) / base) * 100 : 0;
 }
 
 // Single definition of "closed", so stats() and advancedStats() can't disagree
@@ -3224,7 +3240,7 @@ async function avatarUpload(input) {
 // ─────────────────────────────────────────────
 // LANGUAGE
 // ─────────────────────────────────────────────
-let _lang = localStorage.getItem('tj_lang') || 'he';
+let _lang = _lsGet('tj_lang') || 'he';
 function t(k) { return (LANG_STRINGS[_lang] || LANG_STRINGS.en)[k] || k; }
 
 const LANG_STRINGS = {
@@ -5115,6 +5131,8 @@ function toast(msg, type='success') {
   const full = String(msg);
   const shown = full.length > 240 ? full.slice(0, 239) + '…' : full;
   el.appendChild(document.createTextNode(' ' + shown));
+  // Amounts in a toast (stop hits, position sizes) stayed readable with privacy mode on.
+  try { if (privacyMode && /[\d$]/.test(shown)) el.classList.add('sensitive'); } catch (e) { /* privacyMode not declared yet */ }
   c.appendChild(el);
   // Longer messages get more time on screen — a one-word "success" toast
   // doesn't need 3s any more than a full sentence needs less.
@@ -5327,6 +5345,7 @@ function pinBackspace() {
 function pinUnlock() {
   const overlay = document.getElementById('pin-overlay');
   if (overlay) overlay.classList.remove('open');
+  _pinInert(false);
   document.body.style.overflow = '';
   lastActivity = Date.now();
   startAutoLock();
@@ -5784,7 +5803,19 @@ function lockNow() {
   pinMsg('');
   document.getElementById('pin-sub-text').textContent = 'הכנס קוד PIN לכניסה';
   document.getElementById('pin-overlay').classList.add('open');
+  _pinInert(true);
   document.body.style.overflow = 'hidden';
+}
+
+// The lock screen only covered the page; Tab and a screen reader still reached the
+// journal behind it. inert removes it from both, and focus moves into the PIN box.
+function _pinInert(on) {
+  const app = document.getElementById('app'), overlay = document.getElementById('pin-overlay');
+  if (app && overlay && !app.contains(overlay)) app.inert = !!on;
+  if (on) {
+    if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
+    overlay?.querySelector('button')?.focus();
+  }
 }
 
 function toggleLock() {
@@ -5800,6 +5831,7 @@ function toggleLock() {
     const link = document.getElementById('pin-toggle-link');
     if (link) link.textContent = '';
     document.getElementById('pin-overlay').classList.add('open');
+    _pinInert(true);
     document.body.style.overflow = 'hidden';
   }
 }
@@ -6220,7 +6252,7 @@ function closeLightbox() {
 // ══════════════════════════════════════════════
 // FEATURE 1 — PRIVACY MODE
 // ══════════════════════════════════════════════
-let privacyMode = localStorage.getItem('tj-privacy') === '1';
+let privacyMode = _lsGet('tj-privacy') === '1';
 function applyPrivacy() {
   document.body.classList.toggle('privacy-on', privacyMode);
   const btn = document.getElementById('privacy-btn');
@@ -6230,7 +6262,7 @@ function applyPrivacy() {
 }
 function togglePrivacy() {
   privacyMode = !privacyMode;
-  localStorage.setItem('tj-privacy', privacyMode ? '1' : '0');
+  _lsSet('tj-privacy', privacyMode ? '1' : '0');
   applyPrivacy();
   auditLog(privacyMode ? 'privacy_on' : 'privacy_off');
 }
@@ -6251,8 +6283,8 @@ function getLockoutDuration(attempts) {
 let _lastPinAttempt = 0;
 const MIN_ATTEMPT_INTERVAL_MS = 300;
 
-function getPinAttempts() { return parseInt(localStorage.getItem(PIN_ATTEMPTS_KEY) || '0'); }
-function setPinAttempts(n) { localStorage.setItem(PIN_ATTEMPTS_KEY, String(n)); }
+function getPinAttempts() { return parseInt(_lsGet(PIN_ATTEMPTS_KEY) || '0'); }
+function setPinAttempts(n) { _lsSet(PIN_ATTEMPTS_KEY, String(n)); }
 function isLockedOut() {
   const until = parseInt(localStorage.getItem(PIN_LOCKOUT_KEY) || '0');
   return Date.now() < until;
@@ -7534,18 +7566,18 @@ function toggleSidebar() {
     document.body.style.overflow = isOpen ? 'hidden' : '';
   } else {
     const collapsed = sidebar.classList.toggle('collapsed');
-    localStorage.setItem('tj-sidebar-collapsed', collapsed ? '1' : '0');
+    _lsSet('tj-sidebar-collapsed', collapsed ? '1' : '0');
   }
 }
 
 function toggleTheme() {
   const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-  localStorage.setItem('tj-theme', next);
+  _lsSet('tj-theme', next);
   _applyTheme(next);
   try{ const f=document.getElementById('screener-frame'); if(f?.src) f.contentDocument.documentElement.dataset.theme = next==='light'?'tj-light':'tj'; }catch(e){}
 }
 (function _initTheme() {
-  const saved = localStorage.getItem('tj-theme') || 'dark';
+  const saved = _lsGet('tj-theme') || 'dark';
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => _applyTheme(saved));
   } else {
@@ -7554,7 +7586,7 @@ function toggleTheme() {
 })();
 (function _initSidebar() {
   const apply = () => {
-    if (localStorage.getItem('tj-sidebar-collapsed') === '1') {
+    if (_lsGet('tj-sidebar-collapsed') === '1') {
       document.getElementById('main-sidebar')?.classList.add('collapsed');
     }
   };
@@ -7565,10 +7597,10 @@ function toggleTheme() {
 // ─── Cookie Consent ─────────────────────────────────────────────────────────
 
 (function _cookieInit() {
-  const consent = localStorage.getItem('tj-cookie-consent');
+  const consent = _lsGet('tj-cookie-consent');
   if (!consent) {
     setTimeout(() => {
-      if (localStorage.getItem('tj-cookie-consent')) return;
+      if (_lsGet('tj-cookie-consent')) return;
       const b = document.getElementById('cookie-banner');
       b.style.display = '';
     }, 800);
@@ -7577,7 +7609,7 @@ function toggleTheme() {
 
 function cookieAccept() {
   const aiOn = document.getElementById('cookie-ai-toggle')?.checked !== false;
-  localStorage.setItem('tj-cookie-consent', JSON.stringify({ necessary: true, ai: aiOn, ts: Date.now() }));
+  _lsSet('tj-cookie-consent', JSON.stringify({ necessary: true, ai: aiOn, ts: Date.now() }));
   _cookieHide();
 }
 
