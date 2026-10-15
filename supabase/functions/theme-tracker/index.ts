@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
 import { serveCached } from '../_shared/swr.ts';
+import { lastSessionBoundaryMs } from '../_shared/market_session.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -174,7 +175,7 @@ serve(async (req: Request) => {
   // the response, so the fan-out cost is never paid in the foreground. Past a
   // day the bars are genuinely wrong, so we block on a real fetch.
   const MAX_STALE_MS = 24 * 60 * 60 * 1000;
-  const jsonHeaders = { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'max-age=300' };
+  const jsonHeaders = { ...CORS, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
 
   const refresh = async () => {
     try {
@@ -192,7 +193,7 @@ serve(async (req: Request) => {
     }
   };
 
-  const { payload } = await serveCached(admin, CACHE_KEY, CACHE_TTL_MS, MAX_STALE_MS, refresh);
+  const { payload } = await serveCached(admin, CACHE_KEY, CACHE_TTL_MS, MAX_STALE_MS, refresh, lastSessionBoundaryMs(Date.now()));
   if (payload) return new Response(JSON.stringify(payload), { headers: jsonHeaders });
   return new Response(JSON.stringify({ error: 'Failed to fetch data' }), {
     status: 500,

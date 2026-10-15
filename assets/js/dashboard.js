@@ -8025,7 +8025,7 @@ async function ttLoad(force = false) {
     const tid = setTimeout(() => controller.abort(), 15000);
     const res = await fetch(
       `${SUPABASE_URL}/functions/v1/theme-tracker`,
-      { headers: { 'Authorization': `Bearer ${_ttToken}` }, signal: controller.signal }
+      { headers: { 'Authorization': `Bearer ${_ttToken}` }, signal: controller.signal, cache: 'no-store' }
     );
     clearTimeout(tid);
     if (!res.ok) throw new Error('HTTP ' + res.status);

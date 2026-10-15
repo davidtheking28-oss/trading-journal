@@ -77,3 +77,21 @@ Deno.test('no row and a failed fetch yields null so the caller can error', async
   const r = await serveCached<{ v: string }>(fakeAdmin(null), 'k', TTL, MAX, async () => null);
   assertEquals(r, { payload: null, stale: false });
 });
+
+Deno.test('a young row from before the session edge is not served ahead of a refresh', async () => {
+  waited.length = 0;
+  const r = await serveCached(fakeAdmin(ago(60_000)), 'k', TTL, MAX, fresh, Date.now() - 30_000);
+  assertEquals(r, { payload: { v: 'FRESH' }, stale: false });
+});
+
+Deno.test('a row refreshed after the session edge is served as usual', async () => {
+  let calls = 0;
+  const r = await serveCached(fakeAdmin(ago(60_000)), 'k', TTL, MAX, async () => { calls++; return { v: 'FRESH' }; }, Date.now() - 120_000);
+  assertEquals(r, { payload: { v: 'CACHED' }, stale: false });
+  assertEquals(calls, 0);
+});
+
+Deno.test('a wrong-session row is still the fallback when the refresh fails', async () => {
+  const r = await serveCached(fakeAdmin(ago(60_000)), 'k', TTL, MAX, async (): Promise<{ v: string } | null> => null, Date.now() - 30_000);
+  assertEquals(r, { payload: { v: 'CACHED' }, stale: true });
+});
