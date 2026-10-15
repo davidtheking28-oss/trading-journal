@@ -162,3 +162,15 @@ test('distance denominators include measurable shape non-matches without flaggin
  ],4);
  assert.equal(report.distanceChecked,3);assert.equal(report.patterns[0].count,2);assert.equal(report.unknown,1);
 });
+
+test('lab leads with one supported finding and a concrete entry-plan check',()=>{
+ const c=labContext();
+ const report={reviewed:5,total:40,unknown:0,distanceChecked:5,partial:true,patterns:[
+  {key:'above',count:2,examples:[]},{key:'below',count:3,examples:[]}
+ ]};
+ const html=c.labPrimaryFindingHTML(report);
+ assert.match(html,/לפני העסקה הבאה/);assert.match(html,/3 מתוך 5/);assert.match(html,/מתחת לשיא/);
+ assert.match(html,/נקודת הפריצה שתכננת/);assert.match(html,/חשד לבדיקה/);
+ assert.doesNotMatch(html,/יותר מ־3%|טעית|הוכח/);
+ assert.match(c.labPrimaryFindingHTML({...report,patterns:[]}),/אין כרגע מספיק דוגמאות/);
+});

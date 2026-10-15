@@ -88,3 +88,5 @@ Verification: **273 logic tests and all 49 browser/accessibility tests passed**,
 Entry evidence and personal outcome comparison follow-up: 276 logic tests passed; four focused browser tests passed (camera snapshots, automatic review, personal comparison with five winners/five losers and example focus, recurring-summary account reset). Screenshot: docs/personal-lab-entry-evidence.png. Local mock validation only; no classifier accuracy claim or live deployment.
 
 Simple UI follow-up: 276 logic checks and three focused browser checks passed. Browser check verifies evidence is initially hidden, compact card text is under 200 characters, Why reveals the evidence, and cohort example links remain usable. Screenshot: docs/personal-lab-simple.png.
+
+2026-10-15 primary-finding follow-up: added pure logic regression for a single highest-count observation, action text, denominator and honest no-finding state. Focused browser checks verify concise leading content and opening a closed trade list via evidence links. Screenshot docs/personal-lab-primary-finding.png uses clearly labelled synthetic data. No production deployment in this step.

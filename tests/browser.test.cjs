@@ -371,11 +371,6 @@ test('holding edits show unsaved state and commit with the same row identity', a
 });
 
 
-test('mobile holding cards expand and remain editable without horizontal page overflow', async t => {
-  const page = await open(t);
-  await page.setViewportSize({ width: 390, height: 844 });
-  await login(page);
-  await page.evaluate(() => cookieDecline());
 test('the quantity calculator adds the sized position to the portfolio, and tops up a held symbol at the average cost', async t => {
   const page = await open(t); await login(page); await page.evaluate(() => cookieDecline()); await investments(page);
   await page.evaluate(() => invCalcOpen());
@@ -428,6 +423,12 @@ test('the calculator add button stays disabled without a symbol', async t => {
   assert.equal(await page.locator('#ic-add').isDisabled(), true);
 });
 
+
+test('mobile holding cards expand and remain editable without horizontal page overflow', async t => {
+  const page = await open(t);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await login(page);
+  await page.evaluate(() => cookieDecline());
   await page.locator('#cookie-banner').waitFor({ state: 'hidden' });
   await page.evaluate(() => switchTab('investments'));
   const row = page.locator('#inv-tbody tr[data-idx]').first();

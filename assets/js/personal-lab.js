@@ -46,7 +46,7 @@ function labMeasure(experiment, trades, nowDate) {
 const _lab = { user: null, generation: 0, revision: 0, pending: null, loaded: false, error: '', active: null,
   history: [], historyLoaded: false, historyLimit: 20, historyMore: false, busy: false, step: 0,
   draft: { template: 'daily_limit', asset_scope: 'stock', target: 3 }, choice: 'inconclusive', note: '', notice: '' };
-const _labAuto = { sequence: 0, limit: 4, cache: new Map(), openCharts: new Set(), summaryOpen: false };
+const _labAuto = { sequence: 0, limit: 4, cache: new Map(), openCharts: new Set(), summaryOpen: false, tradesOpen: false };
 const LAB_TEMPLATES = {
   daily_limit: { he: 'פחות עסקאות, יותר כוונה', en: 'Fewer trades, more intention',
     descHe: 'בחר תקרה יומית ובדוק בכמה ימי פעילות נשארת בתוכה.', descEn: 'Set a daily limit and track how often you stay within it.', icon: '01' },
@@ -64,7 +64,7 @@ function labConclusion(choice) {
 function labActive() { return _lab.active; }
 function labPauseAutomatic() { _labAuto.sequence++; }
 function labReset() {
-  _labAuto.sequence++; _labAuto.limit = 4; _labAuto.cache.clear(); _labAuto.openCharts.clear(); _labAuto.summaryOpen=false;
+  _labAuto.sequence++; _labAuto.limit = 4; _labAuto.cache.clear(); _labAuto.openCharts.clear(); _labAuto.summaryOpen=false; _labAuto.tradesOpen=false;
   _lab.generation++; _lab.revision++;
   Object.assign(_lab, { user: null, pending: null, loaded: false, error: '', active: null, history: [], historyLoaded: false,
     historyLimit: 20, historyMore: false, busy: false, step: 0, draft: { template: 'daily_limit', asset_scope: 'stock', target: 3 }, choice: 'inconclusive', note: '', notice: '' });
@@ -223,6 +223,8 @@ function labRender() {
   if (!host) return;
   const reviewDetails=host.querySelector('#lab-review-summary > details.lab-recurring-observations');
   if(reviewDetails)_labAuto.summaryOpen=reviewDetails.open;
+  const tradeList=host.querySelector('#lab-trades-disclosure');
+  if(tradeList)_labAuto.tradesOpen=tradeList.open;
   host.querySelectorAll('.lab-auto-chart[data-chart-key]').forEach(el=>{
     if(el.open)_labAuto.openCharts.add(el.dataset.chartKey);else _labAuto.openCharts.delete(el.dataset.chartKey);
   });
@@ -231,7 +233,7 @@ function labRender() {
   const focusId = focused?.id;
   const selection = focused && typeof focused.selectionStart === 'number' ? [focused.selectionStart, focused.selectionEnd] : null;
   if (!_currentUser || _legalReadyUserId !== _currentUser.id || _lab.user !== _currentUser) { host.replaceChildren(); return; }
-  const header = `<div class="lab-header"><div><h2 id="personal-lab-title" tabindex="-1">${labText('המעבדה האישית', 'Your personal lab')}</h2><p>${labText('מה חוזר בעסקאות שלך ומה כדאי לבדוק.', 'See what repeats in your trades and what to review.')}</p></div></div>`;
+  const header = `<div class="lab-header"><div><h2 id="personal-lab-title" tabindex="-1">${labText('המעבדה האישית', 'Your personal lab')}</h2></div></div>`;
   let body = '';
   if (_lab.error) body += `<p class="lab-warning" role="alert">${_lab.error}</p>${labButton('reload', labText('רענן נתונים', 'Reload data'))}`;
   if (_lab.notice) body += `<p class="lab-footnote" role="status">${_lab.notice}</p>`;
@@ -239,7 +241,7 @@ function labRender() {
   else if (_lab.loaded && _lab.active) body += labActiveHTML(_lab.active);
   else if (_lab.loaded) body += labCreateHTML();
   if (_lab.history.length) body += `<details class="lab-history" data-lab-section="history"><summary>${labText('ניסויים קודמים', 'Previous experiments')} (${_lab.history.length})</summary>${_lab.history.map(e => `<article class="lab-history-item"><div class="lab-history-heading"><h3>${labTitle(e.template)}</h3><span>${e.status === 'completed' ? labText('הושלם', 'Completed') : labText('בוטל', 'Cancelled')}</span></div><p class="lab-footnote"><bdi dir="ltr">${esc(labRange(e))}</bdi> · ${e.asset_scope === 'stock' ? labText('מניות', 'Stocks') : labText('קריפטו', 'Crypto')}</p>${e.template === 'daily_limit' ? `<p class="lab-footnote">${labText('הכלל שנבדק: עד ', 'Rule tested: up to ')}${Number(e.target)} ${labText('רשומות ביום', 'records per day')}</p>` : ''}${e.summary_choice ? `<p class="lab-conclusion">${labText('המסקנה שלך: ', 'Your conclusion: ')}<strong>${labConclusion(e.summary_choice)}</strong></p>` : ''}${e.summary_metrics ? labMetricsHTML(e.summary_metrics, e) : ''}${e.summary_note ? `<p>${esc(e.summary_note)}</p>` : ''}${e.summary_metrics ? `<p class="lab-footnote">${labText('צילום נתונים קבוע נכון ל־', 'Snapshot saved at ')}${esc(e.summary_metrics.computed_at || e.completed_at)}. ${labText('עריכות וייבוא מאוחר אינם משנים סיכום זה.', 'Edits and late imports do not change this summary.')}</p>` : ''}</article>`).join('')}${_lab.historyMore ? labButton('more', labText('טען עוד', 'Load more')) : ''}</details>`;
-  const automatic = '<section id="lab-auto-analysis" aria-labelledby="lab-auto-title"><h3 id="lab-auto-title" hidden>' + labText('הסטאפ שלך — בדיקה אוטומטית', 'Your setup — automatic review') + '</h3><p class="lab-footnote">' + labText('בדיקת פריצה אפשרית מבסיס. עדיין לא מאמתת VCP מלא או עמידה בכללים שלך.', 'Checks possible base breakouts. Does not yet verify full VCP or your personal rules.') + '</p><div id="lab-auto-results" class="lab-auto-results"></div></section>';
+  const automatic = '<section id="lab-auto-analysis" aria-labelledby="lab-auto-title"><h3 id="lab-auto-title" hidden>' + labText('הסטאפ שלך — בדיקה אוטומטית', 'Your setup — automatic review') + '</h3><div id="lab-auto-results" class="lab-auto-results"></div></section>';
   host.className = 'lab-panel'; host.innerHTML = header + automatic + '<details class="lab-experiments" data-lab-section="experiments"><summary>' + labText('ניסוי הרגלים · אופציונלי', 'Habit experiment · optional') + '</summary>' + body + '</details>';
   host.setAttribute('aria-busy', String(_lab.busy));
   host.querySelectorAll('details[data-lab-section]').forEach(el => { el.open = opened.has(el.dataset.labSection); });
@@ -264,6 +266,11 @@ async function labRenderAutomatic() {
   const visible = trades.slice(0, _labAuto.limit);
   const conclusion=document.createElement('div');conclusion.className='lab-review-summary lab-auto-count';conclusion.id='lab-review-summary';
   conclusion.textContent=labText('מנתח ','Analyzing ')+visible.length+labText(' מתוך ',' of ')+trades.length+labText(' עסקאות סגורות · החדשות תחילה…',' closed trades · newest first…');conclusion.setAttribute('role','status');host.append(conclusion);
+  const tradeList=document.createElement('details');tradeList.id='lab-trades-disclosure';tradeList.className='lab-trades-disclosure';tradeList.open=_labAuto.tradesOpen;
+  const tradeToggle=document.createElement('summary');tradeToggle.textContent=labText('בדיקת העסקאות','Review trades')+' ('+visible.length+')';
+  const tradeRows=document.createElement('div');tradeRows.className='lab-trade-rows';
+  tradeList.append(tradeToggle,tradeRows);host.append(tradeList);
+  tradeList.addEventListener('toggle',()=>{if(current())_labAuto.tradesOpen=tradeList.open;});
   const reviewed=[];
   const jobs = visible.map(trade => {
     const snapshot = {...trade,t:(trade.t || []).map(target=>({...target}))};
@@ -273,12 +280,12 @@ async function labRenderAutomatic() {
     const title = document.createElement('h4'); title.className = 'sensitive';title.tabIndex=-1;title.textContent = snapshot.symbol + ' · ' + snapshot.entryDate;
     const recorded = document.createElement('p');recorded.className='lab-footnote sensitive';recorded.textContent = labText('הסטאפ שתיעדת: ', 'Recorded setup: ') + (SETUP_LABELS[snapshot.setupType] || labText('לא תועד — הבדיקה פועלת גם בלעדיו', 'Not recorded — analysis still runs'));
     const content = document.createElement('div');content.textContent=labText('מנתח את נתוני הגרף…', 'Analyzing chart data…');content.setAttribute('role','status');
-    card.append(title,content);host.append(card);
+    card.append(title,content);tradeRows.append(card);
     return {snapshot,fingerprint,valid,content,recorded};
   });
   if (visible.length < trades.length) {
     const more=document.createElement('button');more.type='button';more.className='btn btn-secondary lab-auto-more';more.textContent=labText('הצג עוד עסקאות', 'Show more trades');
-    more.onclick=()=>{if(!current())return;const previous=visible.length;_labAuto.limit+=4;labRender();document.querySelectorAll('#lab-auto-analysis .lab-auto-trade h4')[previous]?.focus();};host.append(more);
+    more.onclick=()=>{if(!current())return;const previous=visible.length;_labAuto.limit+=4;labRender();document.querySelectorAll('#lab-auto-analysis .lab-auto-trade h4')[previous]?.focus();};tradeRows.append(more);
   }
   let cursor=0;
   const worker = async () => {
@@ -322,6 +329,7 @@ async function labRenderAutomatic() {
     details?.addEventListener('toggle',()=>{if(current())_labAuto.summaryOpen=details.open;});
     conclusion.querySelectorAll('[data-lab-example]').forEach(button=>button.addEventListener('click',()=>{
       if(!current())return;
+      tradeList.open=true;_labAuto.tradesOpen=true;
       [...host.querySelectorAll('[data-lab-trade-key]')].find(card=>card.dataset.labTradeKey===button.dataset.labExample)?.querySelector('h4')?.focus();
     }));
   }
@@ -374,10 +382,26 @@ function labReviewSummary(rows, total) {
   const available=Number.isInteger(total)&&total>=reviewed.length?total:reviewed.length;
   return {reviewed:reviewed.length,total:available,unknown:reviewed.length-known.length,distanceChecked:distance.length,partial:reviewed.length<available,patterns};
 }
+function labPrimaryFindingHTML(report) {
+  const pattern=[...report.patterns].filter(p=>p.count>=2).sort((a,b)=>b.count-a.count || a.key.localeCompare(b.key))[0];
+  let html='<section class="lab-primary-finding" aria-labelledby="lab-primary-title"><h3 id="lab-primary-title">'+labText('לפני העסקה הבאה','Before your next trade')+'</h3>';
+  if(!pattern)return html+'<p>'+labText('אין כרגע מספיק דוגמאות כדי לבחור דפוס חוזר. פתח את בדיקת העסקאות והרחב את המדגם.','There are not enough repeated examples to choose a pattern. Open the trade review and expand the sample.')+'</p><small>'+labText('אין בכך אישור שלא היו טעויות.','This does not establish that there were no mistakes.')+'</small></section>';
+  const finding=pattern.key==='above'
+    ? labText('הכניסה הייתה יותר מ־3% מעל שיא 20 הנרות הקודמים.','Entry was more than 3% above the prior 20-bar high.')
+    : labText('הכניסה הייתה מתחת לשיא 20 הנרות הקודמים.','Entry was below the prior 20-bar high.');
+  const check=pattern.key==='above'
+    ? labText('השווה את מחיר הכניסה לנקודת הפריצה שתכננת ולמרחק המרבי שהגדרת.','Compare your entry price with your planned pivot and the maximum distance you defined.')
+    : labText('בדוק אם הכניסה הייתה מעל נקודת הפריצה שתכננת, או שזו הייתה כניסה מוקדמת מכוונת.','Check whether entry was above your planned pivot or was an intentional early entry.');
+  html+='<p class="sensitive"><strong>'+pattern.count+labText(' מתוך ',' of ')+report.distanceChecked+labText(' עסקאות עם נתונים מתאימים במדגם: ',' comparable trades in this sample: ')+finding+'</strong></p><p>'+check+'</p>';
+  html+='<small>'+labText('חשד לבדיקה, לא טעות מאומתת. השיא המחושב אינו בהכרח נקודת הפריצה שלך.','A review candidate, not a verified mistake. The calculated high is not necessarily your pivot.')+'</small>';
+  html+='<div class="lab-actions">'+pattern.examples.slice(0,2).map(e=>'<button type="button" class="btn btn-secondary btn-sm sensitive" data-lab-example="'+esc(e.type+':'+e.id)+'">'+labText('בדוק דוגמה: ','Review example: ')+esc(e.symbol+' · '+e.entryDate)+'</button>').join('')+'</div>';
+  return html+'</section>';
+}
 function labReviewSummaryHTML(report, expanded = false) {
   let html='<p class="lab-footnote">'+labText('נבדקו ','Reviewed ')+report.reviewed+labText(' מתוך ',' of ')+report.total+labText(' עסקאות סגורות. ',' closed trades. ')+report.unknown+labText(' ללא מספיק מידע לקביעה.',' without enough evidence.')+'</p>';
   if(report.partial)html+='<p class="lab-footnote">'+labText('זהו סיכום חלקי. הצג עוד עסקאות כדי להרחיב את הבדיקה.','This is a partial review. Show more trades to expand coverage.')+'</p>';
-  if(!report.patterns.length)return html+'<p class="lab-footnote">'+labText('אין כרגע מספיק דוגמאות לדפוס חוזר בבדיקת המרחק מהשיא. אין בכך אישור שלא היו טעויות.','There are not enough repeated examples in the distance-from-high check. This does not establish that there were no mistakes.')+'</p>';
+  html=labPrimaryFindingHTML(report)+html;
+  if(!report.patterns.length)return html;
   html+='<details class="lab-recurring-observations"'+(expanded?' open':'')+'><summary>'+labText('מה חוזר בעסקאות שנבדקו?','What repeats in reviewed trades?')+' ('+report.patterns.length+')</summary><p class="lab-footnote">'+labText('תצפית חוזרת אינה הוכחה לטעות. הסף של 3% הוא סף הבדיקה, ולא כלל אישי שהגדרת. בדוק את הדוגמאות מול תוכנית הכניסה שלך.','A repeated observation is not proof of a mistake. The 3% threshold belongs to this check, not a personal rule you defined. Compare the examples with your entry plan.')+'</p>';
   for(const pattern of report.patterns){
     html+='<p><strong>'+pattern.count+labText(' מתוך ',' of ')+report.distanceChecked+labText(' עסקאות עם נתוני מרחק מתאימים — ',' trades with comparable distance data — ')+(pattern.key==='above'?labText('כניסה יותר מ־3% מעל שיא 20 הנרות הקודמים','Entry more than 3% above the prior 20-bar high'):labText('כניסה מתחת לשיא 20 הנרות הקודמים','Entry below the prior 20-bar high'))+'</strong></p><div class="lab-actions">';
