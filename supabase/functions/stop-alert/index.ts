@@ -46,6 +46,9 @@ Deno.serve(async (req: Request) => {
     body: JSON.stringify({ chat_id: sec.telegram_chat_id, text: buildStopMessage(fire) }),
   });
   if (!r.ok) return json({ fired: 0, error: 'telegram ' + r.status }, 502);
-  await sb.from('stop_alert_state').upsert(fire.map(f => ({ user_id: owner, symbol: f.symbol })));
-  return json({ checked: symbols.length, quoted: prices.size, fired: fire.length, rearmed: rearm.length });
+  const { error: stateError } = await sb.from('stop_alert_state').upsert(fire.map(f => ({ user_id: owner, symbol: f.symbol })));
+  // A failed write means the same alert fires again on the next tick; say so instead of
+  // reporting a clean run.
+  if (stateError) console.error('[stop-alert] could not record alerted symbols:', stateError.message);
+  return json({ checked: symbols.length, quoted: prices.size, fired: fire.length, rearmed: rearm.length, ...(stateError ? { stateError: stateError.message } : {}) });
 });

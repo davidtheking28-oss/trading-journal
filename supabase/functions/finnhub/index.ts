@@ -69,7 +69,7 @@ serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: 'Path not allowed' }), { status: 403, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 
-  const symbol    = url.searchParams.get('symbol') ?? '';
+  const symbol    = (url.searchParams.get('symbol') ?? '').toUpperCase().replace(/[^A-Z0-9._:^\-]/g, '').slice(0, 24);
   const symbols   = url.searchParams.get('symbols') ?? '';
   const dateParam = url.searchParams.get('date') ?? '';
   const metric    = url.searchParams.get('metric') ?? '';

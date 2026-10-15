@@ -89,8 +89,11 @@ async function runSync(sb: ReturnType<typeof createClient>, mode: string) {
   // keeps working against u.flex_token.
   const rows: any[] = [];
   for (const r of (settingsRows ?? []) as any[]) {
-    const { data: tokenRaw } = await sb.rpc('get_broker_secret',
+    const { data: tokenRaw, error: secretError } = await sb.rpc('get_broker_secret',
       { p_user_id: r.user_id, p_field: 'flex_token' });
+    // A Vault/RPC failure used to look the same as "no token set": the user simply
+    // dropped out of the run and nothing was logged for days.
+    if (secretError) console.error('[ibkr-cron] get_broker_secret failed for', r.user_id, secretError.message);
     if (tokenRaw) rows.push({ ...r, flex_token: tokenRaw });
   }
 
