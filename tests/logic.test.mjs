@@ -10,6 +10,7 @@
 //                   the DOM or Supabase and cannot be run headless; it cannot
 //                   prove the behaviour, only that the guard was not deleted.
 import { test, describe } from 'node:test';
+import './personal-lab.test.mjs';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
@@ -17,6 +18,76 @@ import { load, extractFunction, extractConst, SOURCE, loadFlexParseXML } from '.
 import { _flexImportInner, rowToTrade as sharedRowToTrade } from '../supabase/functions/_shared/flex-import.mjs';
 
 const flexParseXML = loadFlexParseXML();
+
+test('market history requests time out, clear their timer and remain retryable',async()=>{
+ let timers=0,cleared=0,aborted=false;
+ const ctx={Map,Date,AbortController,SUPABASE_URL:'https://test.invalid',_getToken:async()=>'mock-token',
+  setTimeout(callback,ms){assert.equal(ms,15000);timers++;queueMicrotask(callback);return 1;},clearTimeout(){cleared++;},
+  fetch:async(url,options)=>{
+   if(!options.signal)return {ok:false};
+   return new Promise((resolve,reject)=>options.signal.addEventListener('abort',()=>{aborted=true;reject(new Error('aborted'));},{once:true}));
+  }
+ };
+ vm.createContext(ctx);vm.runInContext(extractConst('_pivotBarsCache'),ctx);vm.runInContext('async '+extractFunction('_fetchPivotBars'),ctx);
+ assert.equal(await ctx._fetchPivotBars('TEST'),null);assert.equal(aborted,true);assert.equal(timers,1);assert.equal(cleared,1);
+ assert.equal(await ctx._fetchPivotBars('TEST'),null);assert.equal(timers,2);
+});
+
+describe('entry setup suggestion', () => {
+  const analyze = (...args) => load(['tradeSetupSuggestion']).tradeSetupSuggestion(...args);
+  const entryDate = '2026-03-15';
+  const bars = Array.from({length:40}, (_,i)=>({t:Date.parse('2026-02-01')/1000+i*86400,o:96+Math.sin(i),h:100,l:94,c:97+Math.sin(i*.5),v:1000}));
+  test('returns auditable reference prices and directional explanations without declaring a mistake',()=>{
+    const c=load('tradeSetupSuggestion','tradeSetupExplanation');
+    for(const [price,direction] of [[95,'מתחת'],[106,'מעל']]){
+      const result=c.tradeSetupSuggestion({entryDate,entryPrice:price},bars);
+      assert.equal(result.referenceHigh,100);assert.equal(result.entryPrice,price);
+      const explanation=c.tradeSetupExplanation(result,true);
+      assert.match(explanation,new RegExp(direction));assert.match(explanation,/100/);
+      assert.match(explanation,/נקודת פריצה מאומתת/);assert.doesNotMatch(explanation,/עשית טעות|חרגת מהכללים שלך/);
+    }
+    assert.match(c.tradeSetupExplanation({status:'unknown',reason:'data'},true),/לא ניתן לקבוע/);
+  });
+  test('suggests a possible breakout using only pre-entry data', () => {
+    const trade={entryDate,entryPrice:101,ls:'L'};
+    const result=analyze(trade,bars);
+    assert.equal(result.status,'possible');assert.equal(result.setup,'breakout');
+    assert.deepEqual(analyze(trade,[...bars,{t:Date.parse(entryDate)/1000,h:500,l:1,c:3,o:2}]),result);
+  });
+  test('does not infer VCP, shorts, stale history or missing prices', () => {
+    assert.equal(analyze({entryDate,entryPrice:101,ls:'S'},bars).status,'unknown');
+    assert.equal(analyze({entryDate,entryPrice:101},bars.slice(0,10)).status,'unknown');
+    assert.equal(analyze({entryDate:'2026-06-01',entryPrice:101},bars).status,'unknown');
+    assert.equal(analyze({entryDate,entryPrice:0},bars).status,'unknown');
+    assert.equal(analyze({entryDate,entryPrice:110},bars).status,'unmatched');
+  });
+  test('rejects corrupt recent candles instead of silently replacing them with older history', () => {
+    const corrupt=bars.map(b=>({...b}));corrupt.at(-2).l=200;
+    assert.equal(analyze({entryDate,entryPrice:101},corrupt).status,'unknown');
+    assert.equal(analyze(null,bars).status,'unknown');
+    assert.equal(analyze({entryDate,entryPrice:101},[...bars,null]).status,'unknown');
+  });
+  test('does not call an uninterrupted advance or a repeated frozen feed a base', () => {
+    const trend=bars.map((b,i)=>({...b,o:83+i*.4,c:83.2+i*.4,h:83.5+i*.4,l:82.8+i*.4}));
+    assert.equal(analyze({entryDate,entryPrice:100},trend).status,'unmatched');
+    const frozen=bars.map(b=>({...b,o:96,h:100,l:94,c:97}));
+    assert.equal(analyze({entryDate,entryPrice:101},frozen).status,'unknown');
+  });
+  test('is independent of ordering and future outcomes and does not mutate the feed', () => {
+    const input=bars.map(b=>({...b})),before=JSON.stringify(input);
+    const expected=analyze({entryDate,entryPrice:101},input);
+    assert.deepEqual(analyze({entryDate,entryPrice:101},[...input].reverse()),expected);
+    for(const price of [1,50,200,10000]) assert.deepEqual(analyze({entryDate,entryPrice:101},[...input,{t:Date.parse('2026-03-16')/1000,o:price,h:price*2,l:price*.5,c:price}]),expected);
+    assert.equal(JSON.stringify(input),before);
+  });
+  test('does not classify an entry exactly at the threshold as beyond it', () => {
+    const result=analyze({entryDate,entryPrice:103},bars);
+    assert.equal(result.status,'possible');assert.equal(result.distancePct,3);
+    const tiny=bars.map(b=>({...b,o:b.o*.000001,h:b.h*.000001,l:b.l*.000001,c:b.c*.000001}));
+    const scaled=analyze({entryDate,entryPrice:103*.000001},tiny);
+    assert.equal(scaled.status,'possible');assert.equal(scaled.distancePct,3);
+  });
+});
 
 describe('broker imports — account boundaries and execution deduplication', () => {
   test('IBKR report requests share briefly, retry failures and refresh after expiry or account change', async () => {
@@ -2398,6 +2469,14 @@ describe('renderPivotDistance — fetch cache, crypto and stale renders', () => 
       await N._fetchPivotBars('AAA'); await N._fetchPivotBars('AAA');
       assert.equal(calls.length, 1);
     } finally { teardown(); }
+  });
+  test('expired market history is refreshed rather than reused for the whole session', async () => {
+    const originalNow=Date.now;let clock=originalNow();Date.now=()=>clock;
+    setup(okBars);
+    try {
+      await N._fetchPivotBars('AAA');clock+=6*60*1000;
+      await N._fetchPivotBars('AAA');assert.equal(calls.length,2);
+    } finally { Date.now=originalNow;teardown(); }
   });
   test('crypto trades never reach the price service', async () => {
     setup(okBars);

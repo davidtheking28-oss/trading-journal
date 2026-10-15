@@ -1,6 +1,7 @@
 (() => {
   const control = window.__test = { delay: 0, calls: [] };
   const db = window.__testDB = {
+    personal_experiments: JSON.parse(sessionStorage.getItem('test-lab-experiments') || '[]'),
     legal_acceptances: ['user-a','user-b'].map(user_id => ({user_id,terms_version:'2026-10-12',privacy_version:'2026-10-12',accepted_at:'2026-10-12T00:00:00Z'})),
     portfolios: [
       { id: 'portfolio-a', user_id: 'user-a', name: 'תיק א', is_default: true },
@@ -17,10 +18,10 @@
   let authCallback = () => {};
   const session = () => current ? { user: user(current), access_token: 'test-token', expires_at: 9999999999 } : null;
   const query = table => {
-    const filters = {};
+    const filters = {}, excluded = {}; let rowLimit = Infinity;
     let single = false, operation = 'select', values;
     const q = {
-      select() { return q; }, eq(k, v) { filters[k] = v; return q; }, order() { return q; }, limit() { return q; },
+      select() { return q; }, eq(k, v) { filters[k] = v; return q; }, order() { return q; }, limit(n) { rowLimit = n; return q; }, neq(k,v) { excluded[k]=v; return q; },
       gte() { return q; }, lte() { return q; }, in() { return q; }, is() { return q; }, not() { return q; },
       single() { single = true; return q; }, maybeSingle() { single = true; return q; },
       insert(v) { operation = 'insert'; values = v; return q; }, update(v) { operation = 'update'; values = v; return q; },
@@ -28,7 +29,7 @@
       then(resolve, reject) {
         return Promise.resolve().then(() => {
           if (table === 'user_settings') return { data: { onboarding_done: true, order_id_notice_seen: true }, error: null };
-          const found = (db[table] || []).filter(row => Object.entries(filters).every(([k,v]) => row[k] === v));
+          const found = (db[table] || []).filter(row => Object.entries(filters).every(([k,v]) => row[k] === v) && Object.entries(excluded).every(([k,v])=>row[k]!==v)).slice(0,rowLimit);
           if (operation === 'update') found.forEach(row => Object.assign(row, values));
           return { data: structuredClone(single ? found[0] || null : found), error: null, count: found.length };
         }).then(resolve, reject);
@@ -52,6 +53,27 @@
     channel() { const channel = { on() { return channel; }, subscribe() { return channel; } }; return channel; },
     removeChannel: async () => {},
     rpc: async (name, params) => {
+      if (['start_personal_experiment','finish_personal_experiment','cancel_personal_experiment'].includes(name)) {
+        const owner=current;
+        if(control.labDelay) await new Promise(r=>setTimeout(r,control.labDelay));
+        if(control.labFailure) return {data:null,error:{message:'offline'}};
+        let row=db.personal_experiments.find(r=>r.user_id===owner && (name==='start_personal_experiment'?r.status==='active':r.id===params.p_id));
+        if(name==='start_personal_experiment' && !row) {
+          const start=window.labShift(window.labToday(params.p_timezone),1);
+          row={id:'experiment-'+Date.now(),user_id:owner,template:params.p_template,asset_scope:params.p_asset_scope,target:params.p_target,timezone:params.p_timezone,start_date:start,end_date:window.labShift(start,30),status:'active',updated_at:new Date().toISOString(),created_at:new Date().toISOString()};
+          db.personal_experiments.push(row);
+        } else if(name!=='start_personal_experiment') {
+          if(!row || row.updated_at!==params.p_expected_updated_at || row.status!=='active') return {data:null,error:{code:'PT409'}};
+          if(name==='finish_personal_experiment') {
+            if(window.labToday(row.timezone)<row.end_date) return {data:null,error:{message:'too early'}};
+            row.summary_metrics={...window.labMeasure(row,(db.trades||[]).map(window._rowToTrade),window.labToday(row.timezone)),computed_at:new Date().toISOString()};
+            row.summary_choice=params.p_choice;row.summary_note=params.p_note;row.completed_at=new Date().toISOString();
+          }
+          row.status=name==='finish_personal_experiment'?'completed':'cancelled';row.updated_at=new Date().toISOString();
+        }
+        sessionStorage.setItem('test-lab-experiments',JSON.stringify(db.personal_experiments));
+        return {data:structuredClone(row),error:null};
+      }
       if (name === 'accept_legal_documents') {
         if (control.legalSaveFailure) return {data:null,error:{message:'Unavailable'}};
         const accepted_at = new Date().toISOString();

@@ -1,4 +1,5 @@
 # Local server — never commit
+.superpowers/
 serve.py
 restart-server.bat
 start-journal.bat

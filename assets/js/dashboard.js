@@ -1,4 +1,44 @@
 const _dashboardFeatures = new Map();
+let _labFeatureEpoch = 0;
+function loadPersonalLabFeature() {
+  return loadDashboardFeature('personal-lab.js', () => typeof labRender === 'function');
+}
+function resetPersonalLab() {
+  _labFeatureEpoch++;
+  const disclosure=document.getElementById('personal-lab-disclosure');
+  if(disclosure)disclosure.open=false;
+  if (typeof labReset === 'function') labReset();
+  for (const id of ['personal-lab', 'personal-lab-overview']) document.getElementById(id)?.replaceChildren();
+}
+function togglePersonalLab() {
+  if(document.getElementById('personal-lab-disclosure')?.open) refreshPersonalLab(true);
+  else if(typeof labPauseAutomatic==='function') labPauseAutomatic();
+}
+function refreshPersonalLab(history) {
+  const user = _currentUser, epoch = _labFeatureEpoch;
+  if (!user || _legalReadyUserId !== user.id) return;
+  if(history && !document.getElementById('personal-lab-disclosure')?.open)return;
+  const host = document.getElementById(history ? 'personal-lab' : 'personal-lab-overview');
+  if (!host) return;
+  loadPersonalLabFeature().then(async () => {
+    if (_currentUser !== user || epoch !== _labFeatureEpoch) return;
+    await labLoad({ history });
+    if (_currentUser !== user || epoch !== _labFeatureEpoch) return;
+    if (history || document.getElementById('tab-statistics')?.classList.contains('active')) labRender();
+    labRenderOverview();
+  }).catch(() => {
+    if (_currentUser !== user || epoch !== _labFeatureEpoch) return;
+    host.replaceChildren();
+    const status = document.createElement('p'); status.setAttribute('role', 'status');
+    status.textContent = _lang === 'he' ? 'המעבדה אינה זמינה כרגע. ' : 'The lab is unavailable. ';
+    const retry = document.createElement('button'); retry.className = 'btn btn-secondary btn-sm';
+    retry.textContent = _lang === 'he' ? 'נסה שוב' : 'Retry'; retry.onclick = () => refreshPersonalLab(history);
+    status.append(retry); host.append(status);
+  });
+}
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && document.querySelector('#tab-statistics.active, #tab-overview.active') && typeof labInvalidate === 'function') labInvalidate();
+});
 function loadDashboardFeature(file, ready) {
   if (ready()) return Promise.resolve();
   if (_dashboardFeatures.has(file)) return _dashboardFeatures.get(file);
@@ -203,9 +243,11 @@ let _dbLoaded = false;
 
 async function loadDB(render = true) {
   if (!_currentUser) { db = JSON.parse(JSON.stringify(SEED)); _dbLoaded = false; return; }
+  const loadUser = _currentUser;
   const { data, error } = await _sb.from('trades').select('*')
-    .eq('user_id', _currentUser.id)
+    .eq('user_id', loadUser.id)
     .order('entry_date', { ascending: false });
+  if (_currentUser !== loadUser) return;
   if (error) { _dbLoaded = false; toast('שגיאה בטעינת נתונים — נסה לרענן', 'error'); console.error('[loadDB]', error); return; }
   const all = (data || []).map(_rowToTrade).filter(validateTradeSchema);
   db.stocks  = all.filter(t => t.type === 'stock'  && !t.deleted);
@@ -220,6 +262,7 @@ async function loadDB(render = true) {
     all.filter(t => t.deleted && (t.ibkr_id || t.bybit_id)).map(t => t.ibkr_id || t.bybit_id)
   );
   await _dedupeTrades(); // always keep the journal free of duplicates
+  if (_currentUser !== loadUser) return;
   _dbLoaded = true;
   if (render) { initFilters(); renderOverview(); renderTable('stock'); }
 }
@@ -248,8 +291,10 @@ const _rtSuppress = (table, ms = 4000) => {
 const _rtMuted = table => Date.now() < (_rtSuppressUntil[table] || 0);
 async function _syncReloadTrades() {
   if (!_currentUser) return;
+  const loadUser = _currentUser;
   const { data, error } = await _sb.from('trades').select('*')
-    .eq('user_id', _currentUser.id).order('entry_date', { ascending: false });
+    .eq('user_id', loadUser.id).order('entry_date', { ascending: false });
+  if (_currentUser !== loadUser) return;
   if (error) return;
   const all = (data || []).map(_rowToTrade).filter(validateTradeSchema);
   db.stocks = all.filter(t => t.type === 'stock'  && !t.deleted);
@@ -259,6 +304,7 @@ async function _syncReloadTrades() {
   db._deletedBrokerIds = new Set(all.filter(t => t.deleted && (t.ibkr_id || t.bybit_id)).map(t => t.ibkr_id || t.bybit_id));
   renderOverview();
   renderTable('stock');
+  if (document.getElementById('tab-statistics')?.classList.contains('active')) renderStatistics();
 }
 function _teardownRealtimeSync() {
   if (_rtChannel) { try { _sb.removeChannel(_rtChannel); } catch {} _rtChannel = null; }
@@ -286,6 +332,7 @@ async function _setupRealtimeSync() {
     clearTimeout(mtt); mtt = setTimeout(() => missedRender(true), 800);
   };
   _rtChannel = _sb.channel('rt-' + uid)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'personal_experiments', filter: f }, () => { if (_currentUser?.id === uid && typeof labInvalidate === 'function') labInvalidate(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'trades', filter: f }, reloadTrades)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'missed_opportunities', filter: f }, reloadMissed)
     // invInit() reads `_invData || await invLoadFromDB()`, so the cache MUST be
@@ -713,7 +760,6 @@ function switchTab(name, btn) {
     if(!f._fitBound){ f._fitBound=true; window.addEventListener('resize', fit); }
   }
   if (name==='investments') invInit();
-  _syncMobileNav(name);
   _maybeShowTabIntro(name, tabEl);
 }
 
@@ -827,8 +873,6 @@ function _retryScreener() {
   f.src = 'https://davidtheking28-oss.github.io/stock-screener/?theme=' + scrTheme + '&v='+encodeURIComponent(f.dataset.release||'local')+'&_r=' + Date.now();
 }
 
-// Mobile bottom-nav: route a tap to the real sidebar tab button (keeps the
-// drawer's highlight in sync too), then highlight the matching bar item.
 // Warm the screener iframe so opening that tab feels instant — but only once the
 // main thread is genuinely idle. On a fixed 1.5s timer it landed at ~2.2s into
 // boot, in the middle of the trades/settings/quote burst, and paid for a whole
@@ -911,20 +955,32 @@ function _entryPivotDistance(bars, entryDateISO, entryPrice) {
 
 const _pivotBarsCache = new Map();
 async function _fetchPivotBars(symbol) {
-  if (_pivotBarsCache.has(symbol)) return _pivotBarsCache.get(symbol);
+  const cached = _pivotBarsCache.get(symbol);
+  if (cached && cached.expiresAt > Date.now()) return cached;
+  _pivotBarsCache.delete(symbol);
   const p = (async () => {
+    let timer;
     try {
       const token = await _getToken();
       if (!token) return null;
+      const controller=new AbortController();
+      timer=setTimeout(()=>controller.abort(),15000);
       const res = await fetch(`${SUPABASE_URL}/functions/v1/ohlc?symbol=${encodeURIComponent(symbol)}&range=1y`,
-        { headers: { 'Authorization': `Bearer ${token}` } });
+        { headers: { 'Authorization': `Bearer ${token}` }, signal:controller.signal });
       if (!res.ok) return null;
       const d = await res.json();
       return Array.isArray(d?.bars) ? d.bars : null;
     } catch { return null; }
+    finally { if(timer!==undefined)clearTimeout(timer); }
   })();
+  p.expiresAt = Infinity; // Share pending requests; expiry starts on completion.
+  if (_pivotBarsCache.size >= 100) _pivotBarsCache.delete(_pivotBarsCache.keys().next().value);
   _pivotBarsCache.set(symbol, p);
-  p.then(v => { if (v === null) _pivotBarsCache.delete(symbol); });
+  p.then(v => {
+    if (_pivotBarsCache.get(symbol) !== p) return;
+    if (v === null) _pivotBarsCache.delete(symbol);
+    else p.expiresAt = Date.now() + 5*60*1000;
+  });
   return p;
 }
 let _pivotRenderSeq = 0;
@@ -975,15 +1031,6 @@ async function renderPivotDistance(trades) {
       <td style="padding:7px 8px;font-weight:700" class="${r.distPct>=0?'num-green':'num-red'}">${r.distPct>=0?'+':''}${r.distPct.toFixed(1)}%</td>
     </tr>`).join('')}
     </tbody></table>${note}</div>`;
-}
-
-function mNav(name) {
-  const btn = document.querySelector(`.tab-btn[onclick*="switchTab('${name}'"]`)
-           || document.querySelector(`.tnav-btn[onclick*="switchTab('${name}'"]`);
-  if (btn) switchTab(name, btn);
-}
-function _syncMobileNav(name) {
-  document.querySelectorAll('.mnav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
 }
 
 // ── First-visit tab intros ───────────────────────
@@ -1902,6 +1949,7 @@ function changeTradePage(type, delta) {
   document.getElementById(type==='stock'?'stocks-wrap':'crypto-wrap')?.scrollTo({top:0});
 }
 function renderTable(type) {
+  if (typeof labRender === 'function' && document.getElementById('tab-statistics')?.classList.contains('active')) labRender();
   const p = type==='stock' ? 'st' : 'cr';
   const wrap = document.getElementById(type==='stock' ? 'stocks-wrap' : 'crypto-wrap');
   // Crypto was folded into the stocks tab behind the scope switch, so
@@ -3180,6 +3228,7 @@ function t(k) { return (LANG_STRINGS[_lang] || LANG_STRINGS.en)[k] || k; }
 
 const LANG_STRINGS = {
   en: {
+    lab_open:'The lab',
     tablet_scroll_hint:'↔ Scroll horizontally to see all columns',
     nav_overview:'Home', nav_stocks:'Stocks / Crypto', nav_crypto:'Crypto',
     nav_statistics:'Statistics', nav_settings:'Profile', nav_themes:'Market Pulse',
@@ -3357,6 +3406,7 @@ set_data_sub:'Stocks & crypto market data', set_import_sub:'Broker connection & 
     tile_keep:'מה לשמר', tile_improve:'מה לשפר',
     tile_no_notes:'לא נרשמו הערות',
     trades:'עסקאות', no_trades:'אין עסקאות להצגה בתקופה זו',
+    lab_open:'המעבדה',
     modal_add:'הוסף עסקה', modal_edit:'ערוך עסקה',
     modal_open_trade:'פתיחת עסקה', modal_targets:'יעדים חלקיים (T1–T5)',
     modal_close_trade:'סגירת עסקה', modal_fees:'עמלות',
@@ -3711,6 +3761,7 @@ async function loadCryptoFearGreed() {
 }
 
 function renderOverview() {
+  refreshPersonalLab(false);
   const now = new Date();
   const om = document.getElementById('ov-month');
   const oy = document.getElementById('ov-year');
@@ -4457,6 +4508,7 @@ function renderCumChart(trades) {
 // ─────────────────────────────────────────────
 let _tradeModalReturnFocus = null;
 function openModal(type, tr=null) {
+  if (typeof labResetDocumentation === 'function') labResetDocumentation();
   _tradeModalReturnFocus = document.activeElement;
   document.getElementById('tgt-list').innerHTML = '';
   document.getElementById('m-type').value = type;
@@ -4503,6 +4555,7 @@ function openModal(type, tr=null) {
 }
 
 function closeModal() {
+  if (typeof labResetDocumentation === 'function') labResetDocumentation();
   const wasOpen = document.getElementById('trade-modal').classList.contains('open');
   document.getElementById('trade-modal').classList.remove('open');
   document.body.style.overflow = '';
@@ -4817,6 +4870,10 @@ async function saveTrade() {
       if (i === -1) { toast('שגיאה: עסקה לא נמצאה','error'); return; }
       const prev = arr[i];
       data.id = prev.id;
+      // The editor has no ECN field; a setup confirmation must not erase fees
+      // imported from the broker or an unchanged custom entry reason.
+      data.ecn = prev.ecn ?? 0;
+      if (modalER === prev.entryReason) data.entryReason = prev.entryReason || '';
       // getFormTrade() builds a fresh object with no broker ids, so replacing the
       // row wholesale dropped ibkr_id/bybit_id from memory. The next sync then
       // failed to match the trade and imported it a second time as a duplicate.
@@ -8127,7 +8184,7 @@ function resetTradeSnapshots() {
   closeSSModal();
 }
 function tradeSnapshotFingerprint(tr) {
-  return JSON.stringify([tr.id,tr.symbol,tr.entryDate,tr.entryPrice,tr.closeDate,tr.exitPrice,tr.shares,tr.closedShares,tr.t]);
+  return JSON.stringify([tr.id,tr.type,tr.ls,tr.symbol,tr.entryDate,tr.entryPrice,tr.closeDate,tr.exitPrice,tr.shares,tr.closedShares,tr.t]);
 }
 async function renderAutomaticTradeShot(host,trade,key,userId,seq) {
   const session = _tradeSnapshotSession;
@@ -8141,16 +8198,20 @@ async function renderAutomaticTradeShot(host,trade,key,userId,seq) {
       _currentUser?.id===userId && db===sourceDB && latest && tradeSnapshotEligible(latest) && tradeSnapshotFingerprint(latest)===fingerprint;
   };
   try {
-    let url=_tradeSnapshotImages.get(cacheKey);
+    const cachedShot=_tradeSnapshotImages.get(cacheKey);
+    const cached=cachedShot?.expiresAt>Date.now() ? cachedShot : null;
+    let url=cached?.url;
+    const marketSymbol = key.startsWith('crypto-') ? _cryptoBaseSymbol(tr.symbol.replace(/-USD$/i,'')).toUpperCase()+'-USD' : tr.symbol;
+    let setupBars=cached?.bars;
     if(!url) {
-      const marketSymbol = key.startsWith('crypto-') ? _cryptoBaseSymbol(tr.symbol.replace(/-USD$/i,'')).toUpperCase()+'-USD' : tr.symbol;
       const [bars] = await Promise.all([_fetchPivotBars(marketSymbol), loadTradeSnapshotFeature()]);
+      setupBars=bars;
       if(!valid()) return;
       url=await tradeSnapshotImage(tr,bars);
       if(!valid()) return;
       if(url) {
         if(_tradeSnapshotImages.size>=100) _tradeSnapshotImages.delete(_tradeSnapshotImages.keys().next().value);
-        _tradeSnapshotImages.set(cacheKey,url);
+        _tradeSnapshotImages.set(cacheKey,{url,bars:setupBars,expiresAt:Date.now()+5*60*1000});
       }
     }
     if(!valid()) return;
@@ -8165,6 +8226,9 @@ async function renderAutomaticTradeShot(host,trade,key,userId,seq) {
     button.setAttribute('aria-label',(_lang==='he'?'הגדל גרף עסקה — ':'Enlarge trade chart — ')+tr.symbol);
     const img=document.createElement('img');img.src=url;img.alt=(_lang==='he'?'גרף עסקה עם חצי כניסה ויציאה — ':'Trade chart with entry and exit arrows — ')+tr.symbol;
     button.append(img);button.onclick=()=>{if(valid())openLightbox(url);};host.append(button);
+    if (!setupBars) setupBars=await _fetchPivotBars(marketSymbol);
+    if (!valid()) return;
+    renderTradeSetupSuggestion(host,tr,setupBars,valid);
     applyPrivacy();
   } catch {
     if(valid())host.textContent=_lang==='he'?'הגרף אינו זמין':'Chart unavailable';

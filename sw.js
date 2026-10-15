@@ -7,6 +7,7 @@ const PRECACHE = [
   './assets/js/trade-charts.js?v=__APP_VERSION__',
   './assets/js/broker-import.js?v=__APP_VERSION__',
   './assets/js/statistics.js?v=__APP_VERSION__',
+  './assets/js/personal-lab.js?v=__APP_VERSION__',
   './assets/js/themes.js?v=__APP_VERSION__',
   './assets/js/missed.js?v=__APP_VERSION__',
   './assets/js/file-import.js?v=__APP_VERSION__',

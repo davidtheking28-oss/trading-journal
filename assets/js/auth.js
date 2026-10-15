@@ -285,6 +285,7 @@ async function authSignOut() {
   _teardownRealtimeSync();
   _invResetSession();
   resetTradeSnapshots();
+  resetPersonalLab();
   await _sb.auth.signOut();
   _currentUser = null;
   _currentSession = null;
@@ -415,7 +416,7 @@ function _logBootTiming(t0) {
 
 async function _onAuthSuccess(user) {
   const _bootT0 = performance.now();
-  if (_currentUser?.id !== user.id) { _legalReadyUserId = null; _closeLegalPrompt(); _invResetSession(); resetTradeSnapshots(); }
+  if (_currentUser?.id !== user.id) { resetPersonalLab(); _legalReadyUserId = null; _closeLegalPrompt(); _invResetSession(); resetTradeSnapshots(); }
   _currentUser = user;
   _legalReadyUserId = null;
   document.getElementById('app').inert = true;

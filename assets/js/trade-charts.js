@@ -1,4 +1,101 @@
 // Loaded on demand by loadTradeSnapshotFeature; shares the dashboard global scope.
+function tradeSetupSuggestion(tr, bars) {
+  const unknown = { status: 'unknown', reason: 'history' };
+  if (!tr || typeof tr !== 'object') return unknown;
+  const date = typeof tr.entryDate === 'string' ? tr.entryDate.slice(0,10) : '';
+  const entry = Date.parse(date + 'T00:00:00Z') / 1000;
+  const price = Number(tr.entryPrice);
+  if (!Number.isFinite(entry) || new Date(entry*1000).toISOString().slice(0,10) !== date || !(price > 0) || !Number.isFinite(price) || !Array.isArray(bars)) return unknown;
+  if (tr.ls === 'S') return { status: 'unknown', reason: 'short' };
+  // Exclude the entire entry-day bar: daily candles contain information from
+  // after an intraday entry. This is a price-pattern hint, not rule compliance.
+  // Do not silently skip malformed records and manufacture a clean base.
+  if (bars.some(b => !b || !Number.isFinite(b.t) || b.t < 0 || b.t > 8640000000000)) return { status: 'unknown', reason: 'data' };
+  const prior = bars.filter(b => b.t < entry).sort((a,b) => a.t-b.t);
+  const base = prior.slice(-20);
+  if (base.length < 20 || entry-base.at(-1).t > 7*86400 || entry-base[0].t > 45*86400 || base.some((b,i)=>i && b.t-base[i-1].t>7*86400)) return unknown;
+  if (new Set(base.map(b => Math.floor(b.t/86400))).size !== base.length || base.some(b => ![b.o,b.h,b.l,b.c].every(v => Number.isFinite(v) && v > 0) || b.h < Math.max(b.o,b.c,b.l) || b.l > Math.min(b.o,b.c))) return { status: 'unknown', reason: 'data' };
+  if (new Set(base.map(b=>[b.o,b.h,b.l,b.c].join('|'))).size < 4) return { status: 'unknown', reason: 'flat' };
+  if (base.some((b,i)=>i && Math.abs(b.c/base[i-1].c-1)>.35)) return { status: 'unknown', reason: 'scale' };
+  const high = Math.max(...base.map(b=>b.h)), low = Math.min(...base.map(b=>b.l));
+  // Normalize percentage arithmetic so exactly 3% is not treated as >3%
+  // through binary floating-point noise (including small crypto prices).
+  const rangePct = Number(((high-low)/low*100).toFixed(8));
+  const distancePct = Number(((price-high)/high*100).toFixed(8));
+  if(!Number.isFinite(rangePct) || !Number.isFinite(distancePct)) return {status:'unknown',reason:'data'};
+  const evidence = { distancePct, rangePct, bars: base.length, referenceHigh: high, entryPrice: price };
+  if (rangePct > 20) return { status: 'unmatched', reason: 'wide', ...evidence };
+  if (distancePct < 0 || distancePct > 3) return { status: 'unmatched', reason: 'distance', ...evidence };
+  // A narrow rising trend alone is not evidence of a base. Require an earlier
+  // visit near resistance and a subsequent retracement before the later test.
+  const earlyHigh = Math.max(...base.slice(0,10).map(b=>b.h));
+  const retracement = base.some((b,i)=>i>0 && i<base.length-2 && b.c <= Math.max(...base.slice(0,i).map(row=>row.h))*.99);
+  if (earlyHigh < high*.98 || !retracement) return { status: 'unmatched', reason: 'shape', ...evidence };
+  return { status: 'possible', setup: 'breakout', ...evidence, method: 'base-breakout-v2' };
+}
+
+function tradeSetupExplanation(result, he) {
+  const reasons = {
+    short: ['הבדיקה תומכת בעסקאות לונג בלבד.', 'This check supports long trades only.'],
+    data: ['נתוני המחיר פגומים או כוללים ימים כפולים.', 'Price data is malformed or contains duplicate days.'],
+    flat: ['נתוני המחיר חוזרים על עצמם.', 'Price data repeats without sufficient variation.'],
+    scale: ['נמצא שינוי מחיר חריג; ייתכן פיצול או חוסר התאמה בנתונים.', 'A price discontinuity may indicate a split or inconsistent data.'],
+    history: ['חסרה היסטוריית מחירים רציפה ועדכנית לפני הכניסה.', 'Recent continuous pre-entry history is missing.']
+  };
+  if(result.status==='unknown')return (he?'לא ניתן לקבוע: ':'Cannot determine: ')+(reasons[result.reason]||reasons.history)[he?0:1];
+  const number=value=>Number(value).toLocaleString('en-US',{maximumFractionDigits:Math.abs(value)>=1?2:8});
+  const distance=Math.abs(result.distancePct).toFixed(1);
+  let text=he
+    ? `הכניסה במחיר ${number(result.entryPrice)} הייתה ${distance}% ${result.distancePct<0?'מתחת':'מעל'} לשיא ${number(result.referenceHigh)} של ${result.bars} הנרות שלפני יום הכניסה.`
+    : `Entry at ${number(result.entryPrice)} was ${distance}% ${result.distancePct<0?'below':'above'} the high of ${number(result.referenceHigh)} over ${result.bars} bars before entry day.`;
+  if(result.status==='possible')text+=he?' נמצאו סימנים לפריצה אפשרית מבסיס.':' Signs of a possible base breakout were found.';
+  else if(result.reason==='wide')text+=he?` טווח המחירים היה ${result.rangePct.toFixed(1)}% — רחב מסף הבדיקה של 20%.`:` The price range was ${result.rangePct.toFixed(1)}%, wider than this check’s 20% threshold.`;
+  else if(result.reason==='shape')text+=he?' לא נמצאו מספיק סימני התבססות בבדיקה הזו.':' This check found insufficient signs of a base.';
+  else if(result.reason==='distance')text+=he?' המרחק מחוץ לטווח הבדיקה של 0–3% מעל השיא.':' The distance is outside this check’s range of 0–3% above the high.';
+  return text+(he?' השיא המחושב אינו נקודת פריצה מאומתת. יש להשוות לתוכנית הכניסה; אין בכך קביעה שהכניסה שגויה.':' The calculated high is not a verified pivot. Compare with the entry plan; this does not establish that the entry was wrong.');
+}
+
+function renderTradeSetupSuggestion(host, trade, bars, valid, options = null) {
+  const compact = !!options?.compact;
+  const result = tradeSetupSuggestion(trade,bars);
+  const he = _lang === 'he';
+  const panel = document.createElement('section'); panel.className = 'ss-setup-review';
+  const title = document.createElement('strong');
+  title.textContent = compact
+    ? result.status === 'possible' ? (he ? 'פריצה אפשרית מבסיס' : 'Possible base breakout') : result.status === 'unknown' ? (he ? 'אין מספיק מידע לקביעה' : 'Not enough evidence') : (he ? 'לא זוהתה התאמה לפריצה מבסיס' : 'No base-breakout match')
+    : he ? 'בדיקת סטאפ בכניסה' : 'Entry setup review';
+  if(compact && result.reason==='distance'){
+    title.textContent=he
+      ? `לבדיקה: הכניסה ${Math.abs(result.distancePct).toFixed(1)}% ${result.distancePct<0?'מתחת':'מעל'} לשיא הקודם`
+      : `Review: entry ${Math.abs(result.distancePct).toFixed(1)}% ${result.distancePct<0?'below':'above'} the prior high`;
+    title.className='sensitive';
+  }
+  const message = document.createElement('p');
+  message.textContent = tradeSetupExplanation(result,he);
+  message.className = 'sensitive';
+  const note = document.createElement('p'); note.className = 'ss-setup-note';
+  note.textContent = he ? 'הצעה לפי נרות יומיים שקדמו ליום הכניסה. אינה מאמתת VCP, מחזור בפריצה או עמידה בכללים האישיים שלך.' : 'A hint from daily bars before entry day. It does not verify VCP, breakout volume or your personal rules.';
+  panel.append(title);
+  const button = document.createElement('button');button.type='button';button.className='btn btn-secondary btn-sm';
+  button.textContent = compact ? (he ? 'עריכת התיעוד · אופציונלי' : 'Edit documentation · optional') : he ? (trade.setupType ? 'בדוק את הסטאפ המתועד' : 'בחר ואשר סטאפ') : (trade.setupType ? 'Review documented setup' : 'Choose and confirm setup');
+  button.onclick = () => {
+    if (!valid()) return;
+    const latest = [...db.stocks,...db.crypto].find(row=>String(row.id)===String(trade.id) && row.type===trade.type);
+    if (!latest) return;
+    closeSSModal();openModal(latest.type,latest);
+    // Suggestions remain separate from saved documentation until the user saves.
+    if (!latest.setupType && result.status==='possible') modalSetSetup('breakout');
+    const group=document.getElementById('m-setup-pills');
+    group?.scrollIntoView({block:'center'});group?.querySelector('button[aria-pressed="true"],button')?.focus({preventScroll:true});
+  };
+  if (compact) {
+    const details=document.createElement('details');details.className='lab-auto-explanation';
+    const summary=document.createElement('summary');summary.textContent=he?'למה?':'Why?';
+    details.append(summary,message,note,button);panel.append(details);
+  } else panel.append(message,note,button);
+  host.append(panel);
+}
+
 function tradeSnapshotData(tr, bars) {
   if (!tradeSnapshotEligible(tr) || !Array.isArray(bars)) return null;
   const entry = Date.parse(tr.entryDate.slice(0,10) + 'T00:00:00Z') / 1000;

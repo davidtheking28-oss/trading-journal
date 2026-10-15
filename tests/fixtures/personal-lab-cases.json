@@ -1,0 +1,94 @@
+[
+  {
+    "row": {
+      "type": "stock",
+      "symbol": "LAB",
+      "entry_date": "2026-10-15",
+      "entry_price": 100,
+      "shares": 10,
+      "exit_price": 110,
+      "ls": "L",
+      "commission": 2
+    },
+    "net": 98,
+    "realized": 1
+  },
+  {
+    "row": {
+      "type": "stock",
+      "symbol": "LAB",
+      "entry_date": "2026-10-15",
+      "entry_price": 100,
+      "shares": 10,
+      "exit_price": 90,
+      "ls": "S",
+      "commission": 2
+    },
+    "net": 98,
+    "realized": 1
+  },
+  {
+    "row": {
+      "type": "stock",
+      "symbol": "LAB",
+      "entry_date": "2026-10-15",
+      "entry_price": 100,
+      "shares": 10,
+      "exit_price": 90,
+      "targets": [
+        {
+          "shares": 4,
+          "price": 110
+        }
+      ],
+      "ls": "L",
+      "commission": 2
+    },
+    "net": -22,
+    "realized": 1
+  },
+  {
+    "row": {
+      "type": "stock",
+      "symbol": "LAB",
+      "entry_date": "2026-10-15",
+      "entry_price": 100,
+      "shares": 10,
+      "exit_price": null,
+      "ls": "L"
+    },
+    "net": 0,
+    "realized": 0
+  },
+  {
+    "row": {
+      "type": "stock",
+      "symbol": "LAB",
+      "entry_date": "2026-10-15",
+      "entry_price": 100,
+      "shares": 10,
+      "closed_shares": 0,
+      "exit_price": 110,
+      "ls": "Long",
+      "ecn": 1,
+      "commission": 1
+    },
+    "net": 98,
+    "realized": 1
+  },
+  {
+    "row": {
+      "type": "stock",
+      "symbol": "LAB",
+      "entry_date": "2026-10-15",
+      "entry_price": 100,
+      "shares": 10,
+      "exit_price": 90,
+      "targets": "[{\"shares\":4,\"price\":110}]",
+      "ls": "L",
+      "commission": 2
+    },
+    "net": -22,
+    "realized": 1
+  }
+]
