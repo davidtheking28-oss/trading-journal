@@ -1207,7 +1207,10 @@ function invCalcInputs() {
 
   // Same % stop — see invSizerInputs's comment.
   const icPrice = +(document.getElementById('ic-price')?.value) || 0;
-  const icStopPct = +(document.getElementById('ic-stop')?.value) || 0;
+  // Left blank, the stop is the app's standard one (the 8% the holdings table
+  // already marks), so the loss at the stop is always shown.
+  const icStopTyped = +(document.getElementById('ic-stop')?.value) || 0;
+  const icStopPct = icStopTyped > 0 ? icStopTyped : Math.round((1 - INV_STOP_FACTOR) * 10000) / 100;
   return {
     portfolioValue, portfolioCurrency: currency, fxRate,
     pctOfPortfolio: +(document.getElementById('ic-pct')?.value) || 0,
@@ -1268,7 +1271,7 @@ function invCalcRender() {
     <div style="font-weight:700;color:var(--text2);margin-bottom:5px">חלוקה ל-${parts.length} פעימות</div>
     <div style="display:grid;grid-template-columns:${cols};gap:8px;color:var(--text3);font-size:11px;padding-bottom:3px">
       <span>כניסה</span><span style="text-align:center">עלות</span>
-      ${hasRisk ? `<span style="${ltr}display:flex;gap:4px" title="ההפסד אם הסטופ נפגע — לפעימה הזו, ובמצטבר על כל מה שכבר נקנה"><span>בסטופ</span><span>·</span><span>מצטבר</span></span>` : ''}
+      ${hasRisk ? `<span style="${ltr}display:flex;gap:4px" title="ההפסד אם הסטופ נפגע — לפעימה הזו, ובמצטבר על כל מה שכבר נקנה"><span>בסטופ ${+((1 - inp.stop / inp.price) * 100).toFixed(1)}%</span><span>·</span><span>מצטבר</span></span>` : ''}
     </div>
     ${parts.map((e, i) => `
       <div style="display:grid;grid-template-columns:${cols};gap:8px;padding:2px 0">

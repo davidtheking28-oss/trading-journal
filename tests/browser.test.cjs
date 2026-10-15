@@ -415,6 +415,27 @@ test('the quantity calculator adds the sized position to the portfolio, and tops
   assert.ok(Math.abs(rows[0].entry_price - (shares * 50 + again * 100) / (shares + again)) < 1e-4);
 });
 
+test('the tranche table shows the loss at the stop, using the standard 8% when no stop is typed', async t => {
+  const page = await open(t); await login(page); await page.evaluate(() => cookieDecline()); await investments(page);
+  await page.evaluate(() => invCalcOpen());
+  await page.evaluate(() => {
+    document.getElementById('ic-portfolio').value = 10000;
+    document.getElementById('ic-sym').value = 'NEWQ';
+    document.getElementById('ic-price').value = 100;
+    document.getElementById('ic-pct').value = 10;
+    document.getElementById('ic-tranches').value = 2;
+    document.getElementById('ic-stop').value = '';
+    invCalcRender();
+  });
+  const text = await page.locator('#ic-tranche-out').innerText();
+  assert.match(text, /בסטופ 8%/);
+  assert.match(text, /−\$80/, 'one tranche of 5 shares at 100 loses 8% = 40; both together 80');
+  await page.evaluate(() => { document.getElementById('ic-stop').value = 5; invCalcRender(); });
+  const typed = await page.locator('#ic-tranche-out').innerText();
+  assert.match(typed, /בסטופ 5%/);
+  assert.match(typed, /−\$50/);
+});
+
 test('the calculator add button stays disabled without a symbol', async t => {
   const page = await open(t); await login(page); await investments(page);
   await page.evaluate(() => invCalcOpen());
