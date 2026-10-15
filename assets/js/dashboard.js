@@ -778,9 +778,10 @@ function _todayLocalISO() {
 // must not read as a miss.
 const SCREENER_TRACKING_START = '2026-09-16';
 // Matches the screener's SCREENERS keys (sepa/power/vcp/cleanbase/qulla/
-// finviz/growth/commodities) — update if that repo adds or removes a
-// screener type. cleanbase added 2026-09-26 (VCP + weak down-candles).
-const SCREENER_TYPE_COUNT = 8;
+// finviz/winners/growth/commodities) — update if that repo adds or removes a
+// screener type. cleanbase added 2026-09-26 (VCP + weak down-candles);
+// winners added 2026-10-15 (year +100%, near the 50-day high, beta > 1).
+const SCREENER_TYPE_COUNT = 9;
 const SCREENER_HALF_THRESHOLD = Math.ceil(SCREENER_TYPE_COUNT / 2);
 async function logScreenerTypeVisit(key) {
   if (!_currentUser) return;
