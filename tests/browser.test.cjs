@@ -76,6 +76,7 @@ async function revealLab(page) {
  if (!await page.locator('#personal-lab-disclosure').evaluate(el=>el.open)) await page.locator('#personal-lab-toggle').click();
  await page.locator('.lab-experiments > summary').waitFor();
  if (!await page.locator('.lab-experiments').evaluate(el=>el.open)) await page.locator('.lab-experiments > summary').click();
+ await page.evaluate(()=>{_labAuto.tradesOpen=true;const list=document.getElementById('lab-trades-disclosure');if(list)list.open=true;});
 }
 
 test('statistics show only the lab button until it is opened and closing pauses analysis',async t=>{
@@ -91,6 +92,11 @@ test('statistics show only the lab button until it is opened and closing pauses 
  assert.equal(await page.locator('#personal-lab').isVisible(),false);
  assert.equal(await page.evaluate(()=>__labRuns),0);
  await page.locator('#personal-lab-toggle').focus();await page.keyboard.press('Enter');
+ await page.locator('#lab-auto-analysis .ss-setup-review').waitFor({state:'attached'});
+ assert.equal(await page.locator('#lab-trades-disclosure').evaluate(el=>el.open),false);
+ assert.equal(await page.locator('.lab-auto-trade').first().isVisible(),false);
+ assert.ok((await page.locator('#personal-lab').boundingBox()).height<650,'closed trade list keeps the lab short');
+ await page.locator('#lab-trades-disclosure > summary').click();
  await page.locator('#lab-auto-analysis .ss-setup-review').waitFor();
  assert.equal(await page.locator('.lab-experiments').evaluate(el=>el.open),false);
  assert.ok(await page.evaluate(()=>__labRuns)>0);
@@ -369,7 +375,6 @@ test('holding edits show unsaved state and commit with the same row identity', a
     return { id: h.id, symbol: h.symbol };
   }), { id: 'holding-a', symbol: 'XYZ' });
 });
-
 
 test('the quantity calculator adds the sized position to the portfolio, and tops up a held symbol at the average cost', async t => {
   const page = await open(t); await login(page); await page.evaluate(() => cookieDecline()); await investments(page);
@@ -1320,11 +1325,17 @@ test('lab conclusions show reviewed coverage, trace examples and never call a no
  await page.locator('#lab-review-summary > details.lab-recurring-observations').waitFor();
  const summary=await page.locator('#lab-review-summary').innerText();
  assert.match(summary,/4.*6/);assert.match(summary,/סיכום חלקי/);assert.match(summary,/1 ללא מספיק מידע/);
+ const primary=page.locator('.lab-primary-finding');
+ assert.equal(await primary.locator('h3').innerText(),'לפני העסקה הבאה');
+ assert.match(await primary.innerText(),/נקודת הפריצה שתכננת/);
+ assert.ok((await primary.innerText()).length<450,'the main finding should stay concise');
  await page.locator('#lab-review-summary > details.lab-recurring-observations > summary').click();
  assert.match(await page.locator('#lab-review-summary').innerText(),/2 מתוך 3/);
  assert.match(await page.locator('#lab-review-summary').innerText(),/אינה הוכחה לטעות/);
  assert.doesNotMatch(await page.locator('#lab-review-summary').innerText(),/טעויות מאומתות|100% דיוק/);
+ await page.evaluate(()=>{document.getElementById('lab-trades-disclosure').open=false;});
  const example=page.locator('#lab-review-summary [data-lab-example]').first();const key=await example.getAttribute('data-lab-example');await example.click();
+ assert.equal(await page.locator('#lab-trades-disclosure').evaluate(el=>el.open),true);
  assert.equal(await page.evaluate(()=>document.activeElement?.closest('[data-lab-trade-key]')?.dataset.labTradeKey),key);
  await page.evaluate(()=>labRender());await page.locator('#lab-review-summary > details.lab-recurring-observations').waitFor();
  assert.equal(await page.locator('#lab-review-summary > details.lab-recurring-observations').evaluate(el=>el.open),true);
