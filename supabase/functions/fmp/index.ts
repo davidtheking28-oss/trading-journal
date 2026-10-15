@@ -25,6 +25,12 @@ serve(async (req: Request) => {
   if (error || !user) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
+  // The project's Auth is shared with other apps; only journal members may spend the shared
+  // data-source quota (the database already enforces the same list).
+  const { data: isMember } = await supabase.rpc('journal_access_allowed');
+  if (isMember !== true) {
+    return new Response(JSON.stringify({ error: 'Journal access is limited to existing members' }), { status: 403, headers: { ...CORS, 'Content-Type': 'application/json' } });
+  }
 
   const { data: settings } = await supabase
     .from('user_settings')

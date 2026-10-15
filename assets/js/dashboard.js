@@ -5158,7 +5158,7 @@ document.addEventListener('keydown', e => {
 
 // Focus trap (WCAG 2.4.3) — keep keyboard focus inside the open modal.
 function _topOpenModal() {
-  for (const id of ['trade-modal','qa-modal','cal-trade-modal','ss-modal','inv-position-modal','inv-calc-modal','inv-portfolio-name-modal']) {
+  for (const id of ['ss-lightbox','trade-modal','qa-modal','cal-trade-modal','ss-modal','inv-position-modal','inv-calc-modal','inv-portfolio-name-modal']) {
     const el = document.getElementById(id);
     if (el && el.classList.contains('open')) return el;
   }
@@ -5178,6 +5178,34 @@ document.addEventListener('keydown', e => {
   if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
   else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
 });
+
+// Only #trade-modal announced itself as a dialog, and closing any modal dropped focus at
+// the top of the page. Give each one its role and name, and hand focus back to whatever
+// opened it.
+(function _modalA11y() {
+  const ids = ['cal-trade-modal','qa-modal','inv-calc-modal','inv-position-modal','inv-portfolio-name-modal','ss-modal','ss-lightbox','sector-modal'];
+  const opener = new WeakMap();
+  const isOpen = el => el.id === 'sector-modal' ? el.style.display === 'block' : el.classList.contains('open');
+  const setup = () => ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el || el.dataset.a11y) return;
+    el.dataset.a11y = '1';
+    if (!el.hasAttribute('role')) el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-modal', 'true');
+    if (!el.hasAttribute('aria-label') && !el.hasAttribute('aria-labelledby')) {
+      const t = el.querySelector('.modal-title, .ss-title, h2, h3');
+      el.setAttribute('aria-label', (t && t.textContent.trim()) || id);
+    }
+    new MutationObserver(() => {
+      if (isOpen(el)) { if (!opener.has(el)) opener.set(el, document.activeElement); }
+      else if (opener.has(el)) {
+        const back = opener.get(el); opener.delete(el);
+        if (back && back !== document.body && document.contains(back)) back.focus();
+      }
+    }).observe(el, { attributes: true, attributeFilter: ['class', 'style'] });
+  });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setup); else setup();
+})();
 
 // ══════════════════════════════════════════════
 // PIN LOCK — נעילת יומן עם קוד PIN

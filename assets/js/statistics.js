@@ -138,7 +138,8 @@ function renderStatisticsContent() {
   const pf      = lossSum > 0 ? winSum / lossSum : null;
 
   let curW = 0, maxW = 0, curL = 0, maxL = 0;
-  [...closed].sort((a, b) => a.entryDate.localeCompare(b.entryDate)).forEach(t => {
+  // A streak is the order results arrived in, i.e. by close date, as the drawdown series does.
+  [...closed].sort((a, b) => (a.closeDate || a.entryDate).localeCompare(b.closeDate || b.entryDate)).forEach(t => {
     if (calcTotal(t) > 0) { curW++; maxW = Math.max(maxW, curW); curL = 0; }
     else               { curL++; maxL = Math.max(maxL, curL); curW = 0; }
   });

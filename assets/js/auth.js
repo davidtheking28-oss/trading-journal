@@ -295,6 +295,15 @@ async function authSignOut() {
   await _sb.auth.signOut();
   _currentUser = null;
   _currentSession = null;
+  _resetSessionState();
+  document.getElementById('auth-overlay').style.display = 'flex';
+  toast('יצאת מהחשבון', 'info');
+}
+
+// Everything a signed-in session leaves behind. Both exits run it: the button above, and
+// the SIGNED_OUT event (another tab signing out, or the session expiring), which used to
+// clear only part of it and let the next account see the previous one's holdings.
+function _resetSessionState() {
   if (_ovLiveTimer) { clearInterval(_ovLiveTimer); _ovLiveTimer = null; }
   // Investments kept a 60s quote timer running past sign-out, firing a request
   // per holding every minute with no token. Its caches survived too, so signing
@@ -315,8 +324,6 @@ async function authSignOut() {
   // watchlist. Dropping src makes the guarded `if (!f.src)` reload it fresh.
   const _sf = document.getElementById('screener-frame');
   if (_sf) _sf.removeAttribute('src');
-  document.getElementById('auth-overlay').style.display = 'flex';
-  toast('יצאת מהחשבון', 'info');
 }
 
 // ─────────────────────────────────────────────

@@ -45,6 +45,7 @@
       _invResetSession();
       _currentUser = null;
       _currentSession = null;
+      _resetSessionState();
       db = { stocks: [], crypto: [] };
       document.getElementById('auth-overlay').style.display = 'flex';
       return;
