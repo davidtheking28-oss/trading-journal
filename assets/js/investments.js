@@ -1220,13 +1220,23 @@ function invCalcInputs() {
   };
 }
 
+let _invCalcAdd = null;
+function invCalcSetAdd(info, hasSym) {
+  _invCalcAdd = info;
+  const b = document.getElementById('ic-add');
+  if (!b) return;
+  b.disabled = !info;
+  b.textContent = info ? (info.first ? `הוסף כניסה 1 — ${info.shares} מניות` : `הוסף לתיק — ${info.shares} מניות`) : 'הוסף לתיק';
+  b.title = info ? '' : (hasSym === false ? 'הזן סימבול כדי להוסיף לתיק' : 'מלא מחיר ואחוז כדי לחשב כמות');
+}
+
 function invCalcRender() {
   const out = document.getElementById('ic-out');
   const tOut = document.getElementById('ic-tranche-out');
   if (!out) return;
   const inp = invCalcInputs();
   if (!inp.portfolioValue || !inp.pctOfPortfolio || !inp.price) {
-    out.style.display = 'none'; if (tOut) tOut.style.display = 'none'; return;
+    out.style.display = 'none'; if (tOut) tOut.style.display = 'none'; invCalcSetAdd(null); return;
   }
   out.style.display = 'block';
   const r = invSizerPaint(out, inp);
@@ -1234,6 +1244,11 @@ function invCalcRender() {
 
   const n = +(document.getElementById('ic-tranches')?.value) || 1;
   const parts = (r && !r.error) ? invSplitEntries(r.shares, inp.price, n) : [];
+  const addSym = (document.getElementById('ic-sym')?.value || '').trim().toUpperCase().replace(/[^A-Z0-9._-]/g, '');
+  const addShares = parts.length >= 2 ? parts[0].shares : (r && !r.error ? r.shares : 0);
+  invCalcSetAdd(addSym && addShares > 0
+    ? { symbol: addSym, cat: document.getElementById('ic-cat')?.value || '', shares: addShares, price: inp.price, first: parts.length >= 2 }
+    : null, !!addSym);
   if (parts.length < 2) { tOut.style.display = 'none'; return; }
   tOut.style.display = 'block';
 
@@ -1332,6 +1347,39 @@ function invCalcOpen() {
   invFxRefresh().then(invCalcRender);
   document.getElementById('inv-calc-modal').classList.add('open');
   setTimeout(() => symEl.focus(), 80);
+}
+
+async function invCalcAdd() {
+  const a = _invCalcAdd;
+  if (!a) return;
+  invCalcSetAdd(null);
+  const data = invGetCurrentData();
+  const res = invBuyInto(data.holdings, { ...a, sector: SECTOR_MAP[a.symbol] || '' });
+  if (!res) return;
+  data.holdings = res.holdings;
+  invCalcClose();
+  invRenderRows(data.holdings);
+  invRecalc();
+  const gen = _invReloadGen;
+  const ok = await invSaveData(data);
+  if (gen !== _invReloadGen || !ok) return;
+  const cur = invGetCurrency();
+  toast(res.merged
+    ? `עודכן: ${res.totalShares} מניות ${a.symbol} @ ${cur}${res.avgPrice.toFixed(2)} ממוצע`
+    : `נוסף לתיק: ${a.shares} מניות ${a.symbol} @ ${cur}${a.price}`, 'success');
+  invFetchPrices();
+  if (!res.merged && !SECTOR_MAP[a.symbol]) {
+    autoFillSector('inv-calc-add', { value: a.symbol }, {}, sector => {
+      const d = invGetCurrentData();
+      const h = d.holdings.find(x => x.symbol === a.symbol);
+      if (!h || h.sector) return;
+      h.sector = sector;
+      if (!h.cat) h.cat = _sectorRiskCat(sector);
+      invRenderRows(d.holdings);
+      invRecalc();
+      invSaveData(d);
+    });
+  }
 }
 
 function invCalcClose() {
@@ -1505,6 +1553,30 @@ function invDeleteRow(i) {
   // donut and per-row percentages kept counting the deleted position.
   invRecalc();
   invSaveData(data);
+}
+
+// Buying into the portfolio from the calculator: a symbol already held is topped
+// up at the weighted average cost (same rule as the row's buy window), a new one
+// becomes a locked row. Pure, so the arithmetic is testable.
+function invBuyInto(holdings, buy) {
+  const sym = String(buy?.symbol || '').toUpperCase().trim();
+  const shares = +buy?.shares, price = +buy?.price;
+  if (!sym || !(shares > 0) || !(price > 0)) return null;
+  const list = (holdings || []).map(h => ({ ...h }));
+  const at = list.findIndex(h => h.symbol === sym);
+  if (at === -1) {
+    list.push({ symbol: sym, sector: buy.sector || '', cat: buy.cat || '', entryShares: shares, entryPrice: price, currentPrice: price, locked: true });
+    return { holdings: list, merged: false, totalShares: shares, avgPrice: price };
+  }
+  const h = list[at];
+  const oldQty = +h.entryShares || 0, oldPrice = +h.entryPrice || 0;
+  const totalShares = oldQty + shares;
+  const avgPrice = (oldQty * oldPrice + shares * price) / totalShares;
+  h.entryShares = totalShares;
+  h.entryPrice = parseFloat(avgPrice.toFixed(6));
+  if (!h.cat && buy.cat) h.cat = buy.cat;
+  if (!h.currentPrice) h.currentPrice = price;
+  return { holdings: list, merged: true, totalShares, avgPrice };
 }
 
 function invMergeDuplicates(holdings) {

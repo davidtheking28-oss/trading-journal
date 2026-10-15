@@ -7156,6 +7156,7 @@ html[data-theme="light"] #app .num-green, html[data-theme="light"] #app .donut-s
 <!-- POSITION UPDATE MODAL -->
 <div class="modal-overlay" id="inv-position-modal" onclick="if(event.target===this)invClosePositionModal()">
   <div class="modal" onclick="event.stopPropagation()" style="max-width:480px;">
+      <button class="btn btn-primary" id="ic-add" onclick="invCalcAdd()" disabled>הוסף לתיק</button>
     <div class="modal-header">
       <div class="modal-title" id="inv-pos-modal-title">עדכון פוזיציה</div>
       <button class="modal-close" onclick="invClosePositionModal()" aria-label="סגור">✕</button>

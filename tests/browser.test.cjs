@@ -376,6 +376,58 @@ test('mobile holding cards expand and remain editable without horizontal page ov
   await page.setViewportSize({ width: 390, height: 844 });
   await login(page);
   await page.evaluate(() => cookieDecline());
+test('the quantity calculator adds the sized position to the portfolio, and tops up a held symbol at the average cost', async t => {
+  const page = await open(t); await login(page); await page.evaluate(() => cookieDecline()); await investments(page);
+  await page.evaluate(() => invCalcOpen());
+  await page.evaluate(() => {
+    document.getElementById('ic-portfolio').value = 10000;
+    document.getElementById('ic-sym').value = 'NEWQ';
+    document.getElementById('ic-price').value = 50;
+    document.getElementById('ic-pct').value = 10;
+    document.getElementById('ic-cat').value = 'yellow';
+    invCalcRender();
+  });
+  const add = page.locator('#ic-add');
+  assert.equal(await add.isDisabled(), false);
+  const label = await add.textContent();
+  const shares = Number(label.match(/(\d+) מניות/)[1]);
+  assert.ok(shares > 0);
+  await add.click();
+  await page.waitForFunction(() => document.getElementById('inv-save-status').dataset.state === 'saved');
+  assert.equal(await page.locator('#inv-calc-modal.open').count(), 0);
+  const row = await page.evaluate(() => __testDB.investment_holdings.find(r => r.symbol === 'NEWQ'));
+  assert.equal(row.entry_shares, shares);
+  assert.equal(row.entry_price, 50);
+  await page.evaluate(() => invCalcOpen());
+  await page.evaluate(() => {
+    document.getElementById('ic-portfolio').value = 10000;
+    document.getElementById('ic-sym').value = 'NEWQ';
+    document.getElementById('ic-price').value = 100;
+    document.getElementById('ic-pct').value = 10;
+    invCalcRender();
+  });
+  const again = Number((await add.textContent()).match(/(\d+) מניות/)[1]);
+  await add.click();
+  await page.waitForFunction(() => document.getElementById('inv-save-status').dataset.state === 'saved');
+  const rows = await page.evaluate(() => __testDB.investment_holdings.filter(r => r.symbol === 'NEWQ'));
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].entry_shares, shares + again);
+  assert.ok(Math.abs(rows[0].entry_price - (shares * 50 + again * 100) / (shares + again)) < 1e-4);
+});
+
+test('the calculator add button stays disabled without a symbol', async t => {
+  const page = await open(t); await login(page); await investments(page);
+  await page.evaluate(() => invCalcOpen());
+  await page.evaluate(() => {
+    document.getElementById('ic-portfolio').value = 10000;
+    document.getElementById('ic-sym').value = '';
+    document.getElementById('ic-price').value = 50;
+    document.getElementById('ic-pct').value = 10;
+    invCalcRender();
+  });
+  assert.equal(await page.locator('#ic-add').isDisabled(), true);
+});
+
   await page.locator('#cookie-banner').waitFor({ state: 'hidden' });
   await page.evaluate(() => switchTab('investments'));
   const row = page.locator('#inv-tbody tr[data-idx]').first();

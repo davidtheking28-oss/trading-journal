@@ -1302,6 +1302,7 @@ describe('invAccumulate / invDonutPcts — uncategorised holdings', () => {
 
 // ── Scaling into a position in tranches ─────────────────────────────────────
 const { invSplitEntries } = load('invSplitEntries');
+const { invBuyInto } = load('invBuyInto');
 
 describe('invSplitEntries — splitting a buy into N entries', () => {
   test('an even split gives every entry the same size', () => {
@@ -2595,4 +2596,29 @@ test('API key forms retain input and do not report success after a failed save',
     vm.createContext(ctx); vm.runInContext('async ' + extractFunction(name), ctx);
     await ctx[name](); assert.equal(input.value, 'test-key');
   }
+});
+
+describe('invBuyInto — adding from the calculator', () => {
+  test('a new symbol becomes a locked row at the quoted price', () => {
+    const r = invBuyInto([], { symbol: 'qtum', shares: 11, price: 141.74, cat: 'yellow', sector: 'Tech' });
+    assert.equal(r.merged, false);
+    assert.deepEqual(r.holdings.map(h => [h.symbol, h.entryShares, h.entryPrice, h.cat, h.locked]), [['QTUM', 11, 141.74, 'yellow', true]]);
+  });
+
+  test('a held symbol is topped up at the weighted average cost, not duplicated', () => {
+    const held = [{ symbol: 'QTUM', entryShares: 10, entryPrice: 100, cat: 'green', id: 'x' }];
+    const r = invBuyInto(held, { symbol: 'QTUM', shares: 10, price: 150, cat: 'yellow' });
+    assert.equal(r.holdings.length, 1);
+    assert.equal(r.holdings[0].entryShares, 20);
+    assert.equal(r.holdings[0].entryPrice, 125);
+    assert.equal(r.holdings[0].cat, 'green', "the holding's own category is kept");
+    assert.equal(r.holdings[0].id, 'x');
+    assert.equal(held[0].entryShares, 10, 'the input list is not mutated');
+  });
+
+  test('nonsense input adds nothing', () => {
+    for (const b of [{ symbol: '', shares: 5, price: 1 }, { symbol: 'A', shares: 0, price: 1 }, { symbol: 'A', shares: -3, price: 1 }, { symbol: 'A', shares: 5, price: 0 }, { symbol: 'A', shares: NaN, price: 1 }, null]) {
+      assert.equal(invBuyInto([], b), null);
+    }
+  });
 });
