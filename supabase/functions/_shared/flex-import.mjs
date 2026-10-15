@@ -287,7 +287,8 @@ export async function _flexImportInner(trades, ctx) {
       // and overstates P&L, so skip instead.
       if (open && (t.closedShares || 0) <= room(open) + 0.01) {
         const prev = { exitPrice: open.exitPrice, closeDate: open.closeDate,
-                       closedShares: open.closedShares, t: open.t, lastCloseDt: open.lastCloseDt };
+                       closedShares: open.closedShares, t: open.t, lastCloseDt: open.lastCloseDt,
+                       commission: open.commission };
         // calcPL prices the remainder (closedShares - sum(t[].shares)) at
         // exitPrice, so an exit already on the row has to be pinned down as an
         // explicit leg before exitPrice is repointed at this execution —
@@ -302,6 +303,10 @@ export async function _flexImportInner(trades, ctx) {
         open.exitPrice    = t.exitPrice;
         open.closedShares = (open.closedShares || 0) + (t.closedShares || 0);
         open.lastCloseDt  = t._exitDt || open.lastCloseDt;
+        // The closing fill's commission belongs on the row it closes (same fix as the
+        // reversal branch below, 2026-10-02); the lastCloseDt guard above already stops a
+        // resynced fill from adding it twice.
+        open.commission   = Math.round(((open.commission || 0) + (t.commission || 0)) * 1e6) / 1e6;
         // close_date marks the row fully closed — a still-partial position
         // (room left after this close) must not carry one, or it reads as
         // closed while still holding shares (the 2026-08-27 half_closed_row
@@ -314,6 +319,7 @@ export async function _flexImportInner(trades, ctx) {
           closed_shares: open.closedShares  || null,
           targets:       legs,
           last_close_dt: open.lastCloseDt   || null,
+          commission:    open.commission,
         } });
         updated++;
       }

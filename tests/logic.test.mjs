@@ -574,6 +574,27 @@ describe('P&L', () => {
   });
 });
 
+describe('biParseRows — CSV import maths', () => {
+  const parse = new Function(extractFunction('biParseDate') + '\n' + extractFunction('biParseRows') + '\nreturn biParseRows;')();
+  const mapping = { symbol: 's', side: 'b', shares: 'q', entryPrice: 'p', entryDate: 'd', commission: 'c', exitPrice: 'x' };
+  const row = over => ({ s: 'BTC', b: 'buy', q: '0.01', p: '60000', d: '2026-01-05', c: '0', x: '', ...over });
+  const go = over => parse([row(over)], mapping, { sideMap: {} })[0];
+
+  test('a fractional crypto size keeps its quoted price', () => {
+    assert.equal(go({}).entryPrice, 60000, 'BTC 0.01 @ 60000 was divided by the size into 6,000,000');
+    assert.equal(go({ q: '2', p: '1500' }).entryPrice, 1500, 'two shares at 1500 are a price, not a total');
+  });
+
+  test('a symbol cell cannot carry markup or script into the table handlers', () => {
+    assert.equal(go({ s: "X');alert(1);//" }).symbol, 'XALERT1', 'quotes and brackets must not survive the import');
+    assert.equal(go({ s: 'brk.b' }).symbol, 'BRK.B');
+  });
+
+  test('a negative commission column is still a cost', () => {
+    assert.equal(go({ c: '-2.5' }).commission, 2.5, 'Flex and TLG take abs; a signed CSV fee was added to profit');
+  });
+});
+
 describe('guards that cannot be exercised headless', () => {
   // _flexImportInner now lives in the shared module (flex-import.mjs), not in
   // dashboard.html's text — these regex guards read its real source.
@@ -1074,6 +1095,21 @@ describe('_flexImportInner — orphan-close resync does not double-count', () =>
     await h.run();
     assert.equal(h.updates[0].patch.close_date, null, 'still holding shares — must not look fully closed');
     assert.equal(h.updates[0].patch.closed_shares, 20);
+  });
+
+  test('the closing fill commission is added to the row it closes', async () => {
+    const h = run([firstClose], { existing: [{ ...openRow }] });
+    await h.run();
+    assert.equal(h.updates[0].patch.commission, 4.33, 'a close read $0.33 better than the broker before');
+    assert.equal(h.db.stocks[0].commission, 4.33);
+  });
+
+  test('a resynced close does not add its commission a second time', async () => {
+    const alreadyApplied = { ...openRow, closedShares: 2, lastCloseDt: '20260819;130353', commission: 4.33 };
+    const h = run([firstClose], { existing: [alreadyApplied] });
+    await h.run();
+    assert.equal(h.updates.length, 0);
+    assert.equal(h.db.stocks[0].commission, 4.33);
   });
 
   test('a close that fully closes the row does get a close_date', async () => {

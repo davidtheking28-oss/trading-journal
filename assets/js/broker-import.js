@@ -140,7 +140,7 @@ function biParseRows(rows, mapping, def) {
   const trades = [];
   for (const row of rows) {
     try {
-      const symbol = (row[mapping.symbol] || '').trim().toUpperCase().replace(/\s+/g,'');
+      const symbol = (row[mapping.symbol] || '').trim().toUpperCase().replace(/\s+/g,'').replace(/[^A-Z0-9._\-]/g,'');
       if (!symbol) continue;
       const sideRaw = (row[mapping.side] || '').trim().toLowerCase();
       const ls = def.sideMap[sideRaw] || (sideRaw.startsWith('b') || sideRaw.startsWith('l') ? 'L' : 'S');
@@ -151,11 +151,11 @@ function biParseRows(rows, mapping, def) {
       const entryDate = biParseDate(rawDate);
       if (!entryDate) continue;
       let exitPrice = mapping.exitPrice ? (parseFloat(row[mapping.exitPrice]) || 0) : 0;
-      const commission = mapping.commission ? (parseFloat(row[mapping.commission]) || 0) : 0;
+      const commission = mapping.commission ? Math.abs(parseFloat(row[mapping.commission]) || 0) : 0;
       const pnl = mapping.pnl ? (parseFloat(row[mapping.pnl]) || 0) : 0;
       // Colmex "Bought"/"Sold" may be total values — detect and convert to price
-      if (entryPrice > shares * 1000 && shares > 0) entryPrice = entryPrice / shares;
-      if (exitPrice > shares * 1000 && shares > 0) exitPrice = exitPrice / shares;
+      if (entryPrice > shares * 1000 && shares >= 1) entryPrice = entryPrice / shares;
+      if (exitPrice > shares * 1000 && shares >= 1) exitPrice = exitPrice / shares;
       // Back-calc exit price from P/L if missing
       if (!exitPrice && pnl && entryPrice && shares) {
         const dir = ls === 'L' ? 1 : -1;
