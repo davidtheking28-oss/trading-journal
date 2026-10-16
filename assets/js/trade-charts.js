@@ -218,15 +218,15 @@ function tradeSnapshotData(tr, bars) {
   // Keep the full holding period so both markers remain visible.
   const selected = clean.filter(b => b.t >= entry - (tr.type === 'crypto' ? 28 : 42)*86400 && b.t <= exit + 10*86400);
   if (!selected.length) return null;
-  // Date-only trades may fall on a non-session day; the marker attaches to the
-  // closest daily bar; stored trade dates remain unchanged.
-  const nearest = timestamp => selected.reduce((best,b)=>Math.abs(b.t-timestamp)<Math.abs(best.t-timestamp)?b:best,selected[0]);
-  if (Math.abs(nearest(entry).t-entry)>3*86400 || Math.abs(nearest(exit).t-exit)>3*86400) return null;
+  // Never silently move an execution onto a different trading day.
+  const entryBar=selected.find(b=>toTime(b.t)===tr.entryDate.slice(0,10));
+  const exitBar=selected.find(b=>toTime(b.t)===tr.closeDate.slice(0,10));
+  if(!entryBar || !exitBar)return null;
   return {
     prices:selected.map(b=>({time:toTime(b.t),open:b.o,high:b.h,low:b.l,close:b.c})),
     volume:selected.map(b=>({time:toTime(b.t),value:Number.isFinite(b.v)&&b.v>0?b.v:0})),
-    entry:{time:toTime(nearest(entry).t),date:tr.entryDate.slice(0,10),price:+tr.entryPrice},
-    exit:{time:toTime(nearest(exit).t),date:tr.closeDate.slice(0,10),price:+tr.exitPrice},
+    entry:{time:toTime(entryBar.t),date:tr.entryDate.slice(0,10),price:+tr.entryPrice},
+    exit:{time:toTime(exitBar.t),date:tr.closeDate.slice(0,10),price:+tr.exitPrice},
     short:tr.ls==='S'
   };
 }
@@ -268,19 +268,19 @@ async function tradeSnapshotImage(tr, bars) {
       width:960,height:320,
       layout:{background:{color:'#101116'},textColor:'#8898b2',fontSize:14,fontFamily:'JetBrains Mono, monospace',attributionLogo:true},
       grid:{vertLines:{color:'rgba(255,255,255,0.035)'},horzLines:{color:'rgba(255,255,255,0.035)'}},
-      rightPriceScale:{borderColor:'rgba(255,255,255,0.06)',scaleMargins:{top:0.1,bottom:0.1}},
+      rightPriceScale:{borderColor:'rgba(255,255,255,0.06)',scaleMargins:{top:0.18,bottom:0.18}},
       timeScale:{borderColor:'rgba(255,255,255,0.06)',rightOffset:0},
       handleScroll:false,handleScale:false
     });
     const series=chart.addBarSeries({upColor:'#ffffff',downColor:'#ffffff',openVisible:true,thinBars:true,priceLineVisible:false,lastValueVisible:false,...(tr.type==='crypto' ? {priceFormat:{type:'price',precision:Math.min(+tr.entryPrice < 1 ? 8 : 2,8),minMove:+tr.entryPrice < 1 ? 0.00000001 : 0.01}} : {})});
     series.setData(data.prices);
+    series.applyOptions({autoscaleInfoProvider:original=>{
+      const info=original();if(!info)return info;
+      return {...info,priceRange:{minValue:Math.min(info.priceRange.minValue,data.entry.price,data.exit.price),maxValue:Math.max(info.priceRange.maxValue,data.entry.price,data.exit.price)}};
+    }});
     const volume=chart.addHistogramSeries({priceFormat:{type:'volume'},priceScaleId:'',lastValueVisible:false,priceLineVisible:false});
     volume.priceScale().applyOptions({scaleMargins:{top:0.82,bottom:0}});
     volume.setData(data.volume.map(b=>({...b,color:'rgba(255,255,255,0.25)'})));
-    series.setMarkers([
-      {time:data.entry.time,position:data.short?'aboveBar':'belowBar',color:'#34d399',shape:data.short?'arrowDown':'arrowUp',text:(_lang==='he'?'כניסה ':'Entry ')+String.fromCharCode(36)+data.entry.price.toFixed(data.entry.price < 1 ? 8 : 2)},
-      {time:data.exit.time,position:data.short?'belowBar':'aboveBar',color:'#fb7185',shape:data.short?'arrowUp':'arrowDown',text:(_lang==='he'?'יציאה ':'Exit ')+String.fromCharCode(36)+data.exit.price.toFixed(data.exit.price < 1 ? 8 : 2)}
-    ].sort((a,b)=>a.time.localeCompare(b.time)));
     tradeSnapshotFit(chart,data.prices.length);
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
     const screenshot=chart.takeScreenshot();
@@ -290,6 +290,19 @@ async function tradeSnapshotImage(tr, bars) {
     ctx.font=(16*scale)+'px Arial';ctx.fillStyle='#e6edf7';
     ctx.fillText(tr.symbol+' · '+(_lang==='he'?'גרף עסקה · נרות יומיים':'Trade chart · Daily bars'),20*scale,25*scale);
     ctx.drawImage(screenshot,0,38*scale);
+    // Bar markers sit above/below OHLC extremes. Draw execution arrows at the
+    // actual price coordinate instead, with entry above and exit below.
+    for(const [point,isEntry] of [[data.entry,true],[data.exit,false]]){
+      const x=chart.timeScale().timeToCoordinate(point.time),y=series.priceToCoordinate(point.price);
+      if(x===null || y===null || y<0 || y>320)return null;
+      const px=x*scale,py=(y+38)*scale,side=isEntry?-1:1;
+      ctx.fillStyle=isEntry?'#34d399':'#fb7185';
+      ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px-6*scale,py+side*9*scale);ctx.lineTo(px-2*scale,py+side*9*scale);ctx.lineTo(px-2*scale,py+side*20*scale);ctx.lineTo(px+2*scale,py+side*20*scale);ctx.lineTo(px+2*scale,py+side*9*scale);ctx.lineTo(px+6*scale,py+side*9*scale);ctx.closePath();ctx.fill();
+      ctx.font=(13*scale)+'px Arial';ctx.textAlign='center';ctx.textBaseline=isEntry?'bottom':'top';
+      const label=(_lang==='he'?(isEntry?'כניסה ':'יציאה '):(isEntry?'Entry ':'Exit '))+'$'+point.price.toFixed(point.price<1?8:2);
+      const half=ctx.measureText(label).width/2;
+      ctx.fillText(label,Math.max(half+4*scale,Math.min(px,canvas.width-half-4*scale)),py+side*23*scale);
+    }
     return canvas.toDataURL('image/png');
   } finally { chart?.remove();box.remove(); }
 }

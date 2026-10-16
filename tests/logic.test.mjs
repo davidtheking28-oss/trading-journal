@@ -34,6 +34,15 @@ test('market history requests time out, clear their timer and remain retryable',
 });
 
 describe('entry setup suggestion', () => {
+  test('trade chart never shifts an execution onto a neighboring daily bar',()=>{
+    const ctx={tradeSnapshotEligible:()=>true};vm.createContext(ctx);vm.runInContext(extractFunction('tradeSnapshotData'),ctx);
+    const tr={type:'stock',entryDate:'2026-10-12',closeDate:'2026-10-14',entryPrice:101,exitPrice:103};
+    const bars=[12,13,14,15].map(day=>({t:Date.parse('2026-10-'+day)/1000,o:100,h:105,l:95,c:102,v:100}));
+    const data=ctx.tradeSnapshotData(tr,bars);
+    assert.equal(data.entry.time,tr.entryDate);assert.equal(data.entry.price,101);assert.equal(data.exit.price,103);
+    assert.equal(ctx.tradeSnapshotData(tr,bars.filter((b,i)=>i!==0)),null);
+    assert.equal(ctx.tradeSnapshotData(tr,bars.filter((b,i)=>i!==2)),null);
+  });
   test('structural review uses confirmed pre-entry swings and abstains without enough evidence',()=>{
     const {tradeBaseStructure:review}=load('tradeBaseStructure');
     const start=Date.parse('2026-01-01')/1000;
