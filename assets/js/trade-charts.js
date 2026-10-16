@@ -1,4 +1,52 @@
 // Loaded on demand by loadTradeSnapshotFeature; shares the dashboard global scope.
+function tradeBaseStructure(trade, bars) {
+  const unknown={status:'unknown',volume:'unknown'};
+  if(!trade || trade.ls==='S' || !Array.isArray(bars))return unknown;
+  const date=String(trade.entryDate||'').slice(0,10),entry=Date.parse(date+'T00:00:00Z')/1000;
+  if(!Number.isFinite(entry) || new Date(entry*1000).toISOString().slice(0,10)!==date || !(Number(trade.entryPrice)>0) || !Number.isFinite(Number(trade.entryPrice)))return unknown;
+  if(bars.some(b=>!b || !Number.isFinite(b.t)))return unknown;
+  const prior=bars.filter(b=>b.t<entry).sort((a,b)=>a.t-b.t).slice(-60);
+  if(prior.length<25 || entry-prior.at(-1).t>7*86400)return unknown;
+  if(new Set(prior.map(b=>Math.floor(b.t/86400))).size!==prior.length || prior.some((b,i)=>
+    ![b.o,b.h,b.l,b.c].every(n=>Number.isFinite(n)&&n>0) || b.h<Math.max(b.o,b.c,b.l) || b.l>Math.min(b.o,b.c) ||
+    (i && (b.t-prior[i-1].t>7*86400 || Math.abs(b.c/prior[i-1].c-1)>.35))))return unknown;
+  // Two bars on either side confirm a swing. All confirmation bars precede entry.
+  const swings=[];
+  for(let i=2;i<prior.length-2;i++){
+    const b=prior[i],neighbors=[prior[i-2],prior[i-1],prior[i+1],prior[i+2]];
+    const peak=neighbors.every(n=>b.h>n.h),trough=neighbors.every(n=>b.l<n.l);
+    if(peak===trough)continue;
+    const point={kind:peak?'high':'low',price:peak?b.h:b.l,index:i};
+    const last=swings.at(-1);
+    if(last?.kind===point.kind){if(peak?point.price>last.price:point.price<last.price)swings[swings.length-1]=point;}
+    else swings.push(point);
+  }
+  const legs=[];
+  for(let i=0;i<swings.length-1;i++)if(swings[i].kind==='high' && swings[i+1].kind==='low'){
+    const high=swings[i],low=swings[i+1];
+    legs.push({depth:(high.price-low.price)/high.price*100,high,low});
+  }
+  const last=legs.slice(-3),depths=last.map(l=>Number(l.depth.toFixed(2)));
+  const shrinking=last.length===3 && last.every(l=>l.depth>=1) && last[1].depth<last[0].depth*.8 && last[2].depth<last[1].depth*.8 && last[2].depth<=8;
+  const final=last.at(-1),pivot=final?.high.price;
+  const nearHigh=final && prior.slice(final.high.index+1).every(b=>b.h<=pivot*1.02) && prior.at(-1).c>=pivot*.95;
+  const volumes=prior.slice(-25),volumeKnown=volumes.every(b=>Number.isFinite(b.v)&&b.v>0);
+  const average=rows=>rows.reduce((sum,b)=>sum+b.v,0)/rows.length;
+  const ratio=volumeKnown?average(volumes.slice(-5))/average(volumes.slice(0,20)):null;
+  const lows=swings.filter(point=>point.kind==='low').slice(-3);
+  const risingLows=lows.length===3?lows.every((point,i)=>!i || point.price>lows[i-1].price):null;
+  // Diagnostic SMA, not an assumed personal rule. Compare with five sessions ago.
+  const meanClose=rows=>rows.reduce((sum,b)=>sum+b.c,0)/rows.length;
+  const ma=meanClose(prior.slice(-21));
+  const previous=prior.length>=26?meanClose(prior.slice(-26,-5)):null;
+  const delta=previous===null?null:Number(((ma/previous-1)*100).toFixed(8));
+  const average21={value:ma,above:prior.at(-1).c>=ma,
+    direction:delta===null?'unknown':delta>0?'rising':delta<0?'falling':'flat'};
+  return {status:shrinking&&nearHigh?'candidate':'not-established',contractions:depths,
+    pivot:shrinking&&nearHigh?pivot:null,volume:ratio===null?'unknown':ratio<=.6?'drying':'not-drying',
+    volumeRatio:ratio,risingLows,average21,method:'experimental-swings-v2'};
+}
+
 function tradeSetupSuggestion(tr, bars) {
   const unknown = { status: 'unknown', reason: 'history' };
   if (!tr || typeof tr !== 'object') return unknown;
@@ -55,6 +103,28 @@ function tradeSetupExplanation(result, he) {
   return text+(he?' השיא המחושב אינו נקודת פריצה מאומתת. יש להשוות לתוכנית הכניסה; אין בכך קביעה שהכניסה שגויה.':' The calculated high is not a verified pivot. Compare with the entry plan; this does not establish that the entry was wrong.');
 }
 
+function tradeEntryCoach(result, trade, he) {
+  // Explain evidence, never infer the trader's intent or use the outcome.
+  if (!['vcp','breakout'].includes(trade?.setupType) || result.status==='unknown') return null;
+  const text=(a,b)=>he?a:b;
+  if(result.reason==='distance')return result.distancePct<0 ? {
+    why:text('אם תכננת פריצה מעל השיא הזה, המחיר עדיין לא הגיע לטריגר. ייתכן שתכננת נקודת כניסה מוקדמת אחרת.','If this high was your planned breakout trigger, price had not reached it. You may have planned a different early entry.'),
+    next:text('סמן את נקודת הפריצה שתכננת והשווה למחיר הכניסה. האם זו הייתה כניסה מוקדמת מכוונת?','Mark your planned pivot and compare it with your entry. Was an early entry intentional?')
+  } : {
+    why:text('אם זה היה הטריגר שלך, הכניסה הייתה רחוקה ממנו. עם אותו סטופ, כניסה גבוהה יותר מגדילה את הסיכון למניה.','If this was your trigger, entry was far above it. With the same stop, a higher entry increases risk per share.'),
+    next:text('סמן את הטריגר, הסטופ ומרחק הכניסה המרבי שתכננת; השווה אותם לביצוע בפועל.','Mark your planned trigger, stop and maximum entry distance; compare them with your execution.')
+  };
+  if(result.reason==='wide' || result.reason==='shape')return {
+    why:text('הבדיקה לא ביססה מבנה של בסיס. זה לבדו לא שולל את הסטאפ שתיעדת.','This check did not establish a base structure. That alone does not rule out your documented setup.'),
+    next:text('סמן בגרף את הבסיס ואת ההתכווצות האחרונה שזיהית לפני הכניסה.','Mark the base and final contraction you identified before entry on the chart.')
+  };
+  if(result.status==='possible')return {
+    why:text('מיקום הכניסה מתאים לבדיקה המצומצמת. עדיין אין כאן אישור ל־VCP או למחזור בפריצה.','Entry location fits this limited check. This does not confirm VCP or breakout volume.'),
+    next:text('השווה לנקודת הפריצה שתכננת ובדוק את ההתכווצות האחרונה והמחזור בזמן הכניסה.','Compare with your planned pivot and review the final contraction and volume at entry.')
+  };
+  return null;
+}
+
 function renderTradeSetupSuggestion(host, trade, bars, valid, options = null) {
   const compact = !!options?.compact;
   const result = tradeSetupSuggestion(trade,bars);
@@ -91,8 +161,48 @@ function renderTradeSetupSuggestion(host, trade, bars, valid, options = null) {
   if (compact) {
     const details=document.createElement('details');details.className='lab-auto-explanation';
     const summary=document.createElement('summary');summary.textContent=he?'למה?':'Why?';
-    details.append(summary,message,note,button);panel.append(details);
+    const coach=tradeEntryCoach(result,trade,he);
+    if(coach){
+      const explain=document.createElement('div');explain.className='lab-entry-coach sensitive';
+      const observation=Number.isFinite(result.referenceHigh)
+        ? title.textContent+(he?' · שיא 20 נרות: ':' · 20-bar high: ')+result.referenceHigh.toLocaleString('en-US',{maximumFractionDigits:result.referenceHigh>=1?2:8})
+        : message.textContent;
+      for(const [label,value] of [[he?'מה זוהה':'Observed',observation],[he?'למה זה חשוב':'Why it matters',coach.why],[he?'בפעם הבאה':'Next time',coach.next]]){
+        const row=document.createElement('p'),heading=document.createElement('strong');heading.textContent=label+': ';row.append(heading,document.createTextNode(value));explain.append(row);
+      }
+      note.textContent=he?'השיא המחושב אינו נקודת פריצה מאומתת. זו בדיקה מצומצמת של נרות לפני הכניסה, ללא אימות VCP, מחזור הפריצה או הכללים האישיים.':'The calculated high is not a verified pivot. This limited pre-entry bar check does not verify VCP, breakout volume or personal rules.';
+      details.append(summary,explain,note,button);
+    }else details.append(summary,message,note,button);
+    panel.append(details);
   } else panel.append(message,note,button);
+  if(compact && ['vcp','breakout'].includes(trade.setupType)){
+    const structure=tradeBaseStructure(trade,bars);
+    const detail=document.createElement('details');detail.className='lab-structure-review';
+    const heading=document.createElement('summary');heading.textContent=he?'מבנה הבסיס · ניסיוני':'Base structure · experimental';
+    const description=document.createElement('p');description.className='sensitive';
+    description.textContent=structure.status==='unknown'
+      ? (he?'אין מספיק נתונים תקינים לבדיקה המבנית.':'Insufficient valid data for structural review.')
+      : structure.status==='candidate'
+        ? (he?'זוהו שלוש נסיגות מצטמצמות: ':'Three shrinking pullbacks detected: ')+structure.contractions.map(n=>n.toFixed(1)+'%').join(' → ')+(he?'. נקודת פריצה משוערת: ':'. Estimated pivot: ')+structure.pivot.toLocaleString('en-US',{maximumFractionDigits:structure.pivot>=1?2:8})+'.'
+        : (he?'לא זוהו שלוש נסיגות מצטמצמות שעומדות בתנאי הבדיקה. אין בכך שלילה של הסטאפ שלך.':'Three shrinking pullbacks meeting this check were not established. This does not rule out your setup.');
+    detail.append(heading,description);
+    if(structure.status!=='unknown'){
+      const volume=document.createElement('p');volume.className='ss-setup-note sensitive';
+      volume.textContent=structure.volume==='unknown'
+        ? (he?'אין מספיק נתוני מחזור לבדיקה.':'Insufficient volume data.')
+        : (he?'מחזור 5 הנרות האחרונים ביחס ל־20 שקדמו להם: ':'Volume over the last 5 bars relative to the preceding 20: ')+Math.round(structure.volumeRatio*100)+'%'+(structure.volume==='drying'?(he?' · זוהתה ירידה במחזור.':' · Volume dry-up detected.'):(he?' · לא זוהתה ירידה מספקת לפי סף הבדיקה.':' · No sufficient dry-up under this check.'));
+      detail.append(volume);
+      const trend=document.createElement('p');trend.className='ss-setup-note sensitive';
+      const direction=structure.average21.direction;
+      trend.textContent=(he?'ממוצע פשוט 21 לפני הכניסה: ':'Pre-entry 21-period SMA: ')+
+        (direction==='unknown'?(he?'אין מספיק נתונים לשיפוע': 'insufficient slope history'):direction==='rising'?(he?'עולה':'rising'):direction==='falling'?(he?'יורד':'falling'):(he?'שטוח':'flat'))+
+        (structure.average21.above?(he?' · הסגירה האחרונה מעליו או עליו.':' · Last close at or above it.'):(he?' · הסגירה האחרונה מתחתיו.':' · Last close below it.'))+
+        (structure.risingLows===null?(he?' אין מספיק שפלים מאושרים להשוואה.':' Not enough confirmed lows to compare.'):structure.risingLows?(he?' שלושת השפלים האחרונים עולים.':' Last three lows are rising.'):(he?' שלושת השפלים האחרונים אינם עולים ברצף.':' Last three lows are not consistently rising.'));
+      detail.append(trend);
+    }
+    const limit=document.createElement('small');limit.className='ss-setup-note';limit.textContent=he?'כללים ניסיוניים, לא אימות מלא של הסטאפ שלך. ממוצע פשוט 21 הוא בדיקת עזר. כניסת המשך, מגמה ארוכת טווח ומחזור בזמן הפריצה עדיין לא זוהו או נבדקו.':'Experimental rules, not full validation of your setup. The 21-period SMA is a diagnostic. Continuation entry, long-term trend and volume at breakout remain unassessed.';
+    detail.append(limit);panel.querySelector('.lab-auto-explanation').append(detail);
+  }
   host.append(panel);
 }
 

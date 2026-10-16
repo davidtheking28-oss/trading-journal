@@ -34,6 +34,45 @@ test('market history requests time out, clear their timer and remain retryable',
 });
 
 describe('entry setup suggestion', () => {
+  test('structural review uses confirmed pre-entry swings and abstains without enough evidence',()=>{
+    const {tradeBaseStructure:review}=load('tradeBaseStructure');
+    const start=Date.parse('2026-01-01')/1000;
+    const prices=[100,102,105,103,99,95,97,100,104,102,100,99,100,102,104,103,102,101,102,103,104,103,102,103,104,104];
+    const bars=prices.map((c,i)=>({t:start+i*86400,o:c,h:c+.2,l:c-.2,c,v:i<21?1000:400}));
+    const trade={entryDate:'2026-01-27',entryPrice:105,ls:'L'};
+    const result=review(trade,bars);
+    assert.equal(result.status,'candidate');assert.equal(result.contractions.length,3);
+    assert.ok(result.contractions[0]>result.contractions[1]);assert.ok(result.contractions[1]>result.contractions[2]);
+    assert.equal(result.volume,'drying');assert.equal(result.pivot,104.2);
+    assert.equal(result.risingLows,true);
+    assert.equal(result.average21.direction,'rising');
+    assert.equal(result.average21.above,true);
+    assert.ok(Math.abs(result.average21.value-prices.slice(-21).reduce((a,b)=>a+b,0)/21)<1e-10);
+    assert.equal(review(trade,bars.slice(-25)).average21.direction,'unknown');
+    assert.deepEqual(review(trade,[...bars,{t:start+26*86400,o:1,h:900,l:1,c:2,v:99999}]),result);
+    assert.deepEqual(review(trade,[...bars].reverse()),result);
+    assert.equal(review(trade,bars.slice(-10)).status,'unknown');
+    assert.equal(review({...trade,ls:'S'},bars).status,'unknown');
+    assert.equal(review(trade,[...bars,bars[10]]).status,'unknown');
+    assert.equal(review(trade,bars.map(b=>({...b,v:undefined}))).volume,'unknown');
+    assert.notEqual(review(trade,bars.map((b,i)=>({...b,o:90+i,h:90.2+i,l:89.8+i,c:90+i}))).status,'candidate');
+    const falling=review(trade,bars.map((b,i)=>({...b,o:120-i,h:120.2-i,l:119.8-i,c:120-i})));
+    assert.equal(falling.average21.direction,'falling');assert.equal(falling.average21.above,false);
+    assert.equal(falling.risingLows,null);
+  });
+  test('entry coaching is conditional on documented setup and evidence, never profit or loss',()=>{
+    const {tradeEntryCoach:coach}=load('tradeEntryCoach');
+    const trade={setupType:'vcp',exitPrice:1};
+    const result={status:'unmatched',reason:'distance',distancePct:-1};
+    assert.match(coach(result,trade,true).why,/אם תכננת/);
+    assert.match(coach(result,trade,true).next,/מכוונת/);
+    assert.deepEqual(coach(result,trade,true),coach(result,{...trade,exitPrice:1000},true));
+    assert.equal(coach(result,{setupType:'pullback'},true),null);
+    assert.equal(coach({status:'unknown'},trade,true),null);
+    assert.match(coach({...result,distancePct:5},trade,false).why,/same stop/);
+    assert.match(coach({status:'possible'},trade,true).why,/אין כאן אישור/);
+    for(const reason of ['wide','shape'])assert.match(coach({status:'unmatched',reason},trade,true).why,/לא שולל/);
+  });
   const analyze = (...args) => load(['tradeSetupSuggestion']).tradeSetupSuggestion(...args);
   const entryDate = '2026-03-15';
   const bars = Array.from({length:40}, (_,i)=>({t:Date.parse('2026-02-01')/1000+i*86400,o:96+Math.sin(i),h:100,l:94,c:97+Math.sin(i*.5),v:1000}));

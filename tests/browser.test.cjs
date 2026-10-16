@@ -1242,6 +1242,15 @@ test('personal lab automatically analyzes closed trades without opening the came
  assert.equal(await page.locator('#lab-auto-analysis .lab-auto-chart').evaluate(el=>el.open),true,'chart disclosure survives refresh');
  assert.equal(await page.locator('#ss-modal.open').count(),0);
  assert.equal(await page.evaluate(()=>db.stocks[0].setupType),'');
+ await page.evaluate(()=>{db.stocks[0].setupType='vcp';labRender();});
+ await page.locator('.lab-entry-coach').waitFor({state:'attached'});
+ assert.equal(await page.locator('.lab-entry-coach').isVisible(),false,'coaching stays folded until requested');
+ assert.equal(await page.locator('.lab-structure-review > summary').isVisible(),false,'structural detail does not add another top-level action');
+ await page.locator('.lab-auto-explanation > summary').click();
+ await page.locator('.lab-structure-review > summary').click();
+ assert.match(await page.locator('.lab-structure-review').innerText(),/ממוצע פשוט 21|אין מספיק נתונים/);
+ assert.match(await page.locator('.lab-entry-coach').innerText(),/מה זוהה[\s\S]*למה זה חשוב[\s\S]*בפעם הבאה/);
+ assert.equal(await page.evaluate(()=>db.stocks[0].setupType),'vcp','coaching never rewrites documentation');
  await page.evaluate(()=>{_currentUser={id:'other-user'};resetPersonalLab();});
  assert.equal(await page.locator('#lab-auto-analysis').count(),0);
 });
