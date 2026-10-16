@@ -878,8 +878,8 @@ test('closed stock trades automatically display one entry and exit image and ref
   await page.evaluate(()=>{
     window.__snapshotCalls=0;
     _fetchPivotBars=async()=>{ __snapshotCalls++;return Array.from({length:280},(_,i)=>{const timestamp=Date.parse('2026-01-01T00:00:00Z')/1000+i*86400;const close=100+(timestamp-Date.parse('2026-09-02T00:00:00Z')/1000)/86400*.15+Math.sin(i*.38)*2.2;return {t:timestamp,o:close+Math.sin(i)*.6,h:close+1.2,l:close-1.1,c:close,v:200000+Math.round(Math.abs(Math.sin(i*.9))*300000)};}).filter(b=>![0,6].includes(new Date(b.t*1000).getUTCDay())); };
-    db.stocks=[{id:901,type:'stock',symbol:'AAPL',ls:'L',entryDate:'2026-09-02',closeDate:'2026-09-06',entryPrice:100,exitPrice:110,shares:5,closedShares:5,t:[]},
-      {id:902,type:'stock',symbol:'MSFT',ls:'L',entryDate:'2026-09-02',closeDate:'2026-09-06',entryPrice:100,exitPrice:110,shares:5,closedShares:2,t:[]}];
+    db.stocks=[{id:901,type:'stock',symbol:'AAPL',ls:'L',entryDate:'2026-09-02',closeDate:'2026-09-04',entryPrice:100,exitPrice:110,shares:5,closedShares:5,t:[]},
+      {id:902,type:'stock',symbol:'MSFT',ls:'L',entryDate:'2026-09-02',closeDate:'2026-09-04',entryPrice:100,exitPrice:110,shares:5,closedShares:2,t:[]}];
     db.crypto=[];switchTab('stocks');renderTable('stock');
   });
   assert.equal(await page.locator('.trade-snapshot-cell').count(),0,'no separate chart column');
