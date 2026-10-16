@@ -52,7 +52,7 @@ const server=createServer((req,res)=>{
  try{
   let body=readFileSync(file);
   if(file.endsWith('dashboard.html')){
-   const version='preview-'+Math.max(...['dashboard.html','assets/js/personal-lab.js','assets/js/dashboard.js','assets/js/trade-charts.js','tests/personal-lab-preview.cjs'].map(path=>Math.floor(statSync(resolve(root,path)).mtimeMs)));
+   const version='preview-'+Math.max(...['dashboard.html','tests/archived/personal-lab.js','assets/js/dashboard.js','assets/js/trade-charts.js','tests/personal-lab-preview.cjs'].map(path=>Math.floor(statSync(resolve(root,path)).mtimeMs)));
    body=body.toString().replaceAll('__APP_VERSION__',version).replaceAll('__SUPABASE_URL__','https://test.supabase.co').replaceAll('__SUPABASE_ANON__','test-key')
     .replaceAll('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.3/dist/umd/supabase.min.js','/__sdk.js?v='+version)
     .replaceAll('https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js','/__chart.js')

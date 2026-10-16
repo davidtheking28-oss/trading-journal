@@ -37,7 +37,6 @@
   _sb.auth.onAuthStateChange((event, session) => {
     if (session) _currentSession = session;
     if (event === 'SIGNED_OUT') {
-      resetPersonalLab();
       _closeLegalPrompt();
       _legalReadyUserId = null;
       resetTradeSnapshots();

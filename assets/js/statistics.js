@@ -101,7 +101,6 @@ function renderMonthlyTracker(trades) {
 
 
 function renderStatisticsContent() {
-  refreshPersonalLab(true);
  const secondaryToggle=document.getElementById('stats-secondary-toggle');
  if(secondaryToggle && window.matchMedia('(min-width:769px)').matches) {
  const open=!document.getElementById('stats-secondary-content').classList.contains('stats-desktop-collapsed');

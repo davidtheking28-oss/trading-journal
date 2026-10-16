@@ -1,44 +1,4 @@
 const _dashboardFeatures = new Map();
-let _labFeatureEpoch = 0;
-function loadPersonalLabFeature() {
-  return loadDashboardFeature('personal-lab.js', () => typeof labRender === 'function');
-}
-function resetPersonalLab() {
-  _labFeatureEpoch++;
-  const disclosure=document.getElementById('personal-lab-disclosure');
-  if(disclosure)disclosure.open=false;
-  if (typeof labReset === 'function') labReset();
-  for (const id of ['personal-lab', 'personal-lab-overview']) document.getElementById(id)?.replaceChildren();
-}
-function togglePersonalLab() {
-  if(document.getElementById('personal-lab-disclosure')?.open) refreshPersonalLab(true);
-  else if(typeof labPauseAutomatic==='function') labPauseAutomatic();
-}
-function refreshPersonalLab(history) {
-  const user = _currentUser, epoch = _labFeatureEpoch;
-  if (!user || _legalReadyUserId !== user.id) return;
-  if(history && !document.getElementById('personal-lab-disclosure')?.open)return;
-  const host = document.getElementById(history ? 'personal-lab' : 'personal-lab-overview');
-  if (!host) return;
-  loadPersonalLabFeature().then(async () => {
-    if (_currentUser !== user || epoch !== _labFeatureEpoch) return;
-    await labLoad({ history });
-    if (_currentUser !== user || epoch !== _labFeatureEpoch) return;
-    if (history || document.getElementById('tab-statistics')?.classList.contains('active')) labRender();
-    labRenderOverview();
-  }).catch(() => {
-    if (_currentUser !== user || epoch !== _labFeatureEpoch) return;
-    host.replaceChildren();
-    const status = document.createElement('p'); status.setAttribute('role', 'status');
-    status.textContent = _lang === 'he' ? 'המעבדה אינה זמינה כרגע. ' : 'The lab is unavailable. ';
-    const retry = document.createElement('button'); retry.className = 'btn btn-secondary btn-sm';
-    retry.textContent = _lang === 'he' ? 'נסה שוב' : 'Retry'; retry.onclick = () => refreshPersonalLab(history);
-    status.append(retry); host.append(status);
-  });
-}
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && document.querySelector('#tab-statistics.active, #tab-overview.active') && typeof labInvalidate === 'function') labInvalidate();
-});
 function loadDashboardFeature(file, ready) {
   if (ready()) return Promise.resolve();
   if (_dashboardFeatures.has(file)) return _dashboardFeatures.get(file);
@@ -345,7 +305,6 @@ async function _setupRealtimeSync() {
     clearTimeout(mtt); mtt = setTimeout(() => missedRender(true), 800);
   };
   _rtChannel = _sb.channel('rt-' + uid)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'personal_experiments', filter: f }, () => { if (_currentUser?.id === uid && typeof labInvalidate === 'function') labInvalidate(); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'trades', filter: f }, reloadTrades)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'missed_opportunities', filter: f }, reloadMissed)
     // invInit() reads `_invData || await invLoadFromDB()`, so the cache MUST be
@@ -1966,7 +1925,6 @@ function changeTradePage(type, delta) {
   document.getElementById(type==='stock'?'stocks-wrap':'crypto-wrap')?.scrollTo({top:0});
 }
 function renderTable(type) {
-  if (typeof labRender === 'function' && document.getElementById('tab-statistics')?.classList.contains('active')) labRender();
   const p = type==='stock' ? 'st' : 'cr';
   const wrap = document.getElementById(type==='stock' ? 'stocks-wrap' : 'crypto-wrap');
   // Crypto was folded into the stocks tab behind the scope switch, so
@@ -3245,7 +3203,6 @@ function t(k) { return (LANG_STRINGS[_lang] || LANG_STRINGS.en)[k] || k; }
 
 const LANG_STRINGS = {
   en: {
-    lab_open:'The lab',
     tablet_scroll_hint:'↔ Scroll horizontally to see all columns',
     nav_overview:'Home', nav_stocks:'Stocks / Crypto', nav_crypto:'Crypto',
     nav_statistics:'Statistics', nav_settings:'Profile', nav_themes:'Market Pulse',
@@ -3423,7 +3380,6 @@ set_data_sub:'Stocks & crypto market data', set_import_sub:'Broker connection & 
     tile_keep:'מה לשמר', tile_improve:'מה לשפר',
     tile_no_notes:'לא נרשמו הערות',
     trades:'עסקאות', no_trades:'אין עסקאות להצגה בתקופה זו',
-    lab_open:'המעבדה',
     modal_add:'הוסף עסקה', modal_edit:'ערוך עסקה',
     modal_open_trade:'פתיחת עסקה', modal_targets:'יעדים חלקיים (T1–T5)',
     modal_close_trade:'סגירת עסקה', modal_fees:'עמלות',
@@ -3778,7 +3734,6 @@ async function loadCryptoFearGreed() {
 }
 
 function renderOverview() {
-  refreshPersonalLab(false);
   const now = new Date();
   const om = document.getElementById('ov-month');
   const oy = document.getElementById('ov-year');
@@ -8287,9 +8242,6 @@ async function renderAutomaticTradeShot(host,trade,key,userId,seq) {
     button.setAttribute('aria-label',(_lang==='he'?'הגדל גרף עסקה — ':'Enlarge trade chart — ')+tr.symbol);
     const img=document.createElement('img');img.src=url;img.alt=(_lang==='he'?'גרף עסקה עם חצי כניסה ויציאה — ':'Trade chart with entry and exit arrows — ')+tr.symbol;
     button.append(img);button.onclick=()=>{if(valid())openLightbox(url);};host.append(button);
-    if (!setupBars) setupBars=await _fetchPivotBars(marketSymbol);
-    if (!valid()) return;
-    renderTradeSetupSuggestion(host,tr,setupBars,valid);
     applyPrivacy();
   } catch {
     if(valid())host.textContent=_lang==='he'?'הגרף אינו זמין':'Chart unavailable';

@@ -10,7 +10,7 @@ function labContext(extra = {}) {
  const escapeStart=helpers.indexOf('function esc(');
  vm.runInContext(helpers.slice(escapeStart,helpers.indexOf('\n}',escapeStart)+2),ctx);
  for(const fn of ['calcPL','calcTotal','isClosed']) vm.runInContext(extractFunction(fn),ctx);
- vm.runInContext(readFileSync(new URL('../assets/js/personal-lab.js',import.meta.url),'utf8'),ctx);
+ vm.runInContext(readFileSync(new URL('./archived/personal-lab.js',import.meta.url),'utf8'),ctx);
  return ctx;
 }
 

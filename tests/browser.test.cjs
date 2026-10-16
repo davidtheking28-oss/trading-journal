@@ -76,13 +76,6 @@ async function open(t, contextOptions = {}) {
     if (url.includes('chart.js@') && process.env.DESKTOP_REAL_CHARTS) return route.continue();
     if (url.includes('chart.js@')) return route.fulfill({ contentType: 'text/javascript', body: 'window.Chart=class { static defaults={};static getChart(){return null} constructor(el,cfg){this.data=cfg.data;this.options=cfg.options;this.canvas=el;} update(){}resize(){}destroy(){} };' });
     if (!url.startsWith(base)) return route.fulfill({ contentType: 'application/json', body: '{}' });
-    // Archived feature fixtures live only in these tests, including reloads.
-    if(new URL(url).pathname==='/dashboard.html' && /^(personal lab|personal comparison|lab conclusions|statistics show only the lab)/.test(t.name)){
-      const response=await route.fetch();let html=await response.text();
-      html=html.replace('<div id="tab-statistics" class="tab-content">','<div id="tab-statistics" class="tab-content"><details id="personal-lab-disclosure" class="lab-disclosure" ontoggle="togglePersonalLab()"><summary id="personal-lab-toggle">המעבדה</summary><section id="personal-lab" aria-labelledby="personal-lab-title"></section></details>');
-      html=html.replace('id="tab-overview"','id="tab-overview"').replace('<!-- ===== STATISTICS ===== -->','<section id="personal-lab-overview"></section><!-- ===== STATISTICS ===== -->');
-      return route.fulfill({response,body:html});
-    }
     await route.continue();
   });
   await page.goto(base + '/dashboard.html');
@@ -108,13 +101,6 @@ async function login(page, email = 'a@example.test') {
   await page.waitForFunction(() => !document.getElementById('auth-submit-btn').disabled);
 }
 
-async function revealLab(page) {
- if (!await page.locator('#personal-lab-disclosure').evaluate(el=>el.open)) await page.locator('#personal-lab-toggle').click();
- await page.locator('.lab-experiments > summary').waitFor();
- if (!await page.locator('.lab-experiments').evaluate(el=>el.open)) await page.locator('.lab-experiments > summary').click();
- await page.evaluate(()=>{_labAuto.tradesOpen=true;const list=document.getElementById('lab-trades-disclosure');if(list)list.open=true;});
-}
-
 test('new-user guide has four short steps, real destinations, skip and settings replay without adding trades',async t=>{
  const page=await open(t);await login(page);
  const before=await page.evaluate(()=>db.stocks.length+db.crypto.length);
@@ -138,32 +124,7 @@ test('new-user guide has four short steps, real destinations, skip and settings 
  assert.equal(await page.locator('#ob-overlay').isVisible(),false,'completed guide does not reopen automatically');
 });
 
-test('statistics show only the lab button until it is opened and closing pauses analysis',async t=>{
- const page=await open(t);await login(page);
- await page.evaluate(async()=>{
-  cookieDecline();await loadPersonalLabFeature();await loadTradeSnapshotFeature();window.__labRuns=0;
-  const original=tradeSetupSuggestion;tradeSetupSuggestion=(...args)=>{__labRuns++;return original(...args);};
-  _fetchPivotBars=async()=>[];
-  db.stocks=[{id:98701,type:'stock',symbol:'AAPL',ls:'L',entryDate:'2026-03-15',closeDate:'2026-03-16',entryPrice:101,exitPrice:102,shares:2,closedShares:2,t:[]}];_dbLoaded=true;switchTab('statistics');
- });
- await page.locator('#personal-lab-toggle').waitFor();
- assert.equal(await page.locator('#personal-lab-disclosure').evaluate(el=>el.open),false);
- assert.equal(await page.locator('#personal-lab').isVisible(),false);
- assert.equal(await page.evaluate(()=>__labRuns),0);
- await page.locator('#personal-lab-toggle').focus();await page.keyboard.press('Enter');
- await page.locator('#lab-auto-analysis .ss-setup-review').waitFor({state:'attached'});
- assert.equal(await page.locator('#lab-trades-disclosure').evaluate(el=>el.open),false);
- assert.equal(await page.locator('.lab-auto-trade').first().isVisible(),false);
- assert.ok((await page.locator('#personal-lab').boundingBox()).height<650,'closed trade list keeps the lab short');
- await page.locator('#lab-trades-disclosure > summary').click();
- await page.locator('#lab-auto-analysis .ss-setup-review').waitFor();
- assert.equal(await page.locator('.lab-experiments').evaluate(el=>el.open),false);
- assert.ok(await page.evaluate(()=>__labRuns)>0);
- await page.locator('#personal-lab-toggle').click();
- assert.equal(await page.locator('#personal-lab').isVisible(),false);
- await page.evaluate(()=>{_currentUser={id:'other'};resetPersonalLab();});
- assert.equal(await page.locator('#personal-lab-disclosure').evaluate(el=>el.open),false);
-});
+
 
 test('broker collection notices are localized and credentials require an explicit save', async t => {
   const page = await open(t);
@@ -945,7 +906,7 @@ test('closed stock trades automatically display one entry and exit image and ref
   await page.locator('#cam-btn-stock-901').click();
   await page.locator('#ss-grid .ss-auto-chart img').waitFor();
   const source=await page.locator('#ss-grid .ss-auto-chart img').getAttribute('src');
-  await page.locator('#ss-grid .ss-setup-review').waitFor();
+  assert.equal(await page.locator('#ss-grid .ss-setup-review').count(),0,'no retired setup analysis under the chart');
   assert.match(source,/^data:image\/png;base64,/);
   if(process.env.TRADE_SNAPSHOT_REVIEW) await page.screenshot({path:process.env.TRADE_SNAPSHOT_REVIEW,animations:'disabled'});
   await page.locator('#ss-grid .ss-auto-chart-button').click();await page.locator('#ss-lightbox.open').waitFor();
@@ -1118,155 +1079,13 @@ test('Market Pulse says so when "Today" is still the previous session, and stays
   await page.waitForFunction(() => document.getElementById('tt-session-note').style.display === 'none');
 });
 
-test('personal lab creates one experiment, preserves failed draft, reloads and clears on account change', async t => {
- const page = await open(t); await login(page);
- await page.evaluate(() => switchTab('statistics'));
- await revealLab(page);
- await page.locator('[data-lab-template="daily_limit"]').click();
- await page.locator('#lab-target').fill('2');
- await page.locator('[data-lab-action="review"]').click();
- await page.evaluate(() => { window.__test.labFailure = true; });
- await page.locator('[data-lab-action="start"]').click();
- await page.locator('#personal-lab [role="alert"]').waitFor();
- assert.match(await page.locator('#personal-lab').innerText(), /לא אושרה|not confirmed/);
- await page.evaluate(() => { window.__test.labFailure = false; });
- await page.locator('[data-lab-action="start"]').click();
- await page.locator('.lab-active-heading').waitFor();
- assert.equal(await page.evaluate(() => window.__testDB.personal_experiments.filter(x=>x.status==='active').length),1);
- const saved = await page.evaluate(() => window.__testDB.personal_experiments);
- await page.reload();
- await page.evaluate(rows => { window.__testDB.personal_experiments=rows; switchTab('statistics'); },saved);
- await revealLab(page);
- await page.locator('.lab-active-heading').waitFor();
- await page.evaluate(() => { switchTab('overview'); });
- assert.match(await page.locator('#personal-lab-overview').innerText(), /לניסוי שלי|View experiment/);
- await page.evaluate(async () => { await _sb.auth.signOut(); });
- assert.equal(await page.locator('#personal-lab').innerText(),'');
- await login(page,'b@example.test');
- await page.evaluate(() => switchTab('statistics'));
- await revealLab(page);await page.locator('.lab-templates').waitFor();
-});
 
-test('personal lab active metrics, missing records, privacy and frozen review work in both languages and themes', async t => {
- const page=await open(t);await login(page);await page.evaluate(()=>{cookieDecline();switchTab('statistics');});
- await revealLab(page);await page.locator('.lab-templates').waitFor();
- await page.locator('#personal-lab').screenshot({path:resolve(root,'docs/personal-lab-templates.png')});
- await page.evaluate(()=>{
-  const today=labToday('Asia/Jerusalem'), start=labShift(today,-12);
-  window.__testDB.personal_experiments=[{id:'lab-review',user_id:'user-a',template:'setup_documented',asset_scope:'stock',target:100,timezone:'Asia/Jerusalem',start_date:start,end_date:labShift(start,30),status:'active',updated_at:'stamp-lab',created_at:start}];
-  db.stocks=[{id:91001,type:'stock',symbol:'LAB1',entryDate:labShift(start,1),entryPrice:100,shares:10,exitPrice:110,ls:'L',t:[],setupType:'vcp'}, {id:91002,type:'stock',symbol:'LAB2',entryDate:labShift(start,2),entryPrice:100,shares:10,exitPrice:90,ls:'L',t:[],setupType:''}];
-  _dbLoaded=true;labInvalidate();
- });
- await page.waitForFunction(()=>document.querySelector('.lab-metric strong')?.textContent==='50%');
- await page.locator('#personal-lab').screenshot({path:resolve(root,'docs/personal-lab-active.png')});
- await page.addScriptTag({path:require.resolve('axe-core/axe.min.js')});
- await page.addStyleTag({content:'*,*::before,*::after{transition:none !important;animation:none !important}'});
- for(const width of [1280,1024]) for(const lang of ['he','en']) for(const theme of ['dark','light']) {
-  await page.setViewportSize({width,height:1000});
-  await page.evaluate(({lang,theme})=>{_applyTheme(theme);setLang(lang);labRender();}, {lang,theme});
-  const result=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth+2}));assert.equal(result.overflow,false);
-  const violations=await page.evaluate(async()=> (await axe.run(document.getElementById('personal-lab'),{runOnly:{type:'rule',values:['color-contrast','label','button-name']}})).violations);
-  assert.deepEqual(violations,[]);
- }
- await page.evaluate(()=>{privacyMode=true;applyPrivacy();});
- assert.equal(await page.locator('.lab-metric .sensitive').evaluate(el=>getComputedStyle(el).filter),'blur(6px)');
- // A local journal edit must update the lab immediately, without a realtime echo.
- await page.evaluate(()=>{db.stocks[1].setupType='vcp';renderTable('stock');});
- assert.equal(await page.locator('.lab-metric strong').first().innerText(),'100%');
- await page.evaluate(()=>{
-  privacyMode=false;applyPrivacy();setLang('he');_applyTheme('dark');
-  const e=window.__testDB.personal_experiments[0],today=labToday(e.timezone);
-  e.end_date=today;e.start_date=labShift(today,-30);labInvalidate();
-  window.__testDB.trades=db.stocks.map(_tradeToRow).map((row,i)=>({...row,id:91001+i}));
- });
- await page.locator('#lab-note').waitFor();await page.locator('#lab-choice').selectOption('keep');await page.locator('#lab-note').fill('בדקתי תהליך, בלי להסיק הבטחה לרווח.');
- await page.locator('#personal-lab').screenshot({path:resolve(root,'docs/personal-lab-review.png')});
- await page.locator('[data-lab-action="finish"]').click();
- await page.locator('.lab-history').waitFor();await page.locator('.lab-history > summary').click();
- assert.match(await page.locator('.lab-history').innerText(),/צילום נתונים קבוע/);
- assert.match(await page.locator('.lab-history').innerText(),/להמשיך בכלל/);
- const before=await page.evaluate(()=>JSON.stringify(window.__testDB.personal_experiments[0].summary_metrics));
- await page.evaluate(()=>{db.stocks[0].exitPrice=1000;renderTable('stock');});
- assert.equal(await page.evaluate(()=>JSON.stringify(window.__testDB.personal_experiments[0].summary_metrics)),before);
- await page.locator('.lab-history').screenshot({path:resolve(root,'docs/personal-lab-summary.png')});
- await page.reload();await page.evaluate(()=>{cookieDecline();switchTab('statistics');});
- await revealLab(page);
- await page.locator('.lab-history > summary').click();
- assert.match(await page.locator('.lab-history').innerText(),/להמשיך בכלל/);
- assert.equal(await page.evaluate(()=>JSON.stringify(window.__testDB.personal_experiments[0].summary_metrics)),before);
-});
 
-test('personal lab retries load failures and preserves review input across refresh and server conflicts', async t => {
- const page=await open(t);await login(page);await page.evaluate(()=>{cookieDecline();switchTab('statistics');});
- await revealLab(page);await page.locator('.lab-templates').waitFor();
- await page.waitForFunction(()=>typeof _lab!=='undefined'&&_lab.historyLoaded&&!_lab.pending);
- await page.evaluate(()=>{
-  const today=labToday('Asia/Jerusalem');
-  window.__testDB.personal_experiments=[{id:'qa-conflict',user_id:'user-a',template:'daily_limit',asset_scope:'stock',target:3,timezone:'Asia/Jerusalem',start_date:labShift(today,-30),end_date:today,status:'active',updated_at:'stamp-old',created_at:today}];
-  const original=_sb.from.bind(_sb);let fail=true;
-  _sb.from=table=>{if(table==='personal_experiments'&&fail){fail=false;throw Error('simulated SDK failure');}return original(table);};
-  labInvalidate();
- });
- await page.locator('#personal-lab [role="alert"]').waitFor().catch(async error=>{console.log('LAB QA STATE',await page.evaluate(()=>({hidden:document.hidden,loaded:_lab.loaded,error:_lab.error,pending:!!_lab.pending,history:_lab.historyLoaded,html:document.getElementById('personal-lab').innerText})));throw error;});
- await page.locator('#personal-lab [data-lab-action="reload"]').click();
- await page.locator('#lab-note').fill('הערה שלא רוצים לאבד');await page.locator('#lab-choice').selectOption('keep');
- await page.evaluate(()=>labLoad({force:true,history:true}));
- assert.equal(await page.locator('#lab-note').inputValue(),'הערה שלא רוצים לאבד');
- await page.evaluate(()=>{
-  const original=_sb.rpc.bind(_sb);let conflict=true;
-  _sb.rpc=async(name,params)=>{
-   if(name==='finish_personal_experiment'&&conflict){conflict=false;window.__testDB.personal_experiments[0].updated_at='stamp-new';return {data:null,error:{code:'PT409'}};}
-   return original(name,params);
-  };
- });
- await page.locator('[data-lab-action="finish"]').click();
- await page.waitForFunction(()=>document.querySelector('#personal-lab')?.textContent.includes('הניסוי השתנה במכשיר אחר'));
- assert.equal(await page.locator('#lab-note').inputValue(),'הערה שלא רוצים לאבד');assert.equal(await page.locator('#lab-choice').inputValue(),'keep');
- await page.locator('[data-lab-action="finish"]').click();
- await page.locator('.lab-history > summary').click();
- assert.match(await page.locator('.lab-history').innerText(),/להמשיך בכלל/);assert.match(await page.locator('.lab-history').innerText(),/הערה שלא רוצים לאבד/);
-});
 
-test('personal lab simplified screen has a clear next action, accessible disclosure and stable keyboard focus', async t=>{
- const page=await open(t);await login(page);await page.evaluate(()=>{cookieDecline();switchTab('statistics');});await revealLab(page);await page.locator('.lab-templates').waitFor();
- await page.evaluate(()=>{
-  const today=labToday('Asia/Jerusalem');
-  window.__testDB.personal_experiments=[{id:'polish-active',user_id:'user-a',template:'setup_documented',asset_scope:'stock',target:100,timezone:'Asia/Jerusalem',start_date:labShift(today,-4),end_date:labShift(today,26),status:'active',updated_at:'polish-stamp',created_at:today}];
-  db.stocks=[{id:82001,type:'stock',symbol:'AAPL',entryDate:today,entryPrice:100,shares:2,ls:'L',t:[],setupType:''}];_dbLoaded=true;labInvalidate();
- });
- await page.locator('[data-lab-action="review-missing"]').waitFor();
- assert.equal(await page.locator('.lab-analysis').getAttribute('open'),null);
- assert.equal(await page.locator('.lab-analysis .sensitive').first().isVisible(),false);
- await page.locator('[data-lab-action="review-missing"]').focus();await page.keyboard.press('Enter');
- assert.equal(await page.locator('#trade-modal').evaluate(el=>el.classList.contains('open')),true);
- assert.equal(await page.locator('#m-setup-pills button').first().evaluate(el=>el===document.activeElement),true);
- assert.match(await page.locator('#lab-documentation-help').innerText(),/סטאפ/);
- await page.screenshot({path:resolve(root,'docs','personal-lab-documentation.png')});
- await page.evaluate(()=>closeModal());
- assert.equal(await page.locator('#lab-documentation-help').count(),0);
- await page.evaluate(()=>{_lab.active.template='reason_documented';labRender();});
- await page.locator('[data-lab-action="review-missing"]').click();
- assert.equal(await page.locator('#m-er-pills button').first().evaluate(el=>el===document.activeElement),true);
- assert.match(await page.locator('#lab-documentation-help').innerText(),/סיבת הכניסה/);
- await page.evaluate(()=>{closeModal();openModal('stock');});
- assert.equal(await page.locator('#lab-documentation-help').count(),0);
- await page.evaluate(()=>{closeModal();_lab.active.template='setup_documented';labRender();});
- await page.locator('.lab-analysis > summary').focus();await page.keyboard.press('Enter');
- assert.equal(await page.locator('.lab-analysis').evaluate(el=>el.open),true);
- await page.evaluate(()=>renderTable('stock'));
- assert.equal(await page.locator('.lab-analysis').evaluate(el=>el.open),true);
- await page.addScriptTag({path:require.resolve('axe-core/axe.min.js')});
- await page.addStyleTag({content:'*,*::before,*::after{transition:none !important;animation:none !important}'});
- for(const theme of ['dark','light']) {
-  await page.evaluate(theme=>_applyTheme(theme),theme);
-  const violations=await page.evaluate(async()=>(await axe.run(document.getElementById('personal-lab'),{runOnly:{type:'rule',values:['color-contrast','label','button-name']}})).violations);
-  assert.deepEqual(violations,[]);
- }
- const size=await page.locator('[data-lab-action="review-missing"]').boundingBox();assert.ok(size.height>=44);
- await page.setViewportSize({width:1024,height:768});
- await page.evaluate(()=>{document.documentElement.style.fontSize='200%';});
- assert.equal(await page.evaluate(()=>document.getElementById('personal-lab').scrollWidth>document.getElementById('personal-lab').clientWidth+2),false);
-});
+
+
+
+
 
 test('bottom navigation is removed and narrow screens retain top navigation and add trade',async t=>{
  const page=await open(t);await login(page);await page.evaluate(()=>cookieDecline());
@@ -1278,218 +1097,4 @@ test('bottom navigation is removed and narrow screens retain top navigation and 
   assert.equal(await page.locator('#tab-stocks .table-toolbar .btn-primary').first().isVisible(),true);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+2),false);
  }
-});
-
-test('setup suggestion explains evidence, requires confirmation and preserves existing documentation',async t=>{
- const page=await open(t);await login(page);
- await page.evaluate(async()=>{
-  cookieDecline();await loadTradeSnapshotFeature();
-  const trade={id:98201,type:'stock',symbol:'AAPL',ls:'L',entryDate:'2026-03-15',entryPrice:101,shares:2,t:[],setupType:''};
-  db.stocks=[trade];
-  window.__setupBars=Array.from({length:40},(_,i)=>({t:Date.parse('2026-02-01')/1000+i*86400,o:96+Math.sin(i),h:100,l:94,c:97+Math.sin(i*.5),v:1000}));
-  const host=document.createElement('div');host.id='setup-review-test';document.body.append(host);
-  renderTradeSetupSuggestion(host,trade,__setupBars,()=>true);
- });
- assert.match(await page.locator('#setup-review-test').innerText(),/פריצה אפשרית/);
- await page.locator('#setup-review-test button').click();
- assert.equal(await page.locator('#m-setup-type').inputValue(),'breakout');
- assert.equal(await page.evaluate(()=>db.stocks[0].setupType),'','suggestion is not a saved fact');
- await page.evaluate(()=>{
-  closeModal();const trade=db.stocks[0];trade.setupType='vcp';
-  const host=document.getElementById('setup-review-test');host.replaceChildren();renderTradeSetupSuggestion(host,trade,__setupBars,()=>true);
- });
- await page.locator('#setup-review-test button').click();
- assert.equal(await page.locator('#m-setup-type').inputValue(),'vcp','existing documentation remains authoritative');
- await page.evaluate(()=>{
-  closeModal();const host=document.getElementById('setup-review-test');host.replaceChildren();renderTradeSetupSuggestion(host,db.stocks[0],__setupBars,()=>false);
- });
- await page.locator('#setup-review-test button').click();
- assert.equal(await page.locator('#trade-modal').evaluate(el=>el.classList.contains('open')),false,'stale account/view callback cannot open a trade');
-});
-
-test('confirming a setup preserves imported fees and custom entry reasons',async t=>{
- const page=await open(t);await login(page);
- await page.evaluate(()=>{
-  cookieDecline();
-  const trade={id:98202,type:'stock',symbol:'AAPL',ls:'L',entryDate:'2026-03-15',entryPrice:101,shares:2,t:[],setupType:'',entryReason:'My custom broker reason',commission:1.25,ecn:3.75,ibkr_id:'test-import-id'};
-  db.stocks=[trade];window.__testDB.trades=[{..._tradeToRow(trade),id:trade.id,user_id:'user-a'}];
-  openModal('stock',trade);modalSetSetup('breakout');
- });
- await page.locator('#trade-modal [onclick="saveTrade()"]').click();
- await page.locator('#trade-modal.open').waitFor({state:'hidden'});
- const row=await page.evaluate(()=>window.__testDB.trades[0]);
- assert.equal(row.setup_type,'breakout');assert.equal(row.ecn,3.75);assert.equal(row.commission,1.25);
- assert.equal(row.entry_reason,'My custom broker reason');assert.equal(row.ibkr_id,'test-import-id');assert.equal(row.entry_price,101);
-});
-
-test('a cached chart and setup explanation use the same market history and refresh together',async t=>{
- const page=await open(t);await login(page);
- await page.evaluate(async()=>{
-  cookieDecline();await loadTradeSnapshotFeature();window.__chartBuilds=0;
-  const trade={id:98203,type:'stock',symbol:'AAPL',ls:'L',entryDate:'2026-03-15',closeDate:'2026-03-16',entryPrice:101,exitPrice:102,shares:2,closedShares:2,t:[]};db.stocks=[trade];
-  window.__historyVersion=0;
-  _fetchPivotBars=async()=>Array.from({length:40},(_,i)=>({t:Date.parse('2026-02-01')/1000+i*86400,o:96+Math.sin(i),h:100+__historyVersion,l:94,c:97+Math.sin(i*.5),v:1000}));
-  tradeSnapshotImage=async()=>{__chartBuilds++;const canvas=document.createElement('canvas');canvas.width=2;canvas.height=2;const ctx=canvas.getContext('2d');ctx.fillStyle=__historyVersion?'red':'blue';ctx.fillRect(0,0,2,2);return canvas.toDataURL();};
-  switchTab('stocks');await openSSModal('stock-98203','AAPL');
- });
- await page.locator('.ss-setup-review').waitFor();
- assert.match(await page.locator('.ss-setup-review').innerText(),/1.0%/);
- await page.evaluate(async()=>{__historyVersion=1;await renderSSGrid();});
- await page.locator('.ss-setup-review').waitFor();
- assert.match(await page.locator('.ss-setup-review').innerText(),/1.0%/,'cached explanation must describe the cached image');
- assert.equal(await page.evaluate(()=>__chartBuilds),1);
- await page.evaluate(async()=>{for(const cached of _tradeSnapshotImages.values())cached.expiresAt=0;await renderSSGrid();});
- await page.locator('.ss-setup-review').waitFor();
- assert.equal(await page.evaluate(()=>__chartBuilds),2);
- assert.match(await page.locator('.ss-setup-review').innerText(),/0.0%/);
-});
-
-test('personal lab automatically analyzes closed trades without opening the camera or entering a setup',async t=>{
- const page=await open(t);await login(page);
- await page.evaluate(()=>{cookieDecline();switchTab('statistics');});await revealLab(page);await page.locator('.lab-templates').waitFor();
- await page.evaluate(()=>{
-  _fetchPivotBars=async()=>Array.from({length:55},(_,i)=>({t:Date.parse('2026-02-01')/1000+i*86400,o:96+Math.sin(i),h:100,l:94,c:97+Math.sin(i*.5),v:1000}));
-  db.stocks=[{id:98301,type:'stock',symbol:'AAPL',ls:'L',entryDate:'2026-03-15',closeDate:'2026-03-16',entryPrice:101,exitPrice:102,shares:2,closedShares:2,t:[],setupType:''}];db.crypto=[];_dbLoaded=true;labRender();
- });
- await page.locator('#lab-auto-analysis .ss-setup-review').waitFor();
- assert.match(await page.locator('#lab-auto-analysis').innerText(),/פריצה אפשרית/);
- assert.equal(await page.locator('#lab-auto-analysis .lab-auto-chart').count(),1);
- assert.equal(await page.locator('#lab-auto-analysis .lab-auto-chart').evaluate(el=>el.open),false);
- assert.equal(await page.locator('#lab-auto-analysis img').count(),0,'charts do not crowd the initial results');
- await page.locator('#lab-auto-analysis .lab-auto-chart > summary').focus();await page.keyboard.press('Enter');
- await page.locator('#lab-auto-analysis img').waitFor();
- await page.evaluate(()=>labRender());
- await page.locator('#lab-auto-analysis img').waitFor();
- assert.equal(await page.locator('#lab-auto-analysis .lab-auto-chart').evaluate(el=>el.open),true,'chart disclosure survives refresh');
- assert.equal(await page.locator('#ss-modal.open').count(),0);
- assert.equal(await page.evaluate(()=>db.stocks[0].setupType),'');
- await page.evaluate(()=>{db.stocks[0].setupType='vcp';labRender();});
- await page.locator('.lab-entry-coach').waitFor({state:'attached'});
- assert.equal(await page.locator('.lab-entry-coach').isVisible(),false,'coaching stays folded until requested');
- assert.equal(await page.locator('.lab-structure-review > summary').isVisible(),false,'structural detail does not add another top-level action');
- await page.locator('.lab-auto-explanation > summary').click();
- await page.locator('.lab-structure-review > summary').click();
- assert.match(await page.locator('.lab-structure-review').innerText(),/ממוצע פשוט 21|אין מספיק נתונים/);
- assert.match(await page.locator('.lab-entry-coach').innerText(),/מה זוהה[\s\S]*למה זה חשוב[\s\S]*בפעם הבאה/);
- assert.equal(await page.evaluate(()=>db.stocks[0].setupType),'vcp','coaching never rewrites documentation');
- await page.evaluate(()=>{_currentUser={id:'other-user'};resetPersonalLab();});
- assert.equal(await page.locator('#lab-auto-analysis').count(),0);
-});
-
-test('personal lab ignores delayed analysis after account changes and bounds chart loading',async t=>{
- const page=await open(t);await login(page);
- await page.evaluate(()=>{cookieDecline();switchTab('statistics');});await revealLab(page);await page.locator('.lab-templates').waitFor();
- await page.evaluate(async()=>{
-  await loadTradeSnapshotFeature();window.__labRequests=0;window.__labReleases=[];
-  _fetchPivotBars=()=>{__labRequests++;return new Promise(resolve=>__labReleases.push(resolve));};
-  db.stocks=Array.from({length:6},(_,i)=>({id:98400+i,type:'stock',symbol:'TEST'+i,ls:'L',entryDate:'2026-03-15',closeDate:'2026-03-16',entryPrice:101,exitPrice:102,shares:2,closedShares:2,t:[],setupType:''}));db.crypto=[];_dbLoaded=true;labRender();
- });
- await page.waitForFunction(()=>__labRequests===2);
- assert.equal(await page.locator('.lab-auto-trade').count(),4);
- assert.match(await page.locator('.lab-auto-count').innerText(),/4.*6/);
- await page.evaluate(()=>{_currentUser={id:'other-user'};resetPersonalLab();__labReleases.forEach(resolve=>resolve([]));});
- await page.waitForFunction(()=>!document.querySelector('#lab-auto-analysis'));
- assert.equal(await page.evaluate(()=>__labRequests),2,'no further requests for the obsolete account');
-});
-
-test('personal lab remains compact, accessible and readable without building hidden charts',async t=>{
- const page=await open(t);await login(page);
- await page.evaluate(()=>{cookieDecline();switchTab('statistics');});await revealLab(page);await page.locator('.lab-templates').waitFor();
- await page.evaluate(async()=>{
-  await loadTradeSnapshotFeature();window.__labImageBuilds=0;
-  const image=tradeSnapshotImage;tradeSnapshotImage=(...args)=>{__labImageBuilds++;return image(...args);};
-  _fetchPivotBars=async()=>Array.from({length:55},(_,i)=>({t:Date.parse('2026-02-01')/1000+i*86400,o:96+Math.sin(i),h:100,l:94,c:97+Math.sin(i*.5),v:1000}));
-  db.stocks=Array.from({length:6},(_,i)=>({id:98500+i,type:'stock',symbol:'TEST'+i,ls:'L',entryDate:'2026-03-15',closeDate:'2026-03-16',entryPrice:101,exitPrice:102,shares:2,closedShares:2,t:[],setupType:''}));db.crypto=[];_dbLoaded=true;labRender();
- });
- await page.waitForFunction(()=>document.querySelectorAll('#lab-auto-analysis .ss-setup-review').length===4);
- assert.equal(await page.evaluate(()=>__labImageBuilds),0);
- assert.equal(await page.locator('.lab-auto-chart[open]').count(),0);
- for(const card of await page.locator('.lab-auto-trade').all()) assert.ok((await card.boundingBox()).height<340,'summary rows should remain easy to scan');
- await page.locator('.lab-auto-more').click();
- await page.waitForFunction(()=>document.querySelectorAll('#lab-auto-analysis .ss-setup-review').length===6);
- assert.equal(await page.evaluate(()=>document.activeElement?.tagName),'H4','show more should focus the newly revealed trade');
- assert.equal(await page.evaluate(()=>__labImageBuilds),0);
- await page.addScriptTag({path:require.resolve('axe-core/axe.min.js')});
- await page.addStyleTag({content:'*,*::before,*::after{transition:none!important;animation:none!important}'});
- for(const theme of ['dark','light']){
-  await page.evaluate(theme=>_applyTheme(theme),theme);
-  assert.deepEqual(await page.evaluate(async()=>(await axe.run(document.getElementById('lab-auto-analysis'),{runOnly:{type:'rule',values:['color-contrast','label','button-name']}})).violations),[]);
- }
- for(const width of [1280,1024,768]){
-  await page.setViewportSize({width,height:900});
-  assert.equal(await page.evaluate(()=>{const el=document.getElementById('lab-auto-analysis');return el.scrollWidth>el.clientWidth+2;}),false);
- }
- await page.setViewportSize({width:1280,height:1000});
- await page.locator('.lab-auto-chart > summary').first().focus();await page.keyboard.press('Enter');
- await page.locator('.lab-auto-chart img').first().waitFor();assert.equal(await page.evaluate(()=>__labImageBuilds),1);
- await page.mouse.move(0,0); // Hover intentionally reveals sensitive data; test the resting state.
- await page.evaluate(()=>{privacyMode=true;applyPrivacy();});
- assert.notEqual(await page.locator('.lab-auto-chart .ss-auto-chart-button').first().evaluate(el=>getComputedStyle(el).filter),'none');
-});
-
-test('personal lab keeps the analysis readable when chart rendering fails and retries in place',async t=>{
- const page=await open(t);await login(page);
- await page.evaluate(()=>{cookieDecline();switchTab('statistics');});await revealLab(page);await page.locator('.lab-templates').waitFor();
- await page.evaluate(async()=>{
-  await loadTradeSnapshotFeature();window.__chartAttempts=0;const original=tradeSnapshotImage;
-  tradeSnapshotImage=async(...args)=>{if(++__chartAttempts===1)throw new Error('mock chart failure');return original(...args);};
-  _fetchPivotBars=async()=>Array.from({length:55},(_,i)=>({t:Date.parse('2026-02-01')/1000+i*86400,o:96+Math.sin(i),h:100,l:94,c:97+Math.sin(i*.5),v:1000}));
-  db.stocks=[{id:98601,type:'stock',symbol:'AAPL',ls:'L',entryDate:'2026-03-15',closeDate:'2026-03-16',entryPrice:101,exitPrice:102,shares:2,closedShares:2,t:[],setupType:''}];db.crypto=[];_dbLoaded=true;labRender();
- });
- await page.locator('.lab-auto-chart > summary').click();
- await page.locator('.lab-auto-chart button').waitFor();
- assert.match(await page.locator('.lab-auto-chart').innerText(),/הגרף אינו זמין/);
- assert.match(await page.locator('#lab-auto-analysis .ss-setup-review').innerText(),/פריצה אפשרית/);
- await page.locator('.lab-auto-chart button').click();await page.locator('.lab-auto-chart img').waitFor();
- assert.equal(await page.evaluate(()=>__chartAttempts),2);
-});
-
-test('personal comparison shows real cohort counts, explains evidence and links both outcomes',async t=>{
- const page=await open(t);await login(page);await page.evaluate(()=>{cookieDecline();switchTab('statistics');});await revealLab(page);await page.locator('.lab-templates').waitFor();
- await page.evaluate(()=>{
-  _fetchPivotBars=async()=>Array.from({length:55},(_,i)=>({t:Date.parse('2026-02-01')/1000+i*86400,o:96+Math.sin(i),h:100,l:94,c:97+Math.sin(i*.5),v:1000}));
-  db.stocks=Array.from({length:10},(_,i)=>({id:99500+i,type:'stock',symbol:'COHORT'+i,ls:'L',entryDate:'2026-03-15',closeDate:'2026-03-16',entryPrice:i<5?101:106,exitPrice:i<5?110:95,shares:2,closedShares:2,t:[],setupType:'vcp'}));db.crypto=[];_dbLoaded=true;_labAuto.limit=12;labRender();
- });
- await page.waitForFunction(()=>document.querySelector('.lab-personal-comparison')?.textContent.includes('1.0%'));
- const section=page.locator('.lab-personal-comparison');
- assert.equal(await section.evaluate(el=>el.tagName),'DETAILS');
- assert.equal(await section.evaluate(el=>el.open),false);
- await section.locator(':scope > summary').click();
- const text=await section.innerText();
- assert.match(text,/1\.0%/);assert.match(text,/6\.0%/);assert.match(text,/5 עסקאות מרוויחות/);assert.match(text,/5 עסקאות מפסידות/);
- const review=page.locator('.ss-setup-review').first();
- assert.doesNotMatch(await review.innerText(),/השיא המחושב/);
- assert.ok((await review.innerText()).length<200);
- await review.locator('.lab-auto-explanation > summary').click();
- assert.match(await review.innerText(),/השיא המחושב אינו נקודת פריצה מאומתת/);
- const examples=section.locator('[data-lab-example]');assert.equal(await examples.count(),2);
- for(let i=0;i<2;i++){const button=examples.nth(i),key=await button.getAttribute('data-lab-example');await button.click();assert.equal(await page.evaluate(()=>document.activeElement?.closest('[data-lab-trade-key]')?.dataset.labTradeKey),key);}
- await page.evaluate(()=>{_currentUser={id:'other-user'};resetPersonalLab();});assert.equal(await page.locator('.lab-personal-comparison').count(),0);
-});
-
-test('lab conclusions show reviewed coverage, trace examples and never call a non-match a verified mistake',async t=>{
- const page=await open(t);await login(page);await page.evaluate(()=>{cookieDecline();switchTab('statistics');});await revealLab(page);await page.locator('.lab-templates').waitFor();
- await page.evaluate(()=>{
-  _fetchPivotBars=async()=>Array.from({length:55},(_,i)=>({t:Date.parse('2026-02-01')/1000+i*86400,o:96+Math.sin(i),h:100,l:94,c:97+Math.sin(i*.5),v:1000}));
-  db.stocks=Array.from({length:6},(_,i)=>({id:99000+i,type:'stock',symbol:'TEST'+i,ls:i===2?'S':'L',entryDate:'2026-03-15',closeDate:'2026-03-16',entryPrice:i>=4?105:101,exitPrice:102,shares:2,closedShares:2,t:[],setupType:''}));db.crypto=[];_dbLoaded=true;labRender();
- });
- await page.locator('#lab-review-summary > details.lab-recurring-observations').waitFor();
- const summary=await page.locator('#lab-review-summary').innerText();
- assert.match(summary,/4.*6/);assert.match(summary,/סיכום חלקי/);assert.match(summary,/1 ללא מספיק מידע/);
- const primary=page.locator('.lab-primary-finding');
- assert.equal(await primary.locator('h3').innerText(),'לפני העסקה הבאה');
- assert.match(await primary.innerText(),/נקודת הפריצה שתכננת/);
- assert.ok((await primary.innerText()).length<450,'the main finding should stay concise');
- await page.locator('#lab-review-summary > details.lab-recurring-observations > summary').click();
- assert.match(await page.locator('#lab-review-summary').innerText(),/2 מתוך 3/);
- assert.match(await page.locator('#lab-review-summary').innerText(),/אינה הוכחה לטעות/);
- assert.doesNotMatch(await page.locator('#lab-review-summary').innerText(),/טעויות מאומתות|100% דיוק/);
- await page.evaluate(()=>{document.getElementById('lab-trades-disclosure').open=false;});
- const example=page.locator('#lab-review-summary [data-lab-example]').first();const key=await example.getAttribute('data-lab-example');await example.click();
- assert.equal(await page.locator('#lab-trades-disclosure').evaluate(el=>el.open),true);
- assert.equal(await page.evaluate(()=>document.activeElement?.closest('[data-lab-trade-key]')?.dataset.labTradeKey),key);
- await page.evaluate(()=>labRender());await page.locator('#lab-review-summary > details.lab-recurring-observations').waitFor();
- assert.equal(await page.locator('#lab-review-summary > details.lab-recurring-observations').evaluate(el=>el.open),true);
- await page.evaluate(()=>{_currentUser={id:'other-user'};resetPersonalLab();});
- assert.equal(await page.locator('#lab-review-summary').count(),0);
 });
