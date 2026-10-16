@@ -174,3 +174,35 @@ test('lab leads with one supported finding and a concrete entry-plan check',()=>
  assert.doesNotMatch(html,/יותר מ־3%|טעית|הוכח/);
  assert.match(c.labPrimaryFindingHTML({...report,patterns:[]}),/אין כרגע מספיק דוגמאות/);
 });
+
+test('recurring entry checks never combine assets or documented setups and omit pullbacks',()=>{
+ const c=labContext();
+ const row=(id,type,setupType)=>({trade:{id,type,setupType},result:{status:'unmatched',reason:'distance',distancePct:-2}});
+ assert.equal(c.labReviewSummary([row(1,'stock','vcp'),row(2,'crypto','vcp'),row(3,'stock','breakout'),row(4,'stock','pullback'),row(5,'stock','pullback')],5).patterns.length,0);
+ const r=c.labReviewSummary([row(1,'stock','vcp'),row(2,'stock','vcp'),row(3,'stock','breakout')],3);
+ assert.equal(r.patterns.length,1);assert.equal(r.patterns[0].comparableCount,2);
+ assert.equal(r.patterns[0].assetType,'stock');assert.equal(r.patterns[0].setupKey,'vcp');
+ assert.match(c.labPrimaryFindingHTML(r),/2 מתוך 2/);
+});
+
+test('same symbol and entry date cannot manufacture repeated entry mistakes',()=>{
+ const c=labContext();
+ const rows=[1,2].map(id=>({trade:{id,type:'stock',symbol:'ABC',entryDate:'2026-10-01'},result:{status:'unmatched',reason:'distance',distancePct:5}}));
+ assert.equal(c.labReviewSummary(rows,2).patterns.length,0);
+ rows[1].trade.entryDate='2026-10-02';assert.equal(c.labReviewSummary(rows,2).patterns[0].count,2);
+});
+
+test('conflicting same-day entries are excluded rather than chosen by completion order',()=>{
+ const c=labContext();
+ const rows=[5,-2,5].map((value,id)=>({trade:{id,type:'stock',symbol:'ABC',entryDate:id===2?'2026-10-02':'2026-10-01'},result:{status:'unmatched',reason:'distance',distancePct:value}}));
+ for(const input of [rows,[...rows].reverse()]){
+  const r=c.labReviewSummary(input,3);assert.equal(r.patterns.length,0);assert.equal(r.distanceChecked,1);
+ }
+});
+
+test('equally frequent cohort findings are stable across asynchronous completion order',()=>{
+ const c=labContext();
+ const rows=Array.from({length:4},(_,i)=>({trade:{id:i,type:i<2?'stock':'crypto',setupType:'vcp'},result:{status:'unmatched',reason:'distance',distancePct:5}}));
+ const html=c.labPrimaryFindingHTML(c.labReviewSummary(rows,4));
+ assert.equal(c.labPrimaryFindingHTML(c.labReviewSummary([...rows].reverse(),4)),html);
+});

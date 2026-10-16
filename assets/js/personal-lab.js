@@ -373,17 +373,44 @@ function labReviewSummary(rows, total) {
   }
   const reviewed=[...unique.values()];
   const known=reviewed.filter(row=>['possible','unmatched'].includes(row.result?.status));
-  const distance=known.filter(row=>Number.isFinite(row.result.distancePct) && (row.result.status==='possible' || ['distance','shape'].includes(row.result.reason)));
+  const observations=new Map();
+  for(const row of known){
+    const t=row.trade,r=row.result;
+    if(!Number.isFinite(r.distancePct) || !(r.status==='possible' || ['distance','shape'].includes(r.reason)))continue;
+    // A pullback/reversal is not intended to break a prior high. Missing setup
+    // stays a separate unknown cohort; never infer its intent from the outcome.
+    if(t.setupType && !['vcp','breakout'].includes(t.setupType))continue;
+    const symbol=String(t.symbol||'').trim().toUpperCase();
+    const key=t.type+':'+(symbol && labDate(t.entryDate)?symbol+':'+t.entryDate:String(t.id));
+    // Repeated imports/fills on the same entry day are not independent examples.
+    if(!observations.has(key))observations.set(key,row);
+    else {
+      const previous=observations.get(key);
+      if(previous && ((previous.trade.setupType||'unknown')!==(t.setupType||'unknown') || previous.result.distancePct!==r.distancePct))observations.set(key,null);
+    }
+  }
+  const distance=[...observations.values()].filter(Boolean),groups=new Map();
+  for(const row of distance){
+    const key=row.trade.type+':'+(row.trade.setupType||'unknown');
+    if(!groups.has(key))groups.set(key,[]);
+    groups.get(key).push(row);
+  }
   const patterns=[];
-  for(const key of ['above','below']){
-    const examples=distance.filter(row=>key==='above'?row.result.distancePct>3:row.result.distancePct<0);
-    if(examples.length>=2)patterns.push({key,count:examples.length,examples:examples.map(row=>({id:String(row.trade.id),type:row.trade.type,symbol:row.trade.symbol || '',entryDate:row.trade.entryDate || ''}))});
+  for(const group of groups.values())for(const key of ['above','below']){
+    const examples=group.filter(row=>key==='above'?row.result.distancePct>3:row.result.distancePct<0).sort((a,b)=>String(b.trade.entryDate||'').localeCompare(String(a.trade.entryDate||'')) || String(a.trade.id).localeCompare(String(b.trade.id)));
+    if(examples.length>=2)patterns.push({key,count:examples.length,comparableCount:group.length,assetType:group[0].trade.type,setupKey:group[0].trade.setupType||'unknown',examples:examples.map(row=>({id:String(row.trade.id),type:row.trade.type,symbol:row.trade.symbol || '',entryDate:row.trade.entryDate || ''}))});
   }
   const available=Number.isInteger(total)&&total>=reviewed.length?total:reviewed.length;
   return {reviewed:reviewed.length,total:available,unknown:reviewed.length-known.length,distanceChecked:distance.length,partial:reviewed.length<available,patterns};
 }
+function labPatternScope(pattern) {
+  if(!pattern.assetType)return '';
+  const asset=pattern.assetType==='stock'?labText('מניות','Stocks'):labText('קריפטו','Crypto');
+  const setup=pattern.setupKey==='unknown'?labText('סטאפ לא מתועד','Setup not recorded'):(typeof SETUP_LABELS!=='undefined'?SETUP_LABELS[pattern.setupKey]:pattern.setupKey)||pattern.setupKey;
+  return asset+' · '+setup;
+}
 function labPrimaryFindingHTML(report) {
-  const pattern=[...report.patterns].filter(p=>p.count>=2).sort((a,b)=>b.count-a.count || a.key.localeCompare(b.key))[0];
+  const pattern=[...report.patterns].filter(p=>p.count>=2).sort((a,b)=>b.count-a.count || a.key.localeCompare(b.key) || String(a.assetType||'').localeCompare(String(b.assetType||'')) || String(a.setupKey||'').localeCompare(String(b.setupKey||'')))[0];
   let html='<section class="lab-primary-finding" aria-labelledby="lab-primary-title"><h3 id="lab-primary-title">'+labText('לפני העסקה הבאה','Before your next trade')+'</h3>';
   if(!pattern)return html+'<p>'+labText('אין כרגע מספיק דוגמאות כדי לבחור דפוס חוזר. פתח את בדיקת העסקאות והרחב את המדגם.','There are not enough repeated examples to choose a pattern. Open the trade review and expand the sample.')+'</p><small>'+labText('אין בכך אישור שלא היו טעויות.','This does not establish that there were no mistakes.')+'</small></section>';
   const finding=pattern.key==='above'
@@ -392,7 +419,9 @@ function labPrimaryFindingHTML(report) {
   const check=pattern.key==='above'
     ? labText('השווה את מחיר הכניסה לנקודת הפריצה שתכננת ולמרחק המרבי שהגדרת.','Compare your entry price with your planned pivot and the maximum distance you defined.')
     : labText('בדוק אם הכניסה הייתה מעל נקודת הפריצה שתכננת, או שזו הייתה כניסה מוקדמת מכוונת.','Check whether entry was above your planned pivot or was an intentional early entry.');
-  html+='<p class="sensitive"><strong>'+pattern.count+labText(' מתוך ',' of ')+report.distanceChecked+labText(' עסקאות עם נתונים מתאימים במדגם: ',' comparable trades in this sample: ')+finding+'</strong></p><p>'+check+'</p>';
+  const cohort=labPatternScope(pattern);
+  if(cohort)html+='<small>'+esc(cohort)+'</small>';
+  html+='<p class="sensitive"><strong>'+pattern.count+labText(' מתוך ',' of ')+(pattern.comparableCount??report.distanceChecked)+labText(' עסקאות עם נתונים מתאימים במדגם: ',' comparable trades in this sample: ')+finding+'</strong></p><p>'+check+'</p>';
   html+='<small>'+labText('חשד לבדיקה, לא טעות מאומתת. השיא המחושב אינו בהכרח נקודת הפריצה שלך.','A review candidate, not a verified mistake. The calculated high is not necessarily your pivot.')+'</small>';
   html+='<div class="lab-actions">'+pattern.examples.slice(0,2).map(e=>'<button type="button" class="btn btn-secondary btn-sm sensitive" data-lab-example="'+esc(e.type+':'+e.id)+'">'+labText('בדוק דוגמה: ','Review example: ')+esc(e.symbol+' · '+e.entryDate)+'</button>').join('')+'</div>';
   return html+'</section>';
@@ -404,7 +433,8 @@ function labReviewSummaryHTML(report, expanded = false) {
   if(!report.patterns.length)return html;
   html+='<details class="lab-recurring-observations"'+(expanded?' open':'')+'><summary>'+labText('מה חוזר בעסקאות שנבדקו?','What repeats in reviewed trades?')+' ('+report.patterns.length+')</summary><p class="lab-footnote">'+labText('תצפית חוזרת אינה הוכחה לטעות. הסף של 3% הוא סף הבדיקה, ולא כלל אישי שהגדרת. בדוק את הדוגמאות מול תוכנית הכניסה שלך.','A repeated observation is not proof of a mistake. The 3% threshold belongs to this check, not a personal rule you defined. Compare the examples with your entry plan.')+'</p>';
   for(const pattern of report.patterns){
-    html+='<p><strong>'+pattern.count+labText(' מתוך ',' of ')+report.distanceChecked+labText(' עסקאות עם נתוני מרחק מתאימים — ',' trades with comparable distance data — ')+(pattern.key==='above'?labText('כניסה יותר מ־3% מעל שיא 20 הנרות הקודמים','Entry more than 3% above the prior 20-bar high'):labText('כניסה מתחת לשיא 20 הנרות הקודמים','Entry below the prior 20-bar high'))+'</strong></p><div class="lab-actions">';
+    html+='<small class="lab-footnote">'+esc(labPatternScope(pattern))+'</small>';
+    html+='<p><strong>'+pattern.count+labText(' מתוך ',' of ')+(pattern.comparableCount??report.distanceChecked)+labText(' עסקאות עם נתוני מרחק מתאימים — ',' trades with comparable distance data — ')+(pattern.key==='above'?labText('כניסה יותר מ־3% מעל שיא 20 הנרות הקודמים','Entry more than 3% above the prior 20-bar high'):labText('כניסה מתחת לשיא 20 הנרות הקודמים','Entry below the prior 20-bar high'))+'</strong></p><div class="lab-actions">';
     html+=pattern.examples.slice(0,3).map(example=>'<button type="button" class="btn btn-secondary btn-sm sensitive" data-lab-example="'+esc(example.type+':'+example.id)+'">'+esc(example.symbol+' · '+example.entryDate)+'</button>').join('')+'</div>';
   }
   return html+'</details>';
