@@ -216,6 +216,7 @@ function tradeSnapshotData(tr, bars) {
   if (!Number.isFinite(entry) || !Number.isFinite(exit) || exit < entry || !clean.length ||
       clean[0].t > entry + 86400 || clean.at(-1).t < exit - 86400) return null;
   const toTime = timestamp => new Date(timestamp*1000).toISOString().slice(0,10);
+  if(toTime(entry)!==tr.entryDate.slice(0,10) || toTime(exit)!==tr.closeDate.slice(0,10))return null;
   // Focus on the trade, with a short context before entry and after exit.
   // Keep the full holding period so both markers remain visible.
   const selected = clean.filter(b => b.t >= entry - (tr.type === 'crypto' ? 28 : 42)*86400 && b.t <= exit + 10*86400);
@@ -229,7 +230,9 @@ function tradeSnapshotData(tr, bars) {
     volume:selected.map(b=>({time:toTime(b.t),value:Number.isFinite(b.v)&&b.v>0?b.v:0})),
     entry:{time:toTime(entryBar.t),date:tr.entryDate.slice(0,10),price:+tr.entryPrice},
     exit:{time:toTime(exitBar.t),date:tr.closeDate.slice(0,10),price:+tr.exitPrice},
-    short:tr.ls==='S'
+    short:tr.ls==='S',
+    partialExitsOmitted:Array.isArray(tr.t)&&tr.t.some(t=>+t.shares>0&&+t.price>0),
+    priceBasisMismatch:[[+tr.entryPrice,entryBar],[+tr.exitPrice,exitBar]].some(([price,b])=>price<b.l*.9999 || price>b.h*1.0001)
   };
 }
 
@@ -295,7 +298,10 @@ async function tradeSnapshotImage(tr, bars) {
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
     const screenshot=chart.takeScreenshot();
     const scale=screenshot.width/960;
-    const canvas=document.createElement('canvas');canvas.width=screenshot.width;canvas.height=screenshot.height+38*scale;
+    const notes=[];
+    if(data.partialExitsOmitted)notes.push(_lang==='he'?'מוצגת יציאה אחרונה בלבד; מימושים קודמים אינם מסומנים.':'Final exit only; prior partial exits are not marked.');
+    if(data.priceBasisMismatch)notes.push(_lang==='he'?'מחיר ביצוע מחוץ לטווח היומי; בדוק התאמת נתונים, פיצול או מסחר מחוץ לשעות.':'Execution outside daily range; check price basis, splits or extended-hours trading.');
+    const canvas=document.createElement('canvas');canvas.width=screenshot.width;canvas.height=screenshot.height+(38+notes.length*22)*scale;
     const ctx=canvas.getContext('2d');ctx.fillStyle='#101116';ctx.fillRect(0,0,canvas.width,canvas.height);
     ctx.font=(16*scale)+'px Arial';ctx.fillStyle='#e6edf7';
     ctx.fillText(tr.symbol+' · '+(_lang==='he'?'גרף עסקה · נרות יומיים':'Trade chart · Daily bars'),20*scale,25*scale);
@@ -318,6 +324,8 @@ async function tradeSnapshotImage(tr, bars) {
       ctx.font=(13*scale)+'px Arial';ctx.textAlign='center';ctx.textBaseline=isEntry?'bottom':'top';
       ctx.fillText(point.label,labels[i].x,labels[i].y);
     }
+    ctx.font=(12*scale)+'px Arial';ctx.fillStyle='#a8b8cc';ctx.textBaseline='top';ctx.textAlign=_lang==='he'?'right':'left';
+    notes.forEach((note,i)=>ctx.fillText(note,(_lang==='he'?940:20)*scale,(358+i*22)*scale,920*scale));
     return canvas.toDataURL('image/png');
   } finally { chart?.remove();box.remove(); }
 }

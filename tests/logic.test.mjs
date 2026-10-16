@@ -58,6 +58,11 @@ describe('entry setup suggestion', () => {
     assert.equal(ctx.tradeSnapshotData(tr,[...bars,{...bars[0],c:104}]),null);
     const sameDay=ctx.tradeSnapshotData({...tr,closeDate:tr.entryDate,ls:'S'},bars);
     assert.equal(sameDay.short,true);assert.equal(sameDay.entry.time,sameDay.exit.time);
+    assert.equal(ctx.tradeSnapshotData({...tr,entryDate:'2026-02-30'},bars),null);
+    const partial=ctx.tradeSnapshotData({...tr,t:[{shares:1,price:102}]},bars);
+    assert.equal(partial.partialExitsOmitted,true);
+    assert.equal(partial.priceBasisMismatch,false);
+    assert.equal(ctx.tradeSnapshotData({...tr,entryPrice:500},bars).priceBasisMismatch,true);
   });
   test('structural review uses confirmed pre-entry swings and abstains without enough evidence',()=>{
     const {tradeBaseStructure:review}=load('tradeBaseStructure');

@@ -42,8 +42,8 @@ after(async () => {
   if (server) await new Promise(r => server.close(r));
 });
 
-async function open(t) {
-  const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce', serviceWorkers: 'block' });
+async function open(t, contextOptions = {}) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce', serviceWorkers: 'block', ...contextOptions });
   t.after(() => context.close());
   const page = await context.newPage();
   page.setDefaultTimeout(10000);
@@ -944,6 +944,42 @@ test('execution arrows keep exact coordinates and entry-above exit-below labels 
   assert.ok(result.labels[0].y<result.tips[0].y,'entry text is above its arrow tip');
   assert.ok(result.labels[1].y>result.tips[1].y,'exit text is below its arrow tip');
  }
+});
+
+test('trade chart dates and execution prices remain identical across browser timezones and DST boundaries',async t=>{
+ const results=[];
+ for(const timezoneId of ['Asia/Jerusalem','America/New_York','Pacific/Honolulu']){
+  const page=await open(t,{timezoneId});await login(page);
+  results.push(await page.evaluate(async()=>{
+   await loadTradeSnapshotFeature();
+   return ['2026-03-08','2026-10-25','2026-11-01'].map(date=>{
+    const tr={id:1,type:'crypto',symbol:'BTC',ls:'L',entryDate:date,closeDate:date,entryPrice:100,exitPrice:102,shares:1,closedShares:1,t:[]};
+    const data=tradeSnapshotData(tr,[{t:Date.parse(date+'T00:30:00Z')/1000,o:100,h:105,l:95,c:101,v:1000}]);
+    return {entry:data.entry,exit:data.exit,mismatch:data.priceBasisMismatch};
+   });
+  }));
+ }
+ assert.deepEqual(results[0],results[1]);assert.deepEqual(results[0],results[2]);
+ assert.deepEqual(results[0].map(r=>r.entry.time),['2026-03-08','2026-10-25','2026-11-01']);
+});
+
+test('trade chart explains omitted partial exits and price basis discrepancies without changing execution data',async t=>{
+ const page=await open(t);await login(page);
+ const result=await page.evaluate(async()=>{
+  await loadTradeSnapshotFeature();await loadTradeChartLibrary();
+  const trade={id:1,type:'stock',ls:'L',symbol:'TEST',entryDate:'2026-09-20',closeDate:'2026-09-21',entryPrice:100,exitPrice:150,shares:2,closedShares:2,t:[{shares:1,price:110}]};
+  const before=JSON.stringify(trade),texts=[],proto=CanvasRenderingContext2D.prototype,original=proto.fillText;
+  proto.fillText=function(text,...args){texts.push(text);return original.call(this,text,...args);};
+  try{
+   const bars=Array.from({length:35},(_,i)=>({t:Date.parse('2026-09-01')/1000+i*86400,o:100,h:105,l:95,c:101,v:1000}));
+   const image=await tradeSnapshotImage(trade,bars);
+   return {image:!!image,texts,unchanged:JSON.stringify(trade)===before};
+  }finally{proto.fillText=original;}
+ });
+ assert.equal(result.image,true);assert.equal(result.unchanged,true);
+ assert.ok(result.texts.some(text=>text.includes('מימושים קודמים אינם מסומנים')));
+ assert.ok(result.texts.some(text=>text.includes('מחיר ביצוע מחוץ לטווח היומי')));
+ assert.ok(result.texts.some(text=>text.includes('$150.00')),'the stored price is never silently adjusted');
 });
 
 test('automatic trade image reports unavailable data and retries without stale account rendering',async t=>{
