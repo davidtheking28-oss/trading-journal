@@ -42,6 +42,25 @@ after(async () => {
   if (server) await new Promise(r => server.close(r));
 });
 
+test('landing mobile header keeps login, logo and menu separated at narrow widths',async t=>{
+ const page=await open(t);await page.goto(base+'/index.html');
+ for(const width of [320,360,390,430,600,768]){
+  await page.setViewportSize({width,height:850});
+  const logo=await page.locator('nav .nav-logo').boundingBox();
+  const login=await page.locator('nav .nav-cta').boundingBox();
+  const menu=await page.locator('nav .nav-menu-btn').boundingBox();
+  assert.ok(logo && login && menu,'all header actions stay visible at '+width);
+  assert.ok(login.x+login.width<=logo.x-10,'login keeps a gap from the RTL logo at '+width);
+  assert.ok(menu.x>=0 && menu.x+menu.width<=width,'menu stays within viewport at '+width);
+  assert.ok(login.height>=40 && menu.height>=40,'touch targets remain usable');
+  assert.ok(logo.x+logo.width<=width,'logo stays inside viewport');
+ }
+ await page.setViewportSize({width:390,height:850});
+ await page.screenshot({path:resolve(root,'docs/landing-mobile-header.png')});
+ await page.locator('nav .nav-menu-btn').click();
+ assert.equal(await page.locator('nav .nav-menu-btn').getAttribute('aria-expanded'),'true');
+});
+
 async function open(t, contextOptions = {}) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce', serviceWorkers: 'block', ...contextOptions });
   t.after(() => context.close());
@@ -56,12 +75,28 @@ async function open(t, contextOptions = {}) {
     if (url.includes('chart.js@') && process.env.DESKTOP_REAL_CHARTS) return route.continue();
     if (url.includes('chart.js@')) return route.fulfill({ contentType: 'text/javascript', body: 'window.Chart=class { static defaults={};static getChart(){return null} constructor(el,cfg){this.data=cfg.data;this.options=cfg.options;this.canvas=el;} update(){}resize(){}destroy(){} };' });
     if (!url.startsWith(base)) return route.fulfill({ contentType: 'application/json', body: '{}' });
+    // Archived feature fixtures live only in these tests, including reloads.
+    if(new URL(url).pathname==='/dashboard.html' && /^(personal lab|personal comparison|lab conclusions|statistics show only the lab)/.test(t.name)){
+      const response=await route.fetch();let html=await response.text();
+      html=html.replace('<div id="tab-statistics" class="tab-content">','<div id="tab-statistics" class="tab-content"><details id="personal-lab-disclosure" class="lab-disclosure" ontoggle="togglePersonalLab()"><summary id="personal-lab-toggle">המעבדה</summary><section id="personal-lab" aria-labelledby="personal-lab-title"></section></details>');
+      html=html.replace('id="tab-overview"','id="tab-overview"').replace('<!-- ===== STATISTICS ===== -->','<section id="personal-lab-overview"></section><!-- ===== STATISTICS ===== -->');
+      return route.fulfill({response,body:html});
+    }
     await route.continue();
   });
   await page.goto(base + '/dashboard.html');
   await page.waitForLoadState('networkidle');
   return page;
 }
+
+test('journal removes Lab entry points and never loads its module during normal navigation',async t=>{
+ const page=await open(t);const requests=[];
+ page.on('request',request=>{if(request.url().includes('personal-lab.js'))requests.push(request.url());});
+ await login(page);
+ await page.evaluate(()=>{switchTab('statistics');renderStatistics();switchTab('overview');});
+ assert.equal(await page.locator('#personal-lab-disclosure,#personal-lab,#personal-lab-overview').count(),0);
+ assert.deepEqual(requests,[]);
+});
 
 async function login(page, email = 'a@example.test') {
   await page.locator('#auth-email').fill(email);
@@ -78,6 +113,29 @@ async function revealLab(page) {
  if (!await page.locator('.lab-experiments').evaluate(el=>el.open)) await page.locator('.lab-experiments > summary').click();
  await page.evaluate(()=>{_labAuto.tradesOpen=true;const list=document.getElementById('lab-trades-disclosure');if(list)list.open=true;});
 }
+
+test('new-user guide has four short steps, real destinations, skip and settings replay without adding trades',async t=>{
+ const page=await open(t);await login(page);
+ const before=await page.evaluate(()=>db.stocks.length+db.crypto.length);
+ await page.evaluate(()=>{localStorage.removeItem('ob_done_'+_currentUser.id);onboardingCheck(_currentUser.id);});
+ await page.locator('#ob-overlay').waitFor({state:'visible'});
+ assert.match(await page.locator('#ob-progress').innerText(),/1.*4/);
+ await page.locator('#ob-step-1 .btn-onboarding-primary').click();
+ assert.match(await page.locator('#ob-step-2').innerText(),/הוסף עסקה/);
+ await page.locator('#ob-step-2 button').filter({hasText:'הבא'}).click();
+ await page.locator('#ob-step-3').getByText('המשך ללא חיבור',{exact:true}).click();
+ assert.match(await page.locator('#ob-progress').innerText(),/4.*4/);
+ await page.screenshot({path:resolve(root,'docs/new-user-guide.png')});
+ await page.locator('#ob-step-4').getByText('פתח סטטיסטיקות',{exact:true}).click();
+ assert.equal(await page.locator('#tab-statistics').evaluate(el=>el.classList.contains('active')),true);
+ await page.evaluate(()=>switchTab('ibkr'));
+ await page.getByText('מדריך התחלה מהירה',{exact:true}).click();
+ await page.keyboard.press('Escape');
+ assert.equal(await page.locator('#ob-overlay').isVisible(),false);
+ assert.equal(await page.evaluate(()=>db.stocks.length+db.crypto.length),before);
+ await page.evaluate(()=>onboardingCheck(_currentUser.id));
+ assert.equal(await page.locator('#ob-overlay').isVisible(),false,'completed guide does not reopen automatically');
+});
 
 test('statistics show only the lab button until it is opened and closing pauses analysis',async t=>{
  const page=await open(t);await login(page);

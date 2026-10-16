@@ -227,7 +227,18 @@ nav {
 @media (hover: hover) and (pointer: fine) { .nav-menu-btn:hover { color: var(--text); } }
 @media (max-width: 900px) { .nav-menu-btn { display: flex; } }
 @media (max-width: 520px) { .nav-right .nav-link { display: none; } }
-@media (max-width: 360px) { .nav-right .nav-cta { display: none; } }
+.nav-cta-mobile { display:none; }
+@media (max-width:700px) {
+  nav { gap:12px; padding-inline:12px; }
+  .nav-logo { flex-shrink:0; gap:6px; }
+  .nav-logo-icon { width:32px; height:32px; }
+  .nav-logo-text { font-size:19px; }
+  .nav-right { flex-shrink:0; gap:6px; }
+  .nav-right .nav-link,.nav-cta-desktop { display:none; }
+  .nav-right .nav-cta { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:8px 12px; font-size:13px; }
+  .nav-cta-mobile { display:inline; }
+  .nav-menu-btn { width:44px; height:44px; padding:10px; }
+}
 
 .mobile-nav-panel {
   position: fixed; top: 58px; right: 0; left: 0; z-index: 199;
@@ -1188,7 +1199,7 @@ html[lang="en"] #hero .hero-title{letter-spacing:-.02em;line-height:1.08}
   <div class="nav-right">
     <a href="index-en.html" class="nav-link" onclick="try{localStorage.setItem('tj_landing_lang_choice','en')}catch(e){}">English</a>
     <a href="dashboard.html" class="nav-link">כניסה</a>
-    <a href="dashboard.html?mode=login" class="nav-cta">כניסה למשתמשים קיימים</a>
+    <a href="dashboard.html?mode=login" class="nav-cta" aria-label="כניסה למשתמשים קיימים"><span class="nav-cta-desktop">כניסה למשתמשים קיימים</span><span class="nav-cta-mobile" aria-hidden="true">כניסה ליומן</span></a>
     <button class="nav-menu-btn" onclick="toggleMobileNav()" aria-label="תפריט ניווט" aria-expanded="false" aria-controls="mobile-nav-panel">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
     </button>
@@ -1224,7 +1235,7 @@ html[lang="en"] #hero .hero-title{letter-spacing:-.02em;line-height:1.08}
       </div>
       
     </div>
-<figure class="hero-product"><video id="hero-video" muted loop playsinline preload="auto" width="1280" height="720" poster="assets/demo/hero-poster.webp" aria-label="סרטון קצר של יומן המסחר: סטטיסטיקה, ייבוא עסקאות, רווח והפסד, דופק השוק וסורק המניות"><source src="assets/demo/hero-clip-sm.webm" type="video/webm" media="(max-width:760px)"><source src="assets/demo/hero-clip-sm.mp4" type="video/mp4" media="(max-width:760px)"><source src="assets/demo/hero-clip.webm" type="video/webm"><source src="assets/demo/hero-clip.mp4" type="video/mp4"></video><figcaption>תצוגת המוצר · נתוני הדגמה</figcaption><div class="demo-controls"><button id="demo-play" type="button" aria-controls="hero-video" aria-pressed="false">הפעל הדגמה</button></div></figure>
+<figure class="hero-product"><video id="hero-video" muted loop playsinline preload="auto" width="1280" height="720" poster="assets/demo/hero-poster.webp" aria-label="סרטון קצר של יומן המסחר: סטטיסטיקה, ייבוא עסקאות, רווח והפסד, דופק השוק וסורק המניות"><source src="assets/demo/hero-clip-sm.webm" type="video/webm" media="(max-width:760px)"><source src="assets/demo/hero-clip-sm.mp4" type="video/mp4" media="(max-width:760px)"><source src="assets/demo/hero-clip.webm" type="video/webm"><source src="assets/demo/hero-clip.mp4" type="video/mp4"></video></figure>
   </div>
 </section>
 

@@ -331,21 +331,31 @@ function _resetSessionState() {
 // ─────────────────────────────────────────────
 function onboardingCheck(userId) {
   if (_lsGet('ob_done_' + userId)) return;
+  onboardingShow();
+}
+
+let _onboardingReturnFocus = null;
+function onboardingShow() {
+  if(!_currentUser || _legalReadyUserId!==_currentUser.id)return;
+  _onboardingReturnFocus=document.activeElement;
   const el = document.getElementById('ob-overlay');
   el.style.display = 'flex';
   onboardingStep(1);
 }
 
 function onboardingStep(n) {
-  [1,2,3].forEach(i => {
+  [1,2,3,4].forEach(i => {
     document.getElementById('ob-step-' + i).style.display = i === n ? '' : 'none';
     document.getElementById('ob-dot-' + i).style.background = i === n ? 'var(--accent)' : i < n ? 'rgba(79,131,255,0.4)' : 'rgba(148,163,184,0.2)';
   });
+  document.getElementById('ob-progress').textContent=(_lang==='he'?'צעד ':'Step ')+n+(_lang==='he'?' מתוך 4':' of 4');
+  document.querySelector('#ob-step-'+n+' button')?.focus();
 }
 
 function onboardingDone() {
   _lsSet('ob_done_' + _currentUser?.id, '1');
   document.getElementById('ob-overlay').style.display = 'none';
+  if(_onboardingReturnFocus?.isConnected)_onboardingReturnFocus.focus();
   _saveUserSettings({ onboarding_done: true }); // persist across devices
 }
 
@@ -356,9 +366,18 @@ function onboardingOpenTrade() {
 
 function onboardingGoSettings() {
   onboardingDone();
-  const settingsBtn = document.querySelector('.tab-btn[aria-label="Settings"]');
-  if (settingsBtn) switchTab('ibkr', settingsBtn);
+  switchTab('ibkr');
 }
+
+function onboardingGoStatistics(){onboardingDone();switchTab('statistics');}
+document.getElementById('ob-overlay').addEventListener('keydown',event=>{
+  if(event.key==='Escape'){event.preventDefault();onboardingDone();return;}
+  if(event.key!=='Tab')return;
+  const buttons=[...event.currentTarget.querySelectorAll('button')].filter(button=>button.getClientRects().length&&!button.disabled);
+  const first=buttons[0],last=buttons.at(-1);
+  if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}
+  else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}
+});
 
 const ADMIN_ID = '9f9ffff4-0936-446c-b816-410b50894e8b';
 

@@ -6002,7 +6002,6 @@ html[data-theme="light"] #app .num-green, html[data-theme="light"] #app .donut-s
 
     <!-- ===== OVERVIEW ===== -->
     <div id="tab-overview" class="tab-content active">
-      <section id="personal-lab-overview" aria-label="Personal lab"></section>
 
       <!-- Top bar: Add Trade + Fear & Greed -->
       <div class="ov-top-bar" style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-bottom:12px;padding:8px 14px;">
@@ -6124,10 +6123,6 @@ html[data-theme="light"] #app .num-green, html[data-theme="light"] #app .donut-s
 
     <!-- ===== STATISTICS ===== -->
     <div id="tab-statistics" class="tab-content">
-      <details id="personal-lab-disclosure" class="lab-disclosure" ontoggle="togglePersonalLab()">
-        <summary id="personal-lab-toggle" data-i18n="lab_open">המעבדה</summary>
-        <section id="personal-lab" aria-labelledby="personal-lab-title"></section>
-      </details>
       <div class="month-filter" style="margin-bottom:16px;">
         <label>סינון:</label>
         <select id="stats-month" onchange="renderStatistics()" style="display:none"></select>
@@ -6318,6 +6313,7 @@ html[data-theme="light"] #app .num-green, html[data-theme="light"] #app .donut-s
     <!-- ===== SETTINGS ===== -->
 
     <div id="tab-ibkr" class="tab-content">
+      <button type="button" class="btn btn-secondary" onclick="onboardingShow()" style="margin-bottom:16px">מדריך התחלה מהירה</button>
     <div class="s-page-header">
       <div>
         <h2 data-i18n="set_page_title">Settings</h2>
@@ -7574,13 +7570,15 @@ html[data-theme="light"] #app .num-green, html[data-theme="light"] #app .donut-s
   </div>
 </div>
 
-<div id="ob-overlay" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(5,10,22,0.85);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px;">
-  <div style="background:linear-gradient(145deg,#091525,#0b1e38);border:1px solid rgba(79,131,255,0.18);border-radius:var(--r-lg);padding:36px 32px 32px;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,.8);position:relative;">
+<div id="ob-overlay" role="dialog" aria-modal="true" aria-label="מדריך התחלה מהירה" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(5,10,22,0.85);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--card);color:var(--text);border:1px solid var(--border2);border-radius:var(--r-lg);padding:28px;width:100%;max-width:440px;max-height:90vh;overflow:auto;position:relative;">
+    <p id="ob-progress" aria-live="polite" style="color:var(--text2);font-size:13px;text-align:center">צעד 1 מתוך 4</p>
     <!-- Progress dots -->
     <div style="display:flex;justify-content:center;gap:8px;margin-bottom:28px;">
       <div id="ob-dot-1" style="width:8px;height:8px;border-radius:50%;background:var(--accent);transition:background .3s;"></div>
       <div id="ob-dot-2" style="width:8px;height:8px;border-radius:50%;background:rgba(148,163,184,0.2);transition:background .3s;"></div>
       <div id="ob-dot-3" style="width:8px;height:8px;border-radius:50%;background:rgba(148,163,184,0.2);transition:background .3s;"></div>
+      <div id="ob-dot-4" style="width:8px;height:8px;border-radius:50%;background:var(--border2)"></div>
     </div>
 
     <!-- Step 1: Welcome -->
@@ -7605,10 +7603,11 @@ html[data-theme="light"] #app .num-green, html[data-theme="light"] #app .donut-s
           </svg>
         </div>
         <div style="font-size:20px;font-weight:800;letter-spacing:-0.5px;color:var(--text);margin-bottom:8px;">הוסף את העסקה הראשונה</div>
-        <div style="font-size:14px;color:var(--text3);line-height:1.6;">לחץ על <strong style="color:var(--text2)">Stocks</strong> או <strong style="color:var(--text2)">Crypto</strong> בתפריט,<br>ואז על כפתור <strong style="color:var(--accent)">+ Add New Trade</strong>.<br>רשום את הכניסה, יציאה וגודל הפוזיציה.</div>
+        <div style="font-size:14px;color:var(--text2);line-height:1.7;">בטאב ״מניות / קריפטו״ לוחצים על ״הוסף עסקה״ ומזינים סימול, תאריך, מחיר כניסה וכמות. פרטי יציאה מוסיפים רק אחרי מימוש.<br>בעסקה סגורה אפשר ללחוץ על סמל התמונה כדי לראות את גרף הכניסה והיציאה, כשהנתונים זמינים.</div>
       </div>
       <button class="btn-onboarding-primary" onclick="onboardingOpenTrade()">פתח טופס עסקה</button>
       <button onclick="onboardingStep(3)" style="width:100%;margin-top:10px;padding:10px;background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:inherit;">← הבא</button>
+      <button type="button" class="btn btn-secondary" onclick="onboardingStep(1)">חזרה</button>
     </div>
 
     <!-- Step 3: API Keys -->
@@ -7623,7 +7622,17 @@ html[data-theme="light"] #app .num-green, html[data-theme="light"] #app .donut-s
         <div style="font-size:14px;color:var(--text3);line-height:1.6;">ייבוא עסקאות אוטומטי מ־<strong style="color:var(--text2)">IBKR</strong> או <strong style="color:var(--text2)">Bybit</strong>, בחיבור לקריאה בלבד.<br>אפשר לדלג ולחבר אחר כך בהגדרות.</div>
       </div>
       <button class="btn-onboarding-primary" onclick="onboardingGoSettings()">חבר ברוקר עכשיו</button>
-      <button onclick="onboardingDone()" style="width:100%;margin-top:10px;padding:10px;background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:inherit;">אחר כך</button>
+      <button onclick="onboardingStep(4)" style="width:100%;margin-top:10px;padding:10px;background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:inherit;">המשך ללא חיבור</button>
+      <button type="button" class="btn btn-secondary" onclick="onboardingStep(2)">חזרה</button>
+    </div>
+    <div id="ob-step-4" style="display:none">
+      <h2 style="font-size:20px;margin:0 0 12px">מה לומדים מהעסקאות?</h2>
+      <p style="color:var(--text2);line-height:1.7">בטאב ״סטטיסטיקות״ בוחרים תקופה ומניות או קריפטו. מתחילים מרווח והפסד ואחוז הצלחה, ומשווים רק כשיש מספיק עסקאות סגורות.</p>
+      <p style="color:var(--text2);line-height:1.7">במסנן המניות אפשר לשמור מניות ב״מעקב״. הנתונים מסתנכרנים בין המכשירים כשמחוברים לאותו חשבון.</p>
+      <p style="color:var(--text3);line-height:1.6">אפשר לפתוח את המדריך שוב דרך ההגדרות. שום עסקה לא נוצרת במהלך המדריך.</p>
+      <button type="button" class="btn-onboarding-primary" onclick="onboardingGoStatistics()">פתח סטטיסטיקות</button>
+      <button type="button" class="btn btn-secondary" onclick="onboardingDone()" style="margin-top:12px">סיום המדריך</button>
+      <button type="button" class="btn btn-secondary" onclick="onboardingStep(3)">חזרה</button>
     </div>
   </div>
 </div>
