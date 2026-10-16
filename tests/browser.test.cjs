@@ -43,7 +43,8 @@ after(async () => {
 });
 
 test('landing mobile header keeps login, logo and menu separated at narrow widths',async t=>{
- const page=await open(t);await page.goto(base+'/index.html');
+ const page=await open(t,{locale:'he-IL'});await page.goto(base+'/index.html');
+ assert.equal(await page.locator('html').getAttribute('lang'),'he');
  for(const width of [320,360,390,430,600,768]){
   await page.setViewportSize({width,height:850});
   const logo=await page.locator('nav .nav-logo').boundingBox();
