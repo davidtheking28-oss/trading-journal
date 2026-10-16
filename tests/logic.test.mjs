@@ -34,6 +34,16 @@ test('market history requests time out, clear their timer and remain retryable',
 });
 
 describe('entry setup suggestion', () => {
+  test('trade labels separate overlapping price annotations without moving execution tips',()=>{
+    const {tradeSnapshotLabelPositions:place}=load('tradeSnapshotLabelPositions');
+    const points=[{x:200,y:150,width:110},{x:202,y:105,width:110}];
+    const labels=place(points,880,1);
+    assert.ok(labels[0].y<labels[1].y-16);
+    assert.ok(labels[0].y<points[0].y);assert.ok(labels[1].y>points[1].y);
+    assert.equal(points[0].y,150);assert.equal(points[1].y,105);
+    const edge=place([{x:1,y:100,width:100},{x:879,y:200,width:100}],880,1);
+    assert.ok(edge[0].x>=54);assert.ok(edge[1].x<=826);
+  });
   test('trade chart never shifts an execution onto a neighboring daily bar',()=>{
     const ctx={tradeSnapshotEligible:()=>true};vm.createContext(ctx);vm.runInContext(extractFunction('tradeSnapshotData'),ctx);
     const tr={type:'stock',entryDate:'2026-10-12',closeDate:'2026-10-14',entryPrice:101,exitPrice:103};
@@ -42,6 +52,12 @@ describe('entry setup suggestion', () => {
     assert.equal(data.entry.time,tr.entryDate);assert.equal(data.entry.price,101);assert.equal(data.exit.price,103);
     assert.equal(ctx.tradeSnapshotData(tr,bars.filter((b,i)=>i!==0)),null);
     assert.equal(ctx.tradeSnapshotData(tr,bars.filter((b,i)=>i!==2)),null);
+    assert.equal(ctx.tradeSnapshotData({...tr,entryPrice:Infinity},bars),null);
+    assert.equal(ctx.tradeSnapshotData(tr,[...bars,null]),null);
+    assert.equal(ctx.tradeSnapshotData(tr,bars.map((b,i)=>i?b:{...b,l:999})),null);
+    assert.equal(ctx.tradeSnapshotData(tr,[...bars,{...bars[0],c:104}]),null);
+    const sameDay=ctx.tradeSnapshotData({...tr,closeDate:tr.entryDate,ls:'S'},bars);
+    assert.equal(sameDay.short,true);assert.equal(sameDay.entry.time,sameDay.exit.time);
   });
   test('structural review uses confirmed pre-entry swings and abstains without enough evidence',()=>{
     const {tradeBaseStructure:review}=load('tradeBaseStructure');

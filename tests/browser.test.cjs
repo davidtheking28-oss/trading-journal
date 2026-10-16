@@ -920,6 +920,32 @@ test('closed stock trades automatically display one entry and exit image and ref
 
 });
 
+test('execution arrows keep exact coordinates and entry-above exit-below labels for same-day long short and crypto',async t=>{
+ const page=await open(t);await login(page);
+ const results=await page.evaluate(async()=>{
+  await loadTradeSnapshotFeature();await loadTradeChartLibrary();
+  const bars=Array.from({length:35},(_,i)=>({t:Date.parse('2026-09-01')/1000+i*86400,o:100,h:105,l:95,c:101,v:1000}));
+  const results=[];
+  for(const [type,ls,mult] of [['stock','L',1],['stock','S',1],['crypto','L',.00001],['crypto','S',.00001]]){
+   const tips=[],labels=[],proto=CanvasRenderingContext2D.prototype,move=proto.moveTo,text=proto.fillText;
+   proto.moveTo=function(x,y){if(['#34d399','#fb7185'].includes(this.fillStyle))tips.push({x,y,color:this.fillStyle});return move.call(this,x,y);};
+   proto.fillText=function(value,x,y,...rest){if(/^(כניסה|יציאה|Entry|Exit) /.test(value))labels.push({value,x,y});return text.call(this,value,x,y,...rest);};
+   try{
+    const image=await tradeSnapshotImage({id:1,type,ls,symbol:'TEST',entryDate:'2026-09-20',closeDate:'2026-09-20',entryPrice:100*mult,exitPrice:103*mult,shares:1,closedShares:1,t:[]},bars.map(b=>({...b,o:b.o*mult,h:b.h*mult,l:b.l*mult,c:b.c*mult})));
+    results.push({image:!!image,tips,labels});
+   }finally{proto.moveTo=move;proto.fillText=text;}
+  }
+  return results;
+ });
+ for(const result of results){
+  assert.equal(result.image,true);assert.equal(result.tips.length,2);assert.equal(result.labels.length,2);
+  assert.equal(result.tips[0].x,result.tips[1].x,'same trading day uses the same x coordinate');
+  assert.ok(result.tips[0].y>result.tips[1].y,'higher execution price is plotted higher');
+  assert.ok(result.labels[0].y<result.tips[0].y,'entry text is above its arrow tip');
+  assert.ok(result.labels[1].y>result.tips[1].y,'exit text is below its arrow tip');
+ }
+});
+
 test('automatic trade image reports unavailable data and retries without stale account rendering',async t=>{
   const page=await open(t);await login(page);
   await page.evaluate(()=>{

@@ -207,10 +207,12 @@ function renderTradeSetupSuggestion(host, trade, bars, valid, options = null) {
 }
 
 function tradeSnapshotData(tr, bars) {
-  if (!tradeSnapshotEligible(tr) || !Array.isArray(bars)) return null;
+  if (!tr || !tradeSnapshotEligible(tr) || !Array.isArray(bars) || ![+tr.entryPrice,+tr.exitPrice].every(n=>Number.isFinite(n)&&n>0)) return null;
   const entry = Date.parse(tr.entryDate.slice(0,10) + 'T00:00:00Z') / 1000;
   const exit = Date.parse(tr.closeDate.slice(0,10) + 'T00:00:00Z') / 1000;
-  const clean = [...new Map(bars.filter(b => Number.isFinite(b.t) && [b.o,b.h,b.l,b.c].every(v => Number.isFinite(v) && v > 0)).map(b=>[Math.floor(b.t/86400),b])).values()].sort((a,b)=>a.t-b.t);
+  if(bars.some(b=>!b || !Number.isFinite(b.t) || b.t<0 || b.t>8640000000000 || ![b.o,b.h,b.l,b.c].every(v=>Number.isFinite(v)&&v>0) || b.h<Math.max(b.o,b.l,b.c) || b.l>Math.min(b.o,b.c)))return null;
+  if(new Set(bars.map(b=>Math.floor(b.t/86400))).size!==bars.length)return null;
+  const clean = [...bars].sort((a,b)=>a.t-b.t);
   if (!Number.isFinite(entry) || !Number.isFinite(exit) || exit < entry || !clean.length ||
       clean[0].t > entry + 86400 || clean.at(-1).t < exit - 86400) return null;
   const toTime = timestamp => new Date(timestamp*1000).toISOString().slice(0,10);
@@ -255,6 +257,14 @@ function loadTradeChartLibrary() {
   });
   return _tradeChartLibraryPending;
 }
+function tradeSnapshotLabelPositions(points, width, scale) {
+  const labels=points.map((p,i)=>({x:Math.max(p.width/2+4*scale,Math.min(p.x,width-p.width/2-4*scale)),y:p.y+(i?23:-23)*scale}));
+  const overlapX=Math.abs(labels[0].x-labels[1].x)<(points[0].width+points[1].width)/2+8*scale;
+  const overlapY=labels[0].y>=labels[1].y-4*scale && labels[0].y-16*scale<=labels[1].y+16*scale;
+  if(overlapX && overlapY){labels[0].y=Math.min(points[0].y,points[1].y)-23*scale;labels[1].y=Math.max(points[0].y,points[1].y)+23*scale;}
+  return labels;
+}
+
 async function tradeSnapshotImage(tr, bars) {
   const data = tradeSnapshotData(tr,bars);
   if (!data) return null;
@@ -292,16 +302,21 @@ async function tradeSnapshotImage(tr, bars) {
     ctx.drawImage(screenshot,0,38*scale);
     // Bar markers sit above/below OHLC extremes. Draw execution arrows at the
     // actual price coordinate instead, with entry above and exit below.
-    for(const [point,isEntry] of [[data.entry,true],[data.exit,false]]){
+    const points=[data.entry,data.exit].map((point,i)=>{
       const x=chart.timeScale().timeToCoordinate(point.time),y=series.priceToCoordinate(point.price);
-      if(x===null || y===null || y<0 || y>320)return null;
-      const px=x*scale,py=(y+38)*scale,side=isEntry?-1:1;
+      if(x===null || y===null || !Number.isFinite(x) || !Number.isFinite(y) || y<0 || y>320)return null;
+      const label=(_lang==='he'?(i?'יציאה ':'כניסה '):(i?'Exit ':'Entry '))+'$'+point.price.toFixed(point.price<1?8:2);
+      ctx.font=(13*scale)+'px Arial';
+      return {x:x*scale,y:(y+38)*scale,label,width:ctx.measureText(label).width};
+    });
+    if(points.some(p=>!p))return null;
+    const labels=tradeSnapshotLabelPositions(points,chart.timeScale().width()*scale,scale);
+    for(const [i,point] of points.entries()){
+      const isEntry=i===0,px=point.x,py=point.y,side=isEntry?-1:1;
       ctx.fillStyle=isEntry?'#34d399':'#fb7185';
       ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px-6*scale,py+side*9*scale);ctx.lineTo(px-2*scale,py+side*9*scale);ctx.lineTo(px-2*scale,py+side*20*scale);ctx.lineTo(px+2*scale,py+side*20*scale);ctx.lineTo(px+2*scale,py+side*9*scale);ctx.lineTo(px+6*scale,py+side*9*scale);ctx.closePath();ctx.fill();
       ctx.font=(13*scale)+'px Arial';ctx.textAlign='center';ctx.textBaseline=isEntry?'bottom':'top';
-      const label=(_lang==='he'?(isEntry?'כניסה ':'יציאה '):(isEntry?'Entry ':'Exit '))+'$'+point.price.toFixed(point.price<1?8:2);
-      const half=ctx.measureText(label).width/2;
-      ctx.fillText(label,Math.max(half+4*scale,Math.min(px,canvas.width-half-4*scale)),py+side*23*scale);
+      ctx.fillText(point.label,labels[i].x,labels[i].y);
     }
     return canvas.toDataURL('image/png');
   } finally { chart?.remove();box.remove(); }
