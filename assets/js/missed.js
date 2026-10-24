@@ -58,8 +58,9 @@ function missedRenderList(list) {
   const cardHtml = r => `
       <div class="missed-card" id="missed-row-${r.id}">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
-          <div class="missed-card-sym">${esc(r.sym)}</div>
+          <div class="missed-card-sym" style="display:flex;align-items:center;gap:8px;min-width:0"><img src="${_symLogoUrl({symbol:r.sym},'stock')}" alt="" loading="lazy" width="24" height="24" style="border-radius:50%;object-fit:cover;background:var(--bg);flex-shrink:0" onerror="this.style.visibility='hidden'"><span>${esc(r.sym)}</span></div>
           <div class="missed-card-actions">
+            <button type="button" class="missed-del-btn" onclick="missedOpenChart('${esc(String(r.id))}')" aria-label="${_lang==='he'?'גרף כניסה מתוכננת':'Planned entry chart'} · ${esc(r.sym)}" title="${_lang==='he'?'גרף כניסה':'Entry chart'}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h4l2-3h4l2 3h4v13H4z"/><circle cx="12" cy="13" r="4"/></svg></button>
             <button class="missed-del-btn edit" onclick="missedEdit('${r.id}')" title="ערוך">✏</button>
             <button class="missed-del-btn" onclick="missedDelete('${r.id}')" title="מחק">✕</button>
           </div>
@@ -291,6 +292,40 @@ async function missedFollowUp(list) {
   _paintMissedMonthSummaries(list);
   _paintMissedReasons(list);
   applyPrivacy();
+}
+
+let _missedChartSequence=0;
+async function missedOpenChart(id) {
+  const user=_currentUser,row=_missedList.find(item=>String(item.id)===String(id));
+  if(!user || _legalReadyUserId!==user.id || !row)return;
+  let dialog=document.getElementById('missed-chart-dialog');
+  if(!dialog){
+    dialog=document.createElement('dialog');dialog.id='missed-chart-dialog';dialog.className='missed-chart-dialog';
+    dialog.innerHTML='<div class="missed-chart-heading"><h2 id="missed-chart-title"></h2><button type="button" class="btn btn-secondary" aria-label="Close">✕</button></div><div id="missed-chart-body"></div>';
+    dialog.setAttribute('aria-labelledby','missed-chart-title');dialog.querySelector('h2').className='sensitive';document.body.append(dialog);
+    dialog.querySelector('button').onclick=()=>dialog.close();
+    dialog.addEventListener('close',()=>{if(dialog.open)return;_missedChartSequence++;dialog.querySelector('#missed-chart-body').replaceChildren();});
+  }
+  const seq=++_missedChartSequence,fingerprint=JSON.stringify([row.sym,row.date,row.price]);
+  const body=dialog.querySelector('#missed-chart-body');body.replaceChildren();
+  dialog.querySelector('h2').textContent=row.sym+' · '+(_lang==='he'?'כניסה מתוכננת':'Planned entry');
+  dialog.querySelector('button').setAttribute('aria-label',_lang==='he'?'סגור':'Close');
+  const status=document.createElement('p');status.setAttribute('role','status');status.textContent=_lang==='he'?'טוען גרף…':'Loading chart…';body.append(status);
+  if(!dialog.open)dialog.showModal();
+  const valid=()=>dialog.open && seq===_missedChartSequence && _currentUser===user && _legalReadyUserId===user.id && _missedList.some(item=>String(item.id)===String(id)&&JSON.stringify([item.sym,item.date,item.price])===fingerprint);
+  try{
+    const [bars]=await Promise.all([_fetchPivotBars(row.sym),loadTradeSnapshotFeature()]);
+    if(!valid())return;
+    const image=await tradeSnapshotImage({type:'stock',symbol:row.sym,entryDate:row.date,entryPrice:row.price,ls:'L'},bars,{entryOnly:true});
+    if(!valid())return;
+    if(!image)throw new Error('Unavailable');
+    const img=document.createElement('img');img.src=image;img.className='sensitive';img.alt=(_lang==='he'?'גרף כניסה מתוכננת ללא יציאה · ':'Planned entry chart without exit · ')+row.sym;
+    body.replaceChildren(img);applyPrivacy();
+  }catch{
+    if(!valid())return;
+    status.textContent=_lang==='he'?'אין כרגע נתוני גרף תואמים לתאריך ולמחיר שנרשמו.':'Matching chart data is currently unavailable.';
+    const retry=document.createElement('button');retry.type='button';retry.className='btn btn-secondary';retry.textContent=_lang==='he'?'נסה שוב':'Retry';retry.onclick=()=>{_pivotBarsCache.delete(row.sym);void missedOpenChart(id);};body.append(retry);
+  }
 }
 
 function missedEdit(id) {

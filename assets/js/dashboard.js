@@ -8194,6 +8194,8 @@ function loadTradeSnapshotFeature() {
 const _tradeSnapshotImages = new Map();
 let _tradeSnapshotSession = 0;
 function resetTradeSnapshots() {
+  document.getElementById('missed-chart-dialog')?.close();
+  document.getElementById('missed-chart-body')?.replaceChildren();
   _tradeSnapshotSession++;
   _tradeSnapshotImages.clear();
   closeLightbox();

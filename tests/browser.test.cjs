@@ -1002,6 +1002,27 @@ test('trade chart explains omitted partial exits and price basis discrepancies w
  assert.ok(result.texts.some(text=>text.includes('$150.00')),'the stored price is never silently adjusted');
 });
 
+test('missed opportunity chart shows only a planned entry, loads on demand and clears on account reset',async t=>{
+ const page=await open(t);await login(page);
+ const result=await page.evaluate(async()=>{
+  await loadDashboardFeature('missed.js',()=>typeof missedRenderList==='function');
+  _missedList=[{id:'missed-chart-test',sym:'AAPL',date:'2026-09-20',price:100}];
+  missedRenderList(_missedList);
+  const logo=document.querySelector('#missed-row-missed-chart-test .missed-card-sym img');
+  if(!logo || logo.getAttribute('src')!==_symLogoUrl({symbol:'AAPL'},'stock'))throw new Error('Missed card must use the journal company logo');
+  let calls=0;_fetchPivotBars=async()=>{calls++;return Array.from({length:35},(_,i)=>({t:Date.parse('2026-09-01')/1000+i*86400,o:100,h:105,l:95,c:101,v:1000}));};
+  const before=calls;await missedOpenChart('missed-chart-test');return {before,calls};
+ });
+ assert.equal(result.before,0);assert.equal(result.calls,1);
+ await page.locator('#missed-chart-dialog img').waitFor();
+ await page.screenshot({path:resolve(root,'docs/missed-entry-chart.png')});
+ assert.match(await page.locator('#missed-chart-title').innerText(),/כניסה מתוכננת/);
+ assert.match(await page.locator('#missed-chart-dialog img').getAttribute('alt'),/ללא יציאה/);
+ await page.evaluate(()=>resetTradeSnapshots());
+ assert.equal(await page.locator('#missed-chart-dialog').isVisible(),false);
+ assert.equal(await page.locator('#missed-chart-dialog img').count(),0);
+});
+
 test('automatic trade image reports unavailable data and retries without stale account rendering',async t=>{
   const page=await open(t);await login(page);
   await page.evaluate(()=>{

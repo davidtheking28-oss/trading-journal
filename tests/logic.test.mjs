@@ -34,6 +34,13 @@ test('market history requests time out, clear their timer and remain retryable',
 });
 
 describe('entry setup suggestion', () => {
+  test('planned missed-entry charts need no exit and never create an exit marker',()=>{
+    const ctx={tradeSnapshotEligible:()=>false};vm.createContext(ctx);vm.runInContext(extractFunction('tradeSnapshotData'),ctx);
+    const tr={type:'stock',symbol:'AAPL',entryDate:'2026-10-12',entryPrice:100};
+    const bars=[{t:Date.parse('2026-10-12T13:30:00Z')/1000,o:99,h:105,l:95,c:101,v:100}];
+    const data=ctx.tradeSnapshotData(tr,bars,true);assert.equal(data.exit,null);assert.equal(data.entry.price,100);
+    assert.equal(ctx.tradeSnapshotData(tr,bars),null);
+  });
   test('trade labels separate overlapping price annotations without moving execution tips',()=>{
     const {tradeSnapshotLabelPositions:place}=load('tradeSnapshotLabelPositions');
     const points=[{x:200,y:150,width:110},{x:202,y:105,width:110}];
