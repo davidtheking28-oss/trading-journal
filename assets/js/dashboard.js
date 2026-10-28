@@ -835,9 +835,19 @@ function _onScreenerLoad() {
   // failed to fetch (cache corruption, a blocked CDN) throws inside the
   // iframe's own window, which onload can't see. Catch it directly.
   try {
-    f.contentWindow.addEventListener('error', () => {
-      f._loaded = false;
-      _showScreenerLoading(true);
+    const cw = f.contentWindow;
+    cw.addEventListener('error', ev => {
+      // Any uncaught error used to blank the whole tab, including harmless
+      // ones such as the browser's ResizeObserver notice. Only a screener
+      // whose scripts never came up (no supabase client) is actually dead.
+      if (/ResizeObserver/.test(ev?.message || '')) return;
+      setTimeout(() => {
+        let alive = false;
+        try { alive = !!cw.supabase && typeof cw.setScreener === 'function'; } catch (e) {}
+        if (alive) return;
+        f._loaded = false;
+        _showScreenerLoading(true);
+      }, 1500);
     }, { once: true });
   } catch (e) {}
 }
